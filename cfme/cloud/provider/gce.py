@@ -2,7 +2,7 @@ import attr
 
 from widgetastic.widget import View
 from widgetastic_patternfly import Button, Input
-from wrapanapi.google import GoogleCloudSystem
+from wrapanapi.systems import GoogleCloudSystem
 
 from cfme.base.credential import ServiceAccountCredential
 from cfme.cloud.instance.gce import GCEInstance

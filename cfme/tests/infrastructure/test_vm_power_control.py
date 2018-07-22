@@ -40,14 +40,14 @@ def testing_vm(appliance, request, provider, vm_name):
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     yield vm
 
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
     if_scvmm_refresh_provider(provider)
 
 
 @pytest.fixture(scope="function")
 def archived_vm(provider, testing_vm):
     """Fixture to archive testing VM"""
-    provider.mgmt.delete_vm(testing_vm.name)
+    testing_vm.mgmt.delete()
     testing_vm.wait_for_vm_state_change(desired_state='archived', timeout=720,
                                         from_details=False, from_any_provider=True)
 
@@ -70,7 +70,7 @@ def testing_vm_tools(appliance, request, provider, vm_name, full_template):
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     yield vm
 
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
     if_scvmm_refresh_provider(provider)
 
 
@@ -164,9 +164,9 @@ class TestControlOnQuadicons(object):
         # TODO: assert no event.
         time.sleep(60)
         vm_state = testing_vm.find_quadicon().data['state']
-        soft_assert('currentstate-on' in vm_state)
+        soft_assert(vm_state == 'on')
         soft_assert(
-            testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
+            testing_vm.mgmt.is_running, "vm not running")
 
     @pytest.mark.rhv1
     def test_power_off(self, appliance, testing_vm, ensure_vm_running, soft_assert):
@@ -184,9 +184,8 @@ class TestControlOnQuadicons(object):
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=900)
         vm_state = testing_vm.find_quadicon().data['state']
-        soft_assert('currentstate-off' in vm_state)
-        soft_assert(
-            not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
+        soft_assert(vm_state == 'off')
+        soft_assert(not testing_vm.mgmt.is_running, "vm running")
 
     @pytest.mark.rhv3
     def test_power_on_cancel(self, testing_vm, ensure_vm_stopped, soft_assert):
@@ -200,9 +199,8 @@ class TestControlOnQuadicons(object):
         if_scvmm_refresh_provider(testing_vm.provider)
         time.sleep(60)
         vm_state = testing_vm.find_quadicon().data['state']
-        soft_assert('currentstate-off' in vm_state)
-        soft_assert(
-            not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
+        soft_assert(vm_state == 'off')
+        soft_assert(not testing_vm.mgmt.is_running, "vm running")
 
     @pytest.mark.rhv1
     @pytest.mark.tier(1)
@@ -221,9 +219,8 @@ class TestControlOnQuadicons(object):
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=900)
         vm_state = testing_vm.find_quadicon().data['state']
-        soft_assert('currentstate-on' in vm_state)
-        soft_assert(
-            testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
+        soft_assert(vm_state == 'on')
+        soft_assert(testing_vm.mgmt.is_running, "vm not running")
 
 
 class TestVmDetailsPowerControlPerProvider(object):
@@ -247,8 +244,7 @@ class TestVmDetailsPowerControlPerProvider(object):
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
-        soft_assert(
-            not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
+        soft_assert(not testing_vm.mgmt.is_running, "vm running")
         # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1101604
         if not testing_vm.provider.one_of(RHEVMProvider):
             new_last_boot_time = view.entities.summary("Power Management").get_text_of(
@@ -274,8 +270,7 @@ class TestVmDetailsPowerControlPerProvider(object):
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
-        soft_assert(
-            testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
+        soft_assert(testing_vm.mgmt.is_running, "vm not running")
 
     @pytest.mark.rhv3
     def test_suspend(self, appliance, testing_vm, ensure_vm_running, soft_assert):
@@ -302,9 +297,7 @@ class TestVmDetailsPowerControlPerProvider(object):
                 logger.warning('working around bz1174858, ignoring timeout')
             else:
                 raise e
-        soft_assert(
-            testing_vm.provider.mgmt.is_vm_suspended(
-                testing_vm.name), "vm not suspended")
+        soft_assert(testing_vm.mgmt.is_suspended, "vm not suspended")
         # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1101604
         if not testing_vm.provider.one_of(RHEVMProvider):
             new_last_boot_time = view.entities.summary("Power Management").get_text_of(
@@ -340,8 +333,7 @@ class TestVmDetailsPowerControlPerProvider(object):
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
         wait_for_last_boot_timestamp_refresh(testing_vm, last_boot_time, timeout=600)
-        soft_assert(
-            testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
+        soft_assert(testing_vm.mgmt.is_running, "vm not running")
 
 
 @pytest.mark.rhv3
@@ -386,10 +378,10 @@ def test_no_template_power_control(provider, soft_assert):
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(lambda provider: provider.one_of(SCVMMProvider) and
-                         BZ(1520489, forced_streams=['5.9']).blocks, 'BZ 1520489')
-@pytest.mark.meta(blockers=[BZ(1592430, forced_streams=['5.8', '5.9', '5.10'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.meta(blockers=[BZ(1520489, forced_streams=['5.9'],
+                               unblock=lambda provider: not provider.one_of(SCVMMProvider)),
+                            BZ(1592430, forced_streams=['5.8', '5.9', '5.10'],
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
     """ Ensures that no power button is displayed from details view of archived vm
 
@@ -406,10 +398,10 @@ def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(lambda provider: provider.one_of(SCVMMProvider) and
-                         BZ(1520489, forced_streams=['5.9']).blocks, 'BZ 1520489')
-@pytest.mark.meta(blockers=[BZ(1592430, forced_streams=['5.8', '5.9', '5.10'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.meta(blockers=[BZ(1520489, forced_streams=['5.9'],
+                               unblock=lambda provider: not provider.one_of(SCVMMProvider)),
+                            BZ(1592430, forced_streams=['5.8', '5.9', '5.10'],
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_archived_vm_status(testing_vm, archived_vm):
     """Tests archived vm status
 
@@ -417,7 +409,7 @@ def test_archived_vm_status(testing_vm, archived_vm):
         test_flag: inventory
     """
     vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
-    assert ('currentstate-archived' in vm_state)
+    assert (vm_state == 'archived')
 
 
 @pytest.mark.rhv3
@@ -428,7 +420,7 @@ def test_orphaned_vm_status(testing_vm, orphaned_vm):
         test_flag: inventory
     """
     vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
-    assert ('currentstate-orphaned' in vm_state)
+    assert (vm_state == 'orphaned')
 
 
 @pytest.mark.rhv1
@@ -478,14 +470,12 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
     soft_assert(
         ensure_state_changed_on_unchanged(testing_vm_tools, state_changed_on),
         "Value of 'State Changed On' has changed after guest restart")
-    soft_assert(
-        testing_vm_tools.provider.mgmt.is_vm_running(testing_vm_tools.name),
-        "vm not running")
+    soft_assert(testing_vm_tools.mgmt.is_running, "vm not running")
 
 
 @pytest.mark.meta(blockers=[BZ(1571895, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider))
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True)
 def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
 
@@ -505,7 +495,7 @@ def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_OFF, timeout=720, from_details=True)
     soft_assert(
-        not testing_vm_tools.provider.mgmt.is_vm_running(testing_vm_tools.name), "vm running")
+        not testing_vm_tools.mgmt.is_running, "vm running")
     new_last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
     soft_assert(new_last_boot_time == last_boot_time,
                 "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))

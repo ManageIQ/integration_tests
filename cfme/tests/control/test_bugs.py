@@ -133,7 +133,7 @@ def vmware_vm(request, virtualcenter_provider):
         virtualcenter_provider
     )
     vm.create_on_provider(find_in_cfme=True)
-    request.addfinalizer(vm.delete_from_provider)
+    request.addfinalizer(vm.cleanup_on_provider)
     return vm
 
 

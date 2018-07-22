@@ -34,7 +34,7 @@ from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
-    SummaryTable, Table, TimelinesView, CompareToolBarActionsView)
+    SummaryTable, Table, TimelinesView, CompareToolBarActionsView, Search)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
@@ -183,6 +183,7 @@ class VmTemplatesAllForProviderView(InfraVmView):
 class VmsOnlyAllView(InfraVmView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
+    search = View.nested(Search)
     including_entities = View.include(VMEntities, use_parent=True)
 
     @property
@@ -199,6 +200,7 @@ class VmsOnlyAllView(InfraVmView):
 class TemplatesOnlyAllView(InfraVmView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
+    search = View.nested(Search)
     including_entities = View.include(VMEntities, use_parent=True)
 
     @property
@@ -608,8 +610,7 @@ class InfraVm(VM):
             snapshot_dict = {'description': self.description}
             if self.name is not None:
                 snapshot_dict['name'] = self.name
-            if (force_check_memory or
-                    self.parent_vm.provider.mgmt.is_vm_running(self.parent_vm.name)):
+            if (force_check_memory or self.parent_vm.mgmt.is_running):
                 snapshot_dict["snapshot_vm_memory"] = self.memory
             if force_check_memory and not view.snapshot_vm_memory.is_displayed:
                 raise NoSuchElementException('Snapshot VM memory checkbox not present')
@@ -703,26 +704,6 @@ class InfraVm(VM):
     TO_RETIRE = "Retire this VM"
     VM_TYPE = "Virtual Machine"
     DETAILS_VIEW_CLASS = InfraVmDetailsView
-
-    def power_control_from_provider(self, option):
-        """Power control a vm from the provider
-
-        Args:
-            option: power control action to take against vm
-
-        Raises:
-            OptionNotAvailable: option parm must have proper value
-        """
-        if option == InfraVm.POWER_ON:
-            self.provider.mgmt.start_vm(self.name)
-        elif option == InfraVm.POWER_OFF:
-            self.provider.mgmt.stop_vm(self.name)
-        elif option == InfraVm.SUSPEND:
-            self.provider.mgmt.suspend_vm(self.name)
-        # elif reset:
-        # elif shutdown:
-        else:
-            raise OptionNotAvailable(option + " is not a supported action")
 
     def migrate_vm(self, email=None, first_name=None, last_name=None,
                    host=None, datastore=None):

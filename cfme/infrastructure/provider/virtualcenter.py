@@ -1,5 +1,6 @@
 import attr
-from wrapanapi.virtualcenter import VMWareSystem
+
+from wrapanapi.systems import VMWareSystem
 
 from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm

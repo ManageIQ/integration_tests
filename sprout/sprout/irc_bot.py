@@ -25,6 +25,6 @@ def send_message(message):
                               routing_key=settings.PIKA_ROUTING_KEY,
                               body=message)
         connection.close()
-    except:
+    except Exception:
         # Don't bother if we cannot connect
         pass

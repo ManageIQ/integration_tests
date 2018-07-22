@@ -125,7 +125,7 @@ for test_data in elem:
             test.short_name = item_name
             try:
                 docstring = base64.b64decode(doc_data[node_name]['docstring'])
-            except:
+            except Exception:
                 docstring = "Can't find docstring"
             test.description = docstring.split('\n')[0]
             test.docstring = '<br />\n'.join(docstring.splitlines())

@@ -1,7 +1,7 @@
 import attr
-from widgetastic.widget import View
+from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, Button
-from wrapanapi.ec2 import EC2System
+from wrapanapi.systems import EC2System
 
 from cfme.cloud.instance.ec2 import EC2Instance
 from cfme.common.candu_views import VMUtilizationView
@@ -35,6 +35,7 @@ class EC2EndpointForm(View):
 
         username = Input(id='smartstate_docker_userid')
         password = Input(id='smartstate_docker_password')
+        change_pass = Text('//div[@id="smartstate_docker"]//a[1]')
 
         validate = Button('Validate')
 

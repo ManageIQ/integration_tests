@@ -12,7 +12,7 @@ from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
     BaseEntitiesView, ItemsToolBarViewSelector, SummaryTable, Text, Table, Accordion, ManageIQTree,
-    PaginationPane)
+    PaginationPane, Search)
 
 
 class FlavorView(BaseLoggedInPage):
@@ -61,6 +61,7 @@ class FlavorDetailsEntities(View):
 class FlavorAllView(FlavorView):
     toolbar = FlavorToolBar()
     paginator = PaginationPane()
+    search = View.nested(Search)
     including_entities = View.include(FlavorEntities, use_parent=True)
 
     @property

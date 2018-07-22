@@ -93,16 +93,14 @@ def order(self):
         msg_type = "success"
     else:
         msg_type = "info"
-    # TODO Remove once repaired
-    if BZ(1513541, forced_streams=['5.9']).blocks:
-        raise NotImplementedError("Service Order is broken - check BZ 1513541")
     # Additional check if submit is done, to cover case when last filled field value is not taken
     # Can appear every 2nd case when whole module is run
     if view.is_displayed and view.submit_button.is_displayed:
         view.submit_button.click()
     view = self.create_view(RequestsView)
     view.flash.assert_no_error()
-    view.flash.assert_message(msg, msg_type)
+    if not BZ(1605102, forced_streams=['5.10']).blocks:
+        view.flash.assert_message(msg, msg_type)
     return self.appliance.collections.requests.instantiate(self.name, partial_check=True)
 
 

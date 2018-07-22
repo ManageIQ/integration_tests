@@ -96,7 +96,7 @@ def test_rhev_iso_servicecatalog(appliance, provider, setup_provider, catalog_it
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(
-            "{}_0001".format(vm_name), provider).delete_from_provider()
+            "{}_0001".format(vm_name), provider).cleanup_on_provider()
     )
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()

@@ -9,13 +9,14 @@ from cfme.services.catalogs.catalog_items import EditCatalogItemView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.workloads import VmsInstances
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for_decorator
 
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
     pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,
@@ -38,7 +39,7 @@ def test_order_catalog_item(appliance, provider, catalog_item, request,
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(
-            "{}0001".format(vm_name), provider).delete_from_provider()
+            "{}0001".format(vm_name), provider).cleanup_on_provider()
     )
 
     register_event(target_type='Service', target_name=catalog_item.name,
@@ -66,7 +67,7 @@ def test_order_catalog_item_via_rest(
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(vm_name,
-                                                            provider).delete_from_provider()
+                                                            provider).cleanup_on_provider()
     )
     request.addfinalizer(catalog_item.delete)
     catalog = appliance.rest_api.collections.service_catalogs.find_by(name=catalog.name)
@@ -97,7 +98,7 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(
-            "{}0001".format(vm_name), provider).delete_from_provider()
+            "{}0001".format(vm_name), provider).cleanup_on_provider()
     )
     bundle_name = fauxfactory.gen_alphanumeric()
     catalog_bundle = appliance.collections.catalog_bundles.create(

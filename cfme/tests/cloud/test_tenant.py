@@ -10,15 +10,13 @@ pytestmark = [pytest.mark.provider([OpenStackProvider], scope='module')]
 
 @pytest.fixture(scope='function')
 def tenant(provider, setup_provider, appliance):
-    collection = appliance.collections.cloud_tenants
-    tenant = collection.create(name=fauxfactory.gen_alphanumeric(8), provider=provider)
-
+    tenant = appliance.collections.cloud_tenants.create(name=fauxfactory.gen_alphanumeric(8),
+                                                        provider=provider)
     yield tenant
 
     try:
         if tenant.exists:
             tenant.delete()
-
     except Exception:
         logger.warning(
             'Exception while attempting to delete tenant fixture, continuing')

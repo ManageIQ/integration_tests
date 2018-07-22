@@ -5,6 +5,7 @@ from collections import namedtuple
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.browser import manager
 from cfme.utils.ssh import SSHClient
 from cfme.utils.conf import credentials, cfme_data
 from cfme.utils.log import logger
@@ -30,7 +31,7 @@ def provision_vm(request, provider):
     vm_name = "test_rest_db_{}".format(fauxfactory.gen_alphanumeric())
     coll = provider.appliance.provider_based_collection(provider, coll_type='vms')
     vm = coll.instantiate(vm_name, provider)
-    request.addfinalizer(vm.delete_from_provider)
+    request.addfinalizer(vm.cleanup_on_provider)
     if not provider.mgmt.does_vm_exist(vm_name):
         logger.info("deploying %s on provider %s", vm_name, provider.key)
         vm.create_on_provider(allow_skip="default")
@@ -174,11 +175,11 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
         TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
     # Configure secondary replication node
-    command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app1_ip, 'y',
-        TimedCommand('y', 60), '')
+    command_set = ('ap', '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
+                   app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
-    command_set = ('ap', '', '9', TimedCommand('1', 30), '')
+    command_set = ('ap', '', '8', TimedCommand('1', 30), '')
     appl3.appliance_console.run_commands(command_set)
 
     def is_ha_monitor_started(appliance):
@@ -250,7 +251,7 @@ def test_appliance_console_restore_db_local(request, get_appliances_with_provide
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appl2)
     vm = provision_vm(request, virtual_crud)
-    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
+    assert vm.mgmt.is_running, "vm not running"
 
 
 @pytest.mark.tier(2)
@@ -263,9 +264,12 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     appl1.db.restart_db_service()
     command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
+    manager.quit()
     appl1.start_evm_service()
     appl1.wait_for_web_ui()
     appl1.reboot()
+    appl1.start_evm_service()
+    appl1.wait_for_web_ui()
     appl1.ssh_client.run_command(
         'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
     repositories = appl1.collections.ansible_repositories
@@ -281,8 +285,8 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream or appliance.version < '5.9',
-                         reason='Test not supported below 5.9')
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
+                         reason='Test only for downstream version of product')
 def test_appliance_console_restore_pg_basebackup_replicated(
         request, get_replicated_appliances_with_providers):
     appl1, appl2 = get_replicated_appliances_with_providers
@@ -313,8 +317,8 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, appl2)
     vm1 = provision_vm(request, virtual_crud_appl1)
     vm2 = provision_vm(request, virtual_crud_appl2)
-    assert vm1.provider.mgmt.is_vm_running(vm1.name), "vm running"
-    assert vm2.provider.mgmt.is_vm_running(vm2.name), "vm running"
+    assert vm1.mgmt.is_running, "vm not running"
+    assert vm2.mgmt.is_running, "vm not running"
 
 
 @pytest.mark.tier(2)
@@ -350,8 +354,8 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, appl2)
     vm1 = provision_vm(request, virtual_crud_appl1)
     vm2 = provision_vm(request, virtual_crud_appl2)
-    assert vm1.provider.mgmt.is_vm_running(vm1.name), "vm running"
-    assert vm2.provider.mgmt.is_vm_running(vm2.name), "vm running"
+    assert vm1.mgmt.is_running, "vm not running"
+    assert vm2.mgmt.is_running, "vm not running"
 
 
 @pytest.mark.tier(2)
@@ -391,8 +395,8 @@ def test_appliance_console_restore_db_replicated(
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, appl2)
     vm1 = provision_vm(request, virtual_crud_appl1)
     vm2 = provision_vm(request, virtual_crud_appl2)
-    assert vm1.provider.mgmt.is_vm_running(vm1.name), "vm running"
-    assert vm2.provider.mgmt.is_vm_running(vm2.name), "vm running"
+    assert vm1.mgmt.is_running, "vm not running"
+    assert vm2.mgmt.is_running, "vm not running"
 
 
 @pytest.mark.tier(2)
@@ -438,7 +442,7 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
     # Verify that existing provider can detect new VMs after restore/failover
     virtual_crud = provider_app_crud(VMwareProvider, appl3)
     vm = provision_vm(request, virtual_crud)
-    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
+    assert vm.mgmt.is_running, "vm not running"
 
 
 @pytest.mark.tier(2)
@@ -470,7 +474,7 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appl2)
     vm = provision_vm(request, virtual_crud)
-    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
+    assert vm.mgmt.is_running, "vm not running"
 
 
 @pytest.mark.tier(2)
@@ -504,4 +508,4 @@ def test_appliance_console_restore_db_samba(request, get_appliances_with_provide
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appl2)
     vm = provision_vm(request, virtual_crud)
-    assert vm.provider.mgmt.is_vm_running(vm.name), "vm running"
+    assert vm.mgmt.is_running, "vm not running"

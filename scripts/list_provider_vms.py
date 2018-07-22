@@ -3,8 +3,6 @@ import argparse
 from tabulate import tabulate
 from multiprocessing import Process, Queue
 
-from wrapanapi.exceptions import VMError
-
 from cfme.utils.path import log_path
 from cfme.utils.providers import get_mgmt, ProviderFilter, list_providers
 
@@ -50,47 +48,35 @@ def list_vms(provider_key, output_queue):
 
     print('Listing VMS on provider {}'.format(provider_key))
     provider = get_mgmt(provider_key)
-    try:
-        vm_list = provider.list_vm()
-    except NotImplementedError:
-        print('Provider does not support list_vm: {}'.format(provider_key))
-        output_list.append([provider_key, 'Not Supported', NULL, NULL, NULL])
-        return
-    else:
-        # TODO thread metadata collection for further speed improvements
-        for vm_name in vm_list:
-            # Init these meta values in case they fail to query
-            status, creation, vm_type = None, None, None
-            try:
-                print('Collecting metadata for VM {} on provider {}'.format(vm_name, provider_key))
-                # VMError raised for some vms in bad status
-                # exception message contains useful information about VM status
-                try:
-                    status = provider.vm_status(vm_name)
-                except VMError as ex:
-                    status = ex.message
+    # TODO thread metadata collection for further speed improvements
+    for vm in provider.list_vms():
+        # Init these meta values in case they fail to query
+        status, creation, vm_type = None, None, None
+        try:
+            print('Collecting metadata for VM {} on provider {}'.format(vm.name, provider_key))
+            status = vm.state
+            creation = vm.creation_time
 
-                creation = provider.vm_creation_time(vm_name)
-
-                # different provider types implement different methods to get instance type info
+            # different provider types implement different methods to get instance type info
+            if hasattr(vm, 'type'):
+                vm_type = vm.type
+            else:
                 try:
-                    vm_type = provider.vm_type(vm_name)
+                    vm_type = vm.get_hardware_configuration()
                 except (AttributeError, NotImplementedError):
-                    vm_type = provider.vm_hardware_configuration(vm_name)
-                finally:
-                    vm_type = vm_type or '--'
+                    vm_type = '--'
 
-            except Exception as ex:
-                print('Exception during provider processing on {}: {}'
-                      .format(provider_key, ex.message))
-                continue
-            finally:
-                # Add the VM to the list anyway, we just might not have all metadata
-                output_list.append([provider_key,
-                                    vm_name,
-                                    status or NULL,
-                                    creation or NULL,
-                                    str(vm_type) or NULL])
+        except Exception as ex:
+            print('Exception during provider processing on {}: {}'
+                  .format(provider_key, ex.message))
+            continue
+        finally:
+            # Add the VM to the list anyway, we just might not have all metadata
+            output_list.append([provider_key,
+                                vm.name,
+                                status or NULL,
+                                creation or NULL,
+                                str(vm_type) or NULL])
 
     output_queue.put(output_list)
     return

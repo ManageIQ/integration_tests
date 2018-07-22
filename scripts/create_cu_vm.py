@@ -12,12 +12,14 @@ If vm_name is not passed,the script creates these 2 CU VMs: cu-9-5 and cu-24x7
 import argparse
 import sys
 
+from wait_for import TimedOutError
+from wrapanapi import VmState
+
 from cfme.exceptions import CUCommandException
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
-from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
-from cfme.utils.virtual_machines import deploy_template, _vm_cleanup
+from cfme.utils.virtual_machines import deploy_template
 
 
 def command_run(ssh_client, command, message):
@@ -61,19 +63,6 @@ def config_cu_vm(ssh_client):
     command_run(ssh_client, "yum install -y pv",
                 "CU: There was an error installing pv")
 
-    # The cron jobs run at reboot.Hence,a reboot is required.
-    logger.info('Rebooting vm after setting up cron jobs')
-    command_run(ssh_client, "reboot &",
-                "CU: There was an error running reboot")
-
-
-def vm_running(provider, vm_name):
-    if provider.is_vm_running(vm_name):
-        logger.info("VM {} is running".format(vm_name))
-    else:
-        logger.error("VM is not running")
-        return 10
-
 
 def cu_vm(provider, vm_name, template):
     """
@@ -85,12 +74,15 @@ def cu_vm(provider, vm_name, template):
     resource_pool = provider_dict['cap_and_util']['resource_pool']
 
     # TODO methods deploy_template calls don't accept resourcepool and  allowed_datastores as kwargs
-    deploy_template(provider, vm_name, template,
-                    resourcepool=resource_pool, allowed_datastores=datastore)
+    vm = deploy_template(
+        provider, vm_name, template,
+        resourcepool=resource_pool, allowed_datastores=datastore
+    )
 
-    prov_mgmt = get_mgmt(provider)
-    vm_running(prov_mgmt, vm_name)
-    ip = prov_mgmt.get_ip_address(vm_name)
+    vm.ensure_state(VmState.RUNNING, timeout='2m')
+
+    ip = vm.ip
+    assert vm.ip, "VM has no IP"
 
     # TODO this key isn't in cfme qe yamls
     vm_ssh_creds = provider_dict['capandu_vm_creds']
@@ -101,11 +93,14 @@ def cu_vm(provider, vm_name, template):
     with make_ssh_client(ip, sshname, sshpass) as ssh_client:
         try:
             config_cu_vm(ssh_client)
-        except CUCommandException:
-            _vm_cleanup(prov_mgmt, vm_name)
+            # Reboot so cron jobs get picked up
+            vm.restart()
+            vm.wait_for_state(VmState.RUNNING)
+        except (CUCommandException, TimedOutError):
+            vm.cleanup()
             raise
 
-    vm_running(prov_mgmt, vm_name)
+    assert vm.is_running, "VM is not running"
 
 
 def main():

@@ -3,6 +3,7 @@ import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_patternfly import BreadCrumb, Button, Dropdown
+from widgetastic_manageiq import Search
 from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
@@ -62,6 +63,7 @@ class ObjectStoreContainerView(BaseLoggedInPage):
 class ObjectStoreContainerAllView(ObjectStoreContainerView):
     """The all Object Store Containers page"""
     toolbar = View.nested(ObjectStoreContainerToolbar)
+    search = View.nested(Search)
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
     @property

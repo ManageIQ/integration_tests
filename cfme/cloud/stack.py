@@ -12,8 +12,8 @@ from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFME
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    Accordion, ItemsToolBarViewSelector, PaginationPane, SummaryTable, Table, BaseEntitiesView)
-
+    Accordion, ItemsToolBarViewSelector, PaginationPane, SummaryTable, Table, BaseEntitiesView,
+    Search)
 
 class StackToolbar(View):
     """The toolbar on the stacks page"""
@@ -120,6 +120,7 @@ class StackView(BaseLoggedInPage):
 class StackAllView(StackView):
     """The main list page"""
     toolbar = View.nested(StackToolbar)
+    search = View.nested(Search)
     including_entities = View.include(StackEntities, use_parent=True)
     paginator = PaginationPane()
 

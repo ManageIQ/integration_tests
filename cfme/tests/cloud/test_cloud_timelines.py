@@ -12,6 +12,8 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
 
+from wrapanapi.exceptions import NotFoundError
+
 pytestmark = [
     pytest.mark.tier(2),
     # Only onr prov out of the 2 is taken, if not supplying --use-provider=complete
@@ -22,16 +24,18 @@ pytestmark = [
 
 @pytest.fixture(scope='function')
 def new_instance(appliance, provider):
-    inst = appliance.collections.cloud_instances.instantiate(random_vm_name('cloud-timeline',
-                                                                            max_length=20),
-                                                             provider)
-    logger.debug('Fixture new_instance set up! Name: %r Provider: %r', inst.name,
-                 inst.provider.name)
+    inst = appliance.collections.cloud_instances.instantiate(
+        random_vm_name('cloud-timeline', max_length=20), provider)
+    logger.debug('Fixture new_instance set up! Name: %r Provider: %r',
+                 inst.name, inst.provider.name)
     inst.create_on_provider(allow_skip="default", find_in_cfme=True)
     yield inst
-    logger.debug('Fixture new_vm teardown! Name: %r Provider: %r', inst.name, inst.provider.name)
-    if inst.provider.mgmt.does_vm_exist(inst.name):
-        inst.provider.mgmt.delete_vm(inst.name)
+    logger.debug('Fixture new_instance teardown! Name: %r Provider: %r',
+                 inst.name, inst.provider.name)
+    try:
+        inst.mgmt.cleanup()
+    except NotFoundError:
+        pass
 
 
 @pytest.fixture(scope="function")
@@ -44,7 +48,7 @@ def mark_vm_as_appliance(new_instance, appliance):
 
 
 @pytest.fixture(scope='function')
-def control_policy(appliance, new_instance, request):
+def control_policy(appliance, new_instance):
     action = appliance.collections.actions.create(fauxfactory.gen_alpha(), "Tag",
             dict(tag=("My Company Tags", "Environment", "Development")))
     policy = appliance.collections.policies.create(VMControlPolicy, fauxfactory.gen_alpha())
@@ -55,12 +59,9 @@ def control_policy(appliance, new_instance, request):
                                                            policies=[policy])
 
     yield new_instance.assign_policy_profiles(profile.description)
-    if profile.exists:
-        profile.delete()
-    if policy.exists:
-        policy.delete()
-    if action.exists:
-        action.delete()
+    for obj in [profile, policy, action]:
+        if obj.exists:
+            obj.delete()
 
 
 @pytest.fixture(scope='function')
@@ -140,39 +141,37 @@ class InstEvent(object):
                                                                                     self.__dict__))
 
     def _create_vm(self):
-        if not self.inst.provider.mgmt.does_vm_exist(self.inst.name):
+        if not self.inst.exists_on_provider:
             self.inst.create_on_provider(allow_skip="default", find_in_cfme=True)
         else:
-            logger.info('%r already exist on provider', self.inst.name)
+            logger.info('%r already exists on provider', self.inst.name)
 
     def _power_on(self):
-        return self.inst.provider.mgmt.start_vm(self.inst.name)
+        return self.inst.mgmt.start()
 
     def _power_off(self):
-        return self.inst.provider.mgmt.stop_vm(self.inst.name)
+        return self.inst.mgmt.stop()
 
     def _power_off_power_on(self):
-        return self._power_off() and self._power_on()
+        return self.inst.mgmt.restart()
 
     def _rename_vm(self):
         logger.info('%r will be renamed', self.inst.name)
-        new_name = self.inst.provider.mgmt.set_name(self.inst.name,
-                                                    "{}-renamed".format(self.inst.name))
-        logger.info('%r new name is %r', self.inst.name, new_name)
+        new_name = "{}-renamed".format(self.inst.name)
+        self.inst.mgmt.rename(new_name)
         self.inst.name = new_name
-        self.inst.provider.mgmt.restart_vm(self.inst.name)
+        self.inst.mgmt.restart()
         self.inst.provider.refresh_provider_relationships()
         self.inst.wait_to_appear()
         return self.inst.name
 
     def _delete_vm(self):
-        if self.inst.provider.mgmt.does_vm_exist(self.inst.name):
-            navigate_to(self.inst, 'Details')
-            logger.info('%r will be deleted', self.inst.name)
-            return self.inst.provider.mgmt.delete_vm(self.inst.name)
-
-        else:
-            logger.warn('%r is already not existing!', self.inst.name)
+        try:
+            logger.info("attempting to delete vm %s", self.inst.name)
+            self.inst.mgmt.cleanup()
+        except NotFoundError:
+            logger.info("can't delete vm %r, does not exist", self.inst.name)
+            pass
 
     def _check_timelines(self, target, policy_events):
         """Verify that the event is present in the timeline

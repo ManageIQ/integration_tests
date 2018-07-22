@@ -36,6 +36,8 @@ from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for, TimedOutError
 from . import do_scan, wait_for_ssa_enabled
 
+from wrapanapi import VmState
+
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles="+automate +smartproxy +smartstate"),
@@ -59,6 +61,10 @@ class VMWrapper(Pretty):
         """Instantiate BaseVM derived class for correct provider type"""
         collection = self._prov.appliance.provider_based_collection(self._prov)
         return collection.instantiate(self.name, self._prov)
+
+    @property
+    def mgmt(self):
+        return self.crud.mgmt
 
     @property
     def name(self):
@@ -140,7 +146,7 @@ def _get_vm(request, provider, template_name, vm_name):
     vm = collection.instantiate(vm_name, provider, template_name)
 
     try:
-        deploy_template(
+        vm_mgmt = deploy_template(
             provider.key,
             vm_name,
             template_name=template_name,
@@ -151,7 +157,7 @@ def _get_vm(request, provider, template_name, vm_name):
     except TimedOutError as e:
         logger.exception(e)
         try:
-            vm.delete_from_provider()
+            vm_mgmt.cleanup()
         except TimedOutError:
             logger.warning("Could not delete VM %s!", vm_name)
         finally:
@@ -159,7 +165,7 @@ def _get_vm(request, provider, template_name, vm_name):
             pytest.skip("{} is quite likely overloaded! Check its status!\n{}: {}".format(
                 provider.key, type(e).__name__, str(e)))
 
-    request.addfinalizer(lambda: vm.delete_from_provider())
+    request.addfinalizer(lambda: vm_mgmt.cleanup())
 
     # Make it appear in the provider
     provider.refresh_provider_relationships()
@@ -257,7 +263,7 @@ def policy_for_testing(provider, vm_name, policy_name, policy_profile_name, comp
 
 @pytest.fixture(scope="module")
 def host(provider, setup_provider_modscope):
-    return provider.hosts[0]
+    return provider.hosts.all()[0]
 
 
 @pytest.fixture(scope="module")
@@ -281,10 +287,8 @@ def host_policy(appliance, host, policy_collection, name_suffix):
 @pytest.fixture(scope="function")
 def vm_on(vm):
     """ Ensures that the VM is on when the control goes to the test."""
-    vm.wait_vm_steady()
-    if not vm.is_vm_running():
-        vm.start_vm()
-        vm.wait_vm_running()
+    vm.mgmt.wait_for_steady_state()
+    vm.mgmt.ensure_state(VmState.RUNNING)
     # Make sure the state is consistent
     vm.crud.refresh_relationships(from_details=True)
     vm.crud.wait_for_vm_state_change(desired_state=vm.crud.STATE_ON, from_details=True)
@@ -294,13 +298,8 @@ def vm_on(vm):
 @pytest.fixture(scope="function")
 def vm_off(provider, vm):
     """ Ensures that the VM is off when the control goes to the test."""
-    vm.wait_vm_steady()
-    if provider.one_of(InfraProvider, AzureProvider, OpenStackProvider) and vm.is_vm_suspended():
-        vm.start_vm()
-        vm.wait_vm_running()
-    if not vm.is_vm_stopped():
-        vm.stop_vm()
-        vm.wait_vm_stopped()
+    vm.mgmt.wait_for_steady_state()
+    vm.mgmt.ensure_state(VmState.STOPPED)
     # Make sure the state is consistent
     vm.crud.refresh_relationships(from_details=True)
     vm.crud.wait_for_vm_state_change(desired_state=vm.crud.STATE_OFF, from_details=True)
@@ -326,10 +325,10 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_
     policy_for_testing.assign_actions_to_event("VM Power Off", ["Start Virtual Machine"])
     request.addfinalizer(policy_for_testing.assign_events)
     # Stop the VM
-    vm.stop_vm()
+    vm.mgmt.stop()
     # Wait for VM powered on by CFME
     try:
-        wait_for(vm.is_vm_running, num_sec=600, delay=5, message="Check if a vm is running")
+        vm.mgmt.wait_for_state(VmState.RUNNING, timeout=600, delay=5)
     except TimedOutError:
         pytest.fail("CFME did not power on the VM {}".format(vm.name))
 
@@ -353,10 +352,10 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
     policy_for_testing.assign_actions_to_event("VM Power On", ["Stop Virtual Machine"])
     request.addfinalizer(policy_for_testing.assign_events)
     # Start the VM
-    vm.start_vm()
+    vm.mgmt.start()
     # Wait for VM powered off by CFME
     try:
-        wait_for(vm.is_vm_stopped, num_sec=600, delay=5, message="Check if a vm is stopped")
+        vm.mgmt.wait_for_state(VmState.STOPPED, timeout=600, delay=5)
     except TimedOutError:
         pytest.fail("CFME did not power off the VM {}".format(vm.name))
 
@@ -379,10 +378,10 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, poli
     policy_for_testing.assign_actions_to_event("VM Power On", ["Suspend Virtual Machine"])
     request.addfinalizer(policy_for_testing.assign_events)
     # Start the VM
-    vm.start_vm()
+    vm.mgmt.start()
     # Wait for VM be suspended by CFME
     try:
-        wait_for(vm.is_vm_suspended, num_sec=600, delay=5, message="Check if a vm is suspended")
+        vm.mgmt.wait_for_state(VmState.SUSPENDED, timeout=600, delay=5)
     except TimedOutError:
         pytest.fail("CFME did not suspend the VM {}".format(vm.name))
 
@@ -408,7 +407,7 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
     # Request VM's start (through UI)
     vm.crud.power_control_from_cfme(option=vm.crud.POWER_ON, cancel=False)
     try:
-        wait_for(vm.is_vm_running, num_sec=600, delay=5, message="Check if vm is running")
+        vm.mgmt.wait_for_state(VmState.RUNNING, timeout=600, delay=5)
     except TimedOutError:
         pass  # VM did not start, so that's what we want
     else:
@@ -522,7 +521,7 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testi
     policy_for_testing.assign_actions_to_event("VM Power On", ["Generate log message"])
     request.addfinalizer(policy_for_testing.assign_events)
     # Start the VM
-    vm.start_vm()
+    vm.mgmt.start()
     policy_desc = policy_for_testing.description
 
     # Search the logs
@@ -562,7 +561,7 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
     policy_for_testing.assign_actions_to_event("VM Power On", ["Generate Audit Event"])
     request.addfinalizer(policy_for_testing.assign_events)
     # Start the VM
-    vm.start_vm()
+    vm.mgmt.start()
     policy_desc = policy_for_testing.description
 
     # Search the logs
@@ -614,7 +613,7 @@ def test_action_create_snapshot_and_delete_last(request, action_collection,
 
     snapshots_before = vm.crud.total_snapshots
     # Power off to invoke snapshot creation
-    vm.stop_vm()
+    vm.mgmt.stop()
     wait_for(lambda: vm.crud.total_snapshots > snapshots_before, num_sec=800,
              message="wait for snapshot appear", delay=5)
     assert vm.crud.current_snapshot_description == "Created by EVM Policy Action"
@@ -622,7 +621,7 @@ def test_action_create_snapshot_and_delete_last(request, action_collection,
     # Snapshot created and validated, so let's delete it
     snapshots_before = vm.crud.total_snapshots
     # Power on to invoke last snapshot deletion
-    vm.start_vm()
+    vm.mgmt.start()
     wait_for(lambda: vm.crud.total_snapshots < snapshots_before, num_sec=800,
              message="wait for snapshot deleted", delay=5)
 
@@ -662,21 +661,21 @@ def test_action_create_snapshots_and_delete_them(request, action_collection, vm,
         """
         # Power off to invoke snapshot creation
         snapshots_before = vm.crud.total_snapshots
-        vm.stop_vm()
+        vm.mgmt.stop()
         wait_for(lambda: vm.crud.total_snapshots > snapshots_before, num_sec=800,
                  message="wait for snapshot %d to appear" % (n + 1), delay=5)
         current_snapshot = vm.crud.current_snapshot_name
         logger.debug('Current Snapshot Name: {}'.format(current_snapshot))
         assert current_snapshot == snapshot_name
-        vm.start_vm()
+        vm.mgmt.start()
 
     for i in range(4):
         create_one_snapshot(i)
     policy_for_testing.assign_events()
-    vm.stop_vm()
+    vm.mgmt.stop()
     policy_for_testing.assign_actions_to_event("VM Power On", ["Delete all Snapshots"])
     # Power on to invoke all snapshots deletion
-    vm.start_vm()
+    vm.mgmt.start()
     wait_for(lambda: vm.crud.total_snapshots == 0, num_sec=800,
              message="wait for snapshots to be deleted", delay=5)
 
@@ -720,7 +719,7 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
 #     policy_for_testing.assign_actions_to_event("VM Power Off", ["Raise Automation Event"])
 #     request.addfinalizer(lambda: policy_for_testing.assign_events())
 #     # Start the VM
-#     vm.stop_vm()
+#     vm.mgmt.stop()
 #     vm_crud_refresh()
 
 #     # Search the logs
@@ -769,7 +768,7 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, action_collection):
         policy_for_testing.assign_events()
         tag_assign_action.delete()
 
-    vm.start_vm()
+    vm.mgmt.start()
     try:
         wait_for(
             lambda: any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
@@ -816,7 +815,7 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, action_collection
         policy_for_testing.assign_events()
         tag_unassign_action.delete()
 
-    vm.start_vm()
+    vm.mgmt.start()
     try:
 
         wait_for(
@@ -859,7 +858,7 @@ def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, poli
             compliance_policy.scope = (
                 "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name))
         collection = provider.appliance.provider_based_collection(provider)
-        collection.instantiate(clone_vm_name, provider).delete_from_provider()
+        collection.instantiate(clone_vm_name, provider).cleanup_on_provider()
 
     vm_big.crud.clone_vm(fauxfactory.gen_email(), "first", "last", clone_vm_name, "VMware")
     request_description = clone_vm_name

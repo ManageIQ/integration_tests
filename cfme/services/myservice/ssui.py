@@ -31,6 +31,12 @@ class MyServicesView(SSUIBaseLoggedInPage):
         return self.in_myservices and self.title.text == "My Services"
 
 
+class PowerIcon(Text):
+    @property
+    def power_status(self):
+        return self.browser.get_attribute('uib-tooltip', self).split(': ')[1]
+
+
 class DetailsMyServiceView(MyServicesView):
     title = Text(locator='//li[@class="active"]')
 
@@ -47,6 +53,8 @@ class DetailsMyServiceView(MyServicesView):
     configuration = SSUIDropdown('Configuration')
     lifecycle = SSUIDropdown('Lifecycle')
     console_button = Button(tooltip="HTML5 console", classes=['open-console-button'])
+    resource_power_status = PowerIcon("//i[@class='pficon fa fa-power-off' or "
+                                      "@class='pficon pficon-ok']")
 
 
 class ServiceEditForm(MyServicesView):

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure Host in CFME."""
 import attr
+import six
+
 from manageiq_client.api import APIException
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
@@ -195,7 +197,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
 
         def _looking_for_state_change():
             entity = view.entities.get_entity(name=self.name)
-            return "currentstate-{}".format(desired_state) in entity.data['state']
+            return entity.data['state'] == desired_state
 
         return wait_for(
             _looking_for_state_change,
@@ -248,8 +250,14 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
         # TODO: Move to Sentaku
         try:
             host = self.appliance.rest_api.collections.hosts.get(name=self.name)
-            host.action.edit(credentials={"userid": credentials['default'].principal,
-                                          "password": credentials['default'].secret})
+            if isinstance(credentials['default'], six.string_types):
+                creds = self.Credential.from_config(credentials["default"])
+            elif isinstance(credentials['default'], self.Credential):
+                creds = credentials['default']
+            else:
+                raise TypeError("credentials must be a dict or a Credential instance")
+            host.action.edit(credentials={"userid": creds.principal,
+                                          "password": creds.secret})
         except APIException:
             return False
 
@@ -405,6 +413,19 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
             fail_func=view.browser.refresh
         )
 
+    def capture_historical_data(self, interval='hourly', back='6.days'):
+        """Capture historical utilization data for this Host
+
+        Args:
+            interval: Data interval (hourly/ daily)
+            back: back time interval from which you want data
+        """
+        ret = self.appliance.ssh_client.run_rails_command(
+            "\"host = Host.where(:ems_id => {}).where(:name => {})[0];\
+            host.perf_capture({}, {}.ago.utc, Time.now.utc)\""
+            .format(self.provider.id, repr(self.name), repr(interval), back))
+        return ret.success
+
     @classmethod
     def get_credentials_from_config(cls, credentials_config):
         """Retrieves the credentials from the credentials yaml.
@@ -420,7 +441,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
 
 
 @attr.s
-class HostCollection(BaseCollection):
+class HostsCollection(BaseCollection):
     """Collection object for the :py:class:`cfme.infrastructure.host.Host`."""
 
     ENTITY = Host
@@ -485,11 +506,14 @@ class HostCollection(BaseCollection):
         view.flash.assert_success_message(flash_message)
         return host
 
-    def all(self, provider):
+    def all(self):
         """returning all hosts objects"""
-        view = navigate_to(self, 'All')
-        hosts = [self.instantiate(name=item, provider=provider)
-                 for item in view.entities.entity_names]
+        hosts = []
+        provider = self.filters.get('parent')
+        view = navigate_to(provider, 'Hosts') if provider else navigate_to(self, 'All')
+        for _ in view.entities.paginator.pages():
+            for name in view.entities.entity_names:
+                hosts.append(self.instantiate(name=name, provider=provider))
         return hosts
 
     def run_smartstate_analysis(self, *hosts):
@@ -600,7 +624,7 @@ class HostCollection(BaseCollection):
         )
 
 
-@navigator.register(HostCollection)
+@navigator.register(HostsCollection)
 class All(CFMENavigateStep):
     VIEW = HostsView
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
@@ -630,7 +654,7 @@ class Edit(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select("Edit this item")
 
 
-@navigator.register(HostCollection)
+@navigator.register(HostsCollection)
 class Add(CFMENavigateStep):
     VIEW = HostAddView
     prerequisite = NavigateToSibling("All")
@@ -639,7 +663,7 @@ class Add(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select("Add a New item")
 
 
-@navigator.register(HostCollection)
+@navigator.register(HostsCollection)
 class Discover(CFMENavigateStep):
     VIEW = HostDiscoverView
     prerequisite = NavigateToSibling("All")

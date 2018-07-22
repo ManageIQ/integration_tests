@@ -6,6 +6,8 @@ from cfme.utils.blockers import BZ, GH
 from cfme.utils.wait import wait_for
 from cfme.utils.generators import random_vm_name
 
+from wrapanapi import VmState
+
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider_modscope'),
@@ -43,8 +45,14 @@ def reconfigure_vm(vm, config):
                 .format(vars(config.hw), config.disks))
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def small_vm(appliance, provider, small_template_modscope):
+    """This fixture is function-scoped, because there is no un-ambiguous way how to search for
+    reconfigure request in UI in situation when you have two requests for the same reconfiguration
+    and for the same VM name. This happens if you run test_vm_reconfig_add_remove_hw_cold and then
+    test_vm_reconfig_add_remove_hw_hot or vice versa. Making thix fixture function-scoped will
+    ensure that the VM under test has a different name each time so the reconfigure requests
+    are unique as a result."""
     vm = appliance.collections.infra_vms.instantiate(random_vm_name(context='reconfig'),
                                                      provider,
                                                      small_template_modscope.name)
@@ -53,13 +61,13 @@ def small_vm(appliance, provider, small_template_modscope):
 
     yield vm
 
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 @pytest.fixture(scope='function')
 def ensure_vm_stopped(small_vm):
     if small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_OFF):
-        small_vm.power_control_from_provider(small_vm.POWER_OFF)
+        small_vm.mgmt.ensure_state(VmState.STOPPED)
         small_vm.wait_for_vm_state_change(small_vm.STATE_OFF)
     else:
         raise Exception("Unknown power state - unable to continue!")
@@ -68,7 +76,7 @@ def ensure_vm_stopped(small_vm):
 @pytest.fixture(scope='function')
 def ensure_vm_running(small_vm):
     if small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_ON):
-        small_vm.power_control_from_provider(small_vm.POWER_ON)
+        small_vm.mgmt.ensure_state(VmState.RUNNING)
         small_vm.wait_for_vm_state_change(small_vm.STATE_ON)
     else:
         raise Exception("Unknown power state - unable to continue!")

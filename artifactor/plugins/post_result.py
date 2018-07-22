@@ -53,7 +53,8 @@ class PostResult(ArtifactorBasePlugin):
             with log_path.join('no_status.log').open('a') as f:
                 f.write(error)
 
-        map(_inc_test_count, old_artifacts.values())
+        for a_test in old_artifacts.values():
+            _inc_test_count(a_test)
         report['test_counts'] = test_counts
         report['test_counts']['total'] = sum(test_counts.values())
 
@@ -62,5 +63,4 @@ class PostResult(ArtifactorBasePlugin):
             report['ui_coverage_percent'] = ui_coverage_percent
 
         import json
-        with test_report.open('w') as art_out:
-            json.dump(report, art_out, indent=2)
+        test_report.write(json.dumps(report, indent=2))

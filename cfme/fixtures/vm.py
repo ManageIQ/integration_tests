@@ -7,17 +7,19 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.net import net_check
 from cfme.utils.wait import wait_for
 
+from wrapanapi import VmState
+
 
 def _create_vm(request, template, provider, vm_name):
     collection = provider.appliance.provider_based_collection(provider)
     vm_obj = collection.instantiate(vm_name, provider, template_name=template.name)
     vm_obj.create_on_provider(allow_skip="default")
-    provider.mgmt.start_vm(vm_obj.name)
-    provider.mgmt.wait_vm_running(vm_obj.name)
+    vm_obj.mgmt.ensure_state(VmState.RUNNING)
     # In order to have seamless SSH connection
     vm_ip, _ = wait_for(
-        provider.mgmt.current_ip_address, func_args=[vm_obj.name],
-        num_sec=300, delay=5, fail_condition={None}, message="wait for testing VM IP address.")
+        lambda: vm_obj.mgmt.ip,
+        num_sec=300, delay=5, fail_condition={None}, message="wait for testing VM IP address."
+    )
     wait_for(
         net_check, func_args=[ports.SSH, vm_ip], func_kwargs={"force": True},
         num_sec=300, delay=5, message="testing VM's SSH available")
@@ -27,7 +29,7 @@ def _create_vm(request, template, provider, vm_name):
 
     @request.addfinalizer
     def _cleanup():
-        vm_obj.delete_from_provider()
+        vm_obj.cleanup_on_provider()
         provider.refresh_provider_relationships()
 
     return vm_obj

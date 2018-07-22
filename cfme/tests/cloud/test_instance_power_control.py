@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -27,12 +29,10 @@ def create_instance(appliance, provider, template_name):
     instance = appliance.collections.cloud_instances.instantiate(random_vm_name('pwr-c'),
                                                                  provider,
                                                                  template_name)
-    if not provider.mgmt.does_vm_exist(instance.name):
+    if not instance.exists_on_provider:
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
-    elif (instance.provider.one_of(EC2Provider) and
-            provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted'])):
-        provider.mgmt.set_name(
-            instance.name, 'test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
+    elif instance.provider.one_of(EC2Provider) and instance.mgmt.state == VmState.DELETED:
+        instance.mgmt.rename('test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
     return instance
 
@@ -43,7 +43,7 @@ def testing_instance(appliance, provider, small_template, setup_provider):
     """
     instance = create_instance(appliance, provider, small_template.name)
     yield instance
-    instance.delete_from_provider()
+    instance.cleanup_on_provider()
 
 
 @pytest.fixture(scope="function")
@@ -52,7 +52,7 @@ def testing_instance2(appliance, provider, small_template, setup_provider):
     """
     instance2 = create_instance(appliance, provider, small_template.name)
     yield instance2
-    instance2.delete_from_provider()
+    instance2.cleanup_on_provider()
 
 
 # This fixture must be named 'vm_name' because its tied to cfme/fixtures/virtual_machine
@@ -88,11 +88,22 @@ def wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=900
         return False
 
 
+def wait_for_pwr_state_change(instance, state_change_time, timeout=720):
+    def _wait_for():
+        vm = instance.get_vm_via_rest()
+        if vm.state_changed_on != state_change_time:
+            return True
+
+    return wait_for(
+        _wait_for, num_sec=timeout, delay=30, message='Waiting for instance state refresh')
+
+
 def wait_for_termination(provider, instance):
     """ Waits for VM/instance termination and refreshes power states and relationships
     """
     view = navigate_to(instance, 'Details')
-    state_change_time = view.entities.summary('Power Management').get_text_of('State Changed On')
+    pwr_mgmt = view.entities.summary('Power Management')
+    state_change_time = pwr_mgmt.get_text_of('State Changed On')
     provider.refresh_provider_relationships()
     logger.info("Refreshing provider relationships and power states")
     refresh_timer = RefreshTimer(time_for_refresh=300)
@@ -103,22 +114,17 @@ def wait_for_termination(provider, instance):
              delay=60,
              handle_exception=True)
     wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=720)
-    if view.entities.summary('Power Management').get_text_of('Power State') not in \
-            {instance.STATE_TERMINATED, instance.STATE_ARCHIVED, instance.STATE_UNKNOWN}:
+    term_states = {instance.STATE_TERMINATED, instance.STATE_ARCHIVED, instance.STATE_UNKNOWN}
+    if pwr_mgmt.get_text_of('Power State') not in term_states:
         """Wait for one more state change as transitional state also changes "State Changed On" time
         """
         logger.info("Instance is still powering down. please wait before termination")
-        state_change_time = view.entities.summary('Power Management').get_text_of(
-            'State Changed On')
+        state_change_time = pwr_mgmt.get_text_of('State Changed On')
         wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=720)
-    if provider.type == 'ec2':
-        return provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted'])
-    elif view.entities.summary('Power Management').get_text_of('Power State') in \
-            {instance.STATE_TERMINATED, instance.STATE_ARCHIVED, instance.STATE_UNKNOWN}:
-        return True
-    else:
-        logger.info("Instance is still running")
-        return False
+
+    return (instance.mgmt.state == VmState.DELETED
+            if provider.one_of(EC2Provider)
+            else pwr_mgmt.get_text_of('Power State') in term_states)
 
 
 def check_power_options(soft_assert, instance, power_state):
@@ -134,7 +140,7 @@ def check_power_options(soft_assert, instance, power_state):
             "{} must not be available in current power state - {} ".format(pwr_option, power_state))
 
 
-def wait_for_instance_state(soft_assert, provider, instance, state):
+def wait_for_instance_state(soft_assert, instance, state):
     """
     Wait for VM to reach 'state' in both provider and on CFME UI
 
@@ -146,27 +152,25 @@ def wait_for_instance_state(soft_assert, provider, instance, state):
       instance -- instance of cfme.cloud.instance.Instance
       state -- str of either "started"/"running", "stopped", "suspended", "paused", or "terminated"
     """
-    vm = instance.name
-
     if state in ["started", "running"]:
-        check_state_func = provider.mgmt.is_vm_running
+        desired_mgmt_state = VmState.RUNNING
         desired_ui_state = instance.STATE_ON
 
     elif state == "stopped":
-        check_state_func = provider.mgmt.is_vm_stopped
+        desired_mgmt_state = VmState.STOPPED
         desired_ui_state = instance.STATE_OFF
 
-    elif state == "suspended" and provider.mgmt.can_suspend:
-        check_state_func = provider.mgmt.is_vm_suspended
+    elif state == "suspended" and instance.mgmt.system.can_suspend:
+        desired_mgmt_state = VmState.SUSPENDED
         desired_ui_state = instance.STATE_SUSPENDED
 
-    elif state == "paused" and provider.mgmt.can_pause:
-        check_state_func = provider.mgmt.is_vm_paused
+    elif state == "paused" and instance.mgmt.system.can_pause:
+        desired_mgmt_state = VmState.PAUSED
         desired_ui_state = instance.STATE_PAUSED
 
     elif state == "terminated":
         # don't check state on the provider, since vm could be gone
-        check_state_func = lambda vm: True  # noqa
+        desired_mgmt_state = None
         desired_ui_state = (
             instance.STATE_TERMINATED,
             instance.STATE_ARCHIVED,
@@ -174,21 +178,17 @@ def wait_for_instance_state(soft_assert, provider, instance, state):
         )
 
     else:
-        raise ValueError(
-            "Invalid instance state type of '{}' for provider '{}'".format(state, provider.key)
-        )
+        raise ValueError("Invalid instance state type of '{}' for provider '{}'"
+                         .format(state, instance.provider))
 
     # Check VM state in provider
-    wait_for(
-        lambda: check_state_func(vm),
-        num_sec=720,
-        delay=20,
-        message="mgmt system check - {} {}".format(vm, state))
+    if desired_mgmt_state:
+        instance.mgmt.wait_for_state(desired_mgmt_state, timeout=720)
 
     # Check Vm state in CFME
     soft_assert(
         instance.wait_for_instance_state_change(desired_state=desired_ui_state, timeout=1200),
-        "VM {} isn't {} in CFME UI".format(vm, desired_ui_state)
+        "Instance {} isn't {} in CFME UI".format(instance, desired_ui_state)
     )
 
 
@@ -201,7 +201,7 @@ def test_quadicon_terminate_cancel(provider, testing_instance, ensure_vm_running
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE,
                                              cancel=True,
                                              from_details=False)
-    soft_assert('currentstate-on' in testing_instance.find_quadicon().data['state'])
+    soft_assert(testing_instance.find_quadicon().data['state'] == 'on')
 
 
 def test_quadicon_terminate(appliance, provider, testing_instance, ensure_vm_running, soft_assert):
@@ -215,12 +215,14 @@ def test_quadicon_terminate(appliance, provider, testing_instance, ensure_vm_run
     logger.info("Terminate initiated")
     msg_part = "Terminate initiated" if appliance.version >= '5.9' else "Vm Destroy initiated"
     msg = "{} for 1 VM and Instance from the {} Database".format(msg_part, appliance.product_name)
-    view = appliance.browser.create_view(BaseLoggedInPage)
-    view.flash.assert_success_message(msg)
-    terminated_states = (testing_instance.STATE_TERMINATED, testing_instance.STATE_ARCHIVED,
-                         testing_instance.STATE_UNKNOWN)
-    soft_assert(testing_instance.wait_for_instance_state_change(desired_state=terminated_states,
-                                                                timeout=1200))
+    appliance.browser.create_view(BaseLoggedInPage).flash.assert_success_message(msg)
+
+    soft_assert(
+        testing_instance.wait_for_instance_state_change(
+            desired_state=(testing_instance.STATE_TERMINATED,
+                           testing_instance.STATE_ARCHIVED,
+                           testing_instance.STATE_UNKNOWN),
+            timeout=1200))
 
 
 def test_stop(appliance, provider, testing_instance, ensure_vm_running, soft_assert):
@@ -235,7 +237,7 @@ def test_stop(appliance, provider, testing_instance, ensure_vm_running, soft_ass
     view = appliance.browser.create_view(BaseLoggedInPage)
     view.flash.assert_success_message(text='Stop initiated', partial=True)
 
-    wait_for_instance_state(soft_assert, provider, testing_instance, state="stopped")
+    wait_for_instance_state(soft_assert, testing_instance, state="stopped")
 
 
 def test_start(appliance, provider, testing_instance, ensure_vm_stopped, soft_assert):
@@ -253,7 +255,7 @@ def test_start(appliance, provider, testing_instance, ensure_vm_stopped, soft_as
     view.flash.assert_success_message(text='Start initiated', partial=True)
 
     logger.info("Start initiated Flash message")
-    wait_for_instance_state(soft_assert, provider, testing_instance, state="started")
+    wait_for_instance_state(soft_assert, testing_instance, state="started")
 
 
 def test_soft_reboot(appliance, provider, testing_instance, ensure_vm_running, soft_assert):
@@ -264,23 +266,24 @@ def test_soft_reboot(appliance, provider, testing_instance, ensure_vm_running, s
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     view = navigate_to(testing_instance, 'Details')
-    state_change_time = view.entities.summary('Power Management').get_text_of('State Changed On')
+    pwr_mgmt = view.entities.summary('Power Management')
+    state_change_time = pwr_mgmt.get_text_of('State Changed On')
+
     testing_instance.power_control_from_cfme(option=testing_instance.SOFT_REBOOT)
     view.flash.assert_success_message(text='Restart Guest initiated', partial=True)
     wait_for_ui_state_refresh(testing_instance, provider, state_change_time, timeout=720)
-    pwr_state = view.entities.summary('Power Management').get_text_of('Power State')
-    if provider.type == 'gce' and pwr_state == testing_instance.STATE_UNKNOWN:
+    pwr_state = pwr_mgmt.get_text_of('Power State')
+
+    if provider.one_of(GCEProvider) and pwr_state == testing_instance.STATE_UNKNOWN:
         """Wait for one more state change as transitional state also
         changes "State Changed On" time on GCE provider
         """
         logger.info("Instance is still in \"{}\" state. please wait before CFME will show correct "
                     "state".format(pwr_state))
-        state_change_time = view.entities.summary('Power Management').get_text_of(
-            'State Changed On')
-        wait_for_ui_state_refresh(testing_instance, provider, state_change_time,
-                                  timeout=720)
+        state_change_time = pwr_mgmt.get_text_of('State Changed On')
+        wait_for_ui_state_refresh(testing_instance, provider, state_change_time, timeout=720)
 
-    wait_for_instance_state(soft_assert, provider, testing_instance, state="started")
+    wait_for_instance_state(soft_assert, testing_instance, state="started")
 
 
 def test_power_on_or_off_multiple(provider, testing_instance, testing_instance2, soft_assert):
@@ -291,8 +294,8 @@ def test_power_on_or_off_multiple(provider, testing_instance, testing_instance2,
         test_flag: power_control, provision
     """
     # The instances *should* be on after provisioning... but we'll make sure here...
-    testing_instance.ensure_state_on_provider(testing_instance.STATE_ON)
-    testing_instance2.ensure_state_on_provider(testing_instance2.STATE_ON)
+    testing_instance.mgmt.ensure_state(VmState.RUNNING)
+    testing_instance2.mgmt.ensure_state(VmState.RUNNING)
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance2.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
 
@@ -308,15 +311,15 @@ def test_power_on_or_off_multiple(provider, testing_instance, testing_instance2,
     view = _get_view_with_icons_checked()
     view.toolbar.power.item_select(testing_instance.STOP, handle_alert=True)
     view.flash.assert_success_message(text='Stop initiated for 2 VMs and Instances', partial=True)
-    wait_for_instance_state(soft_assert, provider, testing_instance, state="stopped")
-    wait_for_instance_state(soft_assert, provider, testing_instance2, state="stopped")
+    wait_for_instance_state(soft_assert, testing_instance, state="stopped")
+    wait_for_instance_state(soft_assert, testing_instance2, state="stopped")
 
     # Power 2 instances on
     view = _get_view_with_icons_checked()
     view.toolbar.power.item_select(testing_instance.START, handle_alert=True)
     view.flash.assert_success_message(text='Start initiated for 2 VMs and Instances', partial=True)
-    wait_for_instance_state(soft_assert, provider, testing_instance, state="started")
-    wait_for_instance_state(soft_assert, provider, testing_instance2, state="started")
+    wait_for_instance_state(soft_assert, testing_instance, state="started")
+    wait_for_instance_state(soft_assert, testing_instance2, state="started")
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
@@ -335,21 +338,22 @@ def test_hard_reboot(appliance, provider, testing_instance, ensure_vm_running, s
     view.flash.assert_success_message(text='Reset initiated', partial=True)
 
     wait_for_ui_state_refresh(testing_instance, provider, state_change_time, timeout=720)
-    wait_for_instance_state(soft_assert, provider, testing_instance, state="started")
+    wait_for_instance_state(soft_assert, testing_instance, state="started")
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider))
-def test_hard_reboot_unsupported(testing_instance):
+def test_hard_reboot_unsupported(appliance, testing_instance):
     """
     Tests that hard reboot throws an 'unsupported' error message on an Azure instance
 
     Metadata:
         test_flag: power_control, provision
     """
-    view = navigate_to(testing_instance, 'All')
-    testing_instance.power_control_from_cfme(
-        option=testing_instance.HARD_REBOOT, from_details=False)
-    view.flash.assert_message("Reset does not apply to at least one of the selected items")
+    testing_instance.power_control_from_cfme(option=testing_instance.HARD_REBOOT,
+                                             from_details=False)
+    # power_control_from_cfme navigated
+    appliance.browser.create_view(BaseLoggedInPage).flash.assert_message(
+        "Reset does not apply to at least one of the selected items")
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider, OpenStackProvider))
@@ -365,9 +369,9 @@ def test_suspend(appliance, provider, testing_instance, ensure_vm_running, soft_
     view = appliance.browser.create_view(BaseLoggedInPage)
     view.flash.assert_success_message(text='Suspend initiated', partial=True)
 
-    if provider.type == 'azure':
-        provider.mgmt.wait_vm_suspended(testing_instance.name)
-    wait_for_instance_state(soft_assert, provider, testing_instance, state="suspended")
+    if provider.one_of(AzureProvider):
+        testing_instance.mgmt.wait_for_state(VmState.SUSPENDED)
+    wait_for_instance_state(soft_assert, testing_instance, state="suspended")
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
@@ -380,10 +384,10 @@ def test_unpause(appliance, provider, testing_instance, ensure_vm_paused, soft_a
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_PAUSED)
     testing_instance.power_control_from_cfme(option=testing_instance.START)
 
-    view = appliance.browser.create_view(BaseLoggedInPage)
-    view.flash.assert_success_message(text='Start initiated', partial=True)
+    appliance.browser.create_view(BaseLoggedInPage).flash.assert_success_message(
+        text='Start initiated', partial=True)
 
-    wait_for_instance_state(soft_assert, provider, testing_instance, state="started")
+    wait_for_instance_state(soft_assert, testing_instance, state="started")
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider, OpenStackProvider))
@@ -396,10 +400,10 @@ def test_resume(appliance, provider, testing_instance, ensure_vm_suspended, soft
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_SUSPENDED)
     testing_instance.power_control_from_cfme(option=testing_instance.START)
 
-    view = appliance.browser.create_view(BaseLoggedInPage)
-    view.flash.assert_success_message(text='Start initiated', partial=True)
+    appliance.browser.create_view(BaseLoggedInPage).flash.assert_success_message(
+        text='Start initiated', partial=True)
 
-    wait_for_instance_state(soft_assert, provider, testing_instance, state="started")
+    wait_for_instance_state(soft_assert, testing_instance, state="started")
 
 
 def test_terminate(provider, testing_instance, ensure_vm_running, soft_assert, appliance):
@@ -413,9 +417,9 @@ def test_terminate(provider, testing_instance, ensure_vm_running, soft_assert, a
 
     msg_part = "Terminate initiated" if appliance.version >= '5.9' else "Vm Destroy initiated"
     msg = "{} for 1 VM and Instance from the {} Database".format(msg_part, appliance.product_name)
-    view = appliance.browser.create_view(BaseLoggedInPage)
-    view.flash.assert_success_message(msg)
-    wait_for_instance_state(soft_assert, provider, testing_instance, state="terminated")
+
+    appliance.browser.create_view(BaseLoggedInPage).flash.assert_success_message(msg)
+    wait_for_instance_state(soft_assert, testing_instance, state="terminated")
 
 
 def test_instance_power_options_from_on(provider, testing_instance, ensure_vm_running, soft_assert):
@@ -474,7 +478,7 @@ class TestInstanceRESTAPI(object):
         else:
             appliance.rest_api.collections.instances.action.stop(vm)
         self.verify_action_result(appliance.rest_api)
-        wait_for_instance_state(soft_assert, provider, testing_instance, state="stopped")
+        wait_for_instance_state(soft_assert, testing_instance, state="stopped")
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
     def test_start(self, provider, testing_instance, ensure_vm_stopped,
@@ -492,7 +496,7 @@ class TestInstanceRESTAPI(object):
         else:
             appliance.rest_api.collections.instances.action.start(vm)
         self.verify_action_result(appliance.rest_api)
-        wait_for_instance_state(soft_assert, provider, testing_instance, state="started")
+        wait_for_instance_state(soft_assert, testing_instance, state="started")
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
     def test_soft_reboot(self, provider, testing_instance,
@@ -504,14 +508,22 @@ class TestInstanceRESTAPI(object):
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.get_vm_via_rest()
+        state_change_time = vm.state_changed_on
         if from_detail:
             vm.action.reboot_guest()
         else:
             appliance.rest_api.collections.instances.action.reboot_guest(vm)
         self.verify_action_result(appliance.rest_api)
-        wait_for(lambda: vm.power_state != testing_instance.STATE_ON, num_sec=720, delay=45,
-            fail_func=vm.reload)
-        wait_for_instance_state(soft_assert, provider, testing_instance, state="started")
+
+        # On some providers the VM never actually shuts off, on others it might
+        # We may also miss a quick reboot during the wait_for.
+        # Just check for when the state last changed
+        wait_for_pwr_state_change(testing_instance, state_change_time)
+        state_change_time = testing_instance.get_vm_via_rest().state_changed_on
+        # If the VM is not on after this state change, wait for another
+        if vm.power_state != testing_instance.STATE_ON:
+            wait_for_pwr_state_change(testing_instance, state_change_time)
+        wait_for_instance_state(soft_assert, testing_instance, state="started")
 
     @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
@@ -531,7 +543,7 @@ class TestInstanceRESTAPI(object):
         self.verify_action_result(appliance.rest_api)
         wait_for(lambda: vm.power_state != testing_instance.STATE_ON, num_sec=720, delay=45,
             fail_func=vm.reload)
-        wait_for_instance_state(soft_assert, provider, testing_instance, state="started")
+        wait_for_instance_state(soft_assert, testing_instance, state="started")
 
     @pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider, OpenStackProvider))
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
@@ -550,14 +562,14 @@ class TestInstanceRESTAPI(object):
         else:
             appliance.rest_api.collections.instances.action.suspend(vm)
         self.verify_action_result(appliance.rest_api)
-        wait_for_instance_state(soft_assert, provider, testing_instance, state="suspended")
+        wait_for_instance_state(soft_assert, testing_instance, state="suspended")
 
         if from_detail:
             vm.action.start()
         else:
             appliance.rest_api.collections.instances.action.start(vm)
         self.verify_action_result(appliance.rest_api)
-        wait_for_instance_state(soft_assert, provider, testing_instance, state="started")
+        wait_for_instance_state(soft_assert, testing_instance, state="started")
 
     @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
@@ -576,14 +588,14 @@ class TestInstanceRESTAPI(object):
         else:
             appliance.rest_api.collections.instances.action.pause(vm)
         self.verify_action_result(appliance.rest_api)
-        wait_for_instance_state(soft_assert, provider, testing_instance, state="paused")
+        wait_for_instance_state(soft_assert, testing_instance, state="paused")
 
         if from_detail:
             vm.action.start()
         else:
             appliance.rest_api.collections.instances.action.start(vm)
         self.verify_action_result(appliance.rest_api)
-        wait_for_instance_state(soft_assert, provider, testing_instance, state="suspended")
+        wait_for_instance_state(soft_assert, testing_instance, state="started")
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
     def test_terminate(self, provider, testing_instance,
@@ -601,7 +613,7 @@ class TestInstanceRESTAPI(object):
             appliance.rest_api.collections.instances.action.terminate(vm)
         self.verify_action_result(appliance.rest_api)
 
-        wait_for_instance_state(soft_assert, provider, testing_instance, state="terminated")
+        wait_for_instance_state(soft_assert, testing_instance, state="terminated")
 
         terminated_states = (
             testing_instance.STATE_TERMINATED,

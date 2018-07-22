@@ -8,12 +8,13 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
+from cfme.utils.blockers import GH
 from cfme.utils.conf import cfme_data
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
     pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.service,
     pytest.mark.tier(2)
@@ -115,6 +116,7 @@ def catalog_item(appliance, provider, dialog, catalog, provisioning,
 
 
 @pytest.mark.rhv1
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7491')])
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
 def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, request):
     """Tests RHEV PXE service catalog
@@ -125,7 +127,7 @@ def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, r
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(
-            "{}_0001".format(vm_name), provider).delete_from_provider()
+            "{}_0001".format(vm_name), provider).cleanup_on_provider()
     )
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()

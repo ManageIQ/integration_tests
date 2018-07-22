@@ -29,6 +29,8 @@ from cfme.utils.bz import Bugzilla
 from cfme.utils.providers import get_mgmt
 from cfme.utils.version import Version
 
+from wrapanapi import Openshift
+
 
 def go_home(request):
     return redirect(index)
@@ -410,8 +412,8 @@ def my_appliances(request, show_user="my"):
     available_groups = Group.objects.filter(
         id__in=Template.objects.values_list('template_group', flat=True).distinct())
     group_tuples = []
-    for group in available_groups:
-        group_tuples.append((group.templates.order_by('-date')[0].date, group))
+    for grp in available_groups:
+        group_tuples.append((group.templates.order_by('-date')[0].date, grp))
     group_tuples.sort(key=lambda gt: gt[0], reverse=True)
     template_types = [t for t in Template.TEMPLATE_TYPES]
     can_order_pool = show_user == "my"
@@ -754,7 +756,7 @@ def vms_table(request, current_provider=None):
         return go_home(request)
     try:
         manager = get_mgmt(current_provider)
-        vms = sorted(manager.list_vm())
+        vms = sorted([vm.name for vm in manager.list_vms()])
         return render(request, 'appliances/vms/_list.html', locals())
     except Exception as e:
         return HttpResponse('{}: {}'.format(type(e).__name__, str(e)), content_type="text/plain")
@@ -765,7 +767,12 @@ def power_state(request, current_provider):
         return go_home(request)
     vm_name = request.POST["vm_name"]
     manager = get_mgmt(current_provider)
-    state = Appliance.POWER_STATES_MAPPING.get(manager.vm_status(vm_name), "unknown")
+    # TODO: change after openshift wrapanapi refactor
+    if isinstance(manager, Openshift):
+        state = manager.vm_status(vm_name)
+    else:
+        state = manager.get_vm(vm_name).state
+    state = Appliance.POWER_STATES_MAPPING.get(state, "unknown")
     return HttpResponse(state, content_type="text/plain")
 
 
@@ -1023,7 +1030,7 @@ def check_query(request):
         parsed = bz.url_to_query(request.POST['url'])
         if not parsed:
             parsed = None
-    except:
+    except Exception:
         parsed = None
     if 'cmdtype' in parsed:
         # It is a command and that is not supported within .query()

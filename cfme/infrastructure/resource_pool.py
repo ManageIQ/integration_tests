@@ -13,7 +13,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable)
+    Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable, Search)
 
 
 class ResourcePoolToolbar(View):
@@ -74,6 +74,7 @@ class ResourcePoolAllView(ResourcePoolView):
             self.entities.title.text == 'Resource Pools')
 
     toolbar = View.nested(ResourcePoolToolbar)
+    search = View.nested(Search)
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 

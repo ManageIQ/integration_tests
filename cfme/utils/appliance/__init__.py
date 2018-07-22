@@ -21,6 +21,7 @@ from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
 from six.moves.urllib.parse import urlparse
+from wrapanapi import VmState
 from werkzeug.local import LocalStack, LocalProxy
 
 from cfme.fixtures import ui_coverage
@@ -551,6 +552,8 @@ class IPAppliance(object):
                 ssh_client.run_command(
                     "echo HOSTNAME=localhost.localdomain >> /etc/sysconfig/network",
                     ensure_host=True)
+            # clear any set hostname from /etc/hosts
+            self.remove_resolvable_hostname()
             ssh_client.run_command(
                 "sed -i -r -e '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0",
                 ensure_host=True)
@@ -2385,6 +2388,31 @@ class IPAppliance(object):
                 )
             )
 
+    @logger_wrap('Get the resolvable hostname')
+    def get_resolvable_hostname(self, log_callback=None):
+        """Lookup the hostname based on self.hostname"""
+        # Example lookups with self.hostname as IP and self.hostname as resolvable name
+        # [root@host-192-168-55-85 ~]# host 1.2.3.137
+        # 137.3.2.1.in-addr.arpa domain name pointer 137.test.miq.com.
+        # [root@host-192-168-55-85 ~]# host 137.test.miq.com
+        # 137.test.miq.com has address 1.2.3.137
+        host_check = self.ssh_client.run_command('host {}'.format(self.hostname), ensure_host=True)
+        log_callback('Parsing for resolvable hostname from "{}"'.format(host_check.output))
+        fqdn = None  # just in case the logic gets weird
+        if host_check.success and 'domain name pointer' in host_check.output:
+            # resolvable and reverse lookup
+            # parse out the resolved hostname
+            fqdn = host_check.output.split(' ')[-1].rstrip('\n').rstrip('.')
+            log_callback('Found FQDN by appliance IP: "{}"'.format(fqdn))
+        elif host_check.success and 'has address' in host_check.output:
+            # resolvable and address returned
+            fqdn = self.hostname
+            log_callback('appliance hostname attr is FQDN: "{}"'.format(fqdn))
+        else:
+            logger.warning('Bad RC from host command or unexpected output,'
+                           ' no resolvable hostname found')
+        return fqdn
+
     @logger_wrap('Configuring resolvable hostname')
     def set_resolvable_hostname(self, log_callback=None):
         """Try to lookup the hostname based on self.hostname, which is generally an IP
@@ -2399,36 +2427,36 @@ class IPAppliance(object):
         Returns:
             Boolean, True if hostname was set
         """
-        # Example lookups with self.hostname as IP and self.hostname as resolvable name
-        # [root@host-192-168-55-85 ~]# host 1.2.3.137
-        # 137.3.2.1.in-addr.arpa domain name pointer 137.test.miq.com.
-        # [root@host-192-168-55-85 ~]# host 137.test.miq.com
-        # 137.test.miq.com has address 1.2.3.137
-        host_check = self.ssh_client.run_command('host {}'.format(self.hostname))
-        log_callback('Parsing for resolvable hostname from "{}"'.format(host_check.output))
-        fqdn = None  # just in case the logic gets weird
-        if host_check.failed:
-            # not resolvable, don't set
-            logger.warning('Bad RC from host command, skipping setting resolvable hostname')
-            return False
-        if host_check.success and 'domain name pointer' in host_check.output:
-            # resolvable and reverse lookup
-            # parse out the resolved hostname
-            fqdn = host_check.output.split(' ')[-1].rstrip('\n').rstrip('.')
-            log_callback('Found FQDN by appliance IP: "{}"'.format(fqdn))
-        elif host_check.success and 'has address' in host_check.output:
-            # resolvable and address returned
-            fqdn = self.hostname
-            log_callback('appliance hostname attr is FQDN: "{}"'.format(fqdn))
-        else:
-            # unexpected output on success, don't set
-            logger.warning('Success from host command with unexpected output, '
-                           'skipping setting resolvable hostname')
-            return False
+        fqdn = self.get_resolvable_hostname()
         if fqdn is not None:
             log_callback('Setting FQDN "{}" via appliance_console_cli'.format(fqdn))
             result = self.appliance_console_cli.set_hostname(str(fqdn))
             return result.success
+        else:
+            logger.error('Unable to set resolvable hostname')
+            return False
+
+    def remove_resolvable_hostname(self):
+        """remove a resolvable hostname from /etc/hosts directly
+        USE WITH CAUTION as it mangles /etc/hosts,
+        recommended only for seal_for_templatizing with sprout appliances
+        """
+        hosts_grep_cmd = 'grep {} /etc/hosts'.format(self.get_resolvable_hostname())
+        with self.ssh_client as ssh_client:
+            if ssh_client.run_command(hosts_grep_cmd, ensure_host=True).success:
+                # remove resolvable hostname from /etc/hosts
+                # tuples of (loopback, replacement string) for each proto
+                v6 = ('::1', re.escape('::1'.ljust(16)))
+                v4 = ('127.0.0.1', re.escape('127.0.0.1'.ljust(16)))
+                resolve_esc = re.escape(self.get_resolvable_hostname())
+                for addr, fill in [v6, v4]:
+                    # regex finds lines for loopback addrs where resolvable hostname set
+                    # sed replaces with the ljust (space padded) loopback addr
+                    ssh_client.run_command(
+                        "sed -i -r -e 's|({}\s..*){}|{}|' /etc/hosts".format(addr,
+                                                                             resolve_esc,
+                                                                             fill),
+                        ensure_host=True)
 
     def provider_based_collection(self, provider, coll_type='vms'):
         """Given a provider, fetches a collection for the given collection type
@@ -2457,6 +2485,19 @@ class IPAppliance(object):
         else:
             raise ValueError('No support for coll_type: "{}" collection name lookup'
                              .format(coll_type))
+
+    def _switch_migration_ui(self, enable):
+        self.update_advanced_settings({'product': {'transformation': enable}})
+        self.appliance.server.logout()
+        self.restart_evm_service()
+        self.wait_for_evm_service()
+        self.wait_for_web_ui()
+
+    def enable_migration_ui(self):
+        self._switch_migration_ui(True)
+
+    def disable_migration_ui(self):
+        self. _switch_migration_ui(False)
 
 
 class Appliance(IPAppliance):
@@ -2495,7 +2536,12 @@ class Appliance(IPAppliance):
         if 'hostname' not in app_kwargs:
             def is_ip_available():
                 try:
-                    ip = provider.mgmt.get_ip_address(vm_name)
+                    # TODO: change after openshift wrapanapi refactor
+                    if provider.one_of(OpenshiftProvider):
+                        ip = provider.mgmt.get_ip_address(vm_name)
+                    else:
+                        vm = provider.mgmt.get_vm(vm_name)
+                        ip = vm.ip
                     return ip or False  # get_ip_address might return None
                 except AttributeError:
                     return False
@@ -2633,6 +2679,10 @@ class Appliance(IPAppliance):
                 cfme_rel = InfraVm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(self.server.name), self.server.sid)
 
+    @cached_property
+    def mgmt(self):
+        return self.provider.mgmt.get_vm(self.vm_name)
+
     def does_vm_exist(self):
         return self.provider.mgmt.does_vm_exist(self.vm_name)
 
@@ -2656,19 +2706,18 @@ class Appliance(IPAppliance):
         if self.is_on_rhev:
             # if rhev, try to remove direct_lun just in case it is detach
             self.remove_rhev_direct_lun_disk()
-        self.provider.delete_vm(self.vm_name)
+        if self.does_vm_exist():
+            self.mgmt.cleanup()
 
     def stop(self):
         """Stops the VM this appliance is running as
         """
-        self.provider.stop_vm(self.vm_name)
-        self.provider.wait_vm_stopped(self.vm_name)
+        self.mgmt.ensure_state(VmState.STOPPED)
 
     def start(self):
         """Starts the VM this appliance is running as
         """
-        self.provider.start_vm(self.vm_name)
-        self.provider.wait_vm_running(self.vm_name)
+        self.mgmt.ensure_state(VmState.RUNNING)
 
     def templatize(self, seal=True):
         """Marks the appliance as a template. Destroys the original VM in the process.
@@ -2686,11 +2735,11 @@ class Appliance(IPAppliance):
         else:
             if self.is_running:
                 self.stop()
-        self.provider.mark_as_template(self.vm_name)
+        self.mgmt.mark_as_template()
 
     @property
     def is_running(self):
-        return self.provider.is_vm_running(self.vm_name)
+        return self.mgmt.is_running
 
     @property
     def is_on_rhev(self):
@@ -2702,6 +2751,23 @@ class Appliance(IPAppliance):
         from cfme.infrastructure.provider.virtualcenter import VMwareProvider
         return isinstance(self.provider, VMwareProvider.mgmt_class)
 
+    @property
+    def is_on_openshift(self):
+        from cfme.containers.provider.openshift import OpenshiftProvider
+        return isinstance(self.provider, OpenshiftProvider.mgmt_class)
+
+    def set_ansible_url(self):
+        if self.is_on_openshift:
+            config_map = self.provider.get_appliance_tags(self.project)
+            url = config_map['cfme-openshift-embedded-ansible']['url']
+            tag = config_map['cfme-openshift-embedded-ansible']['tag']
+            config = {'embedded_ansible': {'container': {'image_name': url, 'image_tag': tag}}}
+            self.update_advanced_settings(config)
+
+    @property
+    def _lun_name(self):
+        return "{}LUNDISK".format(self.vm_name)
+
     def add_rhev_direct_lun_disk(self, log_callback=None):
         if log_callback is None:
             log_callback = logger.info
@@ -2711,7 +2777,7 @@ class Appliance(IPAppliance):
         log_callback('Adding RHEV direct_lun hook...')
         self.wait_for_ssh()
         try:
-            self.provider.connect_direct_lun_to_appliance(self.vm_name, False)
+            self.mgmt.connect_direct_lun(lun_name=self._lun_name)
         except Exception as e:
             log_callback("Appliance {} failed to connect RHEV direct LUN.".format(self.vm_name))
             log_callback(str(e))
@@ -2726,7 +2792,7 @@ class Appliance(IPAppliance):
         log_callback('Removing RHEV direct_lun hook...')
         self.wait_for_ssh()
         try:
-            self.provider.connect_direct_lun_to_appliance(self.vm_name, True)
+            self.mgmt.disconnect_disk(self._lun_name)
         except Exception as e:
             log_callback("Appliance {} failed to connect RHEV direct LUN.".format(self.vm_name))
             log_callback(str(e))
@@ -2816,7 +2882,8 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         if "allowed_datastores" in prov_data:
             deploy_args["allowed_datastores"] = prov_data["allowed_datastores"]
 
-    provider.deploy_template(template_name, **deploy_args)
+    template = provider.get_template(template_name)
+    template.deploy(**deploy_args)
 
     return Appliance(provider_name, vm_name)
 

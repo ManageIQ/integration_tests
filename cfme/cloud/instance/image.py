@@ -11,7 +11,7 @@ from cfme.common.vm_views import (
 from cfme.exceptions import ImageNotFound, DestinationNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from cfme.utils.providers import get_crud_by_name
-from widgetastic_manageiq import ItemsToolBarViewSelector, SummaryTable, ItemNotFound
+from widgetastic_manageiq import ItemsToolBarViewSelector, SummaryTable, ItemNotFound, Search
 from . import CloudInstanceView, InstanceAccordion
 
 
@@ -49,6 +49,7 @@ class ImageAllView(CloudInstanceView):
     """View for the Image collection"""
     toolbar = View.nested(ImageToolbar)
     sidebar = View.nested(InstanceAccordion)
+    search = View.nested(Search)
     including_entities = View.include(VMEntities, use_parent=True)
 
     @property

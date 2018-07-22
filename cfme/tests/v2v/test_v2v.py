@@ -3,18 +3,23 @@ import pytest
 
 from cfme.utils.appliance.implementations.ui import navigate_to
 
-pytestmark = [pytest.mark.ignore_stream('5.8', '5.9')]
+pytestmark = [pytest.mark.ignore_stream('5.8')]
 
 
-@pytest.mark.tier(0)
-def test_compute_migration_modal(appliance):
-    """Test takes an appliance and tries to navigate to migration page and open mapping wizard.
+@pytest.fixture(scope="module")
+def disable_migration_ui(appliance):
+    appliance.disable_migration_ui()
 
-    This is a dummy test just to check navigation.
-    # TODO : Replace this test with actual test.
-    """
-    infra_mapping_collection = appliance.collections.v2v_mappings
-    view = navigate_to(infra_mapping_collection, 'All')
-    assert view.is_displayed
-    view = navigate_to(infra_mapping_collection, 'Add')
-    assert view.is_displayed
+
+def test_migration_ui_enable_disable(appliance, disable_migration_ui):
+    appliance.enable_migration_ui()
+    view = navigate_to(appliance.server, 'Dashboard', wait_for_view=True)
+    nav_tree = view.navigation.nav_item_tree()
+    assert 'Migration' in nav_tree['Compute'], ('Trying to find Migration in'
+           ' nav_tree, should be present :{}'.format(nav_tree))
+    appliance.disable_migration_ui()
+    view.browser.refresh()
+    view = navigate_to(appliance.server, 'Dashboard', wait_for_view=True)
+    nav_tree = view.navigation.nav_item_tree()
+    assert 'Migration' not in nav_tree['Compute'], ('Trying to find Migration in'
+           ' nav_tree, should be absent :{}'.format(nav_tree))

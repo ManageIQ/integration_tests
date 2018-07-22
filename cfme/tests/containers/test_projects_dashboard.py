@@ -27,27 +27,37 @@ def get_api_object_counts(appliance, project_name, provider):
     """ Fetches amount of Containers/Services/Images from the API per selected project name"""
     assert isinstance(provider, ContainersProvider)
     return {
-        Container: len(provider.mgmt.list_container(project_name=project_name)),
-        Service: len(provider.mgmt.list_service(project_name=project_name)),
-        Image: len(get_container_images_amt(provider, project_name))
+        Container: len(flatten_list(provider.mgmt.list_container(namespace=project_name),
+                                    flattened_list=[])),
+        Service: len(provider.mgmt.list_service(namespace=project_name)),
+        # TODO: remove sorted set when wrapanapi updates will return unique image IDs
+        # number of unique images
+        Image: len(sorted(set(provider.mgmt.list_image_id(namespace=project_name))))
     }
 
 
-def get_container_images_amt(provider, project_name=None):
-    """ Fetches images amount from the API per selected project name"""
-    project_images = [
-        img for img
-        in provider.mgmt.list_image()
-        if img.image_project_name == project_name
-    ]
-    return project_images
+def flatten_list(org_list, flattened_list=[]):
+    """Expands nested list elements to new flatten list
+    Use for get len for of nested list
+
+    Args:
+            org_list: (list) nested list
+            flattened_list: (list) empty list
+    Returns: flatten list
+    """
+    for elem in org_list:
+        if not isinstance(elem, list):
+            flattened_list.append(elem)
+        else:
+            flatten_list(elem, flattened_list)
+    return flattened_list
 
 
 def get_api_pods_names(provider):
     """ Fetches Pod names from the API per selected project name"""
     pod_name = []
-    for pod in provider.mgmt.list_container_group(project_name=PROJECT_NAME):
-        pod_name.append(pod.name)
+    for pod in provider.mgmt.list_pods(namespace=PROJECT_NAME):
+        pod_name.append(pod.metadata.name)
     return pod_name
 
 
@@ -93,3 +103,26 @@ def test_projects_dashboard_icons(provider, appliance, soft_assert, container_pr
                 containers_cls.__name__, api_values[containers_cls], statusbox_value
             )
         )
+
+
+def test_project_has_provider(appliance, soft_assert, provider):
+    """
+    Test provider name existence in all projects table.
+    Steps:
+      * navigate to all project page
+      * get through all the project to ensure that the provider column isn't
+        empty on each on each of the projects
+    """
+    projects_collection = appliance.collections.container_projects
+
+    all_project_view = navigate_to(projects_collection, "All")
+    all_tables_rows = all_project_view.entities.get_all()
+
+    assert all_tables_rows, "No table row was found"
+
+    for row in all_tables_rows:
+        curr_project_name = row.data["name"]
+        curr_project_provider = row.data["provider"]
+
+        soft_assert(curr_project_provider,
+                    "No Provider found for project {name}".format(name=curr_project_name))

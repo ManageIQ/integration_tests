@@ -10,6 +10,7 @@ except ImportError:
     import pickle   # NOQA
 
 import wrapanapi
+from wrapanapi import VmState, Openshift
 
 from cached_property import cached_property
 from celery import chain
@@ -23,6 +24,8 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from json_field import JSONField
+
+from cached_property import threaded_cached_property
 
 from sprout import critical_section, redis
 from sprout.log import create_logger
@@ -378,7 +381,7 @@ class Provider(MetadataMixin):
     def cleanup(self):
         """Put any cleanup tasks that might help the application stability here"""
         self.logger.info("Running cleanup on provider {}".format(self.id))
-        if isinstance(self.api, wrapanapi.openstack.OpenstackSystem):
+        if isinstance(self.api, wrapanapi.systems.openstack.OpenstackSystem):
             # Openstack cleanup
             # Clean up the floating IPs
             for floating_ip in self.api.api.floating_ips.findall(fixed_ip=None):
@@ -597,9 +600,20 @@ class Template(MetadataMixin):
     def provider_name(self):
         return self.provider.id
 
+    @threaded_cached_property
+    def template_mgmt(self):
+        return self.provider_api.get_template(self.original_name)
+
+    @threaded_cached_property
+    def vm_mgmt(self):
+        return self.provider_api.get_vm(self.name)
+
     @property
     def exists_in_provider(self):
-        return self.name in self.provider_api.list_template()
+        # TODO: change after openshift wrapanapi refactor
+        if isinstance(self.provider_api, Openshift):
+            return self.name in self.provider_api.list_template()
+        return self.template_mgmt.exists
 
     @property
     def exists_and_ready(self):
@@ -758,6 +772,14 @@ class Appliance(MetadataMixin):
         # EC2 (for VM manager)
         "stopped": Power.OFF,
         "running": Power.ON,
+
+        # TODO: change after openshift wrapanapi refactor
+        # Move everything to wrapanapi.VmState?
+        VmState.RUNNING: Power.ON,
+        VmState.STOPPED: Power.OFF,
+        VmState.SUSPENDED: Power.SUSPENDED,
+        VmState.ERROR: Power.ERROR,
+        VmState.UNKNOWN: Power.UNKNOWN,
     }
 
     RESET_SWAP_STATES = {Power.OFF, Power.REBOOTING, Power.ORPHANED}
@@ -834,22 +856,37 @@ class Appliance(MetadataMixin):
     def _set_meta(self, key, value):
         if self.power_state == self.Power.ORPHANED:
             return
-        try:
-            self.provider_api.set_meta_value(self.name, 'sprout_{}'.format(key), value)
-            self.logger.info('Set metadata {}: {}'.format(key, repr(value)))
-        except NotImplementedError:
-            pass
+        # TODO: change after openshift wrapanapi refactor
+        if isinstance(self.provider_api, Openshift):
+            try:
+                self.provider_api.set_meta_value(self.name, 'sprout_{}'.format(key), value)
+                self.logger.info('Set metadata {}: {}'.format(key, repr(value)))
+            except NotImplementedError:
+                pass
+        else:
+            try:
+                self.vm_mgmt.set_meta_value('sprout_{}'.format(key), value)
+                self.logger.info('Set metadata {}: {}'.format(key, repr(value)))
+            except (AttributeError, NotImplementedError):
+                pass
 
     def sync_hw(self):
-        try:
+        # TODO: change after openshift wrapanapi refactor
+        params = None
+        if isinstance(self.provider_api, Openshift):
             params = self.provider_api.vm_hardware_configuration(self.name)
+        else:
+            try:
+                params = self.vm_mgmt.get_hardware_configuration()
+            except AttributeError:
+                pass
+
+        if params:
             with transaction.atomic():
                 appliance = type(self).objects.get(pk=self.pk)
                 appliance.cpu = params['cpu']
                 appliance.ram = params['ram']
                 appliance.save()
-        except NotImplementedError:
-            pass
 
     @property
     def serialized(self):
@@ -895,6 +932,14 @@ class Appliance(MetadataMixin):
     def kill_lock(self):
         with critical_section("kill-({})[{}]".format(type(self).__name__, str(self.pk))):
             yield
+
+    @threaded_cached_property
+    def vm_mgmt(self):
+        return self.template.provider_api.get_vm(self.name)
+
+    @threaded_cached_property
+    def template_mgmt(self):
+        return self.template.template_mgmt
 
     @property
     def provider_api(self):
@@ -1015,7 +1060,7 @@ class Appliance(MetadataMixin):
                         template=template, **cpuram_filter).all()[:limit - len(appliances)]:
                     with appliance.kill_lock:
                         appliance.appliance_pool = pool
-                        appliance.save()
+                        appliance.save(update_fields=['appliance_pool'])
                         appliance.set_status("Given to pool {}".format(pool.id))
                         tasks = [appliance_power_on.si(appliance.id)]
                         if pool.yum_update:
@@ -1396,8 +1441,8 @@ class AppliancePool(MetadataMixin):
     @property
     def fulfilled(self):
         try:
-            return len(self.appliance_ips) == self.total_count\
-                and all(a.ready for a in self.appliances)
+            return (len(self.appliance_ips) == self.total_count and
+                    all(a.ready for a in self.appliances))
         except ObjectDoesNotExist:
             return False
 

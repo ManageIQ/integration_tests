@@ -313,6 +313,8 @@ class TaggableCommonBase(object):
             view.form.cancel.click()
             view.flash.assert_success_message('Tag Edit was cancelled by the user')
         if not reset and not cancel:
+            wait_for(lambda: not view.form.save.disabled, delay=1, timeout=5,
+                     message='Save button is not active')
             view.form.save.click()
             view.flash.assert_success_message('Tag edits were successfully saved')
 

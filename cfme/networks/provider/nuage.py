@@ -1,7 +1,8 @@
 import attr
 from widgetastic.widget import View
 from widgetastic_patternfly import Tab, BootstrapSelect, Input, Button
-from wrapanapi.nuage import NuageSystem
+from widgetastic_manageiq import RadioGroup
+from wrapanapi.systems import NuageSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm, EventsEndpoint
 from cfme.common.provider_views import BeforeFillMixin

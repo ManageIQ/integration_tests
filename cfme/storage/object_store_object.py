@@ -11,7 +11,7 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.providers import get_crud_by_name
 from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable)
+    Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable, Search)
 
 
 class ObjectStoreObjectToolbar(View):
@@ -62,6 +62,7 @@ class ObjectStoreObjectView(BaseLoggedInPage):
 class ObjectStoreObjectAllView(ObjectStoreObjectView):
     """The all Object Store Object page"""
     toolbar = View.nested(ObjectStoreObjectToolbar)
+    search = View.nested(Search)
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
     @property

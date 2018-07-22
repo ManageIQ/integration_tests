@@ -1,11 +1,13 @@
 import fauxfactory
 import pytest
 from widgetastic.utils import partial_match
+from wrapanapi.exceptions import NotFoundError
 
 from cfme import test_requirements
-from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.networks.provider import NetworkProvider
 from cfme.provisioning import do_vm_provisioning
+from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -23,11 +25,13 @@ pytestmark = [
 
 @pytest.fixture(scope='function')
 def network(provider, appliance):
-    """Test adding cloud network in ui."""
+    """Adding cloud network in ui."""
     test_name = 'test_network_{}'.format(fauxfactory.gen_alphanumeric(6))
     net_manager = '{} Network Manager'.format(provider.name)
+
     collection = appliance.collections.network_providers
-    network_provider = collection.instantiate(name=net_manager)
+    network_provider = collection.instantiate(prov_class=NetworkProvider, name=net_manager)
+
     collection = appliance.collections.cloud_networks
     ovn_network = collection.create(test_name, 'tenant', network_provider, net_manager, 'None')
 
@@ -37,16 +41,22 @@ def network(provider, appliance):
 
 
 @pytest.mark.rhv1
-def test_provision_vm_to_virtual_network(appliance, setup_provider, provider, vm_name,
+def test_provision_vm_to_virtual_network(appliance, setup_provider, provider,
                                          request, provisioning, network):
     """ Tests provisioning a vm from a template to a virtual network
 
     Metadata:
         test_flag: provision
     """
+    vm_name = random_vm_name('provd')
 
-    request.addfinalizer(
-        lambda: VM.factory(vm_name, provider).cleanup_on_provider())
+    def _cleanup():
+        try:
+            provider.mgmt.get_vm(vm_name).cleanup()
+        except NotFoundError:
+            pass
+
+    request.addfinalizer(_cleanup)
 
     template = provisioning['template']
     provisioning_data = {

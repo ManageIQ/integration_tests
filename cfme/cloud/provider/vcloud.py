@@ -1,7 +1,7 @@
 import attr
 from widgetastic.widget import View
 from widgetastic_patternfly import Tab, Input
-from wrapanapi.vcloud import VmwareCloudSystem
+from wrapanapi.systems import VmwareCloudSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm, Credential
 from cfme.common.provider_views import BeforeFillMixin

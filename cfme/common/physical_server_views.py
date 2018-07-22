@@ -3,6 +3,7 @@ from lxml.html import document_fromstring
 from widgetastic.utils import (
     Parameter, Version, VersionPick)
 from widgetastic.widget import ParametrizedView, Text, View
+from widgetastic_manageiq import Search
 from widgetastic_patternfly import (
     BreadCrumb, Dropdown, Accordion)
 
@@ -198,6 +199,7 @@ class PhysicalServerEntitiesView(BaseEntitiesView):
 class PhysicalServersView(ComputePhysicalInfrastructureServersView):
     toolbar = View.nested(PhysicalServersToolbar)
     sidebar = View.nested(PhysicalServerSideBar)
+    search = View.nested(Search)
     including_entities = View.include(PhysicalServerEntitiesView, use_parent=True)
 
     @property

@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 import re
-from bugzilla import Bugzilla as _Bugzilla
 from collections import Sequence
 
-from cached_property import cached_property
-from cfme.utils.conf import cfme_data, credentials
-from cfme.utils.log import logger
-from cfme.utils.version import (
-    LATEST, Version, current_version, appliance_build_datetime, appliance_is_downstream)
 import six
+from bugzilla import Bugzilla as _Bugzilla
+from miq_version import Version, LATEST
+
+from cached_property import cached_property
+from cfme.utils.conf import credentials, env
+from cfme.utils.log import logger
+from cfme.utils.version import current_version, appliance_build_datetime, appliance_is_downstream
 
 NONE_FIELDS = {"---", "undefined", "unspecified"}
 
@@ -48,7 +49,9 @@ class Product(object):
 
 class Bugzilla(object):
     def __init__(self, **kwargs):
+        # __kwargs passed to _Bugzilla instantiation, pop our args out
         self.__product = kwargs.pop("product", None)
+        self.__config_options = kwargs.pop('config_options', {})
         self.__kwargs = kwargs
         self.__bug_cache = {}
         self.__product_cache = {}
@@ -78,16 +81,19 @@ class Bugzilla(object):
 
     @classmethod
     def from_config(cls):
-        url = cfme_data.get("bugzilla", {}).get("url")
-        product = cfme_data.get("bugzilla", {}).get("product")
+        bz_conf = env.get('bugzilla', {})  # default empty so we can call .get() later
+        url = bz_conf.get('url')
         if url is None:
-            raise Exception("No Bugzilla URL specified!")
-        cr_root = cfme_data.get("bugzilla", {}).get("credentials")
-        username = credentials.get(cr_root, {}).get("username")
-        password = credentials.get(cr_root, {}).get("password")
-        return cls(
-            url=url, user=username, password=password, cookiefile=None,
-            tokenfile=None, product=product)
+            url = 'https://bugzilla.redhat.com/xmlrpc.cgi'
+            logger.warning("No Bugzilla URL specified in conf, using default: %s", url)
+        cred_key = bz_conf.get("bugzilla", {}).get("credentials")
+        return cls(url=url,
+                   user=credentials.get(cred_key, {}).get("username"),
+                   password=credentials.get(cred_key, {}).get("password"),
+                   cookiefile=None,
+                   tokenfile=None,
+                   product=bz_conf.get("bugzilla", {}).get("product"),
+                   config_options=bz_conf)
 
     @cached_property
     def bugzilla(self):
@@ -95,18 +101,18 @@ class Bugzilla(object):
 
     @cached_property
     def loose(self):
-        return cfme_data.get("bugzilla", {}).get("loose", [])
+        return self.__config_options.get("loose", [])
 
     @cached_property
     def open_states(self):
-        return cfme_data.get("bugzilla", {}).get("skip", set([]))
+        return set(self.__config_options.get("skip", []))
 
     @cached_property
     def upstream_version(self):
         if self.default_product is not None:
             return self.default_product.latest_version
         else:
-            return Version(cfme_data.get("bugzilla", {}).get("upstream_version", "9.9"))
+            return Version(self.__config_options.get("upstream_version", Version.latest().vstring))
 
     def get_bug(self, id):
         id = int(id)
@@ -166,11 +172,11 @@ class Bugzilla(object):
                 # It is an upstream bug
                 logger.info('Found a matching upstream bug #%d for bug #%d', variant.id, bug.id)
                 return variant
-            elif ((variant.version is not None and variant.target_release is not None) and
-                    (
-                        variant.version.is_in_series(version_series) or
-                        variant.target_release.is_in_series(version_series))):
-                    filtered.add(variant)
+            elif (isinstance(variant.version, Version) and
+                  isinstance(variant.target_release, Version) and
+                  (variant.version.is_in_series(version_series) or
+                   variant.target_release.is_in_series(version_series))):
+                filtered.add(variant)
             else:
                 logger.warning(
                     "ATTENTION!!: No release flags, wrong versions, ignoring %s", variant.id)
@@ -185,11 +191,11 @@ class Bugzilla(object):
                 return None
         # First, use versions
         for bug in filtered:
-            if ((bug.version is not None and bug.target_release is not None) and
-                    check_fixed_in(bug.fixed_in, version_series) and
-                    (
-                        bug.version.is_in_series(version_series) or
-                        bug.target_release.is_in_series(version_series))):
+            if (isinstance(bug.version, Version) and
+                isinstance(bug.target_release, Version) and
+                check_fixed_in(bug.fixed_in, version_series) and
+                (bug.version.is_in_series(version_series) or
+                 bug.target_release.is_in_series(version_series))):
                 return bug
         # Otherwise prefer release_flag
         for bug in filtered:
@@ -314,7 +320,8 @@ class BugWrapper(object):
     def is_opened(self):
         states = self._bugzilla.open_states
         if not self.upstream_bug and appliance_is_downstream():
-            states = self._bugzilla.open_states + ["POST", "MODIFIED"]
+            states.add('POST')
+            states.add('MODIFIED')
         return self.status in states
 
     @property

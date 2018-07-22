@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import gevent
 import socket
 import sys
 from subprocess import check_call
@@ -259,9 +260,8 @@ class SSHClient(paramiko.SSHClient):
             self.connect()
         return super(SSHClient, self).get_transport(*args, **kwargs)
 
-    def run_command(
-            self, command, timeout=RUNCMD_TIMEOUT, reraise=False, ensure_host=False,
-            ensure_user=False, container=None):
+    def run_command(self, command, timeout=RUNCMD_TIMEOUT, reraise=False, ensure_host=False,
+                    ensure_user=False, container=None):
         """Run a command over SSH.
 
         Args:
@@ -276,6 +276,18 @@ class SSHClient(paramiko.SSHClient):
         Returns:
             A :py:class:`SSHResult` instance.
         """
+        # paramiko hangs on *_ready calls if destination has become unavailable
+        # this is some kind of watchdog to handle this issue
+        try:
+            with gevent.Timeout(timeout):
+                return self._run_command(command, timeout, reraise, ensure_host, ensure_user,
+                                         container)
+        except gevent.Timeout:
+            logger.error("command %s couldn't finish in given timeout %s", command, timeout)
+            raise
+
+    def _run_command(self, command, timeout=RUNCMD_TIMEOUT, reraise=False, ensure_host=False,
+                     ensure_user=False, container=None):
         if isinstance(command, dict):
             command = version.pick(command, active_version=self.vmdb_version)
         original_command = command
@@ -323,7 +335,7 @@ class SSHClient(paramiko.SSHClient):
             while True:
                 if session.exit_status_ready():
                     break
-
+                no_data = 0
                 # While the program is running loop through collecting line by line so that we don't
                 # fill the buffers up without a newline.
                 # Also, note that for long running programs if we try to read output when there
@@ -338,6 +350,8 @@ class SSHClient(paramiko.SSHClient):
                         write_output(line, self.f_stdout)
                     except StopIteration:
                         pass
+                else:
+                    no_data += 1
 
                 if session.recv_stderr_ready():
                     try:
@@ -345,6 +359,11 @@ class SSHClient(paramiko.SSHClient):
                         write_output(line, self.f_stderr)
                     except StopIteration:
                         pass
+                else:
+                    no_data += 1
+
+                if no_data == 2:
+                    gevent.sleep(0.01)
 
             # When the program finishes, we need to grab the rest of the output that is left.
             # Also, we don't have the issue of blocking reads because since the command is

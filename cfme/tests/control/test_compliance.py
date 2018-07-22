@@ -9,10 +9,11 @@ from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import HostCompliancePolicy, VMCompliancePolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
-from cfme.utils.blockers import BZ
 from cfme.utils.hosts import setup_providers_hosts_credentials
 from cfme.utils.update import update
 from . import do_scan
+
+from wrapanapi import VmState
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
@@ -50,7 +51,7 @@ def policy_profile_name():
 
 @pytest.fixture
 def host(provider, setup_provider):
-    return provider.hosts[0]
+    return provider.hosts.all()[0]
 
 
 @pytest.fixture
@@ -98,12 +99,11 @@ def compliance_vm(configure_fleecing, provider, full_template_modscope):
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate(name, provider, full_template_modscope.name)
     vm.create_on_provider(allow_skip="default")
-    provider.mgmt.start_vm(vm.name)
-    provider.mgmt.wait_vm_running(vm.name)
+    vm.mgmt.ensure_state(VmState.RUNNING)
     if not vm.exists:
         vm.wait_to_appear(timeout=900)
     yield vm
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
     provider.refresh_provider_relationships()
 
 
@@ -188,7 +188,6 @@ def test_check_files(request, compliance_vm, analysis_profile, condition_collect
     assert compliance_vm.compliant
 
 
-@pytest.mark.uncollectif(lambda: BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576')
 def test_compliance_with_unconditional_policy(host, assign_policy_for_testing):
     assign_policy_for_testing.assign_actions_to_event(
         "Host Compliance Check",

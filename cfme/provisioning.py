@@ -19,7 +19,7 @@ def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning
             'notes': note}})
     provisioning_data['template_name'] = template_name
     provisioning_data['provider_name'] = provider.name
-    view = navigate_to(vm, 'Provision')
+    view = navigate_to(vm.parent, 'Provision')
     view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
     view.flash.assert_no_error()
     if not wait:
@@ -35,7 +35,7 @@ def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning
 
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
     logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider.key)
-    wait_for(provider.mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
+    wait_for(provider.mgmt.does_vm_exist, func_args=[vm_name], handle_exception=True, num_sec=600)
 
     if smtp_test:
         # Wait for e-mails to appear

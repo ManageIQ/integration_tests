@@ -4723,10 +4723,10 @@ class MigrationProgressBar(Widget):
         """Returns number of vm/s are in migration process"""
         el = self._get_vm_element(no)
         text = self.browser.text(self.VMS_LOCATOR, parent=el)
-        return re.findall("\d+", text)[0]
+        return re.findall(r"\d+", text)[0]
 
     def total_vm_to_be_migrated(self, no):
         """Returns number of vm/s in migration process"""
         el = self._get_vm_element(no)
         text = self.browser.text(self.VMS_LOCATOR, parent=el)
-        return re.findall("\d+", text)[1]
+        return re.findall(r"\d+", text)[1]

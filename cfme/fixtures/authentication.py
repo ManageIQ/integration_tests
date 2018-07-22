@@ -19,6 +19,7 @@ def setup_aws_auth_provider(appliance, amazon_auth_provider):
     original_config = appliance.server.authentication.auth_settings
     appliance.server.authentication.configure(auth_mode='amazon',
                                               auth_provider=amazon_auth_provider)
+    sleep(60)  # wait for MIQ to update, no trigger to look for, but if you try too soon it fails
     yield
 
     appliance.server.authentication.auth_settings = original_config
@@ -36,21 +37,23 @@ def auth_user_data(auth_provider, user_type):
     """Grab user data attrdict from auth provider's user data in yaml
 
     Expected formatting of yaml containing user data:
-        test_users:
-        -
-          username: ldapuser2
-          password: mysecretpassworddontguess
-          fullname: Ldap User2
-          groups:
-            - customgroup1
-          providers:
-            - freeipa01
-          user_types:
-            - uid
 
-    Only include user data for users where the user_type matches that under test
+    test_users:
+    -
+      username: ldapuser2
+      password: mysecretpassworddontguess
+      fullname: Ldap User2
+      groups:
+        - customgroup1
+      providers:
+        - freeipa01
+      user_types:
+        - uid
 
-    Assert the data isn't empty, and skip the test if so
+        Only include user data for users where the user_type matches that under test
+
+        Assert the data isn't empty, and skip the test if so
+
     """
     try:
         data = [user
@@ -64,19 +67,8 @@ def auth_user_data(auth_provider, user_type):
     return data
 
 
-@pytest.fixture(scope='session')
-def ensure_resolvable_hostname(appliance):
-    """
-    Intended for use with freeipa configuration, ensures a resolvable hostname on the appliance
-
-    Tries to resolve the appliance hostname property and skips the test if it can't
-    """
-    appliance.set_resolvable_hostname()
-
-
 @pytest.fixture(scope='function')
-def configure_auth(appliance, auth_mode, auth_provider, user_type, ensure_resolvable_hostname,
-                   request):
+def configure_auth(appliance, auth_mode, auth_provider, user_type, request, fix_missing_hostname):
     """Given auth_mode, auth_provider, user_type parametrization, configure auth for login
     testing.
 

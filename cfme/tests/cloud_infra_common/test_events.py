@@ -31,14 +31,12 @@ def vm_crud(provider, setup_provider_modscope, small_template_modscope):
     vm = collection.instantiate(vm_name, provider, template_name=template.name)
     yield vm
 
-    if vm.does_vm_exist_on_provider():
-        vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 @pytest.mark.rhv2
-@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider) and
-                         BZ(1509020, forced_streams=['5.8', '5.9']).blocks,
-                         'BZ 1509020')
+@pytest.mark.meta(blockers=[BZ(1509020, forced_streams=['5.8', '5.9'],
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_vm_create(request, appliance, vm_crud, provider, register_event):
     """ Test whether vm_create_complete event is emitted.
 

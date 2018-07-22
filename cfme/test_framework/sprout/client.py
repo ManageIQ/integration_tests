@@ -96,7 +96,9 @@ class SproutClient(object):
 
     def provision_appliances(
             self, count=1, preconfigured=False, version=None, stream=None, provider=None,
-            provider_type=None, lease_time=120, ram=None, cpu=None):
+            provider_type=None, lease_time=120, ram=None, cpu=None, **kwargs):
+        # provisioning may take more time than it is expected in some cases
+        wait_time = kwargs.get('wait_time', 300)
         # If we specify version, stream is ignored because we will get that specific version
         if version:
             stream = get_stream(version)
@@ -110,16 +112,21 @@ class SproutClient(object):
         request_id = self.call_method(
             'request_appliances', preconfigured=preconfigured, version=version,
             provider_type=provider_type, group=stream, provider=provider, lease_time=lease_time,
-            ram=ram, cpu=cpu, count=count
+            ram=ram, cpu=cpu, count=count, **kwargs
         )
         wait_for(
-            lambda: self.call_method('request_check', str(request_id))['finished'], num_sec=300,
+            lambda: self.call_method('request_check', str(request_id))['finished'],
+            num_sec=wait_time,
             message='provision {} appliance(s) from sprout'.format(count))
         data = self.call_method('request_check', str(request_id))
         logger.debug(data)
         appliances = []
         for appliance in data['appliances']:
-            appliances.append(IPAppliance(hostname=appliance['ip_address']))
+            app_args = {'hostname': appliance['ip_address'],
+                        'project': appliance['project'],
+                        'container': appliance['container'],
+                        'db_host': appliance['db_host']}
+            appliances.append(IPAppliance(**app_args))
         return appliances, request_id
 
     def destroy_pool(self, pool_id):

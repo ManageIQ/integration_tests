@@ -26,6 +26,8 @@ from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
+from wrapanapi import VmState
+
 pf1 = ProviderFilter(classes=[CloudInfraProvider],
     required_fields=[(['cap_and_util', 'test_chargeback'], True)])
 pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support C&U
@@ -58,10 +60,12 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
 
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
-    if not provider.mgmt.does_vm_exist(vm_name):
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate(vm_name, provider)
+
+    if not vm.exists_on_provider:
         pytest.skip("Skipping test, {} VM does not exist".format(vm_name))
-    provider.mgmt.start_vm(vm_name)
-    provider.mgmt.wait_vm_running(vm_name)
+    vm.mgmt.ensure_state(VmState.RUNNING)
 
     group_collection = appliance.collections.groups
     cb_group = group_collection.instantiate(description='EvmGroup-user')
@@ -73,10 +77,6 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
         groups=cb_group,
         cost_center='Workload',
         value_assign='Database')
-
-    # No vm creation or cleanup
-    collection = provider.appliance.provider_based_collection(provider)
-    vm = collection.instantiate(vm_name, provider)
 
     try:
         vm.set_ownership(user=user.name)

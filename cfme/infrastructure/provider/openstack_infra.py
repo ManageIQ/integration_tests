@@ -4,7 +4,7 @@ from navmazing import NavigateToSibling
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSelect, Button
 from widgetastic_manageiq import Checkbox, RadioGroup, FileInput, Table
-from wrapanapi.openstack_infra import OpenstackInfraSystem
+from wrapanapi.systems import OpenstackInfraSystem
 
 from cfme.common.provider import EventsEndpoint, SSHEndpoint, DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin, ProviderNodesView

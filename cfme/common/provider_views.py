@@ -11,7 +11,7 @@ from cfme.common.host_views import HostEntitiesView
 from widgetastic_manageiq import (
     ParametrizedSummaryTable, Button, TimelinesView, DetailsToolBarViewSelector,
     ItemsToolBarViewSelector, Checkbox, Input, BaseEntitiesView, PaginationPane, BaseTileIconEntity,
-    BaseQuadIconEntity, BaseListEntity, NonJSBaseEntity, JSBaseEntity)
+    BaseQuadIconEntity, BaseListEntity, NonJSBaseEntity, JSBaseEntity, Search)
 
 
 class ProviderQuadIconEntity(BaseQuadIconEntity):
@@ -337,6 +337,7 @@ class ProvidersView(BaseLoggedInPage):
     paginator = PaginationPane()
     toolbar = View.nested(ProviderToolBar)
     sidebar = View.nested(ProviderSideBar)
+    search = View.nested(Search)
     including_entities = View.include(ProviderEntitiesView, use_parent=True)
 
 
@@ -531,7 +532,7 @@ class ContainerProviderAddViewUpdated(ContainerProviderAddView, ContainerProvide
         for widget_name in self.COND_WIDGETS:
             widget = getattr(self, widget_name)
             if widget.is_displayed:
-                widget.fill(values.get(widget_name))
+                widget.fill(values.get(widget_name) or 'Disabled')
 
 
 class PhysicalProviderAddView(ProviderAddView):

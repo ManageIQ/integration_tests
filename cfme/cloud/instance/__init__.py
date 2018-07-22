@@ -16,7 +16,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateSte
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion, CompareToolBarActionsView
+from widgetastic_manageiq import (ManageIQTree, TimelinesView, Accordion, CompareToolBarActionsView,
+    Search)
 
 
 class InstanceDetailsToolbar(View):
@@ -95,6 +96,7 @@ class InstanceAllView(CloudInstanceView):
     actions = View.nested(CompareToolBarActionsView)
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(InstanceAccordion)
+    search = View.nested(Search)
     including_entities = View.include(VMEntities, use_parent=True)
 
 

@@ -26,5 +26,5 @@ with Recorder(args.filename, args.display, args.quality):
             time.sleep(1)
         except KeyboardInterrupt:
             alive = False
-        except:
+        except Exception:
             pass

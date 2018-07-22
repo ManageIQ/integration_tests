@@ -1,5 +1,6 @@
 import attr
-from wrapanapi.msazure import AzureSystem
+
+from wrapanapi.systems import AzureSystem
 
 from cfme.cloud.instance.azure import AzureInstance
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm

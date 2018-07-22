@@ -135,7 +135,8 @@ def upload_template(hostname, username, password, provider, url, name, provider_
                     # url ex:
                     # brew-pulp-docker01.web.prod.ext.phx2.redhat.com:8888/cloudforms46/cfme-openshift-httpd:2.4.6-14
                     tag_name, tag_value = img_url.split('/')[-1].split(':')
-                    tags[tag_name] = tag_value
+                    tag_url = img_url.rpartition(':')[-1]
+                    tags[tag_name] = {'tag': tag_value, 'url': tag_url}
                     if result.failed:
                         err_text = ("OPENSHIFT: couldn't update image stream using url "
                                     "{}, {}".format(img_url, str(result)))

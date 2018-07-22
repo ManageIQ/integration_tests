@@ -6,12 +6,13 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.automate.explorer.domain import DomainCollection
 from cfme import test_requirements
+from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.update import update
 
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
     pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,
@@ -65,7 +66,7 @@ def test_service_manual_approval(appliance, provider, modify_instance,
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(vm_name,
-                                                            provider).delete_from_provider()
+                                                            provider).cleanup_on_provider()
     )
 
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)

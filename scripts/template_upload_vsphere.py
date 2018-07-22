@@ -98,18 +98,16 @@ def upload_ova(hostname, username, password, name, datastore,
         return False
 
 
-def add_disk(client, name, provider):
-    logger.info("VSPHERE:%r Adding disk to %r", provider, name)
+def add_disk(vm):
+    logger.info("VSPHERE Adding disk to %r", vm.name)
 
     # adding disk #1 (base disk is 0)
-    result, msg = client.add_disk_to_vm(vm_name=name,
-                                        capacity_in_kb=8388608,
-                                        provision_type='thin')
+    result, msg = vm.add_disk(capacity_in_kb=8388608, provision_type='thin')
 
     if result:
-        logger.info('VSPHERE:%r Added disk to vm %r', provider, name)
+        logger.info('VSPHERE Added disk to vm %r', vm.name)
     else:
-        logger.error(" VSPHERE:%r Failure adding disk: %r", provider, msg)
+        logger.error(" VSPHERE Failure adding disk to %r: %r", vm.name, msg)
 
     return result
 
@@ -202,7 +200,7 @@ def upload_template(client, hostname, username, password,
             results[provider] = False
             return
 
-        if name in client.list_template():
+        if client.find_templates(name):
             logger.info("VSPHERE:%r template %r already exists", provider, name)
         else:
             if kwargs.get('upload'):
@@ -229,15 +227,17 @@ def upload_template(client, hostname, username, password,
                     results[provider] = False
                     return
 
+            vm = client.get_vm(name)
+
             if kwargs.get('disk'):
-                if not add_disk(client, name, provider):
+                if not add_disk(vm):
                     logger.error('"VSPHERE:%r FAILED adding disk to VM, exiting', provider)
                     results[provider] = False
                     return
 
             if kwargs.get('template'):
                 try:
-                    client.mark_as_template(vm_name=name)
+                    vm.mark_as_template()
                     logger.info("VSPHERE:%r Successfully templatized machine", provider)
                 except Exception:
                     logger.exception("VSPHERE:%r FAILED to templatize machine", provider)
@@ -248,7 +248,7 @@ def upload_template(client, hostname, username, password,
                 logger.info("VSPHERE:%r Adding template %r to trackerbot", provider, name)
                 trackerbot.trackerbot_add_provider_template(stream, provider, name)
 
-        if provider_data and name in client.list_template():
+        if provider_data and client.find_templates(name):
             logger.info("VSPHERE:%r Template and provider_data exist, Deploy %r", provider, name)
             vm_name = 'test_{}_{}'.format(name, fauxfactory.gen_alphanumeric(8))
             deploy_args = {'provider': provider, 'vm_name': vm_name,
@@ -321,6 +321,7 @@ def run(**kwargs):
         raise Exception("Template upload failed for all providers")
     else:
         logger.info("Upload passed for at least 1 provider... success!")
+
 
 if __name__ == "__main__":
     args = parse_cmd_line()

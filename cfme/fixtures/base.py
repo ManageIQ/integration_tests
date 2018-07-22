@@ -45,24 +45,16 @@ def fix_missing_hostname(appliance):
     """
     if isinstance(appliance, DummyAppliance) or appliance.is_dev:
         return
-    ssh_client = appliance.ssh_client
-    logger.info("Checking appliance's /etc/hosts for its own hostname")
-    if ssh_client.run_command('grep $(hostname) /etc/hosts').failed:
-        logger.info('Setting appliance hostname')
-        host_out = appliance.ssh_client.run_command('host {}'.format(appliance.hostname))
-        if host_out.success and 'domain name pointer' in host_out.output:
-            # resolvable and reverse lookup, hostname property is an IP addr
-            fqdn = host_out.output.split(' ')[-1].rstrip('\n').rstrip('.')
-        elif host_out.success and 'has address' in host_out.output:
-            # resolvable and address returned, hostname property is name
-            fqdn = appliance.hostname
-        else:
-            # not resolvable, just use hostname output through appliance_console_cli to modify
-            ret = ssh_client.run_command('hostname')
-            logger.warning('Unable to resolve hostname, using output from `hostname`: %s',
-                           ret.output)
-            fqdn = ret.output.rstrip('\n')
-        logger.info('Setting hostname: %s', fqdn)
-        appliance.appliance_console_cli.set_hostname(fqdn)
-        if ssh_client.run_command('grep $(hostname) /etc/hosts').failed:
-            logger.error('Failed to mangle /etc/hosts')
+    logger.info("Checking appliance's /etc/hosts for a resolvable hostname")
+    hosts_grep_cmd = 'grep {} /etc/hosts'.format(appliance.get_resolvable_hostname())
+    with appliance.ssh_client as ssh_client:
+        if ssh_client.run_command(hosts_grep_cmd).failed:
+            logger.info('Setting appliance hostname')
+            if not appliance.set_resolvable_hostname():
+                # not resolvable, just use hostname output through appliance_console_cli to modify
+                cli_hostname = ssh_client.run_command('hostname').output.rstrip('\n')
+                logger.warning('Unable to resolve hostname, using `hostname`: %s', cli_hostname)
+                appliance.appliance_console_cli.set_hostname(cli_hostname)
+
+            if ssh_client.run_command('grep $(hostname) /etc/hosts').failed:
+                logger.error('Failed to mangle /etc/hosts')

@@ -44,16 +44,14 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope='module')
-def host_with_credentials(appliance, provider, host_name):
+def host_with_credentials(provider, host_name):
     """ Add credentials to hosts """
-    hosts_collection = appliance.collections.hosts
-    host_list = provider.hosts
-    test_host = hosts_collection.instantiate(name=host_name, provider=provider)
-    host_data = [host for host in host_list if host.name == host_name][0]
-    test_host.update_credentials_rest(credentials=host_data.credentials)
+    host, = [host for host in provider.hosts.all() if host.name == host_name]
+    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+    host.update_credentials_rest(credentials=host_data['credentials'])
 
-    yield test_host
-    test_host.update_credentials_rest(credentials=Host.Credential(principal="", secret=""))
+    yield host
+    host.update_credentials_rest(credentials={'default': Host.Credential(principal="", secret="")})
 
 
 @pytest.mark.rhv1

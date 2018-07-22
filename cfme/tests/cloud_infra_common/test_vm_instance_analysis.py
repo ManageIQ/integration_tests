@@ -3,10 +3,11 @@ import pytest
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from widgetastic_patternfly import NoSuchElementException
+from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider, CloudInfraProvider
-from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.ec2 import EC2Provider, EC2EndpointForm
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm_views import DriftAnalysis
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
@@ -139,19 +140,42 @@ def vm_analysis_provisioning_data(provider, analysis_type):
 
 
 def set_hosts_credentials(appliance, request, provider):
-    hosts_collection = appliance.collections.hosts
-    host_list = provider.hosts
-    host_names = [host.name for host in host_list]
-    for host_name in host_names:
-        test_host = hosts_collection.instantiate(name=host_name, provider=provider)
-        host_data = [host for host in host_list if host.name == host_name][0]
-        test_host.update_credentials_rest(credentials=host_data.credentials)
+    hosts = provider.hosts.all()
+    for host in hosts:
+        host_data, = [host for host in provider.data['hosts'] if host['name'] == host.name]
+        host.update_credentials_rest(credentials=host_data['credentials'])
 
     @request.addfinalizer
     def _hosts_remove_creds():
-        for host_name in host_names:
-            test_host = appliance.collections.hosts.instantiate(name=host_name, provider=provider)
-            test_host.update_credentials_rest(credentials=Host.Credential(principal="", secret=""))
+        for host in hosts:
+            host.update_credentials_rest(
+                credentials={'default': Host.Credential(principal="", secret="")})
+
+
+def set_agent_creds(appliance, request, provider):
+    version = appliance.version.vstring
+    agent_data = {"ems": {"ems_amazon": {
+        "agent_coordinator": {"docker_image": "simaishi/amazon-ssa:{}".format(version),
+                              "docker_registry": "docker.io"}}}}
+    appliance.update_advanced_settings(agent_data)
+
+    # Adding SmartState Docker credentials
+    data = provider.data.endpoints
+    username = credentials[data['ssa_agent']['credentials']]['username']
+    password = credentials[data['ssa_agent']['credentials']]['password']
+    view = navigate_to(provider, "Edit")
+    ssa_agent_view = view.browser.create_view(EC2EndpointForm)
+    ssa_agent_view.smart_state_docker.fill({'username': username, 'password': password})
+    ssa_agent_view.default.validate.click()
+    view.save.click()
+
+    @request.addfinalizer
+    def _remove_docker_creds():
+        view = navigate_to(provider, "Edit")
+        ssa_agent_view = view.browser.create_view(EC2EndpointForm)
+        ssa_agent_view.smart_state_docker.fill({'username': ""})
+        ssa_agent_view.smart_state_docker.change_pass.click()
+        view.save.click()
 
 
 @pytest.fixture(scope="module")
@@ -162,6 +186,9 @@ def local_setup_provider(request, setup_provider_modscope, provider, appliance):
         appliance.install_vddk()
         request.addfinalizer(appliance.uninstall_vddk)
         set_hosts_credentials(appliance, request, provider)
+
+    if provider.one_of(EC2Provider):
+        set_agent_creds(appliance, request, provider)
 
     # Make sure all roles are set
     appliance.server.settings.enable_server_roles('automate', 'smartproxy', 'smartstate')
@@ -215,26 +242,23 @@ def ssa_single_vm(request, local_setup_provider, provider, vm_analysis_provision
             deploy_template(vm.provider.key, vm_name, template_name, timeout=2500)
             vm.wait_to_appear(timeout=900, load_details=False)
 
-        request.addfinalizer(lambda: vm.delete_from_provider())
+        request.addfinalizer(lambda: vm.cleanup_on_provider())
 
         if provider.one_of(OpenStackProvider):
             public_net = provider.data['public_network']
-            vm.provider.mgmt.assign_floating_ip(vm.name, public_net)
+            vm.mgmt.assign_floating_ip(public_net)
 
         logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
-        @wait_for_decorator(timeout="20m", delay=5)
-        def get_ip_address():
-            logger.info("Power state for {} vm: {}, is_vm_stopped: {}".format(
-                vm_name, provider.mgmt.vm_status(vm_name), provider.mgmt.is_vm_stopped(vm_name)))
-            if provider.mgmt.is_vm_stopped(vm_name):
-                provider.mgmt.start_vm(vm_name)
+        vm.mgmt.ensure_state(VmState.RUNNING)
 
-            ip = provider.mgmt.current_ip_address(vm_name)
+        @wait_for_decorator(timeout="10m", delay=5)
+        def get_ip_address():
+            ip = vm.mgmt.ip
             logger.info("Fetched IP for %s: %s", vm_name, ip)
             return ip is not None
 
-        connect_ip = provider.mgmt.get_ip_address(vm_name)
+        connect_ip = vm.mgmt.ip
         assert connect_ip is not None
 
         # Check that we can at least get the uptime via ssh this should only be possible
@@ -708,9 +732,7 @@ def test_ssa_packages(ssa_vm):
         pytest.fail('Package {} was not found in details table after SSA run'.format(package_name))
 
 
-@pytest.mark.meta(blockers=[BZ(1533590, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(EC2Provider)),
-    BZ(1553808, forced_streams=['5.8', '5.9'],
+@pytest.mark.meta(blockers=[BZ(1553808, forced_streams=['5.8', '5.9'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.long_running
 def test_ssa_files(ssa_vm):

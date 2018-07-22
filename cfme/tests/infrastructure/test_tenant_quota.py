@@ -16,7 +16,7 @@ from cfme.utils.generators import random_vm_name
 
 pytestmark = [
     test_requirements.quota,
-    pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module", selector=ONE_PER_TYPE)
 ]
@@ -100,7 +100,7 @@ def small_vm(provider, small_template_modscope):
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     vm.refresh_relationships()
     yield vm
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 @pytest.mark.rhv2
@@ -142,7 +142,6 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7297')])
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here

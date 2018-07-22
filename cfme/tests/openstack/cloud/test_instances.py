@@ -49,7 +49,7 @@ def new_instance(provider):
 
     yield instance
     try:
-        instance.power_control_from_provider(instance.TERMINATE)
+        instance.cleanup_on_provider()
     except:
         pass
 
@@ -171,7 +171,7 @@ def test_delete_instance(new_instance):
                                          option=OpenStackInstance.TERMINATE)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_UNKNOWN)
 
-    assert new_instance.name not in new_instance.provider.mgmt.list_vm()
+    assert not new_instance.exists_on_provider
     view = navigate_to(new_instance.parent, 'AllForProvider')
     try:
         view.entities.get_entity(name=new_instance.name, surf_pages=True)

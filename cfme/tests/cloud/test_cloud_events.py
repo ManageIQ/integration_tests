@@ -5,14 +5,16 @@ import yaml
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
 
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.provider([AzureProvider], scope='module')
+    pytest.mark.provider([AzureProvider], scope='module'),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
-def test_manage_nsg_group(appliance, provider, setup_provider, register_event):
+def test_manage_nsg_group(appliance, provider, register_event):
     """
     tests that create/remove azure network security groups events are received and parsed by CFME
 
@@ -60,7 +62,7 @@ def test_manage_nsg_group(appliance, provider, setup_provider, register_event):
     provider.mgmt.remove_netsec_group(nsg_name, resource_group)
 
 
-def test_vm_capture(appliance, request, provider, setup_provider, register_event):
+def test_vm_capture(appliance, request, provider, register_event):
     """
     tests that generalize and capture vm azure events are received and parsed by CFME
 
@@ -68,16 +70,15 @@ def test_vm_capture(appliance, request, provider, setup_provider, register_event
         test_flag: events, provision
     """
 
-    mgmt = provider.mgmt
     vm = appliance.collections.cloud_instances.instantiate(
         random_vm_name(context='capture'), provider)
 
-    if not mgmt.does_vm_exist(vm.name):
+    if not vm.exists_on_provider:
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
         vm.refresh_relationships()
 
     # # deferred delete vm
-    request.addfinalizer(vm.delete_from_provider)
+    request.addfinalizer(vm.cleanup_on_provider)
 
     def cmp_function(_, y):
         # In 5.9 version `y` is a dict, not a yaml stream.
@@ -95,15 +96,12 @@ def test_vm_capture(appliance, request, provider, setup_provider, register_event
     register_event(full_data_attr, source='AZURE', event_type='virtualMachines_capture_EndRequest')
 
     # capture vm
-    image_name = vm.name
-    resource_group = provider.data['provisioning']['resource_group']
-
-    mgmt.capture_vm(vm.name, 'templates', image_name, resource_group=resource_group)
+    vm.mgmt.capture(container='templates', image_name=vm.name)
 
     # delete remaining image
-    container = 'system'
-    blob_images = mgmt.list_blob_images(container)
-    # removing both json and vhd files
-    test_image = [img for img in blob_images if image_name in img][-1]
-
-    mgmt.remove_blob_image(test_image, container)
+    # removing both json and vhd files, find_templates returns blob objects
+    blob_images = provider.mgmt.find_templates(container='system', name=vm.name, only_vhd=False)
+    logger.info('Found blobs on system container: %s', blob_images)
+    for blob in blob_images:
+        logger.info('Deleting blob %s', blob)
+        blob.cleanup()

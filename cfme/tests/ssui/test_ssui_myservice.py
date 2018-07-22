@@ -4,6 +4,8 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -19,7 +21,7 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7297')]),
+    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
     test_requirements.ssui,
     pytest.mark.long_running,
     pytest.mark.provider(gen_func=providers,
@@ -29,8 +31,6 @@ pytestmark = [
 
 
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9']),
-    GH('ManageIQ/integration_tests:7297')])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_service):
     """Test Myservice crud in SSUI.
@@ -48,8 +48,6 @@ def test_myservice_crud(appliance, setup_provider, context, order_service):
         my_service.delete()
 
 
-@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9']),
-    GH('ManageIQ/integration_tests:7297')])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retire_service_ssui(appliance, setup_provider,
                         context, order_service, request):
@@ -80,24 +78,30 @@ def test_service_start(appliance, setup_provider, context,
     catalog_item = order_service
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
-        if provider.one_of(InfraProvider):
+        if provider.one_of(InfraProvider, EC2Provider, AzureProvider):
             # For Infra providers vm is provisioned.Hence Stop option is shown
+            # For Azure, EC2 Providers Instance is provisioned.Hence Stop option is shown
             my_service.service_power(power='Stop')
             view = my_service.create_view(DetailsMyServiceView)
-            view.notification.assert_message(
-                "{} was {}.".format(catalog_item.name, 'stopped'))
+            wait_for(lambda: view.resource_power_status.power_status == 'Off',
+                     timeout=1000,
+                     fail_condition=None,
+                     message='Wait for resources off',
+                     delay=20)
         else:
             my_service.service_power(power='Start')
             view = my_service.create_view(DetailsMyServiceView)
-            view.notification.assert_message(
-                "{} was {}.".format(catalog_item.name, 'started'))
+            wait_for(lambda: view.resource_power_status.power_status == 'On',
+                     timeout=1000,
+                     fail_condition=None,
+                     message='Wait for resources on',
+                     delay=20)
 
         @request.addfinalizer
         def _finalize():
             my_service.delete()
 
 
-@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 @pytest.mark.parametrize('order_service', [['console_test']], indirect=True)
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
@@ -124,7 +128,7 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
         vm_console = vm_obj.vm_console
         if provider.one_of(OpenStackProvider):
             public_net = provider.data['public_network']
-            provider.mgmt.assign_floating_ip(vm_obj.name, public_net)
+            vm_obj.mgmt.assign_floating_ip(public_net)
         request.addfinalizer(vm_console.close_console_window)
         request.addfinalizer(appliance.server.logout)
         ssh_who_command = ("who --count" if not provider.one_of(OpenStackProvider)

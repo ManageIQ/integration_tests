@@ -33,7 +33,7 @@ def vm_obj(provider, setup_provider, small_template, vm_name):
 
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
     yield vm_obj
-    vm_obj.delete_from_provider()
+    vm_obj.cleanup_on_provider()
 
 
 def wait_for_vm_state_change(vm_obj, state):

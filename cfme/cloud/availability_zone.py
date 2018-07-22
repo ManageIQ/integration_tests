@@ -12,7 +12,7 @@ from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
     BaseEntitiesView, TimelinesView, ItemsToolBarViewSelector, Text, Table, SummaryTable, Accordion,
-    ManageIQTree)
+    ManageIQTree, Search)
 
 
 class AvailabilityZoneToolBar(View):
@@ -75,6 +75,7 @@ class AvailabilityZoneAllView(AvailabilityZoneView):
             self.in_availability_zones and
             self.entities.title.text == 'Availability Zones')
 
+    search = View.nested(Search)
     toolbar = View.nested(AvailabilityZoneToolBar)
     including_entities = View.include(AvailabilityZoneEntities, use_parent=True)
 

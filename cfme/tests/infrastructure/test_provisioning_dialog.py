@@ -81,7 +81,7 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
 
         request.addfinalizer(
             lambda: appliance.collections.infra_vms.instantiate(vm_name,
-                                                                provider).delete_from_provider()
+                                                                provider).cleanup_on_provider()
         )
         request_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
         provision_request = appliance.collections.requests.instantiate(
@@ -223,11 +223,11 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
     prov_data['schedule']["power_on"] = started
     template_name = provider.data['provisioning']['template']
 
-    provisioner(template_name, prov_data)
+    vm = provisioner(template_name, prov_data)
 
     wait_for(
-        lambda: provider.mgmt.does_vm_exist(vm_name) and
-        (provider.mgmt.is_vm_running if started else provider.mgmt.is_vm_stopped)(vm_name),
+        lambda: vm.exists_on_provider and
+        (vm.mgmt.is_running if started else vm.mgmt.is_stopped),
         num_sec=240, delay=5
     )
 

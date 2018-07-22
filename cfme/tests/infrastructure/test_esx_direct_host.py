@@ -73,14 +73,14 @@ def pytest_generate_tests(metafunc):
 def host_provider(_host_provider, provider):
     if provider.exists:
         # Delete original provider's hosts first
-        for host in provider.hosts:
+        for host in provider.hosts.all():
             if host.exists:
                 host.delete(cancel=False)
         # Get rid of the original provider, it would make a mess.
         provider.delete(cancel=False)
         provider.wait_for_delete()
     yield _host_provider
-    for host in _host_provider.hosts:
+    for host in _host_provider.hosts.all():
         if host.exists:
             host.delete(cancel=False)
     _host_provider.delete(cancel=False)

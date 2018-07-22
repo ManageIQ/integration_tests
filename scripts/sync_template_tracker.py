@@ -12,6 +12,9 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.providers import list_provider_keys, get_mgmt
 
+from wrapanapi import Openshift
+
+
 add_stdout_handler(logger)
 
 
@@ -55,6 +58,12 @@ def main(trackerbot_url, mark_usable=None, selected_provider=None):
     for template_name, providers in template_providers.items():
         template_name = str(template_name)
         template_info = TemplateName.parse_template(template_name)
+
+        # it turned out that some providers like ec2 may have templates w/o names.
+        # this is easy protection against such issue.
+        if not template_name.strip():
+            logger.warn('Ignoring template w/o name on provider %s', provider_key)
+            continue
 
         # Don't want sprout templates
         if template_info.group_name in ('sprout', 'rhevm-internal'):
@@ -102,7 +111,7 @@ def main(trackerbot_url, mark_usable=None, selected_provider=None):
 
     # Remove templates that aren't on any providers anymore
     for template in trackerbot.depaginate(api, api.template.get())['objects']:
-        if not template['providers']:
+        if not template['providers'] and template['name'].strip():
             logger.info("Deleting template %s (no providers)", template['name'])
             api.template(template['name']).delete()
 
@@ -127,22 +136,18 @@ def get_provider_templates(provider_key, template_providers, unresponsive_provid
     try:
         with thread_lock:
             provider_mgmt = get_mgmt(provider_key)
-        if cfme_data['management_systems'][provider_key]['type'] == 'ec2':
-            # dirty hack to filter out ec2 public images, because there are literally hundreds.
-            templates = provider_mgmt.api.get_all_images(owners=['self'],
-                filters={'image-type': 'machine'})
-            templates = map(lambda i: i.name or i.id, templates)
-        if cfme_data['management_systems'][provider_key]['type'] == 'gce':
-            # get_private_images returns a dictionary with items list that has tuple with list of
-            #  template dictionaries in the 1st spot, hence `.items()[0][1]`
-            templates = [t.get('name') for t in provider_mgmt.get_private_images().items()[0][1]]
-        else:
+
+        # TODO: change after openshift wrapanapi refactor
+        if isinstance(provider_mgmt, Openshift):
             templates = provider_mgmt.list_template()
-        logger.info('%s: returned %s templates', provider_key, len(templates))
+        else:
+            # By default, wrapanapi list_templates() will only list private images on gce/ec2
+            templates = [template.name for template in provider_mgmt.list_templates()]
+        print(provider_key, 'returned {} templates'.format(len(templates)))
         with thread_lock:
             for template in templates:
                 # If it ends with 'db', skip it, it's a largedb/nodb variant
-                if str(template).lower().endswith('db'):
+                if template.lower().endswith('db'):
                     continue
                 template_providers[template].append(provider_key)
     except Exception:

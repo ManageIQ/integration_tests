@@ -33,7 +33,7 @@ def new_vm(setup_provider, provider):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     yield vm
 
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 @pytest.mark.rhv1
@@ -46,7 +46,7 @@ def test_vm_migrate(appliance, new_vm, provider):
     # auto_test_services should exist to test migrate VM
     view = navigate_to(new_vm, 'Details')
     vm_host = view.entities.summary('Relationships').get_text_of('Host')
-    hosts = [vds.name for vds in provider.hosts if vds.name not in vm_host]
+    hosts = [vds.name for vds in provider.hosts.all() if vds.name not in vm_host]
     if hosts:
         migrate_to = hosts[0]
     else:

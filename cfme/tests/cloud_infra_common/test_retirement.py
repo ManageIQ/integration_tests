@@ -50,7 +50,7 @@ def retire_vm(small_template, provider):
                                 template_name=small_template.name)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200)
     yield vm
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 @pytest.fixture(scope="function")
@@ -66,7 +66,7 @@ def retire_ec2_s3_vm(provider):
                                 template_name='amzn-ami-pv-2015.03.rc-1.x86_64-s3')
     vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200)
     yield vm
-    vm.delete_from_provider()
+    vm.cleanup_on_provider()
 
 
 def verify_retirement_state(retire_vm):

@@ -2,7 +2,7 @@ import attr
 from cached_property import cached_property
 from os import path
 
-from wrapanapi.containers.providers.rhopenshift import Openshift
+from wrapanapi.systems.container import Openshift
 
 from cfme.common.provider import DefaultEndpoint
 from cfme.control.explorer.alert_profiles import ProviderAlertProfile, NodeAlertProfile
@@ -145,14 +145,14 @@ class OpenshiftProvider(ContainersProvider):
                 'image_tag': self.image_tag,
                 'cve_loc': self.cve_loc
             }
+            if self.appliance.version >= '5.10':
+                mapping['virt_type'] = self.virt_type
         else:
             mapping['metrics_type'] = None
             mapping['alerts_type'] = None
+            mapping['virt_type'] = None
             mapping['proxy'] = None
             mapping['advanced'] = None
-
-        if self.virt_type and not self.appliance.is_downstream:
-            mapping['virt_type'] = self.virt_type
 
         return mapping
 
@@ -252,17 +252,17 @@ class OpenshiftProvider(ContainersProvider):
         if not custom_attributes:
             raise TypeError('{} takes at least 1 argument.'
                             .format(self.add_custom_attributes.__name__))
-        for attr in custom_attributes:
-            if not isinstance(attr, CustomAttribute):
+        for c_attr in custom_attributes:
+            if not isinstance(c_attr, CustomAttribute):
                 raise TypeError('All arguments should be of type {}. ({} != {})'
-                                .format(CustomAttribute, type(attr), CustomAttribute))
+                                .format(CustomAttribute, type(c_attr), CustomAttribute))
         payload = {
             "action": "add",
             "resources": [{
                 "name": ca.name,
                 "value": str(ca.value)
             } for ca in custom_attributes]}
-        for i, fld_tp in enumerate([attr.field_type for attr in custom_attributes]):
+        for i, fld_tp in enumerate([c_attr.field_type for c_attr in custom_attributes]):
             if fld_tp:
                 payload['resources'][i]['field_type'] = fld_tp
         return self.appliance.rest_api.post(
@@ -277,15 +277,15 @@ class OpenshiftProvider(ContainersProvider):
         if not custom_attributes:
             raise TypeError('{} takes at least 1 argument.'
                             .format(self.edit_custom_attributes.__name__))
-        for attr in custom_attributes:
-            if not isinstance(attr, CustomAttribute):
+        for c_attr in custom_attributes:
+            if not isinstance(c_attr, CustomAttribute):
                 raise TypeError('All arguments should be of type {}. ({} != {})'
-                                .format(CustomAttribute, type(attr), CustomAttribute))
+                                .format(CustomAttribute, type(c_attr), CustomAttribute))
         attribs = self.custom_attributes()
         payload = {
             "action": "edit",
             "resources": [{
-                "href": filter(lambda attr: attr.name == ca.name, attribs)[-1].href,
+                "href": filter(lambda c_attr: c_attr.name == ca.name, attribs)[-1].href,
                 "value": ca.value
             } for ca in custom_attributes]}
         return self.appliance.rest_api.post(
@@ -300,22 +300,22 @@ class OpenshiftProvider(ContainersProvider):
         Returns: response.
         """
         names = []
-        for attr in custom_attributes:
-            attr_type = type(attr)
+        for c_attr in custom_attributes:
+            attr_type = type(c_attr)
             if attr_type in (str, CustomAttribute):
-                names.append(attr if attr_type is str else attr.name)
+                names.append(c_attr if attr_type is str else c_attr.name)
             else:
                 raise TypeError('Type of arguments should be either'
                                 'str or CustomAttribute. ({} not in [str, CustomAttribute])'
-                                .format(type(attr)))
+                                .format(type(c_attr)))
         attribs = self.custom_attributes()
         if not names:
-            names = [attr.name for attr in attribs]
+            names = [attrib.name for attrib in attribs]
         payload = {
             "action": "delete",
             "resources": [{
-                "href": attr.href,
-            } for attr in attribs if attr.name in names]}
+                "href": attrib.href,
+            } for attrib in attribs if attrib.name in names]}
         return self.appliance.rest_api.post(
             path.join(self.href(), 'custom_attributes'), **payload)
 

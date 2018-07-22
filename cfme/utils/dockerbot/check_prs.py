@@ -15,16 +15,16 @@ from cfme.utils.conf import docker as docker_conf
 from cfme.utils.log import setup_logger
 from cfme.utils.trackerbot import api
 
-token = docker_conf['gh_token']
-owner = docker_conf['gh_owner']
-repo = docker_conf['gh_repo']
+token = docker_conf.get('gh_token')
+owner = docker_conf.get('gh_owner')
+repo = docker_conf.get('gh_repo')
 
 tapi = api()
 
-CONT_LIMIT = docker_conf['workers']
+CONT_LIMIT = docker_conf.get('workers')
 DEBUG = docker_conf.get('debug', False)
 
-logger = setup_logger(logging.getLogger('prt'))
+logger, _ = setup_logger(logging.getLogger('prt'))
 
 # Disable pika logs
 logging.getLogger("pika").propagate = False

@@ -70,11 +70,13 @@ def provisioned_instance(provider, instance_args, appliance):
     vm_name, inst_args = instance_args
     collection = appliance.provider_based_collection(provider)
     instance = collection.create(vm_name, provider, form_values=inst_args)
+    if not instance:
+        raise Exception("instance returned by collection.create is 'None'")
     yield instance
 
     logger.info('Instance cleanup, deleting %s', instance.name)
     try:
-        instance.delete_from_provider()
+        instance.cleanup_on_provider()
     except Exception as ex:
         logger.warning('Exception while deleting instance fixture, continuing: {}'
                        .format(ex.message))
@@ -87,7 +89,7 @@ def test_provision_from_template(provider, provisioned_instance):
     Metadata:
         test_flag: provision
     """
-    assert provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned"
+    assert provisioned_instance.exists_on_provider, "Instance wasn't provisioned successfully"
 
 
 @pytest.mark.provider([GCEProvider], required_fields=[['provisioning', 'image']],
@@ -102,7 +104,7 @@ def test_gce_preemptible_provision(appliance, provider, instance_args, soft_asse
     view = navigate_to(instance, "Details")
     preemptible = view.entities.summary("Properties").get_text_of("Preemptible")
     soft_assert('Yes' in preemptible, "GCE Instance isn't Preemptible")
-    soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
+    soft_assert(instance.exists_on_provider, "Instance wasn't provisioned successfully")
 
 
 @pytest.mark.rhv2
@@ -174,7 +176,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
         provision_request.edit_request(values=modifications)
         vm_names = [new_vm_name]  # Will be just one now
         request.addfinalizer(
-            lambda: collection.instantiate(new_vm_name, provider).delete_from_provider()
+            lambda: collection.instantiate(new_vm_name, provider).cleanup_on_provider()
         )
     else:
         # Manual approval
@@ -182,7 +184,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
         vm_names = [vm_name + "001", vm_name + "002"]  # There will be two VMs
         request.addfinalizer(
             lambda: [appliance.collections.infra_vms.instantiate(name,
-                                                                 provider).delete_from_provider()
+                                                                 provider).cleanup_on_provider()
                      for name in vm_names]
         )
     wait_for(
@@ -330,8 +332,8 @@ def test_cloud_provision_from_template_with_attached_disks(
             soft_assert(vm_name in provider.mgmt.volume_attachments(volume_id))
         for volume, device in device_mapping:
             soft_assert(provider.mgmt.volume_attachments(volume)[vm_name] == device)
-        instance.delete_from_provider()  # To make it possible to delete the volume
-        wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
+        instance.mgmt.delete()  # To make it possible to delete the volume
+        wait_for(lambda: not instance.exists_on_provider, num_sec=180, delay=5)
 
 
 # Not collected for EC2 in generate_tests above
@@ -392,8 +394,8 @@ def test_provision_with_boot_volume(request, instance_args, provider, soft_asser
         assert provision_request.is_succeeded(method='ui'), msg
         soft_assert(instance.name in provider.mgmt.volume_attachments(volume))
         soft_assert(provider.mgmt.volume_attachments(volume)[instance.name] == "/dev/vda")
-        instance.delete_from_provider()  # To make it possible to delete the volume
-        wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
+        instance.mgmt.delete()  # To make it possible to delete the volume
+        wait_for(lambda: not instance.exists_on_provider, num_sec=180, delay=5)
 
 
 # Not collected for EC2 in generate_tests above
@@ -413,9 +415,9 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
     # Set up automate
     method = modified_request_class.methods.instantiate(name="openstack_CustomizeRequest")
     try:
-        image_id = provider.mgmt.get_template_id(small_template.name)
+        image_id = provider.mgmt.get_template(small_template.name).uuid
     except KeyError:
-        pytest.skip("No small_template in provider adta!")
+        pytest.skip("No small_template in provider data!")
     with update(method):
         method.script = dedent('''\
             $evm.root["miq_provision"].set_option(
@@ -455,18 +457,19 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
         "Provisioning failed with the message {}".format(
             provision_request.row.last_message.text))
 
-    prov_instance = provider.mgmt._find_instance_by_name(instance.name)
+    instance.mgmt.refresh()
+    prov_instance_raw = instance.mgmt.raw
     try:
-        assert hasattr(prov_instance, 'os-extended-volumes:volumes_attached')
-        volumes_attached = getattr(prov_instance, 'os-extended-volumes:volumes_attached')
+        assert hasattr(prov_instance_raw, 'os-extended-volumes:volumes_attached')
+        volumes_attached = getattr(prov_instance_raw, 'os-extended-volumes:volumes_attached')
         assert len(volumes_attached) == 1
         volume_id = volumes_attached[0]["id"]
         assert provider.mgmt.volume_exists(volume_id)
         volume = provider.mgmt.get_volume(volume_id)
         assert volume.size == 3
     finally:
-        instance.delete_from_provider()
-        wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
+        instance.cleanup_on_provider()
+        wait_for(lambda: not instance.exists_on_provider, num_sec=180, delay=5)
         if "volume_id" in locals():  # To handle the case of 1st or 2nd assert
             if provider.mgmt.volume_exists(volume_id):
                 provider.mgmt.delete_volume(volume_id)

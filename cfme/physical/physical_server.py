@@ -3,7 +3,7 @@
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cached_property import cached_property
-from wrapanapi.lenovo import LenovoSystem
+from wrapanapi.systems import LenovoSystem
 
 from cfme.common import PolicyProfileAssignable, Taggable
 from cfme.common.physical_server_views import (
@@ -236,8 +236,8 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
         inventory_to_match = self.INVENTORY_TO_MATCH
 
         # Retrieve the stats and inventory from wrapanapi
-        server_stats = client.stats(*stats_to_match, requester=self)
-        server_inventory = client.inventory(*inventory_to_match, requester=self)
+        server_stats = client.server_stats(*stats_to_match, requester=self)
+        server_inventory = client.server_inventory(*inventory_to_match, requester=self)
 
         # Refresh the browser
         if ui:
