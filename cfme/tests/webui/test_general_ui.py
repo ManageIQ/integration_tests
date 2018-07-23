@@ -76,6 +76,18 @@ def set_help_menu_options(appliance):
     })
 
 
+@pytest.fixture
+def create_20k_vms(appliance):
+    rails_create_command = ('20000.times { |i| ManageIQ::Providers::Vmware::InfraManager::'
+                            'Vm.create :name => "vm_%05d" % (1+i),'
+                            ' :vendor => "vmware", :location => "foo" }')
+    rails_cleanup_command = ('20000.times { |i| ManageIQ::Providers::Vmware::InfraManager::'
+                             'Vm.where(:name => "vm_%05d" % (1+i)).first.delete}')
+    appliance.ssh_client.run_rails_command("'{}'".format(rails_create_command))
+    yield
+    appliance.ssh_client.run_rails_command("'{}'".format(rails_cleanup_command))
+
+
 @pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
 def test_add_provider_trailing_whitespaces(provider, soft_assert):
     """Test to validate the hostname and username should be without whitespaces """
@@ -163,7 +175,7 @@ def test_automate_can_edit_copied_method(appliance, request):
     })
 
 
-def test_infrastructure_filter_20k_vms(appliance, request):
+def test_infrastructure_filter_20k_vms(appliance, create_20k_vms):
     """Test steps:
 
         1) Go to rails console and create 20000 vms
@@ -171,16 +183,6 @@ def test_infrastructure_filter_20k_vms(appliance, request):
         3) Create filter Field -> Virtual Machine: Vendor = "vmware"
         4) There should be filtered 20k vms
     """
-    rails_create_command = ('20000.times { |i| ManageIQ::Providers::Vmware::InfraManager::'
-                            'Vm.create :name => "vm_%05d" % (1+i),'
-                            ' :vendor => "vmware", :location => "foo" }')
-    rails_cleanup_command = ('20000.times { |i| ManageIQ::Providers::Vmware::InfraManager::'
-                             'Vm.where(:name => "vm_%05d" % (1+i)).first.delete}')
-    assert appliance.ssh_client.run_rails_command("'{}'".format(rails_create_command))
-    request.addfinalizer(
-        lambda: appliance.ssh_client.run_rails_command("'{}'".format(rails_cleanup_command))
-    )
-
     view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     view.entities.search.save_filter(
         'fill_field(Virtual Machine : Vendor, =, vmware)', 'vmware', apply_filter=True)
