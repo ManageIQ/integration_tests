@@ -7,7 +7,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.provider([VMwareProvider], selector=ONE, scope='module'),
+    pytest.mark.provider([VMwareProvider], selector=ONE),
     pytest.mark.usefixtures("setup_provider"),
 ]
 
