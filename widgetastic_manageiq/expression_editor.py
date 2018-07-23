@@ -2,16 +2,18 @@
 """ The expression editor present in some locations of CFME.
 
 """
-from functools import partial
-from selenium.common.exceptions import NoSuchElementException
-from cfme.utils.wait import wait_for, TimedOutError
 import re
-from cfme.utils.pretty import Pretty
-
-from widgetastic_patternfly import Input, BootstrapSelect, Button
-from widgetastic.widget import View
-from widgetastic_manageiq import Calendar, Checkbox
 import six
+from functools import partial
+
+from selenium.common.exceptions import NoSuchElementException
+from widgetastic_manageiq import Calendar, Checkbox
+from widgetastic_patternfly import Input, BootstrapSelect as VanillaBootstrapSelect, Button
+from widgetastic.utils import Version, VersionPick
+from widgetastic.widget import View
+
+from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.pretty import Pretty
 
 
 class ExpressionButton(Button):
@@ -20,6 +22,16 @@ class ExpressionButton(Button):
         return (
             './/*[(self::a or self::button or (self::input and '
             '(@type="button" or @type="submit"))) {}]'.format(self.locator_conditions))
+
+
+class BootstrapSelect(VanillaBootstrapSelect):
+
+    def fill(self, value):
+        # Some BootstrapSelects appears on the page only if another select changed. Therefore we
+        # should wait until it appears and only then we can fill it.
+        self.logger.info("FILLING WIDGET %s", str(self))
+        self.wait_displayed()
+        super(BootstrapSelect, self).fill(value)
 
 
 class ExpressionEditor(View, Pretty):
@@ -90,7 +102,11 @@ class ExpressionEditor(View, Pretty):
     ROOT = "//div[@id='exp_editor_div']"
     MAKE_BUTTON = "//span[not(contains(@style,'none'))]//img[@alt='{}']"
     ATOM_ROOT = "./div[@id='exp_atom_editor_div']"
-    EXPRESSIONS_ROOT = "./fieldset/div"
+    EXPRESSIONS_ROOT = VersionPick({
+        Version.lowest(): "./fieldset/div",
+        "5.10": ".//div[@class='panel-body']"
+    })
+    EXPRESSION_TEXT = "//a[contains(@id,'exp_')]"
     COMMIT = Button(title="Commit expression element changes")
     DISCARD = Button(title="Discard expression element changes")
     REMOVE = Button(title="Remove this expression element")
@@ -99,8 +115,14 @@ class ExpressionEditor(View, Pretty):
     AND = ExpressionButton(title="AND with a new expression element")
     REDO = Button(title="Redo the last change")
     UNDO = Button(title="Undo the last change")
-    SELECT_SPECIFIC = "//img[@alt='Click to change to a specific Date/Time format']"
-    SELECT_RELATIVE = "//img[@alt='Click to change to a relative Date/Time format']"
+    SELECT_SPECIFIC = VersionPick({
+        Version.lowest(): ".//img[@alt='Click to change to a specific Date/Time format']",
+        "5.10": ".//a[@title='Click to change to a specific Date/Time format']"
+    })
+    SELECT_RELATIVE = VersionPick({
+        Version.lowest(): ".//img[@alt='Click to change to a relative Date/Time format']",
+        "5.10": ".//a[@title='Click to change to a relative Date/Time format']"
+    })
 
     pretty_attrs = ['show_loc']
 
@@ -151,30 +173,37 @@ class ExpressionEditor(View, Pretty):
 
     @property
     def expression_text(self):
-        return self.browser.text("//a[contains(@id,'exp_')]", parent=self._expressions_root)
+        try:
+            return self.browser.text(self.EXPRESSION_TEXT, parent=self._expressions_root)
+        except NoSuchElementException:
+            return "<new element>"
 
     def select_first_expression(self):
         """There is always at least one (???), so no checking of bounds."""
-        self.browser.elements("//a[contains(@id,'exp_')]", parent=self._expressions_root)[0].click()
+        el = self.browser.elements(self.EXPRESSION_TEXT, parent=self._expressions_root)[0]
+        self.browser.click(el)
 
     def select_expression_by_text(self, text):
         self.browser.click(
-            "//a[contains(@id,'exp_')][contains(normalize-space(text()),'{}')]".format(text)
+            "{}[contains(normalize-space(text()),'{}')]".format(self.EXPRESSION_TEXT, text)
         )
 
     def no_expression_present(self):
-        els = self.browser.elements("//a[contains(@id,'exp_')]", parent=self._expressions_root)
+        els = self.browser.elements(self.EXPRESSION_TEXT, parent=self._expressions_root)
         if len(els) > 1:
             return False
-        return els[0].text.strip() == "???"
+        no_expression_text = "???" if self.browser.product_version < "5.10" else "<new element>"
+        return self.expression_text == no_expression_text
 
     def any_expression_present(self):
         return not self.no_expression_present()
 
     def is_editing(self):
+        no_expression_text = "???" if self.browser.product_version < "5.10" else "<new element>"
         try:
             self.browser.element(
-                "//a[contains(@id,'exp_')][contains(normalize-space(text()),'???')]",
+                "{}[contains(normalize-space(text()), {})]".format(
+                    self.EXPRESSION_TEXT, no_expression_text),
                 parent=self._expressions_root
             )
             return True

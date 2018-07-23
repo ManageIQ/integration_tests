@@ -17,7 +17,6 @@ from cfme.control.explorer.alert_profiles import AlertProfileDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
-from cfme.utils.version import current_version
 
 pytestmark = [
     pytest.mark.long_running,
@@ -524,6 +523,10 @@ def test_policy_profile_crud(policy_profile_collection, two_random_policies):
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("fill_type,expression,verify", EXPRESSIONS_TO_TEST, ids=[
     expr[0] for expr in EXPRESSIONS_TO_TEST])
+@pytest.mark.meta(
+    blockers=[BZ(1607361, forced_streams=["5.10"],
+    unblock=lambda fill_type: fill_type != "Find")]
+)
 def test_modify_condition_expression(condition_for_expressions, fill_type, expression, verify):
     with update(condition_for_expressions):
         condition_for_expressions.expression = expression.format(
@@ -598,7 +601,6 @@ def test_alert_profile_assigning(alert_profile, appliance):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda: current_version() < "5.8")
 def test_control_is_ansible_playbook_available_in_actions_dropdown(action_collection):
     view = navigate_to(action_collection, "Add")
     assert "Run Ansible Playbook" in [option.text for option in view.action_type.all_options]
