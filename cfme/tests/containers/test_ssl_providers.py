@@ -116,8 +116,8 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert, sync_ssl_
         ti.args[1].default_sec_protocol, ti.args[1].metrics_sec_protocol)
     for ti in TEST_ITEMS])
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_add_mertics_provider_ssl(provider, appliance, test_item, soft_assert,
-                                  sync_ssl_certificate):
+def test_add_mertics_provider_ssl(provider, appliance, test_item,
+                                  soft_assert, sync_ssl_certificate):
     """This test checks adding container providers with 3 different security protocols:
     SSL trusting custom CA, SSL without validation and SSL
     The test checks the Default Endpoint as well as the Hawkular Endpoint
