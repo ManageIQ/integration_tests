@@ -13,6 +13,7 @@ from cfme.utils.ocp_cli import OcpCli
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for, TimedOutError
 from . import ContainersProvider, ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
+from widgetastic.utils import VersionPick, Version
 
 
 class CustomAttribute(object):
@@ -163,7 +164,9 @@ class OpenshiftProvider(ContainersProvider):
     @num_route.variant('ui')
     def num_route_ui(self):
         view = navigate_to(self, "Details")
-        return int(view.entities.summary("Relationships").get_text_of("Routes"))
+        name = VersionPick({Version.lowest(): 'Routes',
+                            '5.9': 'Container Routes'})
+        return int(view.entities.summary("Relationships").get_text_of(name))
 
     @variable(alias='db')
     def num_template(self):
