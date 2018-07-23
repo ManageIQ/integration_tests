@@ -244,8 +244,9 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
         """Updates host's default credential endpoint via rest api
 
         Args:
-            credentials (dict) : credentials from yaml file
-        Returns: ``True`` if credentials are saved and valid; ``False`` otherwise
+            credentials (dict): credentials from yaml file
+
+        Returns: :py:class:`bool`
         """
         # TODO: Move to Sentaku
         try:
@@ -255,7 +256,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
             elif isinstance(credentials['default'], self.Credential):
                 creds = credentials['default']
             else:
-                raise TypeError("credentials must be a string or a Credential instance")
+                raise TypeError("credentials['default'] must be a string or a Credential instance")
             host.action.edit(credentials={"userid": creds.principal,
                                           "password": creds.secret})
         except APIException:

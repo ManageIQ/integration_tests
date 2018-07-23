@@ -6,7 +6,7 @@ from cfme.exceptions import MenuItemNotFound
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import testgen, hosts
+from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 
@@ -58,23 +58,15 @@ def datastore(appliance, provider, datastore_type):
 
 
 @pytest.fixture(scope='module')
-def datastores_hosts_setup(provider, datastore, request, appliance):
-    # Check if there is a host with valid credentials
-    host_entities = datastore.get_hosts()
-    assert len(host_entities) != 0, "No hosts attached to this datastore found"
-    for host_entity in host_entities:
-        if 'checkmark' in host_entity.data['creds']:
-            continue
-        # If not, get credentials for one of the present hosts
-        host_data = hosts.get_host_data_by_name(provider.key, host_entity.name)
-        if host_data is None:
-            continue
-        host_collection = appliance.collections.hosts
-        test_host = host_collection.instantiate(name=host_entity.name, provider=provider)
-        test_host.update_credentials_rest(
-            credentials=Host.get_credentials_from_config(host_data.credentials))
-        request.addfinalizer(lambda: test_host.update_credentials_rest(
-            credentials=Host.Credential(principal="", secret="")))
+def datastores_hosts_setup(provider, datastore):
+    hosts = datastore.hosts.all()
+    assert hosts, "No hosts attached to this datastore found"
+    for host in hosts:
+        host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+        host.update_credentials_rest(credentials=host_data['credentials'])
+    yield
+    for host in hosts:
+        host.remove_hosts_credentials()
 
 
 @pytest.fixture(scope='function')

@@ -210,6 +210,15 @@ class Datastore(Pretty, BaseEntity, Taggable):
     provider = attr.ib()
     type = attr.ib(default=None)
 
+    def __attrs_post_init__(self):
+        # circular imports
+        from cfme.infrastructure.host import HostsCollection
+        self._collections = {'hosts': HostsCollection}
+
+    @property
+    def rest_api_entity(self):
+        return self.appliance.rest_api.collections.data_stores.get(name=self.name)
+
     def delete(self, cancel=True):
         """
         Deletes a datastore from CFME
@@ -227,6 +236,10 @@ class Datastore(Pretty, BaseEntity, Taggable):
                                                else 'Remove Datastore',
                                                handle_alert=(not cancel))
         view.flash.assert_success_message('Delete initiated for Datastore from the CFME Database')
+
+    @property
+    def hosts(self):
+        return self.collections.hosts
 
     def get_hosts(self):
         """ Returns names of hosts (from quadicons) that use this datastore

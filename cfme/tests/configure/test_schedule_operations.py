@@ -28,7 +28,8 @@ run_types = (
 def host_with_credentials(appliance, provider):
     """ Add credentials to hosts """
     host = provider.hosts.all()[0]
-    host.update_credentials_rest(host.credentials)
+    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+    host.update_credentials_rest(credentials=host_data['credentials'])
     yield host
     host.remove_credentials_rest()
 
