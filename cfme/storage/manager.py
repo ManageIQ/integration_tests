@@ -136,9 +136,7 @@ class StorageManager(BaseEntity, Taggable, PolicyProfileAssignable):
                                                handle_alert=not cancel)
 
         if not cancel:
-            msg = "Refresh Provider initiated for 1 {} from the CFME Database".format(
-                self.storage_title)
-            view.flash.assert_success_message(msg)
+            view.flash.assert_no_error()
 
     def delete(self):
         """Delete storage manager"""
