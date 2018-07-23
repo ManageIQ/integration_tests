@@ -108,6 +108,9 @@ def test_graph_screen(provider, interval, graph_type, enable_candu, collect_data
     vm = collection.instantiate('cu-24x7', provider)
     vm.wait_candu_data_available(timeout=1200)
 
+    if not provider.one_of(CloudProvider):
+        vm.capture_historical_data()
+
     view = navigate_to(vm, 'candu')
     view.options.interval.fill(interval)
 
