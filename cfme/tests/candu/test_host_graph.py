@@ -118,8 +118,9 @@ def compare_data(tb_data, gp_data, legends, tolerance=1):
                             leg=leg, dt=row['Date/Time']))
 
 
-# To-Do add support for other provider
-@pytest.mark.provider([VMwareProvider], scope='module', override=True)
+@pytest.mark.uncollectif(lambda provider, interval:
+                         provider.one_of(RHEVMProvider) and
+                         interval == "Daily")
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', HOST_GRAPHS)
 def test_graph_screen(provider, interval, graph_type, host, enable_candu):
@@ -139,7 +140,6 @@ def test_graph_screen(provider, interval, graph_type, host, enable_candu):
         host.capture_historical_data,
         delay=20,
         timeout=1000,
-        fail_condition=False,
         message="wait for capturing host historical data")
     host.wait_candu_data_available(timeout=1200)
 
