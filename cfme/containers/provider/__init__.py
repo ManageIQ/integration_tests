@@ -228,7 +228,9 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     @num_project.variant('ui')
     def num_project_ui(self):
         view = navigate_to(self, "Details")
-        return int(view.entities.summary("Relationships").get_text_of("Projects"))
+        name = VersionPick({Version.lowest(): 'Projects',
+                            '5.9': 'Container Projects'})
+        return int(view.entities.summary("Relationships").get_text_of(name))
 
     @variable(alias='db')
     def num_service(self):
@@ -236,10 +238,8 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
 
     @num_service.variant('ui')
     def num_service_ui(self):
-        if self.appliance.version < "5.7":
-            name = "Services"
-        else:
-            name = "Container Services"
+        name = VersionPick({Version.lowest(): 'Services',
+                            '5.7': 'Container Services'})
         view = navigate_to(self, "Details")
         return int(view.entities.summary("Relationships").get_text_of(name))
 
@@ -250,7 +250,10 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     @num_replication_controller.variant('ui')
     def num_replication_controller_ui(self):
         view = navigate_to(self, "Details")
-        return int(view.entities.summary("Relationships").get_text_of("Replicators"))
+        name = VersionPick({Version.lowest(): 'Replicators',
+                            '5.9': 'Container Replicators'})
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of(name))
 
     @variable(alias='db')
     def num_container_group(self):
@@ -259,7 +262,9 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     @num_container_group.variant('ui')
     def num_container_group_ui(self):
         view = navigate_to(self, "Details")
-        return int(view.entities.summary("Relationships").get_text_of("Pods"))
+        name = VersionPick({Version.lowest(): 'Pods',
+                            '5.9': 'Container Pods'})
+        return int(view.entities.summary("Relationships").get_text_of(name))
 
     @variable(alias='db')
     def num_pod(self):
@@ -278,7 +283,9 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     @num_node.variant('ui')
     def num_node_ui(self):
         view = navigate_to(self, "Details")
-        return int(view.entities.summary("Relationships").get_text_of("Nodes"))
+        name = VersionPick({Version.lowest(): 'Nodes',
+                            '5.9': 'Container Nodes'})
+        return int(view.entities.summary("Relationships").get_text_of(name))
 
     @variable(alias='db')
     def num_container(self):
@@ -302,11 +309,9 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
 
     @num_image.variant('ui')
     def num_image_ui(self):
-        if self.appliance.version < "5.7":
-            name = "Images"
-        else:
-            name = "Container Images"
         view = navigate_to(self, "Details")
+        name = VersionPick({Version.lowest(): 'Images',
+                            '5.9': 'Container Images'})
         return int(view.entities.summary("Relationships").get_text_of(name))
 
     @variable(alias='db')
@@ -316,7 +321,9 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     @num_image_registry.variant('ui')
     def num_image_registry_ui(self):
         view = navigate_to(self, "Details")
-        return int(view.entities.summary("Relationships").get_text_of("Image Registries"))
+        name = VersionPick({Version.lowest(): 'Image Registries',
+                            '5.9': 'Container Image Registries'})
+        return int(view.entities.summary("Relationships").get_text_of(name))
 
     def pods_per_ready_status(self):
         """Grabing the Container Statuses Summary of the pods from API"""
