@@ -9,12 +9,12 @@ dict and will provide you with whatever you ask for with no limitations.
 The main clue to know what is limited by the filters and what isn't is the 'filters' parameter.
 """
 import operator
-import six
 from collections import Mapping, OrderedDict
 from copy import copy
 
-from cfme.common.provider import all_types
+import six
 
+from cfme.common.provider import all_types
 from cfme.exceptions import UnknownProviderType
 from cfme.utils import conf
 from cfme.utils.log import logger
@@ -107,6 +107,8 @@ class ProviderFilter(object):
                 o = provider.data
                 try:
                     for field in field_ident:
+                        if not isinstance(o, Mapping):
+                            raise KeyError
                         o = o[field]
                     if field_value:
                         if o != field_value:
