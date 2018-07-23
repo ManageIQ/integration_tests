@@ -17,6 +17,7 @@ from cfme.utils.generators import random_vm_name
 pytestmark = [
     test_requirements.quota,
     pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
+    test_requirements.vm_migrate,
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module", selector=ONE_PER_TYPE)
 ]
@@ -101,6 +102,18 @@ def small_vm(provider, small_template_modscope):
     vm.refresh_relationships()
     yield vm
     vm.cleanup_on_provider()
+
+
+@pytest.fixture()
+def check_hosts(small_vm, provider):
+    """Fixture to return host"""
+    if len(provider.hosts) != 1:
+        view = navigate_to(small_vm, 'Details')
+        vm_host = view.entities.summary('Relationships').get_text_of('Host')
+        hosts = [vds.name for vds in provider.hosts if vds.name not in vm_host]
+        return hosts[0]
+    else:
+        pytest.skip("There is only one host in the provider")
 
 
 @pytest.mark.rhv2
@@ -237,3 +250,40 @@ def test_setting_child_quota_more_than_parent(tenants_setup, parent_quota, child
     view.flash.assert_message('Error when saving tenant quota: Validation failed: {} allocated '
                               'quota is over allocated, parent tenant does not have enough quota'.
                               format(flash_text))
+
+
+@pytest.mark.long_running
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True, scope="module",
+                      required_fields=['templates', 'small_template'], selector=ONE_PER_TYPE)
+@pytest.mark.parametrize(
+    ['set_roottenant_quota', 'custom_prov_data'],
+    [
+        [('cpu', '2'), {'change': 'cores_per_socket', 'value': '4'}]
+    ],
+    indirect=['set_roottenant_quota'],
+    ids=['max_cores']
+)
+def test_vm_migration_after_assigning_tenant_quota(appliance, setup_provider, small_vm,
+                                                   set_roottenant_quota,
+                                                   custom_prov_data, provider):
+    """prerequisite: Provider should be added
+
+    steps:
+
+    1. Create VM
+    2. Assign tenant quota
+    3. Migrate VM
+    4. Check whether migration is successfully done
+
+    """
+
+    migrate_to = check_hosts(small_vm, provider)
+    small_vm.migrate_vm(fauxfactory.gen_email(), fauxfactory.gen_alpha(),
+                        fauxfactory.gen_alpha(), host=migrate_to)
+    request_description = small_vm.name
+    cells = {'Description': request_description, 'Request Type': 'Migrate'}
+    migrate_request = appliance.collections.requests.instantiate(request_description, cells=cells,
+                                                                 partial_check=True)
+    migrate_request.wait_for_request(method='ui')
+    msg = "Request failed with the message {}".format(migrate_request.row.last_message.text)
+    assert migrate_request.is_succeeded(method='ui'), msg
