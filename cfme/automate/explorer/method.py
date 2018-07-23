@@ -4,7 +4,7 @@ from copy import copy
 
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedLocator, Version, VersionPick
 from widgetastic.widget import Table, Text, View, ParametrizedView, Select, ClickableMixin
 from widgetastic_manageiq import SummaryFormItem, ScriptBox, Input
 from widgetastic_patternfly import BootstrapSelect, BootstrapSwitch, Button, CandidateNotFound
@@ -62,18 +62,27 @@ class Inputs(View, ClickableMixin):
             return results
 
         def delete(self):
-                self.browser.click(
-                    './/img[@alt="Click to delete this input field from method"]', parent=self)
-                try:
-                    del self.row_id
-                except AttributeError:
-                    pass
+            if self.browser.product_version < '5.10':
+                xpath = './/img[@alt="Click to delete this field from schema"]'
+            else:
+                xpath = './/a[@title="Click to delete this field from schema"]'
+            self.browser.click(xpath, parent=self)
+            try:
+                del self.row_id
+            except AttributeError:
+                pass
 
-    add_input = Text('//img[@alt="Equal green"]')
+    add_field = VersionPick({
+        Version.lowest(): Text('//img[@alt="Equal green"]'),
+        '5.10': Text('//div[@id="class_fields_div"]//i[contains(@class, "fa-plus")]')
+    })
     name = Input(locator='.//td/input[contains(@id, "field_name")]')
     data_type = Select(locator='.//td/select[contains(@id, "field_datatype")]')
     default_value = Input(locator='.//td/input[contains(@id, "field_default_value")]')
-    finish_add_input = Text('//img[@alt="Add this entry"]')
+    finish_add_field = VersionPick({
+        Version.lowest(): Text('//img[@alt="Add this entry"]'),
+        '5.10': Text('//a[@title="Add this entry"]')
+    })
 
     def read(self):
         return self.inputs.read()
