@@ -1,6 +1,8 @@
 import pytest
+import re
 
 from cfme import test_requirements
+from cfme.common.candu_views import UtilizationZoomView
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -83,6 +85,29 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
     assert graph_data > 0
 
 
+def compare_data(tb_data, gp_data, legends, tolerance=1):
+    """ Compare Utilization graph and table data.
+    Args:
+        tb_data : Data from Utilization table
+        gp_data : Data from Utilization graph
+        legends : Legends in graph; which will help for comparison
+        tolerance : Its error which we have to allow while comparison
+    """
+    for row in tb_data:
+        for key, data in gp_data.items():
+            if any([re.match(key, item) for item in row['Date/Time'].split()]):
+                for leg in legends:
+                    tb = row[leg].replace(',', '').replace('%', '').split()
+                    if tb:
+                        tb = round(float(tb[0]), 1)
+                        gp = round(
+                            float(data[leg].replace(',', '').replace('%', '').split()[0]), 1)
+                        assert abs(tb - gp) <= tolerance
+                    else:
+                        logger.warning("No {leg} data captured for DateTime: {dt}".format(
+                            leg=leg, dt=row['Date/Time']))
+
+
 @pytest.mark.uncollectif(lambda provider, interval, graph_type:
                          ((provider.one_of(RHEVMProvider) or provider.one_of(AzureProvider)) and
                           graph_type == "vm_cpu_state") or
@@ -92,7 +117,7 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
                          interval == 'Daily'))
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', VM_GRAPHS)
-def test_graph_screen(provider, interval, graph_type, enable_candu, collect_data):
+def test_graph_screen(provider, interval, graph_type, enable_candu):
     """Test VM graphs for hourly and Daily
 
     prerequisites:
@@ -101,15 +126,20 @@ def test_graph_screen(provider, interval, graph_type, enable_candu, collect_data
     Steps:
         * Navigate to VM (cu-24x7) Utilization Page
         * Check graph displayed or not
-        * Check legends hide and display properly or not
-        * Check data for legends collected or not
+        * Zoom graph
+        * Compare data of Table and Graph
     """
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate('cu-24x7', provider)
-    vm.wait_candu_data_available(timeout=1200)
 
     if not provider.one_of(CloudProvider):
-        vm.capture_historical_data()
+        wait_for(
+            vm.capture_historical_data,
+            delay=20,
+            timeout=1000,
+            message="wait for capturing VM historical data"
+        )
+    vm.wait_candu_data_available(timeout=1200)
 
     view = navigate_to(vm, 'candu')
     view.options.interval.fill(interval)
@@ -126,21 +156,13 @@ def test_graph_screen(provider, interval, graph_type, enable_candu, collect_data
     wait_for(lambda: len(graph.all_legends) > 0,
              delay=5, timeout=600, fail_func=refresh)
 
-    # Check for legend hide property and graph data
-    graph_data = 0
-    for leg in graph.all_legends:
-        # check legend hide or not
-        graph.hide_legends(leg)
-        assert not graph.legend_is_displayed(leg)
-        # check legend display or not
-        graph.display_legends(leg)
-        assert graph.legend_is_displayed(leg)
+    graph.zoom_in()
+    view = view.browser.create_view(UtilizationZoomView)
+    assert view.chart.is_displayed
 
-        # check graph display data or not
-        # Note: legend like %Ready have less value some time zero. so sum data for all legend
-        for data in graph.data_for_legends(leg).values():
-            try:
-                graph_data += float(data[leg].replace(',', '').replace('%', '').split()[0])
-            except KeyError:
-                logger.warning("{} has not data point on graph".format(leg))
-    assert graph_data > 0
+    gp_data = view.chart.all_data
+    # Clear cache of table widget before read else it will mismatch headers.
+    view.table.clear_cache()
+    tb_data = view.table.read()
+    legends = view.chart.all_legends
+    compare_data(tb_data=tb_data, gp_data=gp_data, legends=legends)
