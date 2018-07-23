@@ -8,11 +8,12 @@ from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, CheckableBootstrapTreeview as CbTree)
 
 from . import ControlExplorerView
-from cfme.utils import ParamClassName
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import MultiBoxSelect
 
 
@@ -132,7 +133,8 @@ class BaseAlertProfile(BaseEntity, Updateable, Pretty):
         for attrib, value in updates.items():
             setattr(self, attrib, value)
         view = self.create_view(AlertProfileDetailsView)
-        assert view.is_displayed
+        wait_for(lambda: view.is_displayed, timeout=10,
+            message="wait AlertProfileDetailsView is displayed")
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
