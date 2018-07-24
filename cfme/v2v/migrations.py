@@ -9,7 +9,7 @@ from widgetastic.widget import Checkbox, View
 from widgetastic.utils import ParametrizedLocator
 from widgetastic_manageiq import (
     InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList, Paginator,
-    Table, MigrationPlanRequestDetailsList, RadioGroup, HiddenFileInput
+    Table, MigrationPlanRequestDetailsList, RadioGroup, HiddenFileInput, MigrationProgressBar
 )
 from widgetastic_patternfly import (Text, TextInput, Button, BootstrapSelect, SelectorDropdown,
                                     Dropdown)
@@ -288,6 +288,31 @@ class MigrationDashboardView(BaseLoggedInPage):
     migration_plans_completed_list = MigrationPlansList("plans-complete-list")
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
     migr_dropdown = MigrationDropdown(text="Not Started Plans")
+    # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
+    progress_bar = MigrationProgressBar(locator='.//div[3]/div/div[3]/div[3]/div/div')
+
+    def _get_status(self, plan_name):
+        """Returns status of migration plan"""
+        # TODO: Error handling with try-except
+        not_started = "Not Started Plans"
+        self.migr_dropdown.item_select(not_started)
+        if not self.migration_plans_not_started_list.is_plan_completed(plan_name):
+            in_progress = "In Progress Plans"
+            self.migr_dropdown.item_select(in_progress)
+            wait_for(lambda: bool(self.progress_bar.is_plan_started(plan_name)),
+                     message="migration plan is starting, be patient please", delay=5, num_sec=3600)
+            if self.progress_bar.is_plan_started(plan_name):
+                flag = in_progress
+            else:
+                completed = "Completed Plans"
+                self.migr_dropdown.item_select(completed)
+                if self.migration_plans_completed_list.is_plan_completed(plan_name):
+                    flag = completed
+                # TODO: Add archived plans tab to kk's widget
+        else:
+            flag = not_started
+        self.migr_dropdown.item_select(flag)
+        return flag
 
     @property
     def is_displayed(self):

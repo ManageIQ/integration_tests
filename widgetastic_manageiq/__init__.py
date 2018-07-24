@@ -4330,6 +4330,7 @@ class MigrationPlansList(Widget):
     ITEM_VM_LOCATOR = ('.//div[./span[contains(@class,"pficon-virtual-machine") '
             'or contains(@class,"pficon-screen")]]')
     ITEM_BUTTON_LOCATOR = './div[contains(@class,"list-view-pf-actions")]//button'
+    ITEM_IS_SUCCESSFUL_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
 
     def __init__(self, parent, list_class, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4391,6 +4392,25 @@ class MigrationPlansList(Widget):
             raise TypeError("Fill can only take one value from list to click on.")
         self.select_plan(value)
         return True
+
+    def is_plan_completed(self, plan_name):
+        """Returns true if migration plan is in completed or not-started state"""
+        try:
+            for item in self.browser.elements(self.ITEM_LOCATOR):
+                el = self.browser.element(".//*[@class='list-group-item-heading']", parent=item)
+                if self.browser.text(el) == plan_name:
+                    return True
+        except ItemNotFound:
+            return False
+
+    def is_plan_succeeded(self, plan_name):
+        """Returns true if plan is completed with success"""
+        try:
+            el = self._get_plan_element(plan_name)
+            return self.browser.is_displayed(self.browser.element(self.ITEM_IS_SUCCESSFUL_LOCATOR,
+                                                                  parent=el))
+        except NoSuchElementException:
+            return False
 
 
 class InfraMappingList(Widget):
@@ -4684,6 +4704,7 @@ class MigrationProgressBar(Widget):
     SIZE_LOCATOR = './/strong[contains(@id,"size-migrated")]'
     # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
     VMS_LOCATOR = './/strong[contains(@id,"vms-migrated")]'
+    PROGRESS_BAR = './/div[contains(@class,"progress")]/div[contains(@class,"in-progress")]'
 
     def __init__(self, parent, locator, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4730,3 +4751,8 @@ class MigrationProgressBar(Widget):
         el = self._get_vm_element(no)
         text = self.browser.text(self.VMS_LOCATOR, parent=el)
         return re.findall(r"\d+", text)[1]
+
+    def is_plan_started(self, plan_name):
+        """Returns true if migration plan is in in-progress state"""
+        el = self._get_vm_element(plan_name)
+        return self.browser.is_displayed(self.TIMER_LOCATOR, parent=el)

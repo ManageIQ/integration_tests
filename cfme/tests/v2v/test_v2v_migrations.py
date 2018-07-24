@@ -8,7 +8,10 @@ from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 pytestmark = [pytest.mark.ignore_stream('5.8')]
 
@@ -188,6 +191,26 @@ def enable_disable_migration_ui(appliance):
     appliance.disable_migration_ui()
 
 
+vms = []
+
+
+@pytest.fixture(scope="module")
+def vm_list(request, appliance, nvc_prov, rhvm_prov):
+    """Fixture to provide list of vm objects"""
+    # TODO: Need to add list of vm and its configuration in cfme_data.yaml
+    templates = [nvc_prov.data.templates.big_template['name']]
+    for template in templates:
+        vm_name = random_vm_name(context='v2v-auto')
+        collection = appliance.provider_based_collection(nvc_prov)
+        vm = collection.instantiate(vm_name, nvc_prov, template_name=template)
+
+        if not nvc_prov.mgmt.does_vm_exist(vm_name):
+            logger.info("deploying {} on provider {}".format(vm_name, nvc_prov.key))
+            vm.create_on_provider(allow_skip="default", datastore=request.param)
+            vms.append(vm)
+    return vms
+
+
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs'],
                             ['nfs', 'iscsi'], ['iscsi', 'iscsi']], indirect=True)
 def test_single_datastore_single_vm_mapping_crud(appliance, enable_disable_migration_ui,
@@ -225,3 +248,23 @@ def test_dual_datastore_dual_vm_mapping_crud(appliance, enable_disable_migration
     mapping = infrastructure_mapping_collection.create(form_data_dual_datastore)
     view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
     assert mapping.name in view.infra_mapping_list.read()
+
+
+@pytest.mark.parametrize('vm_list', ['NFS_Datastore_1', 'iSCSI_Datastore_1'], ids=['NFS', 'ISCSI'],
+                         indirect=True)
+@pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
+def test_end_to_end_migration(appliance, enable_disable_migration_ui, vm_list, create_provider,
+                              form_data_single_datastore):
+    infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
+    coll = appliance.collections.v2v_plans
+    coll.create(name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+                description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+                infra_map=mapping.name,
+                vm_list=vm_list,
+                start_migration=True)
+    view = appliance.browser.create_view(navigator.get_class(coll, 'All').VIEW)
+    # explicit wait for spinner of in-progress status card
+    wait_for(lambda: bool(view.progress_bar.is_plan_started(coll.name)),
+             message="migration plan is starting, be patient please", delay=5, num_sec=120)
+    assert view._get_status(coll.name) == "Completed Plans"
