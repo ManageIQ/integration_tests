@@ -22,6 +22,7 @@ from debtcollector import removals
 from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
 from six.moves.urllib.parse import urlparse
 from wrapanapi import VmState
+from wrapanapi.exceptions import VMInstanceNotFound
 from werkzeug.local import LocalStack, LocalProxy
 
 from cfme.fixtures import ui_coverage
@@ -2543,7 +2544,7 @@ class Appliance(IPAppliance):
                         vm = provider.mgmt.get_vm(vm_name)
                         ip = vm.ip
                     return ip or False  # get_ip_address might return None
-                except AttributeError:
+                except (AttributeError, VMInstanceNotFound):
                     return False
             ec, tc = wait_for(is_ip_available,
                               delay=5,
