@@ -1,12 +1,12 @@
 from navmazing import NavigateToAttribute
 from widgetastic.widget import View
-from widgetastic_manageiq import (Button, Table, Checkbox, Input, LineChart,
-                                  SummaryFormItem, BootstrapSelect)
 from widgetastic_patternfly import Tab
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from widgetastic_manageiq import (BootstrapSelect, Button, Checkbox, Input, LineChart,
+                                  SummaryFormItem, Table)
 
 
 class PlanningFilter(BaseLoggedInPage):
