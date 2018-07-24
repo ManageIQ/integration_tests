@@ -67,6 +67,8 @@ class AllUserView(ConfigurationView):
     """ All Users View."""
     toolbar = View.nested(AccessControlToolbar)
     entities = View.nested(UsersEntities)
+    table = Table("//div[@id='main_div']//table")
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -383,6 +385,36 @@ class UserCollection(BaseCollection):
         # To ensure tree update
         view.browser.refresh()
         return user
+
+    def delete(self, *users):
+        """
+        Delete user(s) using the Access Control EVM Users checklist
+        """
+        users = list(users)
+        delete_toolbar_txt = 'Delete selected Users'
+        full_name_header = 'Full Name'
+        delete_success_msg = 'EVM User "{}": Delete successful'
+        delete_blocked_msg = 'Default EVM User "{}" cannot be deleted'
+
+        view = navigate_to(self, 'All')
+        for user in users:
+            find_row_kwargs = {full_name_header: user.name}
+            # This will refresh the page to find the item so you won't have multiple items
+            # selected per page
+            row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
+            row[0].check()
+            view.toolbar.configuration.item_select(delete_toolbar_txt, handle_alert=True)
+
+            try:
+                # Check that deleting the user wasn't blocked
+                view.flash.assert_message(delete_blocked_msg.format(user.name))
+                # Check to see if this is a read-only account
+                raise RBACOperationBlocked(view.flash.messages[0].text)
+            except AssertionError:
+                # Delete operation wasn't blocked due to permissions
+                pass
+
+            view.flash.assert_success_message(delete_success_msg.format(user.name))
 
 
 @navigator.register(UserCollection, 'All')
@@ -866,6 +898,53 @@ class GroupCollection(BaseCollection):
         view.browser.refresh()
         return group
 
+    def delete(self, *groups):
+        """
+        Delete group(s) using the Access Control EVM Groups checklist
+        """
+        groups = list(groups)
+        delete_toolbar_txt = 'Delete selected Groups'
+        delete_success_msg = 'EVM Group "{}": Delete successful'
+        if self.appliance.version < '5.9.2':
+            group_name_header = 'Name'
+        else:
+            group_name_header = 'Description'
+
+        readonly_delete_blocked_msg = (
+            'EVM Group "{}": Error during delete: A read only group cannot be deleted.')
+
+        assignedgroup_delete_blocked_msg = (
+            'EVM Group "{}": Error during delete: '
+            'The group has users assigned that do not belong to any other group')
+
+        view = navigate_to(self, 'All')
+        for group in groups:
+            find_row_kwargs = {group_name_header: group.description}
+            # This will refresh the page to find the item so you won't have multiple items
+            # selected per page
+            row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
+            row[0].check()
+            view.toolbar.configuration.item_select(delete_toolbar_txt, handle_alert=True)
+
+            try:
+                # Check that we aren't deleting a read only group
+                view.flash.assert_message(readonly_delete_blocked_msg.format(group.description))
+                raise RBACOperationBlocked(view.flash.messages[0].text)
+            except AssertionError:
+                # Delete operation wasn't blocked due to permissions
+                pass
+
+            try:
+                # Check that we aren't deleting a read only group
+                view.flash.assert_message(
+                    assignedgroup_delete_blocked_msg.format(group.description))
+                raise RBACOperationBlocked(view.flash.messages[0].text)
+            except AssertionError:
+                # Delete operation wasn't blocked due to permissions
+                pass
+
+            view.flash.assert_success_message(delete_success_msg.format(group.description))
+
 
 @navigator.register(GroupCollection, 'All')
 class GroupAll(CFMENavigateStep):
@@ -976,6 +1055,7 @@ class AllRolesView(ConfigurationView):
     """ All Roles View """
     toolbar = View.nested(AccessControlToolbar)
     table = Table("//div[@id='main_div']//table")
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -1126,6 +1206,14 @@ class Role(Updateable, Pretty, BaseEntity):
         else:
             return False
 
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except CandidateNotFound:
+            return False
+
 
 @attr.s
 class RoleCollection(BaseCollection):
@@ -1172,6 +1260,38 @@ class RoleCollection(BaseCollection):
         assert view.is_displayed
 
         return role
+
+    def delete(self, *roles):
+        """
+        Delete role(s) using the Access Control EVM roles checklist
+        """
+        roles = list(roles)
+        delete_toolbar_txt = 'Delete selected Roles'
+        role_name_header = 'Name'
+        delete_success_msg = 'Role "{}": Delete successful'
+        assignedrole_delete_blocked_msg = (
+            'Role "{}": '
+            'Error during delete: Cannot delete record because of dependent entitlements')
+
+        view = navigate_to(self, 'All')
+        for role in roles:
+            find_row_kwargs = {role_name_header: role.name}
+            # This will refresh the page to find the item so you won't have multiple items
+            # selected per page
+            row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
+            row[0].check()
+            view.toolbar.configuration.item_select(delete_toolbar_txt, handle_alert=True)
+
+            try:
+                # Check that we aren't deleting a read only role
+                view.flash.assert_message(
+                    assignedrole_delete_blocked_msg.format(role.name))
+                raise RBACOperationBlocked(view.flash.messages[0].text)
+            except AssertionError:
+                # Delete operation wasn't blocked due to permissions
+                pass
+
+            view.flash.assert_success_message(delete_success_msg.format(role.name))
 
 
 @navigator.register(RoleCollection, 'All')
