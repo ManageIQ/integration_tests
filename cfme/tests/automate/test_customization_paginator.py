@@ -81,9 +81,9 @@ def test_paginator(some_dialogs, soft_assert, appliance):
         current_rec_offset = view.paginator.min_item
         current_rec_end = view.paginator.max_item
 
-        assert int(current_rec_offset) <= int(current_rec_end) <= int(current_total), \
-            "Incorrect paginator value, expected {0} <= {1} <= {2}".format(
-                current_rec_offset, current_rec_end, current_total)
+        assert ((int(current_rec_end) - int(current_rec_offset)) + 1) <= int(current_total), \
+            "Incorrect paginator value, expected (({0} - {1}) + 1) <= {2}".format(
+                current_rec_end, current_rec_offset, current_total)
 
     assert {dlg.label for dlg in some_dialogs} <= dialogs_found, \
         "Could not find all dialogs by clicking the paginator!"
