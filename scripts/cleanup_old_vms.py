@@ -10,6 +10,7 @@ from multiprocessing import Manager, Pool
 
 import pytz
 from tabulate import tabulate
+from wrapanapi.exceptions import VMInstanceNotFound
 
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.path import log_path
@@ -133,7 +134,7 @@ def scan_provider(provider_key, matchers, match_queue, scan_failure_queue):
 
     text_matched_vms = [vm for vm in vm_list if match(matchers, vm.name)]
     for vm in text_matched_vms:
-        match_queue.put(VmProvider(provider_key, vm))
+        match_queue.put(VmProvider(provider_key, vm.name))
 
     non_text_matching = set(vm_list) - set(text_matched_vms)
     logger.info(
@@ -142,11 +143,11 @@ def scan_provider(provider_key, matchers, match_queue, scan_failure_queue):
         '%r: MATCHED text filters: %r', provider_key, [vm.name for vm in text_matched_vms])
 
 
-def scan_vm(provider_key, vm, delta, match_queue, scan_failure_queue):
+def scan_vm(provider_key, vm_name, delta, match_queue, scan_failure_queue):
     """Scan an individual VM for age
 
     Args:
-        vm (wrapanapi.entities.Vm object)
+        vm_name (str) Name of the VM to scan
         delta (datetime.timedelta) The timedelta to compare age against for matches
         match_queue (Queue.Queue): MP queue to hold VMs matching age requirement
         scan_failure_queue (Queue.Queue): MP queue to hold vms that we could not compare age
@@ -158,28 +159,32 @@ def scan_vm(provider_key, vm, delta, match_queue, scan_failure_queue):
     # Nested exceptions to try and be safe about the scanned values and to get complete results
     failure = False
     status = NULL
-    logger.info('%r: Scan VM %r...', provider_key, vm.name)
+    logger.info('%r: Scan VM %r...', provider_key, vm_name)
     try:
+        vm = get_mgmt(provider_key).get_vm(vm_name)
         # Localize to UTC
         vm_creation_time = vm.creation_time
+    except VMInstanceNotFound:
+        logger.exception('%r: could not locate VM %s', provider_key, vm_name)
+        failure = True
     except Exception:  # noqa
         failure = True
-        logger.exception('%r: Exception getting creation time for %r', provider_key, vm.name)
+        logger.exception('%r: Exception getting creation time for %r', provider_key, vm_name)
         # This VM must have some problem, include in report even though we can't delete
         try:
             status = vm.state
         except Exception:  # noqa
             failure = True
-            logger.exception('%r: Exception getting status for %r', provider_key, vm.name)
+            logger.exception('%r: Exception getting status for %r', provider_key, vm_name)
             status = NULL
     finally:
         if failure:
-            scan_failure_queue.put(VmReport(vm.name, FAIL, status, NULL))
+            scan_failure_queue.put(VmReport(provider_key, vm_name, FAIL, status, NULL))
             return
 
     vm_delta = now - vm_creation_time
-    logger.info('%r: VM %r age: %r', provider_key, vm.name, vm_delta)
-    data = VmData(provider_key, vm, str(vm_delta))
+    logger.info('%r: VM %r age: %s', provider_key, vm_name, vm_delta)
+    data = VmData(provider_key, vm_name, str(vm_delta))
 
     # test age to determine which queue it goes in
     if delta < vm_delta:
@@ -188,7 +193,7 @@ def scan_vm(provider_key, vm, delta, match_queue, scan_failure_queue):
         logger.info('%r: VM %r did not match age requirement', provider_key, vm.name)
 
 
-def delete_vm(provider_key, vm, age, result_queue):
+def delete_vm(provider_key, vm_name, age, result_queue):
     """ Delete the given vm_name from the provider via REST interface
 
     Args:
@@ -201,10 +206,17 @@ def delete_vm(provider_key, vm, age, result_queue):
     """
     # diaper exceptions here to handle anything and continue.
     try:
+        vm = get_mgmt(provider_key).get_vm(vm_name)
         status = vm.state
+    except VMInstanceNotFound:
+        logger.exception('%r: could not locate VM %s', provider_key, vm_name)
+        # no reason to continue after this, nothing to try and delete
+        result_queue.put(VmReport(provider_key, vm_name, None, None, FAIL))
+        return
     except Exception:  # noqa
         status = FAIL
-        logger.exception('%r: Exception getting status for %r', provider_key, vm.name)
+        logger.exception('%r: Exception getting status for %r', provider_key, vm_name)
+        # keep going, try to delete anyway
 
     logger.info("%r: Deleting %r, age: %r, status: %r", provider_key, vm.name, age, status)
     try:
@@ -281,8 +293,8 @@ def cleanup_vms(texts, max_hours=24, providers=None, tags=None, prompt=True):
     # scan vms for age matches
     age_match_queue = manager.Queue()
     vm_scan_args = [
-        (provider_key, vm, timedelta(hours=int(max_hours)), age_match_queue, scan_fail_queue)
-        for provider_key, vm in text_matched]
+        (provider_key, vm_name, timedelta(hours=int(max_hours)), age_match_queue, scan_fail_queue)
+        for provider_key, vm_name in text_matched]
     pool_manager(scan_vm, vm_scan_args)
 
     vms_to_delete = []
@@ -304,8 +316,8 @@ def cleanup_vms(texts, max_hours=24, providers=None, tags=None, prompt=True):
     deleted_vms = []
     if vms_to_delete:
         delete_queue = manager.Queue()
-        delete_vm_args = [(provider_key, vm, age, delete_queue)
-                          for provider_key, vm, age in vms_to_delete]
+        delete_vm_args = [(provider_key, vm_name, age, delete_queue)
+                          for provider_key, vm_name, age in vms_to_delete]
         pool_manager(delete_vm, delete_vm_args)
 
         while not delete_queue.empty():
