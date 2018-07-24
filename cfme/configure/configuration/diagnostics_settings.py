@@ -263,7 +263,6 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             Args:
                 selection: The item in Collect menu ('Collect all logs' or 'Collect current logs')
         """
-
         if self.second_server_collect and not self.zone_collect:
             view = navigate_to(self, 'DiagnosticsCollectLogsSlave')
         else:
@@ -338,7 +337,8 @@ class ServerCollectLogsView(ServerDiagnosticsView):
     def is_displayed(self):
         return (
             self.in_server_collect_logs and
-            'Diagnostics Server' in self.title.text
+            self.title.text == 'Diagnostics Server "{} [{}]" (current)'.format(
+                self.context['object'].name, self.context['object'].sid)
         )
 
     @property
@@ -376,7 +376,8 @@ class ServerCollectLogsEditView(ServerCollectLogsView):
         return(
             self.in_server_collect_logs and
             self.depot_type.is_displayed and
-            'Editing Log Depot Settings for Server' in self.edit_form_title.text
+            ('Editing Log Depot Settings for Server'in self.edit_form_title.text or
+             'Editing Log Depot Settings for Zone' in self.edit_form_title.text)
         )
 
 
