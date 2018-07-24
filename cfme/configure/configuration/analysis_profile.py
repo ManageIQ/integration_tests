@@ -4,7 +4,6 @@ from copy import deepcopy
 
 from navmazing import NavigateToSibling, NavigateToAttribute, NavigationDestinationNotFound
 from widgetastic.widget import View, Text, ConditionalSwitchableView
-from widgetastic.utils import Fillable
 from widgetastic_patternfly import Dropdown, Button, CandidateNotFound, TextInput, Tab
 from widgetastic_manageiq import (
     Table, PaginationPane, SummaryFormItem, Checkbox, CheckboxSelect, DynamicTable)
@@ -57,7 +56,7 @@ class AnalysisProfileAllView(BaseLoggedInPage):
     toolbar = View.nested(AnalysisProfileToolbar)
     sidebar = View.nested(ConfigurationView)
     entities = View.nested(AnalysisProfileEntities)
-    paginator = PaginationPane()  #View.nested(PaginationPane)
+    paginator = PaginationPane()
 
 
 class AnalysisProfileDetailsView(BaseLoggedInPage):
@@ -109,11 +108,6 @@ class AnalysisProfileAddView(BaseLoggedInPage):
     """View for the add form, switches between host/vm based on object type
     Uses a switchable view based on the profile type widget
     """
-    @property
-    def is_displayed(self):
-        return (
-            self.title.text == 'Adding a new Analysis Profile' and
-            self.profile_type.text == self.context['object'].profile_type)
 
     title = Text('//div[@id="main-content"]//h1[@id="explorer_title"]'
                  '/span[@id="explorer_title_text"]')
@@ -153,6 +147,22 @@ class AnalysisProfileAddView(BaseLoggedInPage):
                     'Registry Value': TextInput(id='entry_value'),
                     'Actions': Button(title='Add this entry', classes=table_button_classes)},
                 assoc_column='Registry Key', rows_ignore_top=1, action_row=0)
+
+
+class AnalysisProfileAddVmView(AnalysisProfileAddView):
+    @property
+    def is_displayed(self):
+        return (
+            self.title.text == 'Adding a new Analysis Profile' and
+            self.profile_type.text == self.context['object'].VM_TYPE)
+
+
+class AnalysisProfileAddHostView(AnalysisProfileAddView):
+    @property
+    def is_displayed(self):
+        return (
+            self.title.text == 'Adding a new Analysis Profile' and
+            self.profile_type.text == self.context['object'].HOST_TYPE)
 
 
 class AnalysisProfileEditView(AnalysisProfileAddView):
@@ -214,21 +224,6 @@ class AnalysisProfile(Pretty, Updateable, BaseEntity):
     categories = attr.ib(default=None)
     registry = attr.ib(default=None)
 
-
-    # def __init__(self, name, description, profile_type, files=None, events=None, categories=None,
-    #              registry=None, appliance=None):
-    #     Navigatable.__init__(self, appliance=appliance)
-    #     self.name = name
-    #     self.description = description
-    #     self.files = files if isinstance(files, (list, type(None))) else [files]
-    #     self.events = events if isinstance(events, (list, type(None))) else [events]
-    #     self.categories = categories if isinstance(categories, (list, type(None))) else [categories]
-    #     self.registry = registry if isinstance(registry, (list, type(None))) else [registry]
-    #     if profile_type in (self.VM_TYPE, self.HOST_TYPE):
-    #         self.profile_type = profile_type
-    #     else:
-    #         raise ValueError("Profile Type is incorrect")
-
     def update(self, updates, cancel=False):
         """Update the existing Analysis Profile with given updates dict
         Make use of Updateable and use `with` to update object as well
@@ -269,11 +264,6 @@ class AnalysisProfile(Pretty, Updateable, BaseEntity):
         view = self.create_view(AnalysisProfileDetailsView, override=updates)
         assert view.is_displayed
 
-        view.flash.assert_success_message(
-            'Edit of Analysis Profile "{}" was cancelled by the user'.format(self.name)
-            if cancel or not changed
-            else 'Analysis Profile "{}" was saved'.format(updates.get('name', self.name)))
-
     def delete(self, cancel=False):
         """Delete self via details page"""
         view = navigate_to(self, 'Details')
@@ -283,11 +273,6 @@ class AnalysisProfile(Pretty, Updateable, BaseEntity):
             AnalysisProfileDetailsView if cancel else AnalysisProfileAllView)
         view.flush_widget_cache()
         assert view.is_displayed
-        if not cancel:
-            view.flash.assert_success_message('Analysis Profile "{}": Delete successful'
-                                              .format(self.description))
-        else:
-            assert view.flash.messages == []
 
     def copy(self, new_name=None, cancel=False):
         """Copy the Analysis Profile"""
@@ -320,11 +305,6 @@ class AnalysisProfile(Pretty, Updateable, BaseEntity):
             AnalysisProfileDetailsView if cancel else AnalysisProfileAllView)
         view.flush_widget_cache()
         assert view.is_displayed
-        # view.flash.assert_success_message(
-        #     'Add of new Analysis Profile was cancelled by the user'  # yep, not copy specific
-        #     if cancel
-        #     else 'Analysis Profile "{}" was saved'.format(new_profile.name))
-
         return new_profile
 
     @property
@@ -349,14 +329,13 @@ class AnalysisProfileCollection(BaseCollection):
                registry=None, cancel=False):
         """Add Analysis Profile to appliance"""
         # The tab form values have to be dictionaries with the root key matching the tab widget name
-
         form_values = self.form_fill_args({
             'name': name,
             'description': description,
-            'files': files,
-            'events': events,
             'categories': categories,
-            'registry': registry
+            'files': files,
+            'registry': registry,
+            'events': events
         })
 
         if profile_type.lower() == 'vm':
@@ -377,10 +356,6 @@ class AnalysisProfileCollection(BaseCollection):
         view = self.create_view(AnalysisProfileAllView)
 
         assert view.is_displayed
-        # view.flash.assert_success_message(
-        #     'Add of new Analysis Profile was cancelled by the user'
-        #     if cancel
-        #     else 'Analysis Profile "{}" was saved'.format(self.name))
 
         return self.instantiate(
             name=name,
@@ -392,10 +367,6 @@ class AnalysisProfileCollection(BaseCollection):
             registry=registry
         )
 
-    # def as_fill_value(self):
-    #     """String representation of an Analysis Profile in CFME UI"""
-    #     return self.name
-
     def form_fill_args(self, updates=None):
         """Build a dictionary of nested tab_forms for assoc_fill from a flat object dictionary
         If updates dictionary is passed, it is used instead of `self`
@@ -403,26 +374,29 @@ class AnalysisProfileCollection(BaseCollection):
         """
         fill_args = {'profile_type': None}  # this can't be set when adding or editing
         for key in ['name', 'description']:
-            arg = updates[key] if updates and key in updates else getattr(self, key)
-            fill_args[key] = arg
+            if updates and key in updates:
+                arg = updates[key]
+                fill_args[key] = arg
 
         for key in ['files', 'events', 'registry']:
-            data = deepcopy(updates[key] if updates and key in updates else getattr(self, key))
-            if isinstance(data, list):
-                # It would be much better to not have these hardcoded, but I can't get them
-                # statically from the form (ConditionalSwitchWidget)
-                assoc_column = 'Name' if key in ['files', 'events'] else 'Registry Key'
-                values_dict = {}
-                for item in data:
-                    name = item.pop(assoc_column)
-                    values_dict[name] = item
+            if updates and key in updates:
+                data = deepcopy(updates[key])
+                if isinstance(data, list):
+                    # It would be much better to not have these hardcoded, but I can't get them
+                    # statically from the form (ConditionalSwitchWidget)
+                    assoc_column = 'Name' if key in ['files', 'events'] else 'Registry Key'
+                    values_dict = {}
+                    for item in data:
+                        name = item.pop(assoc_column)
+                        values_dict[name] = item
 
-                fill_args[key] = {'tab_form': values_dict}
+                    fill_args[key] = {'tab_form': values_dict}
 
         for key in ['categories']:
             # No assoc_fill for checkbox select, just tab_form mapping here
-            arg = deepcopy(updates[key] if updates and key in updates else getattr(self, key))
-            fill_args[key] = {'tab_form': arg}
+            if updates and key in updates:
+                arg = deepcopy(updates[key])
+                fill_args[key] = {'tab_form': arg}
 
         return fill_args
 
@@ -439,15 +413,6 @@ class AnalysisProfileCollection(BaseCollection):
                     profile_type=profile.type.text))
         return profiles
 
-    # def __str__(self):
-    #     return self.as_fill_value()
-    #
-    # def __enter__(self):
-    #     self.create()
-    #
-    # def __exit__(self, type, value, traceback):
-    #     self.delete()
-
 
 @navigator.register(AnalysisProfileCollection, 'All')
 class AnalysisProfileAll(CFMENavigateStep):
@@ -462,7 +427,7 @@ class AnalysisProfileAll(CFMENavigateStep):
 
 @navigator.register(AnalysisProfileCollection, 'AddVmProfile')
 class AnalysisProfileVmAdd(CFMENavigateStep):
-    VIEW = AnalysisProfileAddView
+    VIEW = AnalysisProfileAddVmView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -471,7 +436,7 @@ class AnalysisProfileVmAdd(CFMENavigateStep):
 
 @navigator.register(AnalysisProfileCollection, 'AddHostProfile')
 class AnalysisProfileHostAdd(CFMENavigateStep):
-    VIEW = AnalysisProfileAddView
+    VIEW = AnalysisProfileAddHostView
     prerequisite = NavigateToSibling('All')
 
     def step(self):

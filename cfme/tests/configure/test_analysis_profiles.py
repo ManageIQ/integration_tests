@@ -48,7 +48,7 @@ def analysis_profile_collection(appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_vm_analysis_profile_crud(soft_assert, analysis_profile_collection):
+def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_collection):
     """CRUD for VM analysis profiles."""
     vm_profile = analysis_profile_collection.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -59,11 +59,18 @@ def test_vm_analysis_profile_crud(soft_assert, analysis_profile_collection):
         registry=registry_list,
         events=events_check()
     )
+    view = appliance.browser.create_view(
+        navigator.get_class(analysis_profile_collection, 'All').VIEW)
+    view.flash.assert_message('Analysis Profile "{}" was saved'.format(vm_profile.description))
+
     assert vm_profile.exists
 
     files_updates = events_check(updates=True)
     with update(vm_profile):
         vm_profile.files = files_updates
+    view = appliance.browser.create_view(navigator.get_class(vm_profile, 'Details').VIEW)
+    view.flash.assert_success_message(
+        'Analysis Profile "{}" was saved'.format(vm_profile.description))
     soft_assert(vm_profile.files == files_updates,
                 'Files update failed on profile: {}, {}'.format(vm_profile.name, vm_profile.files))
 
@@ -73,12 +80,18 @@ def test_vm_analysis_profile_crud(soft_assert, analysis_profile_collection):
                 'Categories update failed on profile: {}'.format(vm_profile.name))
 
     copied_profile = vm_profile.copy(new_name='copied-{}'.format(vm_profile.name))
+    view = appliance.browser.create_view(
+        navigator.get_class(analysis_profile_collection, 'All').VIEW)
+    # yep, not copy specific
+    view.flash.assert_message('Analysis Profile "{}" was saved'.format(vm_profile.description))
     assert copied_profile.exists
 
     copied_profile.delete()
     assert not copied_profile.exists
 
     vm_profile.delete()
+    view.flash.assert_success_message(
+        'Analysis Profile "{}": Delete successful'.format(vm_profile.description))
     assert not vm_profile.exists
 
 
@@ -166,7 +179,7 @@ def test_delete_default_analysis_profile(default_host_profile):
     assert not view.toolbar.configuration.item_enabled('Delete this Analysis Profile')
 
     # Flash error from collection
-    view = navigate_to(default_host_profile, 'All')
+    view = navigate_to(default_host_profile.parent, 'All')
     row = view.entities.table.row(
         name=default_host_profile.name, description=default_host_profile.description
     )
@@ -184,7 +197,7 @@ def test_edit_default_analysis_profile(default_host_profile):
     assert not view.toolbar.configuration.item_enabled('Edit this Analysis Profile')
 
     # Flash error from collection
-    view = navigate_to(default_host_profile, 'All')
+    view = navigate_to(default_host_profile.parent, 'All')
     row = view.entities.table.row(
         name=default_host_profile.name, description=default_host_profile.description
     )
