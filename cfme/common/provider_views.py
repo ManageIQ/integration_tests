@@ -415,6 +415,7 @@ class BeforeFillMixin(object):
     """
      this mixin is used to activate appropriate tab before filling this tab
     """
+
     def before_fill(self):
         if self.exists and not self.is_active():
             self.select()
@@ -572,9 +573,11 @@ class InfraProviderEditView(ProviderEditView):
     """
     @property
     def is_displayed(self):
+        expected_title = ("Edit Infrastructure Providers '{name}'".format(
+            name=self.context['object'].name))
         return (super(InfraProviderEditView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
-                self.title.text == 'Edit Infrastructure Provider')
+                self.title.text == expected_title)
 
 
 class PhysicalProviderEditView(ProviderEditView):
@@ -597,9 +600,10 @@ class CloudProviderEditView(ProviderEditView):
     """
     @property
     def is_displayed(self):
+        expected_title = ("Edit Cloud Providers '{name}'".format(name=self.context['object'].name))
         return (super(CloudProviderEditView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
-                self.title.text == 'Edit Cloud Provider')
+                self.title.text == expected_title)
 
 
 class ContainerProviderEditView(ProviderEditView):
@@ -608,9 +612,11 @@ class ContainerProviderEditView(ProviderEditView):
     """
     @property
     def is_displayed(self):
-        return (super(ContainerProviderEditView, self).is_displayed and
+        expected_title = ("Edit Container Providers '{name}'".format(
+            name=self.context['object'].name))
+        return (super(ProviderEditView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
-                'Edit Containers Provider' in self.title.text)
+                self.title.text == expected_title)
 
 
 class ContainerProviderEditViewUpdated(ContainerProviderEditView, ContainerProviderSettingView):
