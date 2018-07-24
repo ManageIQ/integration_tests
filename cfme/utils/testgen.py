@@ -260,7 +260,7 @@ def providers(metafunc, filters=None):
     return argnames, argvalues, idlist
 
 
-def providers_by_class(metafunc, classes, required_fields=None):
+def providers_by_class(metafunc, classes, required_fields=None, required_flags=None):
     """ Gets providers by their class
 
     Args:
@@ -279,7 +279,8 @@ def providers_by_class(metafunc, classes, required_fields=None):
         # Using the parametrize wrapper
         pytest_generate_tests = testgen.parametrize([GCEProvider], scope='module')
     """
-    pf = ProviderFilter(classes=classes, required_fields=required_fields)
+    pf = ProviderFilter(classes=classes, required_fields=required_fields,
+     required_flags=required_flags)
     return providers(metafunc, filters=[pf])
 
 

@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import partial_match
 
 from cfme.fixtures.provider import setup_or_skip
@@ -20,8 +21,10 @@ pytestmark = [pytest.mark.ignore_stream('5.8')]
 def pytest_generate_tests(metafunc):
     """This is parametrizing over the provider types and creating permutations of provider pairs,
        adding ids and argvalues."""
-    argnames1, argvalues1, idlist1 = testgen.providers_by_class(metafunc, [VMwareProvider])
-    argnames2, argvalues2, idlist2 = testgen.providers_by_class(metafunc, [RHEVMProvider])
+    argnames1, argvalues1, idlist1 = testgen.providers_by_class(metafunc, [VMwareProvider],
+        required_flags=['v2v'])
+    argnames2, argvalues2, idlist2 = testgen.providers_by_class(metafunc, [RHEVMProvider],
+        required_flags=['v2v'])
 
     new_idlist = []
     new_argvalues = []
@@ -35,10 +38,13 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope='module')
-def create_provider(request, nvc_prov, rhvm_prov):
+def providers(request, nvc_prov, rhvm_prov):
     """ Fixture to setup providers """
     setup_or_skip(request, nvc_prov)
     setup_or_skip(request, rhvm_prov)
+    yield nvc_prov, rhvm_prov
+    nvc_prov.delete_if_exists(cancel=False)
+    rhvm_prov.delete_if_exists(cancel=False)
 
 
 def _form_data_cluster_mapping(nvc_prov, rhvm_prov):
@@ -95,7 +101,7 @@ def form_data_single_datastore(request, nvc_prov, rhvm_prov):
         {
             'general': {
                 'name': 'infra_map_{}'.format(fauxfactory.gen_alphanumeric()),
-                'description': "Single Datastore migration  of VM from {ds_type1} to"
+                'description': "Single Datastore migration of VM from {ds_type1} to"
                 " {ds_type2},".format(ds_type1=request.param[0], ds_type2=request.param[1])
             },
             'cluster': {
@@ -123,7 +129,7 @@ def form_data_single_network(request, nvc_prov, rhvm_prov):
         {
             'general': {
                 'name': 'infra_map_{}'.format(fauxfactory.gen_alphanumeric()),
-                'description': "Single Network migration  of VM from {vlan1} to {vlan2},".
+                'description': "Single Network migration of VM from {vlan1} to {vlan2},".
                 format(vlan1=request.param[0], vlan2=request.param[1])
             },
             'cluster': {
@@ -157,7 +163,7 @@ def form_data_dual_datastore(request, nvc_prov, rhvm_prov):
         {
             'general': {
                 'name': 'infra_map_{}'.format(fauxfactory.gen_alphanumeric()),
-                'description': "Dual Datastore migration  of VM from {} to {},"
+                'description': "Dual Datastore migration of VM from {} to {},"
                 "& from {} to {}".
                 format(request.param[0][0], request.param[0][1], request.param[1][0],
                     request.param[1][1])
@@ -214,33 +220,50 @@ def vm_list(request, appliance, nvc_prov, rhvm_prov):
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs'],
                             ['nfs', 'iscsi'], ['iscsi', 'iscsi']], indirect=True)
 def test_single_datastore_single_vm_mapping_crud(appliance, enable_disable_migration_ui,
-                                            create_provider, form_data_single_datastore):
-    # TODO: Add "Delete" method call.This test case does not support update/delete
-    # as update is not a supported feature for mapping,
-    # and delete is not supported in our automation framework.
+                                            providers, form_data_single_datastore,
+                                            soft_assert):
+    # TODO: This test case does not support update
+    # as update is not a supported feature for mapping.
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
     view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
     assert mapping.name in view.infra_mapping_list.read()
+    mapping_list = view.infra_mapping_list
+    mapping_list.delete_mapping(mapping.name)
+    view.browser.refresh()
+    view.wait_displayed()
+    try:
+        assert mapping.name not in view.infra_mapping_list.read()
+    except NoSuchElementException:
+        # meaning there was only one mapping that is deleted, list is empty
+        pass
 
 
 @pytest.mark.parametrize('form_data_single_network', [['VM Network', 'ovirtmgmt'],
                             ['DPortGroup', 'ovirtmgmt']], indirect=True)
 def test_single_network_single_vm_mapping_crud(appliance, enable_disable_migration_ui,
-                                            create_provider, form_data_single_network):
-    # TODO: Add "Delete" method call.This test case does not support update/delete
-    # as update is not a supported feature for mapping,
-    # and delete is not supported in our automation framework.
+                                            providers, form_data_single_network):
+    # TODO: This test case does not support update
+    # as update is not a supported feature for mapping.
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_single_network)
     view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
     assert mapping.name in view.infra_mapping_list.read()
+    mapping_list = view.infra_mapping_list
+    mapping_list.delete_mapping(mapping.name)
+    view.browser.refresh()
+    view.wait_displayed()
+    try:
+        assert mapping.name not in view.infra_mapping_list.read()
+    except NoSuchElementException:
+        # meaning there was only one mapping that is deleted, list is empty
+        pass
 
 
 @pytest.mark.parametrize('form_data_dual_datastore', [[['nfs', 'nfs'], ['iscsi', 'iscsi']],
                             [['nfs', 'local'], ['iscsi', 'iscsi']]], indirect=True)
 def test_dual_datastore_dual_vm_mapping_crud(appliance, enable_disable_migration_ui,
-                                            create_provider, form_data_dual_datastore):
+                                            providers, form_data_dual_datastore):
     # TODO: Add "Delete" method call.This test case does not support update/delete
     # as update is not a supported feature for mapping,
     # and delete is not supported in our automation framework.
@@ -248,12 +271,21 @@ def test_dual_datastore_dual_vm_mapping_crud(appliance, enable_disable_migration
     mapping = infrastructure_mapping_collection.create(form_data_dual_datastore)
     view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
     assert mapping.name in view.infra_mapping_list.read()
+    mapping_list = view.infra_mapping_list
+    mapping_list.delete_mapping(mapping.name)
+    view.browser.refresh()
+    view.wait_displayed()
+    try:
+        assert mapping.name not in view.infra_mapping_list.read()
+    except NoSuchElementException:
+        # meaning there was only one mapping that is deleted, list is empty
+        pass
 
 
 @pytest.mark.parametrize('vm_list', ['NFS_Datastore_1', 'iSCSI_Datastore_1'], ids=['NFS', 'ISCSI'],
                          indirect=True)
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
-def test_end_to_end_migration(appliance, enable_disable_migration_ui, vm_list, create_provider,
+def test_end_to_end_migration(appliance, enable_disable_migration_ui, vm_list, providers,
                               form_data_single_datastore):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
@@ -268,3 +300,32 @@ def test_end_to_end_migration(appliance, enable_disable_migration_ui, vm_list, c
     wait_for(lambda: bool(view.progress_bar.is_plan_started(coll.name)),
              message="migration plan is starting, be patient please", delay=5, num_sec=120)
     assert view._get_status(coll.name) == "Completed Plans"
+
+
+def test_conversion_host_tags(appliance, providers):
+    """Tests following cases:
+
+    1)Test Attribute in UI indicating host has/has not been configured as conversion host like Tags
+    2)Test converstion host tags
+    """
+    tag1 = (appliance.collections.categories.instantiate(
+            display_name='V2V - Transformation Host *')
+            .collections.tags.instantiate(display_name='t'))
+
+    tag2 = (appliance.collections.categories.instantiate(
+            display_name='V2V - Transformation Method')
+            .collections.tags.instantiate(display_name='VDDK'))
+
+    host = providers[1].hosts[0]
+    # Remove any prior tags
+    host.remove_tags(host.get_tags())
+
+    host.add_tag(tag1)
+    assert host.get_tags()[0].category.display_name in tag1.category.display_name
+    host.remove_tag(tag1)
+
+    host.add_tag(tag2)
+    assert host.get_tags()[0].category.display_name in tag2.category.display_name
+    host.remove_tag(tag2)
+
+    host.remove_tags(host.get_tags())

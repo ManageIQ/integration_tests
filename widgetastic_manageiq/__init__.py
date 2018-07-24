@@ -4187,6 +4187,8 @@ class MultiSelectList(Widget):
     PARTIAL_TEXT = (
         './div/div/div/span[contains(@class,"dual-pane-mapper-item-container")'
         'and contains(normalize-space(.),"{}")]')
+    SPINNER_LOCATOR = (".//div[contains(@class, dual-pane-mapper-list-container)]"
+        "/div[contains(@class,'spinner')]")
 
     def __init__(self, parent, div_id, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4216,6 +4218,11 @@ class MultiSelectList(Widget):
     def list_selected_items_elements(self):
         """Returns list of item locators for currently selected items."""
         return self.browser.elements(self.SELECTED_ITEMS_LOCATOR)
+
+    @property
+    def is_displayed(self):
+        # here making sure .elements() returns empty list (len 0 list) tells all spinners gone
+        return len(self.browser.elements(self.SPINNER_LOCATOR)) == 0
 
     def _get_all_options(self):
         """ Method to return dict of all the item webelement locators and text"""
@@ -4373,6 +4380,9 @@ class MigrationPlansList(Widget):
         """Find item by text and click migrate or retry button."""
         try:
             el = self._get_plan_element(plan_name)
+            # TODO: Remove [1] below and add 'migrate' and 'schedule' buttons properly with locators
+            # curently waiting on miq ui development team to provide us new changes in nighty build
+            # need to version pick if 5.9.4 doesn't get schedule plan button
             self.browser.click(self.browser.element(self.ITEM_BUTTON_LOCATOR, parent=el))
         except NoSuchElementException:
             # In case of retry button, sometimes buttons is not present
@@ -4434,6 +4444,10 @@ class InfraMappingList(Widget):
     TARGET_ITEMS_LIST_LOCATOR = './/div[contains(@class,"infra-mapping-item-target")]'
     ITEM_EXPAND_LOCATOR = './span[contains(@class,"fa-angle-down")]'
     ITEM_COLLAPSE_DETAILS_BUTTON_LOCATOR = './/span[contains(@class, "pficon-close")]'
+    ITEM_PROMPT_DELETE_BUTTON_LOCATOR = './/div[@role="document"]//button[@class="btn btn-primary"]'
+    ITEM_PROMPT_CANCEL_BUTTON_LOCATOR = ('.//div[@role="document"]'
+        '//button[@class="btn-cancel btn btn-default"]')
+    ITEM_DELETE_TRASH_ICON_LOCATOR = './/button[./span[contains(@class,"pficon-delete")]]'
 
     def __init__(self, parent, list_class, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4487,7 +4501,7 @@ class InfraMappingList(Widget):
     def read(self):
         return self.all_items
 
-    def get_map_status(self, map_name):
+    def get_map_description(self, map_name):
         """Get status text of the given mapping."""
         el = self._get_map_element(map_name)
         return self.browser.text(self.browser.element(self.ITEM_STATUS_LOCATOR,
@@ -4565,6 +4579,22 @@ class InfraMappingList(Widget):
         except NoSuchElementException:
             raise ItemNotFound('Collapse button not present,'
                 'map clusters/networks/datastores/associated_plans details is not expaded.')
+
+    def delete_mapping(self, map_name, cancel=False):
+        try:
+            el = self._get_map_element(map_name)
+            self.browser.click(self.ITEM_DELETE_TRASH_ICON_LOCATOR, parent=el)
+            # below root_browser is required as the buttons below are on modal prompt
+            # browser with parent=el won't work here.
+            if not cancel:
+                del_btn = self.root_browser.element(self.ITEM_PROMPT_DELETE_BUTTON_LOCATOR)
+                del_btn.click()
+            else:
+                cancel_btn = self.root_browser.element(self.ITEM_PROMPT_CANCEL_BUTTON_LOCATOR)
+                cancel_btn.click()
+            return True
+        except NoSuchElementException:
+            return False
 
 
 class MigrationPlanRequestDetailsList(Widget):
