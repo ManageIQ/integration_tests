@@ -50,7 +50,10 @@ class NuageProvider(NetworkProvider):
     Note: Network provider can be added to cfme database
           only automaticaly with cloud provider
     """
-    STATS_TO_MATCH = ['num_security_group', 'num_cloud_subnet', 'num_cloud_tenant', 'num_network_router']
+    STATS_TO_MATCH = ['num_security_group',
+                      'num_cloud_subnet',
+                      'num_cloud_tenant',
+                      'num_network_router']
     in_version = ('5.9', version.LATEST)
     type_name = 'nuage'
     db_types = ['Nuage::NetworkManager']
