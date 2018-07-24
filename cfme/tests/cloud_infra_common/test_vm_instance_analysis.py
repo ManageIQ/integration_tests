@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import time
 from widgetastic_patternfly import NoSuchElementException
 from wrapanapi import VmState
 
@@ -171,7 +172,11 @@ def set_agent_creds(appliance, request, provider):
     ssa_agent_view = view.browser.create_view(EC2EndpointForm)
     ssa_agent_view.smart_state_docker.fill({'username': username, 'password': password})
     ssa_agent_view.default.validate.click()
+    # TODO: Remove time.sleep asap BZ fix.
+    if BZ(1608023, forced_streams=['5.9', '5.10']).blocks:
+        time.sleep(35)
     view.save.click()
+    view.browser.refresh()
 
     @request.addfinalizer
     def _remove_docker_creds():
