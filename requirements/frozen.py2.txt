@@ -305,7 +305,7 @@ wcwidth==0.1.7
 webencodings==0.5.1
 websocket-client==0.40.0
 Werkzeug==0.14.1
-widgetastic.core==0.21.3
+widgetastic.core==0.21.6
 widgetastic.patternfly==0.0.34
 widgetsnbextension==3.2.1
 wrapanapi==3.0.17

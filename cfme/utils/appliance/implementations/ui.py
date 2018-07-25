@@ -12,16 +12,18 @@ from selenium.common.exceptions import (
     ErrorInResponseException, InvalidSwitchToTargetException,
     InvalidElementStateException, WebDriverException, UnexpectedAlertPresentException,
     NoSuchElementException, StaleElementReferenceException)
+from wait_for import TimedOutError
 from widgetastic.browser import Browser, DefaultPlugin
 from widgetastic.utils import VersionPick
 from widgetastic.widget import Text, View
+from widgetastic_patternfly import Input
 
 from cfme import exceptions
+from cfme.fixtures.pytest_store import store
 from cfme.utils.browser import manager
 from cfme.utils.log import logger, create_sublogger
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-from cfme.fixtures.pytest_store import store
 from . import Implementation
 
 VersionPick.VERSION_CLASS = Version
@@ -208,13 +210,25 @@ class MiqBrowserPlugin(DefaultPlugin):
         sleep(0.3)
         self.make_document_focused()
 
-    def before_click(self, element):
+    def before_click(self, element, locator):
         # this is necessary in order to handle unexpected alerts like "Abandon Changes"
         self.browser.page_dirty = self.page_has_changes
 
-    def after_click(self, element):
+    def after_click(self, element, locator):
         # page_dirty is set to None because otherwise if it was true, all next ensure_page_safe
         # calls would check alert presence which is enormously slow in selenium.
+        if not isinstance(locator, (Input)):
+            if self.browser.browser_type.lower() == 'firefox' and self.browser.browser_version > 45:
+                self.browser.logger.warning('Using the workaround')
+                try:
+                    element = self.browser.element('//body')
+                    wait_for(lambda: element.is_displayed(), num_sec=2, fail_condition=True,
+                             delay=0.5, very_quiet=True)
+                except (StaleElementReferenceException, TimedOutError, NoSuchElementException):
+                    wait_for(
+                        lambda: self.browser.element('//body').is_displayed(),
+                        num_sec=10, handle_exception=True, very_quiet=True
+                    )
         self.browser.page_dirty = None
 
 
