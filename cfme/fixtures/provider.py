@@ -36,12 +36,13 @@ as a result. If this counter reaches a predefined number of failures (see ``SETU
 the failing provider will be added to the list of problematic providers and no further attempts
 to set it up will be made.
 """
-import pytest
 import random
-import six
 import sys
 from collections import Mapping
 from collections import defaultdict
+
+import pytest
+import six
 from _pytest.compat import getimfunc
 from _pytest.fixtures import call_fixture_func
 from _pytest.outcomes import TEST_OUTCOME
@@ -65,10 +66,16 @@ SETUP_FAIL_LIMIT = 3
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
     parser.getgroup('cfme')
+    parser.addoption('--legacy-ids', action='store_true',
+        help="Do not use type/version parametrization")
+    parser.addoption('--disable-selectors', action='store_true',
+        help="Do not use the selectors for parametrization")
     parser.addoption("--provider-limit", action="store", default=1, type=int,
         help=(
             "Number of providers allowed to coexist on appliance. 0 means no limit. "
-            "Use 1 or 2 when running on a single appliance, depending on HW configuration."))
+            "Use 1 or 2 when running on a single appliance, depending on HW configuration."
+        )
+    )
 
 
 def _artifactor_skip_providers(request, providers, skip_msg):

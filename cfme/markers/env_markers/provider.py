@@ -334,24 +334,30 @@ def providers(metafunc, filters=None, selector=ALL):
         argvalues.append(pytest.param(data_prov))
 
         # Use the provider key for idlist, helps with readable parametrized test output
-        ver = data_prov.version if data_prov.version else None
-        if ver:
-            the_id = "{}-{}".format(data_prov.type_name, data_prov.version)
+        if metafunc.config.getoption('legacy_ids'):
+            the_id = "{}".format(data_prov.key)
         else:
-            the_id = "{}".format(data_prov.type_name)
+            ver = data_prov.version if data_prov.version else None
+            if ver:
+                the_id = "{}-{}".format(data_prov.type_name, data_prov.version)
+            else:
+                the_id = "{}".format(data_prov.type_name)
 
         # Now we modify the id based on what selector we chose
-        if selector == ONE:
-            if need_prov_keys:
+        if metafunc.config.getoption('disable_selectors'):
+            idlist.append(the_id)
+        else:
+            if selector == ONE:
+                if need_prov_keys:
+                    idlist.append(data_prov.type_name)
+                else:
+                    idlist.append(data_prov.category)
+            elif selector == ONE_PER_CATEGORY:
+                idlist.append(data_prov.category)
+            elif selector == ONE_PER_TYPE:
                 idlist.append(data_prov.type_name)
             else:
-                idlist.append(data_prov.category)
-        elif selector == ONE_PER_CATEGORY:
-            idlist.append(data_prov.category)
-        elif selector == ONE_PER_TYPE:
-            idlist.append(data_prov.type_name)
-        else:
-            idlist.append(the_id)
+                idlist.append(the_id)
 
         # Add provider to argnames if missing
         if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
