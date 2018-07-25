@@ -68,7 +68,11 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
 def test_config_manager_add_invalid_creds(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.credentials.principal = 'invalid_user'
-    msg = 'Credential validation was not successful: 401 Unauthorized'
+    if config_manager_obj.type == "Ansible Tower":
+        msg = ("Credential validation was not successful: {\"detail\":\"Authentication credentials "
+               "were not provided.\"}")
+    else:
+        msg = 'Credential validation was not successful: 401 Unauthorized'
     with pytest.raises(Exception, match=msg):
         config_manager_obj.create()
 
