@@ -1,18 +1,46 @@
-from cfme.utils.appliance import Navigatable
+import attr
+
 from navmazing import NavigateToAttribute
+from widgetastic.widget import Text
+
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.base.ui import BaseLoggedInPage
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
-
-class Utilization(Navigatable):
-    _param_name = 'Utilization'
-
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance)
+# To-Do: FA owner need to develop further model page.
 
 
-@navigator.register(Utilization, 'All')
+class UtilizationView(BaseLoggedInPage):
+    """Base class for header and nav check"""
+
+    title = Text(locator='//*[@id="explorer_title"]')
+
+    @property
+    def in_utilization(self):
+        return self.logged_in_as_current_user and self.navigation.currently_selected == [
+            "Optimize",
+            "Utilization",
+        ]
+
+
+@attr.s
+class Utilization(BaseEntity):
+    region = attr.ib(default=None)
+    provider = attr.ib(default=None)
+    datastore = attr.ib(default=None)
+
+
+@attr.s
+class UtilizationCollection(BaseCollection):
+    """Collection object for the :py:class:'cfme.optimize.utilization.Utilization'."""
+
+    ENTITY = Utilization
+
+
+@navigator.register(UtilizationCollection, "All")
 class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = UtilizationView
+    prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
 
     def step(self):
-        self.prerequisite_view.navigation.select('Optimize', 'Utilization')
+        self.prerequisite_view.navigation.select("Optimize", "Utilization")
