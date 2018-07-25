@@ -97,6 +97,7 @@ security_groups = cfme.cloud.security_groups:SecurityGroupCollection
 servers = cfme.base:ServerCollection
 service_dialogs = cfme.automate.dialog_collection_pick:collection_pick
 system_image_types = cfme.infrastructure.pxe:SystemImageTypeCollection
+system_images = cfme.infrastructure.pxe:SystemImageCollection
 system_schedules = cfme.configure.configuration.system_schedules:SystemSchedulesCollection
 tags = cfme.configure.configuration.region_settings:TagsCollection
 tasks = cfme.configure.tasks:TasksCollection

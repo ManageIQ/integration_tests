@@ -678,21 +678,33 @@ class PXESystemImageTypeEditView(PXESystemImageTypeForm):
     cancel = Button('Cancel')
 
 
-class SystemImage(Updateable, Navigatable):
+@attr.s
+class SystemImage(Updateable, BaseEntity):
+    """Model of an ISO System Image in CFME.
 
-    def __init__(self, name=None, image_type=None, datastore=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.image_type = image_type
-        self.datastore = datastore
+    Args:
+        name: The name of the System Image. It's the same as ISO filename in ISO domain
+        image_type: SystemImageType object
+        datastore: ISODatastore object
+    """
+    name = attr.ib(default=None)
+    image_type = attr.ib(default=None)
+    datastore = attr.ib(default=None)
 
     def set_image_type(self):
+        """Changes the Type field in Basic Information table for System Image in UI."""
         view = navigate_to(self, 'Edit')
-        changed = view.image_type.fill_with(self.image_type)
+        changed = view.image_type.fill_with(self.image_type.name)
         if changed:
             view.save.click()
         else:
             view.cancel.click()
+
+
+@attr.s
+class SystemImageCollection(BaseCollection):
+
+    ENTITY = SystemImage
 
 
 class PXESystemImageDeatilsView(PXEMainView):
@@ -702,7 +714,7 @@ class PXESystemImageDeatilsView(PXEMainView):
         return self.sidebar.datastores.tree.read()[-1] == self.context['object'].name
 
     @View.nested
-    class entities(View):  # noqa
+    class entities(View):
         basic_information = SummaryTable(title="Basic Information")
 
 

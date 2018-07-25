@@ -63,10 +63,13 @@ def iso_datastore(provider, appliance):
 
 
 @pytest.fixture
-def datastore_init(iso_cust_template, iso_datastore, provisioning, setup_provider):
+def datastore_init(iso_cust_template, iso_datastore, provisioning, setup_provider, appliance):
     if not iso_datastore.exists():
         iso_datastore.create()
-    iso_image = SystemImage(provisioning['iso_file'], provisioning['iso_image_type'], iso_datastore)
+    iso_image_type = appliance.collections.system_image_types.instantiate(
+        name=provisioning['iso_image_type'])
+    iso_image = appliance.collections.system_images.instantiate(
+        name=provisioning['iso_file'], image_type=iso_image_type, datastore=iso_datastore)
     iso_image.set_image_type()
 
 
