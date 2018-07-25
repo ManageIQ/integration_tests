@@ -5,7 +5,8 @@ from widgetastic_patternfly import (Dropdown, Accordion, Button, TextInput,
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.provider_views import ProviderAddView, ProviderEditView
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
-                                  BaseEntitiesView, ParametrizedSummaryTable, Search)
+                                  BaseEntitiesView, ParametrizedSummaryTable, Search,
+                                  Table)
 
 
 class NetworkProviderToolBar(View):
@@ -536,6 +537,8 @@ class SecurityGroupDetailsView(BaseLoggedInPage):
         properties = SummaryTable(title="Properties")
         relationships = SummaryTable(title="Relationships")
         smart_management = SummaryTable(title="Smart Management")
+        firewall_rules = Table(
+            locator='//th[normalize-space(.) = "Firewall Rules"]/ancestor::table[1]')
 
     @property
     def is_displayed(self):
