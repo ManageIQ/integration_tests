@@ -94,25 +94,26 @@ def test_host_most_recent_hour_graph_screen(graph_type, provider, host, enable_c
     assert graph_data > 0
 
 
-def compare_data(tb_data, gp_data, legends, tolerance=1):
+def compare_data(table_data, graph_data, legends, tolerance=1):
     """ Compare Utilization graph and table data.
 
     Args:
-        tb_data : Data from Utilization table
-        gp_data : Data from Utilization graph
+        table_data : Data from Utilization table
+        graph_data : Data from Utilization graph
         legends : Legends in graph; which will help for comparison
         tolerance : Its error which we have to allow while comparison
     """
-    for row in tb_data:
-        for key, data in gp_data.items():
+    for row in table_data:
+        for key, data in graph_data.items():
             if any([re.match(key, item) for item in row['Date/Time'].split()]):
                 for leg in legends:
-                    tb = row[leg].replace(',', '').replace('%', '').split()
-                    if tb:
-                        tb = round(float(tb[0]), 1)
-                        gp = round(
+                    table_item = row[leg].replace(',', '').replace('%', '').split()
+                    if table_item:
+                        table_item = round(float(table_item[0]), 1)
+                        graph_item = round(
                             float(data[leg].replace(',', '').replace('%', '').split()[0]), 1)
-                        assert abs(tb - gp) <= tolerance
+                        cmp_data = abs(table_item - graph_item) <= tolerance
+                        assert cmp_data, "compare graph and table readings with tolerance"
                     else:
                         logger.warning("No {leg} data captured for DateTime: {dt}".format(
                             leg=leg, dt=row['Date/Time']))
@@ -147,7 +148,10 @@ def test_graph_screen(provider, interval, graph_type, host, enable_candu):
     view.options.interval.fill(interval)
 
     # Check garph displayed or not
-    graph = getattr(view.interval_type, graph_type)
+    try:
+        graph = getattr(view.interval_type, graph_type)
+    except AttributeError as e:
+        logger.error(e)
     assert graph.is_displayed
 
     def refresh():
@@ -160,18 +164,21 @@ def test_graph_screen(provider, interval, graph_type, host, enable_candu):
 
     # zoom in button not available with normal graph in Host Utilization page.
     # We have to use vm average graph for zoom in operation.
-    vm_avg_graph = getattr(view.interval_type, "{}_vm_avg".format(graph_type))
+    try:
+        vm_avg_graph = getattr(view.interval_type, "{}_vm_avg".format(graph_type))
+    except AttributeError as e:
+        logger.error(e)
     vm_avg_graph.zoom_in()
     view = view.browser.create_view(UtilizationZoomView)
-    assert view.chart.is_displayed
 
     # wait, some time graph take time to load
     wait_for(lambda: len(view.chart.all_legends) > 0,
-             delay=5, timeout=200, fail_func=refresh)
-
-    gp_data = view.chart.all_data
+             delay=5, timeout=300, fail_func=refresh)
+    assert view.chart.is_displayed
+    view.flush_widget_cache()
+    legends = view.chart.all_legends
+    graph_data = view.chart.all_data
     # Clear cache of table widget before read else it will mismatch headers.
     view.table.clear_cache()
-    tb_data = view.table.read()
-    legends = view.chart.all_legends
-    compare_data(tb_data=tb_data, gp_data=gp_data, legends=legends)
+    table_data = view.table.read()
+    compare_data(table_data=table_data, graph_data=graph_data, legends=legends)
