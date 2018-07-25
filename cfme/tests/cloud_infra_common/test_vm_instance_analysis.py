@@ -142,7 +142,11 @@ def vm_analysis_provisioning_data(provider, analysis_type):
 def set_hosts_credentials(appliance, request, provider):
     hosts = provider.hosts.all()
     for host in hosts:
-        host_data, = [host for host in provider.data['hosts'] if host['name'] == host.name]
+        try:
+            host_data, = [host for host in provider.data['hosts'] if host['name'] == host.name]
+        except ValueError:
+            pytest.skip('Multiple hosts with the same name found, only expecting one')
+
         host.update_credentials_rest(credentials=host_data['credentials'])
 
     @request.addfinalizer
@@ -508,6 +512,7 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
     else:
         # Make sure windows-specific data is not empty
         compare_windows_vm_data(ssa_vm)
+
 
 @pytest.mark.tier(2)
 @pytest.mark.long_running

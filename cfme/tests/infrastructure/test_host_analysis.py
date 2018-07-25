@@ -47,7 +47,10 @@ def pytest_generate_tests(metafunc):
 def host_with_credentials(provider, host_name):
     """ Add credentials to hosts """
     host, = [host for host in provider.hosts.all() if host.name == host_name]
-    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+    try:
+        host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+    except ValueError:
+        pytest.skip('Multiple hosts with the same name found, only expecting one')
     host.update_credentials_rest(credentials=host_data['credentials'])
 
     yield host

@@ -45,7 +45,10 @@ def a_host(host, appliance, provider):
 
 @pytest.fixture(scope='module')
 def set_host_credentials(provider, a_host, setup_provider_modscope):
-    host_data, = [data for data in provider.data['hosts'] if data['name'] == a_host.name]
+    try:
+        host_data, = [data for data in provider.data['hosts'] if data['name'] == a_host.name]
+    except ValueError:
+        pytest.skip('Multiple hosts with the same name found, only expecting one')
     a_host.update_credentials_rest(credentials=host_data['credentials'])
 
     yield
