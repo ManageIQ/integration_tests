@@ -267,6 +267,7 @@ class BasicProvisionFormView(View):
     class catalog(Tab):  # noqa
         TAB_NAME = 'Catalog'
 
+        # Filling catalog template first so that environment tab gets enough time to load
         catalog_name = SelectTable('//div[@id="prov_vm_div"]/table')
         vm_name = Input(name='service__vm_name')
         vm_description = Input(name='service__vm_description')
