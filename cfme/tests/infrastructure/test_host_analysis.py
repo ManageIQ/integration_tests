@@ -8,6 +8,7 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 from cfme.utils import testgen
 
 pytestmark = [
@@ -32,9 +33,10 @@ def pytest_generate_tests(metafunc):
         for test_host in prov_hosts:
             if not test_host.get('test_fleece', False):
                 continue
-            assert test_host.get('type') in HOST_TYPES, (
-                'host type must be set to [{}] for smartstate analysis tests'.format(
-                    '|'.join(HOST_TYPES)))
+            if test_host.get('type') not in HOST_TYPES:
+                logger.warning('host type must be set to [{}] for smartstate analysis tests'
+                               .format('|'.join(HOST_TYPES)))
+                continue
 
             new_argvalue_list = [args['provider'], test_host['type'], test_host['name']]
             test_id = '{}-{}-{}'.format(args['provider'].key, test_host['type'], test_host['name'])
@@ -47,7 +49,10 @@ def pytest_generate_tests(metafunc):
 def host_with_credentials(provider, host_name):
     """ Add credentials to hosts """
     host, = [host for host in provider.hosts.all() if host.name == host_name]
-    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+    try:
+        host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+    except ValueError:
+        pytest.skip('Multiple hosts with the same name found, only expecting one')
     host.update_credentials_rest(credentials=host_data['credentials'])
 
     yield host
