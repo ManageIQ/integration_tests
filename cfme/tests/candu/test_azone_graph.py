@@ -78,7 +78,7 @@ def test_graph_screen(provider, azone, graph_type, interval, enable_candu):
     """
     azone.wait_candu_data_available(timeout=1200)
 
-    view = navigate_to(azone, "candu")
+    view = navigate_to(azone, "Utilization")
     view.options.interval.fill(interval)
 
     # Check garph displayed or not

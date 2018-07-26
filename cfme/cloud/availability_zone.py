@@ -179,7 +179,7 @@ class AvailabilityZoneTimelines(CFMENavigateStep):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
 
-@navigator.register(AvailabilityZone, "candu")
+@navigator.register(AvailabilityZone, "Utilization")
 class Utilization(CFMENavigateStep):
     VIEW = AzoneCloudUtilizationView
     prerequisite = NavigateToSibling("Details")
