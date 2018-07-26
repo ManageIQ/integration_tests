@@ -374,6 +374,11 @@ class ProvisionView(BaseLoggedInPage):
     image_table = Table('//div[@id="pre_prov_div"]//table')
 
     @View.nested
+    class sidebar(View):  # noqa
+        extend_button = Text(locator='//div[contains(@class, "resize-right")]')
+        decrease_button = Text(locator='//div[contains(@class, "resize-left")]')
+
+    @View.nested
     class form(BasicProvisionFormView):  # noqa
         """First page of provision form is image selection
         Second page of form is tabbed with nested views
@@ -381,6 +386,14 @@ class ProvisionView(BaseLoggedInPage):
         continue_button = Button('Continue')  # Continue button on 1st page, image selection
         submit_button = Button('Submit')  # Submit for 2nd page, tabular form
         cancel_button = Button('Cancel')
+
+        def _select_template(self, template_name, provider_name):
+            try:
+                row = self.parent.image_table.row(name=template_name, provider=provider_name)
+            except IndexError:
+                raise TemplateNotFound('Cannot find template "{}" for provider "{}"'
+                                       .format(template_name, provider_name))
+            row.click()
 
         def before_fill(self, values):
             # Provision from image is a two part form,
@@ -391,12 +404,11 @@ class ProvisionView(BaseLoggedInPage):
                 logger.error('template_name "{}", or provider_name "{}" not passed to '
                              'provisioning form', template_name, provider_name)
             # try to find the template anyway, even if values weren't passed
-            try:
-                row = self.parent.image_table.row(name=template_name, provider=provider_name)
-            except IndexError:
-                raise TemplateNotFound('Cannot find template "{}" for provider "{}"'
-                                       .format(template_name, provider_name))
-            row.click()
+            self._select_template(template_name, provider_name)
+            # workaround for provision table template select(template was not clicked)
+            if self.continue_button.disabled:
+                self.parent.sidebar.decrease_button.click()
+                self._select_template(template_name, provider_name)
             self.continue_button.click()
             # TODO timing, wait_displayed is timing out and can't get it to stop in is_displayed
             sleep(3)

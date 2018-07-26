@@ -16,6 +16,7 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.services.requests import RequestsView
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.rest import assert_response
@@ -505,8 +506,9 @@ class BaseVMCollection(BaseCollection):
             view.form.submit_button.click()
 
             view = vm.appliance.browser.create_view(RequestsView)
-            wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
-                     message='wait for Flash Success')
+            if not BZ(1608967, forced_streams=['5.10']).blocks:
+                wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
+                        message='wait for Flash Success')
             view.flash.assert_no_error()
 
             if wait:
