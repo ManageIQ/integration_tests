@@ -1,0 +1,42 @@
+exclude: ^(data|sprout)/
+
+substitutions:
+  - &exclude
+    exclude: '.*' # for now disable - we shal gradually reenable it
+repos:
+# disabled due to a bug
+# - repo: https://github.com/asottile/seed-isort-config
+#   rev: v1.2.0
+#   hooks:
+#   - id: seed-isort-config
+#     args: [--exclude, data/.*]
+- repo: https://github.com/pre-commit/mirrors-isort
+  rev: v4.3.4
+  hooks:
+  - id: isort
+    <<: *exclude
+- repo: https://github.com/ambv/black
+  rev: 18.6b4
+  hooks:
+  - id: black
+    args: [--safe, --quiet]
+    language_version: python3.6
+    exclude: '.*' # for now disable - we shal gradually reenable it
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v1.4.0
+  hooks:
+  - id: trailing-whitespace
+    <<: *exclude
+  - id: end-of-file-fixer
+    <<: *exclude
+  - id: check-yaml
+    exclude: data
+  - id: debug-statements
+    exclude: ^(sprout|scripts|cfme/fixtures/rdb.py)
+  - id: flake8
+    <<: *exclude
+- repo: https://github.com/asottile/pyupgrade
+  rev: v1.4.0
+  hooks:
+  - id: pyupgrade
+    <<: *exclude
