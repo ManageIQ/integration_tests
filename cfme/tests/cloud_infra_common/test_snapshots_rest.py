@@ -54,6 +54,7 @@ def vm(provider, appliance, collection, setup_provider_modscope, small_template_
         vm = vms[0]
         vm.action.delete()
         vm.wait_not_exists(num_sec=600, delay=5)
+    new_vm.cleanup_on_provider()
 
 
 def _delete_snapshot(vm, description):
