@@ -172,6 +172,9 @@ class MiqBrowserPlugin(DefaultPlugin):
             result = self.browser.execute_script(self.ENSURE_PAGE_SAFE, silent=True)
             # TODO: Logging
             return bool(result)
+        time.sleep(0.2)
+        # added this sleep as loading, and other elements that we are checking
+        # in ENSURE_PAGE_SAFE script appears on page after script is run
         wait_for(_check, timeout=timeout, delay=0.2, silent_failure=True, very_quiet=True)
 
     def after_keyboard_input(self, element, keyboard_input):
