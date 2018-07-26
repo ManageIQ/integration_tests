@@ -20,7 +20,6 @@ from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.control.explorer import conditions, policies
-from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -135,7 +134,7 @@ def _get_vm(request, provider, template_name, vm_name):
     elif provider.one_of(OpenStackProvider):
         kwargs = {}
         if 'small_template' in provider.data.templates:
-            kwargs = {"flavour_name": provider.data.provisioning.get('instance_type')}
+            kwargs = {"flavor_name": provider.data.provisioning.get('instance_type')}
     elif provider.one_of(SCVMMProvider):
         kwargs = {
             "host_group": provider.data.get("provisioning", {}).get("host_group", "All Hosts")}
