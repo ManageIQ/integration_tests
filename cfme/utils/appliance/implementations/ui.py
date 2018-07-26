@@ -218,7 +218,11 @@ class MiqBrowserPlugin(DefaultPlugin):
         # page_dirty is set to None because otherwise if it was true, all next ensure_page_safe
         # calls would check alert presence which is enormously slow in selenium.
         if not isinstance(locator, (Input)):
-            if self.browser.browser_type.lower() == 'firefox' and self.browser.browser_version > 45:
+            browser_type = self.browser.browser_type.lower()
+            if (browser_type == 'chrome' or
+                    (browser_type == 'firefox' and self.browser.browser_version > 45)):
+                # Use WA for Firefox > 45 and also for all versions of Chrome
+                # This is probably not the best approach, but solves the clicking problem for Chrome
                 self.browser.logger.warning('Using the workaround')
                 try:
                     element = self.browser.element('//body')
