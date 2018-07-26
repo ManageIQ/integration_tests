@@ -10,13 +10,11 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI, ViaUI
-from cfme.utils.blockers import GH
 from cfme.utils.generators import random_vm_name
 from cfme.utils.update import update
 
 
 pytestmark = [
-    pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7479')]),
     pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 ]
 

@@ -21,7 +21,7 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
+    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7297')]),
     test_requirements.ssui,
     pytest.mark.long_running,
     pytest.mark.provider(gen_func=providers,
@@ -31,6 +31,8 @@ pytestmark = [
 
 
 @pytest.mark.rhv1
+@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9']),
+    GH('ManageIQ/integration_tests:7297')])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_service):
     """Test Myservice crud in SSUI.
@@ -48,6 +50,8 @@ def test_myservice_crud(appliance, setup_provider, context, order_service):
         my_service.delete()
 
 
+@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9']),
+    GH('ManageIQ/integration_tests:7297')])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retire_service_ssui(appliance, setup_provider,
                         context, order_service, request):
@@ -102,6 +106,7 @@ def test_service_start(appliance, setup_provider, context,
             my_service.delete()
 
 
+@pytest.mark.meta(blockers=[BZ(1544535, forced_streams=['5.9'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 @pytest.mark.parametrize('order_service', [['console_test']], indirect=True)
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
