@@ -148,3 +148,27 @@ def test_add_mertics_provider_ssl(provider, appliance, test_item,
     else:
         new_provider.delete(cancel=False)
         new_provider.wait_for_delete()
+
+
+def test_setup_with_wrong_port(provider):
+    """
+    Negative test: set a provider with wrong api port
+    based on BZ1443520
+    """
+    new_provider = copy(provider)
+    new_provider.endpoints["default"].api_port = "1234"
+
+    is_fail = False
+    try:
+        new_provider.setup()
+    except AssertionError as ex:
+        node = new_provider.endpoints["default"].hostname
+        port = new_provider.endpoints["default"].api_port
+        assert (
+            'Credential validation was not successful: Failed to open TCP connection'
+            ' to {node}:{port} (No route to host - connect(2) for "{node}" port '
+            '{port}'.format(node=node, port=port) in ex.message), (
+            "No clear failure massage was provided for wrong api port")
+        is_fail = True
+
+    assert is_fail, "Provider was set with wrong api port"
