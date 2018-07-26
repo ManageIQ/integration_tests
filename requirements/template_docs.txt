@@ -45,7 +45,6 @@ pdfminer.six
 pillow
 progress
 py
-pycrypto
 pygal
 pytesseract
 
