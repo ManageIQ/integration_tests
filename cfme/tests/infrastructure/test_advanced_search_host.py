@@ -4,9 +4,8 @@ from itertools import dropwhile
 
 import fauxfactory
 import pytest
-from widgetastic.exceptions import NoSuchElementException
-
 from cfme.utils.appliance.implementations.ui import navigate_to
+from widgetastic.exceptions import NoSuchElementException
 
 pytestmark = [pytest.mark.tier(3)]
 
@@ -20,7 +19,7 @@ def host_collection(appliance):
 def hosts(infra_provider, host_collection):
     view = navigate_to(host_collection, 'All')
     view.entities.search.remove_search_filters()
-    return host_collection.all(infra_provider)
+    return infra_provider.collections.hosts.all()
 
 
 @pytest.fixture(scope="function")
