@@ -18,7 +18,7 @@ alphanumeric_name = gen_alphanumeric(10)
 long_alphanumeric_name = gen_alphanumeric(100)
 integer_name = str(gen_integer(0, 100000000))
 provider_names = alphanumeric_name, integer_name, long_alphanumeric_name
-AVAILABLE_SEC_PROTOCOLS = ('SSL trusting custom CA','SSL without validation', 'SSL')
+AVAILABLE_SEC_PROTOCOLS = ('SSL trusting custom CA', 'SSL without validation', 'SSL')
 
 DEFAULT_SEC_PROTOCOLS = (
     pytest.mark.polarion('CMP-10598')('SSL trusting custom CA'),
