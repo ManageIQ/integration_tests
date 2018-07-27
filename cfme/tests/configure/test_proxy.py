@@ -30,11 +30,14 @@ def proxy_machine():
     proxy_template_name = data["template_name"]
     proxy_port = data['port']
     prov = get_mgmt(proxy_provider_key)
-    deploy_template(proxy_provider_key,
-                    depot_machine_name,
-                    template_name=proxy_template_name)
-    yield prov.get_ip_address(depot_machine_name), proxy_port
-    prov.delete_vm(depot_machine_name)
+    vm = deploy_template(proxy_provider_key,
+                         depot_machine_name,
+                         template_name=proxy_template_name)
+    wait_for(func=lambda: vm.ip is not None, num_sec=300, delay=10,
+             message='Waiting for instance "{}" ip to be present.')
+
+    yield vm.ip, proxy_port
+    vm.delete()
 
 
 @pytest.fixture(scope='module')
