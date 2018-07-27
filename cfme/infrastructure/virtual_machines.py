@@ -8,15 +8,6 @@ from copy import copy
 import attr
 import fauxfactory
 import re
-
-from navmazing import NavigateToSibling, NavigationDestinationNotFound, NavigateToAttribute
-from widgetastic.utils import partial_match, Parameter, VersionPick, Version
-from widgetastic.widget import (
-    Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
-from widgetastic_patternfly import (
-    Button, BootstrapSelect, BootstrapSwitch, CheckableBootstrapTreeview, Dropdown, Input as
-    WInput)
-
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template, VMCollection, TemplateCollection
 from cfme.common.vm_views import (
@@ -24,7 +15,7 @@ from cfme.common.vm_views import (
     RetirementView, RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities,
     SetOwnershipView)
 from cfme.exceptions import (
-    OptionNotAvailable, DestinationNotFound, ItemNotFound, VmOrInstanceNotFound)
+    DestinationNotFound, ItemNotFound, VmOrInstanceNotFound)
 from cfme.services.requests import RequestsView
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -32,10 +23,17 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
+from navmazing import NavigateToSibling, NavigationDestinationNotFound, NavigateToAttribute
+from widgetastic.utils import partial_match, Parameter, VersionPick, Version
+from widgetastic.widget import (
+    Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
     SummaryTable, Table, TimelinesView, CompareToolBarActionsView, Search)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
+from widgetastic_patternfly import (
+    Button, BootstrapSelect, BootstrapSwitch, CheckableBootstrapTreeview, Dropdown, Input as
+WInput)
 
 
 def has_child(tree, text, parent_item=None):
@@ -1188,16 +1186,10 @@ class VmAllWithTemplatesForProvider(CFMENavigateStep):
     VIEW = VmTemplatesAllForProviderView
 
     def prerequisite(self):
-        view = None
         try:
-            view = navigate_to(self.obj, 'All')
+            navigate_to(self.obj, 'All')
         except NavigationDestinationNotFound:
-            view = navigate_to(self.obj.parent, 'All')
-        finally:
-            if view is None:
-                raise NavigationDestinationNotFound('No view set during prerequisite: '
-                                                    'nav: {}, obj: {}'
-                                                    .format(self, self.obj))
+            navigate_to(self.obj.parent, 'All')
 
     def step(self, *args, **kwargs):
         # provider has been passed, TODO remove this usage
