@@ -266,11 +266,13 @@ class BasicProvisionFormView(View):
     @View.nested
     class catalog(Tab):  # noqa
         TAB_NAME = 'Catalog'
+
+        # Filling catalog template first so that environment tab gets enough time to load
+        catalog_name = SelectTable('//div[@id="prov_vm_div"]/table')
         vm_name = Input(name='service__vm_name')
         vm_description = Input(name='service__vm_description')
         vm_filter = BootstrapSelect('service__vm_filter')
         num_vms = BootstrapSelect('service__number_of_vms')
-        catalog_name = SelectTable('//div[@id="prov_vm_div"]/table')
         provision_type = BootstrapSelect('service__provision_type')
         linked_clone = Input(name='service__linked_clone')
         pxe_server = BootstrapSelect('service__pxe_server_id')
