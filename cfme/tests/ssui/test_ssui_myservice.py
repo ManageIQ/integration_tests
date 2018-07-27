@@ -14,14 +14,13 @@ from cfme.services.myservice import MyService
 from cfme.services.myservice.ssui import DetailsMyServiceView
 from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
-from cfme.utils.blockers import BZ, GH
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
+    pytest.mark.meta(server_roles="+automate"),
     test_requirements.ssui,
     pytest.mark.long_running,
     pytest.mark.provider(gen_func=providers,

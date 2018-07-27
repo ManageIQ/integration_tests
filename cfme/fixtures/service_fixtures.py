@@ -110,3 +110,6 @@ def order_service(appliance, provider, provisioning, dialog, catalog, request):
     service = MyService(appliance, catalog_item.name)
     if service.exists:
         service.delete()
+    vm_name = '{}0001'.format(catalog_item.prov_data['catalog']['vm_name'])
+    vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
+    vm.cleanup_on_provider()
