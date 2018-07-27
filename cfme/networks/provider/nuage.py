@@ -132,3 +132,24 @@ class NuageProvider(NetworkProvider):
     def num_cloud_subnet_ui(self):
         view = navigate_to(self, "Details")
         return int(view.entities.summary("Relationships").get_text_of("Cloud Subnets"))
+
+    def setup_test_entities_on_provider(self):
+        """
+        Sets up testbed on Nuage server that includes.
+        - enterprise     named "CFME Integration Tests - Enterprise" with a single
+        - domaintemplate named "CFME Integration Tests - Domain Template" with a single
+        - domain         named "CFME Integration Tests - Domain" with a single
+        - zone           named "CFME Integration Tests - Zone" with a single
+        - subnet         named "CFME Integration Tests - Subnet"
+        """
+        self.mgmt.create_enterprise()
+        self.mgmt.create_domain_template()
+        self.mgmt.create_domain()
+        self.mgmt.create_zone()
+        self.mgmt.create_subnet()
+
+    def teardown_test_entities_on_provider(self):
+        """
+        Destroys enterprise named "CFME Integration Tests - Enterprise".
+        """
+        self.mgmt.destroy_enterprise()
