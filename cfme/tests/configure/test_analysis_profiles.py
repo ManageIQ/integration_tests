@@ -61,7 +61,8 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
     )
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
-    view.flash.assert_message('Analysis Profile "{}" was saved'.format(vm_profile.description))
+    if not BZ(1609206, forced_streams=['5.10']).blocks:
+        view.flash.assert_message('Analysis Profile "{}" was saved'.format(vm_profile.name))
 
     assert vm_profile.exists
 
@@ -69,8 +70,9 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
     with update(vm_profile):
         vm_profile.files = files_updates
     view = appliance.browser.create_view(navigator.get_class(vm_profile, 'Details').VIEW)
-    view.flash.assert_success_message(
-        'Analysis Profile "{}" was saved'.format(vm_profile.description))
+    if not BZ(1609206, forced_streams=['5.10']).blocks:
+        view.flash.assert_success_message(
+            'Analysis Profile "{}" was saved'.format(vm_profile.name))
     soft_assert(vm_profile.files == files_updates,
                 'Files update failed on profile: {}, {}'.format(vm_profile.name, vm_profile.files))
 
@@ -78,26 +80,28 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
         vm_profile.categories = ['System']
     soft_assert(vm_profile.categories == ['System'],
                 'Categories update failed on profile: {}'.format(vm_profile.name))
-
+    pytest.set_trace()
     copied_profile = vm_profile.copy(new_name='copied-{}'.format(vm_profile.name))
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
     # yep, not copy specific
-    view.flash.assert_message('Analysis Profile "{}" was saved'.format(vm_profile.description))
+    if not BZ(1609206, forced_streams=['5.10']).blocks:
+        view.flash.assert_message('Analysis Profile "{}" was saved'.format(copied_profile.name))
     assert copied_profile.exists
 
     copied_profile.delete()
     assert not copied_profile.exists
 
     vm_profile.delete()
-    view.flash.assert_success_message(
-        'Analysis Profile "{}": Delete successful'.format(vm_profile.description))
+    if not BZ(1609206, forced_streams=['5.10']).blocks:
+        view.flash.assert_success_message(
+            'Analysis Profile "{}": Delete successful'.format(vm_profile.name))
     assert not vm_profile.exists
 
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_host_analysis_profile_crud(soft_assert, analysis_profile_collection):
+def test_host_analysis_profile_crud(appliance, soft_assert, analysis_profile_collection):
     """CRUD for Host analysis profiles."""
     host_profile = analysis_profile_collection.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -106,6 +110,10 @@ def test_host_analysis_profile_crud(soft_assert, analysis_profile_collection):
         files=files_list,
         events=events_check()
     )
+    view = appliance.browser.create_view(
+        navigator.get_class(analysis_profile_collection, 'All').VIEW)
+    if not BZ(1609206, forced_streams=['5.10']).blocks:
+        view.flash.assert_message('Analysis Profile "{}" was saved'.format(host_profile.name))
     assert host_profile.exists
 
     files_updates = events_check(updates=True)
@@ -114,20 +122,27 @@ def test_host_analysis_profile_crud(soft_assert, analysis_profile_collection):
     soft_assert(host_profile.files == files_updates,
                 'Files update failed on profile: {}, {}'
                 .format(host_profile.name, host_profile.files))
-
+    pytest.set_trace()
     copied_profile = host_profile.copy(new_name='copied-{}'.format(host_profile.name))
+    view = appliance.browser.create_view(
+        navigator.get_class(analysis_profile_collection, 'All').VIEW)
+    if not BZ(1609206, forced_streams=['5.10']).blocks:
+        view.flash.assert_message('Analysis Profile "{}" was saved'.format(copied_profile.name))
     assert copied_profile.exists
 
     copied_profile.delete()
     assert not copied_profile.exists
 
     host_profile.delete()
+    if not BZ(1609206, forced_streams=['5.10']).blocks:
+        view.flash.assert_success_message(
+            'Analysis Profile "{}": Delete successful'.format(host_profile.name))
     assert not host_profile.exists
 
 
 # TODO Combine and parametrize VM + Host validation tests
 # Parametrize VM/Host, and (name/description/no item + flash) message as namedtuple
-def test_vmanalysis_profile_description_validation(analysis_profile_collection, appliance):
+def test_vmanalysis_profile_description_validation(analysis_profile_collection):
     """ Test to validate description in vm profiles"""
     with pytest.raises(AssertionError):
         analysis_profile_collection.create(
@@ -160,7 +175,7 @@ def test_analysis_profile_duplicate_name(analysis_profile_collection):
             name=profile.name,
             description=profile.description,
             profile_type=analysis_profile_collection.VM_TYPE,
-            categories=profile.categories_list
+            categories=profile.categories
         )
 
     # Should still be on the form page after create method raises exception
@@ -186,8 +201,9 @@ def test_delete_default_analysis_profile(default_host_profile):
     row[0].check()
     view.toolbar.configuration.item_select('Delete the selected Analysis Profiles',
                                            handle_alert=True)
-    view.flash.assert_message('Default Analysis Profile "{}" can not be deleted'
-                              .format(default_host_profile.name))
+    if not BZ(1609206, forced_streams=['5.10']).blocks:
+        view.flash.assert_message('Default Analysis Profile "{}" can not be deleted'
+                                  .format(default_host_profile.name))
 
 
 def test_edit_default_analysis_profile(default_host_profile):
@@ -203,8 +219,9 @@ def test_edit_default_analysis_profile(default_host_profile):
     )
     row[0].check()
     view.toolbar.configuration.item_select('Edit the selected Analysis Profiles')
-    view.flash.assert_message('Sample Analysis Profile "{}" can not be edited'.format(
-        default_host_profile.name))
+    if not BZ(1609206, forced_streams=['5.10']).blocks:
+        view.flash.assert_message('Sample Analysis Profile "{}" can not be edited'.format(
+            default_host_profile.name))
 
 
 def test_analysis_profile_item_validation(analysis_profile_collection):

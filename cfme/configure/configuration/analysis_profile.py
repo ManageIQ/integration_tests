@@ -148,6 +148,10 @@ class AnalysisProfileAddView(BaseLoggedInPage):
                     'Actions': Button(title='Add this entry', classes=table_button_classes)},
                 assoc_column='Registry Key', rows_ignore_top=1, action_row=0)
 
+    @property
+    def is_displayed(self):
+        return self.title.text == 'Adding a new Analysis Profile'
+
 
 class AnalysisProfileAddVmView(AnalysisProfileAddView):
     @property
@@ -341,7 +345,7 @@ class AnalysisProfileCollection(BaseCollection):
         if profile_type.lower() == 'vm':
             view = navigate_to(self, 'AddVmProfile')
         elif profile_type.lower() == 'host':
-            view = navigate_to(self, 'AddVmProfile')
+            view = navigate_to(self, 'AddHostProfile')
         else:
             raise OptionNotAvailable('Not such profile available')
 
