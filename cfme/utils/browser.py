@@ -33,6 +33,9 @@ from cfme.utils.path import data_path
 FIVE_MINUTES = 5 * 60
 THIRTY_SECONDS = 30
 
+BROWSER_ERRORS = URLError, WebDriverException
+WHARF_OUTER_RETRIES = 3
+
 
 def _load_firefox_profile():
     # create a firefox profile using the template in data/firefox_profile.js.template
@@ -216,7 +219,12 @@ class WharfFactory(BrowserFactory):
                 log.exception(ex)
                 self.wharf.checkin()
                 raise
-        return tries(10, URLError, inner)
+            except Exception:
+                log.exception("failure on webdriver usage, returning container")
+                self.wharf.checkin()
+                raise
+
+        return tries(WHARF_OUTER_RETRIES, BROWSER_ERRORS, inner)
 
     def close(self, browser):
         try:
