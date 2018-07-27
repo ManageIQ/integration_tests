@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.update import update
 
@@ -44,9 +43,7 @@ def test_crud_service_dialog(appliance):
     dialog, element = create_dialog(appliance, element_data)
     view_cls = navigator.get_class(element.parent, 'Add').VIEW
     view = element.appliance.browser.create_view(view_cls)
-    flash_message = version.pick({
-        '5.8': 'Dialog "{}" was added'.format(dialog.label),
-        '5.9': '{} was saved'.format(dialog.label)})
+    flash_message = '{} was saved'.format(dialog.label)
     view.flash.assert_message(flash_message)
     with update(dialog):
         dialog.description = "my edited description"
@@ -69,11 +66,9 @@ def test_service_dialog_duplicate_name(appliance, request):
     dialog, element = create_dialog(appliance, element_data, label=label)
     request.addfinalizer(dialog.delete_if_exists)
     region_number = appliance.server.zone.region.number
-    error_message = version.pick({
-        '5.8': 'Validation failed: Label is not unique within region {}'.format(region_number),
-        '5.9': 'There was an error editing this dialog: '
-               'Failed to create a new dialog - Validation failed: '
-               'Name is not unique within region {}'.format(region_number)})
+    error_message = ('There was an error editing this dialog: '
+                     'Failed to create a new dialog - Validation failed: '
+                     'Name is not unique within region {}'.format(region_number))
     with pytest.raises(AssertionError):
         create_dialog(appliance, element_data, label=label)
         view_cls = navigator.get_class(element.parent, 'Add').VIEW

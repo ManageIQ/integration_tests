@@ -25,16 +25,14 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template, VMCollection, TemplateCollection
 from cfme.common.vm_views import (
     ManagementEngineView, CloneVmView, MigrateVmView, ProvisionView, EditView, PublishVmView,
-    RetirementView, RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities,
-    SetOwnershipView)
-from cfme.exceptions import (
-    DestinationNotFound, ItemNotFound, VmOrInstanceNotFound)
+    RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities, SetOwnershipView)
+from cfme.exceptions import DestinationNotFound, ItemNotFound, VmOrInstanceNotFound
 from cfme.services.requests import RequestsView
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
+from cfme.utils.version import UPSTREAM, VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
@@ -638,13 +636,11 @@ class InfraVm(VM):
 
             view.toolbar.delete.item_select('Delete Selected Snapshot', handle_alert=not cancel)
             if not cancel:
-                flash_message = version.pick({
-                    version.LOWEST: "Remove Snapshot initiated for 1 "
-                                    "VM and Instance from the CFME Database",
-                    version.UPSTREAM: "Delete Snapshot initiated for 1 "
-                                      "VM and Instance from the ManageIQ Database",
+                flash_message = VersionPicker({
+                    UPSTREAM: "Delete Snapshot initiated for 1 "
+                              "VM and Instance from the ManageIQ Database",
                     '5.9': "Delete Snapshot initiated for 1 VM and Instance from the CFME Database"
-                })
+                }).pick(self.parent_vm.appliance.version)
                 view.flash.assert_message(flash_message)
 
             wait_for(lambda: not self.exists, num_sec=300, delay=20, fail_func=view.browser.refresh,
@@ -655,13 +651,12 @@ class InfraVm(VM):
             view.toolbar.delete.item_select('Delete All Existing Snapshots',
                                             handle_alert=not cancel)
             if not cancel:
-                flash_message = version.pick({
-                    version.LOWEST: "Remove All Snapshots initiated for 1 VM and "
-                                    "Instance from the CFME Database",
-                    version.UPSTREAM: "Delete All Snapshots initiated for 1 VM "
-                                      "and Instance from the ManageIQ Database",
+                flash_message = VersionPicker({
+                    UPSTREAM: "Delete All Snapshots initiated for 1 VM "
+                              "and Instance from the ManageIQ Database",
                     '5.9': "Delete All Snapshots initiated for 1 VM "
-                           "and Instance from the CFME Database"})
+                           "and Instance from the CFME Database"
+                }).pick(self.parent_vm.appliance.version)
 
                 view.flash.assert_message(flash_message)
 
@@ -677,13 +672,12 @@ class InfraVm(VM):
 
             view.toolbar.revert.click(handle_alert=not cancel)
             if not cancel:
-                flash_message = version.pick({
-                    version.LOWEST: "Revert To Snapshot initiated for 1 VM and Instance from "
-                                    "the CFME Database",
-                    version.UPSTREAM: "Revert to a Snapshot initiated for 1 VM and Instance "
-                                      "from the ManageIQ Database",
+                flash_message = VersionPicker({
+                    UPSTREAM: "Revert to a Snapshot initiated for 1 VM and Instance "
+                              "from the ManageIQ Database",
                     '5.9': "Revert to a Snapshot initiated for 1 VM and Instance from "
-                           "the CFME Database"})
+                           "the CFME Database"
+                }).pick(self.parent_vm.appliance.version)
                 view.flash.assert_message(flash_message)
 
         def refresh(self):
@@ -1360,15 +1354,7 @@ class VmClone(CFMENavigateStep):
 
 @navigator.register(InfraVm, 'SetRetirement')
 class SetRetirement(CFMENavigateStep):
-    def view_classes(self):
-        return VersionPick({
-            Version.lowest(): RetirementView,
-            "5.9": RetirementViewWithOffset
-        })
-
-    @property
-    def VIEW(self):  # noqa
-        return self.view_classes().pick(self.obj.appliance.version)
+    VIEW = RetirementViewWithOffset
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):

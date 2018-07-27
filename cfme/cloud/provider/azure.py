@@ -6,7 +6,7 @@ from cfme.cloud.instance.azure import AzureInstance
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.infrastructure.provider.rhevm import RHEVMVMUtilizationView
 from cfme.services.catalogs.catalog_items import AzureCatalogItem
-from cfme.utils.version import pick
+from cfme.utils.version import VersionPicker
 from . import CloudProvider
 
 
@@ -55,7 +55,10 @@ class AzureProvider(CloudProvider):
     @property
     def view_value_mapping(self):
         """Maps values to view attrs"""
-        region = pick(self.region) if isinstance(self.region, dict) else self.region
+        if isinstance(self.region, dict):
+            region = VersionPicker(self.region).pick(self.appliance.version)
+        else:
+            region = self.region
         return {
             'name': self.name,
             'prov_type': 'Azure',

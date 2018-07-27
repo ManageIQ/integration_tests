@@ -9,8 +9,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, VMCollection
 from cfme.common.vm_views import (
     ProvisionView, VMToolbar, VMEntities, VMDetailsEntities, EditView,
-    SetOwnershipView, ManagementEngineView, PolicySimulationView,
-    RetirementView, RetirementViewWithOffset)
+    SetOwnershipView, ManagementEngineView, PolicySimulationView, RetirementViewWithOffset)
 from cfme.exceptions import (InstanceNotFound, ItemNotFound, DestinationNotFound)
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from cfme.utils.log import logger
@@ -589,15 +588,7 @@ class SetOwnership(CFMENavigateStep):
 
 @navigator.register(Instance, 'SetRetirement')
 class SetRetirement(CFMENavigateStep):
-    def view_classes(self):
-        return VersionPick({
-            Version.lowest(): RetirementView,
-            "5.9": RetirementViewWithOffset
-        })
-
-    @property
-    def VIEW(self):  # noqa
-        return self.view_classes().pick(self.obj.appliance.version)
+    VIEW = RetirementViewWithOffset
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):

@@ -5,12 +5,10 @@ from widgetastic.widget import Text, TextInput, Widget
 from widgetastic_patternfly import Button, Input
 
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils import deferred_verpick, ParamClassName
+from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.utils.version import LOWEST
-from cfme.utils.wait import wait_for
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from . import ControlExplorerView
 
@@ -323,56 +321,37 @@ class PolicyConditionDetails(CFMENavigateStep):
 class HostCondition(BaseCondition):
 
     TREE_NODE = "Host"
-    FIELD_VALUE = deferred_verpick({LOWEST: "Host / Node"})
-    PRETTY = "Host / Node"
+    PRETTY = FIELD_VALUE = "Host / Node"
 
 
 class VMCondition(BaseCondition):
 
-    TREE_NODE = "VM and Instance"
-    FIELD_VALUE = deferred_verpick({LOWEST: "VM and Instance"})
+    FIELD_VALUE = TREE_NODE = "VM and Instance"
     PRETTY = "VM"
 
 
 class ReplicatorCondition(BaseCondition):
 
     TREE_NODE = "Replicator"
-    FIELD_VALUE = deferred_verpick({
-        LOWEST: "Replicator",
-        "5.9.2": "Container Replicator"
-    })
-    PRETTY = FIELD_VALUE
+    PRETTY = FIELD_VALUE = "Container Replicator"
 
 
 class PodCondition(BaseCondition):
 
     TREE_NODE = "Pod"
-    FIELD_VALUE = deferred_verpick({
-        LOWEST: "Pod",
-        "5.9.2": "Container Pod"
-    })
-    PRETTY = FIELD_VALUE
+    PRETTY = FIELD_VALUE = "Container Pod"
 
 
 class ContainerNodeCondition(BaseCondition):
 
-    TREE_NODE = "Container Node"
-    FIELD_VALUE = deferred_verpick({
-        LOWEST: "Node",
-        "5.9.2": "Container Node"
-    })
-    PRETTY = FIELD_VALUE
+    TREE_NODE = PRETTY = FIELD_VALUE = "Container Node"
 
 
 class ContainerImageCondition(BaseCondition):
 
-    TREE_NODE = "Container Image"
-    FIELD_VALUE = deferred_verpick({LOWEST: "Container Image"})
-    PRETTY = "Container Image"
+    TREE_NODE = PRETTY = FIELD_VALUE = "Container Image"
 
 
 class ProviderCondition(BaseCondition):
 
-    TREE_NODE = "Provider"
-    FIELD_VALUE = deferred_verpick({LOWEST: "Provider"})
-    PRETTY = "Provider"
+    TREE_NODE = PRETTY = FIELD_VALUE = "Provider"
