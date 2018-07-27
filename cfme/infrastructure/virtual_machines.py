@@ -8,6 +8,19 @@ from copy import copy
 import attr
 import fauxfactory
 import re
+from navmazing import NavigateToSibling, NavigationDestinationNotFound, NavigateToAttribute
+from widgetastic.utils import partial_match, Parameter, VersionPick, Version
+from widgetastic.widget import (
+    Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
+from widgetastic_patternfly import (
+    Button,
+    BootstrapSelect,
+    BootstrapSwitch,
+    CheckableBootstrapTreeview,
+    Dropdown,
+    Input as WInput
+)
+
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template, VMCollection, TemplateCollection
 from cfme.common.vm_views import (
@@ -23,17 +36,10 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
-from navmazing import NavigateToSibling, NavigationDestinationNotFound, NavigateToAttribute
-from widgetastic.utils import partial_match, Parameter, VersionPick, Version
-from widgetastic.widget import (
-    Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
     SummaryTable, Table, TimelinesView, CompareToolBarActionsView, Search)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
-from widgetastic_patternfly import (
-    Button, BootstrapSelect, BootstrapSwitch, CheckableBootstrapTreeview, Dropdown, Input as
-WInput)
 
 
 def has_child(tree, text, parent_item=None):
