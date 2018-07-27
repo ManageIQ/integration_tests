@@ -156,7 +156,7 @@ class BrowserFactory(object):
     def create(self, url_key):
         try:
             browser = tries(
-                3, WebDriverException,
+                2, WebDriverException,
                 self.webdriver_class, **self.processed_browser_args())
         except URLError as e:
             if e.reason.errno == 111:
