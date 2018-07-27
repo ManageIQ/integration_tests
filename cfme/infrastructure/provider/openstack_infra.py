@@ -8,6 +8,7 @@ from wrapanapi.systems import OpenstackInfraSystem
 
 from cfme.common.provider import EventsEndpoint, SSHEndpoint, DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin, ProviderNodesView
+from cfme.infrastructure.openstack_node import OpenstackNodeCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 
@@ -68,6 +69,7 @@ class OpenstackInfraProvider(InfraProvider):
 
     api_version = attr.ib(default=None)
     keystone_v3_domain_id = attr.ib(default=None)
+    _collections = {'nodes': OpenstackNodeCollection}
 
     @property
     def view_value_mapping(self):
@@ -78,13 +80,12 @@ class OpenstackInfraProvider(InfraProvider):
             'keystone_v3_domain_id': self.keystone_v3_domain_id
         }
 
+    @property
+    def nodes(self):
+        return self.collections.nodes
+
     def has_nodes(self):
-        details_view = navigate_to(self, 'Details')
-        try:
-            details_view.entities.relationships.get_text_of('Hosts')
-            return False
-        except NameError:
-            return int(details_view.entities.relationships.get_text_of('Hosts / Nodes')) > 0
+        return bool(self.nodes.all())
 
     @classmethod
     def from_config(cls, prov_config, prov_key):
