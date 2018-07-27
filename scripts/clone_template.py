@@ -195,16 +195,18 @@ def main(**kwargs):
         # filter openstack flavors based on what's available
         available_flavors = provider.list_flavor()
         logger.info("Available flavors on provider: %s", available_flavors)
-        flavors = filter(lambda f: f in available_flavors, flavors)
+        generic_flavors = filter(lambda f: f in available_flavors, flavors)
+
         try:
-            flavor = kwargs.get('flavor') or flavors[0]
+            flavor = (kwargs.get('flavor') or
+                      provider_dict.get('sprout', {}).get('flavor_name') or
+                      generic_flavors[0])
         except IndexError:
             raise Exception('--flavor is required for RHOS instances and '
                             'default is not set or unavailable on provider')
         logger.info('Selected flavor: %s', flavor)
 
-        # flavour? Thanks, psav...
-        deploy_args['flavour_name'] = flavor
+        deploy_args['flavor_name'] = flavor
 
         if 'network' in provider_dict:
             # support rhos4 network names
