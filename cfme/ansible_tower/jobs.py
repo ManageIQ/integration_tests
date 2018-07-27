@@ -1,6 +1,6 @@
 import attr
 
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
 from widgetastic.widget import Text, View
 from widgetastic_patternfly import Dropdown, Button
 from widgetastic_manageiq import (Search, ItemsToolBarViewSelector, PaginationPane,
@@ -74,8 +74,7 @@ class TowerJobs(BaseEntity):
         view = navigate_to(self.parent, 'All')
         job_status = ''
         for row in view.entities.elements:
-            print(row['Template Name'].read())
-            if row['Template Name'].read() == self.template_name and job_status == '':
+            if row.template_name.text == self.template_name and job_status == '':
                 job_status = row.status.text
             else:
                 pass
@@ -113,6 +112,7 @@ class TowerJobsCollection(BaseCollection):
         job = self.instantiate(template_name=row.template_name.text)
         return job
 
+    @property
     def is_all_finished(self):
         jobs = self.all()
         for job in jobs:
@@ -130,7 +130,8 @@ class TowerJobsCollection(BaseCollection):
         view.paginator.check_all()
         view.configuration.item_select('Remove Jobs', handle_alert=True)
 
-    def is_finished(self):
+    @property
+    def is_job_finished(self):
         job = self.first_by_date()
         if job.status == "successful":
             return True
@@ -153,7 +154,7 @@ class All(CFMENavigateStep):
 @navigator.register(TowerJobsCollection)
 class Details(CFMENavigateStep):
     VIEW = AnsibleTowerJobsDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         # self.prerequisite_view.items.row(template_name=self.obj.name).click()

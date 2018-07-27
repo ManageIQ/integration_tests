@@ -116,4 +116,4 @@ def test_order_tower_catalog_item_jobs(appliance, catalog_item, request):
     order_request = appliance.collections.requests.instantiate(cells=cells, partial_check=True)
     order_request.wait_for_request(method='ui')
     msg = "Ansible Tower Job failed"
-    assert appliance.collections.ansible_tower_jobs.is_finished(), msg
+    assert appliance.collections.ansible_tower_jobs.is_job_finished(), msg
