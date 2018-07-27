@@ -34,7 +34,7 @@ FIVE_MINUTES = 5 * 60
 THIRTY_SECONDS = 30
 
 BROWSER_ERRORS = URLError, WebDriverException
-WHARF_OUTER_RETRIES = 3
+WHARF_OUTER_RETRIES = 2
 
 
 def _load_firefox_profile():
