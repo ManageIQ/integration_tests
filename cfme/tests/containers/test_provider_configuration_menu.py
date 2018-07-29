@@ -11,6 +11,34 @@ pytestmark = [
 ]
 
 
+def get_buttons(view):
+    # ensure resume option is exsit
+    resume_option = filter(lambda item: "resume" in item.lower(), view.toolbar.configuration.items)
+    assert resume_option, "Not resume provider option is available in the configuration menu"
+    resume_option = resume_option.pop()
+
+    # ensure pause option is exsit
+    pause_option = filter(lambda item: "pause" in item.lower(), view.toolbar.configuration.items)
+    assert pause_option, "Not pause provider option is available in the configuration menu"
+    pause_option = pause_option.pop()
+
+    return pause_option, resume_option
+
+
+def check_buttons_status(view, pause_option, resume_option):
+
+    # get both buttons status
+    pause_option_status = view.toolbar.configuration.item_enabled(pause_option)
+    resume_option_status = view.toolbar.configuration.item_enabled(resume_option)
+
+    # ensure only one of the buttons available at the time
+    if pause_option_status and resume_option_status:
+        return False, "Both pause and resume buttons are active at the same time"
+    if not (pause_option_status or resume_option_status):
+        return False, "Both pause and resume buttons are disabled at the same time"
+    return True, None
+
+
 @pytest.mark.polarion('CMP-9880')
 def test_edit_selected_containers_provider(provider):
     '''Testing Configuration -> Edit... button functionality
@@ -44,3 +72,46 @@ def test_ocp_operator_out_of_the_box(appliance):
 
     # validate the role exist out-of-the-box
     assert is_role_found, "No {role} found".format(role=role_name_prefix)
+
+
+def test_pause_and_resume_provider(provider):
+    """
+    Basic testing for pause and resume for a container provider
+    Tests steps:
+        1. Navigate to provider page
+        2. Validate buttons status are as expected
+        3. Pause the provider
+        4. Validate the button status
+        5. Validate the provider marked as paused
+        6. Resume the provider
+        7. Validate button status
+        8. Validate the provider marked as running
+    The test based on BZ1516292
+    """
+
+    view = navigate_to(provider, "Details")
+    pause_option, resume_option = get_buttons(view)
+    buttn_status, error_msg = check_buttons_status(view, pause_option, resume_option)
+
+    assert buttn_status, error_msg
+
+    # pause the provider
+    view.toolbar.configuration.item_select(pause_option, handle_alert=True)
+
+    view.browser.refresh()
+    buttn_status, error_msg = check_buttons_status(view, pause_option, resume_option)
+
+    assert buttn_status, error_msg
+
+    assert view.entities.summary("Status").get_text_of("Data Collection").lower() == "paused", (
+        "Provider did not pause after pause request")
+
+    # resume the provider
+    view.toolbar.configuration.item_select(resume_option, handle_alert=True)
+
+    view.browser.refresh()
+    buttn_status, error_msg = check_buttons_status(view, pause_option, resume_option)
+    assert buttn_status, error_msg
+
+    assert view.entities.summary("Status").get_text_of("Data Collection").lower() == "running", (
+        "Provider did not resumed after pause request")
