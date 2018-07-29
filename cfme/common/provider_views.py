@@ -608,7 +608,7 @@ class ContainerProviderEditView(ProviderEditView):
     """
     @property
     def is_displayed(self):
-        return (super(ProviderEditView, self).is_displayed and
+        return (super(ContainerProviderEditView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
                 'Edit Containers Provider' in self.title.text)
 
