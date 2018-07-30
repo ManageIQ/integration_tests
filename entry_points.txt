@@ -10,6 +10,7 @@ miq-selenium-container = cfme.utils.dockerbot.sel_container:main
 actions = cfme.control.explorer.actions:ActionCollection
 alert_profiles = cfme.control.explorer.alert_profiles:AlertProfileCollection
 alerts = cfme.control.explorer.alerts:AlertCollection
+analysis_profiles = cfme.configure.configuration.analysis_profile:AnalysisProfileCollection
 ansible_credentials = cfme.ansible.credentials:CredentialsCollection
 ansible_playbooks = cfme.ansible.playbooks:PlaybooksCollection
 ansible_repositories = cfme.ansible.repositories:RepositoryCollection

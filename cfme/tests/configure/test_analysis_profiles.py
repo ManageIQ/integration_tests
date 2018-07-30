@@ -61,8 +61,8 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
     )
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
-    if not BZ(1609206, forced_streams=['5.10']).blocks:
-        view.flash.assert_message('Analysis Profile "{}" was saved'.format(vm_profile.name))
+    vm_flash = vm_profile.name if appliance.version < '5.10' else vm_profile.description
+    view.flash.assert_message('Analysis Profile "{}" was saved'.format(vm_flash))
 
     assert vm_profile.exists
 
@@ -70,9 +70,7 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
     with update(vm_profile):
         vm_profile.files = files_updates
     view = appliance.browser.create_view(navigator.get_class(vm_profile, 'Details').VIEW)
-    if not BZ(1609206, forced_streams=['5.10']).blocks:
-        view.flash.assert_success_message(
-            'Analysis Profile "{}" was saved'.format(vm_profile.name))
+    view.flash.assert_success_message('Analysis Profile "{}" was saved'.format(vm_flash))
     soft_assert(vm_profile.files == files_updates,
                 'Files update failed on profile: {}, {}'.format(vm_profile.name, vm_profile.files))
 
@@ -80,22 +78,21 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
         vm_profile.categories = ['System']
     soft_assert(vm_profile.categories == ['System'],
                 'Categories update failed on profile: {}'.format(vm_profile.name))
-    pytest.set_trace()
     copied_profile = vm_profile.copy(new_name='copied-{}'.format(vm_profile.name))
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
     # yep, not copy specific
-    if not BZ(1609206, forced_streams=['5.10']).blocks:
-        view.flash.assert_message('Analysis Profile "{}" was saved'.format(copied_profile.name))
+    vm_copied_flash = (
+        copied_profile.name if appliance.version < '5.10' else copied_profile.description
+    )
+    view.flash.assert_message('Analysis Profile "{}" was saved'.format(vm_copied_flash))
     assert copied_profile.exists
 
     copied_profile.delete()
     assert not copied_profile.exists
 
     vm_profile.delete()
-    if not BZ(1609206, forced_streams=['5.10']).blocks:
-        view.flash.assert_success_message(
-            'Analysis Profile "{}": Delete successful'.format(vm_profile.name))
+    view.flash.assert_success_message('Analysis Profile "{}": Delete successful'.format(vm_flash))
     assert not vm_profile.exists
 
 
@@ -112,8 +109,8 @@ def test_host_analysis_profile_crud(appliance, soft_assert, analysis_profile_col
     )
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
-    if not BZ(1609206, forced_streams=['5.10']).blocks:
-        view.flash.assert_message('Analysis Profile "{}" was saved'.format(host_profile.name))
+    host_flash = host_profile.name if appliance.version < '5.10' else host_profile.description
+    view.flash.assert_message('Analysis Profile "{}" was saved'.format(host_flash))
     assert host_profile.exists
 
     files_updates = events_check(updates=True)
@@ -122,21 +119,20 @@ def test_host_analysis_profile_crud(appliance, soft_assert, analysis_profile_col
     soft_assert(host_profile.files == files_updates,
                 'Files update failed on profile: {}, {}'
                 .format(host_profile.name, host_profile.files))
-    pytest.set_trace()
     copied_profile = host_profile.copy(new_name='copied-{}'.format(host_profile.name))
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
-    if not BZ(1609206, forced_streams=['5.10']).blocks:
-        view.flash.assert_message('Analysis Profile "{}" was saved'.format(copied_profile.name))
+    host_copied_flash = (
+        copied_profile.name if appliance.version < '5.10' else copied_profile.description
+    )
+    view.flash.assert_message('Analysis Profile "{}" was saved'.format(host_copied_flash))
     assert copied_profile.exists
 
     copied_profile.delete()
     assert not copied_profile.exists
 
     host_profile.delete()
-    if not BZ(1609206, forced_streams=['5.10']).blocks:
-        view.flash.assert_success_message(
-            'Analysis Profile "{}": Delete successful'.format(host_profile.name))
+    view.flash.assert_success_message('Analysis Profile "{}": Delete successful'.format(host_flash))
     assert not host_profile.exists
 
 
@@ -187,7 +183,7 @@ def test_analysis_profile_duplicate_name(analysis_profile_collection):
     view.cancel.click()
 
 
-def test_delete_default_analysis_profile(default_host_profile):
+def test_delete_default_analysis_profile(default_host_profile, appliance):
     """ Test to validate delete default profiles."""
     # Option disabled from details
     view = navigate_to(default_host_profile, 'Details')
@@ -201,12 +197,14 @@ def test_delete_default_analysis_profile(default_host_profile):
     row[0].check()
     view.toolbar.configuration.item_select('Delete the selected Analysis Profiles',
                                            handle_alert=True)
-    if not BZ(1609206, forced_streams=['5.10']).blocks:
-        view.flash.assert_message('Default Analysis Profile "{}" can not be deleted'
-                                  .format(default_host_profile.name))
+    host_flash = (
+        default_host_profile.name if appliance.version < '5.10'
+        else default_host_profile.description
+    )
+    view.flash.assert_message('Default Analysis Profile "{}" can not be deleted'.format(host_flash))
 
 
-def test_edit_default_analysis_profile(default_host_profile):
+def test_edit_default_analysis_profile(default_host_profile, appliance):
     """ Test to validate edit default profiles."""
     # Option disabled from details
     view = navigate_to(default_host_profile, 'Details')
@@ -219,9 +217,11 @@ def test_edit_default_analysis_profile(default_host_profile):
     )
     row[0].check()
     view.toolbar.configuration.item_select('Edit the selected Analysis Profiles')
-    if not BZ(1609206, forced_streams=['5.10']).blocks:
-        view.flash.assert_message('Sample Analysis Profile "{}" can not be edited'.format(
-            default_host_profile.name))
+    host_flash = (
+        default_host_profile.name if appliance.version < '5.10'
+        else default_host_profile.description
+    )
+    view.flash.assert_message('Sample Analysis Profile "{}" can not be edited'.format(host_flash))
 
 
 def test_analysis_profile_item_validation(analysis_profile_collection):

@@ -117,7 +117,7 @@ class AnalysisProfileAddView(BaseLoggedInPage):
         locator='.//h3[normalize-space(.)="Basic Information"]'
                 '/following-sibling::div[@class="form-group"]'
                 '/label[normalize-space(.)="Type"]'
-                '/following-sibling::div')
+                '/following-sibling::div/p')
     form = ConditionalSwitchableView(reference='profile_type')
     # to avoid dynamic table buttons use title + alt + classes
     add = Button(title='Add', classes=[Button.PRIMARY], alt='Add')
