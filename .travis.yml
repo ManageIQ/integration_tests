@@ -32,9 +32,10 @@ jobs:
       script:
       - pre-commit run --all-files
 env:
-  # work around travis being missconfigured
+  #   work around travis being missconfigured
   - BOTO_CONFIG=/dev/null
 install:
+  - pip install -U setuptools pip
   - python -m cfme.scripting.quickstart
 script:
 - pytest cfme/utils/tests cfme/modeling/tests requirements  -v --dummy-appliance
