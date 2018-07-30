@@ -2134,6 +2134,12 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             raise ApplianceException('Impossible to create proxy with current provider type')
         self.update_advanced_settings(vmdb_config)
 
+    def reset_proxy(self, prov_type=None):
+        vmdb_config = self.advanced_settings
+        proxy_type = prov_type or 'default'
+        vmdb_config['http_proxy'][proxy_type] = False
+        self.update_advanced_settings(vmdb_config)
+
     def set_session_timeout(self, timeout=86400, quiet=True):
         """Sets the timeout of UI timeout.
 
