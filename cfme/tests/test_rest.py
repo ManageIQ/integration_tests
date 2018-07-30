@@ -170,6 +170,7 @@ COLLECTIONS_IN_59 = {
 
 
 COLLECTIONS_IN_UPSTREAM = COLLECTIONS_IN_59
+COLLECTIONS_IN_510 = COLLECTIONS_IN_59
 COLLECTIONS_IN_58 = (COLLECTIONS_IN_59 | COLLECTIONS_OBSOLETED_IN_59) - COLLECTIONS_NEWER_THAN_58
 COLLECTIONS_ALL = COLLECTIONS_IN_59 | COLLECTIONS_IN_58
 # non-typical collections without "id" and "resources", or additional parameters are required
@@ -180,6 +181,7 @@ def _collection_not_in_this_version(appliance, collection_name):
     return (
         (collection_name not in COLLECTIONS_IN_UPSTREAM and appliance.version.is_in_series(
             'upstream')) or
+        (collection_name not in COLLECTIONS_IN_510 and appliance.version.is_in_series('5.10')) or
         (collection_name not in COLLECTIONS_IN_59 and appliance.version.is_in_series('5.9')) or
         (collection_name not in COLLECTIONS_IN_58 and appliance.version.is_in_series('5.8'))
     )
