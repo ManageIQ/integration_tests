@@ -9,7 +9,7 @@ from cfme.common.provider import BaseProvider, provider_types
 from cfme.common.provider_views import (PhysicalProviderAddView,
                                         PhysicalProvidersView,
                                         PhysicalProviderDetailsView,
-                                        PhysicalProviderEditView)
+                                        ProviderEditView)
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.log import logger
@@ -137,7 +137,7 @@ class Details(CFMENavigateStep):
 
 @navigator.register(PhysicalProvider, 'Edit')
 class Edit(CFMENavigateStep):
-    VIEW = PhysicalProviderEditView
+    VIEW = ProviderEditView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

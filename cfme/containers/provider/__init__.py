@@ -22,10 +22,10 @@ from cfme.common import TagPageView, PolicyProfileAssignable
 from cfme.common.candu_views import OptionForm
 from cfme.common.provider import BaseProvider, DefaultEndpoint, DefaultEndpointForm, provider_types
 from cfme.common.provider_views import (
-    BeforeFillMixin, ContainerProviderAddView, ContainerProvidersView,
-    ContainerProviderEditView, ContainerProviderEditViewUpdated, ProvidersView,
-    ContainerProviderAddViewUpdated, ProviderSideBar,
-    ProviderDetailsToolBar, ProviderDetailsView, ProviderToolBar)
+    BeforeFillMixin, ContainerProviderAddViewUpdated,
+    ContainerProviderEditViewUpdated, ContainerProvidersView,
+    ProviderDetailsToolBar, ProviderDetailsView,
+    ProviderSideBar, ProviderToolBar, ProvidersView)
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.browser import browser
@@ -647,6 +647,7 @@ class ContainersTestItem(object):
 class LoadDetailsMixin(object):
     """Embed load details functionality for objects -
     required for some classes like PolicyProfileAssignable"""
+
     def load_details(self, refresh=False):
         view = navigate_to(self, 'Details')
         if refresh:
@@ -662,7 +663,6 @@ class Labelable(object):
         return self.mgmt.list_labels()
 
     def set_label(self, name, value):
-
         """Sets a label to the object instance
 
         Args:
