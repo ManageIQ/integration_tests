@@ -251,7 +251,7 @@ class InfraVmDetailsView(InfraVmView):
     class VmsToolbar(InfraVmDetailsToolbar):
         pass
 
-    @toolbar.register(lambda title: "VM Template and Image" in title or "Template" in title)
+    @toolbar.register(lambda title: "Template" in title)
     class TemplatesToolbar(InfraGenericDetailsToolbar):
         pass
 
@@ -1307,17 +1307,7 @@ class VmAll(CFMENavigateStep):
 @navigator.register(InfraVm, 'VMsOnlyDetails')
 class VmDetails(CFMENavigateStep):
     VIEW = InfraVmDetailsView
-
-    def prerequisite(self):
-        view = None
-        try:
-            view = navigate_to(self.obj, 'VMsOnly')
-        except NavigationDestinationNotFound:
-            view = navigate_to(self.obj.parent, 'VMsOnly')
-        finally:
-            if view is None:
-                raise NavigationDestinationNotFound('No view set during prerequisite')
-        return view
+    prerequisite = NavigateToAttribute('parent', 'VMsOnly')
 
     def step(self, *args, **kwargs):
         try:

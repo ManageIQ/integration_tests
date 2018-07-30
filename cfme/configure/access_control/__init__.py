@@ -448,8 +448,9 @@ class MyCompanyTagsExpressionView(View):
     tag_expression = GroupTagExpressionEditor()
 
 
-class MyCompanyTagsWithExpression(View):
+class MyCompanyTagsWithExpression(Tab):
     """ Represents 'My company tags' tab in Group Form """
+    TAB_NAME = "My Company Tags"
     tag_mode = BootstrapSelect(id='use_filter_expression')
     tag_settings = ConditionalSwitchableView(reference='tag_mode')
 
@@ -485,13 +486,7 @@ class GroupForm(ConfigurationView):
     cancel_button = Button('Cancel')
     retrieve_button = Button('Retrieve')
 
-    @View.nested
-    class my_company_tags(Tab):  # noqa
-        """ Represents 'My company tags' tab in Group Form """
-        TAB_NAME = "My Company Tags"
-        form = VersionPick({Version.lowest(): View.nested(MyCompanyTagsTree),
-                            '5.9': View.nested(MyCompanyTagsWithExpression)})
-
+    my_company_tags = View.nested(MyCompanyTagsWithExpression)
     hosts_and_clusters = View.nested(Hosts_And_Clusters)
     vms_and_templates = View.nested(Vms_And_Templates)
 
@@ -511,13 +506,7 @@ class AddGroupView(GroupForm):
 class DetailsGroupEntities(View):
     smart_management = SummaryForm('Smart Management')
 
-    @View.nested
-    class my_company_tags(Tab):  # noqa
-        """ Represents 'My company tags' tab in Group Form """
-        TAB_NAME = "My Company Tags"
-        form = VersionPick({Version.lowest(): View.nested(MyCompanyTagsTree),
-                            '5.9': View.nested(MyCompanyTagsWithExpression)})
-
+    my_company_tags = View.nested(MyCompanyTagsWithExpression)
     hosts_and_clusters = View.nested(Hosts_And_Clusters)
     vms_and_templates = View.nested(Vms_And_Templates)
 
@@ -793,7 +782,7 @@ class Group(BaseEntity, Taggable):
         if item is not None:
             if update:
                 if isinstance(item, six.string_types):
-                    updated_result = tab_view.form.fill({
+                    updated_result = tab_view.fill({
                         'tag_mode': 'Tags Based On Expression',
                         'tag_settings': {'tag_expression': item}})
                 else:
