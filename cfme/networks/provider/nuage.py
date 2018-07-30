@@ -51,7 +51,10 @@ class NuageProvider(NetworkProvider):
     Note: Network provider can be added to cfme database
           only automaticaly with cloud provider
     """
-    STATS_TO_MATCH = ['num_security_group', 'num_cloud_subnet']
+    STATS_TO_MATCH = ['num_security_group',
+                      'num_cloud_subnet',
+                      'num_cloud_tenant',
+                      'num_network_router']
     in_version = ('5.9', version.LATEST)
     type_name = 'nuage'
     db_types = ['Nuage::NetworkManager']
@@ -132,3 +135,21 @@ class NuageProvider(NetworkProvider):
     def num_cloud_subnet_ui(self):
         view = navigate_to(self, "Details")
         return int(view.entities.summary("Relationships").get_text_of("Cloud Subnets"))
+
+    @variable(alias="db")
+    def num_cloud_tenant(self):
+        pass  # TODO: come up with a db query
+
+    @num_cloud_tenant.variant('ui')
+    def num_cloud_tenant_ui(self):
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Cloud Tenants"))
+
+    @variable(alias="db")
+    def num_network_router(self):
+        pass  # TODO: come up with a db query
+
+    @num_network_router.variant('ui')
+    def num_network_router_ui(self):
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Network Routers"))
