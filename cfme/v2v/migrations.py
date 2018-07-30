@@ -82,11 +82,17 @@ class InfraMappingWizardCommon(View):
 class InfraMappingWizardGeneralView(View):
     name = TextInput(name='name')
     description = TextInput(name='description')
+    name_help_text = Text(locator='.//div[contains(@id,"name")]/span')
+    description_help_text = Text(locator='.//div[contains(@id,"description")]/span')
     include_buttons = View.include(InfraMappingFormControlButtons)
 
     def after_fill(self, was_change):
         if was_change:
             self.next_btn.click()
+
+    @property
+    def is_displayed(self):
+        return self.name.is_displayed and self.description.is_displayed
 
 
 class InfraMappingWizardClustersView(View):
@@ -94,6 +100,11 @@ class InfraMappingWizardClustersView(View):
     include_buttons_set2 = View.include(InfraMappingWizardCommon)
     source_clusters = MultiSelectList('source_clusters')
     target_clusters = MultiSelectList('target_clusters')
+
+    @property
+    def is_displayed(self):
+        return (self.source_clusters.is_displayed and self.target_clusters.is_displayed and
+        (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0))
 
     def fill(self, values):
         """Use to add all mappings specified in values.
@@ -128,6 +139,11 @@ class InfraMappingWizardDatastoresView(View):
     source_datastores = MultiSelectList('source_datastores')
     target_datastores = MultiSelectList('target_datastores')
     cluster_selector = BootstrapSelect(id='cluster_select')
+
+    @property
+    def is_displayed(self):
+        return (self.source_datastores.is_displayed and self.target_datastores.is_displayed and
+                (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0))
 
     def fill(self, values):
         """Use to add all mappings specified in values.
@@ -169,6 +185,11 @@ class InfraMappingWizardNetworksView(View):
     next_btn = Button("Create")  # overriding, since 'Next' is called 'Create' in this form
     cluster_selector = BootstrapSelect(id='cluster_select')
 
+    @property
+    def is_displayed(self):
+        return (self.source_networks.is_displayed and self.target_networks.is_displayed and
+                (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0))
+
     def fill(self, values):
         """Use to add all mappings specified in values.
         Args:
@@ -202,8 +223,12 @@ class InfraMappingWizardNetworksView(View):
 
 
 class InfraMappingWizardResultsView(View):
-    close_btn = Button("Close")
-    continue_to_plan_wizard_btn = Button("Continue to the plan wizard")
+    close = Button("Close")
+    continue_to_plan_wizard = Button("Continue to the plan wizard")
+
+    @property
+    def is_displayed(self):
+        return self.continue_to_plan_wizard.is_displayed
 
 
 class InfraMappingWizard(View):
@@ -264,7 +289,7 @@ class InfraMappingWizard(View):
 
     def after_fill(self, was_change):
         if was_change:
-            self.result.close_btn.click()
+            self.result.close.click()
 
 
 # Widget for migration selection dropdown
@@ -284,6 +309,7 @@ class MigrationDashboardView(BaseLoggedInPage):
     create_infrastructure_mapping = Text(locator='(//a|//button)'
                                                  '[text()="Create Infrastructure Mapping"]')
     create_migration_plan = Text(locator='(//a|//button)[text()="Create Migration Plan"]')
+    configure_providers = Text(locator='//a[text()="Configure Providers"]')
     migration_plans_not_started_list = MigrationPlansList("plans-not-started-list")
     migration_plans_completed_list = MigrationPlansList("plans-complete-list")
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
@@ -343,6 +369,7 @@ class AddMigrationPlanView(View):
     class general(View):  # noqa
         infra_map = BootstrapSelect('infrastructure_mapping')
         name = TextInput(name='name')
+        name_help_text = Text(locator='.//div[contains(@id,"name")]/span')
         description = TextInput(name='description')
         select_vm = RadioGroup('.//div[contains(@id,"vm_choice_radio")]')
 
@@ -356,6 +383,10 @@ class AddMigrationPlanView(View):
         filter_by_dropdown = SelectorDropdown('id', 'filterFieldTypeMenu')
         search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
         clear_filters = Text(".//a[text()='Clear All Filters']")
+
+        @property
+        def is_displayed(self):
+            return self.filter_by_dropdown.is_displayed
 
         def filter_by_name(self, vm_name):
             try:
@@ -381,14 +412,27 @@ class AddMigrationPlanView(View):
             self.search_box.fill(path)
             self.browser.send_keys(Keys.ENTER, self.search_box)
 
+        def select_by_name(self, vm_name):
+            self.filter_by_name(vm_name)
+            vms_selected = []
+            for row in self.table.rows():
+                if vm_name in row.read()['VM Name']:
+                    row.select.fill(True)
+                    vms_selected.append(row.read()['VM Name'])
+            return vms_selected
+
     @View.nested
     class options(View):  # noqa
-        create_btn = Button('Create')
+        create = Button('Create')
         run_migration = RadioGroup('.//div[contains(@id,"migration_plan_choice_radio")]')
+
+        @property
+        def is_displayed(self):
+            return self.run_migration.is_displayed
 
     @View.nested
     class results(View):  # noqa
-        close_btn = Button('Close')
+        close = Button('Close')
         msg = Text('.//h3[contains(@id,"migration-plan-results-message")]')
 
     @property
@@ -523,7 +567,7 @@ class MigrationPlanCollection(BaseCollection):
             csv_import: (bool) flag for importing vms
             start_migration: (bool) flag for start migration
         """
-        view = navigate_to(self, 'Add')
+        view = navigate_to(self, 'Add', wait_for_view=True)
         view.general.fill({
             'infra_map': infra_map,
             'name': name,
@@ -556,7 +600,7 @@ class MigrationPlanCollection(BaseCollection):
 
         if start_migration:
             view.options.run_migration.select("Start migration immediately")
-        view.options.create_btn.click()
+        view.options.create.click()
         wait_for(lambda: view.results.msg.is_displayed, timeout=60, message='Wait for Results view')
 
         base_flash = "Migration Plan: '{}'".format(name)
@@ -565,7 +609,7 @@ class MigrationPlanCollection(BaseCollection):
         else:
             base_flash = "{} has been saved".format(base_flash)
         assert view.results.msg.text == base_flash
-        view.results.close_btn.click()
+        view.results.close.click()
         return self.instantiate(name)
 
 # Navigations
@@ -607,6 +651,4 @@ class MigrationPlanRequestDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        # TODO: REPLACE self.obj.ENTITY.name by self.obj.name when migration plan
-        # entity-collection complete
         self.prerequisite_view.migration_plans_not_started_list.select_plan(self.obj.ENTITY.name)
