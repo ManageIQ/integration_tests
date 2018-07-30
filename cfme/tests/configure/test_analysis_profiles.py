@@ -264,6 +264,8 @@ def test_analysis_profile_name_validation(analysis_profile_collection):
     view.cancel.click()
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.version > '5.9',
+                         reason='Description is not required started from 5.10')
 def test_analysis_profile_description_validation(analysis_profile_collection):
     """ Test to validate profile description."""
     with pytest.raises(AssertionError):

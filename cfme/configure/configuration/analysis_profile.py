@@ -428,6 +428,9 @@ class AnalysisProfileAll(CFMENavigateStep):
         self.prerequisite_view.accordions.settings.tree.click_path(
             server_region, "Analysis Profiles")
 
+    def resetter(self):
+        self.view.browser.refresh()
+
 
 @navigator.register(AnalysisProfileCollection, 'AddVmProfile')
 class AnalysisProfileVmAdd(CFMENavigateStep):
