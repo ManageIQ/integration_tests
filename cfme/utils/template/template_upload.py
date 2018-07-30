@@ -97,10 +97,6 @@ if __name__ == '__main__':
     cmd_args = cmd_line_args[0]
     specific_args = cmd_line_args[1]
 
-    if not cmd_args.image_url and not cmd_args.stream:
-        logger.warning("Require either --image-url or --stream")
-        sys.exit(1)
-
     if cmd_args.image_url and not cmd_args.stream:
         # parse stream from image_url
         image_url = cmd_args.image_url
@@ -109,6 +105,10 @@ if __name__ == '__main__':
         # default to base URL for given stream:
         stream = cmd_args.stream
         image_url = ALL_STREAMS[stream]
+    else:
+        logger.warning("Require either --image-url or --stream")
+        sys.exit(1)
+
     provider_type = cmd_args.provider_type
 
     template_name = ("{}-{}".format(cmd_args.template_name, stream) if cmd_args.template_name else

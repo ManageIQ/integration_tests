@@ -69,7 +69,7 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
             # url ex:
             # brew-pulp-docker01.web.prod.ext.phx2.redhat.com:8888/cloudforms46/cfme-openshift-httpd:2.4.6-14
             tag_name, tag_value = img_url.split('/')[-1].split(':')
-            tag_url = img_url.rpartition(':')[-1]
+            tag_url = img_url.rpartition(':')[0]
             tags[tag_name] = {'tag': tag_value, 'url': tag_url}
             if result.failed:
                 logger.exception('%s: could not update image stream with url: %s',
@@ -115,7 +115,7 @@ yaml.safe_dump(data, stream=open("{file}", "w"))'"""
 
     def run(self):
         if 'podtesting' not in self.provider_data.get('tags', []):
-            logger.info("%s:%s No podtesting tag.", self.log_name, self.provider)
+            logger.info("%s:%s No podtesting tag.", self.log_name, self.provider_key)
             return
 
         if self.does_template_exist():
@@ -138,3 +138,5 @@ yaml.safe_dump(data, stream=open("{file}", "w"))'"""
             return False
 
         self.track_template(custom_data={'TAGS': self.tags})
+
+        return True
