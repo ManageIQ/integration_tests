@@ -29,9 +29,12 @@ OBJECTCOLLECTIONS = [
 ]
 
 
-def download(objecttype, extension):
+def download(appliance, objecttype, extension):
     view = navigate_to(objecttype, 'All')
-    view.toolbar.download.item_select("Download as {}".format(extensions_mapping[extension]))
+    if appliance.version >= '5.10' and extension == 'pdf':
+        view.toolbar.download.item_select("Print or export as PDF")
+    else:
+        view.toolbar.download.item_select("Download as {}".format(extensions_mapping[extension]))
 
 
 def download_summary(spec_object):
@@ -51,7 +54,7 @@ def test_download_lists_base(filetype, collection_type, appliance):
         test_flag: sdn
     """
     collection = getattr(appliance.collections, collection_type)
-    download(collection, filetype)
+    download(appliance, collection, filetype)
 
 
 @pytest.mark.uncollectif(
