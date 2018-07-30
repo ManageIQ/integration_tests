@@ -5,9 +5,7 @@ from cfme.utils.testgen import config_managers, generate
 
 
 pytest_generate_tests = generate(gen_func=config_managers)
-pytestmark = [pytest.mark.uncollectif(lambda config_manager_obj:
-                                      config_manager_obj.type == "Ansible Tower"),
-              pytest.mark.meta(blockers=[1491704])]
+pytestmark = [pytest.mark.meta(blockers=[1491704])]
 
 
 @pytest.fixture
@@ -70,7 +68,11 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
 def test_config_manager_add_invalid_creds(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.credentials.principal = 'invalid_user'
-    msg = 'Credential validation was not successful: 401 Unauthorized'
+    if config_manager_obj.type == "Ansible Tower":
+        msg = ('Credential validation was not successful: {"detail":"Authentication credentials '
+               'were not provided."}')
+    else:
+        msg = 'Credential validation was not successful: 401 Unauthorized'
     with pytest.raises(Exception, match=msg):
         config_manager_obj.create()
 
@@ -87,7 +89,6 @@ def test_config_manager_edit(request, config_manager):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
 def test_config_manager_remove(config_manager):
     config_manager.delete()
 
