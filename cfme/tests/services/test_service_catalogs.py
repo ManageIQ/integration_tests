@@ -9,14 +9,13 @@ from cfme.services.catalogs.catalog_items import EditCatalogItemView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.workloads import VmsInstances
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for_decorator
 
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
+    pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,

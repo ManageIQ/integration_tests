@@ -18,7 +18,7 @@ from cfme.utils.wait import wait_for
 
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
+    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7297')]),
     pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.ssui,
     pytest.mark.long_running,
