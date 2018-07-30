@@ -6,11 +6,11 @@ LABEL company="Redhat" product="CFME" environment="dev" tier="test"
 
 RUN pip install -U pip && pip install -U virtualenv
 
-ENV PROJECTS /projects 
+ENV PROJECTS /projects
 
 ENV CFMEENV cfme_env
 
-ENV WORK $PROJECTS/$CFMEENV 
+ENV WORK $PROJECTS/$CFMEENV
 
 RUN mkdir $PROJECTS && cd $PROJECTS
 
@@ -46,6 +46,6 @@ ADD xstartup /root/.vnc/xstartup
 
 RUN chmod 755 /root/.vnc/xstartup
 
-EXPOSE 5999 
+EXPOSE 5999
 
 CMD vncserver :99 -SecurityTypes None
