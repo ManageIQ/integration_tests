@@ -37,6 +37,7 @@ def azone(appliance, provider):
 
 def compare_data(table_data, graph_data, legends, tolerance=1):
     """ Compare Utilization graph and table data.
+
     Args:
         table_data : Data from Utilization table
         graph_data : Data from Utilization graph
@@ -67,8 +68,10 @@ def compare_data(table_data, graph_data, legends, tolerance=1):
 @pytest.mark.parametrize("graph_type", GRAPHS)
 def test_graph_screen(provider, azone, graph_type, interval, enable_candu):
     """Test Availibility zone graphs for Hourly
+
     prerequisites:
         * C&U enabled appliance
+
     Steps:
         * Navigate to Availibility Zone Utilization Page
         * Check graph displayed or not
