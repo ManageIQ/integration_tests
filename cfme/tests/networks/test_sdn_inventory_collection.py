@@ -1,8 +1,10 @@
+import fauxfactory
 import pytest
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
 pytestmark = [
@@ -100,3 +102,39 @@ def test_sdn_api_inventory_loadbalancers(provider, appliance):
 
     assert prov_load_balancers == cfme_load_balancers, 'Provider balancer list: {prov} different '
     'from cfme list: {cfme}'.format(prov=prov_load_balancers, cfme=cfme_load_balancers)
+
+
+@pytest.fixture
+def secgroup_with_rule(provider):
+    res_group = provider.data['provisioning']['resource_group']
+    secgroup_name = 'secgroup_with_rule_{}'.format(fauxfactory.gen_alpha(8).lower())
+    provider.mgmt.create_netsec_group(secgroup_name, res_group)
+    provider.mgmt.create_netsec_group_port_allow(secgroup_name, 22, res_group)
+    provider.refresh_provider_relationships()
+    yield secgroup_name
+    provider.mgmt.remove_netsec_group(secgroup_name, res_group)
+
+
+@pytest.mark.provider([AzureProvider], override=True, scope='function')
+def test_sdn_nsg_firewall_rules(provider, appliance, secgroup_with_rule):
+    """ Pulls the list of firewall ports from Provider API and from appliance. Compare the 2
+    results. If same, then test is successful.
+
+    Metadata:
+        test_flag: sdn, inventory
+    """
+
+    # Navigate to network provider.
+    collection = appliance.collections.network_providers.filter({'provider': provider})
+    network_provider = collection.all()[0]
+    view = navigate_to(network_provider, 'Details')
+    parent_name = view.entities.relationships.get_text_of("Parent Cloud Provider")
+    assert parent_name == provider.name
+
+    # Navigate to secgroup.
+    collection = appliance.collections.network_security_groups.filter({'name': secgroup_with_rule})
+    secgroup = collection.all()[0]
+    view = navigate_to(secgroup, 'Details')
+
+    assert 'Port' == view.entities.firewall_rules[0][3].text
+    assert '22' == view.entities.firewall_rules[1][3].text
