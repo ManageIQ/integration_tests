@@ -395,6 +395,19 @@ def console_template_modscope(provider):
     return _get_template(provider, 'console_template')
 
 
+def _walk_to_obj_parent(obj):
+    old = None
+    while True:
+        if old is obj:
+            break
+        old = obj
+        try:
+            obj = obj._parent_request
+        except AttributeError:
+            pass
+    return obj
+
+
 @pytest.mark.hookwrapper
 def pytest_fixture_setup(fixturedef, request):
     # since we use DataProvider at collection time and BaseProvider in fixtures and tests,
@@ -402,29 +415,39 @@ def pytest_fixture_setup(fixturedef, request):
     # provider fixture request.
     # There were several other ways to do that. However, those bumped into different
     # scope mismatch issues.
-    if fixturedef.argname == 'provider':
-        kwargs = {}
-        for argname in fixturedef.argnames:
-            fixdef = request._get_active_fixturedef(argname)
-            result, arg_cache_key, exc = fixdef.cached_result
-            request._check_scope(argname, request.scope, fixdef.scope)
-            kwargs[argname] = result
 
-        fixturefunc = fixturedef.func
-        if request.instance is not None:
-            fixturefunc = getimfunc(fixturedef.func)
-            if fixturefunc != fixturedef.func:
-                fixturefunc = fixturefunc.__get__(request.instance)
-        my_cache_key = request.param_index
-        try:
-            provider_data = call_fixture_func(fixturefunc, request, kwargs)
-        except TEST_OUTCOME:
-            fixturedef.cached_result = (None, my_cache_key, sys.exc_info())
-            raise
-        from cfme.utils.providers import get_crud
-        provider = get_crud(provider_data.key)
-        fixturedef.cached_result = (provider, my_cache_key, None)
-        request.param = provider
-        yield provider
+    # As the object may not be the root object and may have a parent, we need to walk to that
+    # the object to see if we can find the attribute on it or any of its parents
+    if hasattr(_walk_to_obj_parent(request).function, 'provider'):
+        marks = _walk_to_obj_parent(request).function.provider._marks
+
+        for mark in marks:
+            if mark.kwargs.get('fixture_name', 'provider') == fixturedef.argname:
+                kwargs = {}
+                for argname in fixturedef.argnames:
+                    fixdef = request._get_active_fixturedef(argname)
+                    result, arg_cache_key, exc = fixdef.cached_result
+                    request._check_scope(argname, request.scope, fixdef.scope)
+                    kwargs[argname] = result
+
+                fixturefunc = fixturedef.func
+                if request.instance is not None:
+                    fixturefunc = getimfunc(fixturedef.func)
+                    if fixturefunc != fixturedef.func:
+                        fixturefunc = fixturefunc.__get__(request.instance)
+                my_cache_key = request.param_index
+                try:
+                    provider_data = call_fixture_func(fixturefunc, request, kwargs)
+                except TEST_OUTCOME:
+                    fixturedef.cached_result = (None, my_cache_key, sys.exc_info())
+                    raise
+                from cfme.utils.providers import get_crud
+                provider = get_crud(provider_data.key)
+                fixturedef.cached_result = (provider, my_cache_key, None)
+                request.param = provider
+                yield provider
+                break
+        else:
+            yield
     else:
         yield
