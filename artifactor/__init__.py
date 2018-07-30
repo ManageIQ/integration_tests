@@ -145,27 +145,27 @@ class Artifactor(Rigger):
         """
         if not self.config:
             return False
-        self.log_dir = local(self.config.get('log_dir', log_path))
+        self.log_dir = local(self.config.get("log_dir", log_path))
         self.log_dir.ensure(dir=True)
-        self.artifact_dir = local(self.config.get('artifact_dir', log_path.join('artifacts')))
+        self.artifact_dir = local(self.config.get("artifact_dir", log_path.join("artifacts")))
         self.artifact_dir.ensure(dir=True)
-        self.logger = create_logger('artifactor', self.log_dir.join('artifactor.log').strpath)
-        self.squash_exceptions = self.config.get('squash_exceptions', False)
+        self.logger = create_logger("artifactor", self.log_dir.join("artifactor.log").strpath)
+        self.squash_exceptions = self.config.get("squash_exceptions", False)
         if not self.log_dir:
             print("!!! Log dir must be specified in yaml")
             sys.exit(127)
         if not self.artifact_dir:
             print("!!! Artifact dir must be specified in yaml")
             sys.exit(127)
-        self.config['zmq_socket_address'] = 'tcp://127.0.0.1:{}'.format(random_port())
+        self.config["zmq_socket_address"] = "tcp://127.0.0.1:{}".format(random_port())
         self.setup_plugin_instances()
         self.start_server()
         self.global_data = {
-            'artifactor_config': self.config,
-            'log_dir': self.log_dir.strpath,
-            'artifact_dir': self.artifact_dir.strpath,
-            'artifacts': dict(),
-            'old_artifacts': dict()
+            "artifactor_config": self.config,
+            "log_dir": self.log_dir.strpath,
+            "artifact_dir": self.artifact_dir.strpath,
+            "artifacts": dict(),
+            "old_artifacts": dict(),
         }
 
     def handle_failure(self, exc):
@@ -184,25 +184,31 @@ class ArtifactorBasePlugin(RiggerBasePlugin):
 
     @property
     def store(self):
-        if not hasattr(self, '_store'):
+        if not hasattr(self, "_store"):
             self._store = {}
         return self._store
 
 
 def initialize(artifactor):
     artifactor.parse_config()
-    artifactor.register_hook_callback('pre_start_test', 'pre', parse_setup_dir,
-                                      name="default_start_test")
-    artifactor.register_hook_callback('start_test', 'pre', parse_setup_dir,
-                                      name="default_start_test")
-    artifactor.register_hook_callback('finish_test', 'pre', parse_setup_dir,
-                                      name="default_finish_test")
-    artifactor.register_hook_callback('start_session', 'pre', start_session,
-                                      name="default_start_session")
-    artifactor.register_hook_callback('build_report', 'pre', merge_artifacts,
-                                      name="merge_artifacts")
-    artifactor.register_hook_callback('finish_session', 'pre', merge_artifacts,
-                                      name="merge_artifacts")
+    artifactor.register_hook_callback(
+        "pre_start_test", "pre", parse_setup_dir, name="default_start_test"
+    )
+    artifactor.register_hook_callback(
+        "start_test", "pre", parse_setup_dir, name="default_start_test"
+    )
+    artifactor.register_hook_callback(
+        "finish_test", "pre", parse_setup_dir, name="default_finish_test"
+    )
+    artifactor.register_hook_callback(
+        "start_session", "pre", start_session, name="default_start_session"
+    )
+    artifactor.register_hook_callback(
+        "build_report", "pre", merge_artifacts, name="merge_artifacts"
+    )
+    artifactor.register_hook_callback(
+        "finish_session", "pre", merge_artifacts, name="merge_artifacts"
+    )
     artifactor.initialized = True
 
 
@@ -210,7 +216,7 @@ def start_session(run_id=None):
     """
     Convenience fire_hook for built in hook
     """
-    return None, {'run_id': run_id}
+    return None, {"run_id": run_id}
 
 
 def merge_artifacts(old_artifacts, artifacts):
@@ -219,7 +225,7 @@ def merge_artifacts(old_artifacts, artifacts):
     with the new artifacts for this run
     """
     old_artifacts.update(artifacts)
-    return {'old_artifacts': old_artifacts}, None
+    return {"old_artifacts": old_artifacts}, None
 
 
 def parse_setup_dir(test_name, test_location, artifactor_config, artifact_dir, run_id):
@@ -227,18 +233,24 @@ def parse_setup_dir(test_name, test_location, artifactor_config, artifact_dir, r
     Convenience fire_hook for built in hook
     """
     if test_name and test_location:
-        run_type = artifactor_config.get('per_run')
-        overwrite = artifactor_config.get('reuse_dir', False)
-        path = setup_artifact_dir(root_dir=artifact_dir, test_name=test_name,
-                                  test_location=test_location, run_type=run_type,
-                                  run_id=run_id, overwrite=overwrite)
+        run_type = artifactor_config.get("per_run")
+        overwrite = artifactor_config.get("reuse_dir", False)
+        path = setup_artifact_dir(
+            root_dir=artifact_dir,
+            test_name=test_name,
+            test_location=test_location,
+            run_type=run_type,
+            run_id=run_id,
+            overwrite=overwrite,
+        )
     else:
-        raise Exception('Not enough information to create artifact')
-    return {'artifact_path': path}, None
+        raise Exception("Not enough information to create artifact")
+    return {"artifact_path": path}, None
 
 
-def setup_artifact_dir(root_dir=None, test_name=None, test_location=None,
-                       run_type=None, run_id=None, overwrite=True):
+def setup_artifact_dir(
+    root_dir=None, test_name=None, test_location=None, run_type=None, run_id=None, overwrite=True
+):
     """
     Sets up the artifact dir and returns it.
     """
@@ -287,10 +299,10 @@ def create_logger(logger_name, filename):
 
     log_file = filename
 
-    file_formatter = logging.Formatter('%(asctime)-15s [%(levelname).1s] %(message)s')
+    file_formatter = logging.Formatter("%(asctime)-15s [%(levelname).1s] %(message)s")
     file_handler = logging.FileHandler(log_file)
     file_handler.setFormatter(file_formatter)
 
     logger.addHandler(file_handler)
-    logger.setLevel('DEBUG')
+    logger.setLevel("DEBUG")
     return logger

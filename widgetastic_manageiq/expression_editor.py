@@ -3,29 +3,29 @@
 
 """
 import re
-import six
 from functools import partial
 
+import six
 from selenium.common.exceptions import NoSuchElementException
-from widgetastic_manageiq import Calendar, Checkbox
-from widgetastic_patternfly import Input, BootstrapSelect as VanillaBootstrapSelect, Button
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect as VanillaBootstrapSelect
+from widgetastic_patternfly import Button, Input
 
-from cfme.utils.wait import wait_for, TimedOutError
 from cfme.utils.pretty import Pretty
+from cfme.utils.wait import TimedOutError, wait_for
+from widgetastic_manageiq import Calendar, Checkbox
 
 
 class ExpressionButton(Button):
-
     def __locator__(self):
         return (
-            './/*[(self::a or self::button or (self::input and '
-            '(@type="button" or @type="submit"))) {}]'.format(self.locator_conditions))
+            ".//*[(self::a or self::button or (self::input and "
+            '(@type="button" or @type="submit"))) {}]'.format(self.locator_conditions)
+        )
 
 
 class BootstrapSelect(VanillaBootstrapSelect):
-
     def fill(self, value):
         # Some BootstrapSelects appears on the page only if another select changed. Therefore we
         # should wait until it appears and only then we can fill it.
@@ -102,10 +102,9 @@ class ExpressionEditor(View, Pretty):
     ROOT = "//div[@id='exp_editor_div']"
     MAKE_BUTTON = "//span[not(contains(@style,'none'))]//img[@alt='{}']"
     ATOM_ROOT = "./div[@id='exp_atom_editor_div']"
-    EXPRESSIONS_ROOT = VersionPick({
-        Version.lowest(): "./fieldset/div",
-        "5.10": ".//div[@class='panel-body']"
-    })
+    EXPRESSIONS_ROOT = VersionPick(
+        {Version.lowest(): "./fieldset/div", "5.10": ".//div[@class='panel-body']"}
+    )
     EXPRESSION_TEXT = "//a[contains(@id,'exp_')]"
     COMMIT = Button(title="Commit expression element changes")
     DISCARD = Button(title="Discard expression element changes")
@@ -115,16 +114,20 @@ class ExpressionEditor(View, Pretty):
     AND = ExpressionButton(title="AND with a new expression element")
     REDO = Button(title="Redo the last change")
     UNDO = Button(title="Undo the last change")
-    SELECT_SPECIFIC = VersionPick({
-        Version.lowest(): ".//img[@alt='Click to change to a specific Date/Time format']",
-        "5.10": ".//a[@title='Click to change to a specific Date/Time format']"
-    })
-    SELECT_RELATIVE = VersionPick({
-        Version.lowest(): ".//img[@alt='Click to change to a relative Date/Time format']",
-        "5.10": ".//a[@title='Click to change to a relative Date/Time format']"
-    })
+    SELECT_SPECIFIC = VersionPick(
+        {
+            Version.lowest(): ".//img[@alt='Click to change to a specific Date/Time format']",
+            "5.10": ".//a[@title='Click to change to a specific Date/Time format']",
+        }
+    )
+    SELECT_RELATIVE = VersionPick(
+        {
+            Version.lowest(): ".//img[@alt='Click to change to a relative Date/Time format']",
+            "5.10": ".//a[@title='Click to change to a relative Date/Time format']",
+        }
+    )
 
-    pretty_attrs = ['show_loc']
+    pretty_attrs = ["show_loc"]
 
     def __init__(self, parent, show_loc=None, logger=None):
         View.__init__(self, parent, logger=logger)
@@ -203,8 +206,9 @@ class ExpressionEditor(View, Pretty):
         try:
             self.browser.element(
                 "{}[contains(normalize-space(text()), {})]".format(
-                    self.EXPRESSION_TEXT, no_expression_text),
-                parent=self._expressions_root
+                    self.EXPRESSION_TEXT, no_expression_text
+                ),
+                parent=self._expressions_root,
             )
             return True
         except NoSuchElementException:
@@ -248,12 +252,7 @@ class ExpressionEditor(View, Pretty):
             value: Value to check against.
         """
         view = self.count_form_view
-        view.fill(dict(
-            type="Count of",
-            count=count,
-            key=key,
-            value=value
-        ))
+        view.fill(dict(type="Count of", count=count, key=key, value=value))
         # In case of advanced search box
         if view.user_input.is_displayed:
             user_input = value is None
@@ -268,11 +267,7 @@ class ExpressionEditor(View, Pretty):
             value: Value to check against.
         """
         view = self.tag_form_view
-        view.fill(dict(
-            type="Tag",
-            tag=tag,
-            value=value
-        ))
+        view.fill(dict(type="Tag", tag=tag, value=value))
         # In case of advanced search box
         if view.user_input.is_displayed:
             user_input = value is None
@@ -282,28 +277,27 @@ class ExpressionEditor(View, Pretty):
     def fill_registry(self, key=None, value=None, operation=None, contents=None):
         """ Fills the 'Registry' type of form."""
         view = self.registry_form_view
-        view.fill(dict(
-            type="Registry",
-            key=key,
-            value=value,
-            operation=operation,
-            contents=contents,
-        ))
+        view.fill(
+            dict(type="Registry", key=key, value=value, operation=operation, contents=contents)
+        )
         self.click_commit()
 
-    def fill_find(self, field=None, skey=None, value=None, check=None, cfield=None, ckey=None,
-                  cvalue=None):
+    def fill_find(
+        self, field=None, skey=None, value=None, check=None, cfield=None, ckey=None, cvalue=None
+    ):
         view = self.find_form_view
-        view.fill(dict(
-            type="Find",
-            field=field,
-            skey=skey,
-            value=value,
-            check=check,
-            cfield=cfield,
-            ckey=ckey,
-            cvalue=cvalue
-        ))
+        view.fill(
+            dict(
+                type="Find",
+                field=field,
+                skey=skey,
+                value=value,
+                check=check,
+                cfield=cfield,
+                ckey=ckey,
+                cvalue=cvalue,
+            )
+        )
         self.click_commit()
 
     def fill_field(self, field=None, key=None, value=None):
@@ -315,18 +309,17 @@ class ExpressionEditor(View, Pretty):
             value: Value to check against.
         """
         field_norm = field.strip().lower()
-        if ("date updated" in field_norm or "date created" in field_norm or
-                "boot time" in field_norm or "timestamp" in field_norm):
+        if (
+            "date updated" in field_norm
+            or "date created" in field_norm
+            or "boot time" in field_norm
+            or "timestamp" in field_norm
+        ):
             no_date = False
         else:
             no_date = True
         view = self.field_form_view
-        view.fill(dict(
-            type="Field",
-            field=field,
-            key=key,
-            value=value if no_date else None,
-        ))
+        view.fill(dict(type="Field", field=field, key=key, value=value if no_date else None))
         # In case of advanced search box
         if view.user_input.is_displayed:
             user_input = value is None
@@ -334,8 +327,9 @@ class ExpressionEditor(View, Pretty):
         if not no_date:
             # Flip the right part of form
             view = self.field_date_form
-            if (isinstance(value, six.string_types) and
-                    not re.match(r"^[0-9]{2}/[0-9]{2}/[0-9]{4}$", value)):
+            if isinstance(value, six.string_types) and not re.match(
+                r"^[0-9]{2}/[0-9]{2}/[0-9]{4}$", value
+            ):
                 if not view.dropdown_select.is_displayed:
                     self.click_switch_to_relative()
                 view.fill({"dropdown_select": value})
@@ -373,7 +367,6 @@ class ExpressionEditor(View, Pretty):
 
 
 class GroupTagExpressionEditor(ExpressionEditor):
-
     @View.nested
     class tag_form_view(View):  # noqa
         tag = BootstrapSelect("chosen_tag")
@@ -387,10 +380,7 @@ class GroupTagExpressionEditor(ExpressionEditor):
             value: Value to check against.
         """
         view = self.tag_form_view
-        view.fill(dict(
-            tag=tag,
-            value=value
-        ))
+        view.fill(dict(tag=tag, value=value))
         self.click_commit()
 
 
