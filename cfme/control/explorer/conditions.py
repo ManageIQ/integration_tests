@@ -5,12 +5,12 @@ from widgetastic.widget import Text, TextInput, Widget
 from widgetastic_patternfly import Button, Input
 
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils import deferred_verpick
-from cfme.utils import ParamClassName
+from cfme.utils import deferred_verpick, ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.version import LOWEST
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from . import ControlExplorerView
 
@@ -181,7 +181,8 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
         view.fill(updates)
         view.save_button.click()
         view = self.create_view(ConditionDetailsView, override=updates)
-        assert view.is_displayed
+        wait_for(lambda: view.is_displayed, timeout=10,
+            message="wait until ConditionDetailsView will be displayed")
         view.flash.assert_success_message(
             'Condition "{}" was saved'.format(updates.get("description", self.description)))
 
