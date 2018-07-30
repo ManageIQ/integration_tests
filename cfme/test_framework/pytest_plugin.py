@@ -103,6 +103,7 @@ pytest_plugins = (
     'cfme.fixtures.tccheck',
     'cfme.fixtures.pxe',
     'cfme.fixtures.candu',
+    'cfme.fixtures.v2v',
 
     'cfme.metaplugins',
 )
