@@ -1,0 +1,380 @@
+---
+- hosts: localhost
+  connection: local
+  become: yes
+  become_method: su
+  vars:
+    user_id: "{{ lookup('env','USER_ID') }}"
+    group_id: "{{ lookup('env','GROUP_ID') }}"
+    username: "{{ lookup('env','USERNAME') }}"
+    groupname: "{{ lookup('env','GROUPNAME') }}"
+    debug: "{{ lookup('env','DEBUG') }}"
+    projects: "{{ lookup('env','PROJECTS') }}"
+  
+  tasks:
+    - pause: prompt="Welcome to ManageIQ integration tests configuration \n
+                   press \n
+                    ENTER if you want to keep default value [] \n
+                    Ctrl+C followed with A - to abort \n
+                    Ctrl+C anytime during playbookx execution \n
+                  
+                  If you want to change any of integration tests parameters, you can safely re-run this script. 
+                  Now, you will be prompted to input needed variables (press ENTER to continue):"
+  
+    - name: "[DEBUG] Print out all variables collected from shell environment"
+      debug: msg="Shell variable is {{ item }}"
+      with_items: 
+        - "{{ user_id }}"
+        - "{{ group_id }}"
+        - "{{ username }}"
+        - "{{ groupname }}"
+        - "{{ debug }}"
+        - "{{ projects }}"
+      when: debug
+      register: shell
+    
+    - name: "[DEBUG] Print output"
+      debug: var=shell.stdout_lines
+      when: debug
+
+      # We are passing name of the group and ID of the group from host into container as shell variables 
+    - name: Adding group into container
+      group: name="{{ groupname }}" gid="{{ group_id }}" state=present
+    
+    - name: "[DEBUG] See if group was added into /etc/group file"
+      shell: cat /etc/group
+      when: debug
+      register: group_content
+    
+    - name: "[DEBUG] Print output"
+      debug: var=group_content.stdout_lines
+      when: debug
+ 
+      # We are passing username and UID of the user from host into container as shell variables 
+    - name: Adding user to container
+      user: name="{{ username }}" comment="{{ username }} container" uid="{{ user_id }}" group="{{ groupname }}"
+
+    - name: "[DEBUG] List if home dir exists"
+      shell: ls -ltra /home/{{ username }}
+      when: debug 
+      register: home_content
+    
+    - name: "[DEBUG] Print output"
+      debug: var=home_content.stdout_lines
+      when: debug
+    
+    - name: "[DEBUG] List .ssh dir"
+      shell: ls -ltra /home/{{ username }}/.ssh
+      when: debug
+      register: ssh_content
+    
+    - name: "[DEBUG] Print output"
+      debug: var=ssh_content.stdout_lines
+      when: debug
+
+    - name: Checking if we are connected to internet - WIP
+      ipify_facts:
+      register: ip
+      become_user: root
+
+    - name: Set fact if we are connected to internet - WIP
+      set_fact: 
+        internet: false
+      when: ip.ansible_facts.ipify_public_ip
+ 
+    - name: Check if file with vars exists
+      stat: path="{{ vars_config }}"
+      register: p
+   
+    - name: File with variables does not exist, creating "{{ vars_config }}"
+      file: path="{{ vars_config }}" state=touch owner="{{ username }}" group="{{ groupname }}" mode=0660
+      when: p.stat.exists == False
+    
+    - name: create valid yaml config
+      lineinfile: "dest='{{ vars_config }}' regexp='^---' line='---'"
+      when: p.stat.exists == False
+    
+    - name: import variables if defined
+      include_vars: "{{ vars_config }}"
+      when: p.stat.exists == True
+
+    - name: "0)"
+      action: custom_prompt prompt="{{ mount_ssh_keys_question }} - [{{ mount_ssh_keys }}]:" accepted_keys="{{ accepted_keys_yn }}" help_message="{{ mount_ssh_keys_help }}"
+      register: mount_ssh_keys_p
+
+    - name: "1)"
+      # https://gist.githubusercontent.com/confiks/6d7b0ee3e137df01b758/raw/6b31d61151c4199e5121c34c841f7168850a6071/ask_key.py
+      # action: custom_prompt prompt="{{ pull_requests_question }} - [{{ pull_requests }}]:" accepted_keys="{{ accepted_keys_yn }}"
+      action: custom_prompt prompt="{{ pull_requests_question }} - [{{ pull_requests }}]:" accepted_keys="{{ accepted_keys_yn }}" help_message="{{ pull_requests_help }}"
+      register: pull_requests_p
+
+    - name: "2)"
+      #action: custom_prompt prompt="SSH username - [ {{ ssh_user }} ]:" accepted_keys="['y', 'n', 'r']"
+      action: custom_prompt prompt="{{ git_account_username_question }} - [{{ git_account_username }}]:" help_message="{{ git_account_username_help }}"
+      register: git_account_username_p
+      when: pull_requests_p.key != "n"
+
+    - name: "3)"
+      action: custom_prompt prompt="{{ git_full_name_question }} - [{{ git_full_name }}]:" help_message="{{ git_full_name_help }}"
+      register: git_full_name_p
+      when: pull_requests_p.key != "n"
+    
+    - name: "4)"
+      action: custom_prompt prompt="{{ git_email_question }} - [{{ git_email }}]:" help_message="{{ git_email_help }}"
+      register: git_email_p
+      when: pull_requests_p.key != "n"
+    
+    - name: "5)"
+      action: custom_prompt prompt="{{ gpg_public_key_question }} - [{{ gpg_public_key }}]:" help_message="{{ gpg_public_key_help }}"
+      register: gpg_public_key_p
+      when: pull_requests_p.key != "n"
+    
+    - name: "6)" 
+      action: custom_prompt prompt="{{ any_yaml_question }} - [{{ any_yaml }}]:" accepted_keys="{{ accepted_keys_yn }}" help_message="{{ any_yaml_help }}"
+      register: any_yaml_p
+    
+      #  Ask user if he wants to use YAML files from remote repository 
+    - name: "6.1)"
+      action: custom_prompt prompt="{{ yaml_remote_repo_yn_question }} - [{{ yaml_remote_repo_yn }}]:" accepted_keys="{{ accepted_keys_yn }}" help_message="{{ yaml_remote_repo_yn_help }}"
+      register: yaml_remote_repo_yn_p
+      when: any_yaml_p.key == "y"
+#      when: any_yaml_p.key == "y" and pull_requests_p.key != "n"
+
+    - set_fact:
+        yaml_remote_repo_yn_p: 'n'
+      when: any_yaml_p.key == "y"
+
+      # Ask for URL for remote YAML repo 
+    - name: "6.2)"
+      action: custom_prompt prompt="{{ yaml_remote_repo_question }} - [{{ yaml_remote_repo }}]:" help_message="{{ yaml_remote_repo_help }}"
+      register: yaml_remote_repo_p
+ #     when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
+      when: any_yaml_p.key == "y" and yaml_remote_repo_yn_p.key == "y"
+
+      # Ask for username for remote YAML repo 
+    - name: "6.2)"
+      action: custom_prompt prompt="{{ yaml_remote_repo_username_question }} - [{{ yaml_remote_repo_username }}]:" help_message="{{ yaml_remote_repo_username_help }}"
+      register: yaml_remote_repo_username_p
+#      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
+      when: any_yaml_p.key == "y" and yaml_remote_repo_yn_p.key == "y"
+      # when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
+      
+      # Ask for password if YAMLs are encrypted
+    - name: "6.3)"
+      action: custom_prompt prompt="{{ yaml_remote_key_password_question }} - [{{ yaml_remote_key_password }}]:" help_message="{{ yaml_remote_key_password_help }}"
+      register: yaml_remote_key_password_p
+      # when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
+#      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
+      when: any_yaml_p.key == "y" and yaml_remote_repo_yn_p.key == "y"
+  
+      # Ask user if he wants to use local files from his PC
+    - name: "7.1)"   
+      action: custom_prompt prompt="{{ yaml_local_repo_yn_question }} - [{{ yaml_local_repo_yn }}]:" accepted_keys="{{ accepted_keys_yn }}" help_message="{{ yaml_local_repo_yn_help }}"
+      register: yaml_local_repo_yn_p
+      # when: pull_requests_p.key != "n"
+#      when: any_yaml_p.key == "y" and pull_requests_p.key != "n"
+      when: any_yaml_p.key == "y"
+
+      # Ask for path where local YAML files can be found
+    - name: "7.2)"   
+      action: custom_prompt prompt="{{ yaml_local_repo_question }} - [{{ yaml_local_repo }}]:" help_message="{{ yaml_local_repo_help }}"
+      register: yaml_local_repo_p
+#      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_local_repo_yn_p.key == "y")
+      when: any_yaml_p.key == "y" and yaml_local_repo_yn_p.key == "y"
+    
+    - name: "10)"
+      action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url }}]:" help_message="{{ base_url_help }}"
+      register: base_url_p 
+
+    - name: "11)"
+      action: custom_prompt prompt="{{ browser_question }} - [{{ browser }}]" accepted_keys="{{browser_accepted_keys}}" help_message="{{ browser_help }}"
+      register: browser_p
+ 
+    - name: Set facts 
+      set_fact:
+        git_remote_name: 'upstream'
+        yaml_remote_name: 'upstream' 
+      when: pull_requests_p.key != "n"
+
+ 
+    - name: Writing all prompted variables into variable file
+      lineinfile: "dest={{ vars_config }} regexp='^{{ item.key }}:' line='{{ item.key }}: {{ item.value }}'"
+      with_items:
+        - { key: 'projects', value: "{{ projects }}" }
+        - { key: 'mount_ssh_keys', value: "{{ mount_ssh_keys_p.key }}"}
+        - { key: 'pull_requests', value: "{{ pull_requests_p.key }}"}
+        - { key: 'git_account_username', value: "{{ git_account_username_p.key|default('') }}"}
+        - { key: 'git_full_name', value: "{{ git_full_name_p.key|default('') }}"}
+        - { key: 'git_email', value: "{{ git_email_p.key|default('') }}"}
+        - { key: 'gpg_public_key', value: "{{ gpg_public_key_p.key|default('') }}"}
+        - { key: 'any_yaml', value: "{{ any_yaml_p.key|default('n') }}"}
+        - { key: 'yaml_remote_repo_yn', value: "{{ yaml_remote_repo_yn_p.key|default('') }}"}
+        - { key: 'yaml_remote_repo', value: "{{ yaml_remote_repo_p.key|default('') }}"}
+        - { key: 'yaml_remote_repo_username', value: "{{ yaml_remote_repo_username_p.key|default('') }}"}
+        - { key: 'yaml_remote_key_password', value: "{{ yaml_remote_key_password_p.key|default('') }}"}
+        - { key: 'yaml_local_repo_yn', value: "{{ yaml_local_repo_yn_p.key|default('') }}"}
+        - { key: 'yaml_local_repo', value: "{{ yaml_local_repo_p.key|default('') }}"}
+        - { key: 'base_url', value: "{{ base_url_p.key |default('') }}"}
+        - { key: 'browser', value: "{{ browser_p.key }}"}
+      when: item.value != ''
+    
+    - name: Re-importing variables from variable file
+      include_vars: "{{ vars_config }}"
+
+
+# TBD 
+#    - name: check if github account exists
+#      uri: 
+#        url: "https://github.com/{{ (git_account_username_p.key == '') | ternary(git_account_username, git_account_username_p.key ) }}/cfme_tests"
+#        return_content: no 
+#        follow_redirects: safe 
+#        method: HEAD
+#      failed_when: false
+#      register: git_uri
+#      when: pull_requests_p.key != "n"
+
+#    - debug: msg="{{ git_uri }}"
+
+#    - name: evaluating if account exists
+#      action: fail msg="Github account does not exist - create one and re-run again"
+#      when: git_uri.status != 200
+    # Clone repo if it does not exists
+    # Example just get information about the repository whether or not it has
+    # already been cloned locally.
+
+    - name: Set ManageIQ repo to be ssh
+      set_fact:
+        manageiq_repo: "git://github.com/ManageIQ/integration_tests.git"  
+      when: mount_ssh_keys == "y"
+    
+    - name: Set ManageIQ to be https
+      set_fact:
+        manageiq_repo: "https://github.com/ManageIQ/integration_tests"  
+      when: mount_ssh_keys == "n"
+
+    - name: Check if repo exists locally
+      git: repo="{{ manageiq_repo }}" dest="{{ cfme_vol }}/integration_tests" update=no clone=no version=master remote={{ git_remote_name | default('origin') }}
+      register: git_repo_exists
+
+    - name: Print if repo exists locally - if it is false it means it was cloned before
+      debug: msg="{{ git_repo_exists.changed }}"
+
+    - name: Get active branch
+      shell: cd "{{ cfme_vol }}/integration_tests"; git rev-parse --abbrev-ref HEAD
+      register: git_active_branch
+      when: not git_repo_exists.changed
+
+    - name: Check if we need to stash
+      shell: cd "{{ cfme_vol }}/integration_tests"; git status
+      register: git_stash_status
+      when: not git_repo_exists.changed
+
+    - name: Update git config of integration_tests repo
+      git_config: repo="{{ cfme_vol }}/integration_tests/" scope=local name="{{ item.name }}" value="{{ item.value }}"
+      with_items:
+        - { name: 'user.email', value: "{{ git_email }}" }
+        - { name: 'user.name', value: "{{ git_full_name }}" }
+        - { name: 'user.signingkey', value: "{{ gpg_public_key }}" }
+        - { name: 'push.default', value: 'simple' }
+        - { name: 'remote.upstream.url', value: "{{ manageiq_repo }}" }
+        - { name: 'remote.upstream.fetch', value: '+refs/heads/*:refs/remotes/upstream/*' }
+        - { name: 'remote.origin.url', value: 'git@github.com:{{ git_account_username }}/cfme_tests.git' }
+        - { name: 'remote.origin.fetch', value: '+refs/heads/*:refs/remotes/origin/*' }
+      become_user: "{{ username }}"
+      when: pull_requests == "y"
+
+
+    - name: We must stash changes - active branch is not clean
+      shell: cd "{{ cfme_vol }}/integration_tests"; git stash
+      become_user: "{{ username }}"
+      when: (git_stash_status is defined) and (git_stash_status.stdout.find('working directory clean') == False) # and (not git_repo_exists.changed)
+
+    - name: Clone Integration tests repo
+      #git: repo="git://github.com/{{ git_account_username}}/cfme_tests.git" dest="{{ cfme_vol }}/cfme_tests" clone=yes update=yes version=master
+      # git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote=upstream
+      git: repo="{{ manageiq_repo }}" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote={{ git_remote_name | default('origin') }}
+      become_user: "{{ username }}"
+    
+    - name: Clone Integration tests PR [testing]
+      git: repo="{{ manageiq_repo }}" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote={{ git_remote_name | default('origin') }} refspec=+refs/pull/3254/head:integration_tests_container force=yes
+      become_user: "{{ username }}"
+      when: pull_requests != "n"
+
+    - name: switch branch
+      shell: cd "{{ cfme_vol }}/integration_tests"; git checkout "{{ git_active_branch.stdout}}"
+      become_user: "{{ username }}"
+      # when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
+      #when: (git_stash_status is defined) and (git_stash_status.stdout.find('working directory clean') == False) # and (not git_repo_exists.changed)
+
+    - name: unstash changes
+      shell: cd "{{ cfme_vol }}/integration_tests"; git stash pop
+      become_user: "{{ username }}"
+      when: (git_stash_status is defined) and (git_stash_status.stdout.find('working directory clean') == False) # and (not git_repo_exists.changed)
+
+    - name: get basename from git remote repo
+      set_fact:
+        yaml_remote_repo_basename: "{{ yaml_remote_repo | basename | regex_replace('\\.git','') }}"
+      # when: yaml_remote_repo_yn_p.key == "y"
+      when: yaml_remote_repo_yn == "y"
+
+    - name: Clone remote YAML repo - Add username into repo url - regexp
+      git: repo="{{ yaml_remote_repo }}" dest="{{ cfme_vol }}/{{ yaml_remote_repo_basename }}" clone=yes remote={{ yaml_remote_name | default('origin') }}
+      # git: repo="{{ yaml_remote_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_remote_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
+      become_user: "{{ username }}"
+      # when: yaml_remote_repo_yn_p.key == "y"
+      when: yaml_remote_repo_yn == "y"
+
+    - name: Configure origin for remote YAML repo
+      git_config: repo="{{ cfme_vol }}/{{ yaml_remote_repo_basename }}" scope=local name="{{ item.name }}" value="{{ item.value }}"
+      with_items:
+#        - { name: 'user.email', value: "{{ git_email }}" }
+#        - { name: 'user.name', value: "{{ git_full_name }}" }
+#        - { name: 'user.signingkey', value: "{{ gpg_public_key }}" }
+#        - { name: 'push.default', value: 'simple' }
+#        - { name: 'remote.upstream.url', value: 'git://github.com:ManageIQ/integration_tests.git' }
+#        - { name: 'remote.upstream.fetch', value: '+refs/heads/*:refs/remotes/upstream/*' }
+        - { name: 'remote.origin.url', value: "{{ yaml_remote_repo | regex_replace('^(.+)//(.+)/(.+)/(.+)$', '\\1//\\2/{{ yaml_remote_repo_username }}/\\4') }}" }
+        - { name: 'remote.origin.fetch', value: '+refs/heads/*:refs/remotes/origin/*' }
+      become_user: "{{ username }}"
+      # when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
+      when: pull_requests != "n" and yaml_remote_repo_yn == "y"
+ 
+    - name: Add YAML password/key if it is defined into .yaml_key file
+      template: src=templates/yaml_key.j2 dest="{{ cfme_vol }}/integration_tests/.yaml_key"
+      when: yaml_remote_key_password is defined
+     
+    - debug: msg="{{item | basename }}"
+      with_fileglob: 
+        - "{{ cfme_vol }}/{{ yaml_remote_repo_basename }}/complete/*.*yaml"
+      when: yaml_remote_repo_yn == "y"
+      # when: yaml_remote_repo_yn_p.key == "y"
+      # when: item | basename != 'env.yaml'
+      
+    - name: Create symlinks for (remote) YAML repo
+      file: src="../../{{ yaml_remote_repo_basename }}/complete/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
+      with_fileglob: 
+        - "{{ cfme_vol }}/{{ yaml_remote_repo_basename }}/complete/*.*yaml"
+      #when: yaml_remote_repo_yn_p.key == "y" and ((pull_requests == "y") and ( item | basename != 'env.yaml'))
+      when: yaml_remote_repo_yn == "y"
+      # when: yaml_remote_repo_yn_p.key == "y"
+    
+    - name: Create symlinks for (local) YAML repo (symlinks to remote repo will be overwritten if name is the same)
+      file: src="../../{{ yaml_local_repo }}/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
+      with_fileglob:
+        # - /projects/cfme_env/cfme_vol/{{ yaml_local_repo }}/*.*yaml 
+        - "{{ cfme_vol }}/{{ yaml_local_repo }}/*.*yaml"
+      when: yaml_local_repo_yn == "y"
+      # when: yaml_local_repo_yn_p.key == "y"
+    
+    - name: Create symlinks to default yaml files
+      file: src="../integration_tests_install/integration_tests_config/basic_yamls/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
+      with_fileglob:
+        - "{{ cfme_vol }}/integration_tests/integration_tests_install/integration_tests_config/basic_yamls/*.*yaml"
+      when: any_yaml == "n"
+      # when: yaml_local_repo_yn_p.key == "n"
+
+    - name: Update env.local.yaml
+      template: src=templates/env.local.yaml.j2 dest="{{ cfme_vol }}/integration_tests/conf/env.local.yaml"
+
+    - name: change permissions recursively
+      file: path="{{ cfme_vol }}/integration_tests" state=directory owner="{{ username }}" group="{{ groupname }}" recurse=yes

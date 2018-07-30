@@ -1,0 +1,83 @@
+---
+# cfme_vol: /projects/cfme_env/cfme_vol
+cfme_vol: /projects/cfme_vol
+vars_config: "{{ cfme_vol }}/.vars_config.yml"
+accepted_keys_yn: ['y', 'n']
+help_prompt: "[HELP]: "
+
+# Ask user if he would like to use his ssh private keys for cloning repo - usefull for 
+mount_ssh_keys:
+mount_ssh_keys_question: "Would you like to use your ssh keys for cloning repositories? Type \"y\" or \"n\""
+mount_ssh_keys_help: "{{ help_prompt }} If you answer 'y' here, your $HOME/.ssh directory will be mounted read only to the container."
+
+# Ask user if he will be creating new PRs or just run tests
+pull_requests:
+pull_requests_question: "Are you going to create new Pull Requests against ManageIQ/integration_tests upstream master repository? Type \"y\" or \"n\""
+pull_requests_help: "{{ help_prompt }} If you answer 'y' here, ManageIQ/integration_tests git repo will be pre-configured with username, email address and origin. The requirement here is that you have forked integration_tests repository to your private github account."
+
+# name of github personal account
+git_account_username:
+git_account_username_question: "Type username of your personal github account:"
+git_account_username_help: "{{ help_prompt }} This is your github username which you use for logging into GitHub."
+
+# Full name in <FirstName Surname> format, used for .git/config
+git_full_name:
+git_full_name_question: "Type your full name in <FirstName Surname> format, used for .git/config:"
+git_full_name_help: "{{ help_prompt }} This will configure [user] section in .git/config of the ManageIQ/integration_tests repository. Usually you would use git config user.name 'Jim Gordon' command to configure it..." 
+
+# Public GPG key
+gpg_public_key:
+gpg_public_key_question: "Type your GPG ID (last 8 characters):"
+gpg_public_key_help: "{{ help_prompt }} When opening new PR against integration_tests repo, each commit must be signed by GPG so it can be automatically tested on PullRequestTester (PRT). Each user who would like to use this feature must exist in DB of trusted users. Please contact XYZ if you want to be added to this trusted list. However, you will be still able open PRs and push commits without GPG."
+
+# 
+git_email:
+git_email_question: "Type email address you want to use in your git config:"
+git_email_help: "{{ help_prompt }} Email address which will be put into .git/config. You would normally configure it with git config user.email 'jim.gordon@gotham.ny'"
+
+any_yaml:
+any_yaml_question: "Do you have any YAML files? Type \"y\" or \"n\""
+any_yaml_help: "{{ help_prompt }} Typically you would need yaml files in order to exeute tests. YAML files contain data/information regarding your environment like providers, templates, ... If you do not have access to such files, contact XYZ and ask for access." 
+
+## YAML remote repo
+# yaml external repo y/n question
+yaml_remote_repo_yn:
+yaml_remote_repo_yn_question: "Do you want to use upstream git repository which contains YAML config files? Type \"y\" or \"n\""
+yaml_remote_repo_yn_help: "{{ help_prompt }} If you answer 'y' here, you will be asked in next step for git url where your YAML files resides."
+
+# yaml external repo URL
+yaml_remote_repo:
+yaml_remote_repo_question: "Type URL of upstream GIT repository where your YAML files are located:"
+yaml_remote_repo_help: "{{ help_prompt }} Format of the URL should is - ssh://git@gitaddress.com//yamls_repo.git"
+
+# yaml external repo username
+yaml_remote_repo_username:
+yaml_remote_repo_username_question: "Type username which has permissions to clone yamls repo:"
+yaml_remote_repo_username_help: "{{ help_prompt }} This is username which is used by you to login into Git. It is expected that you forked the upstream repo into your account."
+
+# yaml key string, used if yamls are encrypted
+yaml_remote_key_password:
+yaml_remote_key_password_question: "Type your yaml key (if you do not have any, just press ENTER)"
+yaml_remote_key_password_help: "{{ help_prompt }} Credentials in yaml file can be encrypted. This is the password to decrypt them."
+############################
+
+## YAML local repo
+# yaml local repo y/n question
+yaml_local_repo_yn:
+yaml_local_repo_yn_question: "Do you want to use local yaml files? Type \"y\" or \"n\""
+yaml_local_repo_yn_help: "{{ help_prompt }} Local files will be copied into conf/ directory. These can override e.g. provider which is defined in global yamls."
+
+# yaml local repo path
+yaml_local_repo:
+yaml_local_repo_question: "Type relative path to your $CFME_WORKDIR which contains YAML files:"
+yaml_local_repo_help: "{{ help_prompt }} No help..."
+############################
+
+base_url:
+base_url_question: "Type IP address or resolvable name of your appliance tests will be executed against:"
+base_url_help: "{{ help_prompt }} No help..."
+
+browser:
+browser_question: "What browser would you like to use? Type 'f' for Firefox or 'c' for chrome:"
+browser_accepted_keys: ['f', 'c']
+browser_help: "{{ help_prompt }} Firefox and Chrome browsers are supported. Needed webdrivers will be installed automatically."

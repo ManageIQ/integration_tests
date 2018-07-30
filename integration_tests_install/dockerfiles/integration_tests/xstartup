@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Set up the environment so selenium can find everything it might want
+# (namely chrome and chromedriver)
+#export PATH="/path/to/google/chrome/directory/:/path/to/chromdriver/directory:$PATH"
+# export PATH="${FIREFOX_PATH}:${CHROME_PATH}:${CHROMEDRIVER_PATH}${SELENIUM_PATH}:${CFME_ENV}/bin/:$PATH"
+
+rm /tmp/.X1-lock /tmp/.X11-unix/X1
+
+# Start the window manager
+fluxbox &
+
+# Start the selenium server
+# xterm -maximized -e java -jar $CFME_ENV/selenium/selenium_latest.jar -ensureCleanSession -trustAllSSLCertificates &
+#xterm -maximized -e java -jar $SELENIUM_PATH/selenium_latest.jar -ensureCleanSession -trustAllSSLCertificates &
+xterm -maximized -e java -jar $SELENIUM_PATH/selenium_latest.jar &
