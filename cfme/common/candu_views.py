@@ -103,7 +103,7 @@ class AzoneCloudUtilizationView(View):
 
     @property
     def is_displayed(self):
-        expected_title = "{} Capacity & Utilization".format(self.context['object'].name)
+        expected_title = "{} Capacity & Utilization".format(self.context["object"].name)
         return self.title.text == expected_title
 
 
