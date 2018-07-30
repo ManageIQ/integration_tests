@@ -53,6 +53,8 @@
         - 3.9
     physical:
         - lenovo
+    networks:
+        - nuage
 'master':
   providers:
     infra:
@@ -82,3 +84,5 @@
         - 3.9
     physical:
         - lenovo
+    networks:
+        - nuage
