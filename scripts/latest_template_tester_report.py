@@ -24,7 +24,7 @@ def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument("--tracketbot-url", dest="trackerbot_url",
                         help="tracker bot url to make api call",
-                        default='http://10.16.4.32/trackerbot/api')
+                        default='http://http://infra-trackerbot2.cfme2.lab.eng.rdu2.redhat.com/api')
     parser.add_argument("--stream", dest="stream",
                         help="stream to generate the template test result")
     parser.add_argument("--template", dest="appliance_template",

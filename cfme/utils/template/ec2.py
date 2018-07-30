@@ -30,7 +30,7 @@ class EC2TemplateUpload(ProviderTemplateUpload):
         try:
             self.mgmt.create_s3_bucket(self.bucket_name)
             return True
-        except:
+        except Exception:
             return False
 
     @log_wrap("upload image to bucket")
@@ -64,7 +64,7 @@ class EC2TemplateUpload(ProviderTemplateUpload):
             self.mgmt.get_template(ami_id).cleanup()
             return True
 
-        except:
+        except Exception:
             return False
 
     def run(self):

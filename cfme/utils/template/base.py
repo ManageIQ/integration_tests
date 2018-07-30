@@ -255,10 +255,16 @@ class ProviderTemplateUpload(object):
             return True
 
         # Download file to cli-tool-client
-        return check_call(['curl',
-                           '--output',
-                           self.local_file_path,
-                           self.raw_image_url])
+        try:
+            check_call(['curl',
+                        '--output',
+                        self.local_file_path,
+                        self.raw_image_url])
+        except CalledProcessError:
+            logger.exception('Failed download of image using curl')
+            return False
+        else:
+            return True
 
     @log_wrap('add template to glance')
     def glance_upload(self):
