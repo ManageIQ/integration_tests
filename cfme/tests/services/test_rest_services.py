@@ -79,7 +79,11 @@ def wait_for_retired(entity, num_sec=1000):
     # wait until retired, if this fails, settle with "retiring" state
     retval = wait_for(lambda: is_retired(entity), num_sec=num_sec, delay=10, silent_failure=True)
     if not retval:
-        assert entity.retirement_state == 'retiring'
+        try:
+            retirement_state = entity.retirement_state
+        except AttributeError:
+            retirement_state = None
+        assert retirement_state == 'retiring'
 
 
 def service_body(**kwargs):
@@ -542,7 +546,7 @@ class TestServiceRESTAPI(object):
         child.reload()
         assert child.ancestry == str(parent.id)
 
-    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.8')
+    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.8')
     @pytest.mark.meta(blockers=[BZ(1496936)])
     def test_add_child_resource(self, request, appliance):
         """Tests adding parent reference to already existing service using add_resource.
@@ -590,8 +594,8 @@ class TestServiceRESTAPI(object):
         _action_and_check('suspend', 'suspended')
         _action_and_check('start', 'on')
 
-    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.8')
-    @pytest.mark.meta(blockers=[BZ(1496936)])
+    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.8')
+    @pytest.mark.meta(blockers=[BZ(1496936), BZ(1608958)])
     def test_retire_parent_service_now(self, request, appliance):
         """Tests that child service is retired together with a parent service.
 
@@ -1270,7 +1274,7 @@ class TestServiceRequests(object):
 
 
 # blueprints were removed in versions >= 5.9'
-@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
+@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9')
 class TestBlueprintsRESTAPI(object):
     @pytest.fixture(scope="function")
     def blueprints(self, request, appliance):
@@ -1520,7 +1524,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
             assert_response(appliance, http_status=400)
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
+    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
     @pytest.mark.meta(blockers=[BZ(1510215, forced_streams=['5.9', 'upstream'])])
     def test_invalid_template_type(self, appliance):
         """Tests that template creation fails gracefully when invalid type is specified.
@@ -1590,7 +1594,7 @@ class TestServiceOrderCart(object):
 
     @pytest.mark.tier(3)
     # not testing on version < 5.9 due to BZ1493785 that was fixed only in 5.9
-    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
+    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
     def test_create_cart(self, request, appliance, service_templates):
         """Tests creating a cart with service requests.
 
