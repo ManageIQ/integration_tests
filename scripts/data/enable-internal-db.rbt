@@ -10,7 +10,7 @@ config = ApplianceConsole::InternalDatabaseConfiguration.new({
 })
 
 # if no DB disk is currently mounted, pick the first unpartitioned disk
-if "${db_mounted}" != "True" 
+if "${db_mounted}" != "True"
   config.instance_variable_set(:@disk, LinuxAdmin::Disk.local.select {|d| d.partitions.empty?}.first)
 end
 

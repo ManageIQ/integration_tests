@@ -70,7 +70,7 @@ do_or_die () {
 
 gate() {
 	log "gating $2 to $ARTIFACTOR_DIR/$1"
-	eval "$2" >> $ARTIFACTOR_DIR/$1 2>&1 
+	eval "$2" >> $ARTIFACTOR_DIR/$1 2>&1
 	local RES=$?
 	if [ "$RES" -ne "0" ]
 	then
@@ -201,7 +201,7 @@ then
     HOSTNAME="$IP_ADDRESS"
 else
     HOSTNAME="SPROUT_SHOULD_OVERRIDE_THIS"
-fi    
+fi
 
 cat >> $CFME_REPO_DIR/conf/env.local.yaml <<EOF
 appliances:

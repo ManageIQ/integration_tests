@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Script used when a new release comes only in the form of RPMs. Point it to an existing template and
-# it will turn it to a template with updated CFME. 
+# it will turn it to a template with updated CFME.
 #
 # Usage: $SCRIPT_NAME provider_key template_name new_template_name <params-for-update_rhel-script>
 

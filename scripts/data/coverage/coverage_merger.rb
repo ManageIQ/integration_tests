@@ -2,10 +2,10 @@
 # This expects the layout used by our coverage hook: "coverage/[ipaddress]/[pid]/.resultset.json".
 # It will look for the coverage archive either under the current directory or the one specified.
 # It does the report merging manually based on that layout, and can be run at any time
-# to compile reports.   
+# to compile reports.
 #
 # The basic format of the .resultset.json files is:
-#   
+#
 #   {
 #       "$ip-$pid": {
 #           "coverage": {
@@ -29,7 +29,7 @@
 #           }
 #           "timestamp": 1518751298
 #       }
-#   } 
+#   }
 #
 # Note coverage data is either:
 #
@@ -37,9 +37,9 @@
 #      - > 0: Number of times line covered.
 #      - null: Not coverable (e.g. a comment)
 #
-# 
+#
 # The merge file will look like this.
-# 
+#
 #   {
 #       "merged-coverage-data": {
 #           "coverage": {
@@ -63,7 +63,7 @@
 #           }
 #           "timestamp": 1518751298
 #       }
-#   } 
+#   }
 #
 # Additionally it will add any files that did not get covered at all to the resultset file.
 require 'fileutils'
@@ -101,10 +101,10 @@ def merge_file(file, coverage_data, merge_data)
   end
 end
 
-def merge_source_coverage(src_coverage_data1, src_coverage_data2)                                                                  
+def merge_source_coverage(src_coverage_data1, src_coverage_data2)
   # Since this is the coverage data for the same source file
-  # even though it is across different processes and/or appliances 
-  # we expect the number of lines in the source file to be equal.   
+  # even though it is across different processes and/or appliances
+  # we expect the number of lines in the source file to be equal.
   if src_coverage_data1.length != src_coverage_data2.length
     raise ArgumentError, 'Both files are not the same length!'
   end
@@ -114,7 +114,7 @@ def merge_source_coverage(src_coverage_data1, src_coverage_data2)
   # or Null. If both lines are integers (0 included) we just add the two
   # lines together for the result.   If both are Null they stay Null.
   # If there is a mix we raise and exception.  Null denotes a line that
-  # would not be counted for code coverage and for it to be Null in one 
+  # would not be counted for code coverage and for it to be Null in one
   # array and not the other implies actual differences in the files which is
   # not allowed.
   line_number = 0
@@ -132,7 +132,7 @@ DATA1: #{src_coverage_data1[line_number]} is #{src_coverage_data1[line_number].c
 DATA2: #{src_coverage_data2[line_number]} is #{src_coverage_data2[line_number].class}
 EOM
     end
-    
+
     line_number += 1
   end
 end
@@ -143,9 +143,9 @@ def add_non_covered_files(resultset, show_added_files)
   $log.info('Adding non-covered files...')
 
   # Note that we are not including manageiq- gems, and that is because
-  # though we pick up some files in the resultset from them mostly we 
+  # though we pick up some files in the resultset from them mostly we
   # end up using cfme-* gems mostly.   Because of this just picking up
-  # all the manageiq- gems' puts the coverage statistics way out of kilter. 
+  # all the manageiq- gems' puts the coverage statistics way out of kilter.
   include_globs = [
     '/var/www/miq/vmdb/lib/**/*.rb',
     '/var/www/miq/vmdb/app/**/*.rb',
@@ -164,9 +164,9 @@ def add_non_covered_files(resultset, show_added_files)
     '/opt/rh/cfme-gemset/bundler/gems/cfme-*/app/models/**/*.rb',
   ]
 
-  # Go through the source files and if they are not in the 
+  # Go through the source files and if they are not in the
   # resultset and not in the excluded files list, add them
-  # to the resultset.   
+  # to the resultset.
   includes = Dir.glob(include_globs)
   excludes = Dir.glob(exclude_globs)
   added_files = 0
@@ -178,10 +178,10 @@ def add_non_covered_files(resultset, show_added_files)
     end
     if excludes.include?(filename)
       $log.debug('    Excluded.')
-      next 
+      next
     end
 
-    # We don't have coverage data for this file and it hasn't been 
+    # We don't have coverage data for this file and it hasn't been
     # excluded so let's create it.   Note we use SimpleCov's LineClassifier
     # to generate the coverage data.  This way we will be in complete
     # agreement with what SimpleCov thinks is a runnable line or not.
@@ -205,7 +205,7 @@ OptionParser.new do |parser|
   parser.on("-c", "--coverage-root DIR", "Path to the coverage directory.") do |v|
     options[:coverage_root] = v
   end
-  parser.on("-v", "--verbose", "Turn on verbose output.") do 
+  parser.on("-v", "--verbose", "Turn on verbose output.") do
     $log.level = Logger::DEBUG
   end
   parser.on("--ignore-non-covered", "Ignore non-covered files.") do
@@ -234,7 +234,7 @@ for json_file in json_files
       $log.info("Processing #{key}...")
       coverage = value['coverage']
 
-      # The structure has to have a timestamp.   
+      # The structure has to have a timestamp.
       # So I just arbitrarily grab the same one from the
       # the merge files.   Last one wins.
       results[data_title]['timestamp'] = value['timestamp']
@@ -247,7 +247,7 @@ for json_file in json_files
       # We only expect one key at the top level, so break out.
       break
     }
-    
+
     $log.info("\tMerged #{json_file}")
   rescue JSON::ParserError => e
     $log.error("\tSkipping #{json_file}, no valid JSON")
@@ -285,7 +285,7 @@ end
 # Build our report #
 ####################
 # Set up simplecov to use the merged results, then fire off the formatters
-# Note we need to setup the filters before we instantiate SimpleCov's 
+# Note we need to setup the filters before we instantiate SimpleCov's
 # result from our results hash, as in new versions (e.g. 0.16.1)
 # the filtering is applied at the time you instantiate from a hash.
 $log.info('Generating HTML report.')
@@ -293,7 +293,7 @@ SimpleCov.project_name "CFME #{cfme_version}"
 SimpleCov.root '/'
 SimpleCov.coverage_dir merged_dir
 SimpleCov.formatters = SimpleCov::Formatter::HTMLFormatter
-# At this time we don't need the merging facility because how the 
+# At this time we don't need the merging facility because how the
 # merge above worked (i.e. it's already merged)
 SimpleCov.use_merging false
 
@@ -306,7 +306,7 @@ SimpleCov.add_filter do |src|
   end
   unless include_file
     include_file = src.filename =~ /gems\/cfme-/
-  end 
+  end
   ! include_file
 end
 

@@ -102,4 +102,3 @@ def order_ansible_service_in_ops_ui(appliance, ansible_catalog_item,
     service = MyService(appliance, cat_item_name)
     if service.exists:
         service.delete()
-

@@ -24,7 +24,7 @@ SimpleCov.start 'rails' do
     end
     unless include_file
       include_file = src.filename =~ /gems\/cfme-/
-    end 
+    end
     ! include_file
   end
   # Set the coverage dir for this process to "RAILS_ROOT/coverage/[ipaddress]/[pid]/"

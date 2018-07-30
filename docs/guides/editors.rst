@@ -228,7 +228,7 @@ So far the best emacs setup I've (``jweiss``) found is iPython notebook, combine
 Installing iPython and its Emacs client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-iPython 
+iPython
 """""""
 
 See the install `docs <http://ipython.org/install.html>`_.
@@ -345,14 +345,14 @@ Recommended
    ``ido`` package (now built into emacs) for filename and buffer name completion, ``smex`` for
    ``M-x`` command completion.
 
-:Smartparens: 
+:Smartparens:
 
    Inserts parens, brackets, quotes, etc in pairs.  Keeps parens balanced, allows you to edit
    paren-delimited structures logically instead of as plain text (designed for lisp but also works
    on html, xml, json, etc).  Replaces paredit, an older and more well-known tool that does the same
    thing.  Package ``smartparens``.
 
-:Autocomplete: 
+:Autocomplete:
 
    Code completion for emacs.  Package is called ``autocomplete``, see ``ein`` docs for how to enable in
    python buffers.
@@ -363,7 +363,7 @@ Recommended
    top of.  Package is called ``undo-tree``.
 
 :yagist:
-   
+
    Create a github gist (paste) from a region or buffer with a single keypress, and the link to the
    gist is automatically inserted into the clipboard so you can easily paste it into IRC.
 

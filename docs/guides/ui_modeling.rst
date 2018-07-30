@@ -16,20 +16,20 @@ to bring us a good developer experience:
 * `Navmazing <https://pypi.python.org/pypi/navmazing>`_ - A UI navigation framework which
   registers navigation locations to classes that represent objects or their collections. We
   recommend reading the documentation on the PyPI package page. Referred to as **NM**.
-  
+
   .. note:: Responsible person: *psavage*
 
 * `Widgetastic <https://pypi.python.org/pypi/widgetastic.core>`_ - Page Object Model on steroids.
   Allows mostly declarative specification (Django model inspired) of how does the UI look, what
   things are present, provides unified read and fill interface, rich logs and other useful magic.
   Referred to as **WT**.
-  
+
   .. note:: Responsible person: *mfalesni*
 
 * `Sentaku <http://sentaku.readthedocs.io/en/latest/>`_ - Library that allows you to create an
   object which will have multiple implementations of underlying methods, switching the
   implementations based on context. Curently (Oct 2017) being slowly rolled out in certain parts.
-  
+
   .. note:: Responsible people: *ronny*, *psavage*
 
 Another important concept is :doc:`collections` which you **must** read if you want to create new
