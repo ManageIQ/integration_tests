@@ -147,8 +147,10 @@ class MethodDetailsView(AutomateExplorerView):
             self.title.text.startswith('Automate Method [{}'.format(
                 self.context['object'].display_name or self.context['object'].name)) and
             self.fqdn.is_displayed and
-            # We need to chop off the leading Domain name.
-            self.fqdn.text == self.context['object'].tree_path_name_only[1:])
+            # We check namespace separately as in tree there is status included
+            self.fqdn.text[0] in self.context['object'].tree_path_name_only[1] and
+            # We need to chop off the leading Domain name and namespace(cheecked in previous line)
+            self.fqdn.text[1:] == self.context['object'].tree_path_name_only[2:])
 
 
 class PlaybookBootstrapSelect(BootstrapSelect):
