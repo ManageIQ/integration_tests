@@ -25,7 +25,6 @@ from cfme.networks.views import (
     OneProviderSubnetView,
     NetworkProviderEditView
 )
-from cfme.utils.providers import get_crud_by_name
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger

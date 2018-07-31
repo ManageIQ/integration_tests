@@ -88,7 +88,7 @@ def get_stream_from_image_url(image_url, quiet=False):
                            matching_streams, image_url)
         return matching_streams[0]
     else:
-        logger.error('Cannot find image URL for stream: %s', stream)
+        logger.error('Cannot find stream in image url: %s', image_url)
         raise TemplateUploadException("Cannot find stream from image URL.")
 
 

@@ -11,10 +11,10 @@ from six.moves.urllib.error import URLError
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
-from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.utils.path import project_path
 from cfme.utils import trackerbot
 from cfme.utils.conf import cfme_data, credentials
@@ -105,18 +105,6 @@ class ProviderTemplateUpload(object):
             logger.error("Stream %s is not listed in cfme_data. "
                          "Please specify stream with --stream", self.stream)
             raise TemplateUploadException("Cannot get stream URL.")
-
-    @property
-    def stream_short(self):
-        """Short name for the stream, like '59z' or 'gaprindashvili'"""
-        if 'downstream-' in self.stream:
-            # makes downstream-nightly into the 'nightly' short stream (folder names)
-            return self.stream.replace('downstream-', '')
-        elif 'upstream_' in self.stream:
-            return self.stream.replace('upstream_', '')
-        else:
-            # plain upstream, catchall
-            return self.stream
 
     @property
     def raw_image_url(self):
@@ -284,7 +272,8 @@ class ProviderTemplateUpload(object):
             client_kwargs = dict(endpoint=self.from_template_upload(self.glance_key).get('url'))
         client = Client(version='2', **client_kwargs)
         if self.image_name in [i.name for i in client.images.list()]:
-            logger.info('Image "%s" already exists on %s, skipping glance_upload')
+            logger.info('Image "%s" already exists on %s, skipping glance_upload',
+                        self.image_name, self.provider_key)
             return True
 
         glance_image = client.images.create(

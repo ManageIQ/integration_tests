@@ -24,7 +24,7 @@ class EC2TemplateUpload(ProviderTemplateUpload):
         for bucket in self.mgmt.s3_connection.buckets.all():
             if bucket.name == self.bucket_name:
                 logger.info("(template-upload) [%s:%s:%s] Bucket %s already exists.",
-                            self.log_name, self.provider, self.template_name, self.bucket_name)
+                            self.log_name, self.provider_key, self.template_name, self.bucket_name)
                 return True
 
         try:
