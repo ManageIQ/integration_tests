@@ -396,7 +396,7 @@ class ProvisionView(BaseLoggedInPage):
             except IndexError:
                 raise TemplateNotFound('Cannot find template "{}" for provider "{}"'
                                        .format(template_name, provider_name))
-            
+
         def before_fill(self, values):
             # Provision from image is a two part form,
             # this completes the image selection before the tabular parent form is filled
