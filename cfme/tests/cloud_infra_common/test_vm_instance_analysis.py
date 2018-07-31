@@ -3,6 +3,7 @@ import pytest
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from widgetastic_patternfly import NoSuchElementException
+from widgetastic.utils import partial_match
 from wrapanapi import VmState
 
 from cfme import test_requirements
@@ -236,9 +237,10 @@ def ssa_single_vm(request, local_setup_provider, provider, vm_analysis_provision
         provision_data = vm_analysis_provisioning_data.copy()
         del provision_data['image']
 
-        if "test_ssa_compliance" in request._pyfuncitem.name:
+        if "test_ssa_compliance" in request._pyfuncitem.name or provider.one_of(RHEVMProvider):
             provisioning_data = {"catalog": {'vm_name': vm_name},
-                                 "environment": {'automatic_placement': True}}
+                                 "environment": {'automatic_placement': True},
+                                 "network": {'vlan': partial_match(provision_data['vlan'])}}
             do_vm_provisioning(vm_name=vm_name, appliance=appliance, provider=provider,
                                provisioning_data=provisioning_data, template_name=template_name,
                                request=request, smtp_test=False, num_sec=2500)
@@ -628,7 +630,6 @@ def test_ssa_users(ssa_vm):
 
     username = fauxfactory.gen_alphanumeric()
     expected_users = None
-
     # In windows case we can't add new users (yet)
     # So we simply check that user list doesn't cause any Rails errors
     if ssa_vm.system_type != WINDOWS:
