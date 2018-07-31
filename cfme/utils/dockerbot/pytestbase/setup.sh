@@ -194,7 +194,7 @@ export USE_SPROUT=${USE_SPROUT-"no"}
 log "use_sprout: $USE_SPROUT"
 
 # Now fill out the env yaml with ALL THE THINGS
-rm -f $CFME_REPO_DIR/conf.env.local.yaml
+rm $CFME_REPO_DIR/conf/env.local.yaml
 
 if [ "$USE_SPROUT" == "no" ]
 then
