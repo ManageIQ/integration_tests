@@ -390,3 +390,7 @@ class CollectionFilteringError(CFMEException):
     def __str__(self):
         return 'Action on Collection ({}) requires a filter: ({})'\
                .format(self.collection, self.filter_key)
+
+
+class NeedleNotFoundInLog(CFMEException):
+    """Raised when log doesnt't contain needle"""
