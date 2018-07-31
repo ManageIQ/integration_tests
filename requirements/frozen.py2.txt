@@ -103,7 +103,7 @@ cliff==2.11.0
 cmd2==0.8.5
 configparser==3.5.0
 contextlib2==0.5.5
-cryptography==2.2.2
+cryptography==2.3
 cycler==0.10.0
 dateparser==0.7.0
 debtcollector==1.19.0
@@ -272,7 +272,7 @@ selenium==3.12.0
 selenium-smart-locator==0.2.0
 Send2Trash==1.5.0
 sentaku==0.6.2
-setuptools-scm==3.0.2
+setuptools-scm==3.0.6
 shyaml==0.5.2
 simplegeneric==0.8.1
 simplejson==3.15.0
