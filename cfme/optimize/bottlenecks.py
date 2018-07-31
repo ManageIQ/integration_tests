@@ -70,7 +70,7 @@ class Bottlenecks(BaseEntity):
         return self._row.severity.text
 
     @property
-    def severity(self):
+    def message(self):
         return self._row.message.text
 
 
