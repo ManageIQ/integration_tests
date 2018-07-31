@@ -630,7 +630,6 @@ def test_ssa_users(ssa_vm):
 
     username = fauxfactory.gen_alphanumeric()
     expected_users = None
-
     # In windows case we can't add new users (yet)
     # So we simply check that user list doesn't cause any Rails errors
     if ssa_vm.system_type != WINDOWS:
