@@ -153,8 +153,9 @@ def check_ftp(ftp, server_name, server_zone_id):
     server_string = server_name + "_" + str(server_zone_id)
     with ftp:
         # Files must have been created after start with server string in it (for ex. EVM_1)
-        zip_files = ftp.filesystem.search(re.compile(r"^.*{}.*?[.]zip$".format(server_string)),
-                                          directories=False)
+        date_group = '(_.*?){4}'
+        zip_files = ftp.filesystem.search(re.compile(
+            r"^.*{}{}[.]zip$".format(server_string, date_group)), directories=False)
         assert zip_files, "No logs found!"
     # Check the times of the files by names
     datetimes = []
@@ -176,14 +177,15 @@ def check_ftp(ftp, server_name, server_zone_id):
     if len(datetimes) > 1:
         for i in range(len(datetimes) - 1):
             dt = datetimes[i + 1][0] - datetimes[i][1]
-            assert dt.total_seconds() >= 0.0, \
+            assert dt.total_seconds() >= 0.0, (
                 "Negative gap between log files ({}, {})".format(
                     datetimes[i][2], datetimes[i + 1][2])
+            )
 
 
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
-@pytest.mark.meta(blockers=[BZ(1341502, unblock=lambda log_depot: log_depot.protocol != "anon_ftp",
+@pytest.mark.meta(blockers=[BZ(1603163, unblock=lambda log_depot: log_depot.protocol != "anon_ftp",
                             forced_streams=["5.6", "5.7", "5.8", "upstream"])]
                   )
 def test_collect_log_depot(log_depot, appliance, configured_depot, request):

@@ -3,7 +3,7 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic_patternfly import Input, BootstrapSelect, Button, Dropdown
 from widgetastic_manageiq import SummaryFormItem, Table
-from widgetastic.widget import View, RowNotFound
+from widgetastic.widget import View, RowNotFound, Text
 
 from cfme.base.ui import ServerDiagnosticsView
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -249,9 +249,9 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         """ Set depot type to "No Depot" """
         if not self.is_cleared:
             if self.second_server_collect and not self.zone_collect:
-                view = navigate_to(self, 'DiagnosticsCollectLogsEditSlave')
+                view = navigate_to(self, 'DiagnosticsCollectLogsEditSlave', wait_for_view=True)
             else:
-                view = navigate_to(self, 'DiagnosticsCollectLogsEdit')
+                view = navigate_to(self, 'DiagnosticsCollectLogsEdit', wait_for_view=True)
             view.depot_type.fill('<No Depot>')
             view.save_button.click()
             view = self.create_view(ServerCollectLogsView)
@@ -263,7 +263,6 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             Args:
                 selection: The item in Collect menu ('Collect all logs' or 'Collect current logs')
         """
-
         if self.second_server_collect and not self.zone_collect:
             view = navigate_to(self, 'DiagnosticsCollectLogsSlave')
         else:
@@ -336,15 +335,17 @@ class ServerCollectLogsView(ServerDiagnosticsView):
 
     @property
     def is_displayed(self):
-        return self.in_server_collect_logs
+        return (
+            self.in_server_collect_logs and
+            self.title.text == 'Diagnostics Server "{} [{}]" (current)'.format(
+                self.context['object'].name, self.context['object'].sid)
+        )
 
     @property
     def in_server_collect_logs(self):
         return (
             self.collectlogs.is_displayed and
-            self.collectlogs.is_active and
-            self.title.text == 'Diagnostics Server "{} [{}]" (current)'.format(
-                self.context['object'].name, self.context['object'].sid)
+            self.collectlogs.is_active()
         )
 
 
@@ -361,6 +362,7 @@ class CollectLogsCredsEntities(View):
 
 
 class ServerCollectLogsEditView(ServerCollectLogsView):
+    edit_form_title = Text('//form[@id="form_div"]/h3')
     depot_type = BootstrapSelect(id='log_protocol')
     depot_info = View.nested(CollectLogsBasicEntities)
     depot_creds = View.nested(CollectLogsCredsEntities)
@@ -373,7 +375,9 @@ class ServerCollectLogsEditView(ServerCollectLogsView):
     def is_displayed(self):
         return(
             self.in_server_collect_logs and
-            self.depot_type.is_displayed
+            self.depot_type.is_displayed and
+            ('Editing Log Depot Settings for Server'in self.edit_form_title.text or
+             'Editing Log Depot Settings for Zone' in self.edit_form_title.text)
         )
 
 
