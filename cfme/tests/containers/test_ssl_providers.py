@@ -18,7 +18,9 @@ alphanumeric_name = gen_alphanumeric(10)
 long_alphanumeric_name = gen_alphanumeric(100)
 integer_name = str(gen_integer(0, 100000000))
 provider_names = alphanumeric_name, integer_name, long_alphanumeric_name
-AVAILABLE_SEC_PROTOCOLS = ('SSL trusting custom CA', 'SSL without validation', 'SSL')
+AVAILABLE_SEC_PROTOCOLS = ('SSL trusting custom CA',
+                           'SSL without validation',
+                           'SSL')
 
 DEFAULT_SEC_PROTOCOLS = (
     pytest.mark.polarion('CMP-10598')('SSL trusting custom CA'),
@@ -150,6 +152,7 @@ def test_add_mertics_provider_ssl(provider, appliance, test_item,
     else:
         new_provider.delete(cancel=False)
         new_provider.wait_for_delete()
+
 
 @pytest.mark.usefixtures('has_no_containers_providers')
 @pytest.mark.parametrize('sec_protocol', AVAILABLE_SEC_PROTOCOLS)
