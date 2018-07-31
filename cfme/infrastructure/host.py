@@ -508,13 +508,16 @@ class HostsCollection(BaseCollection):
 
     def all(self):
         """returning all hosts objects"""
-        hosts = []
-        provider = self.filters.get('parent')
-        view = navigate_to(provider, 'Hosts') if provider else navigate_to(self, 'All')
-        for _ in view.entities.paginator.pages():
-            for name in view.entities.entity_names:
-                hosts.append(self.instantiate(name=name, provider=provider))
-        return hosts
+        from cfme.infrastructure.provider import InfraProvider
+        parent = self.filters.get('parent')
+        if parent:
+            rest_api_entity = parent.rest_api_entity
+            rest_api_entity.reload(attributes=['hosts'])
+            hosts = rest_api_entity.hosts
+        else:
+            hosts = self.appliance.rest_api.collections.hosts.all
+        provider = parent if isinstance(parent, InfraProvider) else None
+        return [self.instantiate(name=host['name'], provider=provider) for host in hosts]
 
     def run_smartstate_analysis(self, *hosts):
         view = self.check_hosts(hosts)

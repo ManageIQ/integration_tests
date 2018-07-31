@@ -136,11 +136,15 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
         return self.type_name
 
     @property
+    def rest_api_entity(self):
+        return self.appliance.rest_api.collections.providers.get(name=self.name)
+
+    @property
     def id(self):
         """"
         Return the ID associated with the specified provider name
         """
-        return self.appliance.rest_api.collections.providers.find_by(name=self.name)[0].id
+        return self.rest_api_entity.id
 
     @property
     def version(self):
