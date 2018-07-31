@@ -375,7 +375,7 @@ class ProvisionView(BaseLoggedInPage):
 
     @View.nested
     class sidebar(View):  # noqa
-        extend_button = Text(locator='//div[contains(@class, "resize-right")]')
+        increase_button = Text(locator='//div[contains(@class, "resize-right")]')
         decrease_button = Text(locator='//div[contains(@class, "resize-left")]')
 
     @View.nested
@@ -390,11 +390,11 @@ class ProvisionView(BaseLoggedInPage):
         def _select_template(self, template_name, provider_name):
             try:
                 row = self.parent.image_table.row(name=template_name, provider=provider_name)
+                row.click()
             except IndexError:
                 raise TemplateNotFound('Cannot find template "{}" for provider "{}"'
                                        .format(template_name, provider_name))
-            row.click()
-
+            
         def before_fill(self, values):
             # Provision from image is a two part form,
             # this completes the image selection before the tabular parent form is filled
