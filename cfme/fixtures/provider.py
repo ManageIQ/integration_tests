@@ -395,6 +395,106 @@ def console_template_modscope(provider):
     return _get_template(provider, 'console_template')
 
 
+@pytest.fixture(scope="function")
+def ubuntu16_template(provider):
+    return _get_template(provider, 'ubuntu16_template')
+
+
+@pytest.fixture(scope="module")
+def ubuntu16_template_modscope(provider):
+    return _get_template(provider, 'ubuntu16_template')
+
+
+@pytest.fixture(scope="function")
+def rhel69_template(provider):
+    return _get_template(provider, 'rhel69_template')
+
+
+@pytest.fixture(scope="module")
+def rhel69_template_modscope(provider):
+    return _get_template(provider, 'rhel69_template')
+
+
+@pytest.fixture(scope="function")
+def rhel74_template(provider):
+    return _get_template(provider, 'rhel74_template')
+
+
+@pytest.fixture(scope="module")
+def rhel74_template_modscope(provider):
+    return _get_template(provider, 'rhel74_template')
+
+
+@pytest.fixture(scope="function")
+def win7_template(provider):
+    return _get_template(provider, 'win7_template')
+
+
+@pytest.fixture(scope="module")
+def win7_template_modscope(provider):
+    return _get_template(provider, 'win7_template')
+
+
+@pytest.fixture(scope="function")
+def win10_template(provider):
+    return _get_template(provider, 'win10_template')
+
+
+@pytest.fixture(scope="module")
+def win10_template_modscope(provider):
+    return _get_template(provider, 'win10_template')
+
+
+@pytest.fixture(scope="function")
+def win2012_template(provider):
+    return _get_template(provider, 'win2012_template')
+
+
+@pytest.fixture(scope="module")
+def win2012_template_modscope(provider):
+    return _get_template(provider, 'win2012_template')
+
+
+@pytest.fixture(scope="function")
+def win2016_template(provider):
+    return _get_template(provider, 'win2016_template')
+
+
+@pytest.fixture(scope="module")
+def win2016_template_modscope(provider):
+    return _get_template(provider, 'win2016_template')
+
+
+@pytest.fixture(scope="function")
+def dual_network_template(provider):
+    return _get_template(provider, 'dual_network_template')
+
+
+@pytest.fixture(scope="module")
+def dual_network_template_modscope(provider):
+    return _get_template(provider, 'dual_network_template')
+
+
+@pytest.fixture(scope="function")
+def dual_disk_template(provider):
+    return _get_template(provider, 'dual_disk_template')
+
+
+@pytest.fixture(scope="module")
+def dual_disk_template_modscope(provider):
+    return _get_template(provider, 'dual_disk_template')
+
+
+@pytest.fixture(scope="function")
+def dportgroup_template(provider):
+    return _get_template(provider, 'dportgroup_template')
+
+
+@pytest.fixture(scope="module")
+def dportgroup_template_modscope(provider):
+    return _get_template(provider, 'dportgroup_template')
+
+
 def _walk_to_obj_parent(obj):
     old = None
     while True:
