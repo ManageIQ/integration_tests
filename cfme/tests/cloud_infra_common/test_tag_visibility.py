@@ -5,19 +5,22 @@ from cfme import test_requirements
 from cfme.common.provider import CloudInfraProvider
 from cfme.exceptions import VmOrInstanceNotFound
 from cfme.infrastructure.provider import InfraProvider
-from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
+
 
 pytestmark = [
     test_requirements.tag,
     pytest.mark.tier(3),
-    pytest.mark.provider([CloudInfraProvider], required_fields=['cap_and_util'], scope='module'),
+    pytest.mark.provider(
+        [CloudInfraProvider], required_fields=['cap_and_util'], selector=ONE_PER_TYPE
+    ),
     pytest.mark.usefixtures('setup_provider')
 ]
 
 
-@pytest.fixture(scope="module")
-def tagged_vm(tag, has_no_providers_modscope, provider):
+@pytest.fixture
+def tagged_vm(tag, provider):
     ownership_vm = provider.data.cap_and_util.capandu_vm
     collection = provider.appliance.provider_based_collection(provider)
     tag_vm = collection.instantiate(ownership_vm, provider)
@@ -37,10 +40,10 @@ def test_tag_vis_vm(tagged_vm, user_restricted):
 @pytest.fixture(scope='module')
 def location_tag(appliance):
     """Existing tag object"""
-    category = appliance.collections.categories.create(
-        name='location', display_name='Location',
-        description=fauxfactory.gen_alphanumeric(length=32))
-    tag = appliance.collections.tags.create(name='paris', display_name='Paris', category=category)
+    category = appliance.collections.categories.instantiate(
+        name='location', display_name='Location'
+    )
+    tag = category.collections.tags.instantiate(name='paris', display_name='Paris')
     return tag
 
 
@@ -48,14 +51,12 @@ def location_tag(appliance):
 @pytest.fixture(scope='module')
 def service_level_tag(appliance):
     """Existing tag object"""
-    category = appliance.collections.categories.create(
-        name='service_level', display_name='Service Level',
-        description=fauxfactory.gen_alphanumeric(length=32)
+    category = appliance.collections.categories.instantiate(
+        name='service_level', display_name='Service Level'
     )
-    tag = appliance.collections.tags.create(
+    tag = category.collections.tags.instantiate(
         name='silver',
-        display_name='Silver',
-        category=category
+        display_name='Silver'
     )
     return tag
 
@@ -104,7 +105,7 @@ def check_vm_visibility(user_restricted, appliance):
             if group.description != orig_group:
                 view.change_group(group.description)
             try:
-                navigate_to(vm, 'Details')
+                navigate_to(vm, 'VMsOnlyDetails')
                 actual_visibility = True
             except VmOrInstanceNotFound:
                 actual_visibility = False
