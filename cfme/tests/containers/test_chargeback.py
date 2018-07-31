@@ -77,14 +77,14 @@ def gen_report_base(appliance, obj_type, provider, rate_desc, rate_interval):
                               'Memory Used', 'Memory Used Cost',
                               'Provider Name', 'Fixed Total Cost', 'Total Cost'],
             'filter': {
-                'filter_show_costs': 'Project',
+                'filter_show_costs': 'Container Project',
                 'filter_provider': provider.name,
                 'filter_project': 'All Container Projects'
             }
         }
     elif obj_type == 'Image':
         data = {
-            'base_report_on': 'Chargeback Container Images',
+            'base_report_on': 'Chargeback for Images',
             'report_fields': ['Archived', 'Chargeback Rates', 'Fixed Compute Metric',
                               'Cpu Cores Used Cost', 'Cpu Cores Used Metric',
                               'Network I/O Used', 'Network I/O Used Cost',
@@ -101,7 +101,6 @@ def gen_report_base(appliance, obj_type, provider, rate_desc, rate_interval):
 
     data['menu_name'] = title
     data['title'] = title
-    data['provider'] = provider.name
     if rate_interval == 'Hourly':
         data['filter']['interval'] = 'Day'
         data['filter']['interval_end'] = 'Yesterday'
@@ -142,7 +141,7 @@ def assign_custom_compute_rate(obj_type, chargeback_rate, provider):
         logger.info('ASSIGNING COMPUTE RATE FOR LABELED CONTAINER IMAGES')
     elif obj_type == 'Project':
         asignment = assignments.Assign(
-            assign_to="Selected Containers Providers",
+            assign_to="Selected Providers",
             selections={
                 provider.name: {'Rate': chargeback_rate.description}
             })
