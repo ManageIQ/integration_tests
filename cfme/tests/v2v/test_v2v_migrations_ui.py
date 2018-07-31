@@ -8,48 +8,38 @@ from widgetastic.utils import partial_match
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import testgen
+from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.v2v.migrations import MigrationPlanRequestDetailsView
 
-
-pytestmark = [pytest.mark.ignore_stream('5.8')]
-
-
-# TODO: Following function is due for refactor as soon as PR#7408 is merged.
-def pytest_generate_tests(metafunc):
-    """This is parametrizing over the provider types and creating permutations of provider pairs,
-       adding ids and argvalues."""
-    argnames1, argvalues1, idlist1 = testgen.providers_by_class(metafunc, [VMwareProvider],
-        required_flags=['v2v'])
-    argnames2, argvalues2, idlist2 = testgen.providers_by_class(metafunc, [RHEVMProvider],
-        required_flags=['v2v'])
-
-    new_idlist = []
-    new_argvalues = []
-    new_argnames = ['nvc_prov', 'rhvm_prov']
-
-    for index1, argvalue_tuple1 in enumerate(argvalues1):
-        for index2, argvalue_tuple2 in enumerate(argvalues2):
-            new_idlist.append('{}-{}'.format(idlist1[index1], idlist2[index2]))
-            new_argvalues.append((argvalue_tuple1[0], argvalue_tuple2[0]))
-    testgen.parametrize(metafunc, new_argnames, new_argvalues, ids=new_idlist, scope="module")
+pytestmark = [
+    pytest.mark.ignore_stream('5.8'),
+    pytest.mark.provider(
+        classes=[RHEVMProvider],
+        selector=ONE_PER_VERSION
+    ),
+    pytest.mark.provider(
+        classes=[VMwareProvider],
+        selector=ONE_PER_VERSION,
+        fixture_name='second_provider'
+    )
+]
 
 
 @pytest.fixture(scope='module')
-def providers(request, nvc_prov, rhvm_prov):
+def providers(request, second_provider, provider):
     """ Fixture to setup providers """
-    setup_or_skip(request, nvc_prov)
-    setup_or_skip(request, rhvm_prov)
-    yield nvc_prov, rhvm_prov
-    nvc_prov.delete_if_exists(cancel=False)
-    rhvm_prov.delete_if_exists(cancel=False)
+    setup_or_skip(request, second_provider)
+    setup_or_skip(request, provider)
+    yield second_provider, provider
+    second_provider.delete_if_exists(cancel=False)
+    provider.delete_if_exists(cancel=False)
 
 
-def _form_data_cluster_mapping(nvc_prov, rhvm_prov):
+def _form_data_cluster_mapping(second_provider, provider):
     # since we have only one cluster on providers
-    source_cluster = nvc_prov.data.get('clusters')[0]
-    target_cluster = rhvm_prov.data.get('clusters')[0]
+    source_cluster = second_provider.data.get('clusters')[0]
+    target_cluster = provider.data.get('clusters')[0]
 
     if not source_cluster or not target_cluster:
         pytest.skip("No data for source or target cluster in providers.")
@@ -60,9 +50,9 @@ def _form_data_cluster_mapping(nvc_prov, rhvm_prov):
     }
 
 
-def _form_data_datastore_mapping(nvc_prov, rhvm_prov, source_type, target_type):
-    source_datastores_list = nvc_prov.data.get('datastores')
-    target_datastores_list = rhvm_prov.data.get('datastores')
+def _form_data_datastore_mapping(second_provider, provider, source_type, target_type):
+    source_datastores_list = second_provider.data.get('datastores')
+    target_datastores_list = provider.data.get('datastores')
 
     if not source_datastores_list or not target_datastores_list:
         pytest.skip("No data for source or target cluster in providers.")
@@ -77,9 +67,9 @@ def _form_data_datastore_mapping(nvc_prov, rhvm_prov, source_type, target_type):
     }
 
 
-def _form_data_network_mapping(nvc_prov, rhvm_prov, source_network_name, target_network_name):
-    source_vlans_list = nvc_prov.data.get('vlans')
-    target_vlans_list = rhvm_prov.data.get('vlans')
+def _form_data_network_mapping(second_provider, provider, source_network_name, target_network_name):
+    source_vlans_list = second_provider.data.get('vlans')
+    target_vlans_list = provider.data.get('vlans')
 
     if not source_vlans_list or not target_vlans_list:
         pytest.skip("No data for source or target cluster in providers.")
@@ -95,7 +85,7 @@ def _form_data_network_mapping(nvc_prov, rhvm_prov, source_network_name, target_
 
 
 @pytest.fixture(scope='function')
-def form_data_single_datastore(request, nvc_prov, rhvm_prov):
+def form_data_single_datastore(request, second_provider, provider):
     form_data = (
         {
             'general': {
@@ -104,17 +94,17 @@ def form_data_single_datastore(request, nvc_prov, rhvm_prov):
                 " {ds_type2},".format(ds_type1=request.param[0], ds_type2=request.param[1])
             },
             'cluster': {
-                'mappings': [_form_data_cluster_mapping(nvc_prov, rhvm_prov)]
+                'mappings': [_form_data_cluster_mapping(second_provider, provider)]
             },
             'datastore': {
-                'Cluster ({})'.format(rhvm_prov.data.get('clusters')[0]): {
-                    'mappings': [_form_data_datastore_mapping(nvc_prov, rhvm_prov,
+                'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                    'mappings': [_form_data_datastore_mapping(second_provider, provider,
                         request.param[0], request.param[1])]
                 }
             },
             'network': {
-                'Cluster ({})'.format(rhvm_prov.data.get('clusters')[0]): {
-                    'mappings': [_form_data_network_mapping(nvc_prov, rhvm_prov,
+                'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                    'mappings': [_form_data_network_mapping(second_provider, provider,
                         'VM Network', 'ovirtmgmt')]
                 }
             }

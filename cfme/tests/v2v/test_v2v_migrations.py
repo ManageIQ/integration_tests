@@ -5,52 +5,32 @@ import pytest
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import partial_match
 
-from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import testgen
+from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
-pytestmark = [pytest.mark.ignore_stream('5.8')]
+pytestmark = [
+    pytest.mark.ignore_stream('5.8'),
+    pytest.mark.provider(
+        classes=[RHEVMProvider],
+        selector=ONE_PER_VERSION
+    ),
+    pytest.mark.provider(
+        classes=[VMwareProvider],
+        selector=ONE_PER_VERSION,
+        fixture_name='second_provider'
+    )
+]
 
 
-# TODO: Following function is due for refactor as soon as PR#7408 is merged.
-def pytest_generate_tests(metafunc):
-    """This is parametrizing over the provider types and creating permutations of provider pairs,
-       adding ids and argvalues."""
-    argnames1, argvalues1, idlist1 = testgen.providers_by_class(metafunc, [VMwareProvider],
-        required_flags=['v2v'])
-    argnames2, argvalues2, idlist2 = testgen.providers_by_class(metafunc, [RHEVMProvider],
-        required_flags=['v2v'])
-
-    new_idlist = []
-    new_argvalues = []
-    new_argnames = ['nvc_prov', 'rhvm_prov']
-
-    for index1, argvalue_tuple1 in enumerate(argvalues1):
-        for index2, argvalue_tuple2 in enumerate(argvalues2):
-            new_idlist.append('{}-{}'.format(idlist1[index1], idlist2[index2]))
-            new_argvalues.append((argvalue_tuple1[0], argvalue_tuple2[0]))
-    testgen.parametrize(metafunc, new_argnames, new_argvalues, ids=new_idlist, scope="module")
-
-
-@pytest.fixture(scope='module')
-def providers(request, nvc_prov, rhvm_prov):
-    """ Fixture to setup providers """
-    setup_or_skip(request, nvc_prov)
-    setup_or_skip(request, rhvm_prov)
-    yield nvc_prov, rhvm_prov
-    nvc_prov.delete_if_exists(cancel=False)
-    rhvm_prov.delete_if_exists(cancel=False)
-
-
-def _form_data_cluster_mapping(nvc_prov, rhvm_prov):
+def _form_data_cluster_mapping(second_provider, provider):
     # since we have only one cluster on providers
-    source_cluster = nvc_prov.data.get('clusters')[0]
-    target_cluster = rhvm_prov.data.get('clusters')[0]
+    source_cluster = second_provider.data.get('clusters')[0]
+    target_cluster = provider.data.get('clusters')[0]
 
     if not source_cluster or not target_cluster:
         pytest.skip("No data for source or target cluster in providers.")
@@ -61,9 +41,9 @@ def _form_data_cluster_mapping(nvc_prov, rhvm_prov):
     }
 
 
-def _form_data_datastore_mapping(nvc_prov, rhvm_prov, source_type, target_type):
-    source_datastores_list = nvc_prov.data.get('datastores')
-    target_datastores_list = rhvm_prov.data.get('datastores')
+def _form_data_datastore_mapping(second_provider, provider, source_type, target_type):
+    source_datastores_list = second_provider.data.get('datastores')
+    target_datastores_list = provider.data.get('datastores')
 
     if not source_datastores_list or not target_datastores_list:
         pytest.skip("No data for source or target cluster in providers.")
@@ -78,9 +58,9 @@ def _form_data_datastore_mapping(nvc_prov, rhvm_prov, source_type, target_type):
     }
 
 
-def _form_data_network_mapping(nvc_prov, rhvm_prov, source_network_name, target_network_name):
-    source_vlans_list = nvc_prov.data.get('vlans')
-    target_vlans_list = rhvm_prov.data.get('vlans')
+def _form_data_network_mapping(second_provider, provider, source_network_name, target_network_name):
+    source_vlans_list = second_provider.data.get('vlans')
+    target_vlans_list = provider.data.get('vlans')
 
     if not source_vlans_list or not target_vlans_list:
         pytest.skip("No data for source or target cluster in providers.")
@@ -96,7 +76,7 @@ def _form_data_network_mapping(nvc_prov, rhvm_prov, source_network_name, target_
 
 
 @pytest.fixture(scope='function')
-def form_data_single_datastore(request, nvc_prov, rhvm_prov):
+def form_data_single_datastore(request, second_provider, provider):
     form_data = (
         {
             'general': {
@@ -105,17 +85,17 @@ def form_data_single_datastore(request, nvc_prov, rhvm_prov):
                 " {ds_type2},".format(ds_type1=request.param[0], ds_type2=request.param[1])
             },
             'cluster': {
-                'mappings': [_form_data_cluster_mapping(nvc_prov, rhvm_prov)]
+                'mappings': [_form_data_cluster_mapping(second_provider, provider)]
             },
             'datastore': {
-                'Cluster ({})'.format(rhvm_prov.data.get('clusters')[0]): {
-                    'mappings': [_form_data_datastore_mapping(nvc_prov, rhvm_prov,
+                'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                    'mappings': [_form_data_datastore_mapping(second_provider, provider,
                         request.param[0], request.param[1])]
                 }
             },
             'network': {
-                'Cluster ({})'.format(rhvm_prov.data.get('clusters')[0]): {
-                    'mappings': [_form_data_network_mapping(nvc_prov, rhvm_prov,
+                'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                    'mappings': [_form_data_network_mapping(second_provider, provider,
                         'VM Network', 'ovirtmgmt')]
                 }
             }
@@ -124,7 +104,7 @@ def form_data_single_datastore(request, nvc_prov, rhvm_prov):
 
 
 @pytest.fixture(scope='function')
-def form_data_single_network(request, nvc_prov, rhvm_prov):
+def form_data_single_network(request, second_provider, provider):
     form_data = (
         {
             'general': {
@@ -133,17 +113,17 @@ def form_data_single_network(request, nvc_prov, rhvm_prov):
                 format(vlan1=request.param[0], vlan2=request.param[1])
             },
             'cluster': {
-                'mappings': [_form_data_cluster_mapping(nvc_prov, rhvm_prov)]
+                'mappings': [_form_data_cluster_mapping(second_provider, provider)]
             },
             'datastore': {
-                'Cluster ({})'.format(rhvm_prov.data.get('clusters')[0]): {
-                    'mappings': [_form_data_datastore_mapping(nvc_prov, rhvm_prov,
+                'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                    'mappings': [_form_data_datastore_mapping(second_provider, provider,
                         'nfs', 'nfs')]
                 }
             },
             'network': {
-                'Cluster ({})'.format(rhvm_prov.data.get('clusters')[0]): {
-                    'mappings': [_form_data_network_mapping(nvc_prov, rhvm_prov,
+                'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                    'mappings': [_form_data_network_mapping(second_provider, provider,
                         request.param[0], request.param[1])]
                 }
             }
@@ -152,9 +132,9 @@ def form_data_single_network(request, nvc_prov, rhvm_prov):
 
 
 @pytest.fixture(scope='function')
-def form_data_dual_datastore(request, nvc_prov, rhvm_prov):
-    vmware_nw = nvc_prov.data.get('vlans')[0]
-    rhvm_nw = rhvm_prov.data.get('vlans')[0]
+def form_data_dual_datastore(request, second_provider, provider):
+    vmware_nw = second_provider.data.get('vlans')[0]
+    rhvm_nw = provider.data.get('vlans')[0]
 
     if not vmware_nw or not rhvm_nw:
         pytest.skip("No data for source or target network in providers.")
@@ -169,49 +149,42 @@ def form_data_dual_datastore(request, nvc_prov, rhvm_prov):
                     request.param[1][1])
             },
             'cluster': {
-                'mappings': [_form_data_cluster_mapping(nvc_prov, rhvm_prov)]
+                'mappings': [_form_data_cluster_mapping(second_provider, provider)]
             },
             'datastore': {
-                'Cluster ({})'.format(rhvm_prov.data.get('clusters')[0]): {
-                    'mappings': [_form_data_datastore_mapping(nvc_prov, rhvm_prov,
+                'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                    'mappings': [_form_data_datastore_mapping(second_provider, provider,
                             request.param[0][0], request.param[0][1]),
-                        _form_data_datastore_mapping(nvc_prov, rhvm_prov,
+                        _form_data_datastore_mapping(second_provider, provider,
                             request.param[1][0], request.param[1][1])
                     ]
                 }
             },
             'network': {
-                'Cluster ({})'.format(rhvm_prov.data.get('clusters')[0]): {
-                    'mappings': [_form_data_network_mapping(nvc_prov, rhvm_prov,
-                        nvc_prov.data.get('vlans')[0], rhvm_prov.data.get('vlans')[0])]
+                'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                    'mappings': [_form_data_network_mapping(second_provider, provider,
+                        second_provider.data.get('vlans')[0], provider.data.get('vlans')[0])]
                 }
             }
         })
     return form_data
 
 
-@pytest.fixture(scope="module")
-def enable_disable_migration_ui(appliance):
-    appliance.enable_migration_ui()
-    yield
-    appliance.disable_migration_ui()
-
-
 vms = []
 
 
 @pytest.fixture(scope="module")
-def vm_list(request, appliance, nvc_prov, rhvm_prov):
+def vm_list(request, appliance, second_provider, provider):
     """Fixture to provide list of vm objects"""
     # TODO: Need to add list of vm and its configuration in cfme_data.yaml
-    templates = [nvc_prov.data.templates.big_template['name']]
+    templates = [second_provider.data.templates.big_template['name']]
     for template in templates:
         vm_name = random_vm_name(context='v2v-auto')
-        collection = appliance.provider_based_collection(nvc_prov)
-        vm = collection.instantiate(vm_name, nvc_prov, template_name=template)
+        collection = appliance.provider_based_collection(second_provider)
+        vm = collection.instantiate(vm_name, second_provider, template_name=template)
 
-        if not nvc_prov.mgmt.does_vm_exist(vm_name):
-            logger.info("deploying {} on provider {}".format(vm_name, nvc_prov.key))
+        if not second_provider.mgmt.does_vm_exist(vm_name):
+            logger.info("deploying {} on provider {}".format(vm_name, second_provider.key))
             vm.create_on_provider(allow_skip="default", datastore=request.param)
             vms.append(vm)
     return vms
@@ -219,9 +192,8 @@ def vm_list(request, appliance, nvc_prov, rhvm_prov):
 
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs'],
                             ['nfs', 'iscsi'], ['iscsi', 'iscsi']], indirect=True)
-def test_single_datastore_single_vm_mapping_crud(appliance, enable_disable_migration_ui,
-                                            providers, form_data_single_datastore,
-                                            soft_assert):
+def test_single_datastore_single_vm_mapping_crud(appliance, form_data_single_datastore, providers,
+                                                 conversion_tags, soft_assert):
     # TODO: This test case does not support update
     # as update is not a supported feature for mapping.
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
@@ -241,8 +213,8 @@ def test_single_datastore_single_vm_mapping_crud(appliance, enable_disable_migra
 
 @pytest.mark.parametrize('form_data_single_network', [['VM Network', 'ovirtmgmt'],
                             ['DPortGroup', 'ovirtmgmt']], indirect=True)
-def test_single_network_single_vm_mapping_crud(appliance, enable_disable_migration_ui,
-                                            providers, form_data_single_network):
+def test_single_network_single_vm_mapping_crud(appliance, conversion_tags, providers,
+                                               form_data_single_network):
     # TODO: This test case does not support update
     # as update is not a supported feature for mapping.
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
@@ -262,8 +234,8 @@ def test_single_network_single_vm_mapping_crud(appliance, enable_disable_migrati
 
 @pytest.mark.parametrize('form_data_dual_datastore', [[['nfs', 'nfs'], ['iscsi', 'iscsi']],
                             [['nfs', 'local'], ['iscsi', 'iscsi']]], indirect=True)
-def test_dual_datastore_dual_vm_mapping_crud(appliance, enable_disable_migration_ui,
-                                            providers, form_data_dual_datastore):
+def test_dual_datastore_dual_vm_mapping_crud(appliance, form_data_dual_datastore, migration_ui,
+                                             providers):
     # TODO: Add "Delete" method call.This test case does not support update/delete
     # as update is not a supported feature for mapping,
     # and delete is not supported in our automation framework.
@@ -285,8 +257,8 @@ def test_dual_datastore_dual_vm_mapping_crud(appliance, enable_disable_migration
 @pytest.mark.parametrize('vm_list', ['NFS_Datastore_1', 'iSCSI_Datastore_1'], ids=['NFS', 'ISCSI'],
                          indirect=True)
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
-def test_end_to_end_migration(appliance, enable_disable_migration_ui, vm_list, providers,
-                              form_data_single_datastore):
+def test_end_to_end_migration(appliance, migration_ui, providers, form_data_single_datastore,
+                              vm_list):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
     coll = appliance.collections.v2v_plans

@@ -2495,10 +2495,12 @@ class IPAppliance(object):
         self.wait_for_web_ui()
 
     def enable_migration_ui(self):
-        self._switch_migration_ui(True)
+        if not self.advanced_settings['product']['transformation']:
+            self._switch_migration_ui(True)
 
     def disable_migration_ui(self):
-        self. _switch_migration_ui(False)
+        if self.advanced_settings['product']['transformation']:
+            self. _switch_migration_ui(False)
 
 
 class Appliance(IPAppliance):
