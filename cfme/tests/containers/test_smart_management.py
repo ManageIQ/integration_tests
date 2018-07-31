@@ -76,9 +76,10 @@ def wait_for_tag(obj_inst):
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
                          ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
-@pytest.mark.meta(blockers=[BZ(1479412,
-                               forced_streams=['5.7'],
-                               unblock=lambda test_item: test_item.obj != Container)])
+@pytest.mark.meta(blockers=[
+    BZ(1609541, forced_streams=["5.9"]),
+    BZ(1601915, forced_streams=["5.10"])
+])
 def test_smart_management_add_tag(provider, appliance, test_item):
     logger.debug("Setting smart mgmt tag to {obj_type}".format(obj_type=test_item.obj.__name__))
     # validate no tag set to project
