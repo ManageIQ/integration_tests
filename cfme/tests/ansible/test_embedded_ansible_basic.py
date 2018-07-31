@@ -181,7 +181,7 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
     updated_description = "edited_{}".format(fauxfactory.gen_alpha())
     with update(ansible_repository):
         ansible_repository.description = updated_description
-    view = navigate_to(ansible_repository, "Edit")
+    view = navigate_to(ansible_repository, "Edit", wait_for_view=True)
     wait_for(lambda: view.description.value != "", delay=1, timeout=5)
     assert view.description.value == updated_description
 

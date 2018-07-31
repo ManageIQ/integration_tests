@@ -133,7 +133,7 @@ class SSUINavigateStep(NavigateStep):
         )
 
     def go(self, _tries=0, *args, **kwargs):
-        nav_args = {'use_resetter': True, 'wait_for_view': False}
+        nav_args = {'use_resetter': True, 'wait_for_view': True}
 
         self.log_message("Beginning SUI Navigation...", level="info")
         start_time = time.time()
