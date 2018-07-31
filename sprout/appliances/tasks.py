@@ -880,7 +880,7 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
         if not appliance.provider_api.does_vm_exist(appliance.name):
             appliance.set_status("Beginning template clone.")
             provider_data = appliance.template.provider.provider_data
-            kwargs = provider_data["sprout"]
+            kwargs = dict(provider_data["sprout"])
             kwargs["power_on"] = False
             if "datastore" not in kwargs and 'allowed_datastore' in kwargs:
                 kwargs["datastore"] = kwargs.pop("allowed_datastore")
