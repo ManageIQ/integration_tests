@@ -157,5 +157,5 @@ class Add(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select(
-            'Add a New Physical Provider'
+            'Add a New Physical Infrastructure Provider'
         )
