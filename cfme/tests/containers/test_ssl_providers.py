@@ -151,7 +151,7 @@ def test_add_mertics_provider_ssl(provider, appliance, test_item,
         new_provider.delete(cancel=False)
         new_provider.wait_for_delete()
 
-
+@pytest.mark.usefixtures('has_no_containers_providers')
 @pytest.mark.parametrize('sec_protocol', AVAILABLE_SEC_PROTOCOLS)
 def test_setup_with_wrong_port(provider, sec_protocol, sync_ssl_certificate):
     """
@@ -162,17 +162,5 @@ def test_setup_with_wrong_port(provider, sec_protocol, sync_ssl_certificate):
     new_provider.endpoints["default"].api_port = "1234"
     new_provider.endpoints["default"].sec_protocol = sec_protocol
 
-    is_fail = False
-    try:
+    with pytest.raises(AssertionError, message="Provider was set with wrong api port"):
         new_provider.setup()
-    except AssertionError as ex:
-        node = new_provider.endpoints["default"].hostname
-        port = new_provider.endpoints["default"].api_port
-        assert (
-            'Credential validation was not successful: Failed to open TCP connection'
-            ' to {node}:{port} (No route to host - connect(2) for "{node}" port '
-            '{port}'.format(node=node, port=port) in ex.message), (
-            "No clear failure massage was provided for wrong api port")
-        is_fail = True
-
-    assert is_fail, "Provider was set with wrong api port"
