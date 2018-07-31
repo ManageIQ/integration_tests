@@ -127,7 +127,7 @@ def test_button_on_host(appliance, request, provider, setup_provider):
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
         system="Request", request="InspectMe")
     request.addfinalizer(button.delete_if_exists)
-    host = appliance.collections.hosts.all(provider)[0]
+    host = provider.hosts.all()[0]
     host.execute_button(buttongroup.hover, button.text, handle_alert=None)
 
 
