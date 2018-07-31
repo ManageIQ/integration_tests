@@ -109,7 +109,6 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
         message="Waiting for Drift History count to increase",
         fail_func=appliance.server.browser.refresh
     )
-
     # check drift difference
     soft_assert(a_host.equal_drift_results(
         '{} (1)'.format(added_tag.category.display_name), 'My Company Tags', 0, 1),
