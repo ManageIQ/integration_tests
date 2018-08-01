@@ -22,6 +22,7 @@ balancers = cfme.networks.balancer:BalancerCollection
 block_managers = cfme.storage.manager:BlockManagerCollection
 button_groups = cfme.automate.buttons:ButtonGroupCollection
 buttons = cfme.automate.buttons:ButtonCollection
+bottlenecks = cfme.optimize.bottlenecks:BottlenecksCollection
 candus = cfme.configure.configuration.region_settings:CANDUCollection
 catalog_bundles = cfme.services.catalogs.catalog_items.catalog_bundles:CatalogBundlesCollection
 catalog_items = cfme.services.catalogs.catalog_items:CatalogItemsCollection

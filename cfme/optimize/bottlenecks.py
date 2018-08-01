@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text, Checkbox, Table, View
 from widgetastic_patternfly import Tab, BootstrapSelect
 from widgetastic_manageiq import TimelinesChart
 
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.update import Updateable
 from cfme.utils.pretty import Pretty
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 from . import BottlenecksView
@@ -42,11 +44,19 @@ class BottlenecksTabsView(BottlenecksView):
         time_zone = BootstrapSelect("tl_report_tz")
 
 
-class Bottlenecks(Updateable, Pretty, Navigatable):
-    _param_name = 'Bottlenecks'
+@attr.s
+class Bottlenecks(Updateable, Pretty, BaseEntity):
+    region = attr.ib(default=None)
+    provider = attr.ib(default=None)
+    datastore = attr.ib(default=None)
 
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance)
+
+@attr.s
+class BottlenecksCollection(BaseCollection):
+    """Collection object for the
+:py:class:'cfme.optimize.bottlenecks.Bottlenecks'."""
+
+    ENTITY = Bottlenecks
 
 
 @navigator.register(Bottlenecks, 'All')
