@@ -25,11 +25,22 @@ def test_edit_selected_containers_provider(provider):
 
 
 def test_ocp_operator_out_of_the_box(appliance):
+    """
+    This test checks that the container oprator role is available out-of_the_box
+    Steps:
+     1. Navigate to  Administration | EVM (on the right upper corner)--> Configuration
+     2. In the new page on the left menu select Access Control --> roles
+     3. Search for container operator role
+    """
 
+    # Navigate to all roles page
     roles_collection = appliance.collections.roles
     view = navigate_to(roles_collection, "All")
+
+    # Search for the required role
     role_name_prefix = "container_operator"
     is_role_found = bool(filter(lambda row: role_name_prefix in row.name.text.lower(),
                                 view.table.rows()))
 
+    # validate the role exist out-of-the-box
     assert is_role_found, "No {role} found".format(role=role_name_prefix)
