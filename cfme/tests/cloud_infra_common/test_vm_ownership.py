@@ -145,11 +145,11 @@ def test_form_button_validation(request, user1, setup_provider, provider, vm_cru
         test_flag: rbac
     """
     # Reset button test
-    vm_crud.set_ownership(user=user1.name, click_reset=True)
+    vm_crud.set_ownership(user=user1, click_reset=True)
     # Cancel button test
-    vm_crud.set_ownership(user=user1.name, click_cancel=True)
+    vm_crud.set_ownership(user=user1, click_cancel=True)
     # Save button test
-    vm_crud.set_ownership(user=user1.name)
+    vm_crud.set_ownership(user=user1)
     # Unset the ownership
     vm_crud.unset_ownership()
 
@@ -162,7 +162,7 @@ def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
         test_flag: rbac
     """
     # Set the ownership and checking it
-    vm_crud.set_ownership(user=user1.name)
+    vm_crud.set_ownership(user=user1)
     with user1:
         assert vm_crud.exists, "vm not found"
     vm_crud.unset_ownership()
@@ -179,11 +179,10 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
     """
 
     # user is only a member of a single group so it will always be the current group
-    user_group_name = user2.groups[0].description
-    vm_crud.set_ownership(group=user_group_name)
+    vm_crud.set_ownership(group=user2.group)
     with user2:
         assert not check_vm_exists(vm_crud), "vm exists! but shouldn't exist"
-    vm_crud.set_ownership(user=user2.name)
+    vm_crud.set_ownership(user=user2)
     with user2:
         assert vm_crud.exists, "vm exists"
 
@@ -197,8 +196,7 @@ def test_group_ownership_on_user_or_group_role(
         test_flag: rbac
     """
     # user is only a member of a single group so it will always be the current group
-    user_group_name = user3.groups[0].description
-    vm_crud.set_ownership(group=user_group_name)
+    vm_crud.set_ownership(group=user3.group)
     with user3:
         assert vm_crud.exists, "vm not found"
     vm_crud.unset_ownership()
@@ -228,7 +226,7 @@ def test_template_set_ownership(request, provider, setup_provider, vm_crud):
 #    with user1:
 #        # Checking before and after the ownership transfer
 #        assert user_ownership_vm.exists, "vm not found"
-#        user_ownership_vm.set_ownership(user=user3.name)
+#        user_ownership_vm.set_ownership(user=user3)
 #        assert not user_ownership_vm.exists, "vm exists"
 #    with user3:
 #        assert user_ownership_vm.exists, "vm not found"
