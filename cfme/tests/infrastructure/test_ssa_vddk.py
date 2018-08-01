@@ -2,7 +2,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -16,8 +15,8 @@ pytestmark = [
     pytest.mark.tier(3),
     test_requirements.smartstate,
     pytest.mark.meta(server_roles="+smartproxy +smartstate"),
-    pytest.mark.provider([VMwareProvider], selector=ONE_PER_VERSION, scope='module'),
-    pytest.mark.usefixtures('setup_provider_modscope')
+    pytest.mark.provider([VMwareProvider], selector=ONE_PER_VERSION),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 vddk_versions = [
@@ -28,22 +27,23 @@ vddk_versions = [
 
 
 @pytest.fixture(scope="module")
-def ssa_analysis_profile():
+def ssa_analysis_profile(appliance):
     collected_files = []
     for file in ["/etc/hosts", "/etc/passwd"]:
         collected_files.append({"Name": file, "Collect Contents?": True})
 
     analysis_profile_name = 'ssa_analysis_{}'.format(fauxfactory.gen_alphanumeric())
-    analysis_profile = AnalysisProfile(
+    analysis_profile = appliance.collections.analysis_profiles(
         name=analysis_profile_name,
         description=analysis_profile_name,
-        profile_type=AnalysisProfile.VM_TYPE,
+        profile_type=appliance.collections.analysis_profiles.VM_TYPE,
         categories=["System"],
         files=collected_files
     )
     analysis_profile.create()
-    yield analysis_profile
-    analysis_profile.delete()
+    yield
+    if analysis_profile.exists:
+        analysis_profile.delete()
 
 
 @pytest.fixture(params=vddk_versions, ids=([item for item in vddk_versions]), scope='module')

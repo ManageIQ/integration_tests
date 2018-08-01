@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
+import attr
 from copy import deepcopy
 
 from navmazing import NavigateToSibling, NavigateToAttribute, NavigationDestinationNotFound
 from widgetastic.widget import View, Text, ConditionalSwitchableView
-from widgetastic.utils import Fillable
 from widgetastic_patternfly import Dropdown, Button, CandidateNotFound, TextInput, Tab
 from widgetastic_manageiq import (
     Table, PaginationPane, SummaryFormItem, Checkbox, CheckboxSelect, DynamicTable)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import ConfigurationView
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.exceptions import OptionNotAvailable
 
 
 table_button_classes = [Button.DEFAULT, Button.SMALL, Button.BLOCK]
@@ -55,7 +56,7 @@ class AnalysisProfileAllView(BaseLoggedInPage):
     toolbar = View.nested(AnalysisProfileToolbar)
     sidebar = View.nested(ConfigurationView)
     entities = View.nested(AnalysisProfileEntities)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
 
 
 class AnalysisProfileDetailsView(BaseLoggedInPage):
@@ -107,11 +108,6 @@ class AnalysisProfileAddView(BaseLoggedInPage):
     """View for the add form, switches between host/vm based on object type
     Uses a switchable view based on the profile type widget
     """
-    @property
-    def is_displayed(self):
-        return (
-            self.title.text == 'Adding a new Analysis Profile' and
-            self.profile_type.text == self.context['object'].profile_type)
 
     title = Text('//div[@id="main-content"]//h1[@id="explorer_title"]'
                  '/span[@id="explorer_title_text"]')
@@ -121,7 +117,7 @@ class AnalysisProfileAddView(BaseLoggedInPage):
         locator='.//h3[normalize-space(.)="Basic Information"]'
                 '/following-sibling::div[@class="form-group"]'
                 '/label[normalize-space(.)="Type"]'
-                '/following-sibling::div')
+                '/following-sibling::div/p')
     form = ConditionalSwitchableView(reference='profile_type')
     # to avoid dynamic table buttons use title + alt + classes
     add = Button(title='Add', classes=[Button.PRIMARY], alt='Add')
@@ -152,6 +148,26 @@ class AnalysisProfileAddView(BaseLoggedInPage):
                     'Actions': Button(title='Add this entry', classes=table_button_classes)},
                 assoc_column='Registry Key', rows_ignore_top=1, action_row=0)
 
+    @property
+    def is_displayed(self):
+        return self.title.text == 'Adding a new Analysis Profile'
+
+
+class AnalysisProfileAddVmView(AnalysisProfileAddView):
+    @property
+    def is_displayed(self):
+        return (
+            self.title.text == 'Adding a new Analysis Profile' and
+            self.profile_type.text == self.context['object'].VM_TYPE)
+
+
+class AnalysisProfileAddHostView(AnalysisProfileAddView):
+    @property
+    def is_displayed(self):
+        return (
+            self.title.text == 'Adding a new Analysis Profile' and
+            self.profile_type.text == self.context['object'].HOST_TYPE)
+
 
 class AnalysisProfileEditView(AnalysisProfileAddView):
     """View for the edit form, extends add view since all fields are the same and editable"""
@@ -176,7 +192,8 @@ class AnalysisProfileCopyView(AnalysisProfileAddView):
     pass
 
 
-class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
+@attr.s
+class AnalysisProfile(Pretty, Updateable, BaseEntity):
     """Analysis profiles, Vm and Host type
 
     Example: Note the keys for files, events, registry should match UI columns
@@ -201,46 +218,15 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
             p.delete()
 
     """
-    CREATE_LOC = None
     pretty_attrs = "name", "description", "files", "events"
-    VM_TYPE = 'Vm'
-    HOST_TYPE = 'Host'
 
-    def __init__(self, name, description, profile_type, files=None, events=None, categories=None,
-                 registry=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.description = description
-        self.files = files if isinstance(files, (list, type(None))) else [files]
-        self.events = events if isinstance(events, (list, type(None))) else [events]
-        self.categories = categories if isinstance(categories, (list, type(None))) else [categories]
-        self.registry = registry if isinstance(registry, (list, type(None))) else [registry]
-        if profile_type in (self.VM_TYPE, self.HOST_TYPE):
-            self.profile_type = profile_type
-        else:
-            raise ValueError("Profile Type is incorrect")
-
-    def create(self, cancel=False):
-        """Add Analysis Profile to appliance"""
-        # The tab form values have to be dictionaries with the root key matching the tab widget name
-        form_values = self.form_fill_args()
-
-        view = navigate_to(self, 'Add')
-        view.form.fill(form_values)
-
-        if cancel:
-            view.cancel.click()
-        else:
-            view.add.click()
-
-        view.flush_widget_cache()
-        view = self.create_view(AnalysisProfileAllView)
-
-        assert view.is_displayed
-        view.flash.assert_success_message(
-            'Add of new Analysis Profile was cancelled by the user'
-            if cancel
-            else 'Analysis Profile "{}" was saved'.format(self.name))
+    name = attr.ib()
+    description = attr.ib()
+    profile_type = attr.ib()
+    files = attr.ib(default=None)
+    events = attr.ib(default=None)
+    categories = attr.ib(default=None)
+    registry = attr.ib(default=None)
 
     def update(self, updates, cancel=False):
         """Update the existing Analysis Profile with given updates dict
@@ -269,7 +255,7 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
         # hack to work around how updates are passed when used in context mgr
         # TODO revisit this method when BZ is fixed:
         # https://bugzilla.redhat.com/show_bug.cgi?id=1485953
-        form_fill_args = self.form_fill_args(updates=updates)
+        form_fill_args = self.parent.form_fill_args(updates=updates)
         view = navigate_to(self, 'Edit')
         changed = view.form.fill(form_fill_args)
 
@@ -282,11 +268,6 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
         view = self.create_view(AnalysisProfileDetailsView, override=updates)
         assert view.is_displayed
 
-        view.flash.assert_success_message(
-            'Edit of Analysis Profile "{}" was cancelled by the user'.format(self.name)
-            if cancel or not changed
-            else 'Analysis Profile "{}" was saved'.format(updates.get('name', self.name)))
-
     def delete(self, cancel=False):
         """Delete self via details page"""
         view = navigate_to(self, 'Details')
@@ -296,24 +277,27 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
             AnalysisProfileDetailsView if cancel else AnalysisProfileAllView)
         view.flush_widget_cache()
         assert view.is_displayed
-        if not cancel:
-            view.flash.assert_success_message('Analysis Profile "{}": Delete successful'
-                                              .format(self.description))
-        else:
-            assert view.flash.messages == []
 
     def copy(self, new_name=None, cancel=False):
         """Copy the Analysis Profile"""
         # Create a new object to return in addition to running copy in the UI
         # TODO revisit this method when BZ is fixed:
         # https://bugzilla.redhat.com/show_bug.cgi?id=1485953
-        profile_args = self.__dict__.copy()
-        profile_args['name'] = new_name or self.name + "-copy"
-        new_profile = AnalysisProfile(**profile_args)
+        if not new_name:
+            new_name = '{}-copy'.format(self.name)
+        new_profile = self.parent.instantiate(
+            name=new_name,
+            description=self.description,
+            profile_type=self.profile_type,
+            files=self.files,
+            events=self.events,
+            categories=self.categories,
+            registry=self.registry
+        )
 
         # actually run copy in the UI, fill the form
         view = navigate_to(self, 'Copy')
-        form_args = self.form_fill_args(updates={'name': new_profile.name})
+        form_args = self.parent.form_fill_args(updates={'name': new_profile.name})
         view.form.fill(form_args)
         if cancel:
             view.cancel.click()
@@ -325,11 +309,6 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
             AnalysisProfileDetailsView if cancel else AnalysisProfileAllView)
         view.flush_widget_cache()
         assert view.is_displayed
-        view.flash.assert_success_message(
-            'Add of new Analysis Profile was cancelled by the user'  # yep, not copy specific
-            if cancel
-            else 'Analysis Profile "{}" was saved'.format(new_profile.name))
-
         return new_profile
 
     @property
@@ -341,9 +320,56 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
         else:
             return True
 
-    def as_fill_value(self):
-        """String representation of an Analysis Profile in CFME UI"""
-        return self.name
+
+@attr.s
+class AnalysisProfileCollection(BaseCollection):
+
+    VM_TYPE = 'Vm'
+    HOST_TYPE = 'Host'
+
+    ENTITY = AnalysisProfile
+
+    def create(self, name, description, profile_type, files=None, events=None, categories=None,
+               registry=None, cancel=False):
+        """Add Analysis Profile to appliance"""
+        # The tab form values have to be dictionaries with the root key matching the tab widget name
+        form_values = self.form_fill_args({
+            'name': name,
+            'description': description,
+            'categories': categories,
+            'files': files,
+            'registry': registry,
+            'events': events
+        })
+
+        if profile_type.lower() == 'vm':
+            view = navigate_to(self, 'AddVmProfile')
+        elif profile_type.lower() == 'host':
+            view = navigate_to(self, 'AddHostProfile')
+        else:
+            raise OptionNotAvailable('Not such profile available')
+
+        view.form.fill(form_values)
+
+        if cancel:
+            view.cancel.click()
+        else:
+            view.add.click()
+
+        view.flush_widget_cache()
+        view = self.create_view(AnalysisProfileAllView)
+
+        assert view.is_displayed
+
+        return self.instantiate(
+            name=name,
+            description=description,
+            profile_type=profile_type,
+            files=files,
+            events=events,
+            categories=categories,
+            registry=registry
+        )
 
     def form_fill_args(self, updates=None):
         """Build a dictionary of nested tab_forms for assoc_fill from a flat object dictionary
@@ -352,40 +378,47 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
         """
         fill_args = {'profile_type': None}  # this can't be set when adding or editing
         for key in ['name', 'description']:
-            arg = updates[key] if updates and key in updates else getattr(self, key)
-            fill_args[key] = arg
+            if updates and key in updates:
+                arg = updates[key]
+                fill_args[key] = arg
 
         for key in ['files', 'events', 'registry']:
-            data = deepcopy(updates[key] if updates and key in updates else getattr(self, key))
-            if isinstance(data, list):
-                # It would be much better to not have these hardcoded, but I can't get them
-                # statically from the form (ConditionalSwitchWidget)
-                assoc_column = 'Name' if key in ['files', 'events'] else 'Registry Key'
-                values_dict = {}
-                for item in data:
-                    name = item.pop(assoc_column)
-                    values_dict[name] = item
+            if updates and key in updates:
+                data = deepcopy(updates[key])
+                if isinstance(data, list):
+                    # It would be much better to not have these hardcoded, but I can't get them
+                    # statically from the form (ConditionalSwitchWidget)
+                    assoc_column = 'Name' if key in ['files', 'events'] else 'Registry Key'
+                    values_dict = {}
+                    for item in data:
+                        name = item.pop(assoc_column)
+                        values_dict[name] = item
 
-                fill_args[key] = {'tab_form': values_dict}
+                    fill_args[key] = {'tab_form': values_dict}
 
         for key in ['categories']:
             # No assoc_fill for checkbox select, just tab_form mapping here
-            arg = deepcopy(updates[key] if updates and key in updates else getattr(self, key))
-            fill_args[key] = {'tab_form': arg}
+            if updates and key in updates:
+                arg = deepcopy(updates[key])
+                fill_args[key] = {'tab_form': arg}
 
         return fill_args
 
-    def __str__(self):
-        return self.as_fill_value()
+    def all(self):
+        profiles = []
+        view = navigate_to(self, 'All')
+        view.paginator.set_items_per_page(1000)
+        all_profiles_rows = view.entities.table
+        if all_profiles_rows:
+            for profile in all_profiles_rows:
+                profiles.append(self.instantiate(
+                    name=profile.name.text,
+                    description=profile.description.text,
+                    profile_type=profile.type.text))
+        return profiles
 
-    def __enter__(self):
-        self.create()
 
-    def __exit__(self, type, value, traceback):
-        self.delete()
-
-
-@navigator.register(AnalysisProfile, 'All')
+@navigator.register(AnalysisProfileCollection, 'All')
 class AnalysisProfileAll(CFMENavigateStep):
     VIEW = AnalysisProfileAllView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
@@ -395,28 +428,37 @@ class AnalysisProfileAll(CFMENavigateStep):
         self.prerequisite_view.accordions.settings.tree.click_path(
             server_region, "Analysis Profiles")
 
+    def resetter(self):
+        self.view.browser.refresh()
 
-@navigator.register(AnalysisProfile, 'Add')
-class AnalysisProfileAdd(CFMENavigateStep):
-    VIEW = AnalysisProfileAddView
+
+@navigator.register(AnalysisProfileCollection, 'AddVmProfile')
+class AnalysisProfileVmAdd(CFMENavigateStep):
+    VIEW = AnalysisProfileAddVmView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        # stupid capitalization inconsistencies, just wait until there's a 3rd option...
-        profile_type = self.obj.profile_type if self.obj.profile_type == 'Host' else 'VM'
-        self.prerequisite_view.toolbar.configuration.item_select(
-            "Add {} Analysis Profile".format(profile_type))
+        self.prerequisite_view.toolbar.configuration.item_select("Add VM Analysis Profile")
+
+
+@navigator.register(AnalysisProfileCollection, 'AddHostProfile')
+class AnalysisProfileHostAdd(CFMENavigateStep):
+    VIEW = AnalysisProfileAddHostView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select("Add Host Analysis Profile")
 
 
 @navigator.register(AnalysisProfile, 'Details')
 class AnalysisProfileDetails(CFMENavigateStep):
     VIEW = AnalysisProfileDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         server_region = self.obj.appliance.server_region_string()
         self.prerequisite_view.sidebar.accordions.settings.tree.click_path(
-            server_region, "Analysis Profiles", str(self.obj))
+            server_region, "Analysis Profiles", self.obj.name)
 
 
 @navigator.register(AnalysisProfile, 'Edit')
