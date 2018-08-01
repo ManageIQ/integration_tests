@@ -53,6 +53,16 @@ def flatten_list(org_list, flattened_list=[]):
     return flattened_list
 
 
+def get_container_images_amt(provider, project_name=None):
+    """ Fetches images amount from the API per selected project name"""
+    project_images = [
+        img for img
+        in provider.mgmt.list_templates()
+        if img.project == project_name
+    ]
+    return project_images
+
+
 def get_api_pods_names(provider):
     """ Fetches Pod names from the API per selected project name"""
     pod_name = []

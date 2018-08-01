@@ -24,7 +24,7 @@ def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument("--tracketbot-url", dest="trackerbot_url",
                         help="tracker bot url to make api call",
-                        default='http://10.16.4.32/trackerbot/api')
+                        default=None)
     parser.add_argument("--stream", dest="stream",
                         help="stream to generate the template test result")
     parser.add_argument("--template", dest="appliance_template",
@@ -319,9 +319,14 @@ def generate_html_report(api, stream, filename, appliance_template):
 
 if __name__ == '__main__':
     args = parse_cmd_line()
-    api = trackerbot.api(args.trackerbot_url)
+    trackerbot_api = args.trackerbot_url or cfme_data.get('trackerbot', {}).get('api', None)
+    if not trackerbot_api:
+        sys.exit('No trackerbot URL provided or in cfme_data.yaml')
     if not args.stream or not args.appliance_template:
         sys.exit("stream and appliance_template "
                  "cannot be None, specify the stream as --stream <stream-name>"
                  "and template as --template <template-name>")
-    generate_html_report(api, args.stream, args.output, args.appliance_template)
+    generate_html_report(trackerbot.api(trackerbot_api),
+                         args.stream,
+                         args.output,
+                         args.appliance_template)

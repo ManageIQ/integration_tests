@@ -21,6 +21,7 @@ from celery.exceptions import MaxRetriesExceededError
 from datetime import datetime, timedelta
 from functools import wraps
 from lxml import etree
+from miq_version import Version, TemplateName
 from novaclient.exceptions import OverLimit as OSOverLimit
 from paramiko import SSHException
 from urllib2 import urlopen, HTTPError
@@ -29,7 +30,6 @@ import socket
 from appliances.models import (
     Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask,
     MismatchVersionMailer, User, GroupShepherd)
-from miq_version import Version, TemplateName
 from sprout import settings, redis
 from sprout.irc_bot import send_message
 from sprout.log import create_logger
@@ -181,7 +181,8 @@ def kill_appliance_delete(self, appliance_id, _delete_already_issued=False):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
         if not appliance.provider.is_working:
-            raise RuntimeError('Provider is not working.')
+            raise RuntimeError('Provider {} is not working for appliance {}'
+                               .format(appliance.provider, appliance.name))
         if appliance.provider_api.does_vm_exist(appliance.name):
             appliance.set_status("Deleting the appliance from provider")
             # If we haven't issued the delete order, do it now
@@ -270,7 +271,6 @@ def poke_trackerbot(self):
             provider.save(update_fields=['provider_type'])
         template_name = template["template"]["name"]
         ga_released = template['template']['ga_released']
-        date = TemplateName.parse_template(template_name).datestamp
 
         # nasty trackerbot slightly corrupts json data and it is parsed in wrong way
         # as a result
@@ -278,7 +278,8 @@ def poke_trackerbot(self):
         processed_custom_data = custom_data.replace("u'", '"').replace("'", '"')
         processed_custom_data = yaml.safe_load(processed_custom_data)
 
-        if not date:
+        template_info = TemplateName.parse_template(template_name)
+        if not template_info.datestamp:
             # Not a CFME/MIQ template, ignore it.
             continue
         # Original one
@@ -300,23 +301,21 @@ def poke_trackerbot(self):
                                                       'template_type'])
         except ObjectDoesNotExist:
             if template_name in provider.templates:
-                date = TemplateName.parse_template(template_name).datestamp
-                if date is None:
-                    self.logger.warning(
-                        "Ignoring template {} because it does not have a date!".format(
-                            template_name))
+                if template_info.datestamp is None:
+                    self.logger.warning("Ignoring template {} because it does not have a date!"
+                                        .format(template_name))
                     continue
-                template_version = TemplateName.parse_template(template_name).version
+                template_version = template_info.version
                 if template_version is None:
                     # Make up a faux version
                     # First 3 fields of version get parsed as a zstream
                     # therefore ... makes it a "nil" stream
-                    template_version = "...{}".format(date.strftime("%Y%m%d"))
+                    template_version = "...{}".format(template_info.datestamp.strftime("%Y%m%d"))
                 with transaction.atomic():
                     tpl = Template(
                         provider=provider, template_group=group, original_name=template_name,
-                        name=template_name, preconfigured=False, date=date, ready=True, exists=True,
-                        usable=True, version=template_version)
+                        name=template_name, preconfigured=False, date=template_info.datestamp,
+                        ready=True, exists=True, usable=True, version=template_version)
                     tpl.save()
                     if provider.provider_type == 'openshift':
                         tpl.custom_data = processed_custom_data
@@ -395,17 +394,18 @@ def create_appliance_template(self, provider_id, group_id, template_name, source
         except ObjectDoesNotExist:
             pass
         # Fire off the template preparation
-        date = TemplateName.parse_template(template_name).datestamp
-        if not date:
+        template_info = TemplateName.parse_template(template_name)
+        template_date_fmt = template_info.datestamp.strftime("%Y%m%d")
+        if not template_info.datestamp:
             return
-        template_version = TemplateName.parse_template(template_name).version
-        if template_version is None:
-            # Make up a faux version
-            # First 3 fields of version get parsed as a zstream
-            # therefore ... makes it a "nil" stream
-            template_version = "...{}".format(date.strftime("%Y%m%d"))
-        new_template_name = settings.TEMPLATE_FORMAT.format(
-            group=group.id, date=date.strftime("%y%m%d"), rnd=fauxfactory.gen_alphanumeric(8))
+        # Make up a faux version
+        # First 3 fields of version get parsed as a zstream
+        # therefore ... makes it a "nil" stream
+        template_version = template_info.version or "...{}".format(template_date_fmt)
+
+        new_template_name = settings.TEMPLATE_FORMAT.format(group=group.id,
+                                                            date=template_date_fmt,
+                                                            rnd=fauxfactory.gen_alphanumeric(8))
         if provider.template_name_length is not None:
             allowed_length = provider.template_name_length
             # There is some limit
@@ -419,7 +419,7 @@ def create_appliance_template(self, provider_id, group_id, template_name, source
                 else:
                     # Another solution
                     new_template_name = settings.TEMPLATE_FORMAT.format(
-                        group=group.id[:2], date=date.strftime("%y%m%d"),  # Use only first 2 of grp
+                        group=group.id[:2], date=template_date_fmt,  # Use only first 2 of grp
                         rnd=fauxfactory.gen_alphanumeric(2))  # And just 2 chars random
                     # TODO: If anything larger comes, do fix that!
         if source_template_id is not None:
@@ -429,9 +429,13 @@ def create_appliance_template(self, provider_id, group_id, template_name, source
                 source_template = None
         else:
             source_template = None
-        template = Template(
-            provider=provider, template_group=group, name=new_template_name, date=date,
-            version=template_version, original_name=template_name, parent_template=source_template)
+        template = Template(provider=provider,
+                            template_group=group,
+                            name=new_template_name,
+                            date=template_info.datestamp,
+                            version=template_version,
+                            original_name=template_name, parent_template=source_template,
+                            exists=False)
         template.save()
     workflow = chain(
         prepare_template_deploy.si(template.id),
@@ -451,13 +455,13 @@ def prepare_template_deploy(self, template_id):
     try:
         if not template.provider.is_working:
             raise RuntimeError('Provider is not working.')
-        if not template.exists_in_provider:
+        if template.vm_mgmt is None or not template.vm_mgmt.exists:
             template.set_status("Deploying the template.")
             provider_data = template.provider.provider_data
             kwargs = provider_data["sprout"]
             kwargs["power_on"] = True
-            if "allowed_datastores" not in kwargs and "allowed_datastores" in provider_data:
-                kwargs["allowed_datastores"] = provider_data["allowed_datastores"]
+            if "datastore" not in kwargs and "allowed_datastore" in provider_data:
+                kwargs["datastore"] = provider_data["allowed_datastore"]
             self.logger.info("Deployment kwargs: {}".format(repr(kwargs)))
 
             # TODO: change after openshift wrapanapi refactor
@@ -466,7 +470,7 @@ def prepare_template_deploy(self, template_id):
                 template.provider_api.deploy_template(
                     template.original_name, vm_name=template.name, **kwargs)
             else:
-                vm = template.template_mgmt.deploy(vm_name=template.name, **kwargs)
+                vm = template.source_template_mgmt.deploy(vm_name=template.name, **kwargs)
                 vm.ensure_state(VmState.RUNNING)
         else:
             template.set_status("Waiting for deployment to be finished.")
@@ -594,24 +598,33 @@ def prepare_template_finish(self, template_id):
     try:
         if not template.provider.is_working:
             raise RuntimeError('Provider is not working.')
-        template.set_status("Finishing template creation.")
-        if template.temporary_name is None:
-            tmp_name = "templatize_{}".format(fauxfactory.gen_alphanumeric(8))
-            Template.objects.get(id=template_id).temporary_name = tmp_name  # metadata, autosave
+        template.set_status("Finishing template creation with an api mark_as_template call")
+        # TODO: change after openshift wrapanapi refactor
+        if isinstance(template.provider_api, Openshift):
+            template.provider_api.mark_as_template(template.name, delete_on_error=True)
         else:
-            tmp_name = template.temporary_name
-            # TODO: change after openshift wrapanapi refactor
-            if isinstance(template.provider_api, Openshift):
-                template.provider_api.mark_as_template(
-                    template.name, temporary_name=tmp_name, delete_on_error=False)
+            # virtualcenter may want to store templates on different datastore
+            # migrate if necessary
+            if template.provider.provider_type == 'virtualcenter':
+                host = (template.provider.provider_data.get('template_upload', {}).get('host') or
+                        template.provider_api.list_host().pop())
+                datastore = template.provider.provider_data.get('template_upload',
+                                                                {}).get('template_datastore')
+                if host is not None and datastore is not None:
+                    template.set_status("Migrating VM before mark_as_template for vmware")
+                    template.vm_mgmt.clone(vm_name=template.name,
+                                       datastore=datastore,
+                                       host=host,
+                                       relocate=True)
+                # we now have a cloned VM with temporary name to mark as the template
+                template.vm_mgmt.mark_as_template(template.name, delete_on_error=True)
             else:
-                template.vm_mgmt.mark_as_template(temporary_name=tmp_name, delete_on_error=False)
+                template.vm_mgmt.mark_as_template(template.name, delete_on_error=True)
         with transaction.atomic():
             template = Template.objects.get(id=template_id)
             template.ready = True
             template.exists = True
             template.save(update_fields=['ready', 'exists'])
-            del template.temporary_name
     except Exception as e:
         template.set_status("Could not mark the appliance as template. Retrying.")
         self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
@@ -860,16 +873,17 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
             kill_appliance.delay(appliance_id)
             return
     if not appliance.provider.is_working:
-        raise RuntimeError('Provider is not working.')
+        raise RuntimeError('Provider {} is not working for appliance {}'
+                           .format(appliance.provider, appliance.name))
     try:
         appliance.provider.cleanup()
         if not appliance.provider_api.does_vm_exist(appliance.name):
             appliance.set_status("Beginning template clone.")
             provider_data = appliance.template.provider.provider_data
-            kwargs = provider_data["sprout"]
+            kwargs = dict(provider_data["sprout"])
             kwargs["power_on"] = False
-            if "allowed_datastores" not in kwargs and "allowed_datastores" in provider_data:
-                kwargs["allowed_datastores"] = provider_data["allowed_datastores"]
+            if "datastore" not in kwargs and 'allowed_datastore' in kwargs:
+                kwargs["datastore"] = kwargs.pop("allowed_datastore")
             if appliance.appliance_pool is not None:
                 if appliance.appliance_pool.override_memory is not None:
                     kwargs['ram'] = appliance.appliance_pool.override_memory
@@ -961,7 +975,8 @@ def clone_template_to_appliance__wait_present(self, appliance_id):
         self.request.callbacks[:] = []
         return
     if not appliance.provider.is_working:
-        raise RuntimeError('Provider is not working.')
+        raise RuntimeError('Provider {} is not working for appliance {}'
+                           .format(appliance.provider, appliance.name))
     if appliance.appliance_pool is not None:
         if appliance.appliance_pool.not_needed_anymore:
             # Terminate task chain
@@ -1110,7 +1125,7 @@ def appliance_power_off(self, appliance_id):
                 vm_suspended = api.is_vm_suspended(appliance.name)
                 vm_steady = api.in_steady_state(appliance.name)
             else:
-                vm_stopped = appliance.vm_mgmt.is_vm_stopped
+                vm_stopped = appliance.vm_mgmt.is_stopped
                 vm_suspended = appliance.vm_mgmt.is_suspended
                 vm_steady = appliance.vm_mgmt.in_steady_state
         if not vm_exists or vm_stopped:
@@ -1554,9 +1569,9 @@ def delete_template_from_provider(self, template_id):
     try:
         # TODO: change after openshift wrapanapi refactor
         if isinstance(template.provider.api, Openshift):
-            template.template_mgmt.cleanup()
-        else:
             template.provider_api.delete_template(template.name)
+        elif template.template_mgmt:
+            template.template_mgmt.cleanup()
     except Exception as e:
         self.logger.exception(e)
         return False
@@ -1752,7 +1767,8 @@ def connect_direct_lun(self, appliance_id):
 def disconnect_direct_lun(self, appliance_id):
     appliance = Appliance.objects.get(id=appliance_id)
     if not appliance.provider.is_working:
-        raise RuntimeError('Provider is not working.')
+        raise RuntimeError('Provider {} is not working for appliance {}'
+                           .format(appliance.provider, appliance.name))
     if not appliance.lun_disk_connected:
         return False
     # TODO: change after openshift wrapanapi refactor
@@ -2230,14 +2246,14 @@ def nuke_template_configuration(self, template_id):
         # TODO: change after openshift wrapanapi refactor
         if isinstance(template.provider.api, Openshift):
             template.provider.api.delete_vm(template.name)
-        else:
-            template.provider.api.get_vm(template.name).cleanup()
+        elif template.vm_mgmt:
+            template.vm_mgmt.cleanup()
     if template.provider.api.does_template_exist(template.name):
         self.logger.info('Found the template as a template')
         # TODO: change after openshift wrapanapi refactor
         if isinstance(template.provider.api, Openshift):
             template.provider.api.delete_template(template.name)
-        else:
-            template.provider.api.get_template(template.name).cleanup()
+        elif template.template_mgmt:
+            template.template_mgmt.cleanup()
     template.delete()
     return True

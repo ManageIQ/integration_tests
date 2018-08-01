@@ -3,14 +3,11 @@ Available providers:
     ec2
     gce
     openstack
+    openshift
+    rhevm
     scvmm
     virtualcenter
 
-
-TESTED ON SUCH ENVIRONMENTS:
-
-    rhos11
-    rhos8
 
 
 Required arguments:
@@ -32,9 +29,6 @@ Optional arguments:
 
     --template-name CUSTOM_TEMPLATE_NAME
         if template name is used -> template will be formatted as {template}-{stream}
-
-    --provider-data  # PATH TO LOCAL YAML FILE WITH LOCAL PROVIDER DATA
-        REQUIRES --provider name
 
     --print-name-only
         Prints template names and exits.

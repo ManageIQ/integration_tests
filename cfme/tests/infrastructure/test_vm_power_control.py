@@ -39,7 +39,6 @@ def testing_vm(appliance, request, provider, vm_name):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     yield vm
-
     vm.cleanup_on_provider()
     if_scvmm_refresh_provider(provider)
 
@@ -69,7 +68,6 @@ def testing_vm_tools(appliance, request, provider, vm_name, full_template):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     yield vm
-
     vm.cleanup_on_provider()
     if_scvmm_refresh_provider(provider)
 

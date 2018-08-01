@@ -2,10 +2,10 @@
 """Populate template tracker with information based on cfme_data"""
 import sys
 from collections import defaultdict
-from slumber.exceptions import SlumberHttpBaseException
 from threading import Lock, Thread
 
 from miq_version import TemplateName
+from slumber.exceptions import SlumberHttpBaseException
 
 from cfme.utils import trackerbot, net
 from cfme.utils.conf import cfme_data
@@ -136,7 +136,6 @@ def get_provider_templates(provider_key, template_providers, unresponsive_provid
     try:
         with thread_lock:
             provider_mgmt = get_mgmt(provider_key)
-
         # TODO: change after openshift wrapanapi refactor
         if isinstance(provider_mgmt, Openshift):
             templates = provider_mgmt.list_template()

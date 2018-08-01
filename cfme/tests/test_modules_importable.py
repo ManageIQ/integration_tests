@@ -20,6 +20,14 @@ KNOWN_FAILURES = set(ROOT.dirpath().join(x) for x in[
     'cfme/dashboard.py',
     'cfme/configure/tasks.py',
     'cfme/utils/template/template_upload.py',
+    'cfme/utils/template/ec2.py',
+    'cfme/utils/template/gce.py',
+    'cfme/utils/template/openstack.py',
+    'cfme/utils/template/rhevm.py',
+    'cfme/utils/template/rhopenshift.py',
+    'cfme/utils/template/scvmm.py',
+    'cfme/utils/template/virtualcenter.py',
+    'cfme/utils/template/base.py',
 ])
 
 

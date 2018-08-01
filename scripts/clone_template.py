@@ -85,7 +85,6 @@ def destroy_vm(provider_mgmt, vm_name):
             else:
                 vm = provider_mgmt.get_vm(vm_name)
                 vm_deleted = vm.cleanup()
-
             if vm_deleted:
                 logger.info('VM %s destroyed', vm_name)
             else:
@@ -242,7 +241,6 @@ def main(**kwargs):
             'Cloning %s to %s on %s',
             deploy_args['template'], deploy_args['vm_name'], kwargs['provider']
         )
-
         # TODO: change after openshift wrapanapi refactor
         output = None  # 'output' is only used for openshift providers
         if isinstance(provider, Openshift):

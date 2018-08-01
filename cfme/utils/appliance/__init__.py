@@ -2767,6 +2767,7 @@ class Appliance(IPAppliance):
             self.update_advanced_settings(config)
 
     @property
+
     def _lun_name(self):
         return "{}LUNDISK".format(self.vm_name)
 

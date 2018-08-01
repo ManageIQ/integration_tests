@@ -413,7 +413,7 @@ def my_appliances(request, show_user="my"):
         id__in=Template.objects.values_list('template_group', flat=True).distinct())
     group_tuples = []
     for grp in available_groups:
-        group_tuples.append((group.templates.order_by('-date')[0].date, grp))
+        group_tuples.append((grp.templates.order_by('-date')[0].date, grp))
     group_tuples.sort(key=lambda gt: gt[0], reverse=True)
     template_types = [t for t in Template.TEMPLATE_TYPES]
     can_order_pool = show_user == "my"

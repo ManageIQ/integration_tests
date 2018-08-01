@@ -30,7 +30,6 @@ def vm_crud(provider, setup_provider_modscope, small_template_modscope):
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate(vm_name, provider, template_name=template.name)
     yield vm
-
     vm.cleanup_on_provider()
 
 

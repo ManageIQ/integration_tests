@@ -11,6 +11,7 @@ except ImportError:
 
 import wrapanapi
 from wrapanapi import VmState, Openshift
+from wrapanapi.exceptions import VMInstanceNotFound
 
 from cached_property import cached_property
 from celery import chain
@@ -395,7 +396,7 @@ class Provider(MetadataMixin):
     def vnc_console_link_for(self, appliance):
         if appliance.uuid is None:
             return None
-        if isinstance(self.api, wrapanapi.openstack.OpenstackSystem):
+        if isinstance(self.api, wrapanapi.systems.openstack.OpenstackSystem):
             return "http://{}/dashboard/project/instances/{}/?tab=instance_details__console".format(
                 self.ip_address, appliance.uuid
             )
@@ -601,19 +602,34 @@ class Template(MetadataMixin):
         return self.provider.id
 
     @threaded_cached_property
+    def source_template_mgmt(self):
+        try:
+            return self.provider_api.get_template(self.original_name)
+        except VMInstanceNotFound:
+            return None
+
+    @threaded_cached_property
     def template_mgmt(self):
-        return self.provider_api.get_template(self.original_name)
+        try:
+            return self.provider_api.get_template(self.name)
+        except VMInstanceNotFound:
+            return None
 
     @threaded_cached_property
     def vm_mgmt(self):
-        return self.provider_api.get_vm(self.name)
+        try:
+            mgmt = self.provider_api.get_vm(self.name)
+        except VMInstanceNotFound:
+            return None
+        else:
+            return mgmt
 
     @property
     def exists_in_provider(self):
         # TODO: change after openshift wrapanapi refactor
         if isinstance(self.provider_api, Openshift):
             return self.name in self.provider_api.list_template()
-        return self.template_mgmt.exists
+        return self.source_template_mgmt.exists if self.source_template_mgmt else False
 
     @property
     def exists_and_ready(self):
@@ -935,7 +951,10 @@ class Appliance(MetadataMixin):
 
     @threaded_cached_property
     def vm_mgmt(self):
-        return self.template.provider_api.get_vm(self.name)
+        try:
+            return self.template.provider_api.get_vm(self.name)
+        except VMInstanceNotFound:
+            return None
 
     @threaded_cached_property
     def template_mgmt(self):
@@ -1102,8 +1121,8 @@ class Appliance(MetadataMixin):
         # Then if the appliance is still present in the management system, kill it
         self.logger.info("Deleting from database")
         pool = self.appliance_pool
-        result = super(Appliance, self).delete(*args, **kwargs)
         do_not_touch = kwargs.pop("do_not_touch_ap", False)
+        result = super(Appliance, self).delete(*args, **kwargs)
         if pool is not None and not do_not_touch:
             if pool.current_count == 0:
                 pool.delete()

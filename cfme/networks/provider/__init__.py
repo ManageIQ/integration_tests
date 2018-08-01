@@ -301,9 +301,6 @@ class NetworkProviderCollection(BaseCollection):
 
         return network_providers
 
-    def instantiate(self, prov_class, *args, **kwargs):
-        return prov_class.from_collection(self, *args, **kwargs)
-
     def create(self, prov_class, *args, **kwargs):
         # ugly workaround until I move everything to main class
         class_attrs = [at.name for at in attr.fields(prov_class)]

@@ -74,15 +74,14 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
                                                          template_name=template)
         provisioning_data['template_name'] = template
         provisioning_data['provider_name'] = provider.name
-        view = navigate_to(appliance.collections.infra_vms, 'Provision')
+        view = navigate_to(vm.parent, 'Provision')
         view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
         base_view = vm.appliance.browser.create_view(BaseLoggedInPage)
         base_view.flash.assert_no_error()
 
         request.addfinalizer(
-            lambda: appliance.collections.infra_vms.instantiate(vm_name,
-                                                                provider).cleanup_on_provider()
-        )
+            lambda: appliance.collections.infra_vms.instantiate(vm_name, provider)
+            .cleanup_on_provider())
         request_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
         provision_request = appliance.collections.requests.instantiate(
             description=request_description)

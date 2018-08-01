@@ -119,9 +119,8 @@ def test_pxe_provision_from_template(appliance, provider, vm_name, smtp_test, se
     )
 
     request.addfinalizer(
-        lambda: appliance.collections.infra_vms.instantiate(vm_name,
-                                                            provider).cleanup_on_provider()
-    )
+        lambda: appliance.collections.infra_vms.instantiate(vm_name, provider)
+        .cleanup_on_provider())
 
     provisioning_data = {
         'catalog': {
