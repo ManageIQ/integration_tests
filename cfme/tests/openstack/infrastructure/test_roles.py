@@ -26,7 +26,7 @@ def roles(appliance, provider):
 
 def test_host_role_association(appliance, provider, soft_assert):
     host_collection = appliance.collections.hosts
-    hosts = host_collection.all(provider)
+    hosts = host_collection.all()
     assert len(hosts) > 0
     for host in hosts:
         host.run_smartstate_analysis()

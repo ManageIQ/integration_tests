@@ -16,7 +16,7 @@ def host_collection(appliance):
 
 
 def test_host_configuration(host_collection, provider, soft_assert, appliance):
-    hosts = host_collection.all(provider)
+    hosts = host_collection.all()
     assert hosts
     for host in hosts:
         host.run_smartstate_analysis()
@@ -31,7 +31,7 @@ def test_host_configuration(host_collection, provider, soft_assert, appliance):
 
 
 def test_host_cpu_resources(host_collection, provider, soft_assert):
-    hosts = host_collection.all(provider)
+    hosts = host_collection.all()
     assert hosts
     for host in hosts:
         fields = ['Number of CPUs', 'Number of CPU Cores',
@@ -43,7 +43,7 @@ def test_host_cpu_resources(host_collection, provider, soft_assert):
 
 
 def test_host_auth(host_collection, provider, soft_assert):
-    hosts = host_collection.all(provider)
+    hosts = host_collection.all()
     assert hosts
     for host in hosts:
         view = navigate_to(host, 'Details')
@@ -54,7 +54,7 @@ def test_host_auth(host_collection, provider, soft_assert):
 
 
 def test_host_devices(host_collection, provider):
-    hosts = host_collection.all(provider)
+    hosts = host_collection.all()
     assert hosts
     for host in hosts:
         view = navigate_to(host, 'Details')
@@ -63,7 +63,7 @@ def test_host_devices(host_collection, provider):
 
 
 def test_host_hostname(host_collection, provider, soft_assert):
-    hosts = host_collection.all(provider)
+    hosts = host_collection.all()
     assert hosts
     for host in hosts:
         view = navigate_to(host, 'Details')
@@ -72,7 +72,7 @@ def test_host_hostname(host_collection, provider, soft_assert):
 
 
 def test_host_memory(host_collection, provider):
-    hosts = host_collection.all(provider)
+    hosts = host_collection.all()
     assert hosts
     for host in hosts:
         view = navigate_to(host, 'Details')
@@ -81,7 +81,7 @@ def test_host_memory(host_collection, provider):
 
 
 def test_host_security(host_collection, provider, soft_assert):
-    hosts = host_collection.all(provider)
+    hosts = host_collection.all()
     assert hosts
     for host in hosts:
         view = navigate_to(host, 'Details')
@@ -96,7 +96,7 @@ def test_host_security(host_collection, provider, soft_assert):
 
 def test_host_smbios_data(host_collection, provider, soft_assert):
     """Checks that Manufacturer/Model values are shown for each infra node"""
-    hosts = host_collection.all(provider)
+    hosts = host_collection.all()
     assert hosts
     for host in hosts:
         view = navigate_to(host, 'Details')
@@ -106,7 +106,7 @@ def test_host_smbios_data(host_collection, provider, soft_assert):
 
 
 def test_host_zones_assigned(host_collection, provider):
-    hosts = host_collection.all(provider)
+    hosts = host_collection.all()
     assert hosts
     for host in hosts:
         view = navigate_to(host, 'Details')
