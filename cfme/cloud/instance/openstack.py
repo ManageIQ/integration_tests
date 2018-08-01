@@ -7,9 +7,8 @@ from widgetastic_manageiq import CheckboxSelect, Select, Input
 
 from cfme.exceptions import OptionNotAvailable, DestinationNotFound
 from cfme.common.vm_views import RightSizeView
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from . import Instance, InstanceCollection, CloudInstanceView
-
 
 @attr.s
 class OpenStackInstance(Instance):
@@ -53,6 +52,29 @@ class OpenStackInstance(Instance):
         return {
             'on': [self.START],
             'off': [self.SUSPEND, self.SOFT_REBOOT, self.HARD_REBOOT]}
+
+    def attach_volume(self, name, mountpoint=None):
+        view = navigate_to(self, 'AttachVolume')
+        view.form.fill({
+            'volume': name,
+            'mountpoint': mountpoint
+        })
+        view.form.submit_button.click()
+
+    def detach_volume(self, name):
+        view = navigate_to(self, 'DetachVolume')
+        view.form.volume.fill(name)
+        view.form.submit_button.click()
+
+    @property
+    def volume_count(self):
+        """ number of attached volumes to instance.
+
+        Returns:
+            :py:class:`int` volume count.
+        """
+        view = navigate_to(self, 'Details')
+        return int(view.entities.summary('Relationships').get_text_of('Cloud Volumes'))
 
 
 @attr.s
