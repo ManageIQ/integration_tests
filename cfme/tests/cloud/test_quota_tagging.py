@@ -183,33 +183,3 @@ def test_quota_tagging_cloud_via_services(appliance, request, provider, setup_pr
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
     assert provision_request.row.reason.text == "Quota Exceeded"
-
-
-@pytest.mark.parametrize(
-    ['custom_prov_data', 'extra_msg', 'approve'],
-    [
-        [{}, '', False],
-        [{}, '', False],
-        [{}, '', False],
-        [{'catalog': {'num_vms': '21'}}, '###', True]
-
-    ],
-    ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
-)
-def test_quota_cloud(request, appliance, provider, prov_data, setup_provider, template_name,
-                     vm_name, extra_msg, entities, custom_prov_data, approve):
-    """Test User and Group Quota in UI"""
-    recursive_update(prov_data, custom_prov_data)
-    recursive_update(prov_data, {
-        'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
-    prov_data.update({'template_name': template_name})
-    request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name, extra_msg)
-    appliance.collections.cloud_instances.create(vm_name, provider, prov_data, auto_approve=approve,
-                                                 override=True,
-                                                 request_description=request_description)
-
-    # nav to requests page to check quota validation
-    provision_request = appliance.collections.requests.instantiate(request_description)
-    request.addfinalizer(provision_request.remove_request)
-    provision_request.wait_for_request(method='ui')
-    assert provision_request.row.reason.text == "Quota Exceeded"
