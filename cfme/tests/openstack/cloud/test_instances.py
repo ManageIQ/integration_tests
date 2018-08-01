@@ -4,6 +4,8 @@ import fauxfactory
 import pytest
 from selenium.common.exceptions import TimeoutException
 from wait_for import TimedOutError
+from widgetastic.utils import partial_match
+from wrapanapi.entities import VmState
 
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -11,7 +13,6 @@ from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
-from widgetastic.utils import partial_match
 
 
 pytestmark = [
@@ -50,7 +51,7 @@ def new_instance(provider):
     yield instance
     try:
         instance.cleanup_on_provider()
-    except:
+    except Exception:
         pass
 
 
@@ -134,7 +135,7 @@ def test_shelve_offload_instance(new_instance):
 
 
 def test_start_instance(new_instance):
-    new_instance.power_control_from_provider(OpenStackInstance.STOP)
+    new_instance.mgmt.ensure_state(VmState.STOPPED)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_OFF)
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.START)
