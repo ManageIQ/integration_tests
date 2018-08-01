@@ -29,7 +29,7 @@ Optional arguments:
 
     --template-name CUSTOM_TEMPLATE_NAME
         if template name is used -> template will be formatted as {template}-{stream}
-    
+
     --print-name-only
         Prints template names and exits.
 
