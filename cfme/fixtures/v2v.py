@@ -1,7 +1,6 @@
 import pytest
 
 from cfme.fixtures.provider import setup_or_skip
-from cfme.utils.hosts import setup_host_creds
 
 
 @pytest.fixture(scope="function")
@@ -25,10 +24,12 @@ def provider_setup(migration_ui, request, second_provider, provider):
 @pytest.fixture(scope='function')
 def host_creds(provider_setup):
     """Add credentials to conversation host"""
-    host = provider_setup[0].hosts[0]
-    setup_host_creds(provider_setup[0], host.name)
+    provider = provider_setup[0]
+    host = provider.hosts.all()[0]
+    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+    host.update_credentials_rest(credentials=host_data['credentials'])
     yield host
-    setup_host_creds(provider_setup[0], host.name, remove_creds=True)
+    host.remove_credentials_rest()
 
 
 @pytest.fixture(scope='function')

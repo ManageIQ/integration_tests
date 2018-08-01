@@ -9,7 +9,6 @@ from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import HostCompliancePolicy, VMCompliancePolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
-from cfme.utils.hosts import setup_providers_hosts_credentials
 from cfme.utils.update import update
 from . import do_scan
 
@@ -87,10 +86,11 @@ def vddk_url(provider):
 
 @pytest.fixture(scope="module")
 def configure_fleecing(appliance, provider, setup_provider_modscope, vddk_url):
-    setup_providers_hosts_credentials(provider)
+    provider.setup_hosts_credentials()
     appliance.install_vddk(vddk_url=vddk_url)
     yield
     appliance.uninstall_vddk()
+    provider.remove_hosts_credentials()
 
 
 @pytest.fixture(scope="module")

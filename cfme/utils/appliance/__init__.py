@@ -2669,8 +2669,7 @@ class Appliance(IPAppliance):
             # credential hosts
             log_callback('Credentialing hosts...')
             if not RUNNING_UNDER_SPROUT:
-                from cfme.utils.hosts import setup_providers_hosts_credentials
-            setup_providers_hosts_credentials(self.provider_key, ignore_errors=True)
+                self.provider.setup_hosts_credentials()
 
             # if rhev, set relationship
             if self.is_on_rhev:
