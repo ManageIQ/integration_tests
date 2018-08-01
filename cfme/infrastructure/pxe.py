@@ -714,7 +714,7 @@ class PXESystemImageDeatilsView(PXEMainView):
         return self.sidebar.datastores.tree.read()[-1] == self.context['object'].name
 
     @View.nested
-    class entities(View):
+    class entities(View):  # noqa
         basic_information = SummaryTable(title="Basic Information")
 
 
