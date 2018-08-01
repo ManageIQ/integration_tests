@@ -18,6 +18,10 @@ alphanumeric_name = gen_alphanumeric(10)
 long_alphanumeric_name = gen_alphanumeric(100)
 integer_name = str(gen_integer(0, 100000000))
 provider_names = alphanumeric_name, integer_name, long_alphanumeric_name
+AVAILABLE_SEC_PROTOCOLS = ('SSL trusting custom CA',
+                           'SSL without validation',
+                           'SSL')
+
 DEFAULT_SEC_PROTOCOLS = (
     pytest.mark.polarion('CMP-10598')('SSL trusting custom CA'),
     pytest.mark.polarion('CMP-10597')('SSL without validation'),
@@ -148,3 +152,18 @@ def test_add_mertics_provider_ssl(provider, appliance, test_item,
     else:
         new_provider.delete(cancel=False)
         new_provider.wait_for_delete()
+
+
+@pytest.mark.usefixtures('has_no_containers_providers')
+@pytest.mark.parametrize('sec_protocol', AVAILABLE_SEC_PROTOCOLS)
+def test_setup_with_wrong_port(provider, sec_protocol, sync_ssl_certificate):
+    """
+    Negative test: set a provider with wrong api port
+    based on BZ1443520
+    """
+    new_provider = copy(provider)
+    new_provider.endpoints["default"].api_port = "1234"
+    new_provider.endpoints["default"].sec_protocol = sec_protocol
+
+    with pytest.raises(AssertionError, message="Provider was set with wrong api port"):
+        new_provider.setup()
