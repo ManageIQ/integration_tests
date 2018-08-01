@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 import pytest
-from collections import namedtuple
 
 from fauxfactory import gen_alphanumeric
 from six import iteritems
 
 from cfme.base.credential import Credential
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.auth import auth_user_data
 from cfme.utils.auth import (
     OpenLDAPAuthProvider, OpenLDAPSAuthProvider, ActiveDirectoryAuthProvider, FreeIPAAuthProvider,
     AmazonAuthProvider
 )
-from cfme.utils.blockers import GH
+from cfme.utils.blockers import GH, BZ
 from cfme.utils.conf import auth_data, credentials
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -23,10 +23,9 @@ pytestmark = [
            # need SSL openldap server
            unblock=lambda auth_mode, prov_key: not (
                auth_mode in ['external', 'ldaps'] and
-               auth_data.auth_providers[prov_key].type == 'openldaps')
-           )
-    ]),
-    pytest.mark.usefixtures('prov_key', 'auth_mode', 'auth_provider', 'configure_auth')
+               auth_data.auth_providers[prov_key].type == 'openldaps')),
+        BZ(1593171)]),  # 510z groups page doesn't load
+    pytest.mark.usefixtures('prov_key', 'auth_mode', 'auth_provider', 'configure_auth', 'auth_user')
 ]
 
 # map auth provider types, auth_modes, and user_types for test matrix
@@ -64,68 +63,80 @@ test_param_maps = {
 def pytest_generate_tests(metafunc):
     """ zipper auth_modes and auth_prov together and drop the nonsensical combos """
     # TODO use supportability and provider type+version parametrization
-    argnames = ['auth_mode', 'prov_key', 'user_type']
+    argnames = ['auth_mode', 'prov_key', 'user_type', 'auth_user']
     argvalues = []
+    idlist = []
     if 'auth_providers' not in auth_data:
         metafunc.parametrize(argnames, [
             pytest.param(
-                None, None, None,
+                None, None, None, None,
                 marks=pytest.mark.uncollect("auth providers data missing"))])
         return
+    # Holy nested loops, batman
+    # go through each mode, then each auth type, and find auth providers matching that type
+    # go through each user type for the given mode+auth_type (from param_maps above)
+    # for each user type, find users in the yaml matching user_type an on the given auth provider
+    # add parametrization for matching set of mode, auth_provider key, user_type, and user_dict
+    # set id, use the username from userdict instead of an auto-generated "auth_user[\d]" ID
     for mode in test_param_maps.keys():
         for auth_type in test_param_maps.get(mode, {}):
             eligible_providers = {key: prov_dict
                                   for key, prov_dict in iteritems(auth_data.auth_providers)
                                   if prov_dict.type == auth_type}
             for user_type in test_param_maps[mode][auth_type]['user_types']:
-                argvalues.extend([(mode, key, user_type)
-                                 for key, prov_dict in iteritems(eligible_providers)
-                                 if user_type in prov_dict.get('user_types', [])])
-    metafunc.parametrize(argnames, argvalues)
+                for key, prov_dict in eligible_providers.items():
+                    for user_dict in [u for u in auth_user_data(key, user_type) or []]:
+                        if user_type in prov_dict.get('user_types', []):
+                            argvalues.append((mode, key, user_type, user_dict))
+                            idlist.append('-'.join([mode, key, user_type, user_dict.username]))
+    metafunc.parametrize(argnames, argvalues, ids=idlist)
+
+
+@pytest.fixture(scope='function')
+def user_obj(appliance, auth_user, user_type):
+    """return a simple user object, see if it exists and delete it on teardown"""
+    # Replace spaces with dashes in UPN type usernames for login compatibility
+    username = auth_user.username.replace(' ', '-') if user_type == 'upn' else auth_user.username
+    user = appliance.collections.users.simple_user(
+        username,
+        credentials[auth_user.password].password,
+        fullname=auth_user.fullname or auth_user.username)  # fullname could be empty
+    yield user
+
+    appliance.server.login_admin()
+    if user.exists:
+        user.delete()
 
 
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon')  # default groups tested elsewhere
-def test_login_evm_group(appliance, request, auth_user_data, user_type, soft_assert):
+# this test only runs against users that have an evm built-in group
+@pytest.mark.uncollectif(lambda auth_user: not any([True for g in auth_user.groups or []
+                                                   if 'evmgroup' in g.lower()]),
+                         reason='No evm group available for user')
+def test_login_evm_group(appliance, auth_user, user_obj, soft_assert):
     """This test checks whether a user can login while assigned a default EVM group
         Prerequisities:
             * ``auth_data.yaml`` file
             * auth provider configured with user as a member of a group matching default EVM group
         Test will configure auth and login
     """
-    # get a list of (user_obj, groupname) tuples, creating the user object inline
+    # get a list of groups for the user that match evm default group names
     # Replace spaces with dashes in UPN type usernames for login compatibility
-    # filtering on those that have evmgroup in groupname
-    user_tuples = []
-    for user in auth_user_data:
-        evm_matched_groups = [group for group in user.groups if 'evmgroup' in group.lower()]
-        if evm_matched_groups:
-            user_tuples.append(
-                (appliance.collections.users.simple_user(
-                    user.username.replace(' ', '-') if user_type == 'upn' else user.username,
-                    credentials[user.password]['password'],
-                    fullname=user.fullname),
-                evm_matched_groups[0])
-            )
-
-    for user, groupname in user_tuples:
-        with user:
-            # use appliance.server methods for UI context instead of view directly
-            navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
-            display_name = appliance.server.current_full_name()
-            display_groups = [name.lower() for name in appliance.server.group_names()]
-            soft_assert(display_name == user.name,
-                        'user full name "{}" did not match UI display name "{}"'
-                        .format(user.name, display_name))
-            soft_assert(groupname.lower() in display_groups,
-                        'users group "{}" not displayed in UI groups list "{}"'
-                        .format(groupname, display_groups))
+    evm_group_names = [group for group in auth_user.groups if 'evmgroup' in group.lower()]
+    with user_obj:
+        logger.info('Logging in as user %s, member of groups %s', user_obj, evm_group_names)
+        view = navigate_to(appliance.server, 'LoggedIn')
+        assert view.is_displayed, 'user {} failed login'.format(user_obj)
+        soft_assert(user_obj.name == view.current_fullname,
+                    'user {} is not in view fullname'.format(user_obj))
+        for name in evm_group_names:
+            soft_assert(name in view.group_names,
+                        'user {} evm group {} not in view group_names'.format(user_obj, name))
 
     # split loop to reduce number of logins
     appliance.server.login_admin()
-    for user, groupname in user_tuples:
-        soft_assert(user.exists, 'user record should have been created for "{}"'.format(user))
-        request.addfinalizer(user.delete)
+    assert user_obj.exists, 'user record should have been created for "{}"'.format(user_obj)
 
 
 def retrieve_group(appliance, auth_mode, username, groupname, auth_provider):
@@ -156,8 +167,11 @@ def retrieve_group(appliance, auth_mode, username, groupname, auth_provider):
 
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon')
-def test_login_retrieve_group(appliance, request, auth_user_data, user_type, auth_mode,
-                              auth_provider, soft_assert):
+@pytest.mark.uncollectif(lambda auth_user: not any([True for g in auth_user.groups or []
+                                                   if 'evmgroup' not in g.lower()]),
+                         reason='Only groups available for user are evm built-in')
+def test_login_retrieve_group(appliance, request, auth_mode, auth_provider, soft_assert, auth_user,
+                              user_obj):
     """This test checks whether different cfme auth modes are working correctly.
        authmodes tested as part of this test: ext_ipa, ext_openldap, miq_openldap
        e.g. test_auth[ext-ipa_create-group]
@@ -168,62 +182,33 @@ def test_login_retrieve_group(appliance, request, auth_user_data, user_type, aut
             * this test fetches the auth_modes from yaml and generates tests per auth_mode.
     """
     # get a list of (user_obj, groupname) tuples, creating the user object inline
-    # Replace spaces with dashes in UPN type usernames for login compatibility
     # filtering on those that do NOT evmgroup in groupname
-    user_group_tuples = [(
-        appliance.collections.users.simple_user(
-            user.username.replace(' ', '-') if user_type == 'upn' else user.username,
-            credentials[user.password]['password'],
-            fullname=user.fullname),
-        retrieve_group(appliance, auth_mode, user.username, group, auth_provider))
-        for user in auth_user_data
-        for group in user.groups
-        if 'evmgroup' not in group.lower()]  # exclude built-in evm groups
+    non_evm_group = [g for g in auth_user.groups or [] if 'evmgroup' not in g.lower()][0]
+    # retrieving in test call and not fixture, getting the group from auth provider is part of test
+    group = retrieve_group(appliance, auth_mode, auth_user.username, non_evm_group, auth_provider)
 
-    logger.info('USER_GROUP_TUPLES: %r', user_group_tuples)
+    with user_obj:
+        view = navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
+        soft_assert(view.current_fullname == user_obj.name,
+                    'user full name "{}" did not match UI display name "{}"'
+                    .format(user_obj.name, view.current_fullname))
+        soft_assert(group.description in view.group_names,
+                    'user group "{}" not displayed in UI groups list "{}"'
+                    .format(group.description, view.group_names))
 
-    for user, group in user_group_tuples:
-        with user:
-            navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
-            display_name = appliance.server.current_full_name()
-            display_groups = [name.lower() for name in appliance.server.group_names()]
-            soft_assert(display_name == user.name,
-                        'user full name "{}" did not match UI display name "{}"'
-                        .format(user.name, display_name))
-            soft_assert(group.description.lower() in display_groups,
-                        'user group "{}" not displayed in UI groups list "{}"'
-                        .format(group.description, display_groups))
-
-    appliance.server.login_admin()
-    for user, group in user_group_tuples:
-        soft_assert(user.exists, 'User record for "{}" should exist after login'.format(user))
+    appliance.server.login_admin()  # context should get us back to admin, just in case
+    assert user_obj.exists, 'User record for "{}" should exist after login'.format(user_obj)
 
     @request.addfinalizer
     def _cleanup():
-        for user, group in user_group_tuples:
-            if user.exists:
-                user.delete()
-            if group.exists:
-                group.delete()
-
-
-@pytest.fixture(scope='function')
-def local_group(appliance):
-    """Helper method to check for existance of a group and delete if need be"""
-    group_collection = appliance.collections.groups
-    group_args = {
-        'description': 'test-group-{}'.format(gen_alphanumeric(length=5)),
-        'role': 'EvmRole-desktop'}
-    group = group_collection.create(**group_args)  # gets re-instantiated in create
-    assert group.exists
-    yield group
-
-    if group.exists:
-        group.delete()
+        if user_obj.exists:
+            user_obj.delete()
+        if group.exists:
+            group.delete()
 
 
 def format_user_principal(username, user_type, auth_provider):
-    """Format CN/UID/UPN usernames for authentication"""
+    """Format CN/UID/UPN usernames for authentication with locally created groups"""
     if user_type == 'upn':
         return '{}@{}'.format(username.replace(' ', '-'),
                               auth_provider.user_types[user_type].user_suffix)
@@ -236,29 +221,37 @@ def format_user_principal(username, user_type, auth_provider):
 
 
 @pytest.fixture(scope='function')
-def local_users(appliance, auth_user_data, user_type, auth_provider, local_group):
-    users = [
+def local_group(appliance):
+    """Helper method to check for existance of a group and delete if need be"""
+    group_name = 'test-group-{}'.format(gen_alphanumeric(length=5))
+    group = appliance.collections.groups.create(description=group_name, role='EvmRole-desktop')
+    assert group.exists
+    yield group
+
+    if group.exists:
+        group.delete()
+
+
+@pytest.fixture(scope='function')
+def local_user(appliance, auth_user, user_type, auth_provider, local_group):
         # list of created users, instantiating the Credential and formatting the user name in loop
-        appliance.collections.users.create(
-            name=user.fullname,
-            credential=Credential(
-                principal=format_user_principal(user.username, user_type, auth_provider),
-                secret=credentials[user.password]['password']),
-            groups=[local_group])
-        for user in auth_user_data
-    ]
+    user = appliance.collections.users.create(
+        name=auth_user.fullname or auth_user.username,  # fullname could be empty
+        credential=Credential(
+            principal=format_user_principal(auth_user.username, user_type, auth_provider),
+            secret=credentials[auth_user.password].password),
+        groups=[local_group])
 
-    yield users
+    yield user
 
-    for user in users:
-        if user.exists:
-            user.delete()
+    if user.exists:
+        user.delete()
 
 
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon',
                          'Amazon auth_data needed for local group testing')
-def test_login_local_group(appliance, local_users, local_group, soft_assert):
+def test_login_local_group(appliance, local_user, local_group, soft_assert):
     """
     Test remote authentication with a locally created group.
     Group is NOT retrieved from or matched to those on authentication provider
@@ -267,93 +260,73 @@ def test_login_local_group(appliance, local_users, local_group, soft_assert):
     # modify auth settings to not get groups
     appliance.server.authentication.auth_settings = {'auth_settings': {'get_groups': False}}
 
-    for user in local_users:
-        with user:
-            navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
-            display_name = appliance.server.current_full_name()
-            display_groups = [name.lower() for name in appliance.server.group_names()]
-            soft_assert(display_name == user.name,
-                        'user full name "{}" did not match UI display name "{}"'
-                        .format(user.name, display_name))
-            soft_assert(local_group.description.lower() in display_groups,
-                        'local group "{}" not displayed in UI groups list "{}"'
-                        .format(local_group.description, display_groups))
+    with local_user:
+        view = navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
+        soft_assert(view.current_fullname == local_user.name,
+                    'user full name "{}" did not match UI display name "{}"'
+                    .format(local_user.name, view.current_fullname))
+        soft_assert(local_group.description in view.group_names,
+                    'local group "{}" not displayed in UI groups list "{}"'
+                    .format(local_group.description, view.group_names))
 
 
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream('5.8')
 @pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon',
                          'Amazon auth_data needed for group switch testing')
-def test_user_group_switching(appliance, auth_user_data, auth_mode, user_type, auth_provider,
-                              soft_assert, request):
+@pytest.mark.uncollectif(lambda auth_user: len(auth_user.groups or []) < 2,
+                         reason='User does not have multiple groups')
+def test_user_group_switching(appliance, auth_user, auth_mode, auth_provider, soft_assert, request,
+                              user_obj):
     """Test switching groups on a single user, between retreived group and built-in group"""
-    UserGroups = namedtuple("UserGroups", "user, retrieved, groups")
-    user_group_tuples = []
-    for user in auth_user_data:
-        if len(user.groups) > 1:  # skip users with only one group
-            for group in user.groups:
-                # pick non-evm group when there are multiple groups for the user
-                if 'evmgroup' not in group.lower():
-                    name_arg = (user.username.replace(' ', '-')
-                                if user_type == 'upn'
-                                else user.username)
-                    user_group_tuples.append(UserGroups(
-                        # make a simple_user instance, no CFME user create
-                        appliance.collections.users.simple_user(name_arg,
-                                                                credentials[user.password].password,
-                                                                fullname=user.fullname),
-                        # create group in CFME via retrieve_group which looks it up on auth_provider
-                        retrieve_group(appliance, auth_mode, user.username, group, auth_provider),
-                        # The users complete list of groups
-                        user.groups))
-                else:
-                    logger.info('Skipping user "%s" group "%s", its an evm group', user, group)
-        else:
-            logger.info('Skipping user for group switching test, only one group: %s', user)
+    retrieved_groups = []
+    for group in auth_user.groups:
+        # pick non-evm group when there are multiple groups for the user
+        if 'evmgroup' not in group.lower():
+            # create group in CFME via retrieve_group which looks it up on auth_provider
+            logger.info('Retrieving a user group that is non evm built-in: {}'.format(group))
+            retrieved_groups.append(retrieve_group(appliance,
+                                                   auth_mode,
+                                                   auth_user.username,
+                                                   group,
+                                                   auth_provider))
+    else:
+        logger.info('All user groups for group switching are evm built-in: {}'
+                    .format(auth_user.groups))
 
-    logger.info('USER_GROUP_TUPLES: %r', user_group_tuples)
+    with user_obj:
+        view = navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
+        # Check there are multiple groups displayed
+        assert len(view.group_names) > 1, 'Only a single group is displayed for the user'
+        display_other_groups = [g for g in view.group_names if g != view.current_groupname]
+        # check the user name is displayed
+        soft_assert(view.current_fullname == user_obj.name,
+                    'user full name "{}" did not match UI display name "{}"'
+                    .format(auth_user, view.current_fullname))
+        # Not checking current group, determined by group priority
+        # check retrieved groups are there
+        for group in retrieved_groups:
+            soft_assert(group.description in view.group_names,
+                        'user group "{}" not displayed in UI groups list "{}"'
+                        .format(group, view.group_names))
 
-    for test_user in user_group_tuples:
-        with test_user.user:
-            view = navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
-            display_name = view.current_fullname
-            display_groups = [name for name in view.group_names]
-            active_group = view.current_groupname
-            # Check there are multiple groups displayed
-            soft_assert(len(display_groups) > 1, 'Only a single group is displayed for the user')
-            # gate the rest of the test on there actually being multiple groups selectable
-            if len(display_groups) > 1:
-                display_other_group = set([g for g in display_groups if g != active_group]).pop()
-                # check the user name is displayed
-                soft_assert(display_name == test_user.user.name,
-                            'user full name "{}" did not match UI display name "{}"'
-                            .format(test_user.user, display_name))
-                # Not checking current group, determined by group priority
-                # check retrieved group is there
-                soft_assert(test_user.retrieved.description in display_groups,
-                            'user group "{}" not displayed in UI groups list "{}"'
-                            .format(test_user.retrieved.description, display_groups))
-
-                # change to the other group
-                view.change_group(display_other_group)
-                soft_assert(view.is_displayed,
-                            'Login view is no longer displayed after switching group for {}'
-                            .format(test_user))
-                # assert selected group has changed
-                soft_assert(display_other_group == view.current_groupname)
-            else:
-                logger.warning('Skipping group switch test for user %s, only one group displayed',
-                               test_user)
+        # change to the other groups
+        for other_group in display_other_groups:
+            soft_assert(other_group in auth_user.groups, 'Group {} in UI not expected for user {}'
+                                                         .format(other_group, auth_user))
+            view.change_group(other_group)
+            assert view.is_displayed, ('Not logged in after switching to group {} for {}'
+                                       .format(other_group, auth_user))
+            # assert selected group has changed
+            soft_assert(other_group == view.current_groupname,
+                        'After switching to group {}, its not displayed as active'
+                        .format(other_group))
 
     appliance.server.login_admin()
-    for test_user in user_group_tuples:
-        soft_assert(test_user.user.exists,
-                    'User record for "{}" should exist after login'.format(test_user.user))
+    assert user_obj.exists, 'User record for "{}" should exist after login'.format(auth_user)
 
     @request.addfinalizer
     def _cleanup():
-        for test_user in user_group_tuples:
-            if test_user.user.exists:
-                test_user.user.delete()
-            if test_user.retrieved.exists:
-                test_user.retrieved.delete()
+        for group in retrieved_groups:
+            if group.exists:
+                group.delete()

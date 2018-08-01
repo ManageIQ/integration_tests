@@ -9,6 +9,7 @@ from cfme.configure.configuration.server_settings import (
 )
 from cfme.exceptions import UnknownProviderType
 from cfme.utils.conf import credentials, auth_data
+from cfme.utils.log import logger
 
 auth_prov_data = auth_data.get("auth_providers", {})  # setup on module import
 
@@ -53,6 +54,38 @@ def get_auth_crud(auth_prov_key):
     if auth_prov_config.get('type') != klass.auth_type:
         raise ValueError('{} must have type "{}"'.format(klass.__name__, klass.auth_type))
     return klass.from_config(auth_prov_config, auth_prov_key)
+
+
+def auth_user_data(provider_key, user_type):
+    """Grab user data attrdict from auth provider's user data in yaml
+
+    Expected formatting of yaml containing user data:
+        test_users:
+        -
+          username: ldapuser2
+          password: mysecretpassworddontguess
+          fullname: Ldap User2
+          groups:
+            - customgroup1
+          providers:
+            - freeipa01
+          user_types:
+            - uid
+
+    Only include user data for users where the user_type matches that under test
+
+    Assert the data isn't empty, and skip the test if so
+    """
+    try:
+        data = [user
+                for user in auth_data.test_data.test_users
+                if provider_key in user.providers and user_type in user.user_types]
+        assert data
+    except (KeyError, AttributeError, AssertionError):
+        logger.warning('Exception fetching auth_user_data from key %s and type %s',
+                       provider_key, user_type)
+        return None
+    return data
 
 
 @attr.s

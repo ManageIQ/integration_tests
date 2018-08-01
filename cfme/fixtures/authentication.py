@@ -32,39 +32,14 @@ def auth_provider(prov_key):
     return authutil.get_auth_crud(prov_key)
 
 
-@pytest.fixture(scope='function')
-def auth_user_data(auth_provider, user_type):
-    """Grab user data attrdict from auth provider's user data in yaml
-
-    Expected formatting of yaml containing user data:
-
-    test_users:
-    -
-      username: ldapuser2
-      password: mysecretpassworddontguess
-      fullname: Ldap User2
-      groups:
-        - customgroup1
-      providers:
-        - freeipa01
-      user_types:
-        - uid
-
-        Only include user data for users where the user_type matches that under test
-
-        Assert the data isn't empty, and skip the test if so
-
+@pytest.fixture(scope='module')
+def ensure_resolvable_hostname(appliance):
     """
-    try:
-        data = [user
-                for user in auth_provider.user_data
-                if user_type in user.user_types]
-        assert data
-    except (KeyError, AttributeError, AssertionError):
-        logger.exception('Exception fetching auth_user_data from yaml')
-        pytest.skip('No yaml data for auth_prov {} under "auth_data.test_data"'
-                    .format(auth_provider))
-    return data
+    Intended for use with freeipa configuration, ensures a resolvable hostname on the appliance
+
+    Tries to resolve the appliance hostname property and skips the test if it can't
+    """
+    assert appliance.set_resolvable_hostname()
 
 
 @pytest.fixture(scope='function')
