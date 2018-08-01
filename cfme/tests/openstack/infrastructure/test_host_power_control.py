@@ -19,7 +19,7 @@ def host_collection(appliance):
 @pytest.fixture(scope='module')
 def host_on(host_collection, provider):
     try:
-        my_host_on = host_collection.all(provider)[0]
+        my_host_on = provider.nodes.all().pop()
     except IndexError:
         assert False, "Missing nodes in provider's details"
 
@@ -32,7 +32,7 @@ def host_on(host_collection, provider):
 @pytest.fixture(scope='module')
 def host_off(host_collection, provider):
     try:
-        my_host_off = host_collection.all(provider)[0]
+        my_host_off = provider.nodes.all().pop()
     except IndexError:
         assert False, "Missing nodes in provider's details"
 
