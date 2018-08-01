@@ -107,10 +107,10 @@ def small_vm(provider, small_template_modscope):
 @pytest.fixture()
 def check_hosts(small_vm, provider):
     """Fixture to return host"""
-    if len(provider.hosts) != 1:
+    if provider.hosts != 1:
         view = navigate_to(small_vm, 'Details')
         vm_host = view.entities.summary('Relationships').get_text_of('Host')
-        hosts = [vds.name for vds in provider.hosts if vds.name not in vm_host]
+        hosts = [vds.name for vds in provider.hosts.all() if vds.name not in vm_host]
         return hosts[0]
     else:
         pytest.skip("There is only one host in the provider")
