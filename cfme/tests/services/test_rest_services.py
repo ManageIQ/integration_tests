@@ -79,11 +79,7 @@ def wait_for_retired(entity, num_sec=1000):
     # wait until retired, if this fails, settle with "retiring" state
     retval = wait_for(lambda: is_retired(entity), num_sec=num_sec, delay=10, silent_failure=True)
     if not retval:
-        try:
-            retirement_state = entity.retirement_state
-        except AttributeError:
-            retirement_state = None
-        assert retirement_state == 'retiring'
+        assert getattr(entity, 'retirement_state', None) == 'retiring'
 
 
 def service_body(**kwargs):
