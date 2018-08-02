@@ -32,6 +32,8 @@ HOST_GRAPHS = ['host_cpu',
 
 INTERVAL = ['Hourly', 'Daily']
 
+TAGS = ['VM Location']
+
 
 @pytest.fixture(scope='function')
 def host(appliance, provider):
@@ -144,6 +146,69 @@ def test_graph_screen(provider, interval, graph_type, host, enable_candu):
     except AttributeError as e:
         logger.error(e)
     vm_avg_graph.zoom_in()
+    view = view.browser.create_view(UtilizationZoomView)
+
+    # wait, some time graph take time to load
+    wait_for(lambda: len(view.chart.all_legends) > 0,
+             delay=5, timeout=300, fail_func=refresh)
+    assert view.chart.is_displayed
+    view.flush_widget_cache()
+    legends = view.chart.all_legends
+    graph_data = view.chart.all_data
+    # Clear cache of table widget before read else it will mismatch headers.
+    view.table.clear_cache()
+    table_data = view.table.read()
+    compare_data(table_data=table_data, graph_data=graph_data, legends=legends)
+
+
+@pytest.mark.uncollectif(lambda provider, interval:
+                         provider.one_of(RHEVMProvider) and
+                         interval == "Daily")
+@pytest.mark.parametrize('_tag', TAGS, ids=['vm_tag'])
+@pytest.mark.parametrize('interval', INTERVAL)
+@pytest.mark.parametrize('graph_type', HOST_GRAPHS)
+def test_tagwise(provider, interval, graph_type, _tag, host, candu_tag_vm, enable_candu):
+    """Test Host graphs group by VM tag for hourly and Daily
+
+    prerequisites:
+        * C&U enabled appliance
+        * C&U data collection enabled for Tag category
+        * VM should be taged with proper tag category
+
+    Steps:
+        * Navigate to Host Utilization Page
+        * Check graph displayed or not
+        * Select interval(Hourly or Daily)
+        * Select group by option with VM tag
+        * Zoom graph to get Table
+        * Compare table and graph data
+    """
+    wait_for(
+        host.capture_historical_data,
+        delay=20,
+        timeout=1000,
+        message="wait for capturing host historical data")
+    host.wait_candu_data_available(timeout=1200)
+
+    view = navigate_to(host, 'candu')
+    view.options.fill({'interval': interval, 'group_by': _tag})
+
+    # Check garph displayed or not
+    try:
+        graph = getattr(view.interval_type, graph_type)
+    except AttributeError as e:
+        logger.error(e)
+    assert graph.is_displayed
+
+    def refresh():
+        provider.browser.refresh()
+        view.options.interval.fill(interval)
+
+    # wait, some time graph take time to load
+    wait_for(lambda: len(graph.all_legends) > 0,
+             delay=5, timeout=200, fail_func=refresh)
+
+    graph.zoom_in()
     view = view.browser.create_view(UtilizationZoomView)
 
     # wait, some time graph take time to load

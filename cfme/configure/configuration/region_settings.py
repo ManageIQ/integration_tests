@@ -12,7 +12,6 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import conf
 from cfme.utils.appliance import Navigatable, NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -220,7 +219,8 @@ class Category(Pretty, BaseEntity, Updateable):
         else:
             view.save_button.click()
 
-        view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
+        view = view.browser.create_view(CompanyCategoriesAllView)
+        view.wait_displayed(50)
         assert view.is_displayed
         view.flash.assert_no_error()
 
