@@ -10,10 +10,6 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator,
 
 class Topology(TopologyMixin, BaseEntity):
 
-    region = attr.ib(default=None)
-    provider = attr.ib(default=None)
-    datastore = attr.ib(default=None)
-
     @classmethod
     def load_topology_page(cls):
         navigate_to(cls, 'All')
@@ -21,8 +17,7 @@ class Topology(TopologyMixin, BaseEntity):
 
 @attr.s
 class TopologyCollection(BaseCollection):
-    def __init__(self, appliance=None):
-        '''entity = Topology'''
+        ENTITY = Topology
 
 
 @navigator.register(Topology, 'All')
