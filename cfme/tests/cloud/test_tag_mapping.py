@@ -5,19 +5,21 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
-    pytest.mark.provider([EC2Provider], scope='module'),
-    pytest.mark.usefixture('setup_provider')
+    pytest.mark.provider([EC2Provider]),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
-@pytest.fixture(params=['instances', 'images'], scope='module')
+@pytest.fixture(params=['instances', 'images'])
 def tag_mapping_items(request, appliance, provider):
     type = request.param
     collection = getattr(appliance.collections, 'cloud_{}'.format(type))
     collection.filters = {'provider': provider}
     view = navigate_to(collection, 'AllForProvider')
     name = view.entities.get_first_entity().name
-    return collection.instantiate(name=name, provider=provider), type
+    mgmt_item = (provider.mgmt.get_vm(name) if type == 'instances'
+                 else provider.mgmt.get_template(name))
+    return collection.instantiate(name=name, provider=provider), mgmt_item, type
 
 
 @pytest.fixture
@@ -31,8 +33,8 @@ def tag_value():
 
 
 def test_labels_update(provider, tag_mapping_items, tag_label, tag_value, soft_assert):
-    item, type = tag_mapping_items
-    provider.mgmt.set_tag(item.name, tag_label, tag_value, type)
+    item, mgmt_item, type = tag_mapping_items
+    mgmt_item.set_tag(tag_label, tag_value)
     provider.refresh_provider_relationships(method='ui')
     view = navigate_to(item, 'Details')
     current_tag_value = view.entities.summary('Labels').get_text_of(tag_label)
@@ -43,7 +45,7 @@ def test_labels_update(provider, tag_mapping_items, tag_label, tag_value, soft_a
             )
         )
     )
-    provider.mgmt.unset_tag(item.name, tag_label, tag_value, type)
+    mgmt_item.unset_tag(tag_label, tag_value)
     provider.refresh_provider_relationships(method='ui')
     view = navigate_to(item, 'Details')
     fields = view.entities.summary('Labels').fields
@@ -55,9 +57,9 @@ def test_labels_update(provider, tag_mapping_items, tag_label, tag_value, soft_a
 
 def test_mapping_tags(appliance, provider, tag_mapping_items, tag_label, tag_value,
                      soft_assert, category, request):
-    item, type = tag_mapping_items
-    provider.mgmt.set_tag(item.name, tag_label, tag_value, type)
-    request.addfinalizer(lambda: provider.mgmt.unset_tag(item.name, tag_label, tag_value, type))
+    item, mgmt_item, type = tag_mapping_items
+    mgmt_item.set_tag(tag_label, tag_value)
+    request.addfinalizer(lambda: mgmt_item.unset_tag(tag_label, tag_value))
     provider_type = provider.discover_name.split(' ')[0]
     view = navigate_to(appliance.collections.map_tags, 'Add')
 

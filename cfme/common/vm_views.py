@@ -111,7 +111,7 @@ class JSInstanceEntity(JSBaseEntity):
                 policy = None
 
             data_dict['policy'] = policy
-        else:
+        elif 'quad' in data_dict:
             data_dict['os'] = data_dict['quad']['topLeft']['tooltip']
             data_dict['vendor'] = data_dict['quad']['bottomLeft']['tooltip']
             data_dict['no_snapshots'] = data_dict['total_snapshots']

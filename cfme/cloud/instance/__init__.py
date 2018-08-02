@@ -455,7 +455,6 @@ class InstanceCollection(VMCollection):
 
 
 @navigator.register(InstanceCollection, 'All')
-@navigator.register(Instance, 'All')
 class All(CFMENavigateStep):
     VIEW = InstanceAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
