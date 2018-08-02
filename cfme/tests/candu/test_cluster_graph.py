@@ -50,7 +50,8 @@ def host(appliance, provider):
 
 
 @pytest.mark.uncollectif(
-    lambda provider, interval: provider.one_of(RHEVMProvider) and interval == "Daily"
+    lambda provider, interval: provider.one_of(RHEVMProvider) and interval == "Daily",
+    reason="RHEVM not supporting historical data collection, Need to wait for one day at least"
 )
 @pytest.mark.parametrize("interval", INTERVAL)
 @pytest.mark.parametrize("graph_type", GRAPHS)
