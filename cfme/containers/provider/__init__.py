@@ -584,10 +584,6 @@ class ContainerObjectAllBaseView(ProvidersView):
         # We use 'in' for this condition since when we use search it'll include (Names with "...")
         return self.SUMMARY_TEXT in self.summary.text
 
-    @property
-    def table(self):
-        return self.entities.elements
-
 
 class ContainerObjectDetailsEntities(View):
     properties = SummaryTable(title="Properties")
