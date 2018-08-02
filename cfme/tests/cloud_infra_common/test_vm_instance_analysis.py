@@ -141,23 +141,6 @@ def vm_analysis_provisioning_data(provider, analysis_type):
     return provisioning_data
 
 
-def set_hosts_credentials(appliance, request, provider):
-    hosts = provider.hosts.all()
-    for host in hosts:
-        try:
-            host_data, = [host for host in provider.data['hosts'] if host['name'] == host.name]
-        except ValueError:
-            pytest.skip('Multiple hosts with the same name found, only expecting one')
-
-        host.update_credentials_rest(credentials=host_data['credentials'])
-
-    @request.addfinalizer
-    def _hosts_remove_creds():
-        for host in hosts:
-            host.update_credentials_rest(
-                credentials={'default': Host.Credential(principal="", secret="")})
-
-
 def set_agent_creds(appliance, request, provider):
     version = appliance.version.vstring
     docker_image_name = "simaishi/amazon-ssa:{}".format(version)
@@ -190,13 +173,20 @@ def set_agent_creds(appliance, request, provider):
 
 
 @pytest.fixture(scope="module")
-def local_setup_provider(request, setup_provider_modscope, provider, appliance):
+def local_setup_provider(request, ssa_single_vm, setup_provider_modscope, provider, appliance):
 
-    # TODO: allow for vddk parameterization
     if provider.one_of(VMwareProvider):
+        view = navigate_to(ssa_single_vm, 'Details')
+        host_name = view.entities.summary("Relationships").get_text_of("Host")
+        host, = [host for host in provider.hosts.all() if host.name == host_name]
+        host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+        host.update_credentials_rest(credentials=host_data['credentials'])
         appliance.install_vddk()
-        request.addfinalizer(appliance.uninstall_vddk)
-        set_hosts_credentials(appliance, request, provider)
+
+        @request.addfinalizer
+        def _finalize():
+            appliance.uninstall_vddk()
+            host.remove_credentials_rest()
 
     if provider.one_of(EC2Provider):
         set_agent_creds(appliance, request, provider)
@@ -230,7 +220,7 @@ def ssa_compliance_profile(appliance, provider, ssa_compliance_policy):
 
 
 @pytest.fixture(scope="module")
-def ssa_single_vm(request, local_setup_provider, provider, vm_analysis_provisioning_data,
+def ssa_single_vm(request, provider, vm_analysis_provisioning_data,
            appliance, analysis_type):
     """ Fixture to provision instance on the provider """
     def _ssa_single_vm():
