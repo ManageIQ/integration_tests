@@ -22,7 +22,7 @@ class Topology(TopologyMixin, BaseEntity):
 @attr.s
 class TopologyCollection(BaseCollection):
     def __init__(self, appliance=None):
-        ENTITY = Topology
+        '''entity = Topology'''
 
 
 @navigator.register(Topology, 'All')
