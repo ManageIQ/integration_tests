@@ -1,25 +1,20 @@
 # -*- coding: utf-8 -*-
+import attr
 from navmazing import NavigateToAttribute
 
-from cfme.common import TopologyMixin
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 
 
-class Topology(TopologyMixin, Navigatable):
-
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-
-    @classmethod
-    def load_topology_page(cls):
-        navigate_to(cls, 'All')
+@attr.s
+class TopologyCollection(BaseCollection):
+    pass
 
 
-@navigator.register(Topology, 'All')
+@navigator.register(TopologyCollection, 'All')
 class All(CFMENavigateStep):
+
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
