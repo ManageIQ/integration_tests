@@ -2,12 +2,14 @@
 import fauxfactory
 import pytest
 
+from widgetastic.utils import partial_match
+
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import testgen
-from cfme.utils.blockers import GH
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 
 pytestmark = [
@@ -52,7 +54,7 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture(scope="module")
 def iso_cust_template(provider, appliance):
     iso_cust_template = provider.data['provisioning']['iso_kickstart']
-    return get_template_from_config(iso_cust_template, appliance=appliance)
+    return get_template_from_config(iso_cust_template, create=True, appliance=appliance)
 
 
 @pytest.fixture(scope="module")
@@ -61,13 +63,14 @@ def iso_datastore(provider, appliance):
 
 
 @pytest.fixture
-def datastore_init(iso_cust_template, iso_datastore, provisioning):
+def datastore_init(iso_cust_template, iso_datastore, provisioning, setup_provider, appliance):
     if not iso_datastore.exists():
         iso_datastore.create()
-    # Fails on upstream, BZ1109256
-    iso_datastore.set_iso_image_type(provisioning['iso_file'], provisioning['iso_image_type'])
-    if not iso_cust_template.exists():
-        iso_cust_template.create()
+    iso_image_type = appliance.collections.system_image_types.instantiate(
+        name=provisioning['iso_image_type'])
+    iso_image = appliance.collections.system_images.instantiate(
+        name=provisioning['iso_file'], image_type=iso_image_type, datastore=iso_datastore)
+    iso_image.set_image_type()
 
 
 @pytest.fixture(scope="function")
@@ -78,10 +81,10 @@ def vm_name():
 
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6692',
+@pytest.mark.meta(blockers=[BZ(1584675, forced_streams=['5.8', '5.9'],
                                unblock=lambda provider: not provider.one_of(RHEVMProvider))])
-def test_iso_provision_from_template(appliance, provider, vm_name, smtp_test, datastore_init,
-                                     request, setup_provider):
+def test_iso_provision_from_template(appliance, provider, vm_name, datastore_init,
+                                     request, smtp_test):
     """Tests ISO provisioning
 
     Metadata:
@@ -110,7 +113,6 @@ def test_iso_provision_from_template(appliance, provider, vm_name, smtp_test, da
             'custom_template': {'name': iso_kickstart},
             'root_password': iso_root_password},
         'network': {
-            'vlan': vlan}}
-
+            'vlan': partial_match(vlan)}}
     do_vm_provisioning(appliance, iso_template, provider, vm_name, provisioning_data, request,
                        smtp_test, num_sec=1500)
