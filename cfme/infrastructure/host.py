@@ -193,11 +193,11 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
             desired_state (str): 'on' or 'off'
             timeout (int): Specify amount of time (in seconds) to wait until TimedOutError is raised
         """
-        view = navigate_to(self.parent, "All")
+        view = navigate_to(self, "Details")
 
         def _looking_for_state_change():
-            entity = view.entities.get_entity(name=self.name)
-            return entity.data['state'] == desired_state
+            current_state = view.entities.summary('Properties').get_text_of('Power State')
+            return current_state == desired_state
 
         return wait_for(
             _looking_for_state_change,
