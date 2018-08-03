@@ -63,9 +63,9 @@ class Inputs(View, ClickableMixin):
 
         def delete(self):
             if self.browser.product_version < '5.10':
-                xpath = './/img[@alt="Click to delete this field from schema"]'
+                xpath = './/img[contains(@alt, "Click to delete this")]'
             else:
-                xpath = './/a[@title="Click to delete this field from schema"]'
+                xpath = './/a/i[contains(@class, "pficon-delete")]'
             self.browser.click(xpath, parent=self)
             try:
                 del self.row_id
@@ -74,7 +74,7 @@ class Inputs(View, ClickableMixin):
 
     add_field = VersionPick({
         Version.lowest(): Text('//img[@alt="Equal green"]'),
-        '5.10': Text('//div[@id="class_fields_div"]//i[contains(@class, "fa-plus")]')
+        '5.10': Text('//button//i[contains(@class, "fa-plus")]')
     })
     name = Input(locator='.//td/input[contains(@id, "field_name")]')
     data_type = Select(locator='.//td/select[contains(@id, "field_datatype")]')
@@ -100,9 +100,9 @@ class Inputs(View, ClickableMixin):
             if key not in present:
                 new_value = value.pop(key)
                 new_value['name'] = key
-                self.add_input.click()
+                self.add_field.click()
                 super(Inputs, self).fill(new_value)
-                self.finish_add_input.click()
+                self.finish_add_field.click()
                 changed = True
 
         # Fill the rest as expected
