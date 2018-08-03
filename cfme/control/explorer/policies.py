@@ -10,12 +10,11 @@ from widgetastic_patternfly import Button, Input
 
 from .actions import Action
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils import deferred_verpick, ParamClassName
+from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.utils.version import LOWEST
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BootstrapSwitchSelect, MultiBoxSelect, SummaryFormItem, Dropdown
 from widgetastic_manageiq.expression_editor import ExpressionEditor
@@ -459,130 +458,106 @@ class HostCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Host"
-    PRETTY = deferred_verpick({LOWEST: "Host / Node"})
+    PRETTY = "Host / Node"
 
 
 class VMCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Vm"
-    PRETTY = deferred_verpick({LOWEST: "VM and Instance"})
+    PRETTY = "VM and Instance"
 
 
 class ReplicatorCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Replicator"
-    PRETTY = deferred_verpick({
-        LOWEST: TREE_NODE,
-        "5.9.2": "Container Replicator"
-    })
+    PRETTY = "Container Replicator"
 
 
 class PodCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Pod"
-    PRETTY = deferred_verpick({
-        LOWEST: TREE_NODE,
-        "5.9.2": "Container Pod"
-    })
+    PRETTY = "Container Pod"
 
 
 class ContainerNodeCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
-    TREE_NODE = "Container Node"
-    PRETTY = deferred_verpick({
-        LOWEST: "Node",
-        "5.9.2": TREE_NODE
-    })
+    TREE_NODE = PRETTY = "Container Node"
 
 
 class ContainerImageCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
-    TREE_NODE = "Container Image"
-    PRETTY = deferred_verpick({LOWEST: TREE_NODE})
+    TREE_NODE = PRETTY = "Container Image"
 
 
 class ProviderCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
-    TREE_NODE = "Provider"
-    PRETTY = deferred_verpick({LOWEST: TREE_NODE})
+    TREE_NODE = PRETTY = "Provider"
 
 
 class PhysicalInfrastructureCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
     TREE_NODE = "Physical Infrastructure"
-    PRETTY = deferred_verpick({LOWEST: "Physical Server"})
+    PRETTY = "Physical Server"
 
 
 class HostControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Host"
-    PRETTY = deferred_verpick({LOWEST: "Host / Node"})
+    PRETTY = "Host / Node"
 
 
 class VMControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Vm"
-    PRETTY = deferred_verpick({LOWEST: "VM and Instance"})
+    PRETTY = "VM and Instance"
 
 
 class ReplicatorControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Replicator"
-    PRETTY = deferred_verpick({
-        LOWEST: TREE_NODE,
-        "5.9.2": "Container Replicator"
-    })
+    PRETTY = "Container Replicator"
 
 
 class PodControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Pod"
-    PRETTY = deferred_verpick({
-        LOWEST: TREE_NODE,
-        "5.9.2": "Container Pod"
-    })
+    PRETTY = "Container Pod"
 
 
 class ContainerNodeControlPolicy(BasePolicy):
 
     TYPE = "Control"
-    TREE_NODE = "Container Node"
-    PRETTY = deferred_verpick({
-        LOWEST: "Node",
-        "5.9.2": TREE_NODE
-    })
+    PRETTY = TREE_NODE = "Container Node"
 
 
 class ContainerImageControlPolicy(BasePolicy):
 
     TYPE = "Control"
-    TREE_NODE = "Container Image"
-    PRETTY = deferred_verpick({LOWEST: TREE_NODE})
+    PRETTY = TREE_NODE = "Container Image"
 
 
 class ProviderControlPolicy(BasePolicy):
 
     TYPE = "Control"
-    TREE_NODE = "Provider"
-    PRETTY = deferred_verpick({LOWEST: TREE_NODE})
+    PRETTY = TREE_NODE = "Provider"
 
 
 class PhysicalInfrastructureControlPolicy(BasePolicy):
 
     TYPE = "Control"
     TREE_NODE = "Physical Infrastructure"
-    PRETTY = deferred_verpick({LOWEST: "Physical Server"})
+    PRETTY = "Physical Server"
 
 
 @attr.s

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from copy import deepcopy
-from cfme.utils import version
 from cfme.utils import conf
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -95,8 +94,7 @@ class Credential(Pretty, Updateable, FromConfigMixin):
         return {
             'username': self.principal,
             'password': self.secret,
-            'confirm_password': version.pick({version.LOWEST: self.verify_secret,
-                                              '5.9': None})
+            'confirm_password': None
         }
 
     def __eq__(self, other):
@@ -173,8 +171,7 @@ class TokenCredential(Pretty, Updateable, FromConfigMixin):
         """
         return {
             'token': self.token,
-            'verify_token': version.pick({version.LOWEST: self.verify_token,
-                                          '5.9': None})
+            'verify_token': None
         }
 
 

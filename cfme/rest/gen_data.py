@@ -4,7 +4,6 @@ from widgetastic.utils import partial_match
 
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import version
 from cfme.utils.log import logger
 from cfme.utils.rest import create_resource
 from cfme.utils.virtual_machines import deploy_template
@@ -504,9 +503,7 @@ def orchestration_templates(request, rest_api, num=2):
         data.append({
             'name': 'test_{}'.format(uniq),
             'description': 'Test Template {}'.format(uniq),
-            'type': version.pick({
-                version.LOWEST: 'OrchestrationTemplateCfn',
-                '5.9': 'ManageIQ::Providers::Amazon::CloudManager::OrchestrationTemplate'}),
+            'type': 'ManageIQ::Providers::Amazon::CloudManager::OrchestrationTemplate',
             'orderable': False,
             'draft': False,
             'content': TEMPLATE_TORSO.replace('CloudFormation', uniq)})

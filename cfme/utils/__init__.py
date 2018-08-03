@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 import atexit
-import re
-import subprocess
-import os
 # import diaper for backward compatibility
 import diaper
-from cached_property import cached_property
-from functools import partial
-from werkzeug.local import LocalProxy
+import os
+import re
 import six
+import subprocess
+from functools import partial
+
+from cached_property import cached_property
+from werkzeug.local import LocalProxy
+
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
@@ -172,35 +174,6 @@ def read_env(file):
                 env_vars[key] = value
         stdout, stderr = proc.communicate()
     return env_vars
-
-
-class deferred_verpick(object):
-    """descriptor that version-picks on Access
-
-    Useful for verpicked constants in classes
-    """
-
-    def __init__(self, version_dict):
-        self.version_dict = version_dict
-
-    def __get__(self, obj, cls):
-        # TODO: remove the need to trigger for classes
-        #       so we can use the class level for documentation of version picks
-        from cfme.utils.version import Version
-        if on_rtd:
-            if self.version_dict:
-                latest = max(self.version_dict, key=Version)
-                return self.version_dict[latest]
-            else:
-                raise LookupError("Nothing to pick from")
-        elif obj is None:
-            return self
-        else:
-            return self.pick(obj.appliance.version)
-
-    def pick(self, appliance_version):
-        from cfme.utils.version import pick
-        return pick(self.version_dict, appliance_version)
 
 
 def safe_string(o):

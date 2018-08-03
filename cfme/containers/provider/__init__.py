@@ -27,12 +27,12 @@ from cfme.common.provider_views import (
     ContainerProviderAddViewUpdated, ProviderSideBar,
     ProviderDetailsToolBar, ProviderDetailsView, ProviderToolBar)
 from cfme.modeling.base import BaseCollection
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.browser import browser
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
+from cfme.utils.version import LATEST
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     SummaryTable, Accordion, ManageIQTree, LineChart)
@@ -55,9 +55,7 @@ class ContainersProviderDefaultEndpoint(DefaultEndpoint):
                  "password": self.ssh_creds.secret,
                  "hostname": self.master_hostname})
 
-        out['confirm_password'] = version.pick({
-            version.LOWEST: self.token,
-            '5.9': None})
+        out['confirm_password'] = None
 
         return out
 
@@ -175,7 +173,7 @@ class ContainerProviderDetailsView(ProviderDetailsView, LoggingableView):
 class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     PLURAL = 'Providers'
     provider_types = {}
-    in_version = ('5.5', version.LATEST)
+    in_version = ('5.5', LATEST)
     category = "container"
     pretty_attrs = [
         'name',
@@ -285,20 +283,11 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     @variable(alias='db')
     def num_container(self):
         # Containers are linked to providers through container definitions and then through pods
-        query = version.pick({
-            version.LOWEST: "SELECT count(*) "
-            "FROM ext_management_systems, container_groups, container_definitions, containers "
-            "WHERE containers.container_definition_id=container_definitions.id "
-            "AND container_definitions.container_group_id=container_groups.id "
-            "AND container_groups.ems_id=ext_management_systems.id "
-            "AND ext_management_systems.name='{}'".format(self.name),
-
-            '5.9': "SELECT count(*) "
-            "FROM ext_management_systems, container_groups, containers "
-            "WHERE containers.container_group_id=container_groups.id "
-            "AND container_groups.ems_id=ext_management_systems.id "
-            "AND ext_management_systems.name='{}'".format(self.name)
-        })
+        query = ("SELECT count(*) "
+                 "FROM ext_management_systems, container_groups, containers "
+                 "WHERE containers.container_group_id=container_groups.id "
+                 "AND container_groups.ems_id=ext_management_systems.id "
+                 "AND ext_management_systems.name='{}'".format(self.name))
         res = self.appliance.db.client.engine.execute(query)
         return int(res.first()[0])
 
@@ -400,24 +389,11 @@ class All(CFMENavigateStep):
 @navigator.register(ContainersProviderCollection, 'Add')
 @navigator.register(ContainersProvider, 'Add')
 class Add(CFMENavigateStep):
-
-    def container_provider_view_class(self):
-        return VersionPick({
-            Version.lowest(): ContainerProviderAddView,
-            '5.9': ContainerProviderAddViewUpdated
-        })
-
-    @property
-    def VIEW(self):  # noqa
-        return self.container_provider_view_class().pick(self.obj.appliance.version)
+    VIEW = ContainerProviderAddViewUpdated
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.toolbar.configuration.item_select(
-            VersionPick({
-                Version.lowest(): 'Add Existing Containers Provider',
-                '5.9': 'Add a new Containers Provider'
-            }).pick(self.obj.appliance.version))
+        self.prerequisite_view.toolbar.configuration.item_select('Add a new Containers Provider')
 
 
 @navigator.register(ContainersProvider, 'Details')
@@ -435,16 +411,7 @@ class Details(CFMENavigateStep):
 
 @navigator.register(ContainersProvider, 'Edit')
 class Edit(CFMENavigateStep):
-
-    def container_provider_edit_view_class(self):
-        return VersionPick({
-            Version.lowest(): ContainerProviderEditView,
-            '5.9': ContainerProviderEditViewUpdated
-        })
-
-    @property
-    def VIEW(self):  # noqa
-        return self.container_provider_edit_view_class().pick(self.obj.appliance.version)
+    VIEW = ContainerProviderEditViewUpdated
     prerequisite = NavigateToSibling('All')
 
     def step(self):

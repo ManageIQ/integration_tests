@@ -14,13 +14,13 @@ from cached_property import cached_property
 from os import path as os_path
 from scp import SCPClient
 
-from cfme.utils import conf, ports, version
+from cfme.utils import conf, ports
 from cfme.utils.log import logger
 from cfme.utils.net import net_check
 from cfme.utils.path import project_path
 from cfme.utils.quote import quote
 from cfme.utils.timeutil import parsetime
-from cfme.utils.version import Version
+from cfme.utils.version import Version, VersionPicker
 from cfme.fixtures.pytest_store import store
 import six
 
@@ -289,7 +289,7 @@ class SSHClient(paramiko.SSHClient):
     def _run_command(self, command, timeout=RUNCMD_TIMEOUT, reraise=False, ensure_host=False,
                      ensure_user=False, container=None):
         if isinstance(command, dict):
-            command = version.pick(command, active_version=self.vmdb_version)
+            command = VersionPicker(command).pick(self.vmdb_version)
         original_command = command
         uses_sudo = False
         logger.info("Running command %r", command)

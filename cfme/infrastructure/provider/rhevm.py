@@ -9,7 +9,6 @@ from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpoint
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.exceptions import ItemNotFound
 from cfme.services.catalogs.catalog_items import RHVCatalogItem
-from cfme.utils import version
 from widgetastic_manageiq import LineChart
 from . import InfraProvider
 
@@ -17,15 +16,10 @@ from . import InfraProvider
 class RHEVMEndpoint(DefaultEndpoint):
     @property
     def view_value_mapping(self):
-        tls_since_version = '5.8.0.8'
         return {'hostname': self.hostname,
                 'api_port': getattr(self, 'api_port', None),
-                'verify_tls': version.pick({
-                    version.LOWEST: None,
-                    tls_since_version: getattr(self, 'verify_tls', None)}),
-                'ca_certs': version.pick({
-                    version.LOWEST: None,
-                    tls_since_version: getattr(self, 'ca_certs', None)})
+                'verify_tls': getattr(self, 'verify_tls', None),
+                'ca_certs': getattr(self, 'ca_certs', None)
                 }
 
 
