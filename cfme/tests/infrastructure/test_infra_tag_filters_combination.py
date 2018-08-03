@@ -2,27 +2,29 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
-from cfme.fixtures.provider import setup_one_or_skip
+from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
 
-
-pytestmark = [test_requirements.tag, pytest.mark.tier(2)]
+pytestmark = [
+    test_requirements.tag, pytest.mark.tier(2),
+    pytest.mark.provider(
+        classes=[InfraProvider],
+        required_fields=[
+            'datacenters',
+            'clusters'
+        ],
+        selector=ONE
+    ),
+    pytest.mark.usefixtures('setup_provider')
+]
 
 test_items = [
     ('clusters', None),
     ('infra_vms', 'ProviderVms'),
     ('infra_templates', 'ProviderTemplates')
 ]
-
-
-@pytest.fixture(scope='module')
-def a_provider(request):
-    prov_filter = ProviderFilter(classes=[InfraProvider],
-                                 required_fields=['datacenters', 'clusters'])
-    return setup_one_or_skip(request, filters=[prov_filter])
 
 
 @pytest.fixture(params=test_items, ids=[collection_type for collection_type, _ in test_items],

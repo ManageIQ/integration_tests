@@ -3,18 +3,18 @@
 
 import random
 
-import pytest
 import fauxfactory
+import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import arbitration_rules as _arbitration_rules
 from cfme.rest.gen_data import arbitration_settings as _arbitration_settings
 from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.blockers import BZ
-from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
@@ -22,16 +22,12 @@ from cfme.utils.rest import (
     query_resource_attributes,
 )
 from cfme.utils.wait import wait_for, TimedOutError
-from cfme.fixtures.provider import setup_one_or_skip
 
-
-pytestmark = [test_requirements.rest]
-
-
-@pytest.fixture(scope="module")
-def a_provider(request):
-    pf = ProviderFilter(classes=[VMwareProvider, RHEVMProvider])
-    return setup_one_or_skip(request, filters=[pf])
+pytestmark = [
+    test_requirements.rest,
+    pytest.mark.provider(classes=[VMwareProvider, RHEVMProvider], selector=ONE),
+    pytest.mark.usefixtures('setup_provider')
+]
 
 
 @pytest.fixture(scope='module')
@@ -41,8 +37,8 @@ def api_version(appliance):
 
 
 @pytest.fixture(scope="module")
-def vm_modscope(request, a_provider, appliance):
-    return _vm(request, a_provider, appliance.rest_api)
+def vm_modscope(request, provider, appliance):
+    return _vm(request, provider, appliance.rest_api)
 
 
 def wait_for_requests(requests):
@@ -394,7 +390,7 @@ def test_user_settings(appliance):
     assert isinstance(appliance.rest_api.settings, dict)
 
 
-def test_datetime_filtering(appliance, a_provider):
+def test_datetime_filtering(appliance, provider):
     """Tests support for DateTime filtering with timestamps in YYYY-MM-DDTHH:MM:SSZ format.
 
     Metadata:
@@ -430,7 +426,7 @@ def test_datetime_filtering(appliance, a_provider):
         assert first_newer.created_on == baseline_vm.created_on
 
 
-def test_date_filtering(appliance, a_provider):
+def test_date_filtering(appliance, provider):
     """Tests support for DateTime filtering with timestamps in YYYY-MM-DD format.
 
     Metadata:
@@ -609,7 +605,7 @@ def test_attributes_present(appliance, collection_name):
 
 
 @pytest.mark.parametrize('vendor', ['Microsoft', 'Redhat', 'Vmware'])
-def test_collection_class_valid(appliance, a_provider, vendor):
+def test_collection_class_valid(appliance, provider, vendor):
     """Tests that it's possible to query using collection_class.
 
     Metadata:
@@ -632,7 +628,7 @@ def test_collection_class_valid(appliance, a_provider, vendor):
             assert entity.type == tested_type
 
 
-def test_collection_class_invalid(appliance, a_provider):
+def test_collection_class_invalid(appliance, provider):
     """Tests that it's not possible to query using invalid collection_class.
 
     Metadata:
@@ -1034,12 +1030,12 @@ class TestNotificationsRESTAPI(object):
 
 class TestEventStreamsRESTAPI(object):
     @pytest.fixture(scope='module')
-    def gen_events(self, appliance, vm_modscope, a_provider):
+    def gen_events(self, appliance, vm_modscope, provider):
         vm_name = vm_modscope
         # generating events for some vm
         # create vm and start vm events are produced by vm fixture
         # stop vm event
-        vm = a_provider.mgmt.get_vm(vm_name)
+        vm = provider.mgmt.get_vm(vm_name)
         vm.stop()
         # remove vm event
         vm.delete()
@@ -1056,7 +1052,7 @@ class TestEventStreamsRESTAPI(object):
         query_resource_attributes(collection[-1], soft_assert=soft_assert)
 
     @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
-    def test_find_created_events(self, appliance, vm_modscope, gen_events, a_provider, soft_assert):
+    def test_find_created_events(self, appliance, vm_modscope, gen_events, provider, soft_assert):
         """Tests find_by and get functions of event_streams collection
 
         Metadata:
@@ -1069,7 +1065,7 @@ class TestEventStreamsRESTAPI(object):
         ems_event_type = 'EmsEvent'
 
         evt_col = collections.event_streams
-        for evt, params in a_provider.ems_events:
+        for evt, params in provider.ems_events:
             if 'dest_vm_or_template_id' in params:
                 params.update({'dest_vm_or_template_id': vm_id})
             elif 'vm_or_template_id' in params:

@@ -3,7 +3,8 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.rest.gen_data import a_provider as _a_provider
+from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import (
@@ -14,18 +15,16 @@ from cfme.utils.rest import (
 )
 from cfme.utils.wait import wait_for, wait_for_decorator
 
-
-pytestmark = [test_requirements.provision]
-
-
-@pytest.fixture(scope='function')
-def a_provider(request):
-    return _a_provider(request)
+pytestmark = [
+    test_requirements.provision,
+    pytest.mark.provider(classes=[InfraProvider], selector=ONE),
+    pytest.mark.usefixtures('setup_provider')
+]
 
 
 @pytest.fixture(scope='function')
-def vm(request, a_provider, appliance):
-    vm_name = _vm(request, a_provider, appliance.rest_api)
+def vm(request, provider, appliance):
+    vm_name = _vm(request, provider, appliance.rest_api)
     return appliance.rest_api.collections.vms.get(name=vm_name)
 
 

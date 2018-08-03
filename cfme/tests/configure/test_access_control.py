@@ -11,26 +11,22 @@ from cfme.configure.access_control import AddUserView
 from cfme.configure.tasks import TasksView
 from cfme.exceptions import RBACOperationBlocked
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
-from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
-from cfme.fixtures.provider import setup_one_or_skip
 
-pytestmark = test_requirements.rbac
-
+pytestmark = [
+    test_requirements.rbac,
+    pytest.mark.provider(classes=[VMwareProvider], selector=ONE),
+    pytest.mark.usefixtures('setup_provider')
+]
 
 @pytest.fixture(scope='module')
 def group_collection(appliance):
     return appliance.collections.groups
-
-
-@pytest.fixture(scope='module')
-def a_provider(request):
-    prov_filter = ProviderFilter(classes=[VMwareProvider])
-    return setup_one_or_skip(request, filters=[prov_filter])
 
 
 def new_credential():
@@ -403,7 +399,7 @@ def test_group_crud(group_collection):
 @pytest.mark.uncollectif(lambda appliance, tag_value: appliance.version < '5.9' and
                          tag_value == 'tag_expression',
                          reason="Tag expression not available for 5.8 version")
-def test_group_crud_with_tag(a_provider, group_collection, tag_value):
+def test_group_crud_with_tag(provider, tag_value, group_collection):
     """Test for verifying group create with tag defined
 
     Steps:
@@ -418,14 +414,14 @@ def test_group_crud_with_tag(a_provider, group_collection, tag_value):
         description='grp{}'.format(fauxfactory.gen_alphanumeric()),
         role='EvmRole-approver',
         tag=tag_for_create,
-        host_cluster=([a_provider.data['name']], True),
-        vm_template=([a_provider.data['name'], a_provider.data['datacenters'][0],
+        host_cluster=([provider.data['name']], True),
+        vm_template=([provider.data['name'], provider.data['datacenters'][0],
                      'Discovered virtual machine'], True)
     )
     with update(group):
         group.tag = tag_for_update
-        group.host_cluster = ([a_provider.data['name']], False)
-        group.vm_template = ([a_provider.data['name'], a_provider.data['datacenters'][0],
+        group.host_cluster = ([provider.data['name']], False)
+        group.vm_template = ([provider.data['name'], provider.data['datacenters'][0],
                              'Discovered virtual machine'], False)
     group.delete()
 
@@ -845,7 +841,7 @@ def test_permissions_role_crud(appliance):
 
 
 @pytest.mark.tier(3)
-def test_permissions_vm_provisioning(appliance, a_provider):
+def test_permissions_vm_provisioning(appliance, provider):
     features = [
         ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
         ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',

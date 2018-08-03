@@ -1,23 +1,22 @@
 import pytest
+
 from cfme import test_requirements
-from cfme.rest.gen_data import a_provider as _a_provider
+from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.rest import assert_response
 
-
 pytestmark = [
     test_requirements.ownership,
+    pytest.mark.provider(classes=[InfraProvider], selector=ONE),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
 class TestVmOwnershipRESTAPI(object):
     @pytest.fixture(scope="module")
-    def a_provider(self, request):
-        return _a_provider(request)
-
-    @pytest.fixture(scope="module")
-    def vm(self, request, a_provider, appliance):
-        return _vm(request, a_provider, appliance.rest_api)
+    def vm(self, request, provider, appliance):
+        return _vm(request, provider, appliance.rest_api)
 
     @pytest.mark.tier(3)
     def test_vm_set_ownership(self, appliance, vm):
