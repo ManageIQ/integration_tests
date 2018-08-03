@@ -21,9 +21,9 @@ from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
 from six.moves.urllib.parse import urlparse
+from werkzeug.local import LocalStack, LocalProxy
 from wrapanapi import VmState
 from wrapanapi.exceptions import VMInstanceNotFound
-from werkzeug.local import LocalStack, LocalProxy
 
 from cfme.fixtures import ui_coverage
 from cfme.fixtures.pytest_store import store
@@ -3082,6 +3082,15 @@ class NavigatableMixin(object):
             new_obj = o
         return self.appliance.browser.create_view(
             view_class, additional_context={'object': new_obj})
+
+    def list_destinations(self):
+        """This function returns a list of all valid destinations for a particular object
+        """
+        return {
+            impl.name: impl.navigator.list_destinations(self)
+            for impl in self.appliance.context.implementations.values()
+            if impl.navigator
+        }
 
 
 class NavigatableDeprecationWarning(DeprecationWarning):

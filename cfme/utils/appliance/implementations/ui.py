@@ -589,6 +589,7 @@ class ViaUI(Implementation):
     """UI implementation using the normal ux"""
 
     name = "UI"
+    navigator = navigator
 
     def __str__(self):
         return 'UI'
