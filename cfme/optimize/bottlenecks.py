@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text, Checkbox, Table, View
 from widgetastic_patternfly import Tab, BootstrapSelect
 from widgetastic_manageiq import TimelinesChart
 
-from cfme.utils.update import Updateable
-from cfme.utils.pretty import Pretty
-from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import BottlenecksView
 
@@ -42,14 +42,53 @@ class BottlenecksTabsView(BottlenecksView):
         time_zone = BootstrapSelect("tl_report_tz")
 
 
-class Bottlenecks(Updateable, Pretty, Navigatable):
-    _param_name = 'Bottlenecks'
+@attr.s
+class Bottlenecks(BaseEntity):
 
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance)
+    name = attr.ib()
+
+    @property
+    def _row(self):
+        view = navigate_to(self.parent, 'All')
+        row = view.report.event_details.row(name=self.name)
+        return row
+
+    @property
+    def time_stamp(self):
+        return self._row.time_stamp.text
+
+    @property
+    def type(self):
+        return self._row.type.text
+
+    @property
+    def event_type(self):
+        return self._row.event_type.text
+
+    @property
+    def severity(self):
+        return self._row.severity.text
+
+    @property
+    def message(self):
+        return self._row.message.text
 
 
-@navigator.register(Bottlenecks, 'All')
+@attr.s
+class BottlenecksCollection(BaseCollection):
+    ENTITY = Bottlenecks
+
+    def all(self):
+        event_type = self.filters.get('event_type')
+        view = navigate_to(self, 'All')
+        if event_type:
+            rows = view.report.event_details.rows(event_type=event_type)
+        else:
+            rows = view.report.event_details.rows()
+        return [self.instantiate(name=row.name.text) for row in rows]
+
+
+@navigator.register(BottlenecksCollection, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Bottlenecks')
 
