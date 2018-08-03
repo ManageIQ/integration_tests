@@ -147,18 +147,6 @@ management_systems:
         network: defaultnetwork
         test_vm_power_control:
             - pwr-ctl-vm-1-dnd
-    hawkular:
-        name: hawkular-01
-        type: hawkular
-        credentials: hawkular
-        hostname: livingontheedge.hawkular.org
-        api_port: 80
-        endpoints:
-            default:
-                hostname: livingontheedge.hawkular.org
-                api_port: 80
-                credentials: hawkular
-                security_protocol: Non-SSL
     lenovo:
         name: lenovo
         type: lenovo
