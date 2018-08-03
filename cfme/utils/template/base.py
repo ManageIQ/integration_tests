@@ -127,7 +127,7 @@ class ProviderTemplateUpload(object):
             image_name = self.image_pattern.findall(string_from_url)
             if len(image_name):
                 # return 0th element of image_name, likely multiple formats for same provider type
-                return "{}{}".format(self.image_url, image_name[0])  # TODO support multiple formats
+                return '/'.join([self.image_url, image_name[0]])  # TODO support multiple formats
 
     @property
     def image_name(self):

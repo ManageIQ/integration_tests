@@ -40,6 +40,7 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
             if upload_result.success:
                 return True
             else:
+                logger.error('Failure running ovftool: %s', upload_result.output)
                 logger.warning('Retrying template upload via ovftool')
 
     @cached_property
