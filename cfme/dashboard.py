@@ -167,7 +167,10 @@ class DashboardView(BaseLoggedInPage):
             @property
             def column(self):
                 """Returns the column position of this widget. Numbered from 1!"""
-                parent = self.browser.element('..')
+                if self.browser.product_version < "5.10":
+                    parent = self.browser.element('..')
+                else:
+                    parent = self.browser.element('../../..')
                 try:
                     parent_id = self.browser.get_attribute('id', parent).strip()
                     return int(re.sub(r'^col(\d+)$', '\\1', parent_id))
