@@ -8,7 +8,6 @@ from widgetastic_manageiq import SummaryFormItem, DashboardWidgetsPicker
 from widgetastic_patternfly import Button, Input
 
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -231,14 +230,11 @@ class DashboardsCollection(BaseCollection):
         return dashboard
 
 
-class DefaultDashboard(Updateable, Pretty, Navigatable):
+class DefaultDashboard(Updateable, Pretty, BaseEntity):
     pretty_attrs = ["name", "title", "widgets"]
-
-    def __init__(self, title="Default Dashboard", locked=None, widgets=None, appliance=None):
-        Navigatable.__init__(self, appliance)
-        self.title = title
-        self.locked = locked
-        self.widgets = widgets
+    name = attr.ib
+    title = attr.ib(default=None)
+    widgets = attr.ib(Default=None)
 
     @property
     def name(self):
@@ -268,6 +264,11 @@ class DefaultDashboard(Updateable, Pretty, Navigatable):
         #     view.flash.assert_success_message(
         #         'Edit of Dashboard "{}" was cancelled by the user'.format(self.name))
         view.flash.assert_no_error()
+
+
+@attr.s
+class DefaultDashboardCollection(BaseCollection):
+    ENTITY = DefaultDashboard
 
 
 @navigator.register(DashboardsCollection, "Add")
