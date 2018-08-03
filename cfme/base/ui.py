@@ -5,7 +5,10 @@ import time
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.webdriver.common.keys import Keys
+from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, Table, Text, Image, FileInput
+from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView,
+                                  ParametrizedSummaryTable, SummaryFormItem)
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown, DatePicker,
                                     FlashMessages, BootstrapSelect, Tab)
 
@@ -26,8 +29,6 @@ from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
-from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView,
-                                  ParametrizedSummaryTable, SummaryFormItem)
 from . import Server, Region, Zone, ZoneCollection
 
 
@@ -1595,8 +1596,15 @@ class AutomateImportExportView(AutomateImportExportBaseView):
         verify_ssl = Checkbox(name='git_verify_ssl')
         submit = Button(id='git-url-import')
 
-    export_all = Image('.//input[@title="Export all classes and instances"]')
-    reset_all = Image('.//img[starts-with(@alt, "Reset all components in the following domains:")]')
+    export_all = VersionPick({
+        Version.lowest(): Image('.//input[@title="Export all classes and instances"]'),
+        '5.10': Button(title='Export all classes and instances')
+    })
+    reset_all = VersionPick({
+        Version.lowest(): Image(
+            './/img[starts-with(@alt, "Reset all components in the following domains:")]'),
+        '5.10': Button(title='Reset all components in the following domains:')
+    })
 
     @property
     def is_displayed(self):
