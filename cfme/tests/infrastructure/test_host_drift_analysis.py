@@ -111,7 +111,7 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     )
     # check drift difference
     soft_assert(a_host.equal_drift_results(
-        '{} (1)'.format(added_tag.category.display_name), 'My Company Tags', 0, 1),
+        '{} (1)'.format(added_tag.category.display_name), 'My Company Tags', 1, 2),
         "Drift analysis results are equal when they shouldn't be")
 
     # Test UI features that modify the drift grid
