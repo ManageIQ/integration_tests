@@ -316,6 +316,9 @@ class NetworkProviderCollection(BaseCollection):
         obj.create(**create_kwargs)
         return obj
 
+    def instantiate(self, prov_class, *args, **kwargs):
+        return prov_class.from_collection(self, *args, **kwargs)
+
 
 @navigator.register(NetworkProvider, 'All')  # To be removed once all CEMv3
 @navigator.register(NetworkProviderCollection, 'All')

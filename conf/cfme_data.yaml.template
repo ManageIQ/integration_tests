@@ -1,5 +1,7 @@
 basic_info:
     app_version: 5.2.0
+    cfme_images_url:
+        downstream-59z: http://some-host.com/builds/
 management_systems:
     vsphere5:
         name: vsphere 5
@@ -156,77 +158,6 @@ management_systems:
                 ipaddress: 10.0.0.1
                 hostname: lenovo.hostname
                 api_port: 3000
-    nuage:
-        name: nuage_net
-        type: nuage
-        endpoints:
-            default:
-                hostname: 10.0.0.1
-                credentials: nuage
-                security_protocol: Non-SSL
-                api_port: 5000
-            events:
-                event_stream: AMQP
-                hostname: 10.0.0.1
-                api_port: 5672
-                security_protocol: Non-SSL
-                credentials: nuage_events
-    openshift:
-        name: openshift
-        type: openshift
-        version: x.x
-        tags:
-            - tag
-        excluded_test_flags:
-        since_version:
-        server_zone:
-        hostname:
-        ipaddress:
-        port:
-        credentials:
-        ssh_creds:
-        authenticate:
-        rest_protocol:
-        sec_protocol:
-        metrics_type:
-        alerts_type :
-        provisioning:
-            node:
-            image:
-        cleanup:
-        cap_and_util:
-            resource_pool:
-            test_chargeback:
-            chargeback_vm:
-            capandu_vm:
-        hosts:
-            - name: name1
-            - name: name2
-        endpoints:
-            default:
-                hostname:
-                api_port:
-                sec_protocol:
-                credentials:
-            hawkular:
-                hostname:
-                api_port:
-                sec_protocol:
-            alerts:
-                hostname:
-                api_port:
-                sec_protocol:
-        settings:
-            proxy:
-                http_proxy:
-            advanced:
-                adv_http:
-                adv_https:
-                no_proxy:
-                image_repo:
-                image_reg:
-                image_tag:
-                cve_loc:
     nuage:
         name: nuage_net
         type: nuage
