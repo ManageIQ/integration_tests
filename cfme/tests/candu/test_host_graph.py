@@ -32,7 +32,7 @@ HOST_GRAPHS = ['host_cpu',
 
 INTERVAL = ['Hourly', 'Daily']
 
-TAGS = ['VM Location']
+GROUP_BY = ['VM Location']
 
 
 @pytest.fixture(scope='function')
@@ -164,10 +164,10 @@ def test_graph_screen(provider, interval, graph_type, host, enable_candu):
 @pytest.mark.uncollectif(lambda provider, interval:
                          provider.one_of(RHEVMProvider) and
                          interval == "Daily")
-@pytest.mark.parametrize('_tag', TAGS, ids=['vm_tag'])
+@pytest.mark.parametrize('gp_by', GROUP_BY, ids=['vm_tag'])
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', HOST_GRAPHS)
-def test_tagwise(provider, interval, graph_type, _tag, host, candu_tag_vm, enable_candu):
+def test_tagwise(provider, interval, graph_type, gp_by, host, candu_tag_vm, enable_candu):
     """Test Host graphs group by VM tag for hourly and Daily
 
     prerequisites:
@@ -191,7 +191,7 @@ def test_tagwise(provider, interval, graph_type, _tag, host, candu_tag_vm, enabl
     host.wait_candu_data_available(timeout=1200)
 
     view = navigate_to(host, 'candu')
-    view.options.fill({'interval': interval, 'group_by': _tag})
+    view.options.fill({'interval': interval, 'group_by': gp_by})
 
     # Check garph displayed or not
     try:
@@ -222,3 +222,6 @@ def test_tagwise(provider, interval, graph_type, _tag, host, candu_tag_vm, enabl
     view.table.clear_cache()
     table_data = view.table.read()
     compare_data(table_data=table_data, graph_data=graph_data, legends=legends)
+
+    # check tag London available or not in legend list.
+    assert "London" in legends

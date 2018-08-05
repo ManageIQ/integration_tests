@@ -6,6 +6,7 @@ from widgetastic_patternfly import BootstrapSelect, DatePicker
 
 class OptionForm(View):
     interval = BootstrapSelect(id='perf_typ')
+    compare_to = BootstrapSelect(id='compare_to')
     group_by = BootstrapSelect(id='perf_cat')
     show_weeks_back = BootstrapSelect(id='perf_days')
     show_mints_back = BootstrapSelect(id='perf_minutes')

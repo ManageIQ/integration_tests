@@ -41,19 +41,20 @@ def collect_data(appliance, provider, interval='hourly', back='7.days'):
 
 
 @pytest.fixture(scope="module")
-def enable_candu_cat(appliance):
+def enable_candu_category(appliance):
     """Enable capture C&U Data for tag category location"""
     collection = appliance.collections.categories
-    location_cat = collection.instantiate(name="location", display_name="Location")
-    if not location_cat.capture_candu:
-        location_cat.update(updates={"capture_candu": True})
-    return location_cat
+    location_category = collection.instantiate(name="location", display_name="Location")
+    if not location_category.capture_candu:
+        location_category.update(updates={"capture_candu": True})
+    return location_category
 
 
 @pytest.fixture(scope="function")
-def candu_tag_vm(provider, enable_candu_cat):
+def candu_tag_vm(provider, enable_candu_category):
+    """Add location tag to VM"""
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate('cu-24x7', provider)
-    tag = enable_candu_cat.collections.tags.instantiate(name="london", display_name="London")
+    tag = enable_candu_category.collections.tags.instantiate(name="london", display_name="London")
     vm.add_tag(tag)
     return vm
