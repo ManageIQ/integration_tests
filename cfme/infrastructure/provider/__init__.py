@@ -84,8 +84,6 @@ class InfraProvider(Pretty, Fillable, BaseProvider, PolicyProfileAssignable, Tag
     name = attr.ib(default=None)
     key = attr.ib(default=None)
     zone = attr.ib(default=None)
-    # hostname = attr.ib(default=None) # defined in CloudInfraProvider class
-    # ip_address = attr.ib(default=None) # defined in CloudInfraProvider class
     start_ip = attr.ib(default=None)
     end_ip = attr.ib(default=None)
     provider_data = attr.ib(default=None)

@@ -3,8 +3,9 @@ import pytest
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.common.provider import CloudInfraProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.exceptions import VmOrInstanceNotFound
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -14,7 +15,7 @@ pytestmark = [
     test_requirements.ownership,
     pytest.mark.meta(blockers=[BZ(1380781, forced_streams=["5.7"])]),
     pytest.mark.tier(3),
-    pytest.mark.provider([CloudInfraProvider], scope='module')
+    pytest.mark.provider([CloudProvider, InfraProvider], scope='module')
 ]
 
 

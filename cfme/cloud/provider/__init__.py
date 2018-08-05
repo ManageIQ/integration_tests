@@ -127,7 +127,7 @@ class CloudProvider(Pretty, BaseProvider, PolicyProfileAssignable, Taggable):
 
     @staticmethod
     def discover_dict(credential):
-        """Returns the discovery credentials dictionary, needs overiding"""
+        """Returns the discovery credentials dictionary, needs overriding"""
         raise NotImplementedError("This provider doesn't support discovery")
 
     @property

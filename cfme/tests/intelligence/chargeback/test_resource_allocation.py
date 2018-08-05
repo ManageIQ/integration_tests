@@ -37,8 +37,9 @@ import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.gce import GCEProvider
-from cfme.infrastructure.provider import CloudInfraProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.blockers import BZ
@@ -51,8 +52,8 @@ pytestmark = [
     pytest.mark.meta(blockers=[BZ(1511099, forced_streams=['5.9', '5.8'],
                                   unblock=lambda provider: not provider.one_of(GCEProvider)),
                                ]),
-    pytest.mark.provider([CloudInfraProvider], scope='module', selector=ONE_PER_TYPE,
-                        required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
+    pytest.mark.provider([CloudProvider, InfraProvider], scope='module', selector=ONE_PER_TYPE,
+                         required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
     pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider'),
     test_requirements.chargeback,
 ]
