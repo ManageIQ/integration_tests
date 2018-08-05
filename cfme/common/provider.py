@@ -16,13 +16,12 @@ from cfme.utils import ParamClassName, conf
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.log import logger
-from cfme.utils.net import resolve_hostname
 from cfme.utils.stats import tol_check
 from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for, RefreshTimer
-from . import PolicyProfileAssignable
+
 
 _base_types_cache = {}
 _provider_types_cache = defaultdict(dict)
@@ -1048,100 +1047,6 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
                         inner_tuple += (provider,)
                         result_list.append(inner_tuple)
         return result_list
-
-
-class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, Taggable):
-    vm_name = ""
-    template_name = ""
-    detail_page_suffix = 'provider'
-    edit_page_suffix = 'provider_edit'
-    refresh_text = "Refresh Relationships and Power States"
-    db_types = ["CloudManager", "InfraManager"]
-
-    @property
-    def hostname(self):
-        return getattr(self.default_endpoint, "hostname", None)
-
-    @hostname.setter
-    def hostname(self, value):
-        if self.default_endpoint:
-            if value:
-                self.default_endpoint.hostname = value
-        else:
-            logger.warn("can't set hostname because default endpoint is absent")
-
-    @property
-    def ip_address(self):
-        return getattr(self.default_endpoint, "ipaddress", resolve_hostname(str(self.hostname)))
-
-    @ip_address.setter
-    def ip_address(self, value):
-        if self.default_endpoint:
-            if value:
-                self.default_endpoint.ipaddress = value
-        else:
-            logger.warn("can't set ipaddress because default endpoint is absent")
-
-    @variable(alias="db")
-    def num_template(self):
-        """ Returns the providers number of templates, as shown on the Details page."""
-        ext_management_systems = self.appliance.db.client["ext_management_systems"]
-        vms = self.appliance.db.client["vms"]
-        temlist = list(self.appliance.db.client.session.query(vms.name)
-                       .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
-                       .filter(ext_management_systems.name == self.name)
-                       .filter(vms.template == True))  # NOQA
-        return len(temlist)
-
-    @num_template.variant('ui')
-    def num_template_ui(self):
-        view = navigate_to(self, "Details")
-        return int(view.entities.summary("Relationships").get_text_of(self.template_name))
-
-    @variable(alias="db")
-    def num_vm(self):
-        """ Returns the providers number of instances, as shown on the Details page."""
-        ext_management_systems = self.appliance.db.client["ext_management_systems"]
-        vms = self.appliance.db.client["vms"]
-        vmlist = list(self.appliance.db.client.session.query(vms.name)
-                      .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
-                      .filter(ext_management_systems.name == self.name)
-                      .filter(vms.template == False))  # NOQA
-        return len(vmlist)
-
-    @num_vm.variant('ui')
-    def num_vm_ui(self):
-        view = navigate_to(self, "Details")
-        return int(view.entities.summary("Relationships").get_text_of(self.vm_name))
-
-    def load_all_provider_instances(self):
-        return self.load_all_provider_vms()
-
-    def load_all_provider_vms(self):
-        """ Loads the list of instances that are running under the provider.
-
-        """
-        view = navigate_to(self, 'Details')
-        if view.entities.summary("Relationships").get_text_of(self.vm_name) == "0":
-            return False
-        else:
-            view.entities.summary("Relationships").click_at(self.vm_name)
-            return True
-
-    def load_all_provider_images(self):
-        self.load_all_provider_templates()
-
-    def load_all_provider_templates(self):
-        """ Loads the list of images that are available under the provider.
-
-        """
-        # todo: replace these methods with new nav location
-        view = navigate_to(self, 'Details')
-        if view.entities.summary("Relationships").get_text_of(self.template_name) == "0":
-            return False
-        else:
-            view.entities.summary("Relationships").click_at(self.template_name)
-            return True
 
 
 class DefaultEndpoint(object):
