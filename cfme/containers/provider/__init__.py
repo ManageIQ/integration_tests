@@ -239,7 +239,7 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     @num_service.variant('ui')
     def num_service_ui(self):
         name = VersionPick({Version.lowest(): 'Services',
-                            '5.7': 'Container Services'})
+                            '5.9': 'Container Services'})
         view = navigate_to(self, "Details")
         return int(view.entities.summary("Relationships").get_text_of(name))
 
