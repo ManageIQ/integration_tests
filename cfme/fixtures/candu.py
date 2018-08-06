@@ -52,9 +52,12 @@ def enable_candu_category(appliance):
 
 @pytest.fixture(scope="function")
 def candu_tag_vm(provider, enable_candu_category):
-    """Add location tag to VM"""
+    """Add location tag to VM if not available"""
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate('cu-24x7', provider)
+    available_tags = vm.get_tags()
     tag = enable_candu_category.collections.tags.instantiate(name="london", display_name="London")
-    vm.add_tag(tag)
+
+    if tag.display_name not in [item.display_name for item in available_tags]:
+        vm.add_tag(tag)
     return vm

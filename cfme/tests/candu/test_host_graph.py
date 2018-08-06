@@ -167,7 +167,7 @@ def test_graph_screen(provider, interval, graph_type, host, enable_candu):
 @pytest.mark.parametrize('gp_by', GROUP_BY, ids=['vm_tag'])
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', HOST_GRAPHS)
-def test_tagwise(provider, interval, graph_type, gp_by, host, candu_tag_vm, enable_candu):
+def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_candu):
     """Test Host graphs group by VM tag for hourly and Daily
 
     prerequisites:
@@ -181,14 +181,20 @@ def test_tagwise(provider, interval, graph_type, gp_by, host, candu_tag_vm, enab
         * Select interval(Hourly or Daily)
         * Select group by option with VM tag
         * Zoom graph to get Table
+        * Check tag assigned to VM available in chart legends
         * Compare table and graph data
     """
+    # get host of cu-24x7
+    candu_tag_vm.capture_historical_data()
+    host = candu_tag_vm.host
+    host.capture_historical_data()
+
     wait_for(
         host.capture_historical_data,
         delay=20,
         timeout=1000,
         message="wait for capturing host historical data")
-    host.wait_candu_data_available(timeout=1200)
+    host.wait_candu_data_available(timeout=1500)
 
     view = navigate_to(host, 'candu')
     view.options.fill({'interval': interval, 'group_by': gp_by})
@@ -204,24 +210,22 @@ def test_tagwise(provider, interval, graph_type, gp_by, host, candu_tag_vm, enab
         provider.browser.refresh()
         view.options.interval.fill(interval)
 
-    # wait, some time graph take time to load
-    wait_for(lambda: len(graph.all_legends) > 0,
-             delay=5, timeout=200, fail_func=refresh)
-
     graph.zoom_in()
     view = view.browser.create_view(UtilizationZoomView)
 
     # wait, some time graph take time to load
-    wait_for(lambda: len(view.chart.all_legends) > 0,
-             delay=5, timeout=300, fail_func=refresh)
+    wait_for(lambda: "London" in view.chart.all_legends,
+    delay=10, timeout=1500, fail_func=refresh)
+
     assert view.chart.is_displayed
+
     view.flush_widget_cache()
     legends = view.chart.all_legends
+    # check tag London available or not in legend list.
+    assert "London" in legends
+
     graph_data = view.chart.all_data
     # Clear cache of table widget before read else it will mismatch headers.
     view.table.clear_cache()
     table_data = view.table.read()
     compare_data(table_data=table_data, graph_data=graph_data, legends=legends)
-
-    # check tag London available or not in legend list.
-    assert "London" in legends
