@@ -584,7 +584,7 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
-@pytest.mark.meta(blockers=[BZ(1549529, forced_streams=["5.8", "5.9", "upstream"],
+@pytest.mark.meta(blockers=[BZ(1549529, forced_streams=["5.9", "5.10", "upstream"],
                   unblock=lambda provider: provider.one_of(VMwareProvider))])
 def test_action_create_snapshot_and_delete_last(request, action_collection,
         vm, vm_on, policy_for_testing, provider):
@@ -627,7 +627,7 @@ def test_action_create_snapshot_and_delete_last(request, action_collection,
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
-@pytest.mark.meta(blockers=[BZ(1549529, forced_streams=["5.8", "5.9", "upstream"],
+@pytest.mark.meta(blockers=[BZ(1549529, forced_streams=["5.9", "5.10", "upstream"],
                   unblock=lambda provider: provider.one_of(VMwareProvider))])
 def test_action_create_snapshots_and_delete_them(request, action_collection, vm, vm_on,
         policy_for_testing, provider):
