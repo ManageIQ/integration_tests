@@ -2,7 +2,6 @@ import attr
 import re
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
 from widgetastic_patternfly import (
     BreadCrumb, BootstrapSwitch, Button, CheckableBootstrapTreeview, Dropdown, Input, Tab)
@@ -41,7 +40,7 @@ class TimeProfileView(BaseLoggedInPage):
 class TimeProfileAddView(TimeProfileView):
     @View.nested
     class form(TimeProfileForm):    # noqa
-        add = Button(VersionPick({Version.lowest(): 'Save', '5.9': 'Add'}))
+        add = Button('Add')
 
     @property
     def is_displayed(self):

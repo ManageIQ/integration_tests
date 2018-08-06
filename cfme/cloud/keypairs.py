@@ -3,7 +3,6 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.widget import View
-from widgetastic.utils import VersionPick, Version
 from widgetastic_patternfly import BreadCrumb, Button, Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
@@ -126,11 +125,7 @@ class KeyPair(BaseEntity, Taggable):
 
     def delete(self, cancel=False, wait=False):
         view = navigate_to(self, 'Details')
-        # TODO: get rid of this resolve when widgetastic.core/pull/68 is merged
-        item_name = VersionPick({Version.lowest(): 'Remove this Key Pair',
-                                '5.9': 'Remove this Key Pair from Inventory'}
-                                ).pick(self.appliance.version)
-        view.toolbar.configuration.item_select(item_name,
+        view.toolbar.configuration.item_select('Remove this Key Pair from Inventory',
                                                handle_alert=(not cancel))
         # cancel doesn't redirect, confirmation does
         view.flush_widget_cache()

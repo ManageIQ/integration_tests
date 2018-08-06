@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import attr
-
 from navmazing import NavigateToSibling, NavigateToAttribute
-
+from widgetastic_manageiq import Accordion, ManageIQTree, View, Table
 from widgetastic_patternfly import VerticalNavigation
-from widgetastic.utils import VersionPick, Version
 
 from cfme.containers.provider import (ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
@@ -14,7 +12,6 @@ from cfme.common import Taggable, TagPageView
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.providers import get_crud_by_name
-from widgetastic_manageiq import Accordion, ManageIQTree, View, Table
 
 
 class ContainerView(ContainerObjectAllBaseView, LoggingableView):
@@ -96,11 +93,7 @@ class ContainerCollection(GetRandomInstancesMixin, BaseCollection):
         container_table = self.appliance.db.client['containers']
         ems_table = self.appliance.db.client['ext_management_systems']
         pod_table = self.appliance.db.client['container_groups']
-        container_pod_id = (
-            VersionPick({
-                Version.lowest(): getattr(container_table, 'container_definition_id', None),
-                '5.9': getattr(container_table, 'container_group_id', None)})
-            .pick(self.appliance.version))
+        container_pod_id = getattr(container_table, 'container_group_id', None)
         container_query = (
             self.appliance.db.client.session
                 .query(container_table.name, pod_table.name, ems_table.name)

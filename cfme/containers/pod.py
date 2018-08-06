@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import attr
-
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import VersionPick, Version
+from widgetastic_manageiq import NestedSummaryTable
 from widgetastic.widget import View
 
 from cfme.common import Taggable, TagPageView
@@ -14,23 +13,16 @@ from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.providers import get_crud_by_name
-from widgetastic_manageiq import NestedSummaryTable
 
 
 class PodAllView(ContainerObjectAllBaseView):
     """Container Pods All view"""
-    SUMMARY_TEXT = VersionPick({
-        Version.lowest(): 'Pods',
-        '5.9': 'Container Pods'
-    })
+    SUMMARY_TEXT = 'Container Pods'
 
 
 class PodDetailsView(ContainerObjectDetailsBaseView):
     """Container Pods Detail view"""
-    SUMMARY_TEXT = VersionPick({
-        Version.lowest(): 'Pods',
-        '5.9': 'Container Pods'
-    })
+    SUMMARY_TEXT = 'Container Pods'
 
     @View.nested
     class entities(ContainerObjectDetailsEntities):  # noqa

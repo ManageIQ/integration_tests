@@ -3,7 +3,6 @@
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import VersionPick
 from widgetastic.widget import View
 from widgetastic_patternfly import BreadCrumb, BootstrapNav, Button, Dropdown, Input
 
@@ -13,7 +12,6 @@ from cfme.exceptions import TenantNotFound, DestinationNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
-from cfme.utils.version import Version
 from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import (
     Accordion, BootstrapSelect, ItemsToolBarViewSelector, PaginationPane,
@@ -131,10 +129,7 @@ class TenantAddForm(View):
     """The form on the Add page"""
     cloud_provider = BootstrapSelect(id='ems_id')
     name = Input('name')
-    save_button = VersionPick({
-        Version.lowest(): Button('Save'),
-        '5.9': Button('Add')
-    })
+    save_button = Button('Add')
     reset_button = Button('Reset')
     cancel_button = Button('Cancel')
 

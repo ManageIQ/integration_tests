@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
-from widgetastic.utils import (
-    Parameter,
-    Version,
-    VersionPick
-)
-from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_manageiq import (
     BaseEntitiesView,
     NonJSBaseEntity,
@@ -19,10 +13,9 @@ from widgetastic_manageiq import (
     TimelinesView,
     ManageIQTree
 )
-from widgetastic_patternfly import (
-    Dropdown,
-    Accordion
-)
+from widgetastic_patternfly import Dropdown, Accordion
+from widgetastic.utils import Parameter
+from widgetastic.widget import ParametrizedView, Text, View
 
 from cfme.base.login import BaseLoggedInPage
 
@@ -63,10 +56,10 @@ class NonJSPhysicalSwitchEntity(NonJSBaseEntity):
     tile_entity = PhysicalSwitchTileIconEntity
 
 
-class JSPhysicalSwitchEntity(JSBaseEntity):
+class PhysicalSwitchEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(JSPhysicalSwitchEntity, self).data
+        data_dict = super(PhysicalSwitchEntity, self).data
         if 'quadicon' in data_dict and data_dict['quadicon']:
             quad_data = document_fromstring(data_dict['quadicon'])
             data_dict['no_port'] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)
@@ -74,16 +67,6 @@ class JSPhysicalSwitchEntity(JSBaseEntity):
             data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('alt')
             data_dict['health_state'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].get('alt')
         return data_dict
-
-
-def PhysicalSwitchEntity():  # noqa
-    """ Temporary wrapper for PhysicalSwitch Entity during transition to JS based Entity
-
-    """
-    return VersionPick({
-        Version.lowest(): NonJSPhysicalSwitchEntity,
-        '5.9': JSPhysicalSwitchEntity,
-    })
 
 
 class PhysicalSwitchDetailsToolbar(View):
@@ -167,7 +150,7 @@ class PhysicalSwitchEntitiesView(BaseEntitiesView):
     """Represents the view with different items like hosts."""
     @property
     def entity_class(self):
-        return PhysicalSwitchEntity().pick(self.browser.product_version)
+        return PhysicalSwitchEntity
 
 
 class PhysicalSwitchesView(ComputePhysicalInfrastructureSwitchesView):

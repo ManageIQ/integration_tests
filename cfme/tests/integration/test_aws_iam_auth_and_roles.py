@@ -1,14 +1,13 @@
 import pytest
 from deepdiff import DeepDiff
 
-from widgetastic.utils import VersionPick, Version
-
-from cfme.roles import role_access_ui_58z, role_access_ui_59z, role_access_ui_510z
+from cfme.roles import role_access_ui_59z, role_access_ui_510z
 from cfme.utils.appliance import ViaUI, find_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.version import VersionPicker
 
 
 def pytest_generate_tests(metafunc):
@@ -22,8 +21,7 @@ def pytest_generate_tests(metafunc):
     parameter_list = []
     id_list = []
     # TODO: Include SSUI role_access dict and VIASSUI context
-    role_access_ui = VersionPick({
-        Version.lowest(): role_access_ui_58z,
+    role_access_ui = VersionPicker({
         '5.9': role_access_ui_59z,
         '5.10': role_access_ui_510z
     }).pick(appliance.version)

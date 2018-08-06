@@ -9,7 +9,7 @@ import attr
 import fauxfactory
 import re
 from navmazing import NavigateToSibling, NavigationDestinationNotFound, NavigateToAttribute
-from widgetastic.utils import partial_match, Parameter, VersionPick, Version
+from widgetastic.utils import partial_match, Parameter
 from widgetastic.widget import (
     Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_patternfly import (
@@ -74,9 +74,7 @@ def find_path(tree, text, parent_item=None):
 
 
 class InfraGenericDetailsToolbar(View):
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page',
-                                       '6.0': 'Reload current display'}))
+    reload = Button(title='Refresh this page')
     history = Dropdown('History')
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
@@ -324,8 +322,7 @@ class InfraVmReconfigureView(BaseLoggedInPage):
 class InfraVmSnapshotToolbar(View):
     """The toolbar on the snapshots page"""
     history = Dropdown('History')
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+    reload = Button(title='Refresh this page')
     create = Button(title='Create a new snapshot for this VM')
     delete = Dropdown('Delete Snapshots')
     revert = Button(title='Revert to selected snapshot')
@@ -366,8 +363,7 @@ class InfraVmSnapshotAddView(InfraVmView):
 class InfraVmGenealogyToolbar(View):
     """The toolbar on the genalogy page"""
     history = Dropdown(title='History')
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+    reload = Button(title='Refresh this page')
     edit_tags = Button(title='Edit Tags for this VM')
     compare = Button(title='Compare selected VMs')
 

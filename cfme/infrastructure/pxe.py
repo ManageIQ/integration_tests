@@ -5,6 +5,7 @@ import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text, Checkbox
+from widgetastic_manageiq import ManageIQTree, Input, ScriptBox, SummaryTable, Table
 from widgetastic_patternfly import Dropdown, Accordion, BootstrapSelect, Button
 
 from cfme.base import BaseEntity, BaseCollection
@@ -18,8 +19,6 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (ManageIQTree, Input, ScriptBox, SummaryTable, Table, Version,
-                                  VersionPick)
 
 
 class PXEToolBar(View):
@@ -83,8 +82,7 @@ class PXEDetailsToolBar(PXEToolBar):
     """
      represents the toolbar which appears when any pxe entity is clicked
     """
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+    reload = Button(title='Refresh this page')
 
 
 class PXEServerDetailsView(PXEMainView):
@@ -285,9 +283,7 @@ class PXEServer(Updateable, Pretty, Navigatable):
             cancel: Whether to cancel the deletion, defaults to True
         """
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select(VersionPick({
-            Version.lowest(): 'Remove this PXE Server',
-            '5.9': 'Remove this PXE Server from Inventory'}).pick(self.appliance.version),
+        view.toolbar.configuration.item_select('Remove this PXE Server from Inventory',
             handle_alert=not cancel)
         if not cancel:
             main_view = self.create_view(PXEServersView)

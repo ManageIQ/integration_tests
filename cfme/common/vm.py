@@ -24,7 +24,6 @@ from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import VersionPick
 from . import PolicyProfileAssignable
 
 
@@ -72,12 +71,9 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
     TO_OPEN_EDIT = None  # Name of the item in Configuration that puts you in the form
     QUADICON_TYPE = "vm"
     # Titles of the delete buttons in configuration
-    REMOVE_SELECTED = VersionPick({'5.8': 'Remove selected items',
-                                   '5.9': 'Remove selected items from Inventory'})
-    REMOVE_SINGLE = VersionPick({'5.8': 'Remove Virtual Machine',
-                                 '5.9': 'Remove Virtual Machine from Inventory'})
-    RETIRE_DATE_FMT = VersionPick({'5.8': parsetime.american_minutes_with_utc,
-                                   '5.9': parsetime.saved_report_title_format})
+    REMOVE_SELECTED = 'Remove selected items from Inventory'
+    REMOVE_SINGLE = 'Remove Virtual Machine from Inventory'
+    RETIRE_DATE_FMT = parsetime.saved_report_title_format
     _param_name = ParamClassName('name')
     DETAILS_VIEW_CLASS = None
 

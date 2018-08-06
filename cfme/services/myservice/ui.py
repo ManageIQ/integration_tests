@@ -1,5 +1,5 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import Parameter, VersionPick, Version
+from widgetastic.utils import Parameter
 from widgetastic.widget import ParametrizedView, Table, Text, View
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
 
@@ -20,8 +20,7 @@ class MyServiceToolbar(View):
     """
     Represents provider toolbar and its controls
     """
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+    reload = Button(title='Refresh this page')
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     lifecycle = Dropdown(text='Lifecycle')
@@ -54,8 +53,7 @@ class MyServicesView(BaseLoggedInPage):
 class ServiceRetirementForm(MyServicesView):
     title = Text('#explorer_title_text')
 
-    retirement_date = Calendar(VersionPick({Version.lowest(): 'retirementDate',
-                                            '5.9': 'retirement_date_datepicker'}))
+    retirement_date = Calendar('retirement_date_datepicker')
     retirement_warning = BootstrapSelect('retirement_warn')
 
 
@@ -193,8 +191,7 @@ class ServiceVMDetailsView(VMDetailsEntities):
 class AllGenericObjectInstanceView(BaseLoggedInPage):
     @View.nested
     class toolbar(View):  # noqa
-        reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                           '5.9': 'Refresh this page'}))
+        reload = Button(title='Refresh this page')
         policy = Dropdown(text='Policy')
         download = Dropdown(text='Download')
         view_selector = View.nested(ItemsToolBarViewSelector)

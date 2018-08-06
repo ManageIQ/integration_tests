@@ -1,8 +1,7 @@
 import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import (Parameter, ParametrizedLocator, ParametrizedString, Version,
-    VersionPick)
+from widgetastic.utils import Parameter, ParametrizedLocator, ParametrizedString
 from widgetastic.widget import Checkbox, Table, Text, View
 from widgetastic_manageiq import FileInput, SummaryForm, SummaryTable
 from widgetastic_patternfly import (
@@ -152,10 +151,7 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         max_ttl = Input("retirement_execution_ttl")
         escalate_privilege = BootstrapSwitch("retirement_become_enabled")
         verbosity = BootstrapSelect("retirement_verbosity")
-        remove_resources = VersionPick({
-            Version.lowest(): BootstrapSelect("vm.catalogItemModel.retirement_remove_resources"),
-            "5.9": BootstrapSelect("vm.vm.catalogItemModel.retirement_remove_resources")
-        })
+        remove_resources = BootstrapSelect("vm.vm.catalogItemModel.retirement_remove_resources")
         extra_vars = AnsibleExtraVariables(tab="retirement")
 
     cancel = Button("Cancel")

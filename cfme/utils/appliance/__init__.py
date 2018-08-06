@@ -3044,7 +3044,7 @@ class DummyAppliance(object):
     """a dummy with minimal attribute set"""
     hostname = 'DummyApplianceHostname'
     browser_steal = False
-    version = attr.ib(default=Version('5.8.0'), converter=_version_for_version_or_stream)
+    version = attr.ib(default=Version('5.9.0'), converter=_version_for_version_or_stream)
     is_downstream = True
     is_pod = False
     is_dev = False

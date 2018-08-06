@@ -1,13 +1,13 @@
 import click
 import re
 import sys
+from collections import namedtuple
 
 from cfme.test_framework.sprout.client import SproutClient
-from collections import namedtuple
-from cfme.utils.conf import credentials
 from cfme.utils.appliance import IPAppliance
+from cfme.utils.conf import credentials
+from cfme.utils.version import VersionPicker, Version
 from wait_for import wait_for
-from widgetastic.utils import VersionPick, Version
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 pwd = None
@@ -93,7 +93,7 @@ def setup_ha_env(cfme_version, provider_type, provider, lease, desc):
     ip2 = apps[2].hostname
     opt = '5' if cfme_version >= "5.8" else '8'
     rep = '6' if cfme_version >= "5.8" else '9'
-    mon = VersionPick({
+    mon = VersionPicker({
         Version.lowest(): '12',
         '5.8': '9',
         '5.9.3': '8'
