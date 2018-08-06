@@ -222,3 +222,10 @@ def test_add_interface_to_router(router, subnet):
     view = navigate_to(router, 'Details')
     subnets_count = int(view.entities.relationships.get_text_of('Cloud Subnets'))
     assert subnets_count == 1  # Compare to '1' because clean router was used initially
+
+
+def test_list_networks(provider, appliance):
+    networks = [n.label for n in provider.mgmt.api.networks.list()]
+    displayed_networks = [n.name for n in appliance.collections.cloud_networks.all()]
+    for n in networks:
+        assert n in displayed_networks
