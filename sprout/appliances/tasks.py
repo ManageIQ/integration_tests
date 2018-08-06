@@ -272,11 +272,8 @@ def poke_trackerbot(self):
         template_name = template["template"]["name"]
         ga_released = template['template']['ga_released']
 
-        # nasty trackerbot slightly corrupts json data and it is parsed in wrong way
-        # as a result
         custom_data = template['template'].get('custom_data', "{}")
-        processed_custom_data = custom_data.replace("u'", '"').replace("'", '"')
-        processed_custom_data = yaml.safe_load(processed_custom_data)
+        processed_custom_data = yaml.safe_load(custom_data)
 
         template_info = TemplateName.parse_template(template_name)
         if not template_info.datestamp:
