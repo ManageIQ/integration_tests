@@ -11,6 +11,7 @@ from widgetastic_patternfly import CandidateNotFound, Input, Button
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.blockers import BZ
 
 from . import AutomateExplorerView, check_tree_path
 from .domain import DomainDetailsView, Domain
@@ -25,10 +26,13 @@ class NamespaceDetailsView(AutomateExplorerView):
         return (
             self.in_explorer and
             self.title.text == 'Automate Namespace "{}"'.format(self.context['object'].name) and
-            self.datastore.is_opened and
-            check_tree_path(
-                self.datastore.tree.currently_selected,
-                self.context['object'].tree_path))
+            self.datastore.is_opened and (
+                BZ(1611969, forced_streams=['5.10']).blocks or
+                check_tree_path(
+                    self.datastore.tree.currently_selected,
+                    self.context['object'].tree_path)
+            )
+        )
 
 
 class NamespaceForm(AutomateExplorerView):
