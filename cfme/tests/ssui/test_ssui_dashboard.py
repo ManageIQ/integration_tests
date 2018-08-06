@@ -4,7 +4,6 @@ from datetime import date, timedelta
 import fauxfactory
 import pytest
 
-import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -52,11 +51,11 @@ def new_compute_rate(enable_candu):
 
 
 @pytest.fixture(scope="module")
-def assign_chargeback_rate(new_compute_rate):
+def assign_chargeback_rate(new_compute_rate, appliance):
     """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
+    enterprise = appliance.collections.assignments.Assign(
+        "The Enterprise",
+        {
             'Enterprise': {'Rate': new_compute_rate}
         })
     enterprise.computeassign()
@@ -64,9 +63,9 @@ def assign_chargeback_rate(new_compute_rate):
     logger.info('Assigning CUSTOM Compute and Storage rates')
     yield
     # Resetting the Chargeback rate assignment
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
+    enterprise = appliance.collections.assignments.Assign(
+        "The Enterprise",
+        {
             'Enterprise': {'Rate': '<Nothing>'}
         })
     enterprise.computeassign()

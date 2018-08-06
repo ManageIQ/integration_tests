@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Page model for Intel->Chargeback->Assignments.
 import attr
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
 from widgetastic.widget import Text
 from widgetastic_patternfly import BootstrapSelect, Button
 

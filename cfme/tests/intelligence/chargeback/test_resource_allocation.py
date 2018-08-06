@@ -33,7 +33,6 @@ import fauxfactory
 import pytest
 from wrapanapi import VmState
 
-import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -114,12 +113,12 @@ def enable_candu(provider, appliance):
 
 
 @pytest.yield_fixture(scope="module")
-def assign_custom_rate(new_chargeback_rate, provider):
+def assign_custom_rate(new_chargeback_rate, provider, appliance):
     """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
     description = new_chargeback_rate
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
+    enterprise = appliance.collections.assignments.Assign(
+        "The Enterprise",
+        {
             'Enterprise': {'Rate': description}
         })
     enterprise.computeassign()
@@ -128,9 +127,9 @@ def assign_custom_rate(new_chargeback_rate, provider):
     yield
 
     # Resetting the Chargeback rate assignment
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
+    enterprise = appliance.collections.assignments.Assign(
+        "The Enterprise",
+        {
             'Enterprise': {'Rate': '<Nothing>'}
         })
     enterprise.computeassign()

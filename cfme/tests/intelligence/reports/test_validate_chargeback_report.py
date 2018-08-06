@@ -27,7 +27,6 @@ import fauxfactory
 import pytest
 import re
 
-import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -45,7 +44,7 @@ from cfme.utils.wait import wait_for
 from wrapanapi import VmState
 
 pf1 = ProviderFilter(classes=[CloudInfraProvider],
-    required_fields=[(['cap_and_util', 'test_chargeback'], True)])
+                     required_fields=[(['cap_and_util', 'test_chargeback'], True)])
 pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support C&U
 
 pytestmark = [
@@ -119,11 +118,11 @@ def enable_candu(provider, appliance):
 
 
 @pytest.fixture(scope="module")
-def assign_default_rate(provider):
+def assign_default_rate(provider, appliance):
     # Assign default Compute rate to the Enterprise and then queue the Chargeback report.
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
+    enterprise = appliance.collections.assignments.Assign(
+        "The Enterprise",
+        {
             'Enterprise': {'Rate': 'Default'}
         })
     enterprise.computeassign()
@@ -133,9 +132,9 @@ def assign_default_rate(provider):
     yield
 
     # Resetting the Chargeback rate assignment
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
+    enterprise = appliance.collections.assignments.Assign(
+        "The Enterprise",
+        {
             'Enterprise': {'Rate': '<Nothing>'}
         })
     enterprise.computeassign()
@@ -143,12 +142,12 @@ def assign_default_rate(provider):
 
 
 @pytest.fixture(scope="module")
-def assign_custom_rate(new_compute_rate, provider):
+def assign_custom_rate(new_compute_rate, provider, appliance):
     # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
     description = new_compute_rate
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
+    enterprise = appliance.collections.assignments.Assign(
+        "The Enterprise",
+        {
             'Enterprise': {'Rate': description}
         })
     enterprise.computeassign()
@@ -158,9 +157,9 @@ def assign_custom_rate(new_compute_rate, provider):
     yield
 
     # Resetting the Chargeback rate assignment
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
+    enterprise = appliance.collections.assignments.Assign(
+        "The Enterprise",
+        {
             'Enterprise': {'Rate': '<Nothing>'}
         })
     enterprise.computeassign()
