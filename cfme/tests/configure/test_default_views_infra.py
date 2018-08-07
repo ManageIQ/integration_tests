@@ -85,7 +85,6 @@ def test_default_view_infra_reset(appliance):
 def test_infra_default_view(appliance, group_name, view):
     """This test case changes the default view of an infra related page and asserts the change."""
     page = _get_page(gtl_params[group_name], appliance)
-    print(group_name, view, page)
     default_views = appliance.user.my_settings.default_views
     old_default = default_views.get_default_view(group_name)
     default_views.set_default_view(group_name, view)
@@ -99,14 +98,13 @@ def test_infra_default_view(appliance, group_name, view):
 
 @pytest.mark.parametrize('expected_view',
                          ['Expanded View', 'Compressed View', 'Details Mode', 'Exists Mode'])
-def test_infra_compare_view_infra(appliance, expected_view):
+def test_infra_compare_view(appliance, expected_view):
     """This test changes the default view/mode for comparison between infra provider instances
     and asserts the change."""
     if expected_view in ['Expanded View', 'Compressed View']:
         group_name, selector_type = 'Compare', 'views_selector'
     else:
         group_name, selector_type = 'Compare Mode', 'modes_selector'
-    print(expected_view, group_name, selector_type)
     default_views = appliance.user.my_settings.default_views
     old_default = default_views.get_default_view(group_name)
     default_views.set_default_view(group_name, expected_view)
