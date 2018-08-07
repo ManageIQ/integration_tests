@@ -8,6 +8,7 @@ from widgetastic_patternfly import BreadCrumb, Button, Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
+from cfme.common.candu_views import ClusterInfraUtilizationView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
@@ -256,6 +257,19 @@ class Cluster(Pretty, BaseEntity, Taggable):
             task.wait_for_finished()
             return task
 
+    def wait_candu_data_available(self, timeout=1200):
+        """Waits until C&U data are available for this Cluster
+
+        Args:
+            timeout: Timeout passed to :py:func:`utils.wait.wait_for`
+        """
+        view = navigate_to(self, 'Details')
+        wait_for(
+            lambda: view.toolbar.monitoring.item_enabled("Utilization"),
+            delay=10, handle_exception=True, num_sec=timeout,
+            fail_func=view.browser.refresh
+        )
+
 
 @attr.s
 class ClusterCollection(BaseCollection):
@@ -344,3 +358,12 @@ class Timelines(CFMENavigateStep):
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
+
+
+@navigator.register(Cluster, "Utilization")
+class Utilization(CFMENavigateStep):
+    VIEW = ClusterInfraUtilizationView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.toolbar.monitoring.item_select('Utilization')

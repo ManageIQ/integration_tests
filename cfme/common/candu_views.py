@@ -103,5 +103,29 @@ class AzoneCloudUtilizationView(View):
 
     @property
     def is_displayed(self):
+        expected_title = "{} Capacity & Utilization".format(self.context["object"].name)
+        return self.title.text == expected_title
+
+
+class ClusterInfraUtilizationView(View):
+    """View for Infrastructure provider Cluster Utilization Hourly and Daily"""
+    title = Text(".//div[@id='main-content']//h1")
+    options = View.nested(OptionForm)
+
+    cluster_cpu = LineChart(id="miq_chart_parent_candu_0")
+    cluster_cpu_vm_host_avg = LineChart(id="miq_chart_parent_candu_0_2")
+    cluster_cpu_state = LineChart(id="miq_chart_parent_candu_1")
+    cluster_cpu_state_vm_host_avg = LineChart(id="miq_chart_parent_candu_1_2")
+    cluster_memory = LineChart(id="miq_chart_parent_candu_2")
+    cluster_memory_vm_host_avg = LineChart(id="miq_chart_parent_candu_2_2")
+    cluster_disk = LineChart(id="miq_chart_parent_candu_3")
+    cluster_disk_vm_host_avg = LineChart(id="miq_chart_parent_candu_3_2")
+    cluster_network = LineChart(id="miq_chart_parent_candu_4")
+    cluster_network_vm_host_avg = LineChart(id="miq_chart_parent_candu_4_2")
+    cluster_host = LineChart(id="miq_chart_parent_candu_5")
+    cluster_vm = LineChart(id="miq_chart_parent_candu_6")
+
+    @property
+    def is_displayed(self):
         expected_title = "{} Capacity & Utilization".format(self.context['object'].name)
         return self.title.text == expected_title
