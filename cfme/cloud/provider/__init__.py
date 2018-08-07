@@ -9,7 +9,7 @@ from widgetastic_patternfly import Dropdown, BreadCrumb
 from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.instance.image import Image
 from cfme.common import TagPageView, PolicyProfileAssignable, Taggable
-from cfme.common.provider import BaseProvider, provider_types
+from cfme.common.provider import BaseProvider, provider_types, CloudInfraProviderMixin
 from cfme.common.provider_views import (
     CloudProviderAddView, CloudProviderEditView, CloudProviderDetailsView, CloudProvidersView,
     CloudProvidersDiscoverView)
@@ -17,9 +17,7 @@ from cfme.common.vm_views import VMToolbar, VMEntities
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.log import logger
-from cfme.utils.net import resolve_hostname
 from cfme.utils.pretty import Pretty
-from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import TimelinesView, ItemsToolBarViewSelector
 
@@ -78,7 +76,8 @@ class CloudProviderImagesView(BaseLoggedInPage):
 
 
 @attr.s(hash=False)
-class CloudProvider(Pretty, BaseProvider, PolicyProfileAssignable, Taggable):
+class CloudProvider(BaseProvider, CloudInfraProviderMixin, Pretty, PolicyProfileAssignable,
+                    Taggable):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
     Args:
@@ -105,9 +104,6 @@ class CloudProvider(Pretty, BaseProvider, PolicyProfileAssignable, Taggable):
     template_name = "Images"
     db_types = ["CloudManager"]
     template_class = Image
-    detail_page_suffix = 'provider'
-    edit_page_suffix = 'provider_edit'
-    refresh_text = "Refresh Relationships and Power States"
 
     name = attr.ib(default=None)
     key = attr.ib(default=None)
@@ -129,91 +125,6 @@ class CloudProvider(Pretty, BaseProvider, PolicyProfileAssignable, Taggable):
     def discover_dict(credential):
         """Returns the discovery credentials dictionary, needs overriding"""
         raise NotImplementedError("This provider doesn't support discovery")
-
-    @property
-    def hostname(self):
-        return getattr(self.default_endpoint, "hostname", None)
-
-    @hostname.setter
-    def hostname(self, value):
-        if self.default_endpoint:
-            if value:
-                self.default_endpoint.hostname = value
-        else:
-            logger.warn("can't set hostname because default endpoint is absent")
-
-    @property
-    def ip_address(self):
-        return getattr(self.default_endpoint, "ipaddress", resolve_hostname(str(self.hostname)))
-
-    @ip_address.setter
-    def ip_address(self, value):
-        if self.default_endpoint:
-            if value:
-                self.default_endpoint.ipaddress = value
-        else:
-            logger.warn("can't set ipaddress because default endpoint is absent")
-
-    @variable(alias="db")
-    def num_template(self):
-        """ Returns the providers number of templates, as shown on the Details page."""
-        ext_management_systems = self.appliance.db.client["ext_management_systems"]
-        vms = self.appliance.db.client["vms"]
-        temlist = list(self.appliance.db.client.session.query(vms.name)
-                       .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
-                       .filter(ext_management_systems.name == self.name)
-                       .filter(vms.template == True))  # NOQA
-        return len(temlist)
-
-    @num_template.variant('ui')
-    def num_template_ui(self):
-        view = navigate_to(self, "Details")
-        return int(view.entities.summary("Relationships").get_text_of(self.template_name))
-
-    @variable(alias="db")
-    def num_vm(self):
-        """ Returns the providers number of instances, as shown on the Details page."""
-        ext_management_systems = self.appliance.db.client["ext_management_systems"]
-        vms = self.appliance.db.client["vms"]
-        vmlist = list(self.appliance.db.client.session.query(vms.name)
-                      .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
-                      .filter(ext_management_systems.name == self.name)
-                      .filter(vms.template == False))  # NOQA
-        return len(vmlist)
-
-    @num_vm.variant('ui')
-    def num_vm_ui(self):
-        view = navigate_to(self, "Details")
-        return int(view.entities.summary("Relationships").get_text_of(self.vm_name))
-
-    def load_all_provider_instances(self):
-        return self.load_all_provider_vms()
-
-    def load_all_provider_vms(self):
-        """ Loads the list of instances that are running under the provider.
-
-        """
-        view = navigate_to(self, 'Details')
-        if view.entities.summary("Relationships").get_text_of(self.vm_name) == "0":
-            return False
-        else:
-            view.entities.summary("Relationships").click_at(self.vm_name)
-            return True
-
-    def load_all_provider_images(self):
-        self.load_all_provider_templates()
-
-    def load_all_provider_templates(self):
-        """ Loads the list of images that are available under the provider.
-
-        """
-        # todo: replace these methods with new nav location
-        view = navigate_to(self, 'Details')
-        if view.entities.summary("Relationships").get_text_of(self.template_name) == "0":
-            return False
-        else:
-            view.entities.summary("Relationships").click_at(self.template_name)
-            return True
 
 
 @attr.s
