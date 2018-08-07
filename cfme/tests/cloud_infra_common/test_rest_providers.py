@@ -60,10 +60,10 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
             # once BZ1545240 is fixed other failure than internal server
             # error is expected
             if failure.name == 'cloud_tenants' and BZ(
-                    1545240, forced_streams=['5.8', '5.9', 'upstream']).blocks:
+                    1612905, forced_streams=['5.8', '5.9', 'upstream']).blocks:
                 continue
             if failure.name == 'flavors' and BZ(
-                    1545240, forced_streams=['5.9', 'upstream']).blocks:
+                    1612905, forced_streams=['5.9', 'upstream']).blocks:
                 continue
         if provider.one_of(RHEVMProvider):
             # once BZ1546112 is fixed other failure than internal server
