@@ -13,7 +13,6 @@ from cfme.cloud.provider.ec2 import EC2Provider, EC2EndpointForm
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm_views import DriftAnalysis
 from cfme.control.explorer.policies import VMControlPolicy
-from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -24,12 +23,12 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
-from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for, wait_for_decorator
 
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.smartstate,
+    pytest.mark.meta(server_roles="+automate +smartproxy +smartstate")
 ]
 
 WINDOWS = {'id': "Red Hat Enterprise Windows", 'icon': 'windows', 'os_type': 'windows'}
@@ -102,7 +101,9 @@ def pytest_generate_tests(metafunc):
     argnames.append('analysis_type')
     new_idlist = []
     new_argvalues = []
+
     for index, argvalue_tuple in enumerate(argvalues):
+        argvalue_tuple[0].create_rest()
         args = dict(zip(argnames, argvalue_tuple))
         vma_data = args['provider'].data.vm_analysis_new
         vms = vma_data.vms
@@ -172,27 +173,16 @@ def set_agent_creds(appliance, request, provider):
         view.save.click()
 
 
-@pytest.fixture(scope="module")
-def local_setup_provider(request, ssa_single_vm, setup_provider_modscope, provider, appliance):
+def set_host_creds(request, appliance, provider, ssa_vm):
+    host = ssa_vm.host
+    host_data = [data for data in provider.data['hosts'] if data['name'] == host.name]
+    host.update_credentials_rest(credentials=[h.get('credentials') for h in host_data][0])
+    appliance.install_vddk()
 
-    if provider.one_of(VMwareProvider):
-        view = navigate_to(ssa_single_vm, 'Details')
-        host_name = view.entities.summary("Relationships").get_text_of("Host")
-        host, = [host for host in provider.hosts.all() if host.name == host_name]
-        host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
-        host.update_credentials_rest(credentials=host_data['credentials'])
-        appliance.install_vddk()
-
-        @request.addfinalizer
-        def _finalize():
-            appliance.uninstall_vddk()
-            host.remove_credentials_rest()
-
-    if provider.one_of(EC2Provider):
-        set_agent_creds(appliance, request, provider)
-
-    # Make sure all roles are set
-    appliance.server.settings.enable_server_roles('automate', 'smartproxy', 'smartstate')
+    @request.addfinalizer
+    def _finalize():
+        appliance.uninstall_vddk()
+        host.remove_credentials_rest()
 
 
 @pytest.fixture(scope="module")
@@ -220,8 +210,7 @@ def ssa_compliance_profile(appliance, provider, ssa_compliance_policy):
 
 
 @pytest.fixture(scope="module")
-def ssa_single_vm(request, provider, vm_analysis_provisioning_data,
-           appliance, analysis_type):
+def ssa_single_vm(request, provider, vm_analysis_provisioning_data, appliance, analysis_type):
     """ Fixture to provision instance on the provider """
     def _ssa_single_vm():
         template_name = vm_analysis_provisioning_data['image']
@@ -241,8 +230,7 @@ def ssa_single_vm(request, provider, vm_analysis_provisioning_data,
                                provisioning_data=provisioning_data, template_name=template_name,
                                request=request, smtp_test=False, num_sec=2500)
         else:
-            deploy_template(vm.provider.key, vm_name, template_name, timeout=2500)
-            vm.wait_to_appear(timeout=900, load_details=False)
+            vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=2500)
 
         request.addfinalizer(lambda: vm.cleanup_on_provider())
 
@@ -293,10 +281,16 @@ def ssa_single_vm(request, provider, vm_analysis_provisioning_data,
 
 
 @pytest.fixture(scope="module")
-def ssa_vm(ssa_single_vm, assign_profile_to_vm):
+def ssa_vm(ssa_single_vm, assign_profile_to_vm, provider, request, appliance):
     """Single vm with assigned profile"""
     ssa_vm = ssa_single_vm()
     assign_profile_to_vm(ssa_vm)
+    if provider.one_of(VMwareProvider):
+        set_host_creds(request, appliance, provider, ssa_vm)
+
+    if provider.one_of(EC2Provider):
+        set_agent_creds(appliance, request, provider)
+
     return ssa_vm
 
 
@@ -334,7 +328,7 @@ def ssa_analysis_profile(appliance):
     for file in ssa_expect_files:
         collected_files.append({"Name": file, "Collect Contents?": True})
 
-    analysis_profile_name = 'custom'
+    analysis_profile_name = 'default'
     analysis_profiles_collection = appliance.collections.analysis_profiles
     analysis_profile_data = {
         'name': analysis_profile_name,
@@ -477,7 +471,7 @@ def compare_windows_vm_data(soft_assert):
 @pytest.mark.rhv2
 @pytest.mark.tier(1)
 @pytest.mark.long_running
-def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_provisioning_data,
+def test_ssa_template(provider, soft_assert, vm_analysis_provisioning_data,
                       appliance, ssa_vm, compare_windows_vm_data):
     """ Tests SSA can be performed on a template
 
@@ -517,7 +511,7 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
+def test_ssa_compliance(ssa_compliance_profile, ssa_vm,
                         soft_assert, appliance, vm_system_type):
     """ Tests SSA can be performed and returns sane results
 
