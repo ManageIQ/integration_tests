@@ -1,5 +1,6 @@
 import fauxfactory
 import pytest
+from wait_for import wait_for
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -109,7 +110,10 @@ def secgroup_with_rule(provider):
     res_group = provider.data['provisioning']['resource_group']
     secgroup_name = 'secgroup_with_rule_{}'.format(fauxfactory.gen_alpha(8).lower())
     provider.mgmt.create_netsec_group(secgroup_name, res_group)
-    provider.mgmt.create_netsec_group_port_allow(secgroup_name, 22, res_group)
+    provider.mgmt.create_netsec_group_port_allow(secgroup_name,
+        'Tcp', '*', '*', 'Allow', 'Inbound', description='Allow port 22',
+        source_port_range='*', destination_port_range='22', priority=100,
+        name='Port_22_allow', resource_group=res_group)
     provider.refresh_provider_relationships()
     yield secgroup_name
     provider.mgmt.remove_netsec_group(secgroup_name, res_group)
@@ -125,16 +129,25 @@ def test_sdn_nsg_firewall_rules(provider, appliance, secgroup_with_rule):
     """
 
     # Navigate to network provider.
-    collection = appliance.collections.network_providers.filter({'provider': provider})
-    network_provider = collection.all()[0]
+    prov_collection = appliance.collections.network_providers.filter({'provider': provider})
+    network_provider = prov_collection.all()[0]
+    network_provider.refresh_provider_relationships()
+    wait_for(network_provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     view = navigate_to(network_provider, 'Details')
     parent_name = view.entities.relationships.get_text_of("Parent Cloud Provider")
     assert parent_name == provider.name
 
-    # Navigate to secgroup.
-    collection = appliance.collections.network_security_groups.filter({'name': secgroup_with_rule})
-    secgroup = collection.all()[0]
+    secgrp_collection = appliance.collections.network_security_groups
+    secgroup = [i for i in secgrp_collection.all() if i.name == secgroup_with_rule][0]
     view = navigate_to(secgroup, 'Details')
 
-    assert 'Port' == view.entities.firewall_rules[0][3].text
-    assert '22' == view.entities.firewall_rules[1][3].text
+    if appliance.version < '5.10':
+        # The table has one header row. The first non-header row has column
+        # names.
+        assert 'Port' == view.entities.firewall_rules[1][3].text
+        assert '22' == view.entities.firewall_rules[2][3].text
+    else:
+        # The table has two header rows. We cannot access the second one with
+        # widgetastic. So let's hope the column of index 3 is the Port Range
+        # column.
+        assert '22' == view.entities.firewall_rules[1][3].text

@@ -35,8 +35,8 @@ class SecurityGroup(Taggable, BaseEntity):
         view = navigate_to(self, 'Details')
         try:
             prov_name = view.entities.relationships.get_text_of("Network Manager")
-            collection = self.appliance.collections.network_provider
-            return collection.instantiate(name=prov_name)
+            net_prov_collection = self.appliance.collections.network_provider
+            return net_prov_collection.instantiate(name=prov_name)
         except ItemNotFound:  # BZ 1480577
             return None
 
@@ -54,6 +54,7 @@ class SecurityGroupCollection(BaseCollection):
         else:
             view = navigate_to(self, 'All')
         list_networks_obj = view.entities.get_all(surf_pages=True)
+
         return [self.instantiate(name=s.name) for s in list_networks_obj]
 
 
