@@ -41,7 +41,11 @@ def test_default_view_cloud_reset(appliance):
     assert not view.tabs.default_views.reset.disabled
 
 
-def set_and_test_default_view(appliance, group_name, expected_view, page):
+@pytest.mark.parametrize('group_name', gtl_params.keys())
+@pytest.mark.parametrize('expected_view', ['List View', 'Tile View', 'Grid View'])
+def test_default_view(appliance, group_name, expected_view):
+    """This test case changes the default view of a page and asserts the change."""
+    page = gtl_params[group_name]
     default_views = appliance.user.my_settings.default_views
     old_default = default_views.get_default_view(group_name, fieldset='Clouds')
     default_views.set_default_view(group_name, expected_view, fieldset='Clouds')
@@ -52,22 +56,7 @@ def set_and_test_default_view(appliance, group_name, expected_view, page):
     default_views.set_default_view(group_name, old_default, fieldset='Clouds')
 
 
-@pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_cloud_tile_defaultview(appliance, request, key):
-    set_and_test_default_view(appliance, key, 'Tile View', gtl_params[key])
-
-
-@pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_cloud_list_defaultview(appliance, request, key):
-    set_and_test_default_view(appliance, key, 'List View', gtl_params[key])
-
-
-@pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_cloud_grid_defaultview(appliance, request, key):
-    set_and_test_default_view(appliance, key, 'Grid View', gtl_params[key])
-
-
-def set_and_test_compare_view(appliance, group_name, expected_view, selector_type='views_selector'):
+def set_and_test_compare_view(appliance, group_name, expected_view, selector_type):
     default_views = appliance.user.my_settings.default_views
     old_default = default_views.get_default_view(group_name)
     default_views.set_default_view(group_name, expected_view)
@@ -79,17 +68,13 @@ def set_and_test_compare_view(appliance, group_name, expected_view, selector_typ
     default_views.set_default_view(group_name, old_default)
 
 
-def test_cloud_expanded_view(appliance, request):
-    set_and_test_compare_view(appliance, 'Compare', 'Expanded View')
+@pytest.mark.parametrize('view', ['Expanded View', 'Compressed View'])
+def test_cloud_views(appliance, request, view):
+    """This test case checks the comparison between provider instances in different views."""
+    set_and_test_compare_view(appliance, 'Compare', view, 'views_selector')
 
 
-def test_cloud_compressed_view(appliance, request):
-    set_and_test_compare_view(appliance, 'Compare', 'Compressed View')
-
-
-def test_cloud_details_mode(appliance, request):
-    set_and_test_compare_view(appliance, 'Compare Mode', 'Details Mode', 'modes_selector')
-
-
-def test_cloud_exists_mode(appliance, request):
-    set_and_test_compare_view(appliance, 'Compare Mode', 'Exists Mode', 'modes_selector')
+@pytest.mark.parametrize('mode', ['Details Mode', 'Exists Mode'])
+def test_cloud_modes(appliance, request, mode):
+    """This test case checks the comparison between provider instances in different modes."""
+    set_and_test_compare_view(appliance, 'Compare Mode', mode, 'modes_selector')
