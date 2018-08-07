@@ -167,13 +167,15 @@ def test_hard_reboot_instance(new_instance):
                      OpenStackInstance.STATE_REBOOTING)
 
 
-def test_delete_instance(new_instance):
+def test_delete_instance(new_instance, provider):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.TERMINATE)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_UNKNOWN)
 
     assert not new_instance.exists_on_provider
-    view = navigate_to(new_instance.parent, 'AllForProvider')
+    view = navigate_to(
+        new_instance.appliance.collections.cloud_instances.filter({'provider': provider}),
+        'AllForProvider')
     try:
         view.entities.get_entity(name=new_instance.name, surf_pages=True)
         assert False, "entity still exists"
