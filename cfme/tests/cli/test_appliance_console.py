@@ -399,19 +399,6 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
             logger.info("{}: rule not found".format(rule))
 
 
-@pytest.mark.meta(blockers=[BZ(1544854, forced_streams=['5.9', '5.10'])])
-def test_appliance_exec_scripts(appliance, soft_assert):
-    files = appliance.ssh_client.run_command("ls -la /var/www/miq/vmdb/tools/ | grep .rb")
-    file_list = files.output.split("\n")
-    for f in file_list:
-        if not f:
-            continue
-        data = f.split()
-        soft_assert(re.match('^[-]..x..x..x.$', data[0]))
-        soft_assert(appliance.ssh_client.run_command(
-            "cat /var/www/miq/vmdb/tools/{} | grep /usr/bin/env".format(data[8])))
-
-
 def test_appliance_console_static_ipv6(temp_appliance_preconfig):
     """'ap' launches appliance_console, '' clears info screen, '1' network configuration,
     '3' set static ipv6, 'ips' static address 'y', '' complete."""
