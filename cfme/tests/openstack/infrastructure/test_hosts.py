@@ -9,6 +9,8 @@ pytestmark = [
     pytest.mark.provider([OpenstackInfraProvider], scope='module'),
 ]
 
+VIEWS = ["List View", "Tile View"]
+
 
 @pytest.fixture(scope="module")
 def host_collection(appliance):
@@ -112,3 +114,25 @@ def test_host_zones_assigned(host_collection, provider):
         view = navigate_to(host, 'Details')
         result = view.entities.summary('Relationships').get_text_of('Availability Zone')
         assert result, "Availability zone doesn't specified"
+
+
+def test_hypervisor_hostname(host_collection, provider, soft_assert):
+    hvisors = provider.mgmt.list_hosts()
+    hosts = host_collection.all()
+    for host in hosts:
+        view = navigate_to(host, 'Details')
+        hv_name = view.entities.summary('Properties').get_text_of('Hypervisor Hostname')
+        soft_assert(hv_name in hvisors,
+            "Hypervisor hostname {} is not in Hypervisor list".format(hv_name))
+
+
+@pytest.mark.parametrize("view_type", VIEWS)
+def test_hypervisor_hostname_views(host_collection, provider, view_type, soft_assert):
+    hvisors = provider.mgmt.list_hosts()
+    view = navigate_to(host_collection, 'All')
+    view.toolbar.view_selector.select(view_type)
+    items = view.entities.get_all()
+    for item in items:
+        hv_name = item.data['hypervisor_hostname']
+        soft_assert(hv_name in hvisors,
+                    "Hypervisor hostname {} is not in Hypervisor list".format(hv_name))
