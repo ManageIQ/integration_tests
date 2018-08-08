@@ -22,7 +22,7 @@ from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for, RefreshTimer
-from . import PolicyProfileAssignable
+
 
 _base_types_cache = {}
 _provider_types_cache = defaultdict(dict)
@@ -1050,13 +1050,10 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
         return result_list
 
 
-class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, Taggable):
-    vm_name = ""
-    template_name = ""
+class CloudInfraProviderMixin(object):
     detail_page_suffix = 'provider'
     edit_page_suffix = 'provider_edit'
     refresh_text = "Refresh Relationships and Power States"
-    db_types = ["CloudManager", "InfraManager"]
 
     @property
     def hostname(self):

@@ -7,12 +7,13 @@ from widgetastic.utils import partial_match
 from wrapanapi import VmState
 
 from cfme import test_requirements
-from cfme.cloud.provider import CloudProvider, CloudInfraProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.ec2 import EC2Provider, EC2EndpointForm
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm_views import DriftAnalysis
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.host import Host
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVm
@@ -96,7 +97,7 @@ ssa_expect_files = [
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [CloudInfraProvider], required_fields=['vm_analysis_new'])
+        metafunc, [CloudProvider, InfraProvider], required_fields=['vm_analysis_new'])
     argnames.append('analysis_type')
     new_idlist = []
     new_argvalues = []

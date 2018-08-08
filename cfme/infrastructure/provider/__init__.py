@@ -8,9 +8,9 @@ from widgetastic.utils import Fillable
 from widgetastic_patternfly import BreadCrumb
 
 from cfme.base.ui import Server
-from cfme.common import TagPageView
+from cfme.common import TagPageView, Taggable, PolicyProfileAssignable
 from cfme.common.host_views import ProviderAllHostsView
-from cfme.common.provider import CloudInfraProvider, provider_types
+from cfme.common.provider import BaseProvider, provider_types, CloudInfraProviderMixin
 from cfme.common.provider_views import (
     InfraProviderAddView, InfraProviderEditView, InfraProviderDetailsView, ProviderTimelinesView,
     InfraProvidersDiscoverView, InfraProvidersView, ProviderNodesView, ProviderTemplatesView,
@@ -43,7 +43,8 @@ class ProviderClustersView(ClusterView):
 
 
 @attr.s(hash=False)
-class InfraProvider(Pretty, CloudInfraProvider, Fillable):
+class InfraProvider(BaseProvider, CloudInfraProviderMixin, Pretty, Fillable,
+                    PolicyProfileAssignable, Taggable):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
 
@@ -80,8 +81,6 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     name = attr.ib(default=None)
     key = attr.ib(default=None)
     zone = attr.ib(default=None)
-    # hostname = attr.ib(default=None) # defined in CloudInfraProvider class
-    # ip_address = attr.ib(default=None) # defined in CloudInfraProvider class
     start_ip = attr.ib(default=None)
     end_ip = attr.ib(default=None)
     provider_data = attr.ib(default=None)

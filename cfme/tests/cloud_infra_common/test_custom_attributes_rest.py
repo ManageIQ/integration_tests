@@ -5,7 +5,7 @@ import fauxfactory
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
-from cfme.infrastructure.provider import CloudInfraProvider, InfraProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import (
@@ -18,7 +18,7 @@ from cfme.utils.rest import (
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.tier(2),
-    pytest.mark.provider([CloudInfraProvider], scope='module'),
+    pytest.mark.provider([CloudProvider, InfraProvider], scope='module'),
     test_requirements.rest,
     pytest.mark.rhv3
 ]

@@ -3,7 +3,7 @@
 # in selenium (the group is selected then immediately reset)
 import pytest
 
-from cfme.cloud.provider import CloudInfraProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -19,7 +19,8 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
 
-pf1 = ProviderFilter(classes=[CloudInfraProvider], required_flags=['provision', 'cloud_init'])
+pf1 = ProviderFilter(classes=[CloudProvider, InfraProvider], required_flags=['provision',
+                                                                             'cloud_init'])
 pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support cloud-init
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),

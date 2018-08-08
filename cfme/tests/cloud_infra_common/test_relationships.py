@@ -12,7 +12,6 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.stack import ProviderStackAllView
 from cfme.cloud.tenant import ProviderTenantAllView
 from cfme.common.host_views import ProviderAllHostsView
-from cfme.common.provider import CloudInfraProvider
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.vm_views import HostAllVMsView, ProviderAllVMsView
 from cfme.infrastructure.cluster import ClusterDetailsView, ProviderAllClustersView
@@ -267,7 +266,7 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
 
 
 @pytest.mark.rhv1
-@pytest.mark.provider([CloudInfraProvider])
+@pytest.mark.provider([CloudProvider, InfraProvider])
 def test_provider_refresh_relationship(provider, setup_provider):
     """Tests provider refresh
 

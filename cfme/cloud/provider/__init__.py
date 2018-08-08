@@ -8,8 +8,8 @@ from widgetastic_patternfly import Dropdown, BreadCrumb
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.instance.image import Image
-from cfme.common import TagPageView
-from cfme.common.provider import CloudInfraProvider, provider_types
+from cfme.common import TagPageView, PolicyProfileAssignable, Taggable
+from cfme.common.provider import BaseProvider, provider_types, CloudInfraProviderMixin
 from cfme.common.provider_views import (
     CloudProviderAddView, CloudProviderEditView, CloudProviderDetailsView, CloudProvidersView,
     CloudProvidersDiscoverView)
@@ -76,7 +76,8 @@ class CloudProviderImagesView(BaseLoggedInPage):
 
 
 @attr.s(hash=False)
-class CloudProvider(Pretty, CloudInfraProvider):
+class CloudProvider(BaseProvider, CloudInfraProviderMixin, Pretty, PolicyProfileAssignable,
+                    Taggable):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
     Args:
@@ -122,7 +123,7 @@ class CloudProvider(Pretty, CloudInfraProvider):
 
     @staticmethod
     def discover_dict(credential):
-        """Returns the discovery credentials dictionary, needs overiding"""
+        """Returns the discovery credentials dictionary, needs overriding"""
         raise NotImplementedError("This provider doesn't support discovery")
 
 

@@ -2,7 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.provider import CloudInfraProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.blockers import BZ
@@ -18,7 +18,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     test_requirements.rest,
     pytest.mark.tier(1),
-    pytest.mark.provider([CloudInfraProvider])
+    pytest.mark.provider([CloudProvider, InfraProvider])
 ]
 
 
