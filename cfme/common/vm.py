@@ -5,7 +5,6 @@ from datetime import datetime, date, timedelta
 import attr
 from cached_property import cached_property
 from riggerlib import recursive_update
-from wrapanapi.exceptions import NotFoundError
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
@@ -659,7 +658,7 @@ class VM(BaseVM):
             delay=10, handle_exception=True, num_sec=timeout,
             fail_func=view.toolbar.reload.click)
 
-    def capture_historical_data(self, interval='hourly', back='6.days'):
+    def capture_historical_data(self, interval="hourly", back="6.days"):
         """Capture historical utilization data for this VM/Instance
 
         Args:
@@ -667,9 +666,11 @@ class VM(BaseVM):
             back: back time interval from which you want data
         """
         ret = self.appliance.ssh_client.run_rails_command(
-            "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
-            vm.perf_capture({}, {}.ago.utc, Time.now.utc)\""
-            .format(self.provider.id, repr(self.name), repr(interval), back))
+            "\"vm = Vm.where(:ems_id => {prov_id}).where(:name => '{vm_name}')[0];\
+            vm.perf_capture('{interval}', {back}.ago.utc, Time.now.utc)\"".format(
+                prov_id=self.provider.id, vm_name=self.name, interval=interval, back=back
+            )
+        )
         return ret.success
 
     def wait_for_vm_state_change(self, desired_state=None, timeout=300, from_details=False,
