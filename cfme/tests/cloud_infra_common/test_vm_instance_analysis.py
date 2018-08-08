@@ -340,15 +340,17 @@ def ssa_analysis_profile(appliance):
 
     analysis_profile_name = 'default'
     analysis_profiles_collection = appliance.collections.analysis_profiles
-    analysis_profile = analysis_profiles_collection(
+    profile_kwargs = dict(
         name=analysis_profile_name,
         description=analysis_profile_name,
         profile_type=analysis_profiles_collection.VM_TYPE,
         categories=["System", "Software", "Services", "User Accounts", "VM Configuration"],
-        files=collected_files)
+        files=collected_files
+    )
+    analysis_profile = analysis_profiles_collection.instantiate(**profile_kwargs)
     if analysis_profile.exists:
         analysis_profile.delete()
-    analysis_profile.create()
+    analysis_profile = analysis_profiles_collection.create(**profile_kwargs)
     yield analysis_profile
     if analysis_profile.exists:
         analysis_profile.delete()
