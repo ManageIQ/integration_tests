@@ -1439,21 +1439,22 @@ def generic_shepherd(self, preconfigured):
             # There must be some templates in order to run the provisioning
             # Provision ONE appliance at time for each group, that way it is possible to maintain
             # reasonable balancing
-            new_appliance_name = gen_appliance_name(template.id)
             with transaction.atomic():
                 # Now look for templates that are on non-busy providers
                 tpl_free = filter(
                     lambda t: t.provider.free,
                     possible_templates_for_provision)
                 if tpl_free:
+                    chosen_template = sorted(tpl_free, key=lambda t: t.provider.appliance_load)[0]
+                    new_appliance_name = gen_appliance_name(chosen_template.id)
                     appliance = Appliance(
-                        template=sorted(tpl_free, key=lambda t: t.provider.appliance_load)[0],
+                        template=chosen_template,
                         name=new_appliance_name)
                     appliance.save()
-            if tpl_free:
-                self.logger.info(
-                    "Adding an appliance to shepherd: {}/{}".format(appliance.id, appliance.name))
-                clone_template_to_appliance.delay(appliance.id, None)
+                    self.logger.info(
+                        "Adding an appliance to shepherd: {}/{}".format(appliance.id,
+                                                                        appliance.name))
+                    clone_template_to_appliance.delay(appliance.id, None)
         elif len(appliances) > pool_size:
             # Too many appliances, kill the surplus
             # Only kill those that are visible only for one group. This is necessary so the groups
