@@ -441,7 +441,7 @@ class BaseVMCollection(BaseCollection):
         For reference how does that work, refer to the entrypoints in the setup.py
 
         Args:
-            vm_name: Name of the VM/Instance as it appears in the UI
+            name: Name of the VM/Instance as it appears in the UI
             provider: The provider object (not the string!)
             template_name: Source template name. Useful when the VM/Instance does not exist and you
                 want to create it.
@@ -457,8 +457,9 @@ class BaseVMCollection(BaseCollection):
         else:
             return provider.vm_class.from_collection(self, name, provider, template_name)
 
-    def create(self, vm_name, provider, form_values=None, cancel=False,
-               check_existing=False, find_in_cfme=False, wait=True):
+    def create(self, vm_name, provider, form_values=None, cancel=False, check_existing=False,
+               find_in_cfme=False, wait=True, request_description=None, auto_approve=False,
+               override=False):
         """Provisions an vm/instance with the given properties through CFME
 
         Args:
@@ -469,6 +470,9 @@ class BaseVMCollection(BaseCollection):
             check_existing: verify if such vm_name exists
             find_in_cfme: verify that vm was created and appeared in CFME
             wait: wait for vm provision request end
+            request_description: request description that test needs to search in request table.
+            auto_approve: if true the request is approved before waiting for completion.
+            override: To override any failure related exception
 
         Note:
             Calling create on a sub-class of instance will generate the properly formatted
@@ -509,20 +513,28 @@ class BaseVMCollection(BaseCollection):
             if not BZ(1608967, forced_streams=['5.10']).blocks:
                 wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
                         message='wait for Flash Success')
+            # This flash message is not flashed in 5.10.
+            if self.appliance.version < 5.10:
+                wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
+                         message='wait for Flash Success')
             view.flash.assert_no_error()
-
             if wait:
-                request_description = 'Provision from [{}] to [{}]'.format(
-                    form_values.get('template_name'), vm.name)
+                if request_description is None:
+                    request_description = 'Provision from [{}] to [{}]'.format(
+                        form_values.get('template_name'), vm.name)
                 provision_request = vm.appliance.collections.requests.instantiate(
                     request_description)
                 logger.info('Waiting for cfme provision request for vm %s', vm.name)
+                if auto_approve:
+                    provision_request.approve_request(method='ui', reason="Approved")
                 provision_request.wait_for_request(method='ui', num_sec=900)
                 if provision_request.is_succeeded(method='ui'):
                     logger.info('Waiting for vm %s to appear on provider %s', vm.name,
                                 provider.key)
                     wait_for(provider.mgmt.does_vm_exist, [vm.name],
                              handle_exception=True, num_sec=600)
+                elif override:
+                    logger.info('Overriding exception to check failure condition.')
                 else:
                     raise Exception(
                         "Provisioning vm {} failed with: {}"

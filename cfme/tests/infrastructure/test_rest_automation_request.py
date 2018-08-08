@@ -1,24 +1,22 @@
 import multiprocessing as mp
 
 import pytest
-
 from manageiq_client.api import ManageIQClient as MiqApi
 
 from cfme import test_requirements
-from cfme.rest.gen_data import a_provider as _a_provider
+from cfme.fixtures.pytest_store import store
+from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import automation_requests_data as _automation_requests_data
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.rest import assert_response, query_resource_attributes
 from cfme.utils.wait import wait_for
-from cfme.fixtures.pytest_store import store
 
-
-pytestmark = [test_requirements.rest]
-
-
-@pytest.fixture(scope='module')
-def a_provider(request):
-    return _a_provider(request)
+pytestmark = [
+    test_requirements.rest,
+    pytest.mark.provider(classes=[InfraProvider], selector=ONE),
+    pytest.mark.usefixtures('setup_provider')
+]
 
 
 @pytest.fixture(scope='module')

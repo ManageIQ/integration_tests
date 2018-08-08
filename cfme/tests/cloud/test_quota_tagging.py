@@ -4,7 +4,6 @@ import pytest
 from riggerlib import recursive_update
 
 from cfme import test_requirements
-from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI, ViaUI

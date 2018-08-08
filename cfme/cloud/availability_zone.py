@@ -7,9 +7,11 @@ from widgetastic_patternfly import Dropdown, Button, BreadCrumb
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
+from cfme.common.candu_views import AzoneCloudUtilizationView
 from cfme.exceptions import AvailabilityZoneNotFound, ItemNotFound
 from cfme.modeling.base import BaseEntity, BaseCollection
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     BaseEntitiesView, TimelinesView, ItemsToolBarViewSelector, Text, Table, SummaryTable, Accordion,
     ManageIQTree, Search)
@@ -125,6 +127,19 @@ class AvailabilityZone(BaseEntity, Taggable):
     name = attr.ib()
     provider = attr.ib()
 
+    def wait_candu_data_available(self, timeout=1200):
+        """Waits until C&U data are available for this Availability Zone
+
+        Args:
+            timeout: Timeout passed to :py:func:`utils.wait.wait_for`
+        """
+        view = navigate_to(self, 'Details')
+        wait_for(
+            lambda: view.toolbar.monitoring.item_enabled("Utilization"),
+            delay=10, handle_exception=True, num_sec=timeout,
+            fail_func=view.browser.refresh
+        )
+
 
 @attr.s
 class AvailabilityZoneCollection(BaseCollection):
@@ -162,3 +177,12 @@ class AvailabilityZoneTimelines(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
+
+
+@navigator.register(AvailabilityZone, "Utilization")
+class Utilization(CFMENavigateStep):
+    VIEW = AzoneCloudUtilizationView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.toolbar.monitoring.item_select('Utilization')

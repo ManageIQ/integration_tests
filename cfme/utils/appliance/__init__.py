@@ -21,9 +21,9 @@ from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
 from six.moves.urllib.parse import urlparse
+from werkzeug.local import LocalStack, LocalProxy
 from wrapanapi import VmState
 from wrapanapi.exceptions import VMInstanceNotFound
-from werkzeug.local import LocalStack, LocalProxy
 
 from cfme.fixtures import ui_coverage
 from cfme.fixtures.pytest_store import store
@@ -35,7 +35,7 @@ from cfme.utils.log import logger, create_sublogger, logger_wrap
 from cfme.utils.net import net_check
 from cfme.utils.path import data_path, patches_path, scripts_path, conf_path
 from cfme.utils.ssh import SSHTail
-from cfme.utils.version import Version, get_stream, pick
+from cfme.utils.version import Version, get_stream, VersionPicker
 from cfme.utils.wait import wait_for, TimedOutError
 from .db import ApplianceDB
 from .implementations.rest import ViaREST
@@ -1035,12 +1035,11 @@ class IPAppliance(object):
 
     @logger_wrap("Patch appliance with MiqQE js: {}")
     def patch_with_miqqe(self, log_callback=None):
-
         # (local_path, remote_path, md5/None) trio
-        autofocus_patch = pick({
+        autofocus_patch = VersionPicker({
             '5.5': 'autofocus.js.diff',
             '5.7': 'autofocus_57.js.diff'
-        })
+        }).pick(self.version)
         patch_args = (
             (str(patches_path.join('miq_application.js.diff')),
              '/var/www/miq/vmdb/app/assets/javascripts/miq_application.js',
@@ -3082,6 +3081,15 @@ class NavigatableMixin(object):
             new_obj = o
         return self.appliance.browser.create_view(
             view_class, additional_context={'object': new_obj})
+
+    def list_destinations(self):
+        """This function returns a list of all valid destinations for a particular object
+        """
+        return {
+            impl.name: impl.navigator.list_destinations(self)
+            for impl in self.appliance.context.implementations.values()
+            if impl.navigator
+        }
 
 
 class NavigatableDeprecationWarning(DeprecationWarning):

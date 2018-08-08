@@ -10,15 +10,19 @@ from wrapanapi.entities import VmState
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [
     pytest.mark.usefixtures("setup_provider_modscope"),
     pytest.mark.provider([OpenStackProvider], scope='module')
 ]
+
+
+VOLUME_SIZE = 1
 
 
 @pytest.fixture(scope='function')
@@ -53,6 +57,21 @@ def new_instance(provider):
         instance.cleanup_on_provider()
     except Exception:
         pass
+
+
+@pytest.fixture(scope='function')
+def volume(appliance, provider):
+    collection = appliance.collections.volumes
+    storage_manager = '{} Cinder Manager'.format(provider.name)
+    volume = collection.create(name=fauxfactory.gen_alpha(),
+                               storage_manager=storage_manager,
+                               tenant=provider.data['provisioning']['cloud_tenant'],
+                               size=VOLUME_SIZE,
+                               provider=provider)
+    yield volume
+
+    if volume.exists:
+        volume.delete(wait=False)
 
 
 def test_create_instance(new_instance, soft_assert):
@@ -189,3 +208,16 @@ def test_instance_operating_system_linux(new_instance):
     os = view.entities.summary('Properties').get_text_of("Operating System")
     prov_data_os = new_instance.provider.data['provisioning']['image']['os_distro']
     assert os == prov_data_os, 'OS type mismatch: expected {} and got {}'.format(prov_data_os, os)
+
+
+def test_instance_attach_volume(new_instance, volume, appliance):
+    initial_volume_count = new_instance.volume_count
+    new_instance.attach_volume(volume.name)
+    view = appliance.browser.create_view(navigator.get_class(new_instance, 'AttachVolume').VIEW)
+    view.flash.assert_success_message(
+        'Attaching Cloud Volume "{}" to {} finished'.format(volume.name, new_instance.name))
+
+    wait_for(lambda: new_instance.volume_count > initial_volume_count,
+             delay=20,
+             timeout=300, message="Waiting for volume to be attached to instance",
+             fail_func=new_instance.refresh_relationships)

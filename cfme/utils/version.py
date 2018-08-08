@@ -5,6 +5,8 @@ from miq_version import (  # noqa
     Version, LOWEST, LATEST, UPSTREAM, SPTuple, get_version,
     version_stream_product_mapping
 )
+from widgetastic.utils import VersionPick
+from widgetastic.widget import Widget
 
 from cfme.fixtures.pytest_store import store
 
@@ -64,16 +66,34 @@ def appliance_has_netapp():
         return None
 
 
-def pick(v_dict, active_version=None):
-    """
-    Collapses an ambiguous series of objects bound to specific versions
-    by interrogating the CFME Version and returning the correct item.
-    """
-    # convert keys to Versions
-    active_version = active_version or current_version()
+class VersionPicker(VersionPick):
+    """An adopted version of :py:class:`widgetastic.utils.VersionPick` descriptor."""
 
-    v_dict = {get_version(k): v for (k, v) in v_dict.items()}
-    versions = v_dict.keys()
-    sorted_matching_versions = sorted((v for v in versions if v <= active_version),
-                                      reverse=True)
-    return v_dict.get(sorted_matching_versions[0]) if sorted_matching_versions else None
+    def __get__(self, obj, cls=None):
+        if obj is None:
+            return self
+        # in order to keep widgetastic.utils.VersionPick behaviour
+        elif isinstance(obj, Widget):
+            return super(VersionPicker, self).__get__(obj)
+        else:
+            return self.pick(obj.appliance.version)
+
+    def pick(self, active_version=None):
+        """
+        Collapses an ambiguous series of objects bound to specific versions
+        by interrogating the CFME Version and returning the correct item.
+
+        Args:
+            active_version: a :py:class:`miq_version.Version` instance.
+
+        Returns:
+            A value from the version dictionary.
+        """
+        # convert keys to Versions
+        active_version = active_version or current_version()
+
+        v_dict = {get_version(k): v for (k, v) in self.version_dict.items()}
+        versions = v_dict.keys()
+        sorted_matching_versions = sorted((v for v in versions if v <= active_version),
+                                          reverse=True)
+        return v_dict.get(sorted_matching_versions[0]) if sorted_matching_versions else None

@@ -8,25 +8,22 @@ from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import browser
 from cfme.utils.wait import wait_for
-from cfme.fixtures.provider import setup_one_by_class_or_skip
 
 pytestmark = [
     pytest.mark.meta(server_roles="-automate"),  # To prevent the provisioning itself.
-    test_requirements.service
+    test_requirements.service,
+    pytest.mark.provider(classes=[InfraProvider], selector=ONE),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
-@pytest.fixture(scope='module')
-def a_provider(request):
-    return setup_one_by_class_or_skip(request, InfraProvider)
-
-
 @pytest.fixture(scope="module")
-def provisioning(a_provider):
-    return a_provider.data.get("provisioning", {})
+def provisioning(provider):
+    return provider.data.get("provisioning", {})
 
 
 @pytest.fixture(scope="module")
@@ -40,14 +37,14 @@ def vm_name():
 
 
 @pytest.fixture(scope="module")
-def generated_request(appliance, a_provider, provisioning, template_name, vm_name):
+def generated_request(appliance, provider, provisioning, template_name, vm_name):
     """Creates a provision request, that is not automatically approved, and returns the search data.
 
     After finishing the test, request should be automatically deleted.
 
     Slightly modified code from :py:module:`cfme.tests.infrastructure.test_provisioning`
     """
-    if a_provider.one_of(RHEVMProvider) and provisioning.get('vlan') is None:
+    if provider.one_of(RHEVMProvider) and provisioning.get('vlan') is None:
         pytest.skip('rhevm requires a vlan value in provisioning info')
     first_name = fauxfactory.gen_alphanumeric()
     last_name = fauxfactory.gen_alphanumeric()
@@ -55,7 +52,7 @@ def generated_request(appliance, a_provider, provisioning, template_name, vm_nam
     e_mail = "{}@{}.test".format(first_name, last_name)
     host, datastore = map(provisioning.get, ('host', 'datastore'))
     vm = appliance.collections.infra_vms.instantiate(name=vm_name,
-                                                     provider=a_provider,
+                                                     provider=provider,
                                                      template_name=template_name)
     view = navigate_to(vm, 'Provision')
 
@@ -76,14 +73,14 @@ def generated_request(appliance, a_provider, provisioning, template_name, vm_nam
     }
 
     # Same thing, different names. :\
-    if a_provider.one_of(RHEVMProvider):
+    if provider.one_of(RHEVMProvider):
         provisioning_data['catalog']['provision_type'] = 'Native Clone'
-    elif a_provider.one_of(VMwareProvider):
+    elif provider.one_of(VMwareProvider):
         provisioning_data['catalog']['provision_type'] = 'VMware'
 
     # template and provider names for template selection
     provisioning_data['template_name'] = template_name
-    provisioning_data['provider_name'] = a_provider.name
+    provisioning_data['provider_name'] = provider.name
 
     view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
     request_cells = {

@@ -107,10 +107,10 @@ def small_vm(provider, small_template_modscope):
 @pytest.fixture()
 def check_hosts(small_vm, provider):
     """Fixture to return host"""
-    if len(provider.hosts) != 1:
+    if len(provider.hosts.all()) != 1:
         view = navigate_to(small_vm, 'Details')
         vm_host = view.entities.summary('Relationships').get_text_of('Host')
-        hosts = [vds.name for vds in provider.hosts if vds.name not in vm_host]
+        hosts = [vds.name for vds in provider.hosts.all() if vds.name not in vm_host]
         return hosts[0]
     else:
         pytest.skip("There is only one host in the provider")
@@ -253,7 +253,7 @@ def test_setting_child_quota_more_than_parent(tenants_setup, parent_quota, child
 
 
 @pytest.mark.long_running
-@pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True, scope="module",
+@pytest.mark.provider([VMwareProvider], override=True, scope="module",
                       required_fields=[['templates', 'small_template']], selector=ONE_PER_TYPE)
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data'],

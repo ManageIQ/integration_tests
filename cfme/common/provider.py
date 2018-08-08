@@ -12,7 +12,7 @@ from cfme.common import Taggable
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, AddProviderError)
 from cfme.modeling.base import BaseEntity
-from cfme.utils import ParamClassName, version, conf
+from cfme.utils import ParamClassName, conf
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.log import logger
@@ -20,8 +20,9 @@ from cfme.utils.net import resolve_hostname
 from cfme.utils.stats import tol_check
 from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for, RefreshTimer
-from . import PolicyProfileAssignable
+
 
 _base_types_cache = {}
 _provider_types_cache = defaultdict(dict)
@@ -257,8 +258,11 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
         Helper method for ``self.create_rest``
         """
         if getattr(self, "region", None):
-            provider_attributes["provider_region"] = version.pick(
-                self.region) if isinstance(self.region, dict) else self.region
+            if isinstance(self.region, dict):
+                provider_attributes["provider_region"] = VersionPicker(self.region).pick(
+                    self.appliance.version)
+            else:
+                provider_attributes["provider_region"] = self.region
         if getattr(self, "project", None):
             provider_attributes["project"] = self.project
 
@@ -536,8 +540,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
             cancel: Whether to cancel the deletion, defaults to True
         """
         view = navigate_to(self, 'Details')
-        item_title = version.pick({'5.9': 'Remove this {} Provider from Inventory',
-                                   version.LOWEST: 'Remove this {} Provider'})
+        item_title = 'Remove this {} Provider from Inventory'
         view.toolbar.configuration.item_select(item_title.format(self.string_name),
                                                handle_alert=not cancel)
         if not cancel:
@@ -1047,13 +1050,10 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
         return result_list
 
 
-class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, Taggable):
-    vm_name = ""
-    template_name = ""
+class CloudInfraProviderMixin(object):
     detail_page_suffix = 'provider'
     edit_page_suffix = 'provider_edit'
     refresh_text = "Refresh Relationships and Power States"
-    db_types = ["CloudManager", "InfraManager"]
 
     @property
     def hostname(self):

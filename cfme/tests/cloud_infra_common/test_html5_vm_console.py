@@ -5,8 +5,9 @@ import imghdr
 import time
 import re
 
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.common.provider import CloudInfraProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import ssh
 from cfme.utils.blockers import BZ
@@ -21,7 +22,7 @@ from cfme.markers.env_markers.provider import providers
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider(gen_func=providers,
-                         filters=[ProviderFilter(classes=[CloudInfraProvider],
+                         filters=[ProviderFilter(classes=[CloudProvider, InfraProvider],
                                                  required_flags=['html5_console'])],
                          scope='module'),
 ]

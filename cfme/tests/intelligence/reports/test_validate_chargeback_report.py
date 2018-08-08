@@ -33,7 +33,7 @@ from cfme.base.credential import Credential
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
-from cfme.common.provider import CloudInfraProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.blockers import BZ
@@ -43,8 +43,8 @@ from cfme.utils.wait import wait_for
 
 from wrapanapi import VmState
 
-pf1 = ProviderFilter(classes=[CloudInfraProvider],
-                     required_fields=[(['cap_and_util', 'test_chargeback'], True)])
+pf1 = ProviderFilter(classes=[CloudProvider, InfraProvider],
+    required_fields=[(['cap_and_util', 'test_chargeback'], True)])
 pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support C&U
 
 pytestmark = [

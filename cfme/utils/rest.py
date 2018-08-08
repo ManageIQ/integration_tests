@@ -168,22 +168,13 @@ def delete_resources_from_collection(
     for resource in resources:
         resource.wait_not_exists(num_sec=num_sec, delay=delay)
 
-    def _response_success_false():
-        collection.action.delete(*resources)
-        _assert_response(success=False)
-
-    current_version = collection._api.server_info.get('version')
-    if not_found is False:
-        _response_success_false()
-    # On version < 5.9 when one resource in a list of resources to delete is missing,
-    # the whole request fails with 'RecordNotFound'. It's not the case only
-    # for resources in the "configuration_script_sources" collection ATM.
-    elif not_found or current_version < '5.9':
+    if not_found:
         with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
             collection.action.delete(*resources)
         _assert_response(http_status=404)
     else:
-        _response_success_false()
+        collection.action.delete(*resources)
+        _assert_response(success=False)
 
 
 def delete_resources_from_detail(

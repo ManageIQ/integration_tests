@@ -5,8 +5,8 @@ from datetime import date, timedelta, datetime
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.common.provider import CloudInfraProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.generators import random_vm_name
@@ -22,7 +22,7 @@ pytestmark = [
     pytest.mark.long_running,
     test_requirements.retirement,
     pytest.mark.provider(gen_func=providers,
-                         filters=[ProviderFilter(classes=[CloudInfraProvider],
+                         filters=[ProviderFilter(classes=[CloudProvider, InfraProvider],
                                                  required_flags=['provision', 'retire'])]),
 ]
 

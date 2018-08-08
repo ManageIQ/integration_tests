@@ -15,9 +15,8 @@ from cfme.containers.template import Template, TemplateCollection
 from cfme.containers.volume import Volume, VolumeCollection
 from cfme.containers.container import Container, ContainerCollection
 
-from cfme.utils import version
-from cfme.utils.soft_get import soft_get
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.soft_get import soft_get
 
 
 pytestmark = [
@@ -88,13 +87,10 @@ TEST_ITEMS = [
         ContainersTestItem(
             Image,
             'CMP-9978',
-            expected_fields={
-                version.LOWEST: ['name', 'image id', 'full name'],
-                '5.7': [
-                    'name', 'image id', 'full name', 'architecture', 'author',
-                    'entrypoint', 'docker version', 'exposed ports', 'size'
-                ]
-            },
+            expected_fields=[
+                'name', 'image id', 'full name', 'architecture', 'author',
+                'entrypoint', 'docker version', 'exposed ports', 'size'
+            ],
             collection_object=ImageCollection
         )
     ),
@@ -151,10 +147,7 @@ def test_properties(provider, appliance, test_item, soft_assert):
 
     for instance in instances:
 
-        if isinstance(test_item.expected_fields, dict):
-            expected_fields = version.pick(test_item.expected_fields)
-        else:
-            expected_fields = test_item.expected_fields
+        expected_fields = test_item.expected_fields
         for field in expected_fields:
             view = navigate_to(instance, 'Details')
             try:

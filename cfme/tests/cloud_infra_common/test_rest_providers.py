@@ -2,7 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.provider import CloudInfraProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.blockers import BZ
@@ -18,7 +18,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     test_requirements.rest,
     pytest.mark.tier(1),
-    pytest.mark.provider([CloudInfraProvider])
+    pytest.mark.provider([CloudProvider, InfraProvider])
 ]
 
 
@@ -60,10 +60,10 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
             # once BZ1545240 is fixed other failure than internal server
             # error is expected
             if failure.name == 'cloud_tenants' and BZ(
-                    1545240, forced_streams=['5.8', '5.9', 'upstream']).blocks:
+                    1612905, forced_streams=['5.8', '5.9', 'upstream']).blocks:
                 continue
             if failure.name == 'flavors' and BZ(
-                    1545240, forced_streams=['5.9', 'upstream']).blocks:
+                    1612905, forced_streams=['5.9', 'upstream']).blocks:
                 continue
         if provider.one_of(RHEVMProvider):
             # once BZ1546112 is fixed other failure than internal server

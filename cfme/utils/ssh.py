@@ -14,13 +14,13 @@ from cached_property import cached_property
 from os import path as os_path
 from scp import SCPClient
 
-from cfme.utils import conf, ports, version
+from cfme.utils import conf, ports
 from cfme.utils.log import logger
 from cfme.utils.net import net_check
 from cfme.utils.path import project_path
 from cfme.utils.quote import quote
 from cfme.utils.timeutil import parsetime
-from cfme.utils.version import Version
+from cfme.utils.version import Version, VersionPicker
 from cfme.fixtures.pytest_store import store
 import six
 
@@ -289,7 +289,7 @@ class SSHClient(paramiko.SSHClient):
     def _run_command(self, command, timeout=RUNCMD_TIMEOUT, reraise=False, ensure_host=False,
                      ensure_user=False, container=None):
         if isinstance(command, dict):
-            command = version.pick(command, active_version=self.vmdb_version)
+            command = VersionPicker(command).pick(self.vmdb_version)
         original_command = command
         uses_sudo = False
         logger.info("Running command %r", command)
@@ -433,15 +433,16 @@ class SSHClient(paramiko.SSHClient):
                 command=command, pre=prefix), timeout=timeout, **kwargs)
 
     def put_file(self, local_file, remote_file='.', **kwargs):
+        ensure_host = kwargs.pop('ensure_host', False)
         logger.info("Transferring local file %r to remote %r", local_file, remote_file)
-        if self.is_container:
+        if self.is_container and not ensure_host:
             tempfilename = '/share/temp_{}'.format(fauxfactory.gen_alpha())
             logger.info('For this purpose, temporary file name is %r', tempfilename)
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
                 local_file, tempfilename, **kwargs)
             self.run_command('mv {} {}'.format(tempfilename, remote_file))
             return scp
-        elif self.is_pod:
+        elif self.is_pod and not ensure_host:
             tmp_folder_name = 'automation-{}'.format(fauxfactory.gen_alpha().lower())
             logger.info('For this purpose, temporary folder name is /tmp/%s', tmp_folder_name)
             # Clean up container's temporary folder

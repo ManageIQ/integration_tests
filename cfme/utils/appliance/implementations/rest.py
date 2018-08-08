@@ -4,6 +4,7 @@
 class ViaREST(object):
 
     name = "REST"
+    navigator = None
 
     def __init__(self, owner):
         self.owner = owner

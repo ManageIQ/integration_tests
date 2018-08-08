@@ -2,7 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.provider import CloudInfraProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.exceptions import VmOrInstanceNotFound
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
@@ -13,7 +13,7 @@ pytestmark = [
     test_requirements.tag,
     pytest.mark.tier(3),
     pytest.mark.provider(
-        [CloudInfraProvider], required_fields=['cap_and_util'], selector=ONE_PER_TYPE
+        [CloudProvider, InfraProvider], required_fields=['cap_and_util'], selector=ONE_PER_TYPE
     ),
     pytest.mark.usefixtures('setup_provider')
 ]

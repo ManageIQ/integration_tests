@@ -6,7 +6,9 @@ import pytest
 from manageiq_client.api import ManageIQClient as MiqApi
 
 from cfme import test_requirements
+from cfme.fixtures.pytest_store import store
 from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import (
     TEMPLATE_TORSO,
     _creating_skeleton,
@@ -24,7 +26,6 @@ from cfme.rest.gen_data import (
     vm as _vm,
 )
 from cfme.utils.blockers import BZ
-from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
@@ -34,27 +35,26 @@ from cfme.utils.rest import (
 )
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
-from cfme.fixtures.provider import setup_one_or_skip
-from cfme.fixtures.pytest_store import store
 
 pytestmark = [
     pytest.mark.long_running,
     test_requirements.service,
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    pytest.mark.provider(
+        classes=[InfraProvider],
+        required_fields=[
+            ["provisioning", "template"],
+            ["provisioning", "host"],
+            ["provisioning", "datastore"],
+            ["provisioning", "vlan"],
+        ],
+        selector=ONE,
+    ),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
 NUM_BUNDLE_ITEMS = 4
-
-
-@pytest.fixture(scope="module")
-def a_provider(request):
-    pf = ProviderFilter(classes=[InfraProvider], required_fields=[
-        ['provisioning', 'template'],
-        ['provisioning', 'host'],
-        ['provisioning', 'datastore'],
-        ['provisioning', 'vlan']])
-    return setup_one_or_skip(request, filters=[pf])
 
 
 def wait_for_vm_power_state(vm, resulting_state):

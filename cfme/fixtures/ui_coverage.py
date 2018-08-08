@@ -64,11 +64,12 @@ from py.path import local
 
 from cfme.fixtures.pytest_store import store
 from cfme.exceptions import ApplianceVersionException
-from cfme.utils import conf, version
+from cfme.utils import conf
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import create_sublogger
 from cfme.utils.path import conf_path, log_path, scripts_data_path
 from cfme.utils.quote import quote
+from cfme.utils.version import LATEST, LOWEST, VersionPicker
 
 # paths to all of the coverage-related files
 
@@ -188,10 +189,10 @@ class CoverageManager(object):
             self.ipapp.ssh_client.run_command('yum -y install git')
             self.ipapp.ssh_client.run_command('cd {}; bundle'.format(rails_root))
 
-        version.pick({
-            version.LOWEST: _gem_install,
-            version.LATEST: _bundle_install,
-        })()
+        VersionPicker({
+            LOWEST: _gem_install,
+            LATEST: _bundle_install,
+        }).pick()()
 
     def _install_coverage_hook(self):
         # Clean appliance coverage dir

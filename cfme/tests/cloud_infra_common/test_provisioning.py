@@ -9,10 +9,11 @@ from riggerlib import recursive_update
 from widgetastic_patternfly import CheckableBootstrapTreeview as Check_tree
 
 from cfme import test_requirements
-from cfme.cloud.provider import CloudInfraProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -26,7 +27,7 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
     test_requirements.provision, pytest.mark.tier(2),
     pytest.mark.provider(gen_func=providers,
-                         filters=[ProviderFilter(classes=[CloudInfraProvider],
+                         filters=[ProviderFilter(classes=[CloudProvider, InfraProvider],
                                                  required_flags=['provision'])],
                          scope="function"),
     pytest.mark.usefixtures('setup_provider')

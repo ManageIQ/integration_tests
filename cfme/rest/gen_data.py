@@ -2,15 +2,12 @@
 import fauxfactory
 from widgetastic.utils import partial_match
 
-from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import version
 from cfme.utils.log import logger
 from cfme.utils.rest import create_resource
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
-from cfme.fixtures.provider import setup_one_by_class_or_skip
 
 from wrapanapi import VmState
 
@@ -197,10 +194,6 @@ def rates(request, rest_api, num=3):
         data.append(req)
 
     return _creating_skeleton(request, rest_api, 'rates', data)
-
-
-def a_provider(request):
-    return setup_one_by_class_or_skip(request, InfraProvider)
 
 
 def vm(request, a_provider, rest_api):
@@ -510,9 +503,7 @@ def orchestration_templates(request, rest_api, num=2):
         data.append({
             'name': 'test_{}'.format(uniq),
             'description': 'Test Template {}'.format(uniq),
-            'type': version.pick({
-                version.LOWEST: 'OrchestrationTemplateCfn',
-                '5.9': 'ManageIQ::Providers::Amazon::CloudManager::OrchestrationTemplate'}),
+            'type': 'ManageIQ::Providers::Amazon::CloudManager::OrchestrationTemplate',
             'orderable': False,
             'draft': False,
             'content': TEMPLATE_TORSO.replace('CloudFormation', uniq)})

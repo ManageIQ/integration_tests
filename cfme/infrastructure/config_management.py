@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, TextInput, Text, View
@@ -8,13 +7,13 @@ from widgetastic_patternfly import BootstrapSelect, Dropdown, Tab
 from cfme.base.credential import Credential as BaseCredential
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable, TagPageView
-from cfme.utils import ParamClassName
-from cfme.utils import version, conf
+from cfme.utils import conf, ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.version import LATEST, LOWEST, VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
@@ -531,6 +530,11 @@ class Satellite(ConfigManager):
             satellite_cfg_mgr.delete()
     """
 
+    type = VersionPicker({
+        LOWEST: 'Red Hat Satellite',
+        LATEST: 'Foreman'
+    })
+
     def __init__(self, name=None, url=None, ssl=None, credentials=None, key=None):
         super(Satellite, self).__init__(name=name, url=url, ssl=ssl, credentials=credentials,
                                         key=key)
@@ -539,16 +543,6 @@ class Satellite(ConfigManager):
         self.ssl = ssl
         self.credentials = credentials
         self.key = key or name
-
-    @cached_property
-    def type(self):
-        """Returns presumed type of the manager based on CFME version
-
-        Note:
-            We cannot actually know the type of the provider from the UI.
-            This represents the supported type by CFME version and is to be used in navigation.
-            """
-        return version.pick({version.LOWEST: 'Red Hat Satellite', version.LATEST: 'Foreman'})
 
 
 class AnsibleTower(ConfigManager):
