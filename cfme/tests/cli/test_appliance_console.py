@@ -1,8 +1,6 @@
 import pytest
-import re
 import random
 
-from cfme.utils.blockers import BZ
 from collections import namedtuple
 from wait_for import wait_for
 from cfme.utils import os
