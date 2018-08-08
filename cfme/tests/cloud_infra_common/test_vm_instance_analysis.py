@@ -339,7 +339,7 @@ def ssa_analysis_profile(appliance):
 
     analysis_profile_name = 'default'
     analysis_profiles_collection = appliance.collections.analysis_profiles
-    analysis_profile = analysis_profiles_collection(
+    analysis_profile = analysis_profiles_collection.instantiate(
         name=analysis_profile_name,
         description=analysis_profile_name,
         profile_type=analysis_profiles_collection.VM_TYPE,
