@@ -1,6 +1,7 @@
-import pytest
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.containers.provider import ContainersProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
+import pytest
+
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -10,17 +11,33 @@ pytestmark = [
 
 
 def get_pause_resume_buttons(view):
-    # ensure resume option is exist
+    # ensure resume option is exists
     resume_option = filter(lambda item: "resume" in item.lower(), view.toolbar.configuration.items)
     assert resume_option, "Not resume provider option is available in the configuration menu"
     resume_option = resume_option.pop()
 
-    # ensure pause option is exsit
+    # ensure pause option is exists
     pause_option = filter(lambda item: "pause" in item.lower(), view.toolbar.configuration.items)
     assert pause_option, "Not pause provider option is available in the configuration menu"
     pause_option = pause_option.pop()
 
     return pause_option, resume_option
+
+
+def check_ems_state_in_diagnostics(appliance, provider):
+    workers_view = navigate_to(appliance.collections.diagnostic_workers, 'AllDiagnosticWorkers')
+    workers_view.browser.refresh()
+    ems_worker_is_running = False
+    for row in workers_view.workers_table.rows():
+        name = getattr(row, "Name")
+        uri_queue_name = getattr(row, "URI / Queue Name")
+        assert name, "'Name' column not found in workers table"
+        assert uri_queue_name, "'URI / Queue Name' column not found in workers table"
+        if ("Event Monitor for Provider" in name.text and
+                provider.name in name.text and
+                "ems_" in uri_queue_name.text):
+            ems_worker_is_running = True
+    return ems_worker_is_running
 
 
 @pytest.mark.polarion('10790', '10791')
@@ -57,28 +74,3 @@ def test_pause_and_resume_provider_workers(appliance, provider):
     ems_worker_state = check_ems_state_in_diagnostics(appliance, provider)
 
     assert ems_worker_state, "Diagnostics shows that workers are not running after resume provider"
-
-
-def check_ems_state_in_diagnostics(appliance, provider):
-    workers_view = navigate_to(appliance.collections.diagnostic_workers, 'AllDiagnosticWorkers')
-
-    workers_view.browser.refresh()
-
-    ems_worker_is_running = False
-
-    for row in workers_view.workers_table.rows():
-
-        name = getattr(row, "Name")
-
-        uri_queue_name = getattr(row, "URI / Queue Name")
-
-        assert name, "'Name' column not found in workers table"
-
-        assert uri_queue_name, "'URI / Queue Name' column not found in workers table"
-
-        if "Event Monitor for Provider" in name.text\
-                and provider.name in name.text \
-                and "ems_" in uri_queue_name.text:
-            ems_worker_is_running = True
-
-    return ems_worker_is_running
