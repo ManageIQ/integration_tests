@@ -27,7 +27,7 @@ def test_provisioning_dialog_crud(appliance):
     assert dialog.exists
 
     with update(dialog):
-        dialog.diag_type = collection.HOST_PROVISION
+        dialog.diag_type = collection.VM_MIGRATE
     assert dialog.exists
     # Update with cancel
     dialog.update(updates={'description': 'not saved'}, cancel=True)
