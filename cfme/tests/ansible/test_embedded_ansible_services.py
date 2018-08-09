@@ -286,29 +286,22 @@ def test_service_ansible_playbook_confirm(appliance, soft_assert):
     collection = appliance.collections.catalog_items
     cat_item = collection.instantiate(collection.ANSIBLE_PLAYBOOK, "", "", {})
     view = navigate_to(cat_item, "Add")
-    assert view.provisioning.is_displayed
-    assert view.retirement.is_displayed
+    view.provisioning.wait_displayed()
+    view.retirement.wait_displayed()
     soft_assert(view.provisioning.repository.is_displayed)
     soft_assert(view.provisioning.verbosity.is_displayed)
     soft_assert(view.provisioning.verbosity.selected_option == "0 (Normal)")
-    if appliance.version < "5.9":
-        soft_assert(view.provisioning.hosts.is_displayed)
-        soft_assert(view.provisioning.hosts.value == "localhost")
-        soft_assert(view.retirement.hosts.is_displayed)
-        soft_assert(view.retirement.hosts.value == "localhost")
-        soft_assert(view.retirement.remove_resources.selected_option == "Yes")
-    else:
-        soft_assert(view.provisioning.localhost.is_displayed)
-        soft_assert(view.provisioning.specify_host_values.is_displayed)
-        soft_assert(view.provisioning.logging_output.is_displayed)
-        soft_assert(view.retirement.localhost.is_displayed)
-        soft_assert(view.retirement.specify_host_values.is_displayed)
-        soft_assert(view.retirement.logging_output.is_displayed)
-        soft_assert(view.retirement.remove_resources.selected_option == "")
+    soft_assert(view.provisioning.localhost.is_displayed)
+    soft_assert(view.provisioning.specify_host_values.is_displayed)
+    soft_assert(view.provisioning.logging_output.is_displayed)
+    soft_assert(view.retirement.localhost.is_displayed)
+    soft_assert(view.retirement.specify_host_values.is_displayed)
+    soft_assert(view.retirement.logging_output.is_displayed)
     soft_assert(view.retirement.repository.is_displayed)
     soft_assert(view.retirement.verbosity.is_displayed)
-    soft_assert(view.retirement.remove_resources.is_displayed)
     soft_assert(view.retirement.verbosity.selected_option == "0 (Normal)")
+    soft_assert(view.retirement.remove_resources.is_displayed)
+    soft_assert(view.retirement.remove_resources.selected_option == "Yes")
 
 
 @pytest.mark.tier(3)

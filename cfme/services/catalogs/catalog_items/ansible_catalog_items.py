@@ -153,8 +153,8 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         escalate_privilege = BootstrapSwitch("retirement_become_enabled")
         verbosity = BootstrapSelect("retirement_verbosity")
         remove_resources = VersionPick({
-            Version.lowest(): BootstrapSelect("vm.catalogItemModel.retirement_remove_resources"),
-            "5.9": BootstrapSelect("vm.vm.catalogItemModel.retirement_remove_resources")
+            Version.lowest(): BootstrapSelect("vm.vm.catalogItemModel.retirement_remove_resources"),
+            "5.10": BootstrapSelect("retirement_remove_resources")
         })
         extra_vars = AnsibleExtraVariables(tab="retirement")
 
