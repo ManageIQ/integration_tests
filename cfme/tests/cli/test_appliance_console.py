@@ -374,3 +374,57 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
                 logger.info("{}: no result".format(rule))
         else:
             logger.info("{}: rule not found".format(rule))
+
+
+def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
+    """'ap' launches appliance_console, '' clears info screen, '1' configure network,
+    '1' configure DHCP, 'y' confirm IPv4 configuration, 'y' IPv6 configuration."""
+    command_set = ('ap', '', '1', '1', 'y', 'y')
+    unconfigured_appliance.appliance_console.run_commands(command_set)
+
+    def appliance_is_connective():
+        unconfigured_appliance.ssh_client.run_command("true")
+    wait_for(appliance_is_connective, handle_exception=True, delay=1, timeout=30)
+
+    soft_assert(unconfigured_appliance.ssh_client.run_command(
+        "ip a show dev eth0 | grep 'inet\s.*dynamic'"))
+    soft_assert(unconfigured_appliance.ssh_client.run_command
+        ("ip a show dev eth0 | grep 'inet6\s.*dynamic'"))
+
+
+def test_appliance_console_static_ipv4(unconfigured_appliance, soft_assert):
+    """'ap' launches appliance_console, '' clears info screen, '1' configure network,
+    '2' configure static IPv4, '' confirm default IPv4 addr, '' confirm default netmask,
+    '' confirm default gateway, '' confirm default primary DNS, '' confirm default secondary DNS,
+    '' confirm default search order, 'y' apply static configuration.
+    """
+    command_set = ('ap', '', '1', '2', '', '', '', '', '', '', 'y')
+    unconfigured_appliance.appliance_console.run_commands(command_set)
+
+    def appliance_is_connective():
+        unconfigured_appliance.ssh_client.run_command("true")
+    wait_for(appliance_is_connective, handle_exception=True, delay=1, timeout=30)
+
+    soft_assert(unconfigured_appliance.ssh_client.run_command(
+        "ip -4 a show dev eth0 | grep 'inet .*scope global eth0'"))
+    soft_assert(unconfigured_appliance.ssh_client.run_command(
+        "ip -4 r show dev eth0 | grep 'default via'"))
+
+
+def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
+    """'ap' launches appliance_console, '' clears info screen, '1' configure network,
+    '3' configure static IPv6, '1::1' set IPv4 addr, '' set deafault prefix length,
+    '1::f' set IPv6 gateway, '' confirm default primary DNS, '' confirm default secondary DNS,
+    '' confirm default search order, 'y' apply static configuration.
+    """
+    command_set = ('ap', '', '1', '3', '1::1', '', '1::f', '', '', '', 'y')
+    unconfigured_appliance.appliance_console.run_commands(command_set)
+
+    def appliance_is_connective():
+        unconfigured_appliance.ssh_client.run_command("true")
+    wait_for(appliance_is_connective, handle_exception=True, delay=1, timeout=30)
+
+    soft_assert(unconfigured_appliance.ssh_client.run_command(
+        "ip -6 a show dev eth0 | grep 'inet6 1::1.*scope global'"))
+    soft_assert(unconfigured_appliance.ssh_client.run_command(
+        "ip -6 r show dev eth0 | grep 'default via 1::f'"))
