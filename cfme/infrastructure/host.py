@@ -2,6 +2,7 @@
 """A model of an Infrastructure Host in CFME."""
 import attr
 import six
+import json
 
 from manageiq_client.api import APIException
 from navmazing import NavigateToSibling, NavigateToAttribute
@@ -418,7 +419,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
             fail_func=view.browser.refresh
         )
 
-    def capture_historical_data(self, interval='hourly', back='6.days'):
+    def capture_historical_data(self, interval="hourly", back="6.days"):
         """Capture historical utilization data for this Host
 
         Args:
@@ -426,9 +427,14 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
             back: back time interval from which you want data
         """
         ret = self.appliance.ssh_client.run_rails_command(
-            "\"host = Host.where(:ems_id => {}).where(:name => {})[0];\
-            host.perf_capture({}, {}.ago.utc, Time.now.utc)\""
-            .format(self.provider.id, repr(self.name), repr(interval), back))
+            "'host = Host.where(:ems_id => {prov_id}).where(:name => {host_name})[0];\
+            host.perf_capture({interval}, {back}.ago.utc, Time.now.utc)'".format(
+                prov_id=self.provider.id,
+                host_name=json.dumps(self.name),
+                interval=json.dumps(interval),
+                back=back,
+            )
+        )
         return ret.success
 
     @classmethod
