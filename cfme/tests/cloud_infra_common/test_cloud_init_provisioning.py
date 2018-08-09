@@ -85,7 +85,8 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
     provision_request = provider.appliance.collections.requests.instantiate(vm_name,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    connect_ip = mgmt_system.get_vm(vm_name).ip
+    wait_for(lambda: instance.ip_address is not None, num_sec=60)
+    connect_ip = instance.ip_address
     assert connect_ip, "VM has no IP"
 
     # Check that we can at least get the uptime via ssh this should only be possible
