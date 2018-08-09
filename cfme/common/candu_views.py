@@ -129,3 +129,33 @@ class ClusterInfraUtilizationView(View):
     def is_displayed(self):
         expected_title = "{} Capacity & Utilization".format(self.context['object'].name)
         return self.title.text == expected_title
+
+
+class DatastoreInfraUtilizationView(View):
+    """View for Infrastructure provider Datastore Utilization Hourly and Daily"""
+
+    title = Text(".//div[@id='main-content']//h1")
+    options = View.nested(OptionForm)
+    interval_type = ConditionalSwitchableView(reference="options.interval")
+
+    @interval_type.register("Hourly", default=True)
+    class DatastoreInfraHourlyUtilizationView(View):
+        datastore_used_disk_space = LineChart(id="miq_chart_parent_candu_5")
+        datastore_hosts = LineChart(id="miq_chart_parent_candu_6")
+        datastore_vms = LineChart(id="miq_chart_parent_candu_7")
+
+    @interval_type.register("Daily")
+    class DatastoreInfraDailyUtilizationView(View):
+        datastore_use_space_by_type = LineChart(id="miq_chart_parent_candu_0")
+        datastore_disk_files_space_by_type = LineChart(id="miq_chart_parent_candu_1")
+        datastore_snapshot_files_space_by_type = LineChart(id="miq_chart_parent_candu_2")
+        datastore_memory_files_space_by_type = LineChart(id="miq_chart_parent_candu_3")
+        datastore_vms_by_type = LineChart(id="miq_chart_parent_candu_4")
+        datastore_used_disk_space = LineChart(id="miq_chart_parent_candu_5")
+        datastore_hosts = LineChart(id="miq_chart_parent_candu_6")
+        datastore_vms = LineChart(id="miq_chart_parent_candu_7")
+
+    @property
+    def is_displayed(self):
+        expected_title = "{} Capacity & Utilization".format(self.context["object"].name)
+        return self.title.text == expected_title
