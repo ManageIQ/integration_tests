@@ -108,7 +108,7 @@ def test_tables_fields(provider, test_item, soft_assert, appliance):
     view = navigate_to((test_item.obj if test_item.obj is ContainersProvider
                         else getattr(appliance.collections, test_item.collection_name)), 'All')
     view.toolbar.view_selector.select('List View')
-    for row in view.table.rows():
+    for row in view.entities.elements.rows():
         name_field = getattr(row, 'name', getattr(row, 'host', None))
         name = name_field.text
         for field in test_item.fields_to_verify:
