@@ -254,6 +254,7 @@ class IPAppliance(object):
         'db_port': 'db_port',
         'ssh_port': 'ssh_port',
         'project': 'project',
+        'version': 'version',
     }
     CONFIG_NONGLOBAL = {'hostname'}
     PROTOCOL_PORT_MAPPING = {'http': 80, 'https': 443}
@@ -270,9 +271,15 @@ class IPAppliance(object):
     @property
     def as_json(self):
         """Dumps the arguments that can create this appliance as a JSON. None values are ignored."""
+        def _version_tostr(x):
+            if isinstance(x, Version):
+                return str(x)
+            else:
+                return x
         return json.dumps({
-            k: getattr(self, k)
-            for k in set(self.CONFIG_MAPPING.values())})
+            k: _version_tostr(getattr(self, k))
+            for k in set(self.CONFIG_MAPPING.values())
+            if k in self.__dict__})
 
     @classmethod
     def from_json(cls, json_string):
@@ -281,7 +288,7 @@ class IPAppliance(object):
     def __init__(
             self, hostname, ui_protocol='https', ui_port=None, browser_steal=False, project=None,
             container=None, openshift_creds=None, db_host=None, db_port=None, ssh_port=None,
-            is_dev=False
+            is_dev=False, version=None,
     ):
         if not isinstance(hostname, six.string_types):
             raise TypeError('Appliance\'s hostname must be a string!')
@@ -317,6 +324,10 @@ class IPAppliance(object):
             self.is_pod = True
         else:
             self.is_pod = False
+        if version is not None:
+            # only set when given so we can defer to therest api via the
+            # cached property
+            self.version = Version(version)
 
     def unregister(self):
         """ unregisters appliance from RHSM/SAT6 """
@@ -780,11 +791,18 @@ class IPAppliance(object):
 
     @cached_property
     def version(self):
+        return self._version_from_rest()
+
+    def _version_from_rest(self):
         try:
             return Version(self.rest_api.server_info['version'])
         except (AttributeError, KeyError, IOError, APIException):
             self.log.exception('appliance.version could not be retrieved from REST, falling back')
             return self.ssh_client.vmdb_version
+
+    def verify_version(self):
+        """verifies if the actual appliance version matches the local stored one"""
+        return self.version == self._version_from_rest()
 
     @cached_property
     def build(self):
@@ -2945,7 +2963,7 @@ def load_appliances(appliance_list, global_kwargs):
                 )
             appliance = IPAppliance(**{mapping[k]: v for k, v in kwargs.items() if k in mapping})
 
-        result.append(appliance)
+            result.append(appliance)
     return result
 
 

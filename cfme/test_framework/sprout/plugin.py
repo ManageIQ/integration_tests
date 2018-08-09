@@ -103,7 +103,6 @@ def mangle_in_sprout_appliances(config):
             appliance_args.update(extra_args)
         appliances.append(appliance_args)
         log.info("- %s is %s", appliance['url'], appliance['name'])
-
     mgr.reset_timer()
     template_name = requested_appliances[0]["template_name"]
     conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
