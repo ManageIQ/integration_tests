@@ -234,7 +234,7 @@ def main(**kwargs):
         raw_tags = trackerbot.providertemplate().get(provider=kwargs['provider'],
                                                      template=deploy_args['template'])['objects']
         raw_tags = raw_tags[-1]['template'].get('custom_data', "{}")
-        deploy_args["tags"] = yaml.safe_load(raw_tags.replace("u'", '"').replace("'", '"'))['TAGS']
+        deploy_args["tags"] = yaml.safe_load(raw_tags)['TAGS']
     # Do it!
     try:
         logger.info(
