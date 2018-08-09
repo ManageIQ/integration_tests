@@ -1716,11 +1716,11 @@ class IPAppliance(object):
     def is_embedded_ansible_running(self):
         return self.is_embedded_ansible_role_enabled and self.is_supervisord_running
 
-    def wait_for_embedded_ansible(self, timeout=900):
+    def wait_for_embedded_ansible(self, timeout=1200):
         """Waits for embedded ansible to be ready
 
         Args:
-            timeout: Number of seconds to wait until timeout (default ``900``)
+            timeout: Number of seconds to wait until timeout (default ``1200``)
         """
         if self.is_pod and BZ(1576744, forced_streams=['5.9']).blocks:
             # TODO: to remove this when BZ is fixed
