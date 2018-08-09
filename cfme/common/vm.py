@@ -3,6 +3,7 @@
 from datetime import datetime, date, timedelta
 
 import attr
+import json
 from cached_property import cached_property
 from riggerlib import recursive_update
 
@@ -666,9 +667,12 @@ class VM(BaseVM):
             back: back time interval from which you want data
         """
         ret = self.appliance.ssh_client.run_rails_command(
-            "\"vm = Vm.where(:ems_id => {prov_id}).where(:name => '{vm_name}')[0];\
-            vm.perf_capture('{interval}', {back}.ago.utc, Time.now.utc)\"".format(
-                prov_id=self.provider.id, vm_name=self.name, interval=interval, back=back
+            "'vm = Vm.where(:ems_id => {prov_id}).where(:name => {vm_name})[0];\
+            vm.perf_capture({interval}, {back}.ago.utc, Time.now.utc)'".format(
+                prov_id=self.provider.id,
+                vm_name=json.dumps(self.name),
+                interval=json.dumps(interval),
+                back=back,
             )
         )
         return ret.success
