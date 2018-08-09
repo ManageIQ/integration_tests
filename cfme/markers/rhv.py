@@ -20,6 +20,9 @@ To test this module::
 
     pytest -p pytester markers/rhv.py
 """
+import pytest
+
+
 RHV_CFME_TIERS = (1, 2, 3)
 
 
@@ -53,3 +56,18 @@ def test_rhv_markers(testdir):
     testdir.runpytest("-m rhv1 or rhv2 or rhv3", "--strict").assert_outcomes(passed=3)
     testdir.runpytest("-m not rhv3", "--strict").assert_outcomes(passed=2, failed=1)
     testdir.runpytest("-m not rhv1 and not rhv2 and not rhv3", "--strict").assert_outcomes(failed=1)
+
+
+def pytest_runtest_logreport(report):
+    """Add RHV tier (e.g. "rhv1" to XML report as a property."""
+    if report.when != 'setup':
+        return
+    xml = getattr(pytest.config, '_xml', None)
+    if xml is None:
+        return
+    reporter = xml.node_reporter(report)
+    for tier in RHV_CFME_TIERS:
+        tier_marker = 'rhv{}'.format(tier)
+        if report.keywords.get(tier_marker):
+            reporter.add_property('rhv_tier', tier_marker)
+            break
