@@ -951,6 +951,15 @@ class InfraVm(VM):
         return host
 
     @property
+    def datastore(self):
+        vm_api = self.appliance.rest_api.collections.vms.get(name=self.name)
+        vm_api.reload(attributes=['v_datastore_path'])
+        datastore_name = vm_api.v_datastore_path.split('/')[0]
+        return self.appliance.collections.datastores.instantiate(
+            name=datastore_name, provider=self.provider
+        )
+
+    @property
     def vm_default_args(self):
         """Represents dictionary used for Vm/Instance provision with mandatory default args"""
         provisioning = self.provider.data['provisioning']
