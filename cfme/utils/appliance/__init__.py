@@ -2775,16 +2775,21 @@ class Appliance(IPAppliance):
         from cfme.containers.provider.openshift import OpenshiftProvider
         return isinstance(self.provider, OpenshiftProvider.mgmt_class)
 
-    def set_ansible_url(self):
+    @logger_wrap("Setting ansible url: {}")
+    def set_ansible_url(self, log_callback=None):
         if self.is_on_openshift:
-            config_map = self.provider.get_appliance_tags(self.project)
-            url = config_map['cfme-openshift-embedded-ansible']['url']
-            tag = config_map['cfme-openshift-embedded-ansible']['tag']
-            config = {'embedded_ansible': {'container': {'image_name': url, 'image_tag': tag}}}
-            self.update_advanced_settings(config)
+            try:
+                config_map = self.provider.get_appliance_tags(self.project)
+                url = config_map['cfme-openshift-embedded-ansible']['url']
+                tag = config_map['cfme-openshift-embedded-ansible']['tag']
+                config = {'embedded_ansible': {'container': {'image_name': url, 'image_tag': tag}}}
+                self.update_advanced_settings(config)
+            except KeyError as e:
+                msg = "embedded ansible url was not changed in appliance {} because of {}".format(
+                    self.vm_name, str(e))
+                log_callback(msg)
 
     @property
-
     def _lun_name(self):
         return "{}LUNDISK".format(self.vm_name)
 
