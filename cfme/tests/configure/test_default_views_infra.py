@@ -28,37 +28,6 @@ gtl_params = {
 }
 
 
-def test_default_view_infra_reset(appliance):
-    """This test case performs Reset button test.
-
-    Steps:
-        * Navigate to DefaultViews page
-        * Check Reset Button is disabled
-        * Select 'infrastructure_providers' button from infrastructure region
-        * Change it's default mode
-        * Check Reset Button is enabled
-    """
-    view = navigate_to(appliance.user.my_settings, "DefaultViews")
-    assert view.tabs.default_views.reset.disabled
-    infra_btn = view.tabs.default_views.infrastructure.infrastructure_providers
-    views = ['Tile View', 'Grid View', 'List View']
-    views.remove(infra_btn.active_button)
-    infra_btn.select_button(random.choice(views))
-    assert not view.tabs.default_views.reset.disabled
-
-
-def set_and_test_default_view(appliance, group_name, view, page):
-    default_views = appliance.user.my_settings.default_views
-    old_default = default_views.get_default_view(group_name)
-    default_views.set_default_view(group_name, view)
-    dest = 'All'
-    if group_name == 'VMs':
-        dest = 'VMsOnly'
-    selected_view = navigate_to(page, dest, use_resetter=False).toolbar.view_selector.selected
-    assert view == selected_view, '{} view setting failed'.format(view)
-    default_views.set_default_view(group_name, old_default)
-
-
 def check_vm_visibility(appliance, check=False):
     view = navigate_to(appliance.collections.infra_vms, 'All')
     value = view.sidebar.vmstemplates.tree.read_contents()
@@ -92,22 +61,52 @@ def _get_page(page, appliance):
     return page
 
 
-@pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_infra_tile_defaultview(appliance, key):
-    set_and_test_default_view(appliance, key, 'Tile View', _get_page(gtl_params[key], appliance))
+def test_default_view_infra_reset(appliance):
+    """This test case performs Reset button test.
+
+    Steps:
+        * Navigate to DefaultViews page
+        * Check Reset Button is disabled
+        * Select 'infrastructure_providers' button from infrastructure region
+        * Change it's default mode
+        * Check Reset Button is enabled
+    """
+    view = navigate_to(appliance.user.my_settings, "DefaultViews")
+    assert view.tabs.default_views.reset.disabled
+    infra_btn = view.tabs.default_views.infrastructure.infrastructure_providers
+    views = ['Tile View', 'Grid View', 'List View']
+    views.remove(infra_btn.active_button)
+    infra_btn.select_button(random.choice(views))
+    assert not view.tabs.default_views.reset.disabled
 
 
-@pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_infra_list_defaultview(appliance, key):
-    set_and_test_default_view(appliance, key, 'List View', _get_page(gtl_params[key], appliance))
+@pytest.mark.parametrize('group_name', gtl_params.keys(), scope="module")
+@pytest.mark.parametrize('view', ['List View', 'Tile View', 'Grid View'])
+def test_infra_default_view(appliance, group_name, view):
+    """This test case changes the default view of an infra related page and asserts the change."""
+    page = _get_page(gtl_params[group_name], appliance)
+    print(group_name, view, page)
+    default_views = appliance.user.my_settings.default_views
+    old_default = default_views.get_default_view(group_name)
+    default_views.set_default_view(group_name, view)
+    dest = 'All'
+    if group_name == 'VMs':
+        dest = 'VMsOnly'
+    selected_view = navigate_to(page, dest, use_resetter=False).toolbar.view_selector.selected
+    assert view == selected_view, '{} view setting failed'.format(view)
+    default_views.set_default_view(group_name, old_default)
 
 
-@pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_infra_grid_defaultview(appliance, key):
-    set_and_test_default_view(appliance, key, 'Grid View', _get_page(gtl_params[key], appliance))
-
-
-def set_and_test_compare_view(appliance, group_name, expected_view, selector_type='views_selector'):
+@pytest.mark.parametrize('expected_view',
+                         ['Expanded View', 'Compressed View', 'Details Mode', 'Exists Mode'])
+def test_infra_compare_view_infra(appliance, expected_view):
+    """This test changes the default view/mode for comparison between infra provider instances
+    and asserts the change."""
+    if expected_view in ['Expanded View', 'Compressed View']:
+        group_name, selector_type = 'Compare', 'views_selector'
+    else:
+        group_name, selector_type = 'Compare Mode', 'modes_selector'
+    print(expected_view, group_name, selector_type)
     default_views = appliance.user.my_settings.default_views
     old_default = default_views.get_default_view(group_name)
     default_views.set_default_view(group_name, expected_view)
@@ -117,22 +116,6 @@ def set_and_test_compare_view(appliance, group_name, expected_view, selector_typ
     selected_view = getattr(vm_view.actions, selector_type).selected
     assert expected_view == selected_view, '{} setting failed'.format(expected_view)
     default_views.set_default_view(group_name, old_default)
-
-
-def test_infra_expanded_view(appliance):
-    set_and_test_compare_view(appliance, 'Compare', 'Expanded View')
-
-
-def test_infra_compressed_view(appliance):
-    set_and_test_compare_view(appliance, 'Compare', 'Compressed View')
-
-
-def test_infra_details_mode(appliance):
-    set_and_test_compare_view(appliance, 'Compare Mode', 'Details Mode', 'modes_selector')
-
-
-def test_infra_exists_mode(appliance):
-    set_and_test_compare_view(appliance, 'Compare Mode', 'Exists Mode', 'modes_selector')
 
 
 def test_vm_visibility_off(appliance):
