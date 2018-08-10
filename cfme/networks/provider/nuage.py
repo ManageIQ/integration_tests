@@ -1,7 +1,7 @@
 import attr
+import copy
 from widgetastic.widget import View
 from widgetastic_patternfly import Tab, BootstrapSelect, Input, Button
-from widgetastic_manageiq import RadioGroup
 from wrapanapi.systems import NuageSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm, EventsEndpoint
@@ -77,7 +77,7 @@ class NuageProvider(NetworkProvider):
     @property
     def mgmt(self):
         from cfme.utils.providers import get_mgmt
-        d = self.data
+        d = copy.deepcopy(self.data)
         d['hostname'] = self.default_endpoint.hostname
         d['api_port'] = self.default_endpoint.api_port
         d['security_protocol'] = self.default_endpoint.security_protocol
