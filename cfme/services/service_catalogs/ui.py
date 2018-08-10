@@ -1,8 +1,7 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
-
-from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import Select, Text, View
+from widgetastic_manageiq import Accordion, ManageIQTree
 from widgetastic_patternfly import Button
+from widgetastic.widget import Text, View
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
@@ -11,8 +10,6 @@ from cfme.services.service_catalogs import ServiceCatalogs, BaseOrderForm
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from cfme.utils.blockers import BZ
-from cfme.utils.wait import wait_for
-from widgetastic_manageiq import Accordion, ManageIQTree
 
 
 class ServicesCatalogsView(BaseLoggedInPage):
@@ -74,8 +71,10 @@ class OrderServiceCatalogView(OrderForm):
     @property
     def is_displayed(self):
         return (
-            self.in_service_catalogs and self.service_catalogs.is_opened and
-            'Service "{}"'.format(self.context['object'].name) in self.title.text
+            self.in_service_catalogs and
+            self.service_catalogs.is_opened and
+            'Service "{}"'.format(self.context['object'].name) in self.title.text and
+            self.submit_button.is_displayed
         )
 
 
@@ -89,14 +88,8 @@ def order(self):
     if self.ansible_dialog_values:
         view.fill(self.ansible_dialog_values)
     msg = "Order Request was Submitted"
-    if self.appliance.version < "5.9":
-        msg_type = "success"
-    else:
-        msg_type = "info"
-    # Additional check if submit is done, to cover case when last filled field value is not taken
-    # Can appear every 2nd case when whole module is run
-    if view.is_displayed and view.submit_button.is_displayed:
-        view.submit_button.click()
+    msg_type = "info"
+    view.submit_button.click()
     view = self.create_view(RequestsView)
     view.flash.assert_no_error()
     if not BZ(1605102, forced_streams=['5.10']).blocks:
@@ -132,11 +125,11 @@ class ServiceCatalogDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        try:
-            self.prerequisite_view.service_catalogs.tree.click_path("All Services",
-                 self.obj.catalog.name, self.obj.name)
-        except:
-            raise NoSuchElementException()
+        self.prerequisite_view.service_catalogs.tree.click_path(
+            "All Services",
+            self.obj.catalog.name,
+            self.obj.name
+        )
 
 
 @navigator.register(ServiceCatalogs, 'Order')

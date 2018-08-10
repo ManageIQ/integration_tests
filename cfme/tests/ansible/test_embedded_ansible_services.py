@@ -434,7 +434,11 @@ def test_custom_button_ansible_credential_list(custom_service_button, service_ca
     view = navigate_to(service, "Details")
     view.toolbar.custom_button(custom_service_button.group.text).item_select(
         custom_service_button.text)
-    credentials_dropdown = BootstrapSelect(appliance.browser.widgetastic, id="credential")
+    credentials_dropdown = BootstrapSelect(
+        appliance.browser.widgetastic,
+        locator=".//select[@id='credential']/.."
+    )
+    wait_for(lambda: credentials_dropdown.is_displayed, timeout=30)
     all_options = [option.text for option in credentials_dropdown.all_options]
     assert ["<Default>", "CFME Default Credential"] == all_options
 
