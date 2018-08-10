@@ -2,20 +2,23 @@
 """
 import attr
 from lxml.html import document_fromstring
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import ParametrizedView, View, Text
-from widgetastic_manageiq import (ManageIQTree,
-                                  SummaryTable,
-                                  ItemsToolBarViewSelector,
-                                  BaseEntitiesView,
-                                  NonJSBaseEntity,
-                                  BaseListEntity,
-                                  BaseQuadIconEntity,
-                                  BaseTileIconEntity,
-                                  JSBaseEntity,
-                                  Search)
-from widgetastic_patternfly import Dropdown, Accordion
+from widgetastic.widget import ParametrizedView, Text, View
+from widgetastic_patternfly import Accordion, Dropdown
+from widgetastic_manageiq import (
+    BaseEntitiesView,
+    BaseListEntity,
+    BaseQuadIconEntity,
+    BaseTileIconEntity,
+    ItemsToolBarViewSelector,
+    JSBaseEntity,
+    ManageIQTree,
+    NonJSBaseEntity,
+    Search,
+    SummaryTable,
+)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
@@ -24,9 +27,9 @@ from cfme.common.host_views import HostsView
 from cfme.exceptions import ItemNotFound, MenuItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.pretty import Pretty
-from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.wait import TimedOutError, wait_for
 
 
 class DatastoreToolBar(View):
