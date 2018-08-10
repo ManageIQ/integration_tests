@@ -45,7 +45,6 @@ def verify_custom_attributes(provider, custom_attributes_to_verify):
                 str(custom_attribute['value'])))
 
 
-@pytest.mark.polarion('CMP-10559')
 def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provider):
     """This test checks adding a Custom Attribute using Ansible script via Manage IQ module
         Steps:
@@ -68,7 +67,6 @@ def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provi
     assert not view.entities.summary('Custom Attributes').is_displayed
 
 
-@pytest.mark.polarion('CMP-10560')
 def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, provider):
     """This test checks editing a Custom Attribute using Ansible script via Manage IQ module
         Steps:
@@ -91,7 +89,6 @@ def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, prov
     assert not view.entities.summary('Custom Attributes').is_displayed
 
 
-@pytest.mark.polarion('CMP-10561')
 def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attributes, provider):
     """This test checks adding a Custom Attribute with the same name
         using Ansible script via Manage IQ module
@@ -116,7 +113,6 @@ def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attribu
     assert not view.entities.summary('Custom Attributes').is_displayed
 
 
-@pytest.mark.polarion('CMP-10562')
 def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attributes, provider):
     """This test checks adding a Custom Attribute with a bad user name
         using Ansible script via Manage IQ module
@@ -137,7 +133,6 @@ def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attribut
     assert not view.entities.summary('Custom Attributes').is_displayed
 
 
-@pytest.mark.polarion('CMP-10563')
 @pytest.mark.usefixtures('setup_provider')
 def test_manageiq_ansible_remove_custom_attributes(ansible_custom_attributes, provider):
     """This test checks removing Custom Attribute using Ansible script via Manage IQ module

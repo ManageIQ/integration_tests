@@ -3,20 +3,20 @@ from collections import namedtuple
 
 import pytest
 
-from cfme.containers.overview import ContainersOverviewView
-from cfme.containers.node import NodeAllView
-from cfme.containers.pod import PodAllView
-from cfme.containers.service import ServiceAllView
-from cfme.containers.provider import ContainersProvider, ContainerProvidersView
-from cfme.containers.project import ProjectAllView
+from cfme.containers.container import ContainerAllView
 from cfme.containers.image_registry import ImageRegistryAllView
-from cfme.containers.template import TemplateAllView
+from cfme.containers.node import NodeAllView
+from cfme.containers.overview import ContainersOverviewView
+from cfme.containers.pod import PodAllView
+from cfme.containers.project import ProjectAllView
+from cfme.containers.provider import ContainersProvider, ContainerProvidersView
 from cfme.containers.replicator import ReplicatorAllView
 from cfme.containers.route import RouteAllView
-from cfme.containers.container import ContainerAllView
+from cfme.containers.service import ServiceAllView
+from cfme.containers.template import TemplateAllView
+from cfme.containers.volume import VolumeAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.version import current_version
-from cfme.configure.settings import Visual
 
 
 pytestmark = [
@@ -38,15 +38,10 @@ data_sets = (
     DataSet(TemplateAllView, 'Compute / Containers / Container Templates'),
     DataSet(ReplicatorAllView, 'Compute / Containers / Replicators'),
     DataSet(RouteAllView, 'Compute / Containers / Routes'),
-    # https://bugzilla.redhat.com/show_bug.cgi?id=1510376
-    # from cfme.containers.volume import VolumeAllView
-    # DataSet(VolumeAllView, 'Compute / Containers / Volumes'),
-    # https://bugzilla.redhat.com/show_bug.cgi?id=1466350
-    DataSet(ContainerAllView, 'Compute / Containers / Containers')
-)
+    DataSet(VolumeAllView, 'Compute / Containers / Volumes'),
+    DataSet(ContainerAllView, 'Compute / Containers / Containers'))
 
 
-@pytest.mark.polarion('CMP-10601')
 def test_start_page(appliance, soft_assert):
 
     for data_set in data_sets:

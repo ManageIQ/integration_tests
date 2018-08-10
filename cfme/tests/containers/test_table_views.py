@@ -49,7 +49,6 @@ def random_default_views(appliance):
                                                               original_default_views.values())
 
 
-@pytest.mark.polarion('CMP-10568')
 def test_default_views(appliance, random_default_views):
     for collection_name in objects_mapping.keys():
         obj = (ContainersProvider if collection_name is ContainersProvider
@@ -62,7 +61,6 @@ def test_default_views(appliance, random_default_views):
         )
 
 
-@pytest.mark.polarion('CMP-10570')
 def test_table_views(appliance):
     for collection_name in objects_mapping.keys():
         obj = (ContainersProvider if collection_name is ContainersProvider

@@ -48,7 +48,6 @@ def get_api_object_counts(appliance):
     return out
 
 
-@pytest.mark.polarion('CMP-9521')
 def test_containers_overview_data_integrity(appliance, soft_assert):
     """Test data integrity of status boxes in containers dashboard.
     Steps:

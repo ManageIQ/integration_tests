@@ -15,8 +15,8 @@ from cfme.containers.route import Route, RouteCollection
 from cfme.containers.template import Template, TemplateCollection
 
 from cfme.utils.wait import wait_for
-from cfme.utils.log import logger
 from cfme.utils.blockers import GH
+from cfme.utils.log import logger
 
 
 pytestmark = [
@@ -76,7 +76,6 @@ def random_labels(provider, appliance):
 
 
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7687')])
-@pytest.mark.polarion('CMP-10572')
 def test_labels_create(provider, soft_assert, random_labels):
 
     provider.refresh_provider_relationships()
@@ -97,7 +96,6 @@ def test_labels_create(provider, soft_assert, random_labels):
 
 
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7687')])
-@pytest.mark.polarion('CMP-10572')
 def test_labels_remove(provider, soft_assert, random_labels):
     # Removing the labels
     for instance, label_name, label_value, status_code, _ in random_labels:

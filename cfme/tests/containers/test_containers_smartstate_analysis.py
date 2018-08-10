@@ -31,16 +31,10 @@ TESTED_ATTRIBUTES__openscap_on = TESTED_ATTRIBUTES__openscap_off + (
 )
 
 TEST_ITEMS = (
-    pytest.mark.polarion('CMP-9496')(
-        ContainersTestItem(Image, 'CMP-9496',
-                           is_openscap=False,
-                           tested_attr=TESTED_ATTRIBUTES__openscap_off)
-    ),
-    pytest.mark.polarion('CMP-10064')(
-        ContainersTestItem(Image, 'CMP-10064',
-                           is_openscap=True,
-                           tested_attr=TESTED_ATTRIBUTES__openscap_on)
-    )
+    ContainersTestItem(Image, 'openscap_off', is_openscap=False,
+                       tested_attr=TESTED_ATTRIBUTES__openscap_off),
+    ContainersTestItem(Image, 'openscap_on', is_openscap=True,
+                       tested_attr=TESTED_ATTRIBUTES__openscap_on)
 )
 
 NUM_SELECTED_IMAGES = 1

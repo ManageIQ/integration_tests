@@ -17,7 +17,6 @@ from cfme.containers.volume import Volume, VolumeCollection
 from cfme.containers.container import Container, ContainerCollection
 
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.soft_get import soft_get
 
 
 pytestmark = [
@@ -28,107 +27,62 @@ pytestmark = [
 
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-9945')(
-        ContainersTestItem(
-            Container,
-            'CMP-9945',
-            expected_fields=[
-                'Name', 'State', 'Last State', 'Restart count', 'Backing Ref (Container ID)',
-                'Privileged'],
-            collection_object=ContainerCollection
-        )
-    ),
-    pytest.mark.polarion('CMP-10430')(
-        ContainersTestItem(
-            Project,
-            'CMP-10430',
-            expected_fields=['Name', 'Creation timestamp', 'Resource version'],
-            collection_object=ProjectCollection
-        )
-    ),
-    pytest.mark.polarion('CMP-9877')(
-        ContainersTestItem(
-            Route,
-            'CMP-9877',
-            expected_fields=['Name', 'Creation timestamp', 'Resource version', 'Host Name'],
-            collection_object=RouteCollection
-        )
-    ),
-    pytest.mark.polarion('CMP-9911')(
-        ContainersTestItem(
-            Pod,
-            'CMP-9911',
-            expected_fields=[
-                'Name', 'Status', 'Creation timestamp', 'Resource version',
-                'Restart policy', 'DNS Policy', 'IP Address'
-            ],
-            collection_object=PodCollection
-        )
-    ),
-    pytest.mark.polarion('CMP-9960')(
-        ContainersTestItem(
-            Node,
-            'CMP-9960',
-            expected_fields=[
-                'Name', 'Creation timestamp', 'Resource version', 'Number of CPU Cores',
-                'Memory', 'Max Pods Capacity', 'System BIOS UUID', 'Machine ID',
-                'Infrastructure Machine ID', 'Container runtime version',
-                'Kubernetes kubelet version', 'Kubernetes proxy version',
-                'Operating System Distribution', 'Kernel version',
-            ],
-            collection_object=NodeCollection
-        )
-    ),
-    pytest.mark.polarion('CMP-9890')(
-        ContainersTestItem(
-            Service,
-            'CMP-9890',
-            expected_fields=[
-                'Name', 'Creation timestamp', 'Resource version', 'Session affinity',
-                'Type', 'Portal IP'
-            ],
-            collection_object=ServiceCollection
-        )
-    ),
-    pytest.mark.polarion('CMP-9988')(
-        ContainersTestItem(
-            ImageRegistry,
-            'CMP-9988',
-            expected_fields=['Host'],
-            collection_object=ImageRegistryCollection
-        )
-    ),
-    pytest.mark.polarion('CMP-10316')(
-        ContainersTestItem(
-            Template,
-            'CMP-10316',
-            expected_fields=['Name', 'Creation timestamp', 'Resource version'],
-            collection_object=TemplateCollection
-        )
-    ),
-    pytest.mark.polarion('CMP-10407')(
-        ContainersTestItem(
-            Volume,
-            'CMP-10407',
-            expected_fields=[
-                'Name',
-                'Creation timestamp', 'Resource version', 'Access modes', 'Reclaim policy',
-                'Status phase', 'Volume path'],
-            collection_object=VolumeCollection
-        )
-    ),
-    pytest.mark.polarion('CMP-9978')(
-        ContainersTestItem(
-            Image,
-            'CMP-9978',
-            expected_fields=[
-                'Name', 'Image Id', 'Full Name', 'Architecture', 'Author',
-                'Command', 'Entrypoint', 'Docker Version', 'Exposed Ports', 'Size'
-            ],
-            collection_object=ImageCollection
-        )
-    )
-]
+    ContainersTestItem(
+        Container, 'test_properties_container_provider',
+        expected_fields=[
+            'Name', 'State', 'Last State', 'Restart count', 'Backing Ref (Container ID)',
+            'Privileged'],
+        collection_object=ContainerCollection),
+    ContainersTestItem(
+        Project, 'test_properties_container_project',
+        expected_fields=['Name', 'Creation timestamp', 'Resource version'],
+        collection_object=ProjectCollection),
+    ContainersTestItem(
+        Route, 'test_properties_container_route',
+        expected_fields=['Name', 'Creation timestamp', 'Resource version', 'Host Name'],
+        collection_object=RouteCollection),
+    ContainersTestItem(
+        Pod, 'test_properties_container_pod',
+        expected_fields=[
+            'Name', 'Status', 'Creation timestamp', 'Resource version',
+            'Restart policy', 'DNS Policy', 'IP Address'],
+        collection_object=PodCollection),
+    ContainersTestItem(
+        Node, 'test_properties_container_node',
+        expected_fields=[
+            'Name', 'Creation timestamp', 'Resource version', 'Number of CPU Cores',
+            'Memory', 'Max Pods Capacity', 'System BIOS UUID', 'Machine ID',
+            'Infrastructure Machine ID', 'Container runtime version',
+            'Kubernetes kubelet version', 'Kubernetes proxy version',
+            'Operating System Distribution', 'Kernel version'],
+        collection_object=NodeCollection),
+    ContainersTestItem(
+        Service, 'test_properties_container_service',
+        expected_fields=[
+            'Name', 'Creation timestamp', 'Resource version', 'Session affinity',
+            'Type', 'Portal IP'],
+        collection_object=ServiceCollection),
+    ContainersTestItem(
+        ImageRegistry, 'test_properties_container_image_registry',
+        expected_fields=['Host'],
+        collection_object=ImageRegistryCollection),
+    ContainersTestItem(
+        Template, 'test_properties_container_template',
+        expected_fields=['Name', 'Creation timestamp', 'Resource version'],
+        collection_object=TemplateCollection),
+    ContainersTestItem(
+        Volume, 'test_properties_container_volumes',
+        expected_fields=[
+            'Name',
+            'Creation timestamp', 'Resource version', 'Access modes', 'Reclaim policy',
+            'Status phase', 'Volume path'],
+        collection_object=VolumeCollection),
+    ContainersTestItem(
+        Image, 'test_properties_container_image',
+        expected_fields=[
+            'Name', 'Image Id', 'Full Name', 'Architecture', 'Author',
+            'Command', 'Entrypoint', 'Docker Version', 'Exposed Ports', 'Size'],
+        collection_object=ImageCollection)]
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,

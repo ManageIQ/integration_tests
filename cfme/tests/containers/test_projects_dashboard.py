@@ -71,7 +71,6 @@ def get_api_pods_names(provider):
     return pod_name
 
 
-@pytest.mark.polarion('CMP-10806')
 def test_projects_dashboard_pods(provider, soft_assert, container_project_instance):
     """Tests data integrity of Pods names in Pods status box in Projects Dashboard.
     Steps:
@@ -90,7 +89,6 @@ def test_projects_dashboard_pods(provider, soft_assert, container_project_instan
         )
 
 
-@pytest.mark.polarion('CMP-10805')
 def test_projects_dashboard_icons(provider, appliance, soft_assert, container_project_instance):
     """Tests data integrity of Containers/Images/Services number in
     Projects Dashboard's status boxes.

@@ -22,7 +22,6 @@ COLLECTION_NAMES = [
 ]
 
 
-@pytest.mark.polarion('CMP-10577')
 def test_search_bar(provider, appliance, soft_assert):
     """ <object> summary page - Search bar
     This test checks Search bar functionality on every object summary page

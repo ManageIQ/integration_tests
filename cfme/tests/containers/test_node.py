@@ -11,7 +11,6 @@ pytestmark = [pytest.mark.usefixtures('setup_provider')]
 TEST_DEST = ('All', 'Details')
 
 
-@pytest.mark.polarion('CMP-10782')
 @pytest.mark.tier(3)
 @pytest.mark.provider([ContainersProvider])
 def test_nodes_navigate(soft_assert, appliance):

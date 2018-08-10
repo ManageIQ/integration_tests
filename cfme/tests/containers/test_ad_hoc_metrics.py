@@ -40,14 +40,12 @@ def is_ad_hoc_greyed(provider_object):
     return view.toolbar.monitoring.item_enabled('Ad hoc Metrics')
 
 
-@pytest.mark.polarion('CMP-10643')
 def test_ad_hoc_metrics_overview(provider, metrics_up_and_running):
 
     assert is_ad_hoc_greyed(provider), (
         "Monitoring --> Ad hoc Metrics not activated despite provider was set")
 
 
-@pytest.mark.polarion('CMP-10645')
 def test_ad_hoc_metrics_select_filter(provider, metrics_up_and_running):
 
     view = navigate_to(provider, 'AdHoc')

@@ -26,22 +26,15 @@ pytestmark = [
 logger = create_sublogger("smart_management")
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-9948')(ContainersTestItem(
-        Container, 'CMP-9948', collection_obj=ContainerCollection)),
-    pytest.mark.polarion('CMP-10320')(ContainersTestItem(
-        Template, 'CMP-10320', collection_obj=TemplateCollection)),
-    pytest.mark.polarion('CMP-9992')(ContainersTestItem(
-        ImageRegistry, 'CMP-9992', collection_obj=ImageRegistryCollection)),
-    pytest.mark.polarion('CMP-9981')(ContainersTestItem(
-        Image, 'CMP-9981', collection_obj=ImageCollection)),
-    pytest.mark.polarion('CMP-9964')(ContainersTestItem(
-        Node, 'CMP-9964', collection_obj=NodeCollection)),
-    pytest.mark.polarion('CMP-9932')(ContainersTestItem(
-        Pod, 'CMP-9932', collection_obj=PodCollection)),
-    pytest.mark.polarion('CMP-9870')(ContainersTestItem(
-        Project, 'CMP-9870', collection_obj=ProjectCollection)),
-    pytest.mark.polarion('CMP-9854')(ContainersTestItem(
-        ContainersProvider, 'CMP-9854', collection_obj=None))
+    ContainersTestItem(Container, 'container_smart_man', collection_obj=ContainerCollection),
+    ContainersTestItem(Template, 'template_smart_man', collection_obj=TemplateCollection),
+    ContainersTestItem(ImageRegistry, 'image_registry_smart_man',
+                       collection_obj=ImageRegistryCollection),
+    ContainersTestItem(Image, 'image_smart_man', collection_obj=ImageCollection),
+    ContainersTestItem(Node, 'node_smart_man', collection_obj=NodeCollection),
+    ContainersTestItem(Pod, 'pod_smart_man', collection_obj=PodCollection),
+    ContainersTestItem(Project, 'project_smart_man', collection_obj=ProjectCollection),
+    ContainersTestItem(ContainersProvider, 'container_provider_smart_man', collection_obj=None)
 ]
 
 

@@ -19,90 +19,55 @@ pytestmark = [
 ]
 
 
-# The polarion markers below are used to mark the test item
-# with polarion test case ID.
-# TODO: future enhancement - https://github.com/pytest-dev/pytest/pull/1921
-
-
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-9859')(
-        ContainersTestItem(
-            ContainersProvider, 'CMP-9859', fields_to_verify=['hostname', 'port', 'type'],
-            collection_name=None
-        )
-    ),
-    pytest.mark.polarion('CMP-10651')(
-        ContainersTestItem(
-            Route, 'CMP-10651', fields_to_verify=['provider', 'project_name'],
-            collection_name='container_routes'
-        )
-    ),
-    pytest.mark.polarion('CMP-9943')(
-        ContainersTestItem(
-            Container, 'CMP-9943', fields_to_verify=['pod_name', 'image', 'state'],
-            collection_name='containers'
-        )
-    ),
-    pytest.mark.polarion('CMP-9909')(
-        ContainersTestItem(
-            Pod, 'CMP-9909', fields_to_verify=[
-                'provider', 'project_name', 'ready', 'containers',
-                'phase', 'restart_policy', 'dns_policy'
-            ],
-            collection_name='container_pods'
-        )
-    ),
-    pytest.mark.polarion('CMP-9889')(
-        ContainersTestItem(
-            Service, 'CMP-9889', fields_to_verify=[
-                'provider', 'project_name', 'type', 'portal_ip',
-                'session_affinity', 'pods'
-            ],
-            collection_name='container_services'
-        )
-    ),
-    pytest.mark.polarion('CMP-9967')(
-        ContainersTestItem(
-            Node, 'CMP-9967', fields_to_verify=[
-                'provider', 'ready', 'operating_system', 'kernel_version',
-                'runtime_version'
-            ],
-            collection_name='container_nodes'
-        )
-    ),
-    pytest.mark.polarion('CMP-9920')(
-        ContainersTestItem(
-            Replicator, 'CMP-9920',
-            fields_to_verify=['provider', 'project_name', 'replicas', 'current_replicas'],
-            collection_name='container_replicators'
-        )
-    ),
-    pytest.mark.polarion('CMP-9975')(
-        ContainersTestItem(
-            Image, 'CMP-9975', fields_to_verify=['provider', 'tag', 'id', 'image_registry'],
-            collection_name='container_images'
-        )
-    ),
-    pytest.mark.polarion('CMP-9985')(
-        ContainersTestItem(
-            ImageRegistry, 'CMP-9985', fields_to_verify=['port', 'provider'],
-            collection_name='container_image_registries'
-        )
-    ),
-    pytest.mark.polarion('CMP-10652')(
-        ContainersTestItem(
-            Project, 'CMP-9886', fields_to_verify=[
-                'provider', 'container_routes', 'container_services',
-                'container_replicators', 'pods', 'containers', 'images'
-            ],
-            collection_name='container_projects'
-        )
-    )
-]
+    ContainersTestItem(
+        ContainersProvider, 'container_provider_table_fields',
+        fields_to_verify=['hostname', 'port', 'type'],
+        collection_name=None),
+    ContainersTestItem(
+        Route, 'route__table_fields',
+        fields_to_verify=['provider', 'project_name'],
+        collection_name='container_routes'),
+    ContainersTestItem(
+        Container, 'container__table_fields',
+        fields_to_verify=['pod_name', 'image', 'state'],
+        collection_name='containers'),
+    ContainersTestItem(
+        Pod, 'pod__table_fields',
+        fields_to_verify=['provider', 'project_name', 'ready', 'containers', 'phase',
+                          'restart_policy', 'dns_policy'],
+        collection_name='container_pods'),
+    ContainersTestItem(
+        Service, 'service_table_fields9',
+        fields_to_verify=['provider', 'project_name', 'type', 'portal_ip', 'session_affinity',
+                          'pods'],
+        collection_name='container_services'),
+    ContainersTestItem(
+        Node, 'node_table_fields',
+        fields_to_verify=['provider', 'ready', 'operating_system', 'kernel_version',
+                          'runtime_version'],
+        collection_name='container_nodes'),
+    ContainersTestItem(
+        Replicator, 'replicator_table_fields',
+        fields_to_verify=['provider', 'project_name', 'replicas', 'current_replicas'],
+        collection_name='container_replicators'),
+    ContainersTestItem(
+        Image, 'image_table_fields',
+        fields_to_verify=['provider', 'tag', 'id', 'image_registry'],
+        collection_name='container_images'),
+    ContainersTestItem(
+        ImageRegistry, 'image_registry_table_fields',
+        fields_to_verify=['port', 'provider'],
+        collection_name='container_image_registries'),
+    ContainersTestItem(
+        Project, 'project_table_fields',
+        fields_to_verify=['provider', 'container_routes', 'container_services',
+                          'container_replicators', 'pods', 'containers', 'images'],
+        collection_name='container_projects')]
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
-                         ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
+                         ids=[ti.pretty_id() for ti in TEST_ITEMS])
 def test_tables_fields(provider, test_item, soft_assert, appliance):
 
     view = navigate_to((test_item.obj if test_item.obj is ContainersProvider

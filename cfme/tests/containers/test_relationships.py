@@ -20,33 +20,22 @@ pytestmark = [
 ]
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-9851')(ContainersTestItem(
-        ContainersProvider, 'CMP-9851', collection_obj=None)),
-    pytest.mark.polarion('CMP-9947')(ContainersTestItem(
-        Container, 'CMP-9947', collection_obj=ContainerCollection)),
-    pytest.mark.polarion('CMP-9929')(ContainersTestItem(
-        Pod, 'CMP-9929', collection_obj=PodCollection)),
-    pytest.mark.polarion('CMP-10564')(ContainersTestItem(
-        Service, 'CMP-10564', collection_obj=ServiceCollection)),
-    pytest.mark.polarion('CMP-9962')(ContainersTestItem(
-        Node, 'CMP-9962', collection_obj=NodeCollection)),
-    pytest.mark.polarion('CMP-10565')(ContainersTestItem(
-        Replicator, 'CMP-10565', collection_obj=ReplicatorCollection)),
-    pytest.mark.polarion('CMP-9980')(ContainersTestItem(
-        Image, 'CMP-9980', collection_obj=ImageCollection)),
-    pytest.mark.polarion('CMP-9994')(ContainersTestItem(
-        ImageRegistry, 'CMP-9994', collection_obj=ImageRegistryCollection)),
-    pytest.mark.polarion('CMP-9868')(ContainersTestItem(
-        Project, 'CMP-9868', collection_obj=ProjectCollection)),
-    pytest.mark.polarion('CMP-10319')(ContainersTestItem(
-        Template, 'CMP-10319', collection_obj=TemplateCollection)),
-    pytest.mark.polarion('CMP-10410')(ContainersTestItem(
-        Volume, 'CMP-10410', collection_obj=VolumeCollection))
-]
+    ContainersTestItem(ContainersProvider, 'container_provider_relationships', collection_obj=None),
+    ContainersTestItem(Container, 'container_relationships', collection_obj=ContainerCollection),
+    ContainersTestItem(Pod, 'pod_relationships', collection_obj=PodCollection),
+    ContainersTestItem(Service, 'service_relationships', collection_obj=ServiceCollection),
+    ContainersTestItem(Node, 'node_relationships', collection_obj=NodeCollection),
+    ContainersTestItem(Replicator, 'replicator_relationships', collection_obj=ReplicatorCollection),
+    ContainersTestItem(Image, 'image_relationships', collection_obj=ImageCollection),
+    ContainersTestItem(ImageRegistry, 'image_registry_relationships',
+                       collection_obj=ImageRegistryCollection),
+    ContainersTestItem(Project, 'project_relationships', collection_obj=ProjectCollection),
+    ContainersTestItem(Template, 'template_relationships', collection_obj=TemplateCollection),
+    ContainersTestItem(Volume, 'volume_relationships', collection_obj=VolumeCollection)]
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS, scope='module',
-                         ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
+                         ids=[ti.pretty_id() for ti in TEST_ITEMS])
 @pytest.mark.usefixtures('has_persistent_volume')
 @pytest.mark.usefixtures('setup_provider_modscope')
 def test_relationships_tables(soft_assert, provider, has_persistent_volume, appliance, test_item):
@@ -88,7 +77,6 @@ def test_relationships_tables(soft_assert, provider, has_persistent_volume, appl
         view = navigate_to(test_obj, 'Details')
 
 
-@pytest.mark.polarion('CMP-9934')
 @pytest.mark.usefixtures('setup_provider')
 def test_container_status_relationships_data_integrity(provider, appliance, soft_assert):
     """ This test verifies that the sum of running, waiting and terminated containers
