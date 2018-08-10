@@ -54,7 +54,10 @@ class NuageProvider(NetworkProvider):
     STATS_TO_MATCH = ['num_security_group',
                       'num_cloud_subnet',
                       'num_cloud_tenant',
-                      'num_network_router']
+                      'num_network_router',
+                      'num_cloud_network',
+                      'num_floating_ip',
+                      'num_network_port']
     in_version = ('5.9', version.LATEST)
     type_name = 'nuage'
     db_types = ['Nuage::NetworkManager']
@@ -118,38 +121,37 @@ class NuageProvider(NetworkProvider):
             'api_version': self.api_version_name
         }
 
-    @variable(alias="db")
+    @variable(alias="ui")
     def num_security_group(self):
-        pass  # TODO: come up with a db query
-
-    @num_security_group.variant('ui')
-    def num_security_group_ui(self):
         view = navigate_to(self, "Details")
         return int(view.entities.summary("Relationships").get_text_of("Security Groups"))
 
-    @variable(alias="db")
+    @variable(alias="ui")
     def num_cloud_subnet(self):
-        pass  # TODO: come up with a db query
-
-    @num_cloud_subnet.variant('ui')
-    def num_cloud_subnet_ui(self):
         view = navigate_to(self, "Details")
         return int(view.entities.summary("Relationships").get_text_of("Cloud Subnets"))
 
-    @variable(alias="db")
+    @variable(alias="ui")
     def num_cloud_tenant(self):
-        pass  # TODO: come up with a db query
-
-    @num_cloud_tenant.variant('ui')
-    def num_cloud_tenant_ui(self):
         view = navigate_to(self, "Details")
         return int(view.entities.summary("Relationships").get_text_of("Cloud Tenants"))
 
-    @variable(alias="db")
+    @variable(alias="ui")
     def num_network_router(self):
-        pass  # TODO: come up with a db query
-
-    @num_network_router.variant('ui')
-    def num_network_router_ui(self):
         view = navigate_to(self, "Details")
         return int(view.entities.summary("Relationships").get_text_of("Network Routers"))
+
+    @variable(alias="ui")
+    def num_cloud_network(self):
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Cloud Networks"))
+
+    @variable(alias="ui")
+    def num_floating_ip(self):
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Floating IPs"))
+
+    @variable(alias="ui")
+    def num_network_port(self):
+        view = navigate_to(self, "Details")
+        return int(view.entities.summary("Relationships").get_text_of("Network Ports"))
