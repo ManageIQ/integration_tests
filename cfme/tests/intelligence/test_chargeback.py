@@ -7,7 +7,6 @@ import pytest
 import cfme.intelligence.chargeback.rates as cb
 from cfme import test_requirements
 from cfme.rest.gen_data import rates as _rates
-from cfme.utils.blockers import BZ
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
@@ -24,163 +23,108 @@ pytestmark = [
 ]
 
 
-# TODO refactor to parametrize and collapse into CRUD tests
-# single CRUD test function, parametrized on compute/storage + fixed/variable, will give us the
-# same coverage with much less overlap and code duplication
-
 def with_random_per_time(**kw):
     kw['per_time'] = random.choice(['Hourly', 'Daily', 'Monthly', 'Weekly', 'Yearly'])
     return kw
 
 
-@pytest.fixture
-def chargeback_compute_rate():
-    # TODO add variable rate parametrization
-    compute_rate = cb.ComputeRate(
-        description='cb' + fauxfactory.gen_alphanumeric(),
-        fields={
-            'Allocated CPU Count': with_random_per_time(fixed_rate='1000'),
-            'Used Disk I/O': with_random_per_time(fixed_rate='10'),
-            'Fixed Compute Cost 1': with_random_per_time(fixed_rate='100'),
-            'Used Memory': with_random_per_time(fixed_rate='6000'),
-            'Used CPU Cores': {'variable_rate': '0.05'}
-        })
-    yield compute_rate
-    if compute_rate.exists:
-        compute_rate.delete()
-
-
-def chargeback_storage_rate(rate_type='fixed'):
-    if rate_type == 'fixed':
+@pytest.fixture()
+def chargeback_rate(rate_resource, rate_type, rate_action, request):
+    if 'fixed' in rate_type:
         rate = [{'fixed_rate': '6000'}, {'fixed_rate': '.1'}]
-    elif rate_type == 'variable':
+    elif 'variable' in rate_type:
         rate = [{'variable_rate': '2000'}, {'variable_rate': '.6'}]
     else:
-        raise ValueError('Storage rate type argument must be "fixed" or "variable"')
+        raise ValueError('Compute rate type argument must be "fixed" or "variable"')
 
-    return cb.StorageRate(
-        description='cb' + fauxfactory.gen_alphanumeric(),
-        fields={
-            'Fixed Storage Cost 1': with_random_per_time(fixed_rate='100'),
-            'Fixed Storage Cost 2': with_random_per_time(fixed_rate='300'),
-            'Allocated Disk Storage': with_random_per_time(**rate[0]),
-            'Used Disk Storage': with_random_per_time(**rate[1]),
-        })
+    if rate_resource == 'compute':
+        rate = cb.ComputeRate(
+            description='cb_{}_{}_{}_{}'.format(fauxfactory.gen_alphanumeric(), rate_type,
+                rate_resource, rate_action),
+            fields={
+                'Allocated CPU Count': with_random_per_time(fixed_rate='1000'),
+                'Used Disk I/O': with_random_per_time(fixed_rate='10'),
+                'Fixed Compute Cost 1': with_random_per_time(fixed_rate='100'),
+                'Used Memory': with_random_per_time(**rate[0]),
+                'Used CPU Cores': with_random_per_time(**rate[1]),
+            })
+
+    elif rate_resource == 'storage':
+        rate = cb.StorageRate(
+            description='cb_{}_{}_{}_{}'.format(fauxfactory.gen_alphanumeric(), rate_type,
+                rate_resource, rate_action),
+            fields={
+                'Fixed Storage Cost 1': with_random_per_time(fixed_rate='100'),
+                'Fixed Storage Cost 2': with_random_per_time(fixed_rate='300'),
+                'Allocated Disk Storage': with_random_per_time(**rate[0]),
+                'Used Disk Storage': with_random_per_time(**rate[1]),
+            })
+
+    @request.addfinalizer
+    def _cleanup():
+        if rate.exists:
+            rate.delete()
+    return rate
 
 
-def test_add_new_compute_chargeback(chargeback_compute_rate):
-    chargeback_compute_rate.create()
-    view = chargeback_compute_rate.create_view(
-        navigator.get_class(chargeback_compute_rate, 'All').VIEW)
-    view.flash.assert_success_message('Chargeback Rate "{}" was added'
-                                      .format(chargeback_compute_rate.description))
-    assert chargeback_compute_rate.exists
+def test_compute_chargeback_duplicate_disallowed(request):
+    cb_rate = chargeback_rate('compute', 'fixed', 'add', request)
 
-
-@pytest.mark.tier(3)
-def test_compute_chargeback_duplicate_disallowed(chargeback_compute_rate):
-    chargeback_compute_rate.create()
-    assert chargeback_compute_rate.exists
+    cb_rate.create()
+    assert cb_rate.exists
     with pytest.raises(AssertionError):
-        chargeback_compute_rate.create()
+        cb_rate.create()
     # view should still be on the add form
-    view = chargeback_compute_rate.create_view(
-        navigator.get_class(chargeback_compute_rate, 'Add').VIEW)
+    view = cb_rate.create_view(
+        navigator.get_class(cb_rate, 'Add').VIEW)
     view.flash.assert_message('Description has already been taken', t='error')
     # cancel form, check all redirect
     view.cancel_button.click()
-    view = chargeback_compute_rate.create_view(
-        navigator.get_class(chargeback_compute_rate, 'All').VIEW)
+    view = cb_rate.create_view(
+        navigator.get_class(cb_rate, 'All').VIEW)
     assert view.is_displayed
     view.flash.assert_success_message('Add of new Chargeback Rate was cancelled by the user')
 
 
-@pytest.mark.rhel_testing
-@pytest.mark.tier(3)
-@pytest.mark.parametrize('storage_chargeback',
-                         ['fixed', 'variable'],
-                         ids=['fixed_storage_rate', 'variable_storage_rate'])
-@pytest.mark.meta(blockers=[
-    BZ(1532368, forced_streams='5.9',
-       unblock=lambda storage_chargeback: 'variable' not in storage_chargeback)])
-def test_add_new_storage_chargeback(storage_chargeback, request):
-    cb_rate = chargeback_storage_rate(storage_chargeback)
-
-    @request.addfinalizer
-    def _cleanup():
-        if cb_rate.exists:
-            cb_rate.delete()
-
+@pytest.mark.parametrize('rate_resource', ['compute', 'storage'])
+@pytest.mark.parametrize('rate_type', ['fixed', 'variable'])
+@pytest.mark.parametrize('rate_action', ['add', 'delete', 'edit'])
+def test_chargeback_rate(rate_resource, rate_type, rate_action, request):
+    cb_rate = chargeback_rate(rate_resource, rate_type, rate_action, request)
     cb_rate.create()
+
     view = cb_rate.create_view(
         navigator.get_class(cb_rate, 'All').VIEW)
     view.flash.assert_success_message(
         'Chargeback Rate "{}" was added'.format(cb_rate.description))
     assert cb_rate.exists
 
+    if 'delete' in rate_action:
+        cb_rate.delete()
+        view = cb_rate.create_view(
+            navigator.get_class(cb_rate, 'Details').VIEW)
+        view.flash.assert_success_message(
+            'Chargeback Rate "{}": Delete successful'.format(cb_rate.description))
+        assert not cb_rate.exists
 
-@pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1468561, forced_streams=["5.8"])])
-def test_edit_compute_chargeback(chargeback_compute_rate):
-    chargeback_compute_rate.create()
-    assert chargeback_compute_rate.exists
-    with update(chargeback_compute_rate):
-        chargeback_compute_rate.description = chargeback_compute_rate.description + "-edited"
-        chargeback_compute_rate.fields = {
-            'Fixed Compute Cost 1': with_random_per_time(fixed_rate='500'),
-            'Allocated CPU Count': with_random_per_time(fixed_rate='100'),
-        }
-    view = chargeback_compute_rate.create_view(
-        navigator.get_class(chargeback_compute_rate, 'Details').VIEW)
-    view.flash.assert_success_message(
-        'Chargeback Rate "{}" was saved'.format(chargeback_compute_rate.description))
-    assert chargeback_compute_rate.exists
-
-
-@pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1468561, forced_streams=["5.8"])])
-def test_edit_storage_chargeback():
-    storage_rate = chargeback_storage_rate()  # TODO parametrize on variable
-    storage_rate.create()
-    assert storage_rate.exists
-    with update(storage_rate):
-        storage_rate.description = storage_rate.description + "-edited"
-        storage_rate.fields = {
-            'Fixed Storage Cost 1': with_random_per_time(fixed_rate='500'),
-            'Allocated Disk Storage': with_random_per_time(fixed_rate='100'),
-        }
-    view = storage_rate.create_view(
-        navigator.get_class(storage_rate, 'Details').VIEW)
-    view.flash.assert_success_message(
-        'Chargeback Rate "{}" was saved'.format(storage_rate.description))
-    assert storage_rate.exists
-
-
-@pytest.mark.tier(3)
-def test_delete_compute_chargeback(chargeback_compute_rate):
-    chargeback_compute_rate.create()
-    assert chargeback_compute_rate.exists
-
-    chargeback_compute_rate.delete()
-    view = chargeback_compute_rate.create_view(
-        navigator.get_class(chargeback_compute_rate, 'Details').VIEW)
-    view.flash.assert_success_message(
-        'Chargeback Rate "{}": Delete successful'.format(chargeback_compute_rate.description))
-    assert not chargeback_compute_rate.exists
-
-
-@pytest.mark.tier(3)
-def test_delete_storage_chargeback():
-    storage_rate = chargeback_storage_rate()  # TODO parametrize on variable
-    storage_rate.create()
-    assert storage_rate.exists
-
-    storage_rate.delete()
-    view = storage_rate.create_view(
-        navigator.get_class(storage_rate, 'Details').VIEW)
-    view.flash.assert_success_message(
-        'Chargeback Rate "{}": Delete successful'.format(storage_rate.description))
-    assert not storage_rate.exists
+    if 'update' in rate_action:
+        with update(cb_rate):
+            cb_rate.description = '{}_edited'.format(cb_rate.description)
+            if 'compute' in rate_action:
+                cb_rate.fields = {
+                    'Fixed Compute Cost 1': with_random_per_time(fixed_rate='500'),
+                    'Allocated CPU Count': with_random_per_time(fixed_rate='100'),
+                }
+            elif 'storage' in rate_action:
+                cb_rate.fields = {
+                    'Fixed Storage Cost 1': with_random_per_time(fixed_rate='100'),
+                    'Fixed Storage Cost 2': with_random_per_time(fixed_rate='200'),
+                }
+        view = cb_rate.create_view(
+            navigator.get_class(cb_rate, 'Details').VIEW)
+        view.flash.assert_success_message(
+            'Chargeback Rate "{}" was saved'.format(cb_rate.description))
+        assert cb_rate.exists
 
 
 class TestRatesViaREST(object):
