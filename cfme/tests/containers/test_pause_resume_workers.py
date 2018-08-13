@@ -11,14 +11,16 @@ pytestmark = [
 
 
 def get_pause_resume_buttons(view):
+    resume_option = [menu_item for menu_item in view.toolbar.configuration.items if
+                     "resume this containers provider" in menu_item.lower()]
     # ensure resume option is exists
-    resume_option = filter(lambda item: "resume" in item.lower(), view.toolbar.configuration.items)
-    assert resume_option, "Not resume provider option is available in the configuration menu"
+    assert resume_option, "No resume provider option is available in the configuration menu"
     resume_option = resume_option.pop()
 
+    pause_option = [menu_item for menu_item in view.toolbar.configuration.items if
+                    "pause this containers provider" in menu_item.lower()]
     # ensure pause option is exists
-    pause_option = filter(lambda item: "pause" in item.lower(), view.toolbar.configuration.items)
-    assert pause_option, "Not pause provider option is available in the configuration menu"
+    assert pause_option, "No pause provider option is available in the configuration menu"
     pause_option = pause_option.pop()
 
     return pause_option, resume_option
@@ -27,17 +29,17 @@ def get_pause_resume_buttons(view):
 def check_ems_state_in_diagnostics(appliance, provider):
     workers_view = navigate_to(appliance.collections.diagnostic_workers, 'AllDiagnosticWorkers')
     workers_view.browser.refresh()
-    ems_worker_is_running = False
-    for row in workers_view.workers_table.rows():
-        name = getattr(row, "Name")
-        uri_queue_name = getattr(row, "URI / Queue Name")
-        assert name, "'Name' column not found in workers table"
-        assert uri_queue_name, "'URI / Queue Name' column not found in workers table"
-        if ("Event Monitor for Provider" in name.text and
-                provider.name in name.text and
-                "ems_" in uri_queue_name.text):
-            ems_worker_is_running = True
-    return ems_worker_is_running
+    try:
+        rows = workers_view.workers_table.rows(
+            name='Event Monitor for Provider: {}'.format(provider.name))
+        for r in rows:
+            return True
+        else:
+            return False
+
+    except Exception:
+        return False
+    return False
 
 
 @pytest.mark.polarion('10790', '10791')
