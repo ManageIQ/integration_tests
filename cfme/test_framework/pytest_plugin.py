@@ -71,6 +71,7 @@ pytest_plugins = (
     'cfme.fixtures.page_screenshots',
     'cfme.fixtures.perf',
     'cfme.fixtures.provider',
+    'cfme.fixtures.physical_switch',
     'cfme.fixtures.qa_contact',
     'cfme.fixtures.randomness',
     'cfme.fixtures.rbac',
