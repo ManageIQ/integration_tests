@@ -105,7 +105,7 @@ class NetworkProviderEditView(ProviderEditView):
     """ Represents Network Provider Edit View """
     @property
     def is_displayed(self):
-        return (super(NetworkProviderEditView, self).is_displayed and
+        return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
                 self.title.text.startswith('Edit Network Provider'))
 

@@ -11,8 +11,8 @@ from cfme.cloud.instance.image import Image
 from cfme.common import TagPageView, PolicyProfileAssignable, Taggable
 from cfme.common.provider import BaseProvider, provider_types, CloudInfraProviderMixin
 from cfme.common.provider_views import (
-    CloudProviderAddView, CloudProviderEditView, CloudProviderDetailsView, CloudProvidersView,
-    CloudProvidersDiscoverView)
+    CloudProviderAddView, CloudProviderDetailsView, CloudProvidersView,
+    CloudProvidersDiscoverView, ProviderEditView)
 from cfme.common.vm_views import VMToolbar, VMEntities
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
@@ -244,7 +244,7 @@ class Details(CFMENavigateStep):
 
 @navigator.register(CloudProvider, 'Edit')
 class Edit(CFMENavigateStep):
-    VIEW = CloudProviderEditView
+    VIEW = ProviderEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -258,7 +258,7 @@ class Edit(CFMENavigateStep):
 
 @navigator.register(CloudProvider, 'EditFromDetails')
 class EditFromDetails(CFMENavigateStep):
-    VIEW = CloudProviderEditView
+    VIEW = ProviderEditView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

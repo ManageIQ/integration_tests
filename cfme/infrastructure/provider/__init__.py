@@ -12,9 +12,9 @@ from cfme.common import TagPageView, Taggable, PolicyProfileAssignable
 from cfme.common.host_views import ProviderAllHostsView
 from cfme.common.provider import BaseProvider, provider_types, CloudInfraProviderMixin
 from cfme.common.provider_views import (
-    InfraProviderAddView, InfraProviderEditView, InfraProviderDetailsView, ProviderTimelinesView,
-    InfraProvidersDiscoverView, InfraProvidersView, ProviderNodesView, ProviderTemplatesView,
-    ProviderVmsView)
+    InfraProviderAddView, InfraProviderDetailsView, InfraProvidersDiscoverView,
+    InfraProvidersView, ProviderEditView, ProviderNodesView,
+    ProviderTemplatesView, ProviderTimelinesView, ProviderVmsView)
 from cfme.exceptions import DestinationNotFound
 from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
 from cfme.infrastructure.host import HostsCollection
@@ -353,7 +353,7 @@ class EditTags(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Edit')
 class Edit(CFMENavigateStep):
-    VIEW = InfraProviderEditView
+    VIEW = ProviderEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self):

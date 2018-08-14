@@ -415,6 +415,7 @@ class BeforeFillMixin(object):
     """
      this mixin is used to activate appropriate tab before filling this tab
     """
+
     def before_fill(self):
         if self.exists and not self.is_active():
             self.select()
@@ -563,57 +564,20 @@ class ProviderEditView(ProviderAddView):
 
     @property
     def is_displayed(self):
-        return self.logged_in_as_current_user
+        provider_obj = self.context['object']
+        expected_title = ("Edit {type} Providers '{name}'".format(
+            type=provider_obj.string_name, name=provider_obj.name))
+
+        return (self.logged_in_as_current_user and
+                self.title.text == expected_title and
+                self.navigation.currently_selected == [
+                    'Compute',
+                    ('Clouds' if provider_obj.string_name == "Cloud" else provider_obj.string_name),
+                    'Providers'
+                ])
 
 
-class InfraProviderEditView(ProviderEditView):
-    """
-     represents Infra Provider Edit View
-    """
-    @property
-    def is_displayed(self):
-        return (super(InfraProviderEditView, self).is_displayed and
-                self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
-                self.title.text == 'Edit Infrastructure Provider')
-
-
-class PhysicalProviderEditView(ProviderEditView):
-    """
-     represents Provider Edit View
-    """
-    @property
-    def is_displayed(self):
-        expected_title = ("Edit Physical Infrastructure Providers '{name}'"
-                          .format(name=self.context['object'].name))
-        return (super(PhysicalProviderEditView, self).is_displayed and
-                self.navigation.currently_selected ==
-                ['Compute', 'Physical Infrastructure', 'Providers'] and
-                self.title.text == expected_title)
-
-
-class CloudProviderEditView(ProviderEditView):
-    """
-     represents Cloud Provider Edit View
-    """
-    @property
-    def is_displayed(self):
-        return (super(CloudProviderEditView, self).is_displayed and
-                self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
-                self.title.text == 'Edit Cloud Provider')
-
-
-class ContainerProviderEditView(ProviderEditView):
-    """
-     represents Container Provider Edit View
-    """
-    @property
-    def is_displayed(self):
-        return (super(ContainerProviderEditView, self).is_displayed and
-                self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
-                'Edit Containers Provider' in self.title.text)
-
-
-class ContainerProviderEditViewUpdated(ContainerProviderEditView, ContainerProviderSettingView):
+class ContainerProviderEditViewUpdated(ProviderEditView, ContainerProviderSettingView):
     """
      Additional widgets for builds 5.9 and up
     """
