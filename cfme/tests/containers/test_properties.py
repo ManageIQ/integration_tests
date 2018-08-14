@@ -144,7 +144,7 @@ TEST_ITEMS = [
 def test_properties(provider, appliance, test_item, soft_assert):
 
     instances = test_item.collection_object(appliance).get_random_instances(count=2)
-
+    # Just to have a change
     for instance in instances:
 
         expected_fields = test_item.expected_fields
