@@ -465,6 +465,27 @@ class IPAppliance(object):
     def rest_logger(self):
         return create_sublogger('rest-api')
 
+    def fix_httpd_issue(self, log_callback=None):
+        # This is workaround for issue when httpd cannot start after restart because
+        # it didn't properly clean up semaphores
+        if self.version >= '5.10' and not self.is_pod:
+            with self.ssh_client as ssh:
+                filename = 'httpd.service'
+                src = os.path.join('/usr/lib/systemd/system', filename)
+                dst = os.path.join('/etc/systemd/system', filename)
+                copy_cmd = 'cp {} {}'.format(src, dst)
+                assert ssh.run_command(copy_cmd).success
+                exec_pre = """
+[Service]
+ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line; \
+                               do ipcrm sem $line; done"
+        """
+                full_cmd = """echo '{cmd}' >> {dst}""".format(cmd=exec_pre, dst=dst)
+                assert ssh.run_command(full_cmd).success
+                assert ssh.run_command('systemctl daemon-reload').success
+                assert ssh.run_command('systemctl restart httpd').success
+                self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+
     # Configuration methods
     @logger_wrap("Configure IPAppliance: {}")
     def configure(self, log_callback=None, **kwargs):
@@ -510,6 +531,8 @@ class IPAppliance(object):
             self.ssh_client.run_command("service auditd restart", ensure_host=True)
 
             ipapp.wait_for_ssh()
+
+            self.fix_httpd_issue(log_callback)
 
             self.deploy_merkyl(start=True, log_callback=log_callback)
             if fix_ntp_clock and not self.is_pod:
@@ -2784,7 +2807,6 @@ class Appliance(IPAppliance):
             self.update_advanced_settings(config)
 
     @property
-
     def _lun_name(self):
         return "{}LUNDISK".format(self.vm_name)
 
