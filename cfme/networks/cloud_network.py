@@ -42,7 +42,10 @@ class CloudNetwork(Taggable, BaseEntity):
     def parent_provider(self):
         """ Return object of parent cloud provider """
         view = navigate_to(self, 'Details')
-        provider_name = view.entities.relationships.get_text_of('Parent ems cloud')
+        if self.appliance.version >= '5.10':
+            provider_name = view.entities.relationships.get_text_of('Parent Cloud Provider')
+        else:
+            provider_name = view.entities.relationships.get_text_of('Parent ems cloud')
         return providers.get_crud_by_name(provider_name)
 
     @property

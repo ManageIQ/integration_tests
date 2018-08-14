@@ -427,7 +427,7 @@ class NetworkRouterAddView(BaseLoggedInPage):
     """ Represents Add NetworkRouters page """
     network_manager = Select(id='ems_id')
     router_name = TextInput(name='name')
-    ext_gateway = BootstrapSwitch(id='network_router_external_gateway')
+    ext_gateway = BootstrapSwitch(name='external_gateway')
     network_name = Select(name='cloud_network_id')
     subnet_name = Select(name='cloud_subnet_id')
     cloud_tenant = Select(name='cloud_tenant_id')
@@ -441,7 +441,7 @@ class NetworkRouterAddView(BaseLoggedInPage):
 class NetworkRouterEditView(BaseLoggedInPage):
     """ Represents Edit NetworkRouters page """
     router_name = TextInput(name='name')
-    ext_gateway = BootstrapSwitch(id='network_router_external_gateway')
+    ext_gateway = BootstrapSwitch(name='external_gateway')
     network_name = Select(name='cloud_network_id')
     subnet_name = Select(name='cloud_subnet_id')
     save = Button('Save')
@@ -565,7 +565,7 @@ class SubnetDetailsToolBar(View):
 class SubnetAddView(BaseLoggedInPage):
     """ Represents Add view of subnet """
     title = Text('//div[@id="main-content"]//h1')
-    network_manager = Select(id='ems_id')
+    network_manager = Select(name='ems_id')
     cloud_tenant = Select(name='cloud_tenant_id')
     network = Select(name='network_id')
     subnet_name = TextInput(name='name')

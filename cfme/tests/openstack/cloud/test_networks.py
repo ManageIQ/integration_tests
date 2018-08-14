@@ -52,7 +52,7 @@ def create_subnet(appliance, provider, network):
 def create_router(appliance, provider, ext_gw, ext_network=None, ext_subnet=None):
     collection = appliance.collections.network_routers
     router = collection.create(name=fauxfactory.gen_alpha(),
-                               tenant=provider.data['tenant'],
+                               tenant=provider.data['provisioning']['cloud_tenant'],
                                provider=provider,
                                network_manager='{} Network Manager'.format(provider.name),
                                has_external_gw=ext_gw,
@@ -114,7 +114,7 @@ def test_create_network(network, provider):
     """Creates private cloud network and verifies it's relationships"""
     assert network.exists
     assert network.parent_provider.name == provider.name
-    assert network.cloud_tenant == provider.data['tenant']
+    assert network.cloud_tenant == provider.data['provisioning']['cloud_tenant']
 
 
 def test_edit_network(network):
@@ -138,7 +138,7 @@ def test_create_subnet(subnet, provider):
     """Creates private subnet and verifies it's relationships"""
     assert subnet.exists
     assert subnet.parent_provider.name == provider.name
-    assert subnet.cloud_tenant == provider.data['tenant']
+    assert subnet.cloud_tenant == provider.data['provisioning']['cloud_tenant']
     assert subnet.cidr == SUBNET_CIDR
     assert subnet.cloud_network == subnet.network
     assert subnet.net_protocol == 'ipv4'
@@ -164,13 +164,13 @@ def test_delete_subnet(subnet):
 def test_create_router(router, provider):
     """Create router without gateway"""
     assert router.exists
-    assert router.cloud_tenant == provider.data['tenant']
+    assert router.cloud_tenant == provider.data['provisioning']['cloud_tenant']
 
 
 def test_create_router_with_gateway(router_with_gw, provider):
     """Creates router with gateway (external network)"""
     assert router_with_gw.exists
-    assert router_with_gw.cloud_tenant == provider.data['tenant']
+    assert router_with_gw.cloud_tenant == provider.data['provisioning']['cloud_tenant']
     assert router_with_gw.cloud_network == router_with_gw.ext_network
 
 
