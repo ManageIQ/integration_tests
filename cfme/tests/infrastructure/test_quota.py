@@ -98,6 +98,69 @@ def entities(appliance, request, max_quota_test_instance):
     return getattr(appliance.collections, collection).instantiate(description)
 
 
+@pytest.fixture(scope='module')
+def new_tenant(appliance):
+    tenant_list = []
+    for i in range(0, 3):
+        collection = appliance.collections.tenants
+        tenant = collection.create(name='tenant{}'.format(fauxfactory.gen_alphanumeric()),
+                                   description='tenant_des{}'.
+                                   format(fauxfactory.gen_alphanumeric()),
+                                   parent=collection.get_root_tenant())
+        tenant_list.append(tenant)
+    yield tenant_list
+    if tenant.exists:
+        tenant.delete()
+
+
+@pytest.fixture
+def set_parent_tenant_quota(request, appliance, new_tenant):
+    for i in range(0, 3):
+        field, value = request.param
+        new_tenant[i].set_quota(**{'{}_cb'.format(field): True, field: value})
+    yield
+    # will refresh page as navigation to configuration is blocked if alerts are on the page
+    appliance.server.login_admin()
+    appliance.server.browser.refresh()
+    for i in range(0, 3):
+        new_tenant[i].set_quota(**{'{}_cb'.format(field): False})
+
+
+@pytest.fixture(scope='module')
+def new_group_list(appliance, new_tenant):
+    group_list = []
+    collection = appliance.collections.groups
+    for i in range(0, 3):
+        group = collection.create(description='group_{}'.format(fauxfactory.gen_alphanumeric()),
+                                  role='EvmRole-super_administrator',
+                                  tenant='My Company/{}'.format(new_tenant[i].name))
+        group_list.append(group)
+    yield group_list
+    if group.exists:
+        group.delete()
+
+
+@pytest.fixture(scope='module')
+def new_user(appliance, new_group_list, new_credential):
+    collection = appliance.collections.users
+    user = collection.create(
+        name='user_{}'.format(fauxfactory.gen_alphanumeric()),
+        credential=new_credential,
+        email='xyz@redhat.com',
+        groups=new_group_list,
+        cost_center='Workload',
+        value_assign='Database')
+    yield user
+
+
+@pytest.fixture
+def custom_prov_data(request, prov_data, vm_name, template_name):
+    value = request.param
+    prov_data.update(value)
+    prov_data['catalog']['vm_name'] = vm_name
+    prov_data['catalog']['catalog_name'] = {'name': template_name}
+
+
 @pytest.mark.rhv2
 # Here cust_prov_data is the dict required during provisioning of the VM.
 @pytest.mark.parametrize(
@@ -122,3 +185,45 @@ def test_quota(appliance, provider, setup_provider, custom_prov_data, vm_name, a
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+@pytest.mark.parametrize(
+    ['set_parent_tenant_quota', 'custom_prov_data', 'extra_msg', 'approve'],
+    [
+        [('cpu', '2'), {'hardware': {'num_sockets': '8'}}, '', False],
+        [('storage', '0.01'), {}, '', False],
+        [('memory', '2'), {'hardware': {'memory': '4096'}}, '', False],
+        [('vm', '1'), {'catalog': {'num_vms': '4'}}, '###', True]
+    ],
+    indirect=['set_parent_tenant_quota'],
+    ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
+)
+def test_user_quota_diff_groups(request, appliance, provider, setup_provider, new_user,
+                                set_parent_tenant_quota, extra_msg, custom_prov_data, approve,
+                                prov_data, vm_name, template_name):
+    """prerequisite: Provider should be added
+
+    steps:
+
+    1. Create three tenants
+    2. Create Three new groups
+    3. Three groups should be assigned to three different tenants
+    4. Create new user
+    5. User should be member of three groups
+    6. Assign quota for three tenants(like ('cpu', '2') for three tenants at a time)
+    7. Provision VM with more than assigned quota
+    """
+    with new_user:
+        recursive_update(prov_data, custom_prov_data)
+        do_vm_provisioning(appliance, template_name=template_name, provider=provider,
+                           vm_name=vm_name, provisioning_data=prov_data, smtp_test=False,
+                           wait=False, request=None)
+
+        # nav to requests page to check quota validation
+        request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name,
+                                                                     extra_msg)
+        provision_request = appliance.collections.requests.instantiate(request_description)
+        if approve:
+            provision_request.approve_request(method='ui', reason="Approved")
+        provision_request.wait_for_request(method='ui')
+        assert provision_request.row.reason.text == "Quota Exceeded"
