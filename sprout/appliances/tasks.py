@@ -1596,7 +1596,7 @@ def appliance_rename(self, appliance_id, new_name):
     with redis.appliances_ignored_when_renaming(appliance.name, new_name):
         self.logger.info("Renaming {}/{} to {}".format(appliance_id, appliance.name, new_name))
         appliance.vm_mgmt.rename(new_name)
-        appliance.name = appliance.vm_mgmt.name
+        appliance.name = new_name
         appliance.save(update_fields=['name'])
     return appliance.name
 
