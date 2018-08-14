@@ -12,8 +12,8 @@ def migration_ui(appliance):
 
 
 @pytest.fixture(scope='function')
-def provider_setup(migration_ui, request, second_provider, provider):
-    """Fixture to setup nvc and rhv provider"""
+def v2v_providers(request, migration_ui, second_provider, provider):
+    """ Fixture to setup providers """
     setup_or_skip(request, second_provider)
     setup_or_skip(request, provider)
     yield second_provider, provider
@@ -22,9 +22,9 @@ def provider_setup(migration_ui, request, second_provider, provider):
 
 
 @pytest.fixture(scope='function')
-def host_creds(provider_setup):
+def host_creds(v2v_providers):
     """Add credentials to conversation host"""
-    provider = provider_setup[0]
+    provider = v2v_providers[0]
     host = provider.hosts.all()[0]
     host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
     host.update_credentials_rest(credentials=host_data['credentials'])
