@@ -129,7 +129,7 @@ def dialog(request, appliance):
     return service_dialog
 
 
-def services(request, appliance, a_provider, service_dialog=None, service_catalog=None):
+def services(request, appliance, provider, service_dialog=None, service_catalog=None):
     """
     The attempt to add the service entities via web
     """
@@ -138,7 +138,7 @@ def services(request, appliance, a_provider, service_dialog=None, service_catalo
         appliance,
         service_dialog=service_dialog,
         service_catalog=service_catalog,
-        a_provider=a_provider,
+        provider=provider,
         num=1
     )
 
@@ -196,10 +196,10 @@ def rates(request, rest_api, num=3):
     return _creating_skeleton(request, rest_api, 'rates', data)
 
 
-def vm(request, a_provider, rest_api):
-    provider_rest = rest_api.collections.providers.get(name=a_provider.name)
+def vm(request, provider, rest_api):
+    provider_rest = rest_api.collections.providers.get(name=provider.name)
     vm = deploy_template(
-        a_provider.key,
+        provider.key,
         'test_rest_vm_{}'.format(fauxfactory.gen_alphanumeric(length=4))
     )
     vm_name = vm.name
@@ -220,21 +220,21 @@ def vm(request, a_provider, rest_api):
 
 
 def service_templates_ui(request, appliance, service_dialog=None, service_catalog=None,
-        a_provider=None, num=4):
+        provider=None, num=4):
     if not service_dialog:
         service_dialog = dialog(request, appliance)
     if not service_catalog:
         service_catalog = service_catalog_obj(request, appliance)
 
     cat_items_col = appliance.collections.catalog_items
-    catalog_item_type = a_provider.catalog_item_type if a_provider else cat_items_col.GENERIC
+    catalog_item_type = provider.catalog_item_type if provider else cat_items_col.GENERIC
 
     catalog_items = []
     new_names = []
     for _ in range(num):
-        if a_provider:
+        if provider:
             template, host, datastore, vlan = map(
-                a_provider.data.get('provisioning').get,
+                provider.data.get('provisioning').get,
                 ('template', 'host', 'datastore', 'vlan'))
 
             vm_name = 'test_rest_{}'.format(fauxfactory.gen_alphanumeric())
@@ -248,10 +248,10 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
                 'network': {},
             }
 
-            if a_provider.one_of(RHEVMProvider):
+            if provider.one_of(RHEVMProvider):
                 provisioning_data['catalog']['provision_type'] = 'Native Clone'
                 provisioning_data['network']['vlan'] = partial_match(vlan)
-            elif a_provider.one_of(VMwareProvider):
+            elif provider.one_of(VMwareProvider):
                 provisioning_data['catalog']['provision_type'] = 'VMware'
                 provisioning_data['network']['vlan'] = partial_match(vlan)
 
@@ -511,10 +511,10 @@ def orchestration_templates(request, rest_api, num=2):
     return _creating_skeleton(request, rest_api, 'orchestration_templates', data)
 
 
-def arbitration_profiles(request, rest_api, a_provider, num=2):
-    provider = rest_api.collections.providers.get(name=a_provider.name)
+def arbitration_profiles(request, rest_api, provider, num=2):
+    r_provider = rest_api.collections.providers.get(name=provider.name)
     data = []
-    providers = [{'id': provider.id}, {'href': provider.href}]
+    providers = [{'id': r_provider.id}, {'href': r_provider.href}]
     for index in range(num):
         data.append({
             'name': 'test_settings_{}'.format(fauxfactory.gen_alphanumeric(5)),

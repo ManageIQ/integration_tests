@@ -111,13 +111,13 @@ def service_catalogs(request, appliance):
 
 
 @pytest.fixture(scope='function')
-def catalog_bundle(request, dialog, service_catalog_obj, appliance, a_provider):
+def catalog_bundle(request, dialog, service_catalog_obj, appliance, provider):
     catalog_items = service_templates_ui(
         request,
         appliance,
         service_dialog=dialog,
         service_catalog=service_catalog_obj,
-        a_provider=a_provider,
+        provider=provider,
         num=NUM_BUNDLE_ITEMS)
 
     uid = fauxfactory.gen_alphanumeric()
@@ -172,13 +172,13 @@ def service_templates(request, appliance):
 
 
 @pytest.fixture(scope="function")
-def vm_service(request, appliance, a_provider):
-    return _services(request, appliance, a_provider).pop()
+def vm_service(request, appliance, provider):
+    return _services(request, appliance, provider).pop()
 
 
 @pytest.fixture(scope="function")
-def vm(request, a_provider, appliance):
-    return _vm(request, a_provider, appliance.rest_api)
+def vm(request, provider, appliance):
+    return _vm(request, provider, appliance.rest_api)
 
 
 @pytest.fixture(scope="function")
