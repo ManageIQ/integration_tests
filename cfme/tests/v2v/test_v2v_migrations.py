@@ -29,10 +29,14 @@ pytestmark = [
 
 def _form_data_cluster_mapping(second_provider, provider):
     # since we have only one cluster on providers
-    source_cluster = second_provider.data.get('clusters')[0]
-    target_cluster = provider.data.get('clusters')[0]
-
-    if not source_cluster or not target_cluster:
+    skip = False
+    try:
+        source_cluster = second_provider.data.get('clusters')[0]
+        target_cluster = provider.data.get('clusters')[0]
+    except TypeError:
+        skip = True
+        pass
+    if skip or not source_cluster or not target_cluster:
         pytest.skip("No data for source or target cluster in providers.")
 
     return {
@@ -133,10 +137,15 @@ def form_data_single_network(request, second_provider, provider):
 
 @pytest.fixture(scope='function')
 def form_data_dual_datastore(request, second_provider, provider):
-    vmware_nw = second_provider.data.get('vlans')[0]
-    rhvm_nw = provider.data.get('vlans')[0]
+    skip = False
+    try:
+        vmware_nw = second_provider.data.get('vlans')[0]
+        rhvm_nw = provider.data.get('vlans')[0]
+    except TypeError:
+        skip = True
+        pass
 
-    if not vmware_nw or not rhvm_nw:
+    if skip or not vmware_nw or not rhvm_nw:
         pytest.skip("No data for source or target network in providers.")
 
     form_data = (
@@ -163,7 +172,7 @@ def form_data_dual_datastore(request, second_provider, provider):
             'network': {
                 'Cluster ({})'.format(provider.data.get('clusters')[0]): {
                     'mappings': [_form_data_network_mapping(second_provider, provider,
-                        second_provider.data.get('vlans')[0], provider.data.get('vlans')[0])]
+                                                            vmware_nw, rhvm_nw)]
                 }
             }
         })

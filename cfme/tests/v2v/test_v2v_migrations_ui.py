@@ -27,10 +27,15 @@ pytestmark = [
 
 def _form_data_cluster_mapping(second_provider, provider):
     # since we have only one cluster on providers
-    source_cluster = second_provider.data.get('clusters')[0]
-    target_cluster = provider.data.get('clusters')[0]
+    skip = False
+    try:
+        source_cluster = second_provider.data.get('clusters')[0]
+        target_cluster = provider.data.get('clusters')[0]
+    except TypeError:
+        skip = True
+        pass
 
-    if not source_cluster or not target_cluster:
+    if skip or not source_cluster or not target_cluster:
         pytest.skip("No data for source or target cluster in providers.")
 
     return {
