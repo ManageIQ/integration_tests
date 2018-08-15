@@ -215,8 +215,6 @@ class MiqBrowserPlugin(DefaultPlugin):
         self.browser.page_dirty = self.page_has_changes
 
     def after_click(self, element, locator):
-        # page_dirty is set to None because otherwise if it was true, all next ensure_page_safe
-        # calls would check alert presence which is enormously slow in selenium.
         if not isinstance(locator, (Input)):
             browser_type = self.browser.browser_type.lower()
             if (browser_type == 'chrome' or
@@ -224,15 +222,17 @@ class MiqBrowserPlugin(DefaultPlugin):
                 # Use WA for Firefox > 45 and also for all versions of Chrome
                 # This is probably not the best approach, but solves the clicking problem for Chrome
                 self.browser.logger.warning('Using the workaround')
+                dom_check_script = 'return document.readyState === "complete"'
                 try:
-                    element = self.browser.element('//body')
-                    wait_for(lambda: element.is_displayed(), num_sec=2, fail_condition=True,
-                             delay=0.5, very_quiet=True)
+                    wait_for(lambda: self.browser.execute_script(dom_check_script),
+                             fail_condition=True, num_sec=2, delay=0.5, very_quiet=True)
                 except (StaleElementReferenceException, TimedOutError, NoSuchElementException):
                     wait_for(
-                        lambda: self.browser.element('//body').is_displayed(),
+                        lambda: self.browser.execute_script(dom_check_script),
                         num_sec=10, handle_exception=True, very_quiet=True
                     )
+        # page_dirty is set to None because otherwise if it was true, all next ensure_page_safe
+        # calls would check alert presence which is enormously slow in selenium.
         self.browser.page_dirty = None
 
 
