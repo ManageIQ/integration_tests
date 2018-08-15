@@ -53,9 +53,9 @@ def new_compute_rate(enable_candu):
 @pytest.fixture(scope="module")
 def assign_chargeback_rate(new_compute_rate, appliance):
     """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
-    enterprise = appliance.collections.assignments.Assign(
-        "The Enterprise",
-        {
+    enterprise = appliance.collections.assignments.instantiate(
+        assign_to="The Enterprise",
+        selections={
             'Enterprise': {'Rate': new_compute_rate}
         })
     enterprise.computeassign()
@@ -63,9 +63,9 @@ def assign_chargeback_rate(new_compute_rate, appliance):
     logger.info('Assigning CUSTOM Compute and Storage rates')
     yield
     # Resetting the Chargeback rate assignment
-    enterprise = appliance.collections.assignments.Assign(
-        "The Enterprise",
-        {
+    enterprise = appliance.collections.assignments.instantiate(
+        assign_to="The Enterprise",
+        selections={
             'Enterprise': {'Rate': '<Nothing>'}
         })
     enterprise.computeassign()

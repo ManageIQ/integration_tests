@@ -120,9 +120,9 @@ def enable_candu(provider, appliance):
 @pytest.fixture(scope="module")
 def assign_default_rate(provider, appliance):
     # Assign default Compute rate to the Enterprise and then queue the Chargeback report.
-    enterprise = appliance.collections.assignments.Assign(
-        "The Enterprise",
-        {
+    enterprise = appliance.collections.assignments.instantiate(
+        assign_to="The Enterprise",
+        selections={
             'Enterprise': {'Rate': 'Default'}
         })
     enterprise.computeassign()
@@ -132,9 +132,9 @@ def assign_default_rate(provider, appliance):
     yield
 
     # Resetting the Chargeback rate assignment
-    enterprise = appliance.collections.assignments.Assign(
-        "The Enterprise",
-        {
+    enterprise = appliance.collections.assignments.instantiate(
+        assign_to="The Enterprise",
+        selections={
             'Enterprise': {'Rate': '<Nothing>'}
         })
     enterprise.computeassign()
@@ -145,9 +145,9 @@ def assign_default_rate(provider, appliance):
 def assign_custom_rate(new_compute_rate, provider, appliance):
     # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
     description = new_compute_rate
-    enterprise = appliance.collections.assignments.Assign(
-        "The Enterprise",
-        {
+    enterprise = appliance.collections.assignments.instantiate(
+        assign_to="The Enterprise",
+        selections={
             'Enterprise': {'Rate': description}
         })
     enterprise.computeassign()
@@ -157,9 +157,9 @@ def assign_custom_rate(new_compute_rate, provider, appliance):
     yield
 
     # Resetting the Chargeback rate assignment
-    enterprise = appliance.collections.assignments.Assign(
-        "The Enterprise",
-        {
+    enterprise = appliance.collections.assignments.instantiate(
+        assign_to="The Enterprise",
+        selections={
             'Enterprise': {'Rate': '<Nothing>'}
         })
     enterprise.computeassign()
