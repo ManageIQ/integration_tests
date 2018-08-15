@@ -25,8 +25,10 @@ def provider_setup(migration_ui, request, second_provider, provider):
 def host_creds(provider_setup):
     """Add credentials to conversation host"""
     provider = provider_setup[0]
-    host = provider.hosts.all()[0]
-    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+    host = provider.hosts.all()
+    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name] or [None]
+    if not host or not host_data:
+        pytest.skip('Missing host_data or host during host creds update')
     host.update_credentials_rest(credentials=host_data['credentials'])
     yield host
     host.remove_credentials_rest()

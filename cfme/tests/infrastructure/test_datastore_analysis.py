@@ -3,7 +3,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.exceptions import MenuItemNotFound
-from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
@@ -62,7 +61,10 @@ def datastores_hosts_setup(provider, datastore):
     hosts = datastore.hosts.all()
     assert hosts, "No hosts attached to this datastore found"
     for host in hosts:
-        host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+        host_data, = [data
+                      for data in provider.data['hosts']
+                      if data['name'] == host.name] or [None]
+        assert host_data, 'Missing host data with matching name during datastore hosts setup'
         host.update_credentials_rest(credentials=host_data['credentials'])
     yield
     for host in hosts:

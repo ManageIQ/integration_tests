@@ -52,8 +52,10 @@ def configure_vddk(request, appliance, provider, vm):
     vddk_url = conf.cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
     view = navigate_to(vm, 'Details')
     host_name = view.entities.summary("Relationships").get_text_of("Host")
-    host, = [host for host in provider.hosts.all() if host.name == host_name]
-    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+    host, = [host for host in provider.hosts.all() if host.name == host_name] or [None]
+    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name] or [None]
+    if not host or not host_data:
+        pytest.skip('Missing host or host_data with matching name during vddk configurtion')
     host.update_credentials_rest(credentials=host_data['credentials'])
     appliance.install_vddk(vddk_url=vddk_url)
 

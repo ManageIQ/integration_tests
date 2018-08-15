@@ -120,8 +120,10 @@ def vddk_url(provider):
 
 @pytest.fixture(scope="function")
 def configure_fleecing(appliance, provider, vm, vddk_url):
-    host, = [host for host in provider.hosts.all() if host.name == vm.api.host.name]
-    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+    host, = [host for host in provider.hosts.all() if host.name == vm.api.host.name] or [None]
+    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name] or [None]
+    if not host or not host_data:
+        pytest.skip('Missing host or host_data when configuring fleecing')
     host.update_credentials_rest(credentials=host_data['credentials'])
     appliance.install_vddk(vddk_url=vddk_url)
     yield
@@ -146,7 +148,7 @@ def _get_vm(request, provider, template_name, vm_name):
     vm = collection.instantiate(vm_name, provider, template_name)
 
     try:
-        vm_mgmt = deploy_template(
+        deploy_template(
             provider.key,
             vm_name,
             template_name=template_name,

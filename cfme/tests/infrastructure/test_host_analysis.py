@@ -48,11 +48,10 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture(scope='module')
 def host_with_credentials(provider, host_name):
     """ Add credentials to hosts """
-    host, = [host for host in provider.hosts.all() if host.name == host_name]
-    try:
-        host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
-    except ValueError:
-        pytest.skip('Multiple hosts with the same name found, only expecting one')
+    host, = [host for host in provider.hosts.all() if host.name == host_name] or [None]
+    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name] or [None]
+    if not host or not host_data:
+        pytest.skip('Missing host or host_data when finding host with credentials')
     host.update_credentials_rest(credentials=host_data['credentials'])
 
     yield host

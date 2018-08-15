@@ -143,11 +143,10 @@ def vm_analysis_provisioning_data(provider, analysis_type):
 def set_hosts_credentials(appliance, request, provider):
     hosts = provider.hosts.all()
     for host in hosts:
-        try:
-            host_data, = [host for host in provider.data['hosts'] if host['name'] == host.name]
-        except ValueError:
-            pytest.skip('Multiple hosts with the same name found, only expecting one')
-
+        host_data, = [host
+                      for host in provider.data['hosts']
+                      if host['name'] == host.name] or [None]
+        assert host_data, 'Missing host_data with matching name during set hosts credentials'
         host.update_credentials_rest(credentials=host_data['credentials'])
 
     @request.addfinalizer
