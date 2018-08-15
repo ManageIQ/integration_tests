@@ -338,17 +338,19 @@ def ssa_analysis_profile(appliance):
     for file in ssa_expect_files:
         collected_files.append({"Name": file, "Collect Contents?": True})
 
-    analysis_profile_name = 'default'
+    analysis_profile_name = 'custom'
     analysis_profiles_collection = appliance.collections.analysis_profiles
-    analysis_profile = analysis_profiles_collection(
-        name=analysis_profile_name,
-        description=analysis_profile_name,
-        profile_type=analysis_profiles_collection.VM_TYPE,
-        categories=["System", "Software", "Services", "User Accounts", "VM Configuration"],
-        files=collected_files)
+    analysis_profile_data = {
+        'name': analysis_profile_name,
+        'description': analysis_profile_name,
+        'profile_type': analysis_profiles_collection.VM_TYPE,
+        'categories': ["System", "Software", "Services", "User Accounts", "VM Configuration"],
+        'files': collected_files
+    }
+    analysis_profile = analysis_profiles_collection.instantiate(**analysis_profile_data)
     if analysis_profile.exists:
         analysis_profile.delete()
-    analysis_profile.create()
+    analysis_profile = analysis_profiles_collection.create(**analysis_profile_data)
     yield analysis_profile
     if analysis_profile.exists:
         analysis_profile.delete()
