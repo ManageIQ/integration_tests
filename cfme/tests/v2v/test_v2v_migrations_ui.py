@@ -165,9 +165,9 @@ def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_
 
     # Test Datacenter name in source and destination mapping select list:
     soft_assert(v2v_providers[0].data['datacenters'][0]
-     in view.form.cluster.source_clusters.all_items[0])
+                in view.form.cluster.source_clusters.all_items[0])
     soft_assert(v2v_providers[1].data['datacenters'][0]
-     in view.form.cluster.target_clusters.all_items[0])
+                in view.form.cluster.target_clusters.all_items[0])
 
     # Assert Add Mapping button is enabled before selecting source and target clusters
     soft_assert(not view.form.cluster.add_mapping.root_browser.
