@@ -2553,11 +2553,11 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         self.wait_for_web_ui()
 
     def enable_migration_ui(self):
-        if not self.advanced_settings['product']['transformation']:
+        if not self.advanced_settings.get('product', {}).get('transformation'):
             self._switch_migration_ui(True)
 
     def disable_migration_ui(self):
-        if self.advanced_settings['product']['transformation']:
+        if self.advanced_settings.get('product', {}).get('transformation'):
             self. _switch_migration_ui(False)
 
 
