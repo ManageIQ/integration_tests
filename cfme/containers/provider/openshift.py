@@ -165,7 +165,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin):
     @num_route.variant('ui')
     def num_route_ui(self):
         view = navigate_to(self, "Details")
-        return int(view.entities.summary("Relationships").get_text_of("Routes"))
+        return int(view.entities.summary("Relationships").get_text_of('Container Routes'))
 
     @variable(alias='db')
     def num_template(self):
