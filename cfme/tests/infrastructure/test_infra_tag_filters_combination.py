@@ -44,7 +44,7 @@ def testing_vis_object(request, provider, appliance):
     return collection.instantiate(name=names[0], provider=provider)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def group_tag_datacenter_combination(group_with_tag, provider):
     with update(group_with_tag):
         group_with_tag.host_cluster = ([provider.data['name'],
