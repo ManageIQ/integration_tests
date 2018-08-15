@@ -33,20 +33,19 @@ def ssa_analysis_profile(appliance):
         collected_files.append({"Name": file, "Collect Contents?": True})
 
     analysis_profile_name = 'ssa_analysis_{}'.format(fauxfactory.gen_alphanumeric())
-    analysis_profile = appliance.collections.analysis_profiles(
+    analysis_profile_collection = appliance.collections.analysis_profiles
+    analysis_profile = analysis_profile_collection.create(
         name=analysis_profile_name,
         description=analysis_profile_name,
-        profile_type=appliance.collections.analysis_profiles.VM_TYPE,
+        profile_type=analysis_profile_collection.VM_TYPE,
         categories=["System"],
-        files=collected_files
-    )
-    analysis_profile.create()
+        files=collected_files)
     yield
     if analysis_profile.exists:
         analysis_profile.delete()
 
 
-@pytest.fixture(params=vddk_versions, ids=([item for item in vddk_versions]), scope='module')
+@pytest.fixture(params=vddk_versions, ids=([item for item in vddk_versions]), scope='function')
 def configure_vddk(request, appliance, provider, vm):
     vddk_version = request.param
     vddk_url = conf.cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
@@ -63,13 +62,13 @@ def configure_vddk(request, appliance, provider, vm):
         host.remove_credentials_rest()
 
 
-@pytest.fixture(scope="module")
-def vm(request, provider, small_template_modscope, ssa_analysis_profile):
+@pytest.fixture(scope="function")
+def vm(request, provider, small_template, ssa_analysis_profile):
     """ Fixture to provision instance on the provider """
     vm_name = random_vm_name("ssa", max_length=16)
     vm_obj = provider.appliance.collections.infra_vms.instantiate(vm_name,
                                                                   provider,
-                                                                  small_template_modscope.name)
+                                                                  small_template.name)
     vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
     vm_obj.mgmt.ensure_state(VmState.RUNNING)
 
