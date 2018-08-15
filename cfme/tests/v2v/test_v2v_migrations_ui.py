@@ -27,8 +27,8 @@ pytestmark = [
 
 def _form_data_cluster_mapping(second_provider, provider):
     # since we have only one cluster on providers
-    source_cluster = second_provider.data.get('clusters', [None])[0]
-    target_cluster = provider.data.get('clusters', [None])[0]
+    source_cluster = second_provider.data.get('clusters', [False])[0]
+    target_cluster = provider.data.get('clusters', [False])[0]
 
     if not source_cluster or not target_cluster:
         pytest.skip("No data for source or target cluster in providers.")
@@ -40,8 +40,8 @@ def _form_data_cluster_mapping(second_provider, provider):
 
 
 def _form_data_datastore_mapping(second_provider, provider, source_type, target_type):
-    source_datastores_list = second_provider.data.get('datastores')
-    target_datastores_list = provider.data.get('datastores')
+    source_datastores_list = second_provider.data.get('datastores', [])
+    target_datastores_list = provider.data.get('datastores', [])
     # assuming, we just have 1 datastore of each type
     source_datastore = [d.name for d in source_datastores_list if d.type == source_type]
     target_datastore = [d.name for d in target_datastores_list if d.type == target_type]
@@ -56,12 +56,13 @@ def _form_data_datastore_mapping(second_provider, provider, source_type, target_
 
 
 def _form_data_network_mapping(second_provider, provider, source_network_name, target_network_name):
-    source_vlans_list = second_provider.data.get('vlans')
-    target_vlans_list = provider.data.get('vlans')
+    source_vlans_list = second_provider.data.get('vlans', [])
+    target_vlans_list = provider.data.get('vlans', [])
     # assuming there will be only 1 network matching given name
     source_network = [v for v in source_vlans_list if v == source_network_name]
     target_network = [v for v in target_vlans_list if v == target_network_name]
-    if not source_vlans_list or not target_vlans_list or not source_network or not target_network:
+    if (not source_vlans_list or not target_vlans_list or
+            not source_network or not target_network):
         pytest.skip("No data for source or target network in providers.")
 
     return {
