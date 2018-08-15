@@ -27,15 +27,10 @@ pytestmark = [
 
 def _form_data_cluster_mapping(second_provider, provider):
     # since we have only one cluster on providers
-    skip = False
-    try:
-        source_cluster = second_provider.data.get('clusters')[0]
-        target_cluster = provider.data.get('clusters')[0]
-    except TypeError:
-        skip = True
-        pass
+    source_cluster = second_provider.data.get('clusters', [None])[0]
+    target_cluster = provider.data.get('clusters', [None])[0]
 
-    if skip or not source_cluster or not target_cluster:
+    if not source_cluster or not target_cluster:
         pytest.skip("No data for source or target cluster in providers.")
 
     return {
@@ -47,34 +42,31 @@ def _form_data_cluster_mapping(second_provider, provider):
 def _form_data_datastore_mapping(second_provider, provider, source_type, target_type):
     source_datastores_list = second_provider.data.get('datastores')
     target_datastores_list = provider.data.get('datastores')
-
-    if not source_datastores_list or not target_datastores_list:
-        pytest.skip("No data for source or target cluster in providers.")
-
     # assuming, we just have 1 datastore of each type
-    source_datastore = [d.name for d in source_datastores_list if d.type == source_type][0]
-    target_datastore = [d.name for d in target_datastores_list if d.type == target_type][0]
+    source_datastore = [d.name for d in source_datastores_list if d.type == source_type]
+    target_datastore = [d.name for d in target_datastores_list if d.type == target_type]
+    if (not source_datastores_list or not target_datastores_list or
+            not source_datastore or not target_datastore):
+        pytest.skip("No data for source or target datastore in providers.")
 
     return {
-        'sources': [partial_match(source_datastore)],
-        'target': [partial_match(target_datastore)]
+        'sources': [partial_match(source_datastore[0])],
+        'target': [partial_match(target_datastore[0])]
     }
 
 
 def _form_data_network_mapping(second_provider, provider, source_network_name, target_network_name):
     source_vlans_list = second_provider.data.get('vlans')
     target_vlans_list = provider.data.get('vlans')
-
-    if not source_vlans_list or not target_vlans_list:
-        pytest.skip("No data for source or target cluster in providers.")
-
     # assuming there will be only 1 network matching given name
-    source_network = [v for v in source_vlans_list if v == source_network_name][0]
-    target_network = [v for v in target_vlans_list if v == target_network_name][0]
+    source_network = [v for v in source_vlans_list if v == source_network_name]
+    target_network = [v for v in target_vlans_list if v == target_network_name]
+    if not source_vlans_list or not target_vlans_list or not source_network or not target_network:
+        pytest.skip("No data for source or target network in providers.")
 
     return {
-        'sources': [partial_match(source_network)],
-        'target': [partial_match(target_network)]
+        'sources': [partial_match(source_network[0])],
+        'target': [partial_match(target_network[0])]
     }
 
 
