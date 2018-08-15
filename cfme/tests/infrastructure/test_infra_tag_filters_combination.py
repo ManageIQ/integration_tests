@@ -29,26 +29,26 @@ test_items = [
 
 @pytest.fixture(params=test_items, ids=[collection_type for collection_type, _ in test_items],
                 scope='function')
-def testing_vis_object(request, a_provider, appliance):
+def testing_vis_object(request, provider, appliance):
     """ Fixture creates class object for tag visibility test
 
     Returns: class object of certain type
     """
     collection_name, destination = request.param
     collection = getattr(appliance.collections, collection_name)
-    view = navigate_to(a_provider, destination) if destination else navigate_to(collection, 'All')
+    view = navigate_to(provider, destination) if destination else navigate_to(collection, 'All')
     names = view.entities.entity_names
     if not names:
         pytest.skip("No content found for test of {}".format(collection))
 
-    return collection.instantiate(name=names[0], provider=a_provider)
+    return collection.instantiate(name=names[0], provider=provider)
 
 
-@pytest.fixture(scope='module')
-def group_tag_datacenter_combination(group_with_tag, a_provider):
+@pytest.fixture(scope='function')
+def group_tag_datacenter_combination(group_with_tag, provider):
     with update(group_with_tag):
-        group_with_tag.host_cluster = ([a_provider.data['name'],
-                                        a_provider.data['datacenters'][0]], True)
+        group_with_tag.host_cluster = ([provider.data['name'],
+                                        provider.data['datacenters'][0]], True)
 
 
 @pytest.mark.meta(blockers=[BZ(1533391, forced_streams=["5.9", "upstream"])])

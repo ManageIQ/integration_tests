@@ -22,13 +22,13 @@ pytestmark = [
 
 
 @pytest.fixture(scope="function")
-def vm(request, a_provider, appliance):
-    return _vm(request, a_provider, appliance.rest_api)
+def vm(request, provider, appliance):
+    return _vm(request, provider, appliance.rest_api)
 
 
 @pytest.fixture(scope="function")
-def template(request, appliance, a_provider, vm):
-    template = mark_vm_as_template(appliance.rest_api, provider=a_provider, vm_name=vm)
+def template(request, appliance, provider, vm):
+    template = mark_vm_as_template(appliance.rest_api, provider=provider, vm_name=vm)
 
     @request.addfinalizer
     def _finished():
@@ -39,7 +39,7 @@ def template(request, appliance, a_provider, vm):
 
 
 @pytest.mark.tier(3)
-def test_query_template_attributes(request, appliance, a_provider, soft_assert):
+def test_query_template_attributes(request, appliance, provider, soft_assert):
     """Tests access to template attributes.
 
     Metadata:
@@ -49,8 +49,8 @@ def test_query_template_attributes(request, appliance, a_provider, soft_assert):
     if templates:
         template_rest = templates[0]
     else:
-        vm_rest = vm(request, a_provider, appliance)
-        template_rest = template(request, appliance, a_provider, vm_rest)
+        vm_rest = vm(request, provider, appliance)
+        template_rest = template(request, appliance, provider, vm_rest)
 
     outcome = query_resource_attributes(template_rest)
     for failure in outcome.failed:
