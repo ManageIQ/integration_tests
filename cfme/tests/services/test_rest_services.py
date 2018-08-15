@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import datetime
-import re
 
 import fauxfactory
 import pytest
@@ -17,6 +16,7 @@ from cfme.rest.gen_data import (
     copy_role,
     dialog as _dialog,
     dialog_rest as _dialog_rest,
+    get_dialog_service_name,
     groups,
     orchestration_templates as _orchestration_templates,
     service_catalog_obj as _service_catalog_obj,
@@ -35,7 +35,6 @@ from cfme.utils.rest import (
     query_resource_attributes,
 )
 from cfme.utils.update import update
-from cfme.utils.version import VersionPicker, Version
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -57,28 +56,6 @@ pytestmark = [
 
 
 NUM_BUNDLE_ITEMS = 4
-
-
-def _get_dialog_service_name(appliance, service_request, *item_names):
-    """Helper to DRY this VersionPicker when tests need to determine a dialog service name
-
-    In gaprindashvili+ its available in the service_request options
-    In earlier versions it has to be parsed from the message
-    """
-    def _regex_parse_name(items, message):
-        for item in items:
-            match = re.search(r'\[({}[0-9-]*)\] '.format(item), message)
-            if match:
-                return match.group(1)
-            else:
-                continue
-        else:
-            pytest.fail('Unable to parse the dialog service name from given request and items')
-
-    return VersionPicker({
-        Version.lowest(): lambda: _regex_parse_name(item_names, service_request.message),
-        '5.10': lambda: service_request.options.get('dialog', {}).get('dialog_service_name', '')
-    }).pick(appliance.version)()  # run lambda after picking
 
 
 def wait_for_vm_power_state(vm, resulting_state):
@@ -945,7 +922,7 @@ class TestServiceCatalogsRESTAPI(object):
 
         wait_for(_order_finished, num_sec=180, delay=10)
 
-        service_name = _get_dialog_service_name(appliance, service_request, template.name)
+        service_name = get_dialog_service_name(appliance, service_request, template.name)
         assert '[{}]'.format(service_name) in service_request.message
         source_id = str(service_request.source_id)
         new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
@@ -987,12 +964,12 @@ class TestServiceCatalogsRESTAPI(object):
                 service_request.request_state.lower() == 'finished')
 
         new_services = []
-        for index, result in enumerate(results):
+        for result in results:
             service_request = appliance.rest_api.get_entity('service_requests', result['id'])
             wait_for(_order_finished, func_args=[service_request], num_sec=180, delay=10)
 
             # service name check
-            service_name = _get_dialog_service_name(
+            service_name = get_dialog_service_name(
                 appliance,
                 service_request,
                 *[t.name for t in catalog.service_templates.all]
@@ -1033,7 +1010,7 @@ class TestServiceCatalogsRESTAPI(object):
 
         wait_for(_order_finished, num_sec=2000, delay=10)
 
-        service_name = _get_dialog_service_name(appliance, service_request, catalog_bundle.name)
+        service_name = get_dialog_service_name(appliance, service_request, catalog_bundle.name)
         assert '[{}]'.format(service_name) in service_request.message
         source_id = str(service_request.source_id)
         new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
@@ -1286,7 +1263,7 @@ class TestServiceRequests(object):
 
         wait_for(_order_finished, num_sec=180, delay=10)
 
-        service_name = _get_dialog_service_name(appliance, service_request, new_template.name)
+        service_name = get_dialog_service_name(appliance, service_request, new_template.name)
         assert '[{}]'.format(service_name) in service_request.message
         source_id = str(service_request.source_id)
         new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
@@ -1742,7 +1719,7 @@ class TestServiceOrderCart(object):
         wait_for(_order_finished, num_sec=180, delay=10)
 
         for index, sr in enumerate(service_requests):
-            service_name = _get_dialog_service_name(
+            service_name = get_dialog_service_name(
                 appliance,
                 sr,
                 *[t.name for t in selected_templates]

@@ -166,14 +166,7 @@ def services(request, appliance, provider, service_dialog=None, service_catalog=
     assert 'error' not in service_request.message.lower(), ('Provisioning failed: `{}`'
                                                             .format(service_request.message))
 
-    service_name = VersionPicker({
-        Version.lowest(): lambda: re.search(r'\[({}[0-9-]*)\] '
-                                            .format(template_subcollection.name),
-                                            service_request.message)
-                                    .group(1),
-        # dialog_service_name is not in earlier versions, wrap in lambda
-        '5.10': lambda: str(service_request.options['dialog']['dialog_service_name'])
-    }).pick(appliance.version)
+    service_name = get_dialog_service_name(service_request, template_subcollection.name)
     assert '[{}]'.format(service_name) in service_request.message
     provisioned_service = appliance.rest_api.collections.services.get(
         service_template_id=service_template.id)
@@ -597,3 +590,25 @@ def policies(request, rest_api, num=2):
         })
 
     return _creating_skeleton(request, rest_api, 'policies', data)
+
+
+def get_dialog_service_name(appliance, service_request, *item_names):
+    """Helper to DRY this VersionPicker when tests need to determine a dialog service name
+
+    In gaprindashvili+ its available in the service_request options
+    In earlier versions it has to be parsed from the message
+    """
+    def _regex_parse_name(items, message):
+        for item in items:
+            match = re.search(r'\[({}[0-9-]*)\] '.format(item), message)
+            if match:
+                return match.group(1)
+            else:
+                continue
+        else:
+            raise ValueError('Could not match name from items in given service request message')
+
+    return VersionPicker({
+        Version.lowest(): lambda: _regex_parse_name(item_names, service_request.message),
+        '5.10': lambda: service_request.options.get('dialog', {}).get('dialog_service_name', '')
+    }).pick(appliance.version)()  # run lambda after picking
