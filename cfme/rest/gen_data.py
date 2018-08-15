@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 import fauxfactory
 from widgetastic.utils import partial_match
 
@@ -6,6 +8,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.log import logger
 from cfme.utils.rest import create_resource
+from cfme.utils.version import VersionPicker, Version
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 
@@ -160,10 +163,17 @@ def services(request, appliance, provider, service_dialog=None, service_catalog=
         return service_request.request_state.lower() == 'finished'
 
     wait_for(_order_finished, num_sec=2000, delay=10)
-    assert 'error' not in service_request.message.lower(), \
-        'Provisioning failed with the message `{}`'.format(service_request.message)
+    assert 'error' not in service_request.message.lower(), ('Provisioning failed: `{}`'
+                                                            .format(service_request.message))
 
-    service_name = str(service_request.options['dialog']['dialog_service_name'])
+    service_name = VersionPicker({
+        Version.lowest(): lambda: re.search(r'\[({}[0-9-]*)\] '
+                                            .format(template_subcollection.name),
+                                            service_request.message)
+                                    .group(1),
+        # dialog_service_name is not in earlier versions, wrap in lambda
+        '5.10': lambda: str(service_request.options['dialog']['dialog_service_name'])
+    }).pick(appliance.version)
     assert '[{}]'.format(service_name) in service_request.message
     provisioned_service = appliance.rest_api.collections.services.get(
         service_template_id=service_template.id)
