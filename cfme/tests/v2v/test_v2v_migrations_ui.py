@@ -26,7 +26,7 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def providers(request, second_provider, provider):
     """ Fixture to setup providers """
     setup_or_skip(request, second_provider)
@@ -38,10 +38,15 @@ def providers(request, second_provider, provider):
 
 def _form_data_cluster_mapping(second_provider, provider):
     # since we have only one cluster on providers
-    source_cluster = second_provider.data.get('clusters')[0]
-    target_cluster = provider.data.get('clusters')[0]
+    skip = False
+    try:
+        source_cluster = second_provider.data.get('clusters')[0]
+        target_cluster = provider.data.get('clusters')[0]
+    except TypeError:
+        skip = True
+        pass
 
-    if not source_cluster or not target_cluster:
+    if skip or not source_cluster or not target_cluster:
         pytest.skip("No data for source or target cluster in providers.")
 
     return {
