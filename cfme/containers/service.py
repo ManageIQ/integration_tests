@@ -4,16 +4,33 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 
 from cfme.common import Taggable, TagPageView
-from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
-    ContainerObjectDetailsBaseView, GetRandomInstancesMixin)
+from cfme.containers.provider import (ContainerObjectAllBaseView, ContainerObjectDetailsBaseView,
+                                      Labelable, LoggingableView, GetRandomInstancesMixin)
+from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.providers import get_crud_by_name
 
 
-class ServiceAllView(ContainerObjectAllBaseView):
+class ServiceView(ContainerObjectAllBaseView, LoggingableView):
+    """Container Nodes view"""
+
+    @property
+    def in_service(self):
+        """Determine if the Service page is currently open"""
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Containers', 'Container Services']
+        )
+
+
+class ServiceAllView(ServiceView):
     """Container Services All view"""
     SUMMARY_TEXT = "Container Services"
+
+    @property
+    def is_displayed(self):
+        return self.in_service and super(ServiceAllView, self).is_displayed
 
 
 class ServiceDetailsView(ContainerObjectDetailsBaseView):
@@ -31,6 +48,16 @@ class Service(BaseEntity, Taggable, Labelable):
     name = attr.ib()
     project_name = attr.ib()
     provider = attr.ib()
+
+    @property
+    def exists(self):
+        """Return True if the Service exists"""
+        try:
+            navigate_to(self, 'Details')
+        except ItemNotFound:
+            return False
+        else:
+            return True
 
 
 @attr.s

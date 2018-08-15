@@ -62,7 +62,7 @@ def random_labels(provider, appliance):
         value = fauxfactory.gen_alphanumeric(random.randrange(1, 63))
         try:
             status_code, json_content = instance.set_label(label_key, value)
-        except:
+        except NameError:
             status_code, json_content = None, format_exc()
 
         data_collection.append(

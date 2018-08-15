@@ -21,19 +21,18 @@ pytestmark = [
 def metrics_up_and_running(provider):
 
     try:
-        router = [router for router in provider.mgmt.o_api.get('route')[1]['items']
-                  if router["metadata"]["name"] == 'hawkular-metrics' or
-                  router["metadata"]["name"] == 'prometheus'].pop()
-    except IndexError:
-        pytest.skip('No Metrics Route available for {}'.format(provider.key))
-
-    metrics_url = router["status"]["ingress"][0]["host"]
+        router = [router for router in provider.mgmt.list_route()
+                  if router.metadata.name == 'hawkular-metrics' or
+                  router.metadata.name == 'prometheus'].pop()
+        metrics_url = router.status.ingress[0].host
+    except AttributeError:
+        pytest.skip('Could not determine metric route for {}'.format(provider.key))
     creds = provider.get_credentials_from_config(provider.key, cred_type='token')
     header = {"Authorization": "Bearer {token}".format(token=creds.token)}
     response = requests.get("https://{url}:443".format(url=metrics_url), headers=header,
                             verify=False)
-    assert response.ok, "{metrics} failed to start!".format(metrics=router["metadata"]["name"])
-    logger.info("{metrics} started successfully".format(metrics=router["metadata"]["name"]))
+    assert response.ok, "{metrics} failed to start!".format(metrics=router.metadata.name)
+    logger.info("{metrics} started successfully".format(metrics=router.metadata.name))
 
 
 def is_ad_hoc_greyed(provider_object):

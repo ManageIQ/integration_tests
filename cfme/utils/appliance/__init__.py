@@ -2005,6 +2005,24 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         self.server_roles = server_roles
         return server_roles == self.server_roles
 
+    def wait_for_server_roles(self, server_roles, **kwargs):
+        """Waits for the server roles to be set
+
+        Warning: This may take awhile if it is a long list.
+
+         Args:
+            server_roles: list of server roles to be checked
+         Returns:
+            :py:class:`bool`
+         """
+
+        try:
+            wait_for(lambda: all([self.server_roles[role] for role in server_roles]), **kwargs)
+        except TimedOutError:
+            return False
+        else:
+            return True
+
     def server_id(self):
         try:
             return self.server.sid
