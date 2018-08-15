@@ -26,7 +26,7 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def providers(request, second_provider, provider):
     """ Fixture to setup providers """
     setup_or_skip(request, second_provider)
