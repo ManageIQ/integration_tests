@@ -193,7 +193,7 @@ class Bugzilla(object):
         for bug in filtered:
             if (isinstance(bug.version, Version) and
                 isinstance(bug.target_release, Version) and
-                check_fixed_in(bug.fixed_in, version_series) and
+                not check_fixed_in(bug.fixed_in, version_series) and
                 (bug.version.is_in_series(version_series) or
                  bug.target_release.is_in_series(version_series))):
                 return bug
