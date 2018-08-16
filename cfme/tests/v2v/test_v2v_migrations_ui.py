@@ -5,7 +5,6 @@ import pytest
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import partial_match
 
-from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
@@ -26,20 +25,10 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope='module')
-def providers(request, second_provider, provider):
-    """ Fixture to setup providers """
-    setup_or_skip(request, second_provider)
-    setup_or_skip(request, provider)
-    yield second_provider, provider
-    second_provider.delete_if_exists(cancel=False)
-    provider.delete_if_exists(cancel=False)
-
-
 def _form_data_cluster_mapping(second_provider, provider):
     # since we have only one cluster on providers
-    source_cluster = second_provider.data.get('clusters')[0]
-    target_cluster = provider.data.get('clusters')[0]
+    source_cluster = second_provider.data.get('clusters', [False])[0]
+    target_cluster = provider.data.get('clusters', [False])[0]
 
     if not source_cluster or not target_cluster:
         pytest.skip("No data for source or target cluster in providers.")
@@ -51,36 +40,34 @@ def _form_data_cluster_mapping(second_provider, provider):
 
 
 def _form_data_datastore_mapping(second_provider, provider, source_type, target_type):
-    source_datastores_list = second_provider.data.get('datastores')
-    target_datastores_list = provider.data.get('datastores')
-
-    if not source_datastores_list or not target_datastores_list:
-        pytest.skip("No data for source or target cluster in providers.")
-
+    source_datastores_list = second_provider.data.get('datastores', [])
+    target_datastores_list = provider.data.get('datastores', [])
     # assuming, we just have 1 datastore of each type
-    source_datastore = [d.name for d in source_datastores_list if d.type == source_type][0]
-    target_datastore = [d.name for d in target_datastores_list if d.type == target_type][0]
+    source_datastore = [d.name for d in source_datastores_list if d.type == source_type]
+    target_datastore = [d.name for d in target_datastores_list if d.type == target_type]
+    if (not source_datastores_list or not target_datastores_list or
+            not source_datastore or not target_datastore):
+        pytest.skip("No data for source or target datastore in providers.")
 
     return {
-        'sources': [partial_match(source_datastore)],
-        'target': [partial_match(target_datastore)]
+        'sources': [partial_match(source_datastore[0])],
+        'target': [partial_match(target_datastore[0])]
     }
 
 
 def _form_data_network_mapping(second_provider, provider, source_network_name, target_network_name):
-    source_vlans_list = second_provider.data.get('vlans')
-    target_vlans_list = provider.data.get('vlans')
-
-    if not source_vlans_list or not target_vlans_list:
-        pytest.skip("No data for source or target cluster in providers.")
-
+    source_vlans_list = second_provider.data.get('vlans', [])
+    target_vlans_list = provider.data.get('vlans', [])
     # assuming there will be only 1 network matching given name
-    source_network = [v for v in source_vlans_list if v == source_network_name][0]
-    target_network = [v for v in target_vlans_list if v == target_network_name][0]
+    source_network = [v for v in source_vlans_list if v == source_network_name]
+    target_network = [v for v in target_vlans_list if v == target_network_name]
+    if (not source_vlans_list or not target_vlans_list or
+            not source_network or not target_network):
+        pytest.skip("No data for source or target network in providers.")
 
     return {
-        'sources': [partial_match(source_network)],
-        'target': [partial_match(target_network)]
+        'sources': [partial_match(source_network[0])],
+        'target': [partial_match(target_network[0])]
     }
 
 
@@ -112,16 +99,8 @@ def form_data_single_datastore(request, second_provider, provider):
     return form_data
 
 
-@pytest.fixture(scope="module")
-def enable_disable_migration_ui(appliance):
-    appliance.enable_migration_ui()
-    yield
-    appliance.disable_migration_ui()
-
-
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
-def test_infra_mapping_ui_assertions(appliance, enable_disable_migration_ui,
-                                    providers, form_data_single_datastore,
+def test_infra_mapping_ui_assertions(appliance, v2v_providers, form_data_single_datastore,
                                     soft_assert):
     # TODO: This test case does not support update
     # as update is not a supported feature for mapping.
@@ -154,8 +133,7 @@ def test_infra_mapping_ui_assertions(appliance, enable_disable_migration_ui,
 
 
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
-def test_v2v_ui_set1(appliance, providers, enable_disable_migration_ui,
-                    form_data_single_datastore, soft_assert):
+def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_assert):
     """Perform UI Validations on Infra_Mappings Wizard."""
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
 
@@ -186,10 +164,10 @@ def test_v2v_ui_set1(appliance, providers, enable_disable_migration_ui,
         ['mappings'][0]['target'])
 
     # Test Datacenter name in source and destination mapping select list:
-    soft_assert(providers[0].data['datacenters'][0]
-     in view.form.cluster.source_clusters.all_items[0])
-    soft_assert(providers[1].data['datacenters'][0]
-     in view.form.cluster.target_clusters.all_items[0])
+    soft_assert(v2v_providers[0].data['datacenters'][0]
+                in view.form.cluster.source_clusters.all_items[0])
+    soft_assert(v2v_providers[1].data['datacenters'][0]
+                in view.form.cluster.target_clusters.all_items[0])
 
     # Assert Add Mapping button is enabled before selecting source and target clusters
     soft_assert(not view.form.cluster.add_mapping.root_browser.
@@ -235,13 +213,12 @@ def test_v2v_ui_set1(appliance, providers, enable_disable_migration_ui,
     soft_assert(view.form.general.name_help_text.read() == 'Please enter a unique name')
 
 
-def test_v2v_ui_no_providers(appliance, providers, enable_disable_migration_ui,
-                      soft_assert):
+def test_v2v_ui_no_providers(appliance, v2v_providers, soft_assert):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
     soft_assert(view.create_infrastructure_mapping.is_displayed)
-    is_provider_1_deleted = providers[0].delete_if_exists(cancel=False)
-    is_provider_2_deleted = providers[1].delete_if_exists(cancel=False)
+    is_provider_1_deleted = v2v_providers[0].delete_if_exists(cancel=False)
+    is_provider_2_deleted = v2v_providers[1].delete_if_exists(cancel=False)
     # Test after removing Providers, users cannot Create Infrastructure Mapping
     view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
     soft_assert(view.configure_providers.is_displayed)
@@ -250,14 +227,14 @@ def test_v2v_ui_no_providers(appliance, providers, enable_disable_migration_ui,
     # soft_assert(not view.create_migration_plan.is_displayed)
     # Following leaves to appliance in the state it was before this test deleted providers
     if is_provider_1_deleted:
-        providers[0].create(validate_inventory=True)
+        v2v_providers[0].create(validate_inventory=True)
     if is_provider_2_deleted:
-        providers[1].create(validate_inventory=True)
+        v2v_providers[1].create(validate_inventory=True)
 
 
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
-def test_v2v_mapping_with_special_chars(appliance, providers, enable_disable_migration_ui,
-                      form_data_single_datastore, soft_assert):
+def test_v2v_mapping_with_special_chars(appliance, v2v_providers, form_data_single_datastore,
+                                        soft_assert):
     # Test mapping can be created with non-alphanumeric name e.g '!@#$%^&*()_+)=-,./,''[][]]':
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     form_data_single_datastore['general']['name'] = fauxfactory.gen_special(length=10)
@@ -276,8 +253,7 @@ def test_v2v_mapping_with_special_chars(appliance, providers, enable_disable_mig
 
 
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
-def test_v2v_ui_set2(appliance, providers, enable_disable_migration_ui,
-                    form_data_single_datastore, soft_assert):
+def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_assert):
     # Test migration plan name 24 chars and description 128 chars max length
     # Test earlier infra mapping can be viewed in migration plan wizard
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
