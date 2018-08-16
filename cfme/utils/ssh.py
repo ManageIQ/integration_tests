@@ -355,7 +355,7 @@ class SSHClient(paramiko.SSHClient):
 
                 if session.recv_stderr_ready():
                     try:
-                        line = next(stdout)
+                        line = next(stderr)
                         write_output(line, self.f_stderr)
                     except StopIteration:
                         pass
