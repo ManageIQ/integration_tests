@@ -810,7 +810,10 @@ def apply_lease_times(self, appliance_id, time_minutes):
         appliance.leased_until = appliance.datetime_leased + timedelta(minutes=int(time_minutes))
         appliance.save(update_fields=['datetime_leased', 'leased_until'])
         self.logger.info(
-            "Lease time has been applied successfully on appliance {}".format(appliance_id))
+            "Lease time has been applied successfully "
+            "on appliance {}, pool {}, provider {}".format(appliance_id,
+                                                           appliance.appliance_pool.id,
+                                                           appliance.provider_name))
 
 
 @logged_task()
@@ -1634,6 +1637,10 @@ def rename_appliances_for_pool(self, pool_id):
             appliance_rename.apply_async(
                 countdown=10,  # To prevent clogging with the transaction.atomic
                 args=(appliance.id, new_name))
+
+        self.logger.info("Appliances have been renamed in pool {}".format(pool_id))
+        for appliance in appliances:
+            wait_appliance_ready.apply_async(args=(appliance.id, ))
 
 
 @singleton_task(soft_time_limit=60)
