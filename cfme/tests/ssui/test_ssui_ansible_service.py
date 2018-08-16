@@ -14,6 +14,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_catalog_crud_ui(appliance, context, order_ansible_service_in_ops_ui, request):
     """Tests Ansible Service Catalog in SSUI."""

@@ -10,6 +10,7 @@ from cfme.utils.appliance import ViaSSUI, ViaUI
 pytestmark = pytest.mark.usefixtures('browser')
 
 
+@pytest.mark.rhel_testing
 @test_requirements.drift
 @pytest.mark.tier(1)
 @pytest.mark.sauce

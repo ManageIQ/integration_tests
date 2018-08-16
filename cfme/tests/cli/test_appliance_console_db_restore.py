@@ -225,6 +225,7 @@ def setup_nfs_samba_backup(appl1):
     nfs_smb.put_file(dump_filename, "{}share.backup".format(loc))
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
                          reason='Test only for downstream version of product')

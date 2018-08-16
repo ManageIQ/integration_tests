@@ -69,6 +69,7 @@ actions = [
 ]
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.parametrize("action, verification_attr, desired_state",
                          actions, ids=[action[0] for action in actions])
 def test_server_actions(physical_server, appliance, provider, action,

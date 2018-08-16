@@ -65,6 +65,7 @@ def test_storage_volume_create_cancelled_validation(appliance, provider):
     view.flash.assert_message('Add of new Cloud Volume was cancelled by the user')
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(1)
 def test_storage_volume_crud(appliance, provider):
     """ Test storage volume crud

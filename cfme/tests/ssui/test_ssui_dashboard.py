@@ -126,6 +126,7 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
     assert result.success, "Failed to run Service Chargeback report".format(result.output)
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.rhv3
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_total_services(appliance, setup_provider, context, order_service):

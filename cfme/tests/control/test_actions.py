@@ -306,6 +306,7 @@ def vm_off(provider, vm):
     return vm
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.rhv2
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],

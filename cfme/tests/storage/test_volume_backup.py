@@ -44,6 +44,7 @@ def backup(appliance, provider):
         logger.warning('Exception during volume deletion - skipping..')
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(3)
 def test_storage_volume_backup_create(backup):
     assert backup.exists

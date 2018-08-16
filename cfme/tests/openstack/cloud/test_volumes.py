@@ -36,6 +36,7 @@ def volume(appliance, provider):
         logger.warning('Exception during volume deletion - skipping..')
 
 
+@pytest.mark.rhel_testing
 def test_create_volume(volume, provider):
     assert volume.exists
     assert volume.size == '{} GB'.format(VOLUME_SIZE)

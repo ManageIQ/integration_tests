@@ -49,6 +49,7 @@ def schedule_data(request):
         return yaml.load(rep_yaml)
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1531600, forced_streams=["5.9"])])
@@ -76,6 +77,7 @@ def test_schedule_crud(schedule_data, appliance):
     schedule.delete()
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 @test_requirements.report
@@ -179,6 +181,7 @@ def test_rssfeedwidget_crud(appliance):
     w.delete()
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 def test_dashboard_crud(appliance):

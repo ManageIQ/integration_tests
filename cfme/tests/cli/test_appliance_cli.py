@@ -119,6 +119,7 @@ def no_ipa_config(configured_appliance):
     configured_appliance.appliance_console_cli.uninstall_ipa_client()
 
 
+@pytest.mark.rhel_testing
 def test_appliance_console_cli_ipa(ipa_crud, configured_appliance, no_ipa_config):
     ipa_args = ipa_crud.as_external_value()
     configured_appliance.appliance_console_cli.configure_ipa(**ipa_args)

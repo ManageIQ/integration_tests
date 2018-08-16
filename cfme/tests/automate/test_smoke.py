@@ -13,6 +13,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.parametrize("domain_name", ["ManageIQ", "RedHat"])
 def test_domain_present(domain_name, soft_assert, appliance):
     """This test verifies presence of domains that are included in the appliance.

@@ -110,6 +110,7 @@ def router_with_gw(provider, appliance, ext_subnet):
     delete_entity(router)
 
 
+@pytest.mark.rhel_testing
 def test_create_network(network, provider):
     """Creates private cloud network and verifies it's relationships"""
     assert network.exists

@@ -183,6 +183,7 @@ def _collection_not_in_this_version(appliance, collection_name):
     )
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(

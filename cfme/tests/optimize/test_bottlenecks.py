@@ -58,6 +58,7 @@ def db_restore(temp_appliance_extended_db):
     app.wait_for_web_ui()
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 def test_bottlenecks_report_event_groups(temp_appliance_extended_db, db_restore, db_tbl, db_events):
     """ Checks event_groups selectbox in report tab. It should filter events by type """

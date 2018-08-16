@@ -25,6 +25,7 @@ pytestmark = [
 VOLUME_SIZE = 1
 
 
+@pytest.mark.rhel_testing
 @pytest.fixture(scope='function')
 def new_instance(provider):
     prov_data = provider.data['provisioning']
@@ -74,6 +75,7 @@ def volume(appliance, provider):
         volume.delete(wait=False)
 
 
+@pytest.mark.rhel_testing
 def test_create_instance(new_instance, soft_assert):
     """Creates an instance and verifies it appears on UI"""
     view = navigate_to(new_instance, 'Details')

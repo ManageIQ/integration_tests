@@ -11,6 +11,7 @@ from cfme.utils.update import update
 pytestmark = [test_requirements.service, pytest.mark.tier(2)]
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.sauce
 def test_catalog_crud(appliance):
     catalog_name = fauxfactory.gen_alphanumeric()

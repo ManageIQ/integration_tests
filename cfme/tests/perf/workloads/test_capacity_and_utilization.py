@@ -15,6 +15,7 @@ roles_cap_and_util = ['automate', 'database_operations', 'ems_inventory', 'ems_m
     'reporting', 'scheduler', 'user_interface', 'web_services']
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.usefixtures('generate_version_files')
 @pytest.mark.parametrize('scenario', get_capacity_and_utilization_scenarios())
 def test_workload_capacity_and_utilization(request, scenario, appliance):
