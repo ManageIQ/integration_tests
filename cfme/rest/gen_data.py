@@ -166,7 +166,7 @@ def services(request, appliance, provider, service_dialog=None, service_catalog=
     assert 'error' not in service_request.message.lower(), ('Provisioning failed: `{}`'
                                                             .format(service_request.message))
 
-    service_name = get_dialog_service_name(service_request, template_subcollection.name)
+    service_name = get_dialog_service_name(appliance, service_request, service_template.name)
     assert '[{}]'.format(service_name) in service_request.message
     provisioned_service = appliance.rest_api.collections.services.get(
         service_template_id=service_template.id)
