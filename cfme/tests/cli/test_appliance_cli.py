@@ -40,6 +40,7 @@ def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
     wait_for(date_changed)
 
 
+@pytest.mark.rhel_testing
 @requires_59
 @pytest.mark.parametrize('timezone', tzs, ids=[tz[0] for tz in tzs])
 def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modscope):
@@ -58,6 +59,7 @@ def test_appliance_console_cli_set_hostname(configured_appliance):
     assert result.output.strip() == hostname
 
 
+@pytest.mark.rhel_testing
 def test_appliance_console_cli_internal_fetch_key(app_creds, unconfigured_appliance, appliance):
     fetch_key_ip = appliance.hostname
     unconfigured_appliance.appliance_console_cli.configure_appliance_internal_fetch_key(
@@ -78,6 +80,7 @@ def test_appliance_console_cli_external_join(app_creds, appliance,
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
+@pytest.mark.rhel_testing
 def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance,
                                                unconfigured_appliance_secondary):
     hostname = dedicated_db_appliance.hostname
@@ -146,6 +149,7 @@ def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
     wait_for(is_storage_extended)
 
 
+@pytest.mark.rhel_testing
 @requires_59
 def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, app_creds):
     unconfigured_appliance.appliance_console_cli.configure_appliance_dedicated_db(
