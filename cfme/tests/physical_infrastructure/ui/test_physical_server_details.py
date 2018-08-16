@@ -14,14 +14,12 @@ def physical_server(appliance, provider, setup_provider_modscope):
     yield physical_servers[0]
 
 
-@pytest.mark.rhel_testing
 def test_physical_server_details(physical_server):
     """Navigate to the physical server details page and verify that the page is displayed"""
     physical_server_view = navigate_to(physical_server, 'Details')
     assert physical_server_view.is_displayed
 
 
-@pytest.mark.rhel_testing
 def test_physical_server_details_dropdowns(physical_server):
     """Navigate to the physical server details page and verify that the menus are present"""
     physical_server_view = navigate_to(physical_server, 'Details')

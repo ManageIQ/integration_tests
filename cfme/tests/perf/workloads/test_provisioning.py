@@ -69,7 +69,6 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
     return result
 
 
-@pytest.mark.rhel_testing
 @pytest.mark.usefixtures('generate_version_files')
 @pytest.mark.parametrize('scenario', get_provisioning_scenarios())
 def test_provisioning(appliance, request, scenario):
