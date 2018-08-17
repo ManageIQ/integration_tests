@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 import fauxfactory
 from widgetastic.utils import partial_match
 
@@ -6,6 +8,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.log import logger
 from cfme.utils.rest import create_resource
+from cfme.utils.version import VersionPicker, Version
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 
@@ -160,10 +163,10 @@ def services(request, appliance, provider, service_dialog=None, service_catalog=
         return service_request.request_state.lower() == 'finished'
 
     wait_for(_order_finished, num_sec=2000, delay=10)
-    assert 'error' not in service_request.message.lower(), \
-        'Provisioning failed with the message `{}`'.format(service_request.message)
+    assert 'error' not in service_request.message.lower(), ('Provisioning failed: `{}`'
+                                                            .format(service_request.message))
 
-    service_name = str(service_request.options['dialog']['dialog_service_name'])
+    service_name = get_dialog_service_name(appliance, service_request, service_template.name)
     assert '[{}]'.format(service_name) in service_request.message
     provisioned_service = appliance.rest_api.collections.services.get(
         service_template_id=service_template.id)
@@ -587,3 +590,25 @@ def policies(request, rest_api, num=2):
         })
 
     return _creating_skeleton(request, rest_api, 'policies', data)
+
+
+def get_dialog_service_name(appliance, service_request, *item_names):
+    """Helper to DRY this VersionPicker when tests need to determine a dialog service name
+
+    In gaprindashvili+ its available in the service_request options
+    In earlier versions it has to be parsed from the message
+    """
+    def _regex_parse_name(items, message):
+        for item in items:
+            match = re.search(r'\[({}[0-9-]*)\] '.format(item), message)
+            if match:
+                return match.group(1)
+            else:
+                continue
+        else:
+            raise ValueError('Could not match name from items in given service request message')
+
+    return VersionPicker({
+        Version.lowest(): lambda: _regex_parse_name(item_names, service_request.message),
+        '5.10': lambda: service_request.options.get('dialog', {}).get('dialog_service_name', '')
+    }).pick(appliance.version)()  # run lambda after picking

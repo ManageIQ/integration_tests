@@ -16,6 +16,7 @@ from cfme.rest.gen_data import (
     copy_role,
     dialog as _dialog,
     dialog_rest as _dialog_rest,
+    get_dialog_service_name,
     groups,
     orchestration_templates as _orchestration_templates,
     service_catalog_obj as _service_catalog_obj,
@@ -921,7 +922,7 @@ class TestServiceCatalogsRESTAPI(object):
 
         wait_for(_order_finished, num_sec=180, delay=10)
 
-        service_name = str(service_request.options['dialog']['dialog_service_name'])
+        service_name = get_dialog_service_name(appliance, service_request, template.name)
         assert '[{}]'.format(service_name) in service_request.message
         source_id = str(service_request.source_id)
         new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
@@ -968,7 +969,11 @@ class TestServiceCatalogsRESTAPI(object):
             wait_for(_order_finished, func_args=[service_request], num_sec=180, delay=10)
 
             # service name check
-            service_name = str(service_request.options['dialog']['dialog_service_name'])
+            service_name = get_dialog_service_name(
+                appliance,
+                service_request,
+                *[t.name for t in catalog.service_templates.all]
+            )
             assert '[{}]'.format(service_name) in service_request.message
 
             # Service name can no longer be used to uniquely identify service when multiple
@@ -1005,7 +1010,7 @@ class TestServiceCatalogsRESTAPI(object):
 
         wait_for(_order_finished, num_sec=2000, delay=10)
 
-        service_name = str(service_request.options['dialog']['dialog_service_name'])
+        service_name = get_dialog_service_name(appliance, service_request, catalog_bundle.name)
         assert '[{}]'.format(service_name) in service_request.message
         source_id = str(service_request.source_id)
         new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
@@ -1168,11 +1173,9 @@ class TestPendingRequestsRESTAPI(object):
 
         wait_for(_order_approved, num_sec=180, delay=10)
 
-        service_name = str(pending_request.options['dialog']['dialog_service_name'])
-        assert '[{}]'.format(service_name) in pending_request.message
         source_id = str(pending_request.source_id)
         new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
-        assert new_service.name == service_name
+        assert '[{}]'.format(new_service.name) in pending_request.message
 
         request.addfinalizer(new_service.action.delete)
 
@@ -1260,7 +1263,7 @@ class TestServiceRequests(object):
 
         wait_for(_order_finished, num_sec=180, delay=10)
 
-        service_name = str(service_request.options['dialog']['dialog_service_name'])
+        service_name = get_dialog_service_name(appliance, service_request, new_template.name)
         assert '[{}]'.format(service_name) in service_request.message
         source_id = str(service_request.source_id)
         new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
@@ -1716,7 +1719,11 @@ class TestServiceOrderCart(object):
         wait_for(_order_finished, num_sec=180, delay=10)
 
         for index, sr in enumerate(service_requests):
-            service_name = str(sr.options['dialog']['dialog_service_name'])
+            service_name = get_dialog_service_name(
+                appliance,
+                sr,
+                *[t.name for t in selected_templates]
+            )
             assert '[{}]'.format(service_name) in sr.message
             service_description = selected_templates[index].description
             new_service = appliance.rest_api.collections.services.get(
