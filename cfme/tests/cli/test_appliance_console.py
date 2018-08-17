@@ -39,6 +39,7 @@ ext_auth_options = [
 ]
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 @pytest.mark.smoke
 def test_appliance_console(appliance):
@@ -53,6 +54,7 @@ def test_appliance_console(appliance):
                                             .format(appliance.product_name))
 
 
+@pytest.mark.rhel_testing
 def test_appliance_console_set_hostname(configured_appliance):
     """'ap' launch appliance_console, '' clear info screen, '1' loads network settings, '5' gives
     access to set hostname, 'hostname' sets new hostname."""
@@ -70,6 +72,7 @@ def test_appliance_console_set_hostname(configured_appliance):
     assert result.output.strip() == hostname
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.parametrize('timezone', tzs, ids=[tz.name for tz in tzs])
 def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modscope):
     """'ap' launch appliance_console, '' clear info screen, '2' set timezone, 'opt' select
@@ -80,6 +83,7 @@ def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modsc
     temp_appliance_preconfig_modscope.appliance_console.timezone_check(timezone)
 
 
+@pytest.mark.rhel_testing
 def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     """Grab fresh appliance and set time and date through appliance_console and check result"""
     app = temp_appliance_preconfig_funcscope
@@ -91,6 +95,7 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     wait_for(date_changed)
 
 
+@pytest.mark.rhel_testing
 def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
     """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' Creates v2_key,
     '1' selects internal db, 'y' continue, '1' use partition, 'n' don't create dedicated db, '0'
@@ -249,6 +254,7 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
     wait_for(is_storage_extended)
 
 
+@pytest.mark.rhel_testing
 def test_appliance_console_ipa(ipa_crud, configured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '10' setup IPA,
     + wait 40 secs and '' finish."""
@@ -331,6 +337,7 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
     evm_tail.validate_logs()
 
 
+@pytest.mark.rhel_testing
 def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     """'ap' launches appliance_console, '' clears info screen, '13' Hardens appliance using SCAP
     configuration, '' complete."""

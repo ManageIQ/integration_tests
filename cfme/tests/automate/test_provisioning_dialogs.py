@@ -8,6 +8,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.sauce
 @test_requirements.automate
 @pytest.mark.tier(3)

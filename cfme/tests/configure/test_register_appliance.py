@@ -85,6 +85,7 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
     yield temp_appliance_preconfig_funcscope
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.ignore_stream("upstream")
 def test_rh_creds_validation(reg_method, reg_data, proxy_url, proxy_creds):
     """ Tests whether credentials are validated correctly for RHSM and SAT6 """
@@ -119,6 +120,7 @@ def test_rh_creds_validation(reg_method, reg_data, proxy_url, proxy_creds):
     red_hat_updates.update_registration(cancel=True)
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.ignore_stream("upstream")
 def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, proxy_creds):
     """ Tests whether an appliance can be registered against RHSM and SAT6 """
@@ -175,6 +177,7 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
     )
 
 
+@pytest.mark.rhel_testing
 def test_rhsm_registration_check_repo_names(
         temp_appliance_preconfig_funcscope, soft_assert, appliance):
     """ Checks default rpm repos on a fresh appliance """
@@ -196,6 +199,7 @@ def test_rhsm_registration_check_repo_names(
             view.repo_name.value == 'cf-me-{}-for-rhel-7-rpms {}'.format(ver, extras))
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.meta(blockers=[BZ(1500878, forced_streams=['5.9', 'upstream'])])
 def test_rh_updates(appliance_preupdate, appliance):
     """ Tests whether the update button in the webui functions correctly """

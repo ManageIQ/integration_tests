@@ -57,6 +57,7 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
         assert widget.dashboard.dashboard_view.is_displayed
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.parametrize("number_dashboards", range(1, 4))
 def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, appliance):
     """Create some custom dashboards and check their presence. Then check their contents."""

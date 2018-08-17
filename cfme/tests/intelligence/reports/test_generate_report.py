@@ -36,6 +36,7 @@ report_path = [
 ]
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.parametrize('path', report_path, scope="module", ids=lambda param: '/'.join(param[:2]))
 def test_reports_generate_report(request, path, appliance):
     """ This Tests run one default report for each category

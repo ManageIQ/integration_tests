@@ -85,6 +85,7 @@ def appliance_preupdate(old_version, appliance):
     sp.destroy_pool(pool_id)
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
 def test_update_yum(appliance_preupdate, appliance):
     """Tests appliance update between versions"""

@@ -108,6 +108,7 @@ def user_obj(appliance, auth_user, user_type):
         user.delete()
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon')  # default groups tested elsewhere
 # this test only runs against users that have an evm built-in group

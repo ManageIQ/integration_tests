@@ -32,6 +32,7 @@ def test_configure_vmdb_last_start_time(appliance):
     assert ui_last_start_updated.strftime('%Y-%m-%d %H:%M:%S %Z') in logs_last_start_time.output
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(1)
 def test_configuration_database_garbage_collection(appliance):
     """

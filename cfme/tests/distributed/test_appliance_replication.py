@@ -188,6 +188,7 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, a
         assert virtualcenter_provider.exists
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
 def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcenter_provider,
@@ -294,6 +295,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
         assert virtualcenter_provider.exists
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
 def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, ensure_vm_running,

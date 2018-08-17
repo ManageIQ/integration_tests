@@ -175,6 +175,7 @@ def catalog_item(appliance, ansible_repository):
         cat_item.delete()
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(1)
 def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
     updated_description = "edited_{}".format(fauxfactory.gen_alpha())
@@ -185,6 +186,7 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
     assert view.description.value == updated_description
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(("credential_type", "credentials"), CREDENTIALS,
     ids=[cred[0] for cred in CREDENTIALS])

@@ -14,6 +14,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.rhel_testing
 def test_delete_cluster_appear_after_refresh(provider, appliance):
     """ Tests delete cluster
 

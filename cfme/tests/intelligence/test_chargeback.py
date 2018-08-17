@@ -95,6 +95,7 @@ def test_compute_chargeback_duplicate_disallowed(chargeback_compute_rate):
     view.flash.assert_success_message('Add of new Chargeback Rate was cancelled by the user')
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(3)
 @pytest.mark.parametrize('storage_chargeback',
                          ['fixed', 'variable'],
