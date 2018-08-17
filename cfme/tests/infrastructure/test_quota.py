@@ -109,12 +109,18 @@ def new_tenant(appliance):
                                    parent=collection.get_root_tenant())
         tenant_list.append(tenant)
     yield tenant_list
-    if tenant.exists:
-        tenant.delete()
+    for tnt in tenant_list:
+        if tnt.exists:
+            tnt.delete()
 
 
 @pytest.fixture
 def set_parent_tenant_quota(request, appliance, new_tenant):
+    """Fixture is used to set tenant quota one by one to each of the tenant in 'new_tenant' list.
+    After testing quota(example: testing cpu limit) with particular user and it's current group
+    which is associated with one of these tenants. Then it disables the current quota
+    (example: cpu limit) and enable new quota limit(example: Max memory) for testing.
+    """
     for i in range(0, 3):
         field, value = request.param
         new_tenant[i].set_quota(**{'{}_cb'.format(field): True, field: value})
@@ -136,8 +142,9 @@ def new_group_list(appliance, new_tenant):
                                   tenant='My Company/{}'.format(new_tenant[i].name))
         group_list.append(group)
     yield group_list
-    if group.exists:
-        group.delete()
+    for grp in group_list:
+        if grp.exists:
+            grp.delete()
 
 
 @pytest.fixture(scope='module')
@@ -151,6 +158,8 @@ def new_user(appliance, new_group_list, new_credential):
         cost_center='Workload',
         value_assign='Database')
     yield user
+    if user.exists:
+        user.delete()
 
 
 @pytest.fixture
