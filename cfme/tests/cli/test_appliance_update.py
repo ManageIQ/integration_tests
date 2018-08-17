@@ -73,6 +73,8 @@ def appliance_preupdate(old_version, appliance):
     apps[0].ssh_client.run_command(
         "curl {} -o /etc/yum.repos.d/update.repo".format(urls)
     )
+    logger.info('Appliance update.repo file: \n%s',
+                apps[0].ssh_client.run_command('cat /etc/yum.repos.d/update.repo').output)
     yield apps[0]
     apps[0].ssh_client.close()
     sp.destroy_pool(pool_id)
