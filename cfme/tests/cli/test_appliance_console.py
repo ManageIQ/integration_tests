@@ -58,7 +58,7 @@ def test_appliance_console(appliance):
 
 @pytest.mark.rhel_testing
 def test_appliance_console_set_hostname(configured_appliance):
-    """'ap' launch appliance_console, '' clear info screen, '1' loads network settings, '5' gives
+    """'ap' launch appliance_console, '' clear info screen, '1' load network settings, '5' gives
     access to set hostname, 'hostname' sets new hostname."""
 
     hostname = 'test.example.com'
