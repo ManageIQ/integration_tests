@@ -122,3 +122,15 @@ def test_tables_fields(provider, test_item, soft_assert, appliance):
 
             soft_assert(value, '{}\'s list table: {} row - has empty field: {}'
                         .format(test_item.obj.__name__, name, field))
+
+
+def test_containers_details_view_title(appliance):
+    """
+    The word summery has to apper as part of the container title
+    In this test the detail container view is tested
+    Test based on BZ1338801
+    """
+     random_container = appliance.collections.containers.all().pop()
+     view = navigate_to(random_container, "Details")
+     assert "Summary" in view.title.text, (
+        "The word \"Summary\" is missing in container details view")
