@@ -79,5 +79,5 @@ def test_start_embedded_ansible(appliance, get_old_ansible_containers_name,
     appliance.server.settings.enable_server_roles(*args)
 
     # Waiting for container to start
-    assert wait_for(is_ansible_container_created, [appliance], delay=30, timeout="10m"), (
+    assert wait_for(is_ansible_container_created, [appliance], delay=30, timeout="15m"), (
         "No ansible container started")
