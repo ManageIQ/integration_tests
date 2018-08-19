@@ -130,7 +130,7 @@ def test_containers_details_view_title(appliance):
     In this test the detail container view is tested
     Test based on BZ1338801
     """
-     random_container = appliance.collections.containers.all().pop()
-     view = navigate_to(random_container, "Details")
-     assert "Summary" in view.title.text, (
+    random_container = appliance.collections.containers.all().pop()
+    view = navigate_to(random_container, "Details")
+    assert "Summary" in view.title.text, (
         "The word \"Summary\" is missing in container details view")
