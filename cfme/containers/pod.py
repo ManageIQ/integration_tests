@@ -9,7 +9,7 @@ from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       ContainerObjectDetailsEntities, Labelable,
-                                      GetRandomInstancesMixin)
+                                      GetRandomInstancesMixin, BasicUtilizationView)
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -130,3 +130,14 @@ class EditTags(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+
+class ContainerPodUtilizationView(BasicUtilizationView):
+    pass
+
+@navigator.register(Pod, 'Utilization')
+class Utilization(CFMENavigateStep):
+    VIEW = ContainerPodUtilizationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.monitoring.item_select("Utilization")

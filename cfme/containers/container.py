@@ -6,7 +6,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_patternfly import VerticalNavigation
 from widgetastic.utils import VersionPick, Version
 
-from cfme.containers.provider import (ContainerObjectAllBaseView,
+from cfme.containers.provider import (ContainerObjectAllBaseView, BasicUtilizationView,
                                       ContainerObjectDetailsBaseView,
                                       GetRandomInstancesMixin, Labelable, LoggingableView)
 from cfme.exceptions import ItemNotFound
@@ -168,9 +168,12 @@ class ContainerTimeLines(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
+class ContainerUtilizationView(BasicUtilizationView):
+    pass
 
 @navigator.register(Container, 'Utilization')
 class ContainerUtilization(CFMENavigateStep):
+    VIEW = ContainerUtilizationView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

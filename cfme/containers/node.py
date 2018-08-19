@@ -12,7 +12,7 @@ from cfme.common import Taggable, TagPageView, PolicyProfileAssignable
 from cfme.common.vm_console import ConsoleMixin
 from cfme.containers.provider import (Labelable,
     ContainerObjectAllBaseView, LoggingableView, ContainerObjectDetailsBaseView,
-    GetRandomInstancesMixin)
+    GetRandomInstancesMixin, BasicUtilizationView)
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import (CFMENavigateStep, navigator,
                                                      navigate_to)
@@ -197,5 +197,16 @@ class Timelines(CFMENavigateStep):
         """Navigate to the Timelines page"""
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
-# TODO Need Ad hoc Metrics
+
+class ContainerNodeUtilizationView(BasicUtilizationView):
+    pass
+
+@navigator.register(Node, 'Utilization')
+class Utilization(CFMENavigateStep):
+    VIEW = ContainerNodeUtilizationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.monitoring.item_select("Utilization")
+
 # TODO Need External Logging

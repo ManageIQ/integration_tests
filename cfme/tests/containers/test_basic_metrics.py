@@ -2,7 +2,10 @@ import pytest
 import requests
 import xmltodict
 
-from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersProvider, ContainersProviderCollection
+from cfme.containers.node import NodeCollection
+from cfme.containers.pod import PodCollection
+from cfme.containers.container import ContainerCollection
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -18,6 +21,8 @@ pytestmark = [
                                                  required_flags=['metrics_collection'])],
                          scope='function')
 ]
+
+TEST_ITEMS = [ContainersProviderCollection, NodeCollection, PodCollection, ContainerCollection]
 
 SET_METRICS_CAPTURE_THRESHOLD_IN_MINUTES = 5
 WAIT_FOR_METRICS_CAPTURE_THRESHOLD_IN_MINUTES = "15m"
@@ -85,13 +90,15 @@ def test_validate_metrics_collection_db(provider,
     assert provider.wait_for_collected_metrics(
         timeout=WAIT_FOR_METRICS_CAPTURE_THRESHOLD_IN_MINUTES)
 
-
-def test_validate_metrics_collection_provider_gui(provider,
+@pytest.mark.parametrize('test_item', TEST_ITEMS)
+def test_validate_metrics_collection_provider_gui(test_item, appliance, provider,
                                                   enable_capacity_and_utilization,
                                                   reduce_metrics_collection_threshold,
                                                   wait_for_metrics_rollup, soft_assert):
 
-    utilization = navigate_to(provider, "Utilization")
+    test_item = provider if test_item is ContainersProvider else test_item(appliance).all().pop()
+
+    utilization = navigate_to(test_item, "Utilization")
     soft_assert(utilization.cpu.all_data,
                 "No cpu's metrics exist in the cpu utilization graph!")
     soft_assert(utilization.memory.all_data,
