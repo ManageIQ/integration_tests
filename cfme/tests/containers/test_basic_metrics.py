@@ -6,6 +6,8 @@ from cfme.containers.provider import ContainersProvider, ContainersProviderColle
 from cfme.containers.node import NodeCollection
 from cfme.containers.pod import PodCollection
 from cfme.containers.container import ContainerCollection
+from cfme.containers.project import ProjectCollection
+from cfme.containers.replicator import ReplicatorCollection
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -22,7 +24,12 @@ pytestmark = [
                          scope='function')
 ]
 
-TEST_ITEMS = [ContainersProviderCollection, NodeCollection, PodCollection, ContainerCollection]
+TEST_ITEMS = [ContainersProviderCollection,
+              NodeCollection,
+              PodCollection,
+              ContainerCollection,
+              ProjectCollection,
+              ReplicatorCollection]
 
 SET_METRICS_CAPTURE_THRESHOLD_IN_MINUTES = 5
 WAIT_FOR_METRICS_CAPTURE_THRESHOLD_IN_MINUTES = "15m"

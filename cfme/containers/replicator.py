@@ -6,7 +6,7 @@ from widgetastic.utils import VersionPick, Version
 
 from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (ContainerObjectAllBaseView, ContainerObjectDetailsBaseView,
-                                      Labelable, GetRandomInstancesMixin)
+                                      Labelable, GetRandomInstancesMixin, BasicUtilizationView)
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -117,3 +117,16 @@ class EditTags(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+
+
+class ContainerreplicatorUtilizationView(BasicUtilizationView):
+    pass
+
+
+@navigator.register(Replicator, 'Utilization')
+class Utilization(CFMENavigateStep):
+    VIEW = ContainerreplicatorUtilizationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.monitoring.item_select("Utilization")
