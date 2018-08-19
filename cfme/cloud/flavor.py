@@ -2,14 +2,17 @@
 """
 import attr
 
-from navmazing import NavigateToAttribute
-from widgetastic_patternfly import Dropdown, Button, View, BreadCrumb
+from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic_patternfly import (Accordion, BootstrapSwitch, BreadCrumb, Button,
+                                    Dropdown, TextInput, View)
+
+from widgetastic.widget import Text, Select
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.exceptions import FlavorNotFound, ItemNotFound
 from cfme.modeling.base import BaseEntity, BaseCollection
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from widgetastic_manageiq import (
     BaseEntitiesView, ItemsToolBarViewSelector, SummaryTable, Text, Table, Accordion, ManageIQTree,
     PaginationPane, Search)
@@ -27,6 +30,7 @@ class FlavorView(BaseLoggedInPage):
 class FlavorToolBar(View):
     policy = Dropdown('Policy')
     download = Dropdown('Download')
+    configuration = Dropdown('Configuration')
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
@@ -38,6 +42,7 @@ class FlavorEntities(BaseEntitiesView):
 class FlavorDetailsToolBar(View):
     policy = Dropdown('Policy')
     download = Button(title='Download summary in PDF format')
+    configuration = Dropdown('Configuration')
 
 
 class FlavorDetailsAccordion(View):
@@ -98,6 +103,38 @@ class FlavorDetailsView(FlavorView):
     entities = FlavorDetailsEntities()
 
 
+class FlavorAddEntities(View):
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+
+
+class FlavorAddForm(View):
+    """ Represents Add Flavor page """
+    provider = Select(name='ems_id')
+    flavor_name = TextInput(name='name')
+    ram_size = TextInput(name='ram')
+    vcpus = TextInput(name='vcpus')
+    disk_size = TextInput(name='disk')
+    swap_size = TextInput(name='swap')
+    rxtx_factor = TextInput(name='rxtx_factor')
+    public = BootstrapSwitch(name='is_public')
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+
+class FlavorAddView(FlavorView):
+    @property
+    def is_displayed(self):
+        expected_title = "Add a new Flavor"
+        return (
+            self.in_availability_zones and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title)
+
+    entities = View.nested(FlavorAddEntities)
+    form = View.nested(FlavorAddForm)
+
+
 @attr.s
 class Flavor(BaseEntity, Taggable):
     """
@@ -107,11 +144,61 @@ class Flavor(BaseEntity, Taggable):
 
     name = attr.ib()
     provider = attr.ib()
+    ram = attr.ib(default=None)
+    vcpus = attr.ib(default=None)
+    disk = attr.ib(default=None)
+    swap = attr.ib(default=None)
+    rxtx = attr.ib(default=None)
+    is_public = attr.ib(default=True)
+
+    def delete(self, cancel=False):
+        """Delete current falvor """
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Remove Flavor', handle_alert=not cancel)
+        view.flash.assert_no_error()
+
+    def refresh(self):
+        """Refresh provider relationships and browser"""
+        self.provider.refresh_provider_relationships()
+        self.browser.refresh()
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except FlavorNotFound:
+            return False
 
 
 @attr.s
 class FlavorCollection(BaseCollection):
     ENTITY = Flavor
+
+    def create(self, name, provider, ram, vcpus, disk, swap, rxtx, is_public=True, cancel=False):
+        """Create new falvor"""
+        view = navigate_to(self, 'Add')
+        form_params = {'provider': provider.name,
+                       'flavor_name': name,
+                       'ram_size': ram,
+                       'vcpus': vcpus,
+                       'disk_size': disk,
+                       'swap_size': swap,
+                       'rxtx_factor': rxtx,
+                       'public': is_public}
+
+        view.form.fill(form_params)
+
+        if cancel:
+            view.form.cancel.click()
+
+        else:
+            view.form.add.click()
+
+        view = self.create_view(FlavorAllView)
+        view.flash.assert_no_error()
+        flavor = self.instantiate(name, provider, ram, vcpus, disk, swap, rxtx, is_public)
+        return flavor
 
 
 @navigator.register(FlavorCollection, 'All')
@@ -136,3 +223,12 @@ class FlavorDetails(CFMENavigateStep):
             raise FlavorNotFound('Could not locate flavor "{}" on provider {}'
                                  .format(self.obj.name, self.obj.provider.name))
         row.click()
+
+
+@navigator.register(FlavorCollection, 'Add')
+class FlavorAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+    VIEW = FlavorAddView
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select('Add a new Flavor')

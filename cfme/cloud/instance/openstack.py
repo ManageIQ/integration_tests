@@ -4,6 +4,7 @@ from navmazing import NavigateToSibling
 from widgetastic.widget import View, NoSuchElementException
 from widgetastic_patternfly import Button, BootstrapSelect
 from widgetastic_manageiq import CheckboxSelect, Select, Input
+from widgetastic.utils import partial_match
 
 from cfme.exceptions import OptionNotAvailable, DestinationNotFound
 from cfme.common.vm_views import RightSizeView
@@ -65,6 +66,12 @@ class OpenStackInstance(Instance):
         view = navigate_to(self, 'DetachVolume')
         view.form.volume.fill(name)
         view.form.submit_button.click()
+
+    def reconfigure(self, flavor):
+        view = navigate_to(self, 'Reconfigure')
+        view.form.flavor.fill(partial_match(flavor))
+        view.form.submit_button.click()
+        view.flash.assert_no_error()
 
     @property
     def volume_count(self):
@@ -167,7 +174,7 @@ class MigrateView(CloudInstanceView):
 class ReconfigureView(CloudInstanceView):
     @View.nested
     class form(View):  # noqa
-        flavor = BootstrapSelect('flavor')
+        flavor = Select(name='flavor_id')
         submit_button = Button('Submit')
         cancel_button = Button('Cancel')
 
