@@ -90,6 +90,7 @@ def test_validate_metrics_collection_db(provider,
     assert provider.wait_for_collected_metrics(
         timeout=WAIT_FOR_METRICS_CAPTURE_THRESHOLD_IN_MINUTES)
 
+
 @pytest.mark.parametrize('test_item', TEST_ITEMS)
 def test_validate_metrics_collection_provider_gui(test_item, appliance, provider,
                                                   enable_capacity_and_utilization,

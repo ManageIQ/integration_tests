@@ -497,6 +497,7 @@ class AdHocMain(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.toolbar.monitoring.item_select('Ad hoc Metrics')
 
+
 class BasicUtilizationView(View):
     title = Text(".//div[@id='main-content']//h1")
     options = View.nested(OptionForm)
@@ -512,6 +513,7 @@ class BasicUtilizationView(View):
 
 class ContainerProvidersUtilizationView(BasicUtilizationView):
     pass
+
 
 @navigator.register(ContainersProvider, 'Utilization')
 class Utilization(CFMENavigateStep):

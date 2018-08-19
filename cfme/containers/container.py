@@ -168,8 +168,10 @@ class ContainerTimeLines(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
+
 class ContainerUtilizationView(BasicUtilizationView):
     pass
+
 
 @navigator.register(Container, 'Utilization')
 class ContainerUtilization(CFMENavigateStep):

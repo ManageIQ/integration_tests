@@ -152,7 +152,7 @@ class EditTags(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
-class NodeUtilizationView(NodeView):
+class NodeUtilizationView(NodeView, BasicUtilizationView):
     """View for utilization of a node"""
     title = Text('//div[@id="main-content"]//h1')
 
@@ -197,16 +197,5 @@ class Timelines(CFMENavigateStep):
         """Navigate to the Timelines page"""
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
-
-class ContainerNodeUtilizationView(BasicUtilizationView):
-    pass
-
-@navigator.register(Node, 'Utilization')
-class Utilization(CFMENavigateStep):
-    VIEW = ContainerNodeUtilizationView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.monitoring.item_select("Utilization")
-
+# TODO Need Ad hoc Metrics
 # TODO Need External Logging

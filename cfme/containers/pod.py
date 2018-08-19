@@ -131,8 +131,10 @@ class EditTags(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
+
 class ContainerPodUtilizationView(BasicUtilizationView):
     pass
+
 
 @navigator.register(Pod, 'Utilization')
 class Utilization(CFMENavigateStep):
