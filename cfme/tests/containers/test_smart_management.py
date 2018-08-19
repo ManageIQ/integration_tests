@@ -76,7 +76,6 @@ def get_clean_entity(**kwargs):
     BZ(1601915, forced_streams=["5.10"])
 ])
 def test_smart_management_add_tag(provider, appliance, test_item):
-    logger.debug("Setting smart mgmt tag to {obj_type}".format(obj_type=test_item.obj.__name__))
 
     # validate no tag set to project
     obj_collection = getattr(appliance.collections, test_item.collection_obj)
