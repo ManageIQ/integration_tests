@@ -10,6 +10,7 @@ pytestmark = [
     pytest.mark.provider([ContainersProvider], scope='function')
 ]
 
+
 def get_ansible_container_name(appliance):
     return filter(lambda container: "ansible" in container.name,
                   appliance.collections.containers.all())
@@ -61,6 +62,7 @@ def test_ocp_operator_out_of_the_box(appliance):
     # validate the role exist out-of-the-box
     assert is_role_found, "No {role} found".format(role=role_name_prefix)
 
+
 def test_start_embedded_ansible(appliance, get_old_ansible_containers_name,
                                 disable_embedded_ansible):
     """
@@ -75,6 +77,7 @@ def test_start_embedded_ansible(appliance, get_old_ansible_containers_name,
     # Enable embedded ansible
     args = ["embedded_ansible"]
     appliance.server.settings.enable_server_roles(*args)
-     # Waiting for container to start
+
+    # Waiting for container to start
     assert wait_for(is_ansible_container_created, [appliance], delay=30, timeout="10m"), (
         "No ansible container started")
