@@ -120,6 +120,10 @@ def test_flash_msg_not_contains_html_tags(provider):
 
 
 def test_typo_in_metrics_endpoint_type(provider):
+    """
+    This test based on bz1538948
+    """
+
     view = navigate_to(provider, "Details")
     endpoints_table = view.entities.summary("Endpoints")
 
