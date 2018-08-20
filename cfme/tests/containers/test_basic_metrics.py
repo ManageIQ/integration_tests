@@ -120,8 +120,8 @@ def test_flash_msg_not_contains_html_tags(provider):
 
 
 def test_typo_in_metrics_endpoint_type(provider):
-        view = navigate_to(provider, "Details")
-        endpoints_table = view.entities.summary("Endpoints")
+    view = navigate_to(provider, "Details")
+    endpoints_table = view.entities.summary("Endpoints")
 
-        assert provider.metrics_type.lower() == endpoints_table.get_text_of(
-            "Metrics Type").lower(), "Incorrect endpoint type found dot metrics endpoint"
+    assert provider.metrics_type.lower() == endpoints_table.get_text_of(
+        "Metrics Type").lower(), "Incorrect endpoint type found dot metrics endpoint"
