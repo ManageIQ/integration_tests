@@ -2,7 +2,6 @@
 import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import VersionPick, Version
 
 from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (ContainerObjectAllBaseView, ContainerObjectDetailsBaseView,
@@ -15,18 +14,12 @@ from cfme.utils.providers import get_crud_by_name
 
 class ReplicatorAllView(ContainerObjectAllBaseView):
     """Container Replicators All view"""
-    SUMMARY_TEXT = VersionPick({
-        Version.lowest(): 'Replicators',
-        '5.9': 'Container Replicators'
-    })
+    SUMMARY_TEXT = 'Container Replicators'
 
 
 class ReplicatorDetailsView(ContainerObjectDetailsBaseView):
     """Container Replicators Details view"""
-    SUMMARY_TEXT = VersionPick({
-        Version.lowest(): 'Replicators',
-        '5.9': 'Container Replicators'
-    })
+    SUMMARY_TEXT = 'Container Replicators'
 
 
 @attr.s

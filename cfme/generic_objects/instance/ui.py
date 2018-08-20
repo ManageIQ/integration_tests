@@ -1,6 +1,5 @@
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text, View, ParametrizedView, ParametrizedString, ParametrizedLocator
-from widgetastic.utils import VersionPick, Version
 from widgetastic_patternfly import Dropdown, CandidateNotFound, Button
 from widgetastic_manageiq import (ItemsToolBarViewSelector, BaseEntitiesView,
     ParametrizedSummaryTable)
@@ -51,8 +50,7 @@ class GenericObjectInstanceDetailsView(BaseLoggedInPage):
 class MyServiceGenericObjectInstanceView(BaseLoggedInPage):
     @View.nested
     class toolbar(View):    # noqa
-        reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                           '5.9': 'Refresh this page'}))
+        reload = Button(title='Refresh this page')
 
         @ParametrizedView.nested
         class group(ParametrizedView):   # noqa

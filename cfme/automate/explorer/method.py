@@ -4,7 +4,7 @@ from copy import copy
 
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import ParametrizedLocator, Version, VersionPick
+from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Table, Text, View, ParametrizedView, Select, ClickableMixin
 from widgetastic_manageiq import SummaryFormItem, ScriptBox, Input
 from widgetastic_patternfly import BootstrapSelect, BootstrapSwitch, Button, CandidateNotFound
@@ -14,6 +14,7 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
+from cfme.utils.version import Version, VersionPicker
 from cfme.utils.wait import wait_for
 
 from . import AutomateExplorerView, check_tree_path
@@ -72,17 +73,17 @@ class Inputs(View, ClickableMixin):
             except AttributeError:
                 pass
 
-    add_field = VersionPick({
-        Version.lowest(): Text('//img[@alt="Equal green"]'),
-        '5.10': Text('//button//i[contains(@class, "fa-plus")]')
-    })
+    add_field = Text(VersionPicker({
+        Version.lowest(): '//img[@alt="Equal green"]',
+        '5.10': '//div[@id="class_fields_div"]//i[contains(@class, "fa-plus")]'
+    }))
     name = Input(locator='.//td/input[contains(@id, "field_name")]')
     data_type = Select(locator='.//td/select[contains(@id, "field_datatype")]')
     default_value = Input(locator='.//td/input[contains(@id, "field_default_value")]')
-    finish_add_field = VersionPick({
-        Version.lowest(): Text('//img[@alt="Add this entry"]'),
-        '5.10': Text('//a[@title="Add this entry"]')
-    })
+    finish_add_field = Text(VersionPicker({
+        Version.lowest(): '//img[@alt="Add this entry"]',
+        '5.10': '//a[@title="Add this entry"]'
+    }))
 
     def read(self):
         return self.inputs.read()

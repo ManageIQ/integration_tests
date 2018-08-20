@@ -5,8 +5,11 @@ import attr
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import ParametrizedLocator, VersionPick, Version
+from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Text, Checkbox, View, ParametrizedView, Table as VanillaTable
+from widgetastic_manageiq import (PaginationPane, Table, ReportToolBarViewSelector,
+                                  NonJSPaginationPane)
+from widgetastic_manageiq.expression_editor import ExpressionEditor
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, CandidateNotFound
 
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -17,9 +20,6 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (PaginationPane, Table, ReportToolBarViewSelector,
-                                  NonJSPaginationPane)
-from widgetastic_manageiq.expression_editor import ExpressionEditor
 from . import CloudIntelReportsView, ReportsMultiBoxSelect
 
 
@@ -121,12 +121,7 @@ class ReportEditView(CustomReportFormCommon):
 
 class ReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
-    reload_button = Button(
-        title=VersionPick({
-            Version.lowest(): 'Reload current display',
-            '5.9': 'Refresh this page'
-        })
-    )
+    reload_button = Button(title='Refresh this page')
     paginator = PaginationPane()
 
     @View.nested

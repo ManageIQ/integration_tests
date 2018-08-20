@@ -2,7 +2,6 @@
 import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.utils import VersionPick, Version
 
 from cfme.common import Taggable, TagPageView
 from cfme.containers.provider import (ContainerObjectAllBaseView,
@@ -17,18 +16,12 @@ from cfme.utils.providers import get_crud_by_name
 
 class ImageRegistryAllView(ContainerObjectAllBaseView):
     """Container Images Registries All view"""
-    SUMMARY_TEXT = VersionPick({
-        Version.lowest(): 'Image Registries',
-        '5.9': 'Container Image Registries'
-    })
+    SUMMARY_TEXT = 'Container Image Registries'
 
 
 class ImageRegistryDetailsView(ContainerObjectDetailsBaseView):
     """Container Image Registries Detail view"""
-    SUMMARY_TEXT = VersionPick({
-        Version.lowest(): 'Image Registries',
-        '5.9': 'Container Image Registries'
-    })
+    SUMMARY_TEXT = 'Container Image Registries'
 
 
 @attr.s

@@ -1,14 +1,12 @@
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import ParametrizedLocator
+from widgetastic.utils import ParametrizedString
+from widgetastic.widget import ParametrizedLocator, Text, View
 from widgetastic_manageiq import (
-    ItemsToolBarViewSelector, BaseEntitiesView, FileInput, ParametrizedSummaryTable, ManageIQTree
+    FonticonPicker, BootstrapSwitch, SummaryForm, Table, ItemsToolBarViewSelector, BaseEntitiesView,
+    FileInput, ParametrizedSummaryTable, ManageIQTree
 )
-from widgetastic_patternfly import Accordion
-from widgetastic.utils import ParametrizedString, VersionPick
-from widgetastic.widget import Text, View
-from widgetastic_manageiq import FonticonPicker, BootstrapSwitch, SummaryForm, Table
-from widgetastic_patternfly import BootstrapSelect, Button, Input, Dropdown
-from cfme.utils.version import Version
+from widgetastic_patternfly import Accordion, BootstrapSelect, Button, Input, Dropdown
+
 from cfme.base.login import BaseLoggedInPage
 
 
@@ -174,9 +172,7 @@ class GenericObjectAddEditButtonView(GenericObjectDefinitionView):
     name = Input(name='name')
     description = Input(name='description')
     display = BootstrapSwitch(name='display')
-    image = VersionPick({
-        Version.lowest(): BootstrapSelect('button_image'),
-        '5.9': FonticonPicker('button_icon')})
+    image = FonticonPicker('button_icon')
     dialog = BootstrapSelect(name='dialog')
     open_url = BootstrapSwitch(name='open_url')
     display_for = BootstrapSelect(name='display_for')
@@ -235,9 +231,7 @@ class GenericObjectButtonGroupAddView(GenericObjectDefinitionView):
     name = Input(name='name')
     display = BootstrapSwitch(name='display')
     description = Input(name='description')
-    image = VersionPick({
-        Version.lowest(): BootstrapSelect('button_image'),
-        '5.9': FonticonPicker('button_icon')})
+    image = FonticonPicker('button_icon')
 
     add = Button('Add')
     cancel = Button('Cancel')

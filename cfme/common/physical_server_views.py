@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
-from widgetastic.utils import (
-    Parameter, Version, VersionPick)
+from widgetastic.utils import Parameter
 from widgetastic.widget import ParametrizedView, Text, View
-from widgetastic_manageiq import Search
-from widgetastic_patternfly import (
-    BreadCrumb, Dropdown, Accordion)
+from widgetastic_manageiq import (
+    BaseEntitiesView, JSBaseEntity, BaseListEntity, BaseQuadIconEntity, BaseTileIconEntity,
+    BootstrapTreeview, Button, ItemsToolBarViewSelector, Search, SummaryTable, TimelinesView,
+    BaseNonInteractiveEntitiesView, ManageIQTree, NonJSBaseEntity)
+from widgetastic_patternfly import BreadCrumb, Dropdown, Accordion
 
 from cfme.base.login import BaseLoggedInPage
-from widgetastic_manageiq import (
-    BaseEntitiesView, NonJSBaseEntity, JSBaseEntity, BaseListEntity, BaseQuadIconEntity,
-    BaseTileIconEntity, BootstrapTreeview, Button, ItemsToolBarViewSelector, SummaryTable,
-    TimelinesView, BaseNonInteractiveEntitiesView, ManageIQTree)
 
 
 class ComputePhysicalInfrastructureServersView(BaseLoggedInPage):
@@ -50,10 +47,10 @@ class NonJSPhysicalServerEntity(NonJSBaseEntity):
     tile_entity = PhysicalServerTileIconEntity
 
 
-class JSPhysicalServerEntity(JSBaseEntity):
+class PhysicalServerEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(JSPhysicalServerEntity, self).data
+        data_dict = super(PhysicalServerEntity, self).data
         if 'quadicon' in data_dict and data_dict['quadicon']:
             quad_data = document_fromstring(data_dict['quadicon'])
             data_dict['no_host'] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)
@@ -61,16 +58,6 @@ class JSPhysicalServerEntity(JSBaseEntity):
             data_dict['vendor'] = quad_data.xpath(self.QUADRANT.format(pos="c"))[0].get('alt')
             data_dict['creds'] = quad_data.xpath(self.QUADRANT.format(pos="d"))[0].get('alt')
         return data_dict
-
-
-def PhysicalServerEntity():  # noqa
-    """ Temporary wrapper for PhysicalServer Entity during transition to JS based Entity
-
-    """
-    return VersionPick({
-        Version.lowest(): NonJSPhysicalServerEntity,
-        '5.9': JSPhysicalServerEntity,
-    })
 
 
 class PhysicalServerDetailsToolbar(View):
@@ -193,7 +180,7 @@ class PhysicalServerEntitiesView(BaseEntitiesView):
     """Represents the view with different items like hosts."""
     @property
     def entity_class(self):
-        return PhysicalServerEntity().pick(self.browser.product_version)
+        return PhysicalServerEntity
 
 
 class PhysicalServersView(ComputePhysicalInfrastructureServersView):

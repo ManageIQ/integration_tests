@@ -2,11 +2,11 @@
 """Page model for Automation/Anisble/Credentials"""
 import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import ParametrizedLocator, VersionPick
-from widgetastic.widget import ConditionalSwitchableView, ParametrizedView, Text, TextInput, View
 from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, Input
 from widgetastic_manageiq import ParametrizedSummaryTable, Table, PaginationPane
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic.utils import ParametrizedLocator
+from widgetastic.widget import ConditionalSwitchableView, ParametrizedView, Text, TextInput, View
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
@@ -14,7 +14,6 @@ from cfme.common import Taggable, TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 
 
@@ -35,12 +34,7 @@ class CredentialsListView(CredentialsBaseView):
         configuration = Dropdown("Configuration")
         policy = Dropdown(text='Policy')
 
-    credentials = Table(
-        VersionPick({
-            Version.lowest(): ".//div[@id='list_grid']/table",
-            "5.9": ".//div[@id='miq-gtl-view']//table"
-        })
-    )
+    credentials = Table(".//div[@id='miq-gtl-view']//table")
     paginator = PaginationPane()
 
     @property

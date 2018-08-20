@@ -4,18 +4,17 @@ import re
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from widgetastic.utils import ParametrizedString, VersionPick
+from widgetastic.utils import ParametrizedString
 from widgetastic.xpath import quote
 from widgetastic.widget import Checkbox, ConditionalSwitchableView, ParametrizedView, Text, View
 from widgetastic_manageiq import (SummaryFormItem, FonticonPicker, PotentiallyInvisibleTab,
-                                  RadioGroup, FakeWidget)
+                                  RadioGroup)
 from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, Input
 
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.blockers import BZ
 from cfme.utils.update import Updateable
-from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 
 from . import AutomateCustomizationView
@@ -54,10 +53,7 @@ class ButtonFormCommon(AutomateCustomizationView):
 
     class options(PotentiallyInvisibleTab):  # noqa
         form = ConditionalSwitchableView(reference="type")
-        type = VersionPick({
-            Version.lowest(): FakeWidget(read_value='Default'),
-            '5.9': BootstrapSelect('button_type')
-        })
+        type = BootstrapSelect('button_type')
 
         @form.register('Default')
         class ButtonFormDefaultView(View):  # noqa
@@ -72,9 +68,7 @@ class ButtonFormCommon(AutomateCustomizationView):
         text = Input(name='name')
         display = Checkbox(name='display')
         hover = Input(name='description')
-        image = VersionPick({
-            Version.lowest(): BootstrapSelect('button_image'),
-            '5.9': FonticonPicker('button_icon')})
+        image = FonticonPicker('button_icon')
         open_url = Checkbox('open_url')
         # TODO: Display for, Submit by after converted to BootstrapSelect
 
@@ -142,11 +136,9 @@ class ButtonDetailView(AutomateCustomizationView):
     playbook_cat_item = SummaryFormItem('Basic Information', 'Ansible Playbook')
     target = SummaryFormItem('Basic Information', 'Target')
     text = SummaryFormItem(
-        'Basic Information', VersionPick({Version.lowest(): 'Button Text', '5.9': 'Text'}),
+        'Basic Information', 'Text',
         text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
-    hover = SummaryFormItem(
-        'Basic Information',
-        VersionPick({Version.lowest(): 'Button Hover Text', '5.9': 'Hover Text'}))
+    hover = SummaryFormItem('Basic Information', 'Hover Text')
     dialog = SummaryFormItem('Basic Information', 'Dialog')
 
     system = SummaryFormItem('Object Details', 'System/Process/')
@@ -391,16 +383,9 @@ class ButtonGroupDetailView(AutomateCustomizationView):
     title = Text('#explorer_title_text')
 
     text = SummaryFormItem(
-        'Basic Information',
-        VersionPick({
-            Version.lowest(): 'Button Group Text',
-            '5.9': 'Text'}),
+        'Basic Information', 'Text',
         text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
-    hover = SummaryFormItem(
-        'Basic Information',
-        VersionPick({
-            Version.lowest(): 'Button Group Hover Text',
-            '5.9': 'Hover Text'}))
+    hover = SummaryFormItem('Basic Information', 'Hover Text')
 
     @property
     def is_displayed(self):
@@ -417,9 +402,7 @@ class ButtonGroupFormCommon(AutomateCustomizationView):
     text = Input(name='name')
     display = Checkbox(name='display')
     hover = Input(name='description')
-    image = VersionPick({
-        Version.lowest(): BootstrapSelect('button_image'),
-        '5.9': FonticonPicker('button_icon')})
+    image = FonticonPicker('button_icon')
 
     cancel_button = Button('Cancel')
 

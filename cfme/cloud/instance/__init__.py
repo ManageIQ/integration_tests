@@ -2,7 +2,7 @@ import attr
 from navmazing import NavigateToSibling, NavigateToAttribute, NavigationDestinationNotFound
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import CheckableBootstrapTreeview, Dropdown, Button
-from widgetastic.utils import VersionPick, Version, partial_match
+from widgetastic.utils import partial_match
 from widgetastic.widget import View
 
 from cfme.base.login import BaseLoggedInPage
@@ -23,8 +23,7 @@ class InstanceDetailsToolbar(View):
     """
     The toolbar on the details screen for an instance
     """
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+    reload = Button(title='Refresh this page')
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     lifecycle = Dropdown('Lifecycle')

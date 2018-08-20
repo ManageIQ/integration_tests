@@ -3,14 +3,12 @@ import sentaku
 
 from widgetastic.widget import ParametrizedView, Select, Text, View
 from widgetastic_patternfly import Input, BootstrapSelect
-from widgetastic.utils import (deflatten_dict, Parameter, ParametrizedString,
-                               ParametrizedLocator, VersionPick)
+from widgetastic.utils import deflatten_dict, Parameter, ParametrizedString, ParametrizedLocator
 
 from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.update import Updateable
-from cfme.utils.version import Version
 
 
 class ServiceCatalogs(Navigatable, Taggable, Updateable, sentaku.modeling.ElementMixin):
@@ -44,12 +42,7 @@ class BaseOrderForm(View):
     {"some_key": "some_value"}
     """
     title = Text('#explorer_title_text')
-    dialog_title = Text(
-        VersionPick({
-            Version.lowest(): ".//div[@id='main_div']//h3",
-            "5.9": ".//div[@id='main_div']//h2"
-        })
-    )
+    dialog_title = Text(".//div[@id='main_div']//h2")
 
     @ParametrizedView.nested
     class fields(ParametrizedView):  # noqa
@@ -57,16 +50,10 @@ class BaseOrderForm(View):
         input = Input(id=Parameter("key"))
         select = Select(id=Parameter("key"))
         param_input = Input(id=ParametrizedString("param_{key}"))
-        dropdown = VersionPick({
-            Version.lowest(): BootstrapSelect(Parameter("key")),
-            "5.9": BootstrapSelect(locator=ParametrizedLocator(
-                './/div[contains(@class, "bootstrap-select")]/select[@id={key|quote}]/..'))
-        })
-        param_dropdown = VersionPick({
-            Version.lowest(): BootstrapSelect(ParametrizedString("param_{key}")),
-            "5.9": BootstrapSelect(locator=ParametrizedLocator(
-                ".//div[contains(@class, 'bootstrap-select')]/select[@id='param_{key}']/.."))
-        })
+        dropdown = BootstrapSelect(locator=ParametrizedLocator(
+            ".//div[contains(@class, 'bootstrap-select')]/select[@id={key|quote}]/.."))
+        param_dropdown = BootstrapSelect(locator=ParametrizedLocator(
+            ".//div[contains(@class, 'bootstrap-select')]/select[@id='param_{key}']/.."))
 
         @property
         def visible_widget(self):

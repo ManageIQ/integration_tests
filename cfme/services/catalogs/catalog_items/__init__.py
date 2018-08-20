@@ -6,7 +6,6 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox, View
 from widgetastic_manageiq import FonticonPicker, ManageIQTree
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound, Tab
-from widgetastic.utils import VersionPick, Version
 
 from cfme.common import Taggable, TagPageView
 from cfme.common.vm_views import BasicProvisionFormView
@@ -49,10 +48,7 @@ class ButtonGroupForm(ServicesCatalogView):
 
     btn_group_text = Input(name='name')
     btn_group_hvr_text = Input(name='description')
-    btn_image = VersionPick({
-        Version.lowest(): BootstrapSelect('button_image'),
-        '5.9': FonticonPicker('button_icon')
-    })
+    btn_image = FonticonPicker('button_icon')
 
 
 class ButtonForm(ServicesCatalogView):

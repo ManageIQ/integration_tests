@@ -7,7 +7,6 @@ import json
 from manageiq_client.api import APIException
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
-from widgetastic.utils import VersionPick
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import PolicyProfileAssignable, Taggable
@@ -140,9 +139,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
             cancel (bool): Whether to cancel the deletion, defaults to True
         """
         view = navigate_to(self, "Details")
-        remove_item = VersionPick({
-            '5.8': 'Remove item',
-            '5.9': 'Remove item from Inventory'})
+        remove_item = 'Remove item from Inventory'
         view.toolbar.configuration.item_select(remove_item, handle_alert=not cancel)
         if not cancel:
             view = self.create_view(HostsView)
@@ -540,10 +537,7 @@ class HostsCollection(BaseCollection):
     def delete(self, *hosts):
         """Deletes this host from CFME."""
         view = self.check_hosts(hosts)
-        remove_item = VersionPick({
-            '5.8': 'Remove items',
-            '5.9': 'Remove items from Inventory'})
-        view.toolbar.configuration.item_select(remove_item, handle_alert=True)
+        view.toolbar.configuration.item_select('Remove items from Inventory', handle_alert=True)
         view.flash.assert_success_message(
             'Delete initiated for {} Hosts / Nodes from the {} Database'.format(
                 len(hosts), self.appliance.product_name))

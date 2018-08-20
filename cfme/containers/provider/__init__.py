@@ -1,19 +1,16 @@
-import attr
-
 import random
+import re
 from random import sample
-from six import string_types
 from traceback import format_exc
 
-
-import re
+import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import StatusBox
-from widgetastic.utils import VersionPick, Version
-from widgetastic.widget import Text, View, TextInput
+from six import string_types
+from widgetastic_manageiq import (
+    StatusBox, Accordion, ManageIQTree, LineChart, ParametrizedSummaryTable)
 from widgetastic_patternfly import (
     BreadCrumb, SelectorDropdown, Dropdown, BootstrapSelect, Input, Button, Tab)
-
+from widgetastic.widget import Text, View, TextInput
 
 from cfme import exceptions
 from cfme.base.credential import TokenCredential
@@ -22,10 +19,9 @@ from cfme.common import TagPageView, PolicyProfileAssignable
 from cfme.common.candu_views import OptionForm
 from cfme.common.provider import BaseProvider, DefaultEndpoint, DefaultEndpointForm, provider_types
 from cfme.common.provider_views import (
-    BeforeFillMixin, ContainerProviderAddViewUpdated,
-    ContainerProviderEditViewUpdated, ContainerProvidersView,
-    ProviderDetailsToolBar, ProviderDetailsView,
-    ProviderSideBar, ProviderToolBar, ProvidersView)
+    BeforeFillMixin, ContainerProvidersView, ContainerProviderEditViewUpdated, ProvidersView,
+    ContainerProviderAddViewUpdated, ProviderSideBar, ProviderDetailsToolBar, ProviderDetailsView,
+    ProviderToolBar)
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.browser import browser
@@ -34,8 +30,6 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.version import LATEST
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    ParametrizedSummaryTable, Accordion, ManageIQTree, LineChart)
 
 
 class ContainersProviderDefaultEndpoint(DefaultEndpoint):
@@ -79,27 +73,11 @@ class ContainersProviderEndpointsForm(View):
 
     @View.nested
     class metrics(Tab, BeforeFillMixin):  # NOQA
-        TAB_NAME = VersionPick({
-            Version.lowest(): 'Hawkular',
-            '5.9': 'Metrics'
-        })
-        sec_protocol = VersionPick({
-            Version.lowest(): BootstrapSelect(id='hawkular_security_protocol'),
-            '5.9': BootstrapSelect(id='metrics_security_protocol')
-        })
-        trusted_ca_certificates = VersionPick({
-            Version.lowest(): TextInput('hawkular_tls_ca_certs'),
-            '5.9': TextInput('metrics_tls_ca_certs')
-        })
-        hostname = VersionPick({
-            Version.lowest(): Input('hawkular_hostname'),
-            '5.9': Input('metrics_hostname')
-        })
-        api_port = VersionPick({
-            Version.lowest(): Input('hawkular_api_port'),
-            '5.9': Input('metrics_api_port')
-        })
-
+        TAB_NAME = 'Metrics'
+        sec_protocol = BootstrapSelect(id='metrics_security_protocol')
+        trusted_ca_certificates = TextInput('metrics_tls_ca_certs')
+        hostname = Input('metrics_hostname')
+        api_port = Input('metrics_api_port')
         validate = Button('Validate')
 
     @View.nested

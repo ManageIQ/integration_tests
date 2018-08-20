@@ -4,7 +4,6 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View
 from widgetastic_patternfly import BreadCrumb
 
@@ -44,10 +43,7 @@ class NodeView(ContainerObjectAllBaseView, LoggingableView):
 class NodeAllView(NodeView):
     """Container Nodes All view"""
 
-    SUMMARY_TEXT = VersionPick({
-        Version.lowest(): 'Nodes',
-        '5.9': 'Container Nodes'
-    })
+    SUMMARY_TEXT = 'Container Nodes'
 
     @property
     def is_displayed(self):
@@ -56,10 +52,7 @@ class NodeAllView(NodeView):
 
 class NodeDetailsView(ContainerObjectDetailsBaseView):
     """Container Nodes Detail view"""
-    SUMMARY_TEXT = VersionPick({
-        Version.lowest(): 'Nodes',
-        '5.9': 'Container Nodes'
-    })
+    SUMMARY_TEXT = 'Container Nodes'
     toolbar = View.nested(NodeDetailsToolBar)
 
 

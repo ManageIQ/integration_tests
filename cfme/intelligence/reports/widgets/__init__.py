@@ -1,6 +1,5 @@
 import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, Checkbox
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_patternfly import Button, Input, BootstrapSelect
@@ -159,9 +158,7 @@ class DashboardWidgetDetailsView(DashboardWidgetsView):
 
     title = Text("#explorer_title_text")
     status_info = SummaryFormItem("Status", "Current Status")
-    reload_button = Button(title=VersionPick({
-        Version.lowest(): 'Reload current display',
-        '5.9': 'Refresh this page'}))
+    reload_button = Button(title='Refresh this page')
 
     @property
     def is_displayed(self):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+import os
 from time import sleep
 
-import os
 from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import (
@@ -14,9 +14,9 @@ from cfme.exceptions import TemplateNotFound
 from cfme.utils.log import logger
 from widgetastic_manageiq import (
     Calendar, Checkbox, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, RadioGroup,
-    VersionPick, Version, BaseEntitiesView, NonJSBaseEntity, BaseListEntity, BaseQuadIconEntity,
-    BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView, PaginationPane,
-    DriftComparison, ParametrizedSummaryTable
+    BaseEntitiesView, NonJSBaseEntity, BaseListEntity, BaseQuadIconEntity, BaseTileIconEntity,
+    JSBaseEntity, BaseNonInteractiveEntitiesView, PaginationPane, DriftComparison,
+    ParametrizedSummaryTable
 )
 
 
@@ -78,10 +78,10 @@ class NonJSInstanceEntity(NonJSBaseEntity):
     tile_entity = InstanceTileIconEntity
 
 
-class JSInstanceEntity(JSBaseEntity):
+class InstanceEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(JSInstanceEntity, self).data
+        data_dict = super(InstanceEntity, self).data
         if 'quadicon' in data_dict and data_dict['quadicon']:
             try:
                 quad_data = document_fromstring(data_dict['quadicon'])
@@ -122,16 +122,6 @@ class JSInstanceEntity(JSBaseEntity):
             data_dict['state'] = data_dict['quad']['topRight']['tooltip']
 
         return data_dict
-
-
-def InstanceEntity():  # noqa
-    """ Temporary wrapper for Instance Entity during transition to JS based Entity
-
-    """
-    return VersionPick({
-        Version.lowest(): NonJSInstanceEntity,
-        '5.9': JSInstanceEntity,
-    })
 
 
 class SelectableTableRow(TableRow):
@@ -177,8 +167,7 @@ class VMToolbar(View):
     Toolbar view for vms/instances collection destinations
     """
     "Refresh this page"
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+    reload = Button(title='Refresh this page')
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     lifecycle = Dropdown('Lifecycle')
@@ -194,7 +183,7 @@ class VMEntities(BaseEntitiesView):
     """
     @property
     def entity_class(self):
-        return InstanceEntity().pick(self.browser.product_version)
+        return InstanceEntity
 
     paginator = PaginationPane()
     adv_search_clear = Text('//div[@id="main-content"]//h1//span[@id="clear_search"]/a')

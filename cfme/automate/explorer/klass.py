@@ -6,7 +6,7 @@ from cached_property import cached_property
 from copy import copy
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import ParametrizedLocator, ParametrizedString, Version, VersionPick
+from widgetastic.utils import ParametrizedLocator, ParametrizedString
 from widgetastic.widget import Checkbox, Text, ParametrizedView
 from widgetastic_manageiq import Table
 from widgetastic_patternfly import BootstrapSelect, CandidateNotFound, Input, Button, Tab
@@ -16,6 +16,7 @@ from cfme.utils.appliance import Navigatable
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.version import Version, VersionPicker
 
 from . import AutomateExplorerView, check_tree_path
 from .common import Copiable, CopyViewBase
@@ -391,7 +392,7 @@ class ClassSchemaEditView(ClassDetailsView):
                     result.append((browser.get_attribute('value', e), ))
                 return result
 
-        add_field = VersionPick({
+        add_field = VersionPicker({
             Version.lowest(): Text('//img[@alt="Equal green"]'),
             '5.10': Text('//div[@id="class_fields_div"]//i[contains(@class, "fa-plus")]')
         })
@@ -409,7 +410,7 @@ class ClassSchemaEditView(ClassDetailsView):
         on_error = Input(name='field_on_error')
         max_retries = Input(name='field_max_retries')
         max_time = Input(name='field_max_time')
-        finish_add_field = VersionPick({
+        finish_add_field = VersionPicker({
             Version.lowest(): Text('//img[@alt="Add this entry"]'),
             '5.10': Text('//a[@title="Add this entry"]')
         })
