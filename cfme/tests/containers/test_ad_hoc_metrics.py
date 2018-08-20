@@ -2,7 +2,8 @@ import pytest
 import requests
 
 from cfme.utils.log import logger
-from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersProvider, ContainersProviderCollection
+from cfme.containers.node import NodeCollection
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.providers import ProviderFilter
@@ -15,6 +16,13 @@ pytestmark = [
                                                  required_flags=['metrics_collection'])],
                          scope='function')
 ]
+
+TEST_ITEMS = [ContainersProviderCollection, NodeCollection]
+
+
+def get_test_object(appliance, provider, test_item):
+    return (
+        provider if test_item is ContainersProviderCollection else test_item(appliance).all().pop())
 
 
 @pytest.fixture(scope="function")
@@ -41,16 +49,21 @@ def is_ad_hoc_greyed(provider_object):
 
 
 @pytest.mark.polarion('CMP-10643')
-def test_ad_hoc_metrics_overview(provider, metrics_up_and_running):
+@pytest.mark.parametrize('test_item', TEST_ITEMS)
+def test_ad_hoc_metrics_overview(appliance, provider, test_item, metrics_up_and_running):
+    obj = get_test_object(appliance, provider, test_item)
 
-    assert is_ad_hoc_greyed(provider), (
+    assert is_ad_hoc_greyed(obj), (
         "Monitoring --> Ad hoc Metrics not activated despite provider was set")
 
 
 @pytest.mark.polarion('CMP-10645')
-def test_ad_hoc_metrics_select_filter(provider, metrics_up_and_running):
+@pytest.mark.parametrize('test_item', TEST_ITEMS)
+def test_ad_hoc_metrics_select_filter(appliance, provider, test_item, metrics_up_and_running):
 
-    view = navigate_to(provider, 'AdHoc')
+    obj = get_test_object(appliance, provider, test_item)
+
+    view = navigate_to(obj, 'AdHoc')
     view.wait_for_filter_option_to_load()
     view.set_filter(view.get_random_filter())
     view.apply_filter()
