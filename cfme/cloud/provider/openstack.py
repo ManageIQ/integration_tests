@@ -7,6 +7,7 @@ from cfme.common.provider import EventsEndpoint
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.provider.openstack_infra import RHOSEndpoint, OpenStackInfraEndpointForm
 from cfme.services.catalogs.catalog_items import OpenStackCatalogItem
+from cfme.utils.blockers import BZ
 from . import CloudProvider
 
 
@@ -85,9 +86,10 @@ class OpenStackProvider(CloudProvider):
         endpoints = {}
         endpoints[RHOSEndpoint.name] = RHOSEndpoint(**prov_config['endpoints'][RHOSEndpoint.name])
 
-        endp_name = EventsEndpoint.name
-        if prov_config['endpoints'].get(endp_name):
-            endpoints[endp_name] = EventsEndpoint(**prov_config['endpoints'][endp_name])
+        if not BZ(1618700, forced_streams=["5.9", "5.10", "upstream"]).blocks:
+            endp_name = EventsEndpoint.name
+            if prov_config["endpoints"].get(endp_name):
+                endpoints[endp_name] = EventsEndpoint(**prov_config["endpoints"][endp_name])
 
         from cfme.utils.providers import get_crud
         infra_prov_key = prov_config.get('infra_provider_key')
