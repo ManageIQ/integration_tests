@@ -80,11 +80,16 @@ class EC2Provider(CloudProvider):
     def from_config(cls, prov_config, prov_key, appliance=None):
         """Returns the EC" object from configuration"""
         endpoint = EC2Endpoint(**prov_config['endpoints']['default'])
+        region_name = prov_config["region_name"]
+        # Note: for Version 5.10 "Northern" replace with "N." like US West (N. California)
+        if cls.appliance.version >= "5.10" and "Northern" in region_name:
+            region_name = region_name.replace("Northern", "N.")
+
         return cls.appliance.collections.cloud_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             region=prov_config['region'],
-            region_name=prov_config['region_name'],
+            region_name=region_name,
             endpoints={endpoint.name: endpoint},
             zone=prov_config['server_zone'],
             key=prov_key)
