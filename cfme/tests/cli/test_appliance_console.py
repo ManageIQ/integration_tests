@@ -187,12 +187,8 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
         TimedCommand('y', 60), '')
     apps[0].appliance_console.run_commands(command_set)
     # Configure secondary replication node
-    if apps[0].version > '5.9':
-        command_set = ('ap', '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
-                       app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
-    else:
-        command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app1_ip, 'y',
-                       TimedCommand('y', 60), '')
+    command_set = ('ap', '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
+                   app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
     apps[1].appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
     command_set = ('ap', '', '8', TimedCommand('1', 30), '')
