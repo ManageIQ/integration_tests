@@ -62,6 +62,66 @@ OBJ_TYPE = [
 ]
 
 
+OBJ_TYPE_59 = [
+    "CLOUD_TENANT",
+    "CLOUD_VOLUME",
+    "CLUSTER",
+    "CONTAINER_NODE",
+    "CONTAINER_PROJECT",
+    "DATASTORE",
+    "GENERIC",
+    "HOST",
+    "PROVIDER",
+    "SERVICE",
+    "TEMPLATE",
+    "VM_INSTANCE",
+]
+
+OBJ_TYPE = [
+    "AZONE",
+    "CLOUD_NETWORK",
+    "CLOUD_OBJECT_STORE_CONTAINER",
+    "CLOUD_SUBNET",
+    "CLOUD_TENANT",
+    "CLOUD_VOLUME",
+    "CLUSTER",
+    "CONTAINER_IMAGE",
+    "CONTAINER_NODE",
+    "CONTAINER_POD",
+    "CONTAINER_PROJECT",
+    "CONTAINER_TEMPLATE",
+    "CONTAINER_VOLUME",
+    "DATASTORE",
+    "GROUP",
+    "USER",
+    "GENERIC",
+    "HOST",
+    "LOAD_BALANCER",
+    "ROUTER",
+    "ORCHESTRATION_STACK",
+    "PROVIDER",
+    "SECURITY_GROUP",
+    "SERVICE",
+    "SWITCH",
+    "TENANT",
+    "TEMPLATE",
+    "VM_INSTANCE",
+]
+
+
+@pytest.fixture(scope="module")
+def buttongroup(appliance):
+    def _buttongroup(object_type):
+        collection = appliance.collections.button_groups
+        button_gp = collection.create(
+            text=fauxfactory.gen_alphanumeric(),
+            hover=fauxfactory.gen_alphanumeric(),
+            type=getattr(collection, object_type)
+        )
+        return button_gp
+    return _buttongroup
+
+
 # IMPORTANT: This is a canonical test. It shows how a proper test should look like under new order.
 @pytest.mark.sauce
 @pytest.mark.tier(2)
@@ -119,10 +179,13 @@ def test_button_group_crud(request, appliance, obj_type):
     assert not buttongroup.exists
 
 
-@pytest.mark.meta(blockers=[1143019, 1205235])
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_button_crud(appliance, dialog, request):
+@pytest.mark.uncollectif(
+    lambda appliance, obj_type: obj_type not in OBJ_TYPE_59 and appliance.version < "5.10"
+)
+@pytest.mark.parametrize("obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE])
+def test_button_crud(appliance, dialog, request, buttongroup, obj_type):
     """Test Creating a Button
 
     Prerequisities:
@@ -135,13 +198,12 @@ def test_button_crud(appliance, dialog, request):
         * Change the hover text, ensure the text is changed on details page
         * Delete the button
         * Assert that the button no longer exists.
+
+    Bugzillas:
+        * 1143019, 1205235
     """
-    buttongroup = appliance.collections.button_groups.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
-        type=appliance.collections.button_groups.SERVICE)
-    request.addfinalizer(buttongroup.delete_if_exists)
-    button = buttongroup.buttons.create(
+    button_gp = buttongroup(obj_type)
+    button = button_gp.buttons.create(
         text=fauxfactory.gen_alphanumeric(),
         hover=fauxfactory.gen_alphanumeric(),
         dialog=dialog, system="Request", request="InspectMe")
