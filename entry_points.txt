@@ -67,6 +67,7 @@ infra_providers = cfme.infrastructure.provider:InfraProviderCollection
 infra_templates = cfme.infrastructure.virtual_machines:InfraTemplateCollection
 infra_vms = cfme.infrastructure.virtual_machines:InfraVmCollection
 map_tags = cfme.configure.configuration.region_settings:MapTagsCollection
+menus = cfme.intelligence.reports.menus:ReportMenusCollection
 network_floating_ips = cfme.networks.floating_ips:FloatingIpCollection
 network_ports = cfme.networks.network_port:NetworkPortCollection
 network_providers = cfme.networks.provider:NetworkProviderCollection
