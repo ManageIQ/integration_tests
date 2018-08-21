@@ -128,4 +128,4 @@ def test_typo_in_metrics_endpoint_type(provider):
     endpoints_table = view.entities.summary("Endpoints")
 
     assert provider.metrics_type.lower() == endpoints_table.get_text_of(
-        "Metrics Type").lower(), "Incorrect endpoint type found dot metrics endpoint"
+        "Metrics Type").lower(), "Provider metrics endpoint name from yaml and UI do not match"
