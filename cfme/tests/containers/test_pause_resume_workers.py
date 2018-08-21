@@ -36,7 +36,6 @@ def check_ems_state_in_diagnostics(appliance, provider):
             return True
         else:
             return False
-
     except Exception:
         return False
     return False
@@ -56,23 +55,15 @@ def test_pause_and_resume_provider_workers(appliance, provider):
         7. navigate to : User -> Configuration -> Diagnostics ->  Workers
         8. Validate the ems_ workers are started
     """
-
     view = navigate_to(provider, "Details")
-
     pause_option, resume_option = get_pause_resume_buttons(view)
-
     # pause the provider
     view.toolbar.configuration.item_select(pause_option, handle_alert=True)
-
     ems_worker_state = check_ems_state_in_diagnostics(appliance, provider)
-
     assert not ems_worker_state, "Diagnostics shows that workers are running after pause provider"
 
     view = navigate_to(provider, "Details")
-
     # resume the provider
     view.toolbar.configuration.item_select(resume_option, handle_alert=True)
-
     ems_worker_state = check_ems_state_in_diagnostics(appliance, provider)
-
     assert ems_worker_state, "Diagnostics shows that workers are not running after resume provider"
