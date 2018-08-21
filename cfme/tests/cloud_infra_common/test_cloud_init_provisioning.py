@@ -13,6 +13,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.pxe import get_template_from_config
 from cfme.markers.env_markers.provider import providers
 from cfme.utils import ssh
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -47,6 +48,7 @@ def vm_name():
                          appliance.version < "5.9",
                          reason="GCE supports cloud_init in 5.9+ BZ 1395757")
 @pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider), reason="BZ 1568038")
+@pytest.mark.meta(blockers=[BZ(1619744, forced_streams=['5.9', '5.10'])])
 def test_provision_cloud_init(appliance, request, setup_provider, provider, provisioning,
                         setup_ci_template, vm_name):
     """ Tests provisioning from a template with cloud_init
