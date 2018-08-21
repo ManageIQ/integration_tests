@@ -2,11 +2,13 @@ import pytest
 import random
 
 from collections import namedtuple
-from wait_for import wait_for
+
 from cfme.utils import os
-from cfme.utils.log_validator import LogValidator
-from cfme.utils.log import logger
 from cfme.utils.conf import hidden, cfme_data
+from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
+from wait_for import wait_for
+
 import tempfile
 import lxml.etree
 import yaml
@@ -43,6 +45,8 @@ ext_auth_options = [
 
 @pytest.mark.rhel_testing
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+@pytest.mark.uncollectif(lambda appliance: appliance.version > '5.10',
+                         reason='5.10 wont launch console with redirect option')
 @pytest.mark.smoke
 def test_appliance_console(appliance):
     """'ap | tee /tmp/opt.txt)' saves stdout to file, 'ap' launch appliance_console."""
@@ -89,7 +93,7 @@ def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modsc
 def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     """Grab fresh appliance and set time and date through appliance_console and check result"""
     app = temp_appliance_preconfig_funcscope
-    command_set = (TimedCommand('ap', 20), '', '3', 'y', '2020-10-20', '09:58:00', 'y', '')
+    command_set = (TimedCommand('ap', 30), '', '3', 'y', '2020-10-20', '09:58:00', 'y', '')
     app.appliance_console.run_commands(command_set)
 
     def date_changed():
@@ -283,7 +287,6 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
     configured_appliance.sssd.wait_for_running()
     assert configured_appliance.ssh_client.run_command("cat /etc/ipa/default.conf |"
                                                        "grep 'enable_ra = True'")
-
     # Unconfigure to cleanup
     # When setup_ipa option selected, will prompt to unconfigure, then to proceed with new config
     command_set = (TimedCommand('ap', 20), RETURN, '10', TimedCommand('y', 40),
@@ -292,20 +295,21 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
     wait_for(lambda: not configured_appliance.sssd.running)
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.version > '5.10', reason='bz blocks 1619662')
 @pytest.mark.parametrize('auth_type', ext_auth_options, ids=[opt.name for opt in ext_auth_options])
 def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '11' change ext auth options,
     'auth_type' auth type to change, '4' apply changes."""
     # TODO this depends on the auth_type options being disabled when the test is run
     # TODO it assumes that first switch is to true, then false.
-
+    com = '5' if configured_appliance.version > '5.10' else '4'
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to true.*'.format(auth_type.option)],
                             hostname=configured_appliance.hostname,
                             username=app_creds['sshlogin'],
                             password=app_creds['sshpass'])
     evm_tail.fix_before_start()
-    command_set = (TimedCommand('ap', 20), '', '11', auth_type.index, '4')
+    command_set = (TimedCommand('ap', 20), '', '11', auth_type.index, com)
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -316,15 +320,16 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
                             password=app_creds['sshpass'])
 
     evm_tail.fix_before_start()
-    command_set = (TimedCommand('ap', 20), '', '11', auth_type.index, '4')
+    command_set = (TimedCommand('ap', 20), '', '11', auth_type.index, com)
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.version > '5.10', reason='bz blocks 1619662')
 def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
     'auth_type' auth type to change, '4' apply changes."""
-
+    com = '5' if configured_appliance.version > '5.10' else '4'
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*sso_enabled to true.*',
                                               '.*saml_enabled to true.*',
@@ -333,7 +338,7 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
     evm_tail.fix_before_start()
-    command_set = (TimedCommand('ap', 20), '', '11', '1', '2', '3', '4')
+    command_set = (TimedCommand('ap', 20), '', '11', '1', '2', '3', com)
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -346,7 +351,7 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
                             password=app_creds['password'])
 
     evm_tail.fix_before_start()
-    command_set = (TimedCommand('ap', 20), '', '11', '1', '2', '3', '4')
+    command_set = (TimedCommand('ap', 20), '', '11', '1', '2', '3', com)
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
