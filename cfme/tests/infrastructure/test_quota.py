@@ -8,11 +8,14 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
 from cfme.utils.update import update
 
 pytestmark = [
     pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 ]
+
+NUM_GROUPS = NUM_TENANTS = 3
 
 
 @pytest.fixture(scope='module')
@@ -100,8 +103,10 @@ def entities(appliance, request, max_quota_test_instance):
 
 @pytest.fixture(scope='module')
 def new_tenant(appliance):
+    """Fixture is used to Create three tenants.
+    """
     tenant_list = []
-    for i in range(0, 3):
+    for i in range(0, NUM_TENANTS):
         collection = appliance.collections.tenants
         tenant = collection.create(name='tenant{}'.format(fauxfactory.gen_alphanumeric()),
                                    description='tenant_des{}'.
@@ -121,22 +126,24 @@ def set_parent_tenant_quota(request, appliance, new_tenant):
     which is associated with one of these tenants. Then it disables the current quota
     (example: cpu limit) and enable new quota limit(example: Max memory) for testing.
     """
-    for i in range(0, 3):
+    for i in range(0, NUM_TENANTS):
         field, value = request.param
         new_tenant[i].set_quota(**{'{}_cb'.format(field): True, field: value})
     yield
     # will refresh page as navigation to configuration is blocked if alerts are on the page
     appliance.server.login_admin()
     appliance.server.browser.refresh()
-    for i in range(0, 3):
+    for i in range(0, NUM_TENANTS):
         new_tenant[i].set_quota(**{'{}_cb'.format(field): False})
 
 
 @pytest.fixture(scope='module')
 def new_group_list(appliance, new_tenant):
+    """Fixture is used to Create Three new groups and assigned to three different tenants.
+    """
     group_list = []
     collection = appliance.collections.groups
-    for i in range(0, 3):
+    for i in range(0, NUM_GROUPS):
         group = collection.create(description='group_{}'.format(fauxfactory.gen_alphanumeric()),
                                   role='EvmRole-super_administrator',
                                   tenant='My Company/{}'.format(new_tenant[i].name))
@@ -149,6 +156,8 @@ def new_group_list(appliance, new_tenant):
 
 @pytest.fixture(scope='module')
 def new_user(appliance, new_group_list, new_credential):
+    """Fixture is used to Create new user and User should be member of three groups.
+    """
     collection = appliance.collections.users
     user = collection.create(
         name='user_{}'.format(fauxfactory.gen_alphanumeric()),
@@ -214,16 +223,11 @@ def test_user_quota_diff_groups(request, appliance, provider, setup_provider, ne
 
     steps:
 
-    1. Create three tenants
-    2. Create Three new groups
-    3. Three groups should be assigned to three different tenants
-    4. Create new user
-    5. User should be member of three groups
-    6. Assign quota for three tenants(like ('cpu', '2') for three tenants at a time)
-    7. Provision VM with more than assigned quota
+    1. Provision VM with more than assigned quota
     """
     with new_user:
         recursive_update(prov_data, custom_prov_data)
+        logger.info("Successfully updated VM provisioning data")
         do_vm_provisioning(appliance, template_name=template_name, provider=provider,
                            vm_name=vm_name, provisioning_data=prov_data, smtp_test=False,
                            wait=False, request=None)
