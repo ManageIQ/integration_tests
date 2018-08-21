@@ -1,8 +1,11 @@
 import pytest
 
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import auth_data, credentials
 from cfme.utils.log_validator import LogValidator
 from wait_for import wait_for
+
 
 pytestmark = [
     pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
@@ -204,3 +207,35 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     wait_for(is_failover_started, func_args=[apps[2]], timeout=450, handle_exception=True)
     apps[2].wait_for_evm_service()
     apps[2].wait_for_web_ui()
+
+
+def test_appliance_console_cli_configure_ipa(configured_appliance):
+    auth_provider_conf = auth_data.auth_providers.freeipa01
+    auth_provider_creds = credentials.get(auth_provider_conf.credentials)
+    result = configured_appliance.ssh_client.run_command(
+        (
+            "appliance_console_cli --ipaserver={ipaserver} --ipaprincipal={ipaprincipal} "
+            "--ipapassword={ipapassword} --ipadomain={ipadomain} --iparealm={iparealm}"
+        ).format(ipaserver=auth_provider_conf.host1,
+                 ipaprincipal=auth_provider_creds.ipaprincipal,
+                 ipapassword=auth_provider_creds.bind_password,
+                 ipadomain=auth_provider_conf.ipadomain,
+                 iparealm=auth_provider_conf.iparealm)
+    )
+    assert result.success
+    assert "Installation failed." not in result.output
+
+    view, _ = wait_for(lambda: navigate_to(configured_appliance.server, 'Authentication'),
+                       handle_exception=True, delay=10, timeout=120)
+    view.form.auth_mode.fill('External (httpd)')
+    view.form.httpd_role.fill("x")
+    view.save.click()
+
+    login_page = navigate_to(configured_appliance.server, 'LoginScreen')
+    ipa_users = [user for user in auth_data.test_data.test_users
+                 if 'freeipa01' in user.providers]
+    user = ipa_users[0]
+    login_page.username.fill(user.username)
+    login_page.password.fill(user.password)
+    login_page.login.click()
+    assert not login_page.flash.messages

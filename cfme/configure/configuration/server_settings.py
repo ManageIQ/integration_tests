@@ -575,6 +575,8 @@ class ServerAuthenticationView(View):
         auth_settings.register('Amazon', widget=AmazonAuthenticationView)
         auth_settings.register('External (httpd)', widget=ExternalAuthenticationView)
 
+        httpd_role = Checkbox(name='httpd_role')
+
     @property
     def is_displayed(self):
         """should be paired with a ServerView.in_server_settings in a nav.am_i_here"""
