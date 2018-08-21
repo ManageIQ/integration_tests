@@ -5127,3 +5127,41 @@ class MonitorStatusCard(ParametrizedView):
 
     def click(self):
         return self.click_title()
+
+
+class SnapshotMemorySwitch(Widget):
+    """ This replaces the old-style checkbox when working with snapshot memory.
+
+    At first glance on the page it looks like a BootstrapSwitch but it really isn't.
+    Basic switch controls are implemented here along with fill and read methods,
+    so this should be usable as any other widget.
+    """
+
+    ROOT = '//div[contains(@class, "bootstrap-switch-snap_memory")]'
+    ON_LOCATOR = './/div[contains(@class, "bootstrap-switch-on")]'
+
+    def switch(self):
+        self.browser.click(self.__locator__)
+
+    @property
+    def is_set(self):
+        return bool(self.browser.elements(self.ON_LOCATOR))
+
+    def switch_on(self):
+        if not self.is_set:
+            self.switch()
+        return True
+
+    def switch_off(self):
+        if self.is_set:
+            self.switch()
+        return True
+
+    def fill(self, value):
+        if value:
+            self.switch_on()
+        else:
+            self.switch_off()
+
+    def read(self):
+        return self.is_set

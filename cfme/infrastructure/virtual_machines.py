@@ -49,7 +49,7 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
-from cfme.utils.version import UPSTREAM, VersionPicker
+from cfme.utils.version import UPSTREAM, Version, VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Accordion,
@@ -60,7 +60,8 @@ from widgetastic_manageiq import (
     Table,
     TimelinesView,
     CompareToolBarActionsView,
-    Search
+    Search,
+    SnapshotMemorySwitch
 )
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
@@ -386,7 +387,9 @@ class InfraVmSnapshotAddView(InfraVmView):
     title = Text('#explorer_title_text')
     name = TextInput('name')
     description = TextInput('description')
-    snapshot_vm_memory = Checkbox('snap_memory')
+    snapshot_vm_memory = VersionPicker({
+        Version.lowest(): Checkbox('snap_memory'),
+        '5.10': SnapshotMemorySwitch()})
     create = Button('Create')
     cancel = Button('Cancel')
 
