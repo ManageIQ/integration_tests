@@ -16,7 +16,7 @@ from cfme.containers.template import Template, TemplateCollection
 
 from cfme.utils.wait import wait_for
 from cfme.utils.log import logger
-from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
 
 
 pytestmark = [
@@ -75,6 +75,7 @@ def random_labels(provider, appliance):
             instance.remove_label(label_key)
 
 
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7687')])
 @pytest.mark.polarion('CMP-10572')
 def test_labels_create(provider, soft_assert, random_labels):
 
@@ -95,11 +96,7 @@ def test_labels_create(provider, soft_assert, random_labels):
             )
 
 
-@pytest.mark.meta(blockers=[
-    BZ(1451832, forced_streams=['5.7', '5.8', 'upstream']),
-    BZ(1472383, forced_streams=['5.7', '5.8', 'upstream']),
-    BZ(1469666, forced_streams=['5.7', '5.8', 'upstream']),
-])
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7687')])
 @pytest.mark.polarion('CMP-10572')
 def test_labels_remove(provider, soft_assert, random_labels):
     # Removing the labels
