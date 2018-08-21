@@ -17,7 +17,7 @@ def assigns_collection(appliance):
 
 
 @pytest.mark.meta(blockers=[1273654])
-def test_assign_compute_enterprise(appliance, assigns_collection):
+def test_assign_compute_enterprise(appliance, assigns_collection, virtualcenter_provider):
     view = navigate_to(appliance.server, 'Chargeback')
 
     enterprise = assigns_collection.instantiate(assign_to="The Enterprise", selections={

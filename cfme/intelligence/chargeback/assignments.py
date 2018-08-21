@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Page model for Intel->Chargeback->Assignments.
 import attr
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import Text
 from widgetastic_patternfly import BootstrapSelect, Button
 
@@ -126,9 +126,9 @@ class AssignAll(CFMENavigateStep):
         )
 
 
-@navigator.register(Assign, 'Storage')
+@navigator.register(AssignsCollection, 'Storage')
 class AssignStorage(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('parent', 'All')
+    prerequisite = NavigateToSibling('All')
     VIEW = AssignmentsView
 
     def step(self):
@@ -136,9 +136,9 @@ class AssignStorage(CFMENavigateStep):
             "Assignments", "Storage")
 
 
-@navigator.register(Assign, 'Compute')
+@navigator.register(AssignsCollection, 'Compute')
 class AssignCompute(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('parent', 'All')
+    prerequisite = NavigateToSibling('All')
     VIEW = AssignmentsView
 
     def step(self):
