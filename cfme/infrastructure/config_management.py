@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from navmazing import NavigateToSibling, NavigateToAttribute
+import attr
+
+from navmazing import NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, TextInput, Text, View
 from widgetastic_manageiq import (
@@ -10,8 +12,8 @@ from widgetastic_patternfly import BootstrapSelect, Dropdown, Tab
 from cfme.base.credential import Credential as BaseCredential
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable, TagPageView
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import conf, ParamClassName
-from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -208,7 +210,8 @@ class ConfigManagementEditView(ConfigManagementView):
         return False
 
 
-class ConfigManager(Updateable, Pretty, Navigatable):
+@attr.s
+class ConfigManager(Updateable, Pretty, BaseEntity):
     """
     This is base class for Configuration manager objects (Red Hat Satellite, Foreman, Ansible Tower)
 
@@ -228,13 +231,11 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     type = None
     refresh_flash_msg = 'Refresh Provider initiated for 1 provider'
 
-    def __init__(self, name=None, url=None, ssl=None, credentials=None, key=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.url = url
-        self.ssl = ssl
-        self.credentials = credentials
-        self.key = key or name
+    name = attr.ib(default=None)
+    url = attr.ib(default=None)
+    ssl = attr.ib(default=None)
+    credentials = attr.ib(default=None)
+    key = attr.ib(default=name)
 
     class Credential(BaseCredential, Updateable):
         pass
@@ -430,6 +431,14 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             return '{} Configuration Manager'.format(self.name)
 
 
+@attr.s
+class ConfigManagersCollection(BaseCollection):
+    """Collection object for the
+    :py:class:'cfme.infrastructure.config_management.ConfigManager'."""
+
+    ENTITY = ConfigManager
+
+
 def get_config_manager_from_config(cfg_mgr_key):
     cfg_mgr = conf.cfme_data.get('configuration_managers', {})[cfg_mgr_key]
     if cfg_mgr['type'] == 'satellite':
@@ -440,7 +449,8 @@ def get_config_manager_from_config(cfg_mgr_key):
         raise Exception("Unknown configuration manager key")
 
 
-class ConfigProfile(Pretty, Navigatable):
+@attr.s
+class ConfigProfile(Pretty, BaseEntity):
     """Configuration profile object (foreman-side hostgroup)
 
     Args:
@@ -449,10 +459,8 @@ class ConfigProfile(Pretty, Navigatable):
     """
     pretty_attrs = ['name', 'manager']
 
-    def __init__(self, name, manager, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.manager = manager
+    name = attr.ib()
+    manager = attr.ib()
 
     @property
     def systems(self):
@@ -470,14 +478,21 @@ class ConfigProfile(Pretty, Navigatable):
         return list()
 
 
-class ConfigSystem(Pretty, Navigatable, Taggable):
+@attr.s
+class ConfigProfilesCollection(BaseCollection):
+    """Collection object for the
+    :py:class:'cfme.infrastructure.config_management.ConfigProfile'."""
+
+    ENTITY = ConfigProfile
+
+
+@attr.s
+class ConfigSystem(Pretty, Taggable):
     """The tags pages of the config system"""
     pretty_attrs = ['name', 'manager_key']
 
-    def __init__(self, name, profile, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.profile = profile
+    name = attr.ib()
+    profile = attr.ib()
 
     def get_tags(self, tenant="My Company Tags"):
         """Overridden get_tags method to deal with the fact that configured systems don't have a
@@ -490,7 +505,15 @@ class ConfigSystem(Pretty, Navigatable, Taggable):
             for r in view.form.tags
         ]
 
+@attr.s
+class ConfigSystemsCollection(BaseCollection):
+    """Collection object for the
+    :py:class:'cfme.infrastructure.config_management.ConfigSystem'."""
 
+    ENTITY = ConfigSystem
+
+
+@attr.s
 class Satellite(ConfigManager):
     """
     Configuration manager object (Red Hat Satellite, Foreman)
@@ -506,9 +529,9 @@ class Satellite(ConfigManager):
         Create provider:
         .. code-block:: python
 
-            satellite_cfg_mgr = Satellite('my_satellite', 'my-satellite.example.com',
-                                ssl=False, ConfigManager.Credential(principal='admin',
-                                secret='testing'), key='satellite_yaml_key')
+            satellite_cfg_mgr = appliance.collections.satellite.instantiate('my_satellite', 'my-satellite.example.com',
+                                False, ConfigManager.Credential(principal='admin',
+                                secret='testing'), 'satellite_yaml_key')
             satellite_cfg_mgr.create()
 
         Update provider:
@@ -528,16 +551,22 @@ class Satellite(ConfigManager):
         LATEST: 'Foreman'
     })
 
-    def __init__(self, name=None, url=None, ssl=None, credentials=None, key=None):
-        super(Satellite, self).__init__(name=name, url=url, ssl=ssl, credentials=credentials,
-                                        key=key)
-        self.name = name
-        self.url = url
-        self.ssl = ssl
-        self.credentials = credentials
-        self.key = key or name
+    name = attr.ib(default=None)
+    url = attr.ib(default=None)
+    ssl = attr.ib(default=None)
+    credentials = attr.ib(default=None)
+    key = attr.ib(default=name)
 
 
+@attr.s
+class SatellitesCollection(BaseCollection):
+    """Collection object for the
+    :py:class:'cfme.infrastructure.config_management.Satellite'."""
+
+    ENTITY = Satellite
+
+
+@attr.s
 class AnsibleTower(ConfigManager):
     """
     Configuration manager object (Ansible Tower)
@@ -553,9 +582,9 @@ class AnsibleTower(ConfigManager):
         Create provider:
         .. code-block:: python
 
-            tower_cfg_mgr = AnsibleTower('my_tower', 'https://my-tower.example.com/api/v1',
-                                ssl=False, ConfigManager.Credential(principal='admin',
-                                secret='testing'), key='tower_yaml_key')
+            tower_cfg_mgr = appliance.collections.ansible_tower.instantiate('my_tower', 'https://my-tower.example.com/api/v1',
+                                False, ConfigManager.Credential(principal='admin',
+                                secret='testing'), 'tower_yaml_key')
             tower_cfg_mgr.create()
 
         Update provider:
@@ -572,14 +601,11 @@ class AnsibleTower(ConfigManager):
 
     type = 'Ansible Tower'
 
-    def __init__(self, name=None, url=None, ssl=None, credentials=None, key=None):
-        super(AnsibleTower, self).__init__(name=name, url=url, ssl=ssl, credentials=credentials,
-                                           key=key)
-        self.name = name
-        self.url = url
-        self.ssl = ssl
-        self.credentials = credentials
-        self.key = key or name
+    name = attr.ib(default=None)
+    url = attr.ib(default=None)
+    ssl = attr.ib(default=None)
+    credentials = attr.ib(default=None)
+    key = attr.ib(default=name)
 
     @property
     def ui_name(self):
@@ -587,7 +613,15 @@ class AnsibleTower(ConfigManager):
         return '{} Automation Manager'.format(self.name)
 
 
-@navigator.register(ConfigManager, 'All')
+@attr.s
+class AnsibleTowersCollection(BaseCollection):
+    """Collection object for the
+    :py:class:'cfme.infrastructure.config_management.AnsibleTower'."""
+
+    ENTITY = AnsibleTower
+
+
+@navigator.register(ConfigManagersCollection, 'All')
 class MgrAll(CFMENavigateStep):
     VIEW = ConfigManagementAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -605,19 +639,19 @@ class MgrAll(CFMENavigateStep):
             self.view.sidebar.providers.tree.click_path('All Configuration Manager Providers')
 
 
-@navigator.register(ConfigManager, 'Add')
+@navigator.register(ConfigManagersCollection, 'Add')
 class MgrAdd(CFMENavigateStep):
     VIEW = ConfigManagementAddView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Provider')
 
 
-@navigator.register(ConfigManager, 'Edit')
+@navigator.register(ConfigManagersCollection, 'Edit')
 class MgrEdit(CFMENavigateStep):
     VIEW = ConfigManagementEditView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.toolbar.view_selector.select('List View')
@@ -627,10 +661,10 @@ class MgrEdit(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Provider')
 
 
-@navigator.register(ConfigManager, 'Details')
+@navigator.register(ConfigManagersCollection, 'Details')
 class MgrDetails(CFMENavigateStep):
     VIEW = ConfigManagementDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.toolbar.view_selector.select('List View')
@@ -639,16 +673,16 @@ class MgrDetails(CFMENavigateStep):
         row.click()
 
 
-@navigator.register(ConfigManager, 'EditFromDetails')
+@navigator.register(ConfigManagersCollection, 'EditFromDetails')
 class MgrEditFromDetails(CFMENavigateStep):
     VIEW = ConfigManagementEditView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToAttribute('parent', 'Details')
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Provider')
 
 
-@navigator.register(ConfigProfile, 'Details')
+@navigator.register(ConfigProfilesCollection, 'Details')
 class Details(CFMENavigateStep):
     VIEW = ConfigManagementProfileView
     prerequisite = NavigateToAttribute('manager', 'Details')
@@ -660,7 +694,7 @@ class Details(CFMENavigateStep):
         row.click()
 
 
-@navigator.register(ConfigSystem, 'All')
+@navigator.register(ConfigSystemsCollection, 'All')
 class SysAll(CFMENavigateStep):
     VIEW = ConfigManagementAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -673,10 +707,10 @@ class SysAll(CFMENavigateStep):
         self.view.sidebar.configured_systems.tree.click_path('All Configured Systems')
 
 
-@navigator.register(ConfigSystem, 'EditTags')
+@navigator.register(ConfigSystemsCollection, 'EditTags')
 class SysEditTags(CFMENavigateStep):
     VIEW = TagPageView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.toolbar.view_selector.select('List View')
