@@ -41,6 +41,7 @@ def vm_name():
     return random_vm_name('ci')
 
 
+@pytest.mark.rhv2
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda provider, appliance: provider.one_of(GCEProvider) and
                          appliance.version < "5.9",
