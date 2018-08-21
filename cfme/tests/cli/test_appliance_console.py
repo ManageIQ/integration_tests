@@ -62,7 +62,7 @@ def test_appliance_console_set_hostname(configured_appliance):
     access to set hostname, 'hostname' sets new hostname."""
 
     hostname = 'test.example.com'
-    command_set = ('ap', '', '1', '5', hostname,)
+    command_set = (TimedCommand('ap', 20), '', '1', '5', hostname,)
     configured_appliance.appliance_console.run_commands(command_set)
 
     def is_hostname_set(appliance):
@@ -79,7 +79,7 @@ def test_appliance_console_set_hostname(configured_appliance):
 def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modscope):
     """'ap' launch appliance_console, '' clear info screen, '2' set timezone, 'opt' select
     region, 'timezone' selects zone, 'y' confirm slection, '' finish."""
-    command_set = ('ap', '', '2') + timezone[1] + ('y', '')
+    command_set = (TimedCommand('ap', 20), '', '2') + timezone[1] + ('y', '')
     temp_appliance_preconfig_modscope.appliance_console.run_commands(command_set)
 
     temp_appliance_preconfig_modscope.appliance_console.timezone_check(timezone)
@@ -89,7 +89,7 @@ def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modsc
 def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     """Grab fresh appliance and set time and date through appliance_console and check result"""
     app = temp_appliance_preconfig_funcscope
-    command_set = ('ap', '', '3', 'y', '2020-10-20', '09:58:00', 'y', '')
+    command_set = (TimedCommand('ap', 20), '', '3', 'y', '2020-10-20', '09:58:00', 'y', '')
     app.appliance_console.run_commands(command_set)
 
     def date_changed():
@@ -104,7 +104,8 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
     db region number, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
 
     pwd = app_creds['password']
-    command_set = ('ap', '', '5', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 360), '')
+    command_set = (TimedCommand('ap', 20), '', '5', '1', '1', 'y', '1', 'n', '0', pwd,
+                   TimedCommand(pwd, 360), '')
     unconfigured_appliance.appliance_console.run_commands(command_set)
     unconfigured_appliance.wait_for_evm_service()
     unconfigured_appliance.wait_for_web_ui()
@@ -115,7 +116,7 @@ def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope)
     confirm db reset, '1' db region number + wait 360 secs, '' continue"""
 
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
-    command_set = ('ap', '', '5', '4', 'y', TimedCommand('1', 360), '')
+    command_set = (TimedCommand('ap', 20), '', '5', '4', 'y', TimedCommand('1', 360), '')
     temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl start evmserverd')
     temp_appliance_preconfig_funcscope.wait_for_evm_service()
@@ -128,7 +129,8 @@ def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
     db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
 
     pwd = app_creds['password']
-    command_set = ('ap', '', '5', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+    command_set = (TimedCommand('ap', 20), '', '5', '1', '1', 'y', '1', 'y', pwd,
+                   TimedCommand(pwd, 360), '')
     unconfigured_appliance.appliance_console.run_commands(command_set)
     wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
 
@@ -173,25 +175,26 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     app1_ip = apps[1].hostname
     pwd = app_creds['password']
     # Configure first appliance as dedicated database
-    command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+    command_set = (TimedCommand('ap', 20), '', '5', '1', '1', '1', 'y', pwd,
+                   TimedCommand(pwd, 360), '')
     apps[0].appliance_console.run_commands(command_set)
     wait_for(lambda: apps[0].db.is_dedicated_active)
     # Configure EVM webui appliance with create region in dedicated database
-    command_set = ('ap', '', '5', '2', app0_ip, '', pwd, '', '2', '0', 'y', app0_ip, '', '', '',
-        pwd, TimedCommand(pwd, 360), '')
+    command_set = (TimedCommand('ap', 20), '', '5', '2', app0_ip, '', pwd, '', '2', '0', 'y',
+                   app0_ip, '', '', '', pwd, TimedCommand(pwd, 360), '')
     apps[2].appliance_console.run_commands(command_set)
     apps[2].wait_for_evm_service()
     apps[2].wait_for_web_ui()
     # Configure primary replication node
-    command_set = ('ap', '', '6', '1', '1', '', '', pwd, pwd, app0_ip, 'y',
-        TimedCommand('y', 60), '')
+    command_set = (TimedCommand('ap', 20), '', '6', '1', '1', '', '', pwd, pwd, app0_ip, 'y',
+                   TimedCommand('y', 60), '')
     apps[0].appliance_console.run_commands(command_set)
     # Configure secondary replication node
-    command_set = ('ap', '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
-                   app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
+    command_set = (TimedCommand('ap', 20), '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '',
+                   '', pwd, pwd, app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
     apps[1].appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
-    command_set = ('ap', '', '8', TimedCommand('1', 30), '')
+    command_set = (TimedCommand('ap', 20), '', '8', TimedCommand('1', 30), '')
     apps[2].appliance_console.run_commands(command_set)
 
     def is_ha_monitor_started(appliance):
@@ -218,8 +221,8 @@ def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_cr
 
     ip = appliance.hostname
     pwd = app_creds['password']
-    command_set = ('ap', '', '5', '2', ip, '', pwd, '', '3', ip, '', '', '',
-        pwd, TimedCommand(pwd, 360), '')
+    command_set = (TimedCommand('ap', 20), '', '5', '2', ip, '', pwd, '', '3', ip, '', '', '',
+                   pwd, TimedCommand(pwd, 360), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
@@ -234,8 +237,8 @@ def test_appliance_console_external_db_create(
 
     ip = dedicated_db_appliance.hostname
     pwd = app_creds['password']
-    command_set = ('ap', '', '5', '1', '2', '0', 'y', ip, '', '', '', pwd,
-        TimedCommand(pwd, 300), '')
+    command_set = (TimedCommand('ap', 20), '', '5', '1', '2', '0', 'y', ip, '', '', '', pwd,
+                   TimedCommand(pwd, 300), '')
     unconfigured_appliance_secondary.appliance_console.run_commands(command_set)
     unconfigured_appliance_secondary.wait_for_evm_service()
     unconfigured_appliance_secondary.wait_for_web_ui()
@@ -244,7 +247,7 @@ def test_appliance_console_external_db_create(
 def test_appliance_console_extend_storage(unconfigured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '9' extend storage, '1' select
     disk, 'y' confirm configuration and '' complete."""
-    command_set = ('ap', '', '9', '1', 'y', '')
+    command_set = (TimedCommand('ap', 20), '', '9', '1', 'y', '')
     unconfigured_appliance.appliance_console.run_commands(command_set)
 
     def is_storage_extended():
@@ -256,7 +259,7 @@ def test_appliance_console_log_file_configuration(unconfigured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '7' log file config, 'y' confirm you
     want to make changes '1' select disk, 'n' do not change log rotate count 'y' confirm selections
     '' complete."""
-    command_set = ('ap', '', '7', 'y', '1', 'n', 'y', '')
+    command_set = (TimedCommand('ap', 20), '', '7', 'y', '1', 'n', 'y', '')
     unconfigured_appliance.appliance_console.run_commands(command_set)
 
     def is_log_file_configured():
@@ -269,7 +272,7 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
     """'ap' launches appliance_console, '' clears info screen, '10' setup IPA,
     + wait 40 secs and '' finish."""
 
-    command_set = ('ap', RETURN, '10',
+    command_set = (TimedCommand('ap', 20), RETURN, '10',
                    ipa_crud.host1,
                    ipa_crud.ipadomain or RETURN,
                    ipa_crud.iparealm or RETURN,
@@ -283,7 +286,8 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
 
     # Unconfigure to cleanup
     # When setup_ipa option selected, will prompt to unconfigure, then to proceed with new config
-    command_set = ('ap', RETURN, '10', TimedCommand('y', 40), TimedCommand('n', 5))
+    command_set = (TimedCommand('ap', 20), RETURN, '10', TimedCommand('y', 40),
+                   TimedCommand('n', 5))
     configured_appliance.appliance_console.run_commands(command_set)
     wait_for(lambda: not configured_appliance.sssd.running)
 
@@ -301,7 +305,7 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
                             username=app_creds['sshlogin'],
                             password=app_creds['sshpass'])
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '11', auth_type.index, '4')
+    command_set = (TimedCommand('ap', 20), '', '11', auth_type.index, '4')
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -312,7 +316,7 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
                             password=app_creds['sshpass'])
 
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '11', auth_type.index, '4')
+    command_set = (TimedCommand('ap', 20), '', '11', auth_type.index, '4')
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -329,7 +333,7 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '11', '1', '2', '3', '4')
+    command_set = (TimedCommand('ap', 20), '', '11', '1', '2', '3', '4')
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -342,7 +346,7 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
                             password=app_creds['password'])
 
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '11', '1', '2', '3', '4')
+    command_set = (TimedCommand('ap', 20), '', '11', '1', '2', '3', '4')
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -352,7 +356,7 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     """'ap' launches appliance_console, '' clears info screen, '13' Hardens appliance using SCAP
     configuration, '' complete."""
 
-    command_set = ('ap', '', '13', '')
+    command_set = (TimedCommand('ap', 20), '', '13', '')
     temp_appliance_preconfig.appliance_console.run_commands(command_set)
 
     with tempfile.NamedTemporaryFile('w') as f:
@@ -399,6 +403,7 @@ def test_appliance_console_static_ipv6(temp_appliance_preconfig):
     hex_string = "{}::{}".format(cfme_data['basic_info']['appliance_console_ipv6_prefix'], ":".join(
         ["{0:0{1}X}".format(int(random.random() * 0xffff), 4).lower() for _ in range(3)]))
     gateway = "{}::1".format(cfme_data['basic_info']['appliance_console_ipv6_prefix'])
-    command_set = ('ap', '', '1', '3', hex_string, '', gateway, '', '', '', 'y', '')
+    command_set = (TimedCommand('ap', 20), '', '1', '3', hex_string, '', gateway,
+                   '', '', '', 'y', '')
     temp_appliance_preconfig.appliance_console.run_commands(command_set)
     assert temp_appliance_preconfig.ssh_client.run_command('ip addr | grep {}'.format(hex_string))
