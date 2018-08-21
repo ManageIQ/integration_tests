@@ -505,6 +505,7 @@ class ConfigSystem(Pretty, Taggable):
             for r in view.form.tags
         ]
 
+
 @attr.s
 class ConfigSystemsCollection(BaseCollection):
     """Collection object for the
@@ -529,7 +530,8 @@ class Satellite(ConfigManager):
         Create provider:
         .. code-block:: python
 
-            satellite_cfg_mgr = appliance.collections.satellite.instantiate('my_satellite', 'my-satellite.example.com',
+            satellite_cfg_mgr = appliance.collections.satellite.instantiate
+            ('my_satellite', 'my-satellite.example.com',
                                 False, ConfigManager.Credential(principal='admin',
                                 secret='testing'), 'satellite_yaml_key')
             satellite_cfg_mgr.create()
@@ -582,7 +584,8 @@ class AnsibleTower(ConfigManager):
         Create provider:
         .. code-block:: python
 
-            tower_cfg_mgr = appliance.collections.ansible_tower.instantiate('my_tower', 'https://my-tower.example.com/api/v1',
+            tower_cfg_mgr = appliance.collections.ansible_tower.instantiate
+            ('my_tower', 'https://my-tower.example.com/api/v1',
                                 False, ConfigManager.Credential(principal='admin',
                                 secret='testing'), 'tower_yaml_key')
             tower_cfg_mgr.create()

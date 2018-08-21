@@ -3,7 +3,6 @@ import six
 
 from cfme.services.myservice import MyService
 from cfme.services.workloads import VmsInstances, TemplatesImages
-from cfme.infrastructure.config_management import ConfigManager, ConfigSystem
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 params_values = [
@@ -46,8 +45,8 @@ params_values = [
     ('container_images', 'All', 'container_images', 'Container Image : Name'),
     ('container_templates', 'All', 'container_templates', 'Container Template : Name'),
 
-    (ConfigManager, 'All', 'configuration_management', 'Configuration Manager : Name'),
-    (ConfigSystem, 'All', 'configuration_management_systems',
+    ('config_manager', 'All', 'configuration_management', 'Configuration Manager : Name'),
+    ('config_system', 'All', 'configuration_management_systems',
      'Configured System (Red Hat Satellite) : Hostname'),
 
     ('network_providers', 'All', 'network_managers', 'Network Manager : Name'),
