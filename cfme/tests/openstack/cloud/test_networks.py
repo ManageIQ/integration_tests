@@ -129,8 +129,8 @@ def test_edit_network(network):
 def test_delete_network(network):
     """Deletes private cloud network"""
     network.delete()
-    wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
-             delay=10)
+    network.browser.refresh()
+    wait_for(lambda: network.exists == False, delay=15, timeout=600, fail_func=network.browser.refresh)
     assert not network.exists
 
 
@@ -147,17 +147,16 @@ def test_create_subnet(subnet, provider):
 def test_edit_subnet(subnet):
     """Edits private subnet's name"""
     subnet.edit(new_name=fauxfactory.gen_alpha())
-    wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
-             delay=10)
+    subnet.browser.refresh()
+    wait_for(lambda: subnet.exists, delay=15, timeout=600, fail_func=subnet.browser.refresh)
     assert subnet.exists
 
 
 def test_delete_subnet(subnet):
     """Deletes private subnet"""
     subnet.delete()
-    wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
-             delay=10)
     subnet.browser.refresh()
+    wait_for(lambda: subnet.exists == False, delay=15, timeout=600, fail_func=subnet.browser.refresh)
     assert not subnet.exists
 
 

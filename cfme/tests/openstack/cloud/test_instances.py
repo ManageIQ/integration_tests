@@ -34,7 +34,8 @@ def new_instance(provider):
                     'last_name': fauxfactory.gen_alpha()},
         'catalog': {'num_vms': '1',
                     'vm_name': fauxfactory.gen_alpha()},
-        'environment': {'cloud_network': prov_data['cloud_network']},
+        'environment': {'cloud_network': prov_data['cloud_network'],
+                        'cloud_tenant': prov_data['cloud_tenant']},
         'properties': {'instance_type': partial_match(prov_data['instance_type'])},
     }
 
