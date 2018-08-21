@@ -81,7 +81,7 @@ def vm_name():
 
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1584675, forced_streams=['5.8', '5.9'],
+@pytest.mark.meta(blockers=[BZ(1613326, forced_streams=['5.8', '5.9', '5.10'],
                                unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_iso_provision_from_template(appliance, provider, vm_name, datastore_init,
                                      request, smtp_test):
