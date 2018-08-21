@@ -50,7 +50,7 @@ def test_graph_screen(provider, interval, graph_type, enable_candu):
     view = navigate_to(datastore, "Utilization")
     view.options.interval.fill(interval)
 
-    # Check garph displayed or not
+    # Check graph displayed or not
     try:
         graph = getattr(view.interval_type, graph_type)
     except AttributeError as e:
