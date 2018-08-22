@@ -1,6 +1,7 @@
+import pytest
+
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-import pytest
 
 
 pytestmark = [
@@ -41,7 +42,6 @@ def check_ems_state_in_diagnostics(appliance, provider):
     return False
 
 
-@pytest.mark.polarion('10790', '10791')
 def test_pause_and_resume_provider_workers(appliance, provider):
     """
     Basic workers testing for pause and resume for a container provider
