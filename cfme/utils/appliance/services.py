@@ -50,6 +50,10 @@ class SystemdService(AppliancePlugin):
         return self._run_service_command('enable', expected_exit_code=0)
 
     @property
+    def enabled(self):
+        return self._run_service_command('is-enabled').rc == 0
+
+    @property
     def running(self):
         return self._run_service_command("status").rc == 0
 

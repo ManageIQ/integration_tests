@@ -83,7 +83,7 @@ class ApplianceDB(AppliancePlugin):
             Note: EVM service has to be stopped for this to work.
         """
 
-        self.appliance.db.restart_db_service()
+        self.appliance.db_service.restart()
         self.appliance.ssh_client.run_command('dropdb vmdb_production', timeout=15)
 
         def _db_dropped():
@@ -676,29 +676,3 @@ class ApplianceDB(AppliancePlugin):
                                                    pwd=conf.credentials['database']['password'])
         result = self.ssh_client.run_command(db_check_command, ensure_host=ensure_host)
         return result.success
-
-    def start_db_service(self):
-        """Starts the postgresql service via systemctl"""
-        self.logger.info('Starting service: {}'.format(self.service_name))
-        with self.ssh_client as ssh:
-            result = ssh.run_command('systemctl start {}'.format(self.service_name))
-            assert result.success, 'Failed to start {}'.format(self.service_name)
-            self.logger.info('Started service: {}'.format(self.service_name))
-
-    def stop_db_service(self):
-        """Starts the postgresql service via systemctl"""
-        service = '{}-postgresql'.format(self.postgres_version)
-        self.logger.info('Stopping {}'.format(service))
-        with self.ssh_client as ssh:
-            result = ssh.run_command('systemctl stop {}'.format(self.service_name))
-            assert result.success, 'Failed to stop {}'.format(service)
-            self.logger.info('Stopped {}'.format(service))
-
-    def restart_db_service(self):
-        """restarts the postgresql service via systemctl"""
-        service = '{}-postgresql'.format(self.postgres_version)
-        self.logger.info('Restarting {}'.format(service))
-        with self.ssh_client as ssh:
-            result = ssh.run_command('systemctl restart {}'.format(self.service_name))
-            assert result.success, 'Failed to restart {}'.format(service)
-            self.logger.info('Restarted {}'.format(service))

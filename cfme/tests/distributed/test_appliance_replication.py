@@ -245,9 +245,9 @@ def test_appliance_replicate_database_disconnection(request, virtualcenter_provi
     with appl1.ipapp:
         configure_db_replication(appl2.hostname)
         # Replication is up and running, now stop the DB on the replication parent
-        appl2.db.stop_db_service()
+        appl2.db_service.stop()
         sleep(60)
-        appl2.db.start_db_service()
+        appl2.db_service.start()
         wait_for(replication_conf.get_replication_status, fail_condition=False, num_sec=360,
                  delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
         assert replication_conf.get_replication_status()
@@ -281,9 +281,9 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
         configure_db_replication(appl2.hostname)
         # Replication is up and running, now stop the DB on the replication parent
         virtualcenter_provider.create()
-        appl2.db.stop_db_service()
+        appl2.db_service.stop()
         sleep(60)
-        appl2.db.start_db_service()
+        appl2.db_service.start()
         wait_for(replication_conf.get_replication_status, fail_condition=False, num_sec=360,
                  delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
         assert replication_conf.get_replication_status()

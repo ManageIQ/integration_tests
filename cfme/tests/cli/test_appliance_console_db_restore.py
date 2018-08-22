@@ -262,7 +262,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     appl1 = get_appliance_with_ansible
     # Restore DB on the second appliance
     appl1.evmserverd.stop()
-    appl1.db.restart_db_service()
+    appl1.db_service.restart()
     command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
     manager.quit()
@@ -297,8 +297,8 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     appl1.set_pglogical_replication(replication_type=':none')
     appl1.evmserverd.stop()
     appl2.evmserverd.stop()
-    appl1.db.restart_db_service()
-    appl2.db.restart_db_service()
+    appl1.db_service.restart()
+    appl2.db_service.restart()
     command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
     appl2.appliance_console.run_commands(command_set)
@@ -334,7 +334,7 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
     providers_before_restore = set(appl1.managed_provider_names)
     appl2.evmserverd.stop()
     appl1.evmserverd.stop()
-    appl1.db.restart_db_service()
+    appl1.db_service.restart()
     appl1.db.drop()
     appl1.db.create()
     command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')

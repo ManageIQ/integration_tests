@@ -187,7 +187,7 @@ def test_upgrade_single_inplace(appliance_preupdate, appliance):
     assert result.success, "update failed {}".format(result.output)
     appliance_preupdate.db.migrate()
     appliance_preupdate.db.automate_reset()
-    appliance_preupdate.db.restart_db_service()
+    appliance_preupdate.db_service.restart()
     appliance_preupdate.start_evm_service()
     appliance_preupdate.wait_for_web_ui()
     result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
