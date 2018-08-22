@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import time
 from widgetastic_patternfly import NoSuchElementException
 from widgetastic.utils import partial_match
 from wrapanapi import VmState
@@ -159,9 +160,10 @@ def set_hosts_credentials(appliance, request, provider):
 
 def set_agent_creds(appliance, request, provider):
     version = appliance.version.vstring
-    agent_data = {"ems": {"ems_amazon": {
-        "agent_coordinator": {"docker_image": "simaishi/amazon-ssa:{}".format(version),
-                              "docker_registry": "docker.io"}}}}
+    docker_image_name = "simaishi/amazon-ssa:{}".format(version)
+    agent_data = {"ems": {"ems_amazon": {"agent_coordinator": {"agent_label": "test_smartstate",
+                                                               "docker_image": docker_image_name,
+                                                               "docker_registry": "docker.io"}}}}
     appliance.update_advanced_settings(agent_data)
 
     # Adding SmartState Docker credentials
@@ -172,7 +174,11 @@ def set_agent_creds(appliance, request, provider):
     ssa_agent_view = view.browser.create_view(EC2EndpointForm)
     ssa_agent_view.smart_state_docker.fill({'username': username, 'password': password})
     ssa_agent_view.default.validate.click()
+    # TODO: Remove time.sleep asap BZ fix.
+    if BZ(1608023, forced_streams=['5.9', '5.10']).blocks:
+        time.sleep(35)
     view.save.click()
+    view.browser.refresh()
 
     @request.addfinalizer
     def _remove_docker_creds():

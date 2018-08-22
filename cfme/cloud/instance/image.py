@@ -1,6 +1,5 @@
 import attr
 from navmazing import NavigateToAttribute, NavigateToSibling, NavigationDestinationNotFound
-from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View
 from widgetastic_patternfly import Button, Dropdown
 
@@ -19,8 +18,7 @@ class ImageToolbar(View):
     """
     Toolbar view for image collection
     """
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+    reload = Button(title='Refresh this page')
     configuration = Dropdown('Configuration')
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')
@@ -33,8 +31,7 @@ class ImageDetailsToolbar(View):
     """
         Toolbar view for image collection
         """
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+    reload = Button(title='Refresh this page')
     configuration = Dropdown('Configuration')
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')

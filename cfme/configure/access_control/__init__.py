@@ -2,7 +2,6 @@ import attr
 import six
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Checkbox, View, Text, ConditionalSwitchableView
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview as CbTree,
@@ -1272,9 +1271,7 @@ class TenantQuotaView(ConfigurationView):
 class AllTenantView(ConfigurationView):
     """ All Tenants View """
     toolbar = View.nested(AccessControlToolbar)
-    table = Table(VersionPick(
-        {Version.lowest(): '//*[@id="records_div"]/table',
-         '5.9': '//*[@id="miq-gtl-view"]/miq-data-table/div/table'}))
+    table = Table('//*[@id="miq-gtl-view"]/miq-data-table/div/table')
 
     @property
     def is_displayed(self):

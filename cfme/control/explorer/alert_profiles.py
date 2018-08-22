@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import attr
-
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Text, TextInput
+from widgetastic_manageiq import MultiBoxSelect
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, CheckableBootstrapTreeview as CbTree)
 
@@ -14,7 +13,6 @@ from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFME
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import MultiBoxSelect
 
 
 class AlertProfileFormCommon(ControlExplorerView):
@@ -85,10 +83,7 @@ class AlertProfilesEditAssignmentsView(ControlExplorerView):
     title = Text("#explorer_title_text")
     assign_to = BootstrapSelect("chosen_assign_to")
     tag_category = BootstrapSelect("chosen_cat")
-    selections = CbTree(VersionPick({
-        Version.lowest(): "obj_treebox",
-        "5.9": "object_treebox"
-    }))
+    selections = CbTree("object_treebox")
     header = Text("//div[@id='alert_profile_assign_div']/h3")
     based_on = Text('//label[normalize-space(.)="Based On"]/../div')
 

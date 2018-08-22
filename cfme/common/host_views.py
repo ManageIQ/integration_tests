@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import (
-    Parameter, Version, VersionPick)
+from widgetastic.utils import Parameter
 from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_patternfly import (
     BreadCrumb, BootstrapNav, BootstrapSelect, CheckableBootstrapTreeview, Dropdown, Tab)
@@ -57,10 +56,10 @@ class NonJSHostEntity(NonJSBaseEntity):
     tile_entity = HostTileIconEntity
 
 
-class JSHostEntity(JSBaseEntity):
+class HostEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(JSHostEntity, self).data
+        data_dict = super(HostEntity, self).data
         try:
             if 'quadicon' in data_dict and data_dict['quadicon']:
                 quad_data = document_fromstring(data_dict['quadicon'])
@@ -71,16 +70,6 @@ class JSHostEntity(JSBaseEntity):
             return data_dict
         except (IndexError, TypeError):
             return {}
-
-
-def HostEntity():  # noqa
-    """ Temporary wrapper for Host Entity during transition to JS based Entity
-
-    """
-    return VersionPick({
-        Version.lowest(): NonJSHostEntity,
-        '5.9': JSHostEntity,
-    })
 
 
 class HostDetailsToolbar(View):
@@ -202,7 +191,7 @@ class HostEntitiesView(BaseEntitiesView):
     """Represents the view with different items like hosts."""
     @property
     def entity_class(self):
-        return HostEntity().pick(self.browser.product_version)
+        return HostEntity
 
 
 class HostsView(ComputeInfrastructureHostsView):

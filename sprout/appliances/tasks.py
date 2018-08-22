@@ -697,10 +697,10 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
         pool.logger.info("Applying lease time and renaming appliances")
         for appliance in pool.appliances:
             apply_lease_times.delay(appliance.id, time_minutes)
-        rename_appliances_for_pool.delay(pool.id)
         with transaction.atomic():
             pool.finished = True
             pool.save(update_fields=['finished'])
+            pool.logger.info("Pool {} setup is finished".format(appliance_pool_id))
     else:
         # Look whether we can swap any provisioning appliance with some in shepherd
         pool.logger.info("Pool isn't fulfilled yet")
@@ -834,6 +834,7 @@ def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None, yum
         clone_template_to_appliance__clone_template.si(appliance_id, lease_time_minutes),
         clone_template_to_appliance__wait_present.si(appliance_id),
         appliance_power_on.si(appliance_id),
+        appliance_rename.si(appliance_id),
         appliance_set_ansible_url.si(appliance_id)
     ]
     if yum_update:
@@ -1493,6 +1494,7 @@ def wait_appliance_ready(self, appliance_id):
     """This task checks for appliance's readiness for use. The checking loop is designed as retrying
     the task to free up the queue."""
     try:
+        self.logger.info("Waiting for appliance {} to become ready".format(appliance_id))
         appliance = Appliance.objects.get(id=appliance_id)
         if appliance.appliance_pool is not None:
             if appliance.appliance_pool.not_needed_anymore:
@@ -1507,6 +1509,7 @@ def wait_appliance_ready(self, appliance_id):
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.ready = True
                 appliance.save(update_fields=['ready'])
+                self.logger.info("Appliance {} became ready".format(appliance_id))
             appliance.set_status("The appliance is ready.")
             with diaper:
                 appliance.synchronize_metadata()
@@ -1514,11 +1517,13 @@ def wait_appliance_ready(self, appliance_id):
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.ready = False
+                self.logger.warning("Appliance {} isn't ready yet".format(appliance_id))
                 appliance.save(update_fields=['ready'])
             appliance.set_status("Waiting for UI to appear.")
             self.retry(args=(appliance_id,), countdown=30, max_retries=45)
     except ObjectDoesNotExist:
         # source object is not present, terminating
+        self.logger.error("Appliance {} isn't present".format(appliance_id))
         return
 
 
@@ -1584,63 +1589,47 @@ def delete_template_from_provider(self, template_id):
 
 
 @singleton_task()
-def appliance_rename(self, appliance_id, new_name):
-    self.logger.info("Start renaming process for {} to {}".format(appliance_id, new_name))
+def appliance_rename(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
+        self.logger.warning("No such appliance {} in sprout".format(appliance_id))
         return None
+
+    if appliance.appliance_pool is None:
+        self.logger.info("Appliance {} is shepherd appliance "
+                         "and shouldn't be renamed".format(appliance_id))
+        return None
+
     if not appliance.provider.is_working:
         raise RuntimeError('Provider is not working.')
-    if not appliance.provider.allow_renaming:
+    if (not appliance.provider.allow_renaming or appliance.is_openshift or
+            not hasattr(appliance.vm_mgmt, 'rename')):
+        self.logger.info("Appliance {} cannot be renamed".format(appliance_id))
         return None
+
+    new_name = '{}_'.format(appliance.appliance_pool.owner.username)
+    if appliance.version and not appliance.version.startswith('...'):
+        # CFME
+        new_name += 'cfme_{}_'.format(appliance.version.replace('.', ''))
+    else:
+        # MIQ
+        new_name += 'miq_'
+    new_name += '{}_{}'.format(
+        appliance.template.date.strftime("%y%m%d"),
+        fauxfactory.gen_alphanumeric(length=4))
+    self.logger.info("Start renaming process for {} to {}".format(appliance_id, new_name))
+
     if appliance.name == new_name:
+        self.logger.info("Appliance {} already has such name".format(appliance_id))
         return None
+
     with redis.appliances_ignored_when_renaming(appliance.name, new_name):
         self.logger.info("Renaming {}/{} to {}".format(appliance_id, appliance.name, new_name))
         appliance.vm_mgmt.rename(new_name)
         appliance.name = new_name
         appliance.save(update_fields=['name'])
     return appliance.name
-
-
-@singleton_task()
-def rename_appliances_for_pool(self, pool_id):
-    self.logger.info("Renaming appliances in pool {}".format(pool_id))
-    with transaction.atomic():
-        try:
-            appliance_pool = AppliancePool.objects.get(id=pool_id)
-        except ObjectDoesNotExist:
-            return
-        # TODO: change after openshift wrapanapi refactor
-        appliances = [
-            appliance
-            for appliance
-            in appliance_pool.appliances
-            if not appliance.is_openshift and hasattr(appliance.vm_mgmt, 'rename')
-        ]
-        for appliance in appliances:
-            if not appliance.provider.allow_renaming:
-                continue
-            if not appliance.provider.is_working:
-                continue
-            new_name = '{}_'.format(appliance_pool.owner.username)
-            if appliance.version and not appliance.version.startswith('...'):
-                # CFME
-                new_name += 'cfme_{}_'.format(appliance.version.replace('.', ''))
-            else:
-                # MIQ
-                new_name += 'miq_'
-            new_name += '{}_{}'.format(
-                appliance.template.date.strftime("%y%m%d"),
-                fauxfactory.gen_alphanumeric(length=4))
-            appliance_rename.apply_async(
-                countdown=10,  # To prevent clogging with the transaction.atomic
-                args=(appliance.id, new_name))
-
-        self.logger.info("Appliances have been renamed in pool {}".format(pool_id))
-        for appliance in appliances:
-            wait_appliance_ready.apply_async(args=(appliance.id, ))
 
 
 @singleton_task(soft_time_limit=60)

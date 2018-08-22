@@ -233,7 +233,7 @@ class SproutManager(object):
             pytest.exit(1)
 
         log.debug("fulfilled at %f %%", result['progress'])
-        return result["fulfilled"]
+        return result["finished"]
 
     def clean_jenkins_job(self, jenkins_job):
         try:

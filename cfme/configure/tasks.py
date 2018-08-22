@@ -7,7 +7,6 @@ import re
 
 from navmazing import NavigateToAttribute
 from widgetastic.exceptions import RowNotFound
-from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
 from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table
 from widgetastic_patternfly import Dropdown, Tab
@@ -22,8 +21,7 @@ from cfme.utils.wait import wait_for, TimedOutError
 class TasksView(BaseLoggedInPage):
     # Toolbar
     delete = Dropdown('Delete Tasks')  # dropdown just has icon, use element title
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload the current display',
-                                       '5.9': 'Refresh this page'}))
+    reload = Button(title='Refresh this page')
 
     @View.nested
     class tabs(View):  # noqa
@@ -49,20 +47,17 @@ class TasksView(BaseLoggedInPage):
 
         @View.nested
         class mytasks(Tab):  # noqa
-            TAB_NAME = VersionPick({Version.lowest(): 'My VM and Container Analysis Tasks',
-                                    '5.9': 'My Tasks'})
+            TAB_NAME = 'My Tasks'
             table = Table('//div[@id="gtl_div"]//table')
 
         @View.nested
         class myothertasks(Tab):  # noqa
-            TAB_NAME = VersionPick({'5.9': 'My Tasks',
-                                    Version.lowest(): 'My Other UI Tasks'})
+            TAB_NAME = 'My Tasks'
             table = Table('//div[@id="gtl_div"]//table')
 
         @View.nested
         class alltasks(Tab):  # noqa
-            TAB_NAME = VersionPick({'5.9': 'All Tasks',
-                                    Version.lowest(): "All VM and Container Analysis Tasks"})
+            TAB_NAME = 'All Tasks'
             table = Table('//div[@id="gtl_div"]//table')
 
         @View.nested

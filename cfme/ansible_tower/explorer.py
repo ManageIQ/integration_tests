@@ -3,7 +3,6 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, View
 from widgetastic_patternfly import Dropdown
-from widgetastic.utils import VersionPick, Version
 from widgetastic_manageiq import Search, ItemsToolBarViewSelector, Button, Accordion, ManageIQTree
 
 from cfme.base import Server
@@ -30,8 +29,7 @@ class TowerExplorerAccordion(View):
 
 
 class TowerExplorerProviderToolbar(View):
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+    reload = Button(title='Refresh this page')
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     download = Dropdown('Download')
@@ -39,8 +37,7 @@ class TowerExplorerProviderToolbar(View):
 
 
 class TowerExplorerSystemJobTemplatesToolbar(View):
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+    reload = Button(title='Refresh this page')
     policy = Dropdown('Policy')
     download = Dropdown('Download')
     view_selector = View.nested(ItemsToolBarViewSelector)

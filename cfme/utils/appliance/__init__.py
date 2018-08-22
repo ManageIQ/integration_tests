@@ -468,7 +468,7 @@ class IPAppliance(object):
     def fix_httpd_issue(self, log_callback=None):
         # This is workaround for issue when httpd cannot start after restart because
         # it didn't properly clean up semaphores
-        if self.version >= '5.10' and not self.is_pod:
+        if not self.is_pod:
             with self.ssh_client as ssh:
                 filename = 'httpd.service'
                 src = os.path.join('/usr/lib/systemd/system', filename)
@@ -482,9 +482,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         """
                 full_cmd = """echo '{cmd}' >> {dst}""".format(cmd=exec_pre, dst=dst)
                 assert ssh.run_command(full_cmd).success
-                assert ssh.run_command('systemctl daemon-reload').success
-                assert ssh.run_command('systemctl restart httpd').success
-                self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+                self.httpd.daemon_reload()
+                self.httpd.restart()
+                wait_for(lambda: self.httpd.running, timeout=1800)
 
     # Configuration methods
     @logger_wrap("Configure IPAppliance: {}")
@@ -3044,7 +3044,7 @@ class DummyAppliance(object):
     """a dummy with minimal attribute set"""
     hostname = 'DummyApplianceHostname'
     browser_steal = False
-    version = attr.ib(default=Version('5.8.0'), converter=_version_for_version_or_stream)
+    version = attr.ib(default=Version('5.9.0'), converter=_version_for_version_or_stream)
     is_downstream = True
     is_pod = False
     is_dev = False

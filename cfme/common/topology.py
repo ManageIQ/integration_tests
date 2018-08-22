@@ -1,6 +1,6 @@
 import attr
 import re
-from widgetastic.utils import ParametrizedLocator, VersionPick, Version
+from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Checkbox, ParametrizedView, Text, View
 from widgetastic_patternfly import Button, Input
 
@@ -13,22 +13,13 @@ from cfme.utils.wait import wait_for
 class TopologySearch(View):
     """Represents search_text control of TopologyView."""
 
-    search_input = VersionPick({
-        Version.lowest(): Input(id='search'),
-        '5.9': Input(id='search_topology')
-    })
-    search_button = VersionPick({
-        Version.lowest(): Button(**{'ng-click': 'searchNode()'}),
-        '5.9': Button(**{
-            'data-function-data': '{"service":"topologyService","name":"searchNode"}'
-        })
+    search_input = Input(id='search_topology')
+    search_button = Button(**{
+        'data-function-data': '{"service":"topologyService","name":"searchNode"}'
     })
     # Text widget is used here due missing 'btn' class
-    clear_button = VersionPick({
-        Version.lowest(): Text(".//button[@ng-click='resetSearch()']"),
-        '5.9': Text(".//button[@data-function-data="
-                    "'{\"service\":\"topologyService\",\"name\":\"resetSearch\"}']")
-    })
+    clear_button = Text(".//button[@data-function-data="
+                        "'{\"service\":\"topologyService\",\"name\":\"resetSearch\"}']")
 
     def clear_search(self):
         self.clear_button.click()

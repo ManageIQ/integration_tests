@@ -9,6 +9,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.testgen import parametrize
+from cfme.utils.version import Version, VersionPicker
 from cfme.utils.wait import wait_for
 
 REG_METHODS = ('rhsm', 'sat6')
@@ -182,21 +183,23 @@ def test_rhsm_registration_check_repo_names(
         temp_appliance_preconfig_funcscope, soft_assert, appliance):
     """ Checks default rpm repos on a fresh appliance """
     ver = temp_appliance_preconfig_funcscope.version.series()
-    if appliance.version < '5.9.2':
-        extras = cfme_data['redhat_updates']['repos']['pre_592']
-    else:
-        extras = cfme_data['redhat_updates']['repos']['post_592']
+    repos = cfme_data.redhat_updates.repos
 
     # TODO We need the context manager here as RedHatUpdates doesn't yet support Collections.
     with temp_appliance_preconfig_funcscope:
+        repo_names = VersionPicker({
+            Version.lowest(): repos.pre_592,
+            Version('5.9.3'): repos.post_592,
+            Version('5.10.0'): repos.post_510
+        }).pick(temp_appliance_preconfig_funcscope.version)
         view = navigate_to(RedHatUpdates, 'Edit')
         soft_assert(
-            view.repo_name.value == 'cf-me-{}-for-rhel-7-rpms {}'.format(ver, extras))
+            view.repo_name.read() == 'cf-me-{}-for-rhel-7-rpms {}'.format(ver, repo_names))
         """checks current repo names"""
         view.repo_default_name.click()
         """resets repos with default button and checks they are also correct"""
         soft_assert(
-            view.repo_name.value == 'cf-me-{}-for-rhel-7-rpms {}'.format(ver, extras))
+            view.repo_name.read() == 'cf-me-{}-for-rhel-7-rpms {}'.format(ver, repo_names))
 
 
 @pytest.mark.rhel_testing

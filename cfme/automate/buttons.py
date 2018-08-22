@@ -2,21 +2,30 @@
 import attr
 import re
 
-from navmazing import NavigateToSibling, NavigateToAttribute
-
-from widgetastic.utils import ParametrizedString, VersionPick
+from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.utils import ParametrizedString
+from widgetastic.widget import (
+    Checkbox,
+    ColourInput,
+    ConditionalSwitchableView,
+    ParametrizedView,
+    Text,
+    View,
+)
 from widgetastic.xpath import quote
-from widgetastic.widget import Checkbox, ConditionalSwitchableView, ParametrizedView, Text, View
-from widgetastic_manageiq import (SummaryFormItem, FonticonPicker, PotentiallyInvisibleTab,
-                                  RadioGroup, FakeWidget)
 from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, Input
 
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.update import Updateable
-from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import (
+    FonticonPicker,
+    PotentiallyInvisibleTab,
+    RadioGroup,
+    SummaryFormItem,
+)
 
 from . import AutomateCustomizationView
 
@@ -54,10 +63,7 @@ class ButtonFormCommon(AutomateCustomizationView):
 
     class options(PotentiallyInvisibleTab):  # noqa
         form = ConditionalSwitchableView(reference="type")
-        type = VersionPick({
-            Version.lowest(): FakeWidget(read_value='Default'),
-            '5.9': BootstrapSelect('button_type')
-        })
+        type = BootstrapSelect('button_type')
 
         @form.register('Default')
         class ButtonFormDefaultView(View):  # noqa
@@ -72,9 +78,7 @@ class ButtonFormCommon(AutomateCustomizationView):
         text = Input(name='name')
         display = Checkbox(name='display')
         hover = Input(name='description')
-        image = VersionPick({
-            Version.lowest(): BootstrapSelect('button_image'),
-            '5.9': FonticonPicker('button_icon')})
+        image = FonticonPicker('button_icon')
         open_url = Checkbox('open_url')
         # TODO: Display for, Submit by after converted to BootstrapSelect
 
@@ -142,11 +146,9 @@ class ButtonDetailView(AutomateCustomizationView):
     playbook_cat_item = SummaryFormItem('Basic Information', 'Ansible Playbook')
     target = SummaryFormItem('Basic Information', 'Target')
     text = SummaryFormItem(
-        'Basic Information', VersionPick({Version.lowest(): 'Button Text', '5.9': 'Text'}),
+        'Basic Information', 'Text',
         text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
-    hover = SummaryFormItem(
-        'Basic Information',
-        VersionPick({Version.lowest(): 'Button Hover Text', '5.9': 'Hover Text'}))
+    hover = SummaryFormItem('Basic Information', 'Hover Text')
     dialog = SummaryFormItem('Basic Information', 'Dialog')
 
     system = SummaryFormItem('Object Details', 'System/Process/')
@@ -217,6 +219,7 @@ class BaseButton(BaseEntity, Updateable):
     def delete(self, cancel=False):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Remove this Button', handle_alert=not cancel)
+
         if cancel:
             assert view.is_displayed
             view.flash.assert_no_error()
@@ -391,16 +394,9 @@ class ButtonGroupDetailView(AutomateCustomizationView):
     title = Text('#explorer_title_text')
 
     text = SummaryFormItem(
-        'Basic Information',
-        VersionPick({
-            Version.lowest(): 'Button Group Text',
-            '5.9': 'Text'}),
+        'Basic Information', 'Text',
         text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
-    hover = SummaryFormItem(
-        'Basic Information',
-        VersionPick({
-            Version.lowest(): 'Button Group Hover Text',
-            '5.9': 'Hover Text'}))
+    hover = SummaryFormItem('Basic Information', 'Hover Text')
 
     @property
     def is_displayed(self):
@@ -417,9 +413,8 @@ class ButtonGroupFormCommon(AutomateCustomizationView):
     text = Input(name='name')
     display = Checkbox(name='display')
     hover = Input(name='description')
-    image = VersionPick({
-        Version.lowest(): BootstrapSelect('button_image'),
-        '5.9': FonticonPicker('button_icon')})
+    image = FonticonPicker('button_icon')
+    icon_color = ColourInput(id="button_color")
 
     cancel_button = Button('Cancel')
 
@@ -464,11 +459,16 @@ class ButtonGroup(BaseEntity, Updateable):
         text: The button Group name.
         hover: The button group hover text.
         type: The object type.
+        image: Icon of Group.
+        display: Group name display on Button.
+        icon_color: Icon Color of Group.
     """
     text = attr.ib()
     hover = attr.ib()
     type = attr.ib()
     image = attr.ib()
+    display = attr.ib(default=None)
+    icon_color = attr.ib(default=None)
 
     _collections = {'buttons': ButtonCollection}
 
@@ -501,6 +501,7 @@ class ButtonGroup(BaseEntity, Updateable):
     def delete(self, cancel=False):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Remove this Button Group', handle_alert=not cancel)
+
         if cancel:
             assert view.is_displayed
             view.flash.assert_no_error()
@@ -560,29 +561,34 @@ class ButtonGroupCollection(BaseCollection):
     TEMPLATE = "VM Template and Image"
     VM_INSTANCE = "VM and Instance"
 
-    def instantiate(self, text, hover, type, image=None):
+    def instantiate(self, text, hover, type, image=None, display=None, icon_color=None):
         if image:
             pass
         elif self.appliance.version < '5.9':
             image = 'Button Image 1'
         else:
             image = 'fa-user'
-        return self.ENTITY.from_collection(self, text, hover, type, image)
+        return self.ENTITY.from_collection(self, text, hover, type, image, display, icon_color)
 
-    def create(self, text, hover, type, image=None):
+    def create(self, text, hover, type, image=None, display=None, icon_color=None):
         self.type = type
+
+        # Icon selection is Mandatory
         if image:
             pass
         elif self.appliance.version < '5.9':
             image = 'Button Image 1'
         else:
             image = 'fa-user'
+
         view = navigate_to(self, 'Add')
         view.fill({
             'text': text,
             'hover': hover,
-            'image': image
-        })
+            'image': image,
+            'display': display,
+            'icon_color': icon_color}
+        )
         view.add_button.click()
         view = self.create_view(ButtonGroupObjectTypeView)
 
@@ -590,11 +596,10 @@ class ButtonGroupCollection(BaseCollection):
         if self.appliance.version < '5.9':
             view.flash.assert_message('Buttons Group "{}" was added'.format(hover))
         else:
-            # checks only when bug is fixed AND version is >5.8
-            if not BZ(1500176, forced_streams=['5.9', 'upstream']).blocks:
-                assert view.is_displayed
             view.flash.assert_message('Button Group "{}" was added'.format(hover))
-        return self.instantiate(text, hover, type, image)
+        return self.instantiate(
+            text=text, hover=hover, type=type, image=image, display=display, icon_color=icon_color
+        )
 
 
 @navigator.register(ButtonGroupCollection, 'All')

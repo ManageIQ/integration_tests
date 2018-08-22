@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
 
-from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import VersionPick, Version
-from widgetastic.widget import View, Text, ConditionalSwitchableView, ParametrizedView
 from widgetastic_patternfly import BreadCrumb, Dropdown, BootstrapSelect, Tab
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic.widget import View, Text, ConditionalSwitchableView, ParametrizedView
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.host_views import HostEntitiesView
@@ -47,10 +46,10 @@ class NonJSProviderEntity(NonJSBaseEntity):
     tile_entity = ProviderTileIconEntity
 
 
-class JSProviderEntity(JSBaseEntity):
+class ProviderEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(JSProviderEntity, self).data
+        data_dict = super(ProviderEntity, self).data
         try:
             if 'quadicon' in data_dict and data_dict['quadicon']:
                 quad_data = document_fromstring(data_dict['quadicon'])
@@ -62,24 +61,13 @@ class JSProviderEntity(JSBaseEntity):
             return {}
 
 
-def ProviderEntity():  # noqa
-    """ Temporary wrapper for Provider Entity during transition to JS based Entity
-
-    """
-    return VersionPick({
-        Version.lowest(): NonJSProviderEntity,
-        '5.9': JSProviderEntity,
-    })
-
-
 class ProviderDetailsToolBar(View):
     """
     represents provider toolbar and its controls
     """
     monitoring = Dropdown(text='Monitoring')
     configuration = Dropdown(text='Configuration')
-    reload = Button(title=VersionPick({Version.lowest(): 'Reload Current Display',
-                                       '5.9': 'Refresh this page'}))
+    reload = Button(title='Refresh this page')
     policy = Dropdown(text='Policy')
     authentication = Dropdown(text='Authentication')
     download = Button(title='Download summary in PDF format')
@@ -323,7 +311,7 @@ class ProviderEntitiesView(BaseEntitiesView):
     """
     @property
     def entity_class(self):
-        return ProviderEntity().pick(self.browser.product_version)
+        return ProviderEntity
 
 
 class ProvidersView(BaseLoggedInPage):

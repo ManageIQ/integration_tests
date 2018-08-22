@@ -2,6 +2,9 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, TextInput, Text, View
+from widgetastic_manageiq import (
+    Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
+    Table, Search)
 from widgetastic_patternfly import BootstrapSelect, Dropdown, Tab
 
 from cfme.base.credential import Credential as BaseCredential
@@ -15,15 +18,11 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.version import LATEST, LOWEST, VersionPicker
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
-    Version, VersionPick, Table, Search)
 
 
 class ConfigManagementToolbar(View):
     """Toolbar"""
-    refresh = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+    refresh = Button(title='Refresh this page')
     configuration = Dropdown('Configuration')
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')
@@ -34,8 +33,7 @@ class ConfigManagementToolbar(View):
 class ConfigManagementDetailsToolbar(View):
     """Toolbar on the details page"""
     history = Dropdown(title='History')
-    refresh = Button(title=VersionPick({Version.lowest(): 'Reload current display',
-                                       '5.9': 'Refresh this page'}))
+    refresh = Button(title='Refresh this page')
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')
     download = Button(title='Download summary in PDF format')
@@ -90,10 +88,8 @@ class ConfigManagementAddForm(View):
     url = TextInput('url')
     ssl = Checkbox('verify_ssl')
 
-    username = VersionPick({Version.lowest(): TextInput('log_userid'),
-                            '5.9': TextInput('default_userid')})
-    password = VersionPick({Version.lowest(): TextInput('log_password'),
-                          '5.9': TextInput('default_password')})
+    username = TextInput('default_userid')
+    password = TextInput('default_password')
     confirm_password = TextInput('log_verify')
 
     validate = Button('Validate')
@@ -350,10 +346,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         row = view.entities.paginator.find_row_on_pages(view.entities.elements,
                                                         provider_name=self.ui_name)
         row[0].check()
-        remove_item = VersionPick({
-            '5.8': 'Remove selected items',
-            '5.9': 'Remove selected items from Inventory'
-        }).pick(self.appliance.version)
+        remove_item = 'Remove selected items from Inventory'
         view.toolbar.configuration.item_select(remove_item, handle_alert=not cancel)
         if not cancel:
             view.flash.assert_success_message('Delete initiated for 1 Provider')

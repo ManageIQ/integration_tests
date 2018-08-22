@@ -2,31 +2,34 @@
 """
 import attr
 from lxml.html import document_fromstring
-from navmazing import NavigateToAttribute
+
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import Version, VersionPick
-from widgetastic.widget import ParametrizedView, View, Text
-from widgetastic_patternfly import Dropdown, Accordion
+from widgetastic.widget import ParametrizedView, Text, View
+from widgetastic_patternfly import Accordion, Dropdown
+from widgetastic_manageiq import (
+    BaseEntitiesView,
+    BaseListEntity,
+    BaseQuadIconEntity,
+    BaseTileIconEntity,
+    ItemsToolBarViewSelector,
+    JSBaseEntity,
+    ManageIQTree,
+    NonJSBaseEntity,
+    Search,
+    SummaryTable,
+)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
+from cfme.common.candu_views import DatastoreInfraUtilizationView
 from cfme.common.host_views import HostsView
 from cfme.exceptions import ItemNotFound, MenuItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.pretty import Pretty
-from cfme.utils.wait import wait_for, TimedOutError
-from widgetastic_manageiq import (ManageIQTree,
-                                  SummaryTable,
-                                  ItemsToolBarViewSelector,
-                                  BaseEntitiesView,
-                                  NonJSBaseEntity,
-                                  BaseListEntity,
-                                  BaseQuadIconEntity,
-                                  BaseTileIconEntity,
-                                  JSBaseEntity,
-                                  Search)
+from cfme.utils.wait import TimedOutError, wait_for
 
 
 class DatastoreToolBar(View):
@@ -35,6 +38,7 @@ class DatastoreToolBar(View):
     """
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
+    monitoring = Dropdown("Monitoring")
     download = Dropdown(text='Download')
     view_selector = View.nested(ItemsToolBarViewSelector)
 
@@ -81,10 +85,10 @@ class NonJSDatastoreEntity(NonJSBaseEntity):
     tile_entity = DatastoreTileIconEntity
 
 
-class JSDatastoreEntity(JSBaseEntity):
+class DatastoreEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(JSDatastoreEntity, self).data
+        data_dict = super(DatastoreEntity, self).data
         try:
             if 'quadicon' in data_dict and data_dict['quadicon']:
                 quad_data = document_fromstring(data_dict['quadicon'])
@@ -96,22 +100,13 @@ class JSDatastoreEntity(JSBaseEntity):
             return {}
 
 
-def DatastoreEntity():  # noqa
-    """Temporary wrapper for Datastore Entity during transition to JS based Entity """
-    return VersionPick({
-        Version.lowest(): NonJSDatastoreEntity,
-        '5.9': JSDatastoreEntity,
-    })
-
-
 class DatastoreEntities(BaseEntitiesView):
     """
     represents central view where all QuadIcons, etc are displayed
     """
-
     @property
     def entity_class(self):
-        return DatastoreEntity().pick(self.browser.product_version)
+        return DatastoreEntity
 
 
 class DatastoresView(BaseLoggedInPage):
@@ -345,6 +340,19 @@ class Datastore(Pretty, BaseEntity, Taggable):
             task.wait_for_finished()
             return task
 
+    def wait_candu_data_available(self, timeout=900):
+        """Waits until C&U data are available for this Datastore
+
+        Args:
+            timeout: Timeout passed to :py:func:`utils.wait.wait_for`
+        """
+        view = navigate_to(self, 'Details')
+        wait_for(
+            lambda: view.toolbar.monitoring.item_enabled("Utilization"),
+            delay=10, handle_exception=True, num_sec=timeout,
+            fail_func=view.browser.refresh
+        )
+
 
 @attr.s
 class DatastoreCollection(BaseCollection):
@@ -436,6 +444,15 @@ class DetailsFromProvider(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
+
+
+@navigator.register(Datastore, "Utilization")
+class Utilization(CFMENavigateStep):
+    VIEW = DatastoreInfraUtilizationView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.toolbar.monitoring.item_select("Utilization")
 
 
 def get_all_datastores():
