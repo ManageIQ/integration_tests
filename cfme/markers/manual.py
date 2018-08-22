@@ -10,10 +10,14 @@ def pytest_configure(config):
 def pytest_addoption(parser):
     """Adds options for the composite uncollection system"""
     parser.addoption("--manual", action="store_true", default=False,
-                     help="Collect manual tests (only for --collect-only")
+                     help="Collect manual tests (only for --collect-only)")
+    parser.addoption("--include-manual", action="store_true", default=False,
+                     help="Collect also manual tests (only for --collect-only)")
 
 
 def pytest_collection_modifyitems(session, config, items):
+    if config.getvalue('include_manual'):
+        return
     len_collected = len(items)
     is_manual = config.getvalue('manual')
     items[:] = [item for item in items if bool(item.get_marker('manual')) == is_manual]

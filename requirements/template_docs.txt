@@ -42,6 +42,7 @@ paramiko
 parsedatetime
 pdfminer.six
 pillow
+polarion-docstrings
 progress
 py
 pygal
