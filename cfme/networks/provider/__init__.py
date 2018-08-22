@@ -96,7 +96,11 @@ class NetworkProvider(BaseProvider, Taggable):
     def security_groups(self):
         return self.collections.security_groups
 
-    def create(self, cancel=False, validate_credentials=True, validate_inventory=False):
+    def create(self, cancel=False, validate_credentials=True, validate_inventory=False,
+               check_existing=False):
+        if check_existing and self.exists:
+            return False
+
         created = True
 
         logger.info('Setting up Network Provider: %s', self.key)
