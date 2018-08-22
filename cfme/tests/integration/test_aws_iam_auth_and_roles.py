@@ -7,7 +7,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
-from cfme.utils.version import VersionPicker
+from cfme.utils.version import VersionPicker, Version
 
 
 def pytest_generate_tests(metafunc):
@@ -22,7 +22,7 @@ def pytest_generate_tests(metafunc):
     id_list = []
     # TODO: Include SSUI role_access dict and VIASSUI context
     role_access_ui = VersionPicker({
-        '5.9': role_access_ui_59z,
+        Version.lowest(): role_access_ui_59z,
         '5.10': role_access_ui_510z
     }).pick(appliance.version)
     logger.info('Using the role access dict: %s', role_access_ui)
