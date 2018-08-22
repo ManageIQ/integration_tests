@@ -7,6 +7,7 @@ from cfme.containers.image import Image
 from cfme.containers.provider import (ContainersProvider, ContainersTestItem,
                                       refresh_and_navigate)
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 
@@ -85,6 +86,7 @@ def get_table_attr(instance, table_name, attr):
         return table.read().get(attr)
 
 
+@pytest.mark.meta(blockers=[BZ(1620068, forced_streams=["5.9"])])
 @pytest.mark.parametrize(('test_item'), TEST_ITEMS)
 def test_containers_smartstate_analysis(provider, test_item,
                                         delete_all_container_tasks, soft_assert,
