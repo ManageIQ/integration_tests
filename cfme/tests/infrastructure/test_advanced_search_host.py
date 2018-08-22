@@ -4,8 +4,10 @@ from itertools import dropwhile
 
 import fauxfactory
 import pytest
-from cfme.utils.appliance.implementations.ui import navigate_to
+from widgetastic_patternfly import SelectItemNotFound
 from widgetastic.exceptions import NoSuchElementException
+
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [pytest.mark.tier(3)]
 
@@ -30,7 +32,7 @@ def hosts_with_vm_count(hosts, host_collection):
     view.toolbar.view_selector.select("Grid View")
     for host in hosts:
         entity = view.entities.get_entity(name=host.name)
-        hosts_with_vm_count.append((host.name, entity.data['no_vm']))
+        hosts_with_vm_count.append((host.name, entity.data['total_vms']))
     return sorted(hosts_with_vm_count, key=lambda tup: tup[1])
 
 
@@ -109,7 +111,7 @@ def test_host_filter_save_cancel(hosts_advanced_search,
                                                       filter_name,
                                                       cancel=True)
     hosts_advanced_search.flash.assert_no_error()
-    with pytest.raises(NoSuchElementException):
+    with pytest.raises(SelectItemNotFound):
         hosts_advanced_search.entities.search.load_filter(filter_name)  # does not exist
 
 
