@@ -7,6 +7,7 @@ import pytest
 from widgetastic_patternfly import SelectItemNotFound
 from widgetastic.exceptions import NoSuchElementException
 
+from cfme.common.host_views import HostsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [pytest.mark.tier(3)]
@@ -47,7 +48,8 @@ def get_expression(user_input=False, op=">"):
 @pytest.fixture(scope="function")
 def host_with_median_vm(hosts_with_vm_count):
     """We'll pick a host with median number of vms"""
-    return hosts_with_vm_count[len(hosts_with_vm_count) // 2]
+    sorted_hosts_with_vm_count = sorted(hosts_with_vm_count, key=lambda tup: int(tup[1]))
+    return sorted_hosts_with_vm_count[len(hosts_with_vm_count) // 2]
 
 
 @pytest.fixture(scope="function")
@@ -65,13 +67,17 @@ def test_can_open_host_advanced_search(hosts_advanced_search):
 def test_host_filter_without_user_input(host_collection, hosts, hosts_with_vm_count,
                                    host_with_median_vm, infra_provider, hosts_advanced_search):
     median_host, median_vm_count = host_with_median_vm
-    # We will filter out hosts with less than median VMs
-    more_than_median_hosts = list(dropwhile(lambda h: h[1] <= median_vm_count, hosts_with_vm_count))
+    # Counting hosts with more than median VMs
+    more_than_median_hosts = len([hostname for hostname, vmcount in hosts_with_vm_count
+                                  if int(vmcount) > int(median_vm_count)])
     # Set up the filter
     hosts_advanced_search.entities.search.advanced_search(get_expression(False).format(
         median_vm_count))
     hosts_advanced_search.flash.assert_no_error()
-    assert len(more_than_median_hosts) == len(host_collection.all(infra_provider))
+
+    view = host_collection.appliance.browser.create_view(HostsView)
+    hosts_on_page = len(view.entities.get_all())
+    assert more_than_median_hosts == hosts_on_page
 
 
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
