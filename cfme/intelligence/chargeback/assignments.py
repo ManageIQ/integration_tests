@@ -68,7 +68,7 @@ class Assign(Updateable, Pretty, BaseEntity):
             providers the rate is to be assigned.
 
     Usage:
-        enterprise = appliance.collections.assignments.instantiate("The Enterprise",
+        enterprise = appliance.collections.chargeback_assignments.instantiate("The Enterprise",
         {
             'Enterprise': {'Rate': 'Default'}
         })
@@ -126,7 +126,7 @@ class AssignAll(CFMENavigateStep):
         )
 
 
-@navigator.register(AssignsCollection, 'Storage')
+@navigator.register(Assign, 'Storage')
 class AssignStorage(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
     VIEW = AssignmentsView
@@ -136,7 +136,7 @@ class AssignStorage(CFMENavigateStep):
             "Assignments", "Storage")
 
 
-@navigator.register(AssignsCollection, 'Compute')
+@navigator.register(Assign, 'Compute')
 class AssignCompute(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
     VIEW = AssignmentsView

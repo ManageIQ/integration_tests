@@ -133,7 +133,7 @@ def assign_custom_compute_rate(obj_type, chargeback_rate, provider, appliance):
         :py:class:`ContainersProvider` provider: The containers provider
     """
     if obj_type == 'Image':
-        asignment = appliance.collections.assignments.instantiate(
+        asignment = appliance.collections.chargeback_assignments.instantiate(
             assign_to="Labeled Container Images",
             docker_labels="architecture",
             selections={
@@ -141,7 +141,7 @@ def assign_custom_compute_rate(obj_type, chargeback_rate, provider, appliance):
             })
         logger.info('ASSIGNING COMPUTE RATE FOR LABELED CONTAINER IMAGES')
     elif obj_type == 'Project':
-        asignment = appliance.collections.assignments.instantiate(
+        asignment = appliance.collections.chargeback_assignments.instantiate(
             assign_to="Selected Containers Providers",
             selections={
                 provider.name: {'Rate': chargeback_rate.description}
@@ -186,7 +186,7 @@ def compute_rate(appliance, rate_type, interval):
 def assign_compute_rate(obj_type, compute_rate, provider, appliance):
     assign_custom_compute_rate(obj_type, compute_rate, provider)
     yield compute_rate
-    appliance.collections.assignments.instantiate(assign_to="<Nothing>").computeassign()
+    appliance.collections.chargeback_assignments.instantiate(assign_to="<Nothing>").computeassign()
 
 
 @pytest.fixture(scope='module')

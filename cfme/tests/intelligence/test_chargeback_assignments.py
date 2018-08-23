@@ -11,11 +11,6 @@ pytestmark = [
 ]
 
 
-@pytest.fixture
-def assigns_collection(appliance):
-    return appliance.collections.assignments
-
-
 @pytest.mark.meta(blockers=[1273654])
 def test_assign_compute_enterprise(appliance, assigns_collection, virtualcenter_provider):
     view = navigate_to(appliance.server, 'Chargeback')

@@ -99,7 +99,7 @@ def enable_candu(appliance):
 def assign_custom_rate(new_compute_rate, appliance):
     """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
     description = new_compute_rate
-    enterprise = appliance.collections.assignments.instantiate(
+    enterprise = appliance.collections.chargeback_assignments.instantiate(
         assign_to="The Enterprise",
         selections={
             'Enterprise': {'Rate': description}
@@ -110,7 +110,7 @@ def assign_custom_rate(new_compute_rate, appliance):
     yield
 
     # Resetting the Chargeback rate assignment
-    enterprise = appliance.collections.assignments.instantiate(
+    enterprise = appliance.collections.chargeback_assignments.instantiate(
         assign_to="The Enterprise",
         selections={
             'Enterprise': {'Rate': '<Nothing>'}
