@@ -11,20 +11,6 @@ pytestmark = [
 ]
 
 
-def get_buttons(view):
-    # ensure resume option is exsit
-    resume_option = filter(lambda item: "resume" in item.lower(), view.toolbar.configuration.items)
-    assert resume_option, "Not resume provider option is available in the configuration menu"
-    resume_option = resume_option.pop()
-
-    # ensure pause option is exsit
-    pause_option = filter(lambda item: "pause" in item.lower(), view.toolbar.configuration.items)
-    assert pause_option, "Not pause provider option is available in the configuration menu"
-    pause_option = pause_option.pop()
-
-    return pause_option, resume_option
-
-
 def check_buttons_status(view, pause_option, resume_option):
 
     # get both buttons status
@@ -90,16 +76,17 @@ def test_pause_and_resume_provider(provider):
     """
 
     view = navigate_to(provider, "Details")
-    pause_option, resume_option = get_buttons(view)
-    buttn_status, error_msg = check_buttons_status(view, pause_option, resume_option)
+    buttn_status, error_msg = (
+        check_buttons_status(view, provider.pause_provider_text, provider.resume_provider_text))
 
     assert buttn_status, error_msg
 
     # pause the provider
-    view.toolbar.configuration.item_select(pause_option, handle_alert=True)
+    view.toolbar.configuration.item_select(provider.pause_provider_text, handle_alert=True)
 
     view.browser.refresh()
-    buttn_status, error_msg = check_buttons_status(view, pause_option, resume_option)
+    buttn_status, error_msg = (
+        check_buttons_status(view, provider.pause_provider_text, provider.resume_provider_text))
 
     assert buttn_status, error_msg
 
@@ -107,10 +94,11 @@ def test_pause_and_resume_provider(provider):
         "Provider did not pause after pause request")
 
     # resume the provider
-    view.toolbar.configuration.item_select(resume_option, handle_alert=True)
+    view.toolbar.configuration.item_select(provider.resume_provider_text, handle_alert=True)
 
     view.browser.refresh()
-    buttn_status, error_msg = check_buttons_status(view, pause_option, resume_option)
+    buttn_status, error_msg = (
+        check_buttons_status(view, provider.pause_provider_text, provider.resume_provider_text))
     assert buttn_status, error_msg
 
     assert view.entities.summary("Status").get_text_of("Data Collection").lower() == "running", (
