@@ -295,7 +295,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
         if wait_for_task_result:
             task = self.appliance.collections.tasks.instantiate(
                 name="SmartState Analysis for '{}'".format(self.name), tab='MyOtherTasks')
-            task.wait_for_finished()
+            task.wait_for_finished(timeout='3m')
             return task
 
     def check_compliance(self, timeout=240):
