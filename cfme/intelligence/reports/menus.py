@@ -51,7 +51,7 @@ class ReportMenu(BaseEntity):
         This is a fake class mainly needed for navmazing navigation.
 
     """
-    group = attr.ib(default=None)
+    group = None
 
     def go_to_group(self, group_name):
         self.group = group_name
@@ -174,13 +174,12 @@ class ReportMenu(BaseEntity):
 
 @attr.s
 class ReportMenusCollection(BaseCollection):
-    """Collection object for the
-    :py:class:'cfme.intelligence.reports.ReportMenu'."""
+    """Collection object for the :py:class:'cfme.intelligence.reports.ReportMenu'."""
 
     ENTITY = ReportMenu
 
 
-@navigator.register(ReportMenusCollection)
+@navigator.register(ReportMenu)
 class EditReportMenus(CFMENavigateStep):
     VIEW = EditReportMenusView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
