@@ -339,7 +339,7 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
         if wait_for_task_result:
             task = self.appliance.collections.tasks.instantiate(
                 name='Scan from Vm {}'.format(self.name), tab='AllTasks')
-            task.wait_for_finished()
+            task.wait_for_finished(timeout='3m')
             return task
 
     def wait_to_disappear(self, timeout=600):
