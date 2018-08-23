@@ -51,10 +51,8 @@ def test_provision_vm_to_virtual_network(appliance, setup_provider, provider,
     vm_name = random_vm_name('provd')
 
     def _cleanup():
-        try:
-            provider.mgmt.get_vm(vm_name).cleanup()
-        except NotFoundError:
-            pass
+        vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
+        vm.cleanup_on_provider()
 
     request.addfinalizer(_cleanup)
 
