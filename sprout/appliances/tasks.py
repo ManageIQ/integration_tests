@@ -180,7 +180,10 @@ def kill_appliance_delete(self, appliance_id, _delete_already_issued=False):
     delete_issued = False
     try:
         appliance = Appliance.objects.get(id=appliance_id)
+        self.logger.info("Trying to kill appliance {}/{}".format(appliance_id, appliance.name))
         if not appliance.provider.is_working:
+            self.logger.error('Provider {} is not working for appliance {}'
+                              .format(appliance.provider, appliance.name))
             raise RuntimeError('Provider {} is not working for appliance {}'
                                .format(appliance.provider, appliance.name))
         if appliance.provider_api.does_vm_exist(appliance.name):
@@ -188,6 +191,8 @@ def kill_appliance_delete(self, appliance_id, _delete_already_issued=False):
             # If we haven't issued the delete order, do it now
             if not _delete_already_issued:
                 # TODO: change after openshift wrapanapi refactor
+                self.logger.info(
+                    "Calling provider's remove appliance method {}".format(appliance_id))
                 if isinstance(appliance.provider_api, Openshift):
                     appliance.provider_api.delete_vm(appliance.name)
                 else:
@@ -195,14 +200,19 @@ def kill_appliance_delete(self, appliance_id, _delete_already_issued=False):
                 delete_issued = True
             # In any case, retry to wait for the VM to be deleted, but next time do not issue delete
             self.retry(args=(appliance_id, True), countdown=5, max_retries=60)
+        self.logger.info("Removing appliance from database {}".format(appliance_id))
         appliance.delete()
     except ObjectDoesNotExist:
+        self.logger.error("Can't kill appliance {}. it doesn't exist".format(appliance_id))
         # Appliance object already not there
         return
     except Exception as e:
         try:
+            self.logger.error("Could not delete appliance {}. Retrying".format(appliance_id))
             appliance.set_status("Could not delete appliance. Retrying.")
         except UnboundLocalError:
+            self.logger.error("Could not delete appliance {}. Some error "
+                              "happened".format(appliance_id))
             return  # The appliance is not there any more
         # In case of error retry, and also specify whether the delete order was already issued
         self.retry(
@@ -1759,6 +1769,7 @@ def connect_direct_lun(self, appliance_id):
 
 @singleton_task()
 def disconnect_direct_lun(self, appliance_id):
+    self.logger.info("Disconnect direct lun has been started for {}".format(appliance_id))
     appliance = Appliance.objects.get(id=appliance_id)
     if not appliance.provider.is_working:
         raise RuntimeError('Provider {} is not working for appliance {}'
