@@ -62,53 +62,6 @@ OBJ_TYPE = [
 ]
 
 
-OBJ_TYPE_59 = [
-    "CLOUD_TENANT",
-    "CLOUD_VOLUME",
-    "CLUSTER",
-    "CONTAINER_NODE",
-    "CONTAINER_PROJECT",
-    "DATASTORE",
-    "GENERIC",
-    "HOST",
-    "PROVIDER",
-    "SERVICE",
-    "TEMPLATE",
-    "VM_INSTANCE",
-]
-
-OBJ_TYPE = [
-    "AZONE",
-    "CLOUD_NETWORK",
-    "CLOUD_OBJECT_STORE_CONTAINER",
-    "CLOUD_SUBNET",
-    "CLOUD_TENANT",
-    "CLOUD_VOLUME",
-    "CLUSTER",
-    "CONTAINER_IMAGE",
-    "CONTAINER_NODE",
-    "CONTAINER_POD",
-    "CONTAINER_PROJECT",
-    "CONTAINER_TEMPLATE",
-    "CONTAINER_VOLUME",
-    "DATASTORE",
-    "GROUP",
-    "USER",
-    "GENERIC",
-    "HOST",
-    "LOAD_BALANCER",
-    "ROUTER",
-    "ORCHESTRATION_STACK",
-    "PROVIDER",
-    "SECURITY_GROUP",
-    "SERVICE",
-    "SWITCH",
-    "TENANT",
-    "TEMPLATE",
-    "VM_INSTANCE",
-]
-
-
 @pytest.fixture(scope="module")
 def buttongroup(appliance):
     def _buttongroup(object_type):
