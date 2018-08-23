@@ -365,21 +365,18 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("action", ["provisioning", "retirement"])
-@pytest.mark.meta(blockers=[
-    BZ(1519275, forced_streams=['5.9']),
-    BZ(1515841, forced_streams=['5.9'])
-])
+@pytest.mark.meta(blockers=[BZ(1614356, forced_streams=['5.10'])])
 def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_request, service,
         action):
     """Test if extra vars passed into ansible during ansible playbook service provision and
     retirement."""
     service_catalog.order()
     service_request.wait_for_request()
-    view = navigate_to(service, "Details")
     if action == "retirement":
         service.retire()
+    view = navigate_to(service, "Details")
     stdout = getattr(view, action).standart_output
-    wait_for(lambda: stdout.is_displayed, timeout=10)
+    stdout.wait_displayed()
     pre = stdout.text
     json_str = pre.split("--------------------------------")
     result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(

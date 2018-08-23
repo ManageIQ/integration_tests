@@ -213,11 +213,17 @@ def retire(self):
             'Retirement initiated for 1 Service from the {} Database'.format(
                 self.appliance.product_name))
     # wait for service to retire
-    wait_for(
-        lambda: view.details.lifecycle.get_text_of('Retirement State') == 'Retired',
-        fail_func=view.toolbar.reload.click,
-        num_sec=10 * 60, delay=3,
-        message='Service Retirement wait')
+    if self.appliance.version < '5.10':
+        wait_for(
+            lambda: view.details.lifecycle.get_text_of('Retirement State') == 'Retired',
+            fail_func=view.toolbar.reload.click,
+            num_sec=10 * 60, delay=3,
+            message='Service Retirement wait')
+    else:
+        request_descr = "Provisioning Service [{0}] from [{0}]".format(self.name)
+        service_request = self.appliance.collections.requests.instantiate(
+            description=request_descr)
+        service_request.wait_for_request()
 
 
 @MiqImplementationContext.external_for(MyService.retire_on_date, ViaUI)
