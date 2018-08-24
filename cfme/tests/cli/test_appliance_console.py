@@ -56,8 +56,12 @@ def test_appliance_console(appliance):
 
 @pytest.mark.rhel_testing
 def test_appliance_console_set_hostname(configured_appliance):
-    """'ap' launch appliance_console, '' clear info screen, '1' loads network settings, '5' gives
-    access to set hostname, 'hostname' sets new hostname."""
+    """ Commands:
+    1. 'ap' launch appliance_console,
+    2. '' clear info screen,
+    3. '1' loads network settings,
+    4. '5' gives access to set hostname,
+    5. 'hostname' sets new hostname."""
 
     hostname = 'test.example.com'
     command_set = ('ap', '', '1', '5', hostname,)
@@ -75,8 +79,14 @@ def test_appliance_console_set_hostname(configured_appliance):
 @pytest.mark.rhel_testing
 @pytest.mark.parametrize('timezone', tzs, ids=[tz.name for tz in tzs])
 def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modscope):
-    """'ap' launch appliance_console, '' clear info screen, '2' set timezone, 'opt' select
-    region, 'timezone' selects zone, 'y' confirm slection, '' finish."""
+    """ Commands:
+    1. 'ap' launch appliance_console,
+    2. '' clear info screen,
+    3. '2' set timezone,
+    4. 'opt' select region,
+    5. 'timezone' selects zone,
+    6. 'y' confirm slection,
+    7. '' finish."""
     command_set = ('ap', '', '2') + timezone[1] + ('y', '')
     temp_appliance_preconfig_modscope.appliance_console.run_commands(command_set)
 
@@ -97,9 +107,19 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
 
 @pytest.mark.rhel_testing
 def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
-    """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' Creates v2_key,
-    '1' selects internal db, 'y' continue, '1' use partition, 'n' don't create dedicated db, '0'
-    db region number, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
+    """ Commands:
+    1. 'ap' launch appliance_console,
+    2. '' clear info screen,
+    3. '5' setup db,
+    4. '1' Creates v2_key,
+    5. '1' selects internal db,
+    6. 'y' continue,
+    7. '1' use partition,
+    8. 'n' don't create dedicated db,
+    9. '0' db region number,
+    10. 'pwd' db password,
+    11. 'pwd' confirm db password + wait 360 secs
+    12. '' finish."""
 
     pwd = app_creds['password']
     command_set = ('ap', '', '5', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 360), '')
@@ -109,8 +129,14 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
 
 
 def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope):
-    """'ap' launch appliance_console, '' clear info screen, '5' setup db, '4' reset db, 'y'
-    confirm db reset, '1' db region number + wait 360 secs, '' continue"""
+    """ Commands:
+    1. 'ap' launch appliance_console,
+    2. '' clear info screen,
+    3. '5' setup db,
+    4. '4' reset db,
+    5. 'y' confirm db reset,
+    6. '1' db region number + wait 360 secs,
+    7. '' continue"""
 
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
     command_set = ('ap', '', '5', '4', 'y', TimedCommand('1', 360), '')
@@ -121,9 +147,18 @@ def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope)
 
 
 def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
-    """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' Creates v2_key,
-    '1' selects internal db, 'y' continue, '1' use partition, 'y' create dedicated db, 'pwd'
-    db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
+    """ Commands:
+    1. 'ap' launch appliance_console,
+    2. '' clear info screen,
+    3. '5' setup db,
+    4. '1' Creates v2_key,
+    5. '1' selects internal db,
+    6. 'y' continue,
+    7. '1' use partition,
+    8. 'y' create dedicated db,
+    9. 'pwd' db password,
+    10. 'pwd' confirm db password + wait 360 secs
+    11. '' finish."""
 
     pwd = app_creds['password']
     command_set = ('ap', '', '5', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
@@ -213,10 +248,22 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
 
 
 def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_creds, appliance):
-    """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '2' fetch v2_key,
-    'ip' address to fetch from, '' default username, 'pwd' db password, '' default v2_key location,
-    '3' join external region, 'port' ip and port of joining region, '' use default db name, ''
-    default username, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
+    """ Commands:
+    1. 'ap' launch appliance_console,
+    2. '' clear info screen,
+    3. '5/8' setup db,
+    4. '2' fetch v2_key,
+    5. 'ip' address to fetch from,
+    6. '' default username,
+    7. 'pwd' db password,
+    8. '' default v2_key location,
+    9. '3' join external region,
+    10. 'port' ip and port of joining region,
+    11. '' use default db name,
+    12. '' default username,
+    13. 'pwd' db password,
+    14. 'pwd' confirm db password + wait 360 secs
+    15. '' finish."""
 
     ip = appliance.hostname
     pwd = app_creds['password']
@@ -229,10 +276,22 @@ def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_cr
 
 def test_appliance_console_external_db_create(
         app_creds, dedicated_db_appliance, unconfigured_appliance_secondary):
-    """'ap' launch appliance_console, '' clear info screen, '5' setup db, '1' create v2_key,
-    '2' create region in external db, '0' db region number, 'y' confirm create region in external db
-    'ip', '' ip and port for dedicated db, '' use default db name, '' default username, 'pwd' db
-    password, 'pwd' confirm db password + wait 360 secs and '' finish."""
+    """
+    1. 'ap' launch appliance_console,
+    2. '' clear info screen,
+    3. '5' setup db,
+    4. '1'
+    5. create v2_key,
+    6. '2' create region in external db,
+    7. '0' db region number,
+    8. 'y' confirm create region in external db
+    9. 'ip',
+    10. '' ip and port for dedicated db,
+    11. '' use default db name,
+    12. '' default username,
+    13. 'pwd' db  password,
+    14. 'pwd' confirm db password + wait 360 secs,
+    15. '' finish."""
 
     ip = dedicated_db_appliance.hostname
     pwd = app_creds['password']
@@ -244,8 +303,13 @@ def test_appliance_console_external_db_create(
 
 
 def test_appliance_console_extend_storage(unconfigured_appliance):
-    """'ap' launches appliance_console, '' clears info screen, '9' extend storage, '1' select
-    disk, 'y' confirm configuration and '' complete."""
+    """ Commands:
+    1. 'ap' launches appliance_console,
+    2. '' clears info screen,
+    3. '9' extend storage,
+    4. '1' select disk,
+    5. 'y' confirm configuration,
+    6. '' complete."""
     command_set = ('ap', '', '9', '1', 'y', '')
     unconfigured_appliance.appliance_console.run_commands(command_set)
 
@@ -256,8 +320,11 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
 
 @pytest.mark.rhel_testing
 def test_appliance_console_ipa(ipa_crud, configured_appliance):
-    """'ap' launches appliance_console, '' clears info screen, '10' setup IPA,
-    + wait 40 secs and '' finish."""
+    """ Commands:
+    1. 'ap' launches appliance_console,
+    2. '' clears info screen,
+    3. '10' setup IPA, + wait 40 secs,
+    4. '' finish."""
 
     command_set = ('ap', RETURN, '10',
                    ipa_crud.host1,
@@ -280,8 +347,12 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
 
 @pytest.mark.parametrize('auth_type', ext_auth_options, ids=[opt.name for opt in ext_auth_options])
 def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configured_appliance):
-    """'ap' launches appliance_console, '' clears info screen, '11' change ext auth options,
-    'auth_type' auth type to change, '4' apply changes."""
+    """ Commands:
+    1. 'ap' launches appliance_console,
+    2. '' clears info screen,
+    3. '11' change ext auth options,
+    4. 'auth_type' auth type to change,
+    5. '4' apply changes."""
     # TODO this depends on the auth_type options being disabled when the test is run
     # TODO it assumes that first switch is to true, then false.
 
@@ -308,8 +379,12 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
 
 
 def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_appliance):
-    """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
-    'auth_type' auth type to change, '4' apply changes."""
+    """ Commands:
+    1. 'ap' launches appliance_console,
+    2. '' clears info screen,
+    3. '12/15' change ext auth options,
+    4. 'auth_type' auth type to change,
+    5. '4' apply changes."""
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*sso_enabled to true.*',
@@ -339,8 +414,11 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
 
 @pytest.mark.rhel_testing
 def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
-    """'ap' launches appliance_console, '' clears info screen, '13' Hardens appliance using SCAP
-    configuration, '' complete."""
+    """ Commands:
+    1. 'ap' launches appliance_console,
+    2. '' clears info screen,
+    3. '13' Hardens appliance using SCAP configuration,
+    4. '' complete."""
 
     command_set = ('ap', '', '13', '')
     temp_appliance_preconfig.appliance_console.run_commands(command_set)
@@ -381,3 +459,78 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
                 logger.info("{}: no result".format(rule))
         else:
             logger.info("{}: rule not found".format(rule))
+
+
+def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
+    """ Commands:
+    1. 'ap' launches appliance_console,
+    2. '' clears info screen,
+    3. '1' configure network,
+    4. '1' configure DHCP,
+    5. 'y' confirm IPv4 configuration,
+    6. 'y' IPv6 configuration."""
+    command_set = ('ap', '', '1', '1', 'y', 'y')
+    unconfigured_appliance.appliance_console.run_commands(command_set)
+
+    def appliance_is_connective():
+        unconfigured_appliance.ssh_client.run_command("true")
+    wait_for(appliance_is_connective, handle_exception=True, delay=1, timeout=30)
+
+    soft_assert(unconfigured_appliance.ssh_client.run_command(
+        "ip a show dev eth0 | grep 'inet\s.*dynamic'"))
+    soft_assert(unconfigured_appliance.ssh_client.run_command
+        ("ip a show dev eth0 | grep 'inet6\s.*dynamic'"))
+
+
+def test_appliance_console_static_ipv4(unconfigured_appliance, soft_assert):
+    """ Commands:
+    1. 'ap' launches appliance_console,
+    2. '' clears info screen,
+    3. '1' configure network,
+    4. '2' configure static IPv4,
+    5. '' confirm default IPv4 addr,
+    6. '' confirm default netmask,
+    7. '' confirm default gateway,
+    8. '' confirm default primary DNS,
+    9. '' confirm default secondary DNS,
+    10. '' confirm default search order,
+    11. 'y' apply static configuration.
+    """
+    command_set = ('ap', '', '1', '2', '', '', '', '', '', '', 'y')
+    unconfigured_appliance.appliance_console.run_commands(command_set)
+
+    def appliance_is_connective():
+        unconfigured_appliance.ssh_client.run_command("true")
+    wait_for(appliance_is_connective, handle_exception=True, delay=1, timeout=30)
+
+    soft_assert(unconfigured_appliance.ssh_client.run_command(
+        "ip -4 a show dev eth0 | grep 'inet .*scope global eth0'"))
+    soft_assert(unconfigured_appliance.ssh_client.run_command(
+        "ip -4 r show dev eth0 | grep 'default via'"))
+
+
+def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
+    """ Commands:
+    1. 'ap' launches appliance_console,
+    2. '' clears info screen,
+    3. '1' configure network,
+    4. '3' configure static IPv6,
+    5. '1::1' set IPv4 addr,
+    6. '' set deafault prefix length,
+    7. '1::f' set IPv6 gateway,
+    8. '' confirm default primary DNS,
+    9. '' confirm default secondary DNS,
+    10. '' confirm default search order,
+    11. 'y' apply static configuration.
+    """
+    command_set = ('ap', '', '1', '3', '1::1', '', '1::f', '', '', '', 'y')
+    unconfigured_appliance.appliance_console.run_commands(command_set)
+
+    def appliance_is_connective():
+        unconfigured_appliance.ssh_client.run_command("true")
+    wait_for(appliance_is_connective, handle_exception=True, delay=1, timeout=30)
+
+    soft_assert(unconfigured_appliance.ssh_client.run_command(
+        "ip -6 a show dev eth0 | grep 'inet6 1::1.*scope global'"))
+    soft_assert(unconfigured_appliance.ssh_client.run_command(
+        "ip -6 r show dev eth0 | grep 'default via 1::f'"))
