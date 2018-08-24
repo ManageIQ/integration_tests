@@ -4,7 +4,7 @@ from cfme import test_requirements
 from cfme.common.candu_views import UtilizationZoomView
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.tests.candu import compare_data
+from cfme.tests.candu import compare_data, compare_data_with_unit
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -188,18 +188,12 @@ def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_can
     candu_tag_vm.capture_historical_data()
     host = candu_tag_vm.host
     host.capture_historical_data()
-
-    wait_for(
-        host.capture_historical_data,
-        delay=20,
-        timeout=1000,
-        message="wait for capturing host historical data")
     host.wait_candu_data_available(timeout=1500)
 
     view = navigate_to(host, 'candu')
     view.options.fill({'interval': interval, 'group_by': gp_by})
 
-    # Check garph displayed or not
+    # Check graph displayed or not
     try:
         graph = getattr(view.interval_type, graph_type)
     except AttributeError as e:
@@ -228,4 +222,4 @@ def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_can
     # Clear cache of table widget before read else it will mismatch headers.
     view.table.clear_cache()
     table_data = view.table.read()
-    compare_data(table_data=table_data, graph_data=graph_data, legends=legends)
+    compare_data_with_unit(table_data=table_data, graph_data=graph_data, legends=legends)
