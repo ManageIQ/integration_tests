@@ -183,6 +183,9 @@ def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_can
         * Zoom graph to get Table
         * Check tag assigned to VM available in chart legends
         * Compare table and graph data
+
+    Bugzillas:
+        * 1367560
     """
     # get host of cu-24x7
     candu_tag_vm.capture_historical_data()
