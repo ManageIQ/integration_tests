@@ -57,13 +57,13 @@ def kibana_logging_url(provider):
     else:
         pytest.skip("Missing logging routes for {}".format(provider.name))
 
+    kibana_router = []
     for route in all_logging_routes:
-        # Kibana-ops router is what will be redirected to from the CFME appliance
-        # In 3.5, only 'ops' is in the route, so check just for 'ops' not 'kibana-ops'
-        if 'ops' in route.spec.host:
-            kibana_router = route.spec.host
-            break
-    else:
+        # Depending on the ocp setup, the route can either be kibana-ops or kibana. Add both to
+        # a list.
+        if 'kibana' in route.spec.host:
+            kibana_router.append(route.spec.host)
+    if not kibana_router:
         pytest.skip("Could not determine Kibana Router for provider {}".format(provider.name))
 
     return kibana_router
@@ -86,7 +86,7 @@ def test_external_logging_activated(provider, appliance, test_item, kibana_loggi
         kibana_console = test_obj.vm_console
         kibana_console.switch_to_console()
         assert not view.is_displayed
-        assert kibana_logging_url in appliance.server.browser.url
+        assert any([kb_url in appliance.server.browser.url for kb_url in kibana_logging_url])
         kibana_console.close_console_window()
         assert view.is_displayed
         view.flash.assert_no_error()

@@ -7,7 +7,7 @@ import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from six import string_types
 from widgetastic_manageiq import (
-    StatusBox, Accordion, ManageIQTree, LineChart, ParametrizedSummaryTable)
+    ContainerSummaryTable, StatusBox, Accordion, ManageIQTree, LineChart, ParametrizedSummaryTable)
 from widgetastic_patternfly import (
     BreadCrumb, SelectorDropdown, Dropdown, BootstrapSelect, Input, Button, Tab)
 from widgetastic.widget import Text, View, TextInput
@@ -536,7 +536,7 @@ class ContainerObjectDetailsBaseView(BaseLoggedInPage, LoggingableView):
     containers = StatusBox('Containers')
     services = StatusBox('Services')
     images = StatusBox('Images')
-    summary = ParametrizedSummaryTable()
+    pods = ContainerSummaryTable(title='Pods')
     SUMMARY_TEXT = None
 
     @View.nested
