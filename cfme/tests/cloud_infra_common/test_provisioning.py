@@ -105,7 +105,8 @@ def test_provision_from_template(provider, provisioned_instance):
 
 @pytest.mark.provider([GCEProvider], required_fields=[['provisioning', 'image']])
 @pytest.mark.usefixtures('setup_provider')
-@pytest.mark.meta(blockers=[BZ(1619298)])
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7661')])
+@pytest.mark.meta(blockers=[BZ(1619298, forced_streams=['5.9', '5.10'])])
 def test_gce_preemptible_provision(appliance, provider, instance_args, soft_assert):
     """
     Polarion:
