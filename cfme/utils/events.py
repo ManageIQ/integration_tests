@@ -214,6 +214,10 @@ class RestEventListener(Thread):
         """
         while not self._stop_event.is_set():
             sleep(1)
+
+            # Memorize how far in time each expectation came.
+            last_processed_ids = []
+
             for exp_event in self._events_to_listen:
 
                 # Skip if event has occurred
@@ -223,23 +227,32 @@ class RestEventListener(Thread):
                 matched_events = self.get_next_portion(exp_event['event'])
 
                 if not matched_events:
+                    # Don't allow history to go on without me!
+                    last_processed_ids.append(self._last_processed_id)
                     continue
 
                 # Match events
                 try:
-                    for event_entity in matched_events:
-                            got_event = Event(self._appliance).build_from_entity(event_entity)
-                            if exp_event['event'].matches(got_event):
-                                if exp_event['callback']:
-                                    exp_event['callback'](exp_event=exp_event['event'],
-                                                          got_event=got_event)
-                                exp_event['matched_events'].append(got_event)
-                    self._last_processed_id = got_event.event_attrs['id'].value
+                    got_events = [Event(self._appliance).build_from_entity(event_entity) for
+                                  event_entity in matched_events]
+                    for got_event in got_events:
+                        if exp_event['event'].matches(got_event):
+                            if exp_event['callback']:
+                                exp_event['callback'](exp_event=exp_event['event'],
+                                                      got_event=got_event)
+                            exp_event['matched_events'].append(got_event)
+
+                    # Allow history to go on as far as I've processed it already.
+                    last_processed_ids.append(
+                        max([evt.event_attrs['id'].value for evt in got_events]))
                 except Exception:
                     logger.exception("An exception during matching events occurred.")
 
                 if self._stop_event.is_set():
                     break
+
+            # Memorize how much history can we forget in next iteration.
+            self._last_processed_id = min(last_processed_ids or [self._last_processed_id])
 
     def get_next_portion(self, evt):
         """ Returns list with one or more events matched with expected event.
