@@ -84,7 +84,7 @@ class HostInfraUtilizationView(View):
     @property
     def is_displayed(self):
         expected_title = "{} Capacity & Utilization".format(self.context['object'].name)
-        return self.title.text == expected_title
+        return self.title.text == expected_title and self.options.interval.is_displayed
 
 
 class AzoneCloudUtilizationView(View):
