@@ -1,4 +1,5 @@
 import pytest
+from datetime import datetime, timedelta
 
 from cfme import test_requirements
 from cfme.common.candu_views import UtilizationZoomView
@@ -176,10 +177,11 @@ def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_can
         * VM should be taged with proper tag category
 
     Steps:
+        * If possible capture historical data for host and vm
         * Navigate to Host Utilization Page
-        * Check graph displayed or not
         * Select interval(Hourly or Daily)
         * Select group by option with VM tag
+        * Check graph displayed or not
         * Zoom graph to get Table
         * Check tag assigned to VM available in chart legends
         * Compare table and graph data
@@ -187,14 +189,21 @@ def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_can
     Bugzillas:
         * 1367560
     """
-    # get host of cu-24x7
+    # Capture historical data for cu-24x7 and its host
     candu_tag_vm.capture_historical_data()
     host = candu_tag_vm.host
     host.capture_historical_data()
     host.wait_candu_data_available(timeout=1500)
+    provider.refresh_provider_relationships()
 
-    view = navigate_to(host, 'candu')
-    view.options.fill({'interval': interval, 'group_by': gp_by})
+    view = navigate_to(host, 'candu', wait_for_view=True)
+    back_date = datetime.now() - timedelta(days=1)
+    data = {'interval': interval, 'group_by': gp_by}
+
+    # Note: If we won't choose backdate then  we have wait for 30min at least for metric collection
+    if interval == "Hourly":
+        data.update({"calendar": back_date})
+    view.options.fill(data)
 
     # Check graph displayed or not
     try:
@@ -204,23 +213,26 @@ def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_can
     assert graph.is_displayed
 
     def refresh():
+        provider.refresh_provider_relationships()
+        host.capture_historical_data()
         provider.browser.refresh()
-        view.options.interval.fill(interval)
+        view.wait_displayed(timeout='20s')
+        view.options.fill(data)
+
+    # wait, for specific vm tag data. It take time to reload metrics with specific vm tag.
+    wait_for(lambda: "London" in graph.all_legends,
+    delay=120, timeout=1500, fail_func=refresh)
 
     graph.zoom_in()
     view = view.browser.create_view(UtilizationZoomView)
 
-    # wait, some time graph take time to load
-    wait_for(lambda: "London" in view.chart.all_legends,
-    delay=10, timeout=1500, fail_func=refresh)
-
-    assert view.chart.is_displayed
-
+    # check for chart and tag London available or not in legend list.
     view.flush_widget_cache()
+    assert view.chart.is_displayed
     legends = view.chart.all_legends
-    # check tag London available or not in legend list.
     assert "London" in legends
 
+    # compare graph and table data
     graph_data = view.chart.all_data
     # Clear cache of table widget before read else it will mismatch headers.
     view.table.clear_cache()
