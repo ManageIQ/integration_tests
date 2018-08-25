@@ -93,6 +93,12 @@ def set_entity_quota_source(max_quota_test_instance, entity):
         max_quota_test_instance.fields = {'quota_source_type': {'value': entity}}
 
 
+@pytest.fixture(scope='module')
+def set_entity_quota_source_change(max_quota_test_instance):
+    with update(max_quota_test_instance):
+        max_quota_test_instance.fields = {'max_storage': {'value': '0.02'}}
+
+
 @pytest.fixture(params=[('groups', 'group', 'EvmGroup-super_administrator'),
                         ('users', 'user', 'Administrator')], ids=['group', 'user'], scope='module')
 def entities(appliance, request, max_quota_test_instance):
@@ -240,3 +246,36 @@ def test_user_quota_diff_groups(request, appliance, provider, setup_provider, ne
             provision_request.approve_request(method='ui', reason="Approved")
         provision_request.wait_for_request(method='ui')
         assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+@pytest.mark.parametrize(
+    ['custom_prov_data', 'extra_msg', 'approve'],
+    [
+        [{}, '', False],
+    ],
+    ids=['max_storage']
+)
+def test_user_infra_storage_quota_by_lifecycle(appliance, provider, setup_provider,
+                                               set_entity_quota_source_change, custom_prov_data,
+                                               extra_msg, approve, prov_data, vm_name,
+                                               template_name):
+    """prerequisite: Provider should be added
+
+    steps:
+
+    1. Provision VM with more than assigned quota w.r.t. storage
+    """
+    recursive_update(prov_data, custom_prov_data)
+    logger.info("Successfully updated VM provisioning data")
+    do_vm_provisioning(appliance, template_name=template_name, provider=provider,
+                       vm_name=vm_name, provisioning_data=prov_data, smtp_test=False,
+                       wait=False, request=None)
+
+    # nav to requests page to check quota validation
+    request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name,
+                                                                 extra_msg)
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    if approve:
+        provision_request.approve_request(method='ui', reason="Approved")
+    provision_request.wait_for_request(method='ui')
+    assert provision_request.row.reason.text == "Quota Exceeded"
