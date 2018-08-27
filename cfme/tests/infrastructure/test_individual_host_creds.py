@@ -23,7 +23,8 @@ pytestmark = [
 msgs = {
     'virtualcenter': {'default': 'Cannot complete login due to an incorrect user name or password',
                       'remote_login': 'Login failed due to a bad username or password.',
-                      'web_services': 'Cannot complete login due to an incorrect user name or password'},
+                      'web_services':
+                          'Cannot complete login due to an incorrect user name or password'},
     'rhevm': 'Login failed due to a bad username or password.',
     'scvmm': 'Check credentials. Remote error message: WinRM::WinRMAuthorizationError'
 }
