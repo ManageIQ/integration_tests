@@ -488,7 +488,8 @@ def test_select_key_pair_none_while_provisioning(appliance, request, has_no_clou
 
 @pytest.mark.tier(3)
 @pytest.mark.provider([AzureProvider], override=True)
-def test_password_requirements(appliance, request, has_no_cloud_providers, setup_provider):
+def test_azure_instance_password_requirements(appliance, request,
+        has_no_cloud_providers, setup_provider):
     """
         Requirement: Have an Azure provider
         1. Compute -> Cloud -> Instances
