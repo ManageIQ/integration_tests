@@ -183,7 +183,8 @@ class RestEventListener(Thread):
                 exp_event = {'event': evt,
                              'callback': callback,
                              'matched_events': [],
-                             'first_event': first_event}
+                             'first_event': first_event,
+                             'last_id': None}
                 self._events_to_listen.append(exp_event)
                 logger.info("event {} is added to listening queue.".format(evt))
             else:
@@ -220,7 +221,7 @@ class RestEventListener(Thread):
                 if exp_event['first_event'] and len(exp_event['matched_events']):
                     continue
 
-                matched_events = self.get_next_portion(exp_event['event'])
+                matched_events = self.get_next_portion(exp_event['event'], exp_event['last_id'])
 
                 if not matched_events:
                     continue
@@ -229,25 +230,33 @@ class RestEventListener(Thread):
                 try:
                     for event_entity in matched_events:
                             got_event = Event(self._appliance).build_from_entity(event_entity)
+
+                            # Update the most recent event ID for this expectation.
+                            evt_id = got_event.event_attrs['id'].value
+                            if exp_event['last_id'] is None or evt_id > exp_event['last_id']:
+                                exp_event['last_id'] = evt_id
+
                             if exp_event['event'].matches(got_event):
                                 if exp_event['callback']:
                                     exp_event['callback'](exp_event=exp_event['event'],
                                                           got_event=got_event)
                                 exp_event['matched_events'].append(got_event)
-                    self._last_processed_id = got_event.event_attrs['id'].value
                 except Exception:
                     logger.exception("An exception during matching events occurred.")
 
                 if self._stop_event.is_set():
                     break
 
-    def get_next_portion(self, evt):
+    def get_next_portion(self, evt, last_processed_id=None):
         """ Returns list with one or more events matched with expected event.
 
         Returns None if there is no matched events."""
         evt.process_id()
 
-        q = Q('id', '>', self._last_processed_id)  # ensure we get only new events
+        # Allow caller to decide how far in past we reach.
+        last_id = last_processed_id or self._last_processed_id
+
+        q = Q('id', '>', last_id)  # ensure we get only new events
 
         used_filters = set(self.FILTER_ATTRS).intersection(set(evt.event_attrs))
         for filter_attr in used_filters:
