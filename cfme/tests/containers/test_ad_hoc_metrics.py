@@ -1,11 +1,10 @@
 import pytest
 import requests
 
-from cfme.utils.log import logger
-from cfme.containers.provider import ContainersProvider, ContainersProviderCollection
-from cfme.containers.node import NodeCollection
+from cfme.containers.provider import ContainersProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 
 pytestmark = [
@@ -17,12 +16,13 @@ pytestmark = [
                          scope='function')
 ]
 
-TEST_ITEMS = [ContainersProviderCollection, NodeCollection]
+TEST_ITEMS = ["containers_providers", "container_nodes"]
 
 
 def get_test_object(appliance, provider, test_item):
-    return (
-        provider if test_item is ContainersProviderCollection else test_item(appliance).all().pop())
+
+    return (provider if test_item == "containers_providers" else
+            getattr(appliance.collections, test_item).all().pop())
 
 
 @pytest.fixture(scope="function")
