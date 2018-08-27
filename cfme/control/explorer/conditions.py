@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import attr
+from wait_for import wait_for
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, TextInput, Widget
 from widgetastic_patternfly import Button, Input
