@@ -4,6 +4,7 @@ import re
 import sys
 
 from cfme.containers.provider.openshift import OpenshiftProvider
+from cfme.utils.appliance import DummyAppliance
 from cfme.utils.providers import list_providers, ProviderFilter
 from cfme.utils.log import logger, add_stdout_handler
 
@@ -77,7 +78,8 @@ if __name__ == "__main__":
     args = parse_cmd_line()
     errors = 0
     pf = ProviderFilter(classes=[OpenshiftProvider], required_fields=[('use_for_sprout', True)])
-    providers = list_providers(filters=[pf], use_global_filters=False)
+    with DummyAppliance():
+        providers = list_providers(filters=[pf], use_global_filters=False)
     for prov in providers:
         # ping provider
         try:

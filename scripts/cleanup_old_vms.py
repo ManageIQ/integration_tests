@@ -12,6 +12,7 @@ import pytz
 from tabulate import tabulate
 from wrapanapi.exceptions import VMInstanceNotFound
 
+from cfme.utils.appliance import DummyAppliance
 from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.path import log_path
 from cfme.utils.providers import get_mgmt, list_providers, ProviderFilter
@@ -273,7 +274,8 @@ def cleanup_vms(texts, max_hours=24, providers=None, tags=None, prompt=True):
         filters.append(ProviderFilter(keys=providers))
 
     # Just want keys, use list_providers with no global filters to include disabled.
-    providers_to_scan = [prov.key for prov in list_providers(filters, use_global_filters=False)]
+    with DummyAppliance():
+        providers_to_scan = [prov.key for prov in list_providers(filters, use_global_filters=False)]
     logger.info('Potential providers for cleanup, filtered with given tags and provider keys: \n%s',
                 '\n'.join(providers_to_scan))
 

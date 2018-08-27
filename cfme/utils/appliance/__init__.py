@@ -3060,6 +3060,15 @@ class DummyAppliance(object):
     def set_session_timeout(self, *k):
         pass
 
+    def __enter__(self):
+        """ This method will replace the current appliance in the store """
+        stack.push(self)
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        """This method will remove the appliance from the store"""
+        assert stack.pop() is self, 'Dummy appliance on stack inconsistent'
+
 
 def find_appliance(obj, require=True):
     if isinstance(obj, NavigatableMixin):
