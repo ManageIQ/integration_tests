@@ -133,7 +133,7 @@ def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
     host_collection = appliance.collections.hosts
     host_obj = host_collection.instantiate(name=test_host.name, provider=provider)
     flash_msg = msgs.get(provider.type)
-    if provider.type == 'virtualcenter':  # different message for failed remote login
+    if isinstance(flash_msg, dict):  # if different message for failed remote login
         flash_msg = flash_msg.get(creds)
     with pytest.raises(Exception, match=flash_msg):
         with update(host_obj, validate_credentials=True):
