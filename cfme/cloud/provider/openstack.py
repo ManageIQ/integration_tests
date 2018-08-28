@@ -7,6 +7,8 @@ from cfme.common.provider import EventsEndpoint
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.provider.openstack_infra import RHOSEndpoint, OpenStackInfraEndpointForm
 from cfme.services.catalogs.catalog_items import OpenStackCatalogItem
+from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
 from . import CloudProvider
 
 
@@ -82,12 +84,17 @@ class OpenStackProvider(CloudProvider):
 
     @classmethod
     def from_config(cls, prov_config, prov_key):
-        endpoints = {}
-        endpoints[RHOSEndpoint.name] = RHOSEndpoint(**prov_config['endpoints'][RHOSEndpoint.name])
+        endpoints = {
+            RHOSEndpoint.name: RHOSEndpoint(**prov_config['endpoints'][RHOSEndpoint.name])
+        }
 
-        endp_name = EventsEndpoint.name
-        if prov_config['endpoints'].get(endp_name):
-            endpoints[endp_name] = EventsEndpoint(**prov_config['endpoints'][endp_name])
+        event_endpoint_config = prov_config['endpoints'].get(EventsEndpoint.name, {})
+        if event_endpoint_config:
+            if (event_endpoint_config.get('event_stream') == 'AMQP' and
+                    BZ(1618700, forced_streams=["5.9", "5.10", "upstream"]).blocks):
+                logger.warning('Skipping AMQP event config due to BZ 1618700')
+            else:
+                endpoints[EventsEndpoint.name] = EventsEndpoint(**event_endpoint_config)
 
         from cfme.utils.providers import get_crud
         infra_prov_key = prov_config.get('infra_provider_key')
@@ -113,19 +120,19 @@ class OpenStackProvider(CloudProvider):
         try:
             return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
                 self._console_connection_status_element).text
-        except:
+        except Exception:
             raise ItemNotFound("Element not found on screen, is current focus on console window?")
 
     def get_remote_console_canvas(self):
         try:
             return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
                 self._canvas_element)
-        except:
+        except Exception:
             raise ItemNotFound("Element not found on screen, is current focus on console window?")
 
     def get_console_ctrl_alt_del_btn(self):
         try:
             return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
                 self._ctrl_alt_del_xpath)
-        except:
+        except Exception:
             raise ItemNotFound("Element not found on screen, is current focus on console window?")
