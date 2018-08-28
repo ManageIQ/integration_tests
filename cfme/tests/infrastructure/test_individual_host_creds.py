@@ -21,7 +21,10 @@ pytestmark = [
 
 
 msgs = {
-    'virtualcenter': 'Login failed due to a bad username or password.',
+    'virtualcenter': {'default': 'Cannot complete login due to an incorrect user name or password',
+                      'remote_login': 'Login failed due to a bad username or password.',
+                      'web_services':
+                          'Cannot complete login due to an incorrect user name or password'},
     'rhevm': 'Login failed due to a bad username or password.',
     'scvmm': 'Check credentials. Remote error message: WinRM::WinRMAuthorizationError'
 }
@@ -130,6 +133,8 @@ def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
     host_collection = appliance.collections.hosts
     host_obj = host_collection.instantiate(name=test_host.name, provider=provider)
     flash_msg = msgs.get(provider.type)
+    if isinstance(flash_msg, dict):  # if different message for failed remote login
+        flash_msg = flash_msg.get(creds)
     with pytest.raises(Exception, match=flash_msg):
         with update(host_obj, validate_credentials=True):
             host_obj.credentials = {creds: host.Host.Credential(principal="wrong", secret="wrong")}
