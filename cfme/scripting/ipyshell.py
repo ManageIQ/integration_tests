@@ -7,7 +7,9 @@ IMPORTS = [
     'from cfme.utils import conf',
     'from cfme.fixtures.pytest_store import store',
     'from cfme.utils.appliance.implementations.ui import navigate_to',
+    'from cfme.utils.appliance import DummyAppliance',
     'from cfme.utils import providers',
+    'from cfme.utils.blockers import BZ, GH',
 ]
 
 
