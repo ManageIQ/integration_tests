@@ -3,6 +3,7 @@ import argparse
 from tabulate import tabulate
 from multiprocessing import Process, Queue
 
+from cfme.utils.appliance import DummyAppliance
 from cfme.utils.path import log_path
 from cfme.utils.providers import get_mgmt, ProviderFilter, list_providers
 
@@ -92,7 +93,8 @@ if __name__ == "__main__":
         filters.append(ProviderFilter(required_tags=args.tag))
 
     # don't include global filter to keep disabled in the list
-    providers = [prov.key for prov in list_providers(filters, use_global_filters=False)]
+    with DummyAppliance('5.10.0.0'):
+        providers = [prov.key for prov in list_providers(filters, use_global_filters=False)]
 
     queue = Queue()  # for MP output
     proc_list = [
