@@ -20,7 +20,6 @@ def check_ems_state_in_diagnostics(appliance, provider):
             return True
     except Exception:
         return False
-    return False
 
 
 def test_pause_and_resume_provider_workers(appliance, provider):
