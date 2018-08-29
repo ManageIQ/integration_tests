@@ -90,6 +90,7 @@ policies = cfme.control.explorer.policies:PolicyCollection
 policy_profiles = cfme.control.explorer.policy_profiles:PolicyProfileCollection
 projects = cfme.configure.access_control:ProjectCollection
 provisioning_dialogs = cfme.automate.provisioning_dialogs:ProvisioningDialogsCollection
+redfish_physical_servers = cfme.physical.provider.redfish:RedfishPhysicalServerCollection
 regions = cfme.base:RegionCollection
 report_dashboards = cfme.intelligence.reports.dashboards:DashboardsCollection
 reports = cfme.intelligence.reports.reports:ReportsCollection
