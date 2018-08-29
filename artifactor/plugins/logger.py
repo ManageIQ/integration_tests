@@ -26,7 +26,7 @@ class Logger(ArtifactorBasePlugin):
             self.handler = None
 
         def close(self):
-            if self.handle is not None:
+            if self.handler is not None:
                 self.handler.close()
                 self.handler = None
 
