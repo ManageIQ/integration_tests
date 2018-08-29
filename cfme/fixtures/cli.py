@@ -21,11 +21,11 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 def fqdn_appliance(appliance, preconfigured, count):
     version = appliance.version.vstring
     stream = get_stream(appliance.version)
+    sprout_client = SproutClient.from_config()
+    apps, request_id = sprout_client.provision_appliances(
+        provider_type='rhevm', count=count, version=version, preconfigured=preconfigured,
+        stream=stream)
     try:
-        sprout_client = SproutClient.from_config()
-        apps, request_id = sprout_client.provision_appliances(
-            provider_type='rhevm', count=count, version=version, preconfigured=preconfigured,
-            stream=stream)
         yield apps
     finally:
         for app in apps:
