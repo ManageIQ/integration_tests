@@ -135,13 +135,11 @@ class RestEventListener(Thread):
 
         self.event_streams = appliance.rest_api.collections.event_streams
 
-    def set_last_record(self):
-        """ Sets last_processed_id to the latest event."""
-        last_event_stream = self.event_streams.query_string(limit=1,
-                                                            sort_order='desc',
-                                                            sort_by='id')
-        if len(last_event_stream):
-            self._last_processed_id = last_event_stream[0].id
+    def get_max_record_id(self):
+        try:
+            return self.event_streams.query_string(limit=1, sort_order='desc', sort_by='id')[0].id
+        except IndexError:
+            return None
 
     def new_event(self, *attrs, **kwattrs):
         """ This method simplifies "expected" event creation.
@@ -190,7 +188,7 @@ class RestEventListener(Thread):
                 raise ValueError("one of events doesn't belong to Event class")
 
     def start(self):
-        self.set_last_record()
+        self._last_processed_id = self.get_max_record_id()
         self._stop_event.clear()
         super(RestEventListener, self).start()
         logger.info('Event Listener has been started')
@@ -214,13 +212,17 @@ class RestEventListener(Thread):
         """
         while not self._stop_event.is_set():
             sleep(1)
+            cur_last_record_id = self.get_max_record_id()
+            if not cur_last_record_id:
+                continue
+
             for exp_event in self._events_to_listen:
 
                 # Skip if event has occurred
                 if exp_event['first_event'] and len(exp_event['matched_events']):
                     continue
 
-                matched_events = self.get_next_portion(exp_event['event'])
+                matched_events = self.get_next_portion(exp_event['event'], cur_last_record_id)
 
                 if not matched_events:
                     continue
@@ -234,20 +236,22 @@ class RestEventListener(Thread):
                                     exp_event['callback'](exp_event=exp_event['event'],
                                                           got_event=got_event)
                                 exp_event['matched_events'].append(got_event)
-                    self._last_processed_id = got_event.event_attrs['id'].value
                 except Exception:
                     logger.exception("An exception during matching events occurred.")
 
                 if self._stop_event.is_set():
                     break
+            self._last_processed_id = cur_last_record_id
 
-    def get_next_portion(self, evt):
+    def get_next_portion(self, evt, max_id=None):
         """ Returns list with one or more events matched with expected event.
 
         Returns None if there is no matched events."""
         evt.process_id()
 
         q = Q('id', '>', self._last_processed_id)  # ensure we get only new events
+        if max_id:
+            q &= Q('id', '<=', max_id)
 
         used_filters = set(self.FILTER_ATTRS).intersection(set(evt.event_attrs))
         for filter_attr in used_filters:
