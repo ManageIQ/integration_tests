@@ -177,7 +177,7 @@ def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_can
         * VM should be taged with proper tag category
 
     Steps:
-        * If possible capture historical data for host and vm
+        * Capture historical data for host and vm
         * Navigate to Host Utilization Page
         * Select interval(Hourly or Daily)
         * Select group by option with VM tag

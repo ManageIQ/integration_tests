@@ -42,7 +42,10 @@ def collect_data(appliance, provider, interval='hourly', back='7.days'):
 
 @pytest.fixture(scope="module")
 def enable_candu_category(appliance):
-    """Enable capture C&U Data for tag category location"""
+    """Enable capture C&U Data for tag category location by navigating to the Configuration ->
+       Region page. Click 'Tags' tab , select required company category under
+       'My Company Categories' and enable 'Capture C & U Data' for the category.
+    """
     collection = appliance.collections.categories
     location_category = collection.instantiate(name="location", display_name="Location")
     if not location_category.capture_candu:
