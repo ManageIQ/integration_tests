@@ -145,7 +145,7 @@ def verify_ssa_image_attributes(provider, soft_assert, rand_image):
                     .format(tbl, attr, value))
 
 
-@pytest.mark.meta(blockers=[BZ(1620068, forced_streams=["5.9"])])
+@pytest.mark.meta(blockers=[BZ(1620068, forced_streams=["5.9", "5.10"])])
 @pytest.mark.polarion('10722')
 def test_cve_location_update_value(provider, soft_assert, delete_all_container_tasks,
                                    set_cve_location, openscap_assigned_rand_image):
@@ -160,7 +160,7 @@ def test_cve_location_update_value(provider, soft_assert, delete_all_container_t
     verify_ssa_image_attributes(provider, soft_assert, openscap_assigned_rand_image)
 
 
-@pytest.mark.meta(blockers=[BZ(1620068, forced_streams=["5.9"])])
+@pytest.mark.meta(blockers=[BZ(1620068, forced_streams=["5.9", "5.10"])])
 @pytest.mark.polarion('10858')
 def test_image_inspector_registry_update_value(provider, soft_assert, delete_all_container_tasks,
                                                set_image_inspector_registry,
