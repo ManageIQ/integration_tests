@@ -66,7 +66,7 @@ def datastores_hosts_setup(provider, datastore):
         host.update_credentials_rest(credentials=host_data['credentials'])
     yield
     for host in hosts:
-        host.remove_hosts_credentials()
+        host.remove_credentials_rest()
 
 
 @pytest.fixture(scope='function')
