@@ -2137,7 +2137,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def reset_proxy(self, prov_type=None):
         vmdb_config = self.advanced_settings
         proxy_type = prov_type or 'default'
-        vmdb_config['http_proxy'][proxy_type] = False
+        vmdb_config['http_proxy'][proxy_type] = False if self.version < "5.10" else "<<reset>>"
         self.update_advanced_settings(vmdb_config)
 
     def set_session_timeout(self, timeout=86400, quiet=True):

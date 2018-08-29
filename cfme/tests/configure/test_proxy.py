@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
@@ -14,7 +16,7 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.provider([CloudProvider], selector=ONE, scope='module'),
+    pytest.mark.provider([AzureProvider, GCEProvider], scope='module'),
     pytest.mark.usefixtures('setup_provider_modscope')
 ]
 
@@ -99,6 +101,9 @@ def prepare_proxy_invalid(provider, appliance):
     appliance.reset_proxy()
 
 
+@pytest.mark.meta(blockers=[
+    BZ(1623862, forced_streams=['5.9', '5.10'],
+       unblock=lambda provider: provider.one_of(AzureProvider))])
 def test_proxy_valid(appliance, proxy_machine, proxy_ssh, prepare_proxy_default, provider):
     """ Check whether valid proxy settings works.
 
@@ -118,6 +123,9 @@ def test_proxy_valid(appliance, proxy_machine, proxy_ssh, prepare_proxy_default,
     )
 
 
+@pytest.mark.meta(blockers=[
+    BZ(1623862, forced_streams=['5.9', '5.10'],
+       unblock=lambda provider: provider.one_of(AzureProvider))])
 def test_proxy_override(appliance, proxy_ssh, prepare_proxy_specific, provider):
     """ Check whether invalid default and valid specific provider proxy settings
     results in provider refresh working.
@@ -139,9 +147,10 @@ def test_proxy_override(appliance, proxy_ssh, prepare_proxy_specific, provider):
     )
 
 
+@pytest.mark.meta(blockers=[BZ(1623550, forced_streams=['5.9', '5.10'])])
 def test_proxy_invalid(appliance, prepare_proxy_invalid, provider):
     """ Check whether invalid default and invalid specific provider proxy settings
-     results in porovider refresh not working.
+     results in provider refresh not working.
 
     Steps:
      * Configure default proxy to invalid entry.
@@ -149,10 +158,15 @@ def test_proxy_invalid(appliance, prepare_proxy_invalid, provider):
      * Wait for the provider refresh to complete to check the settings causes error.
     """
     provider.refresh_provider_relationships()
+
     view = navigate_to(provider, 'Details')
 
+    if appliance.version >= '5.10':
+        view.toolbar.view_selector.select('Summary View')
+
     def last_refresh_failed():
-        'Timed out connecting to server' in (
+        view.toolbar.reload.click()
+        return 'Timed out connecting to server' in (
             view.entities.summary('Status').get_text_of('Last Refresh'))
 
-    wait_for(last_refresh_failed, num_sec=240, delay=30)
+    wait_for(last_refresh_failed, fail_condition=False, num_sec=240, delay=5)
