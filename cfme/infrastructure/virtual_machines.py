@@ -766,9 +766,14 @@ class InfraVm(VM):
                 'email': email,
                 'first_name': first_name,
                 'last_name': last_name},
-            'environment': {"host_name": {'name': prov_data.get("host")},
-                            "datastore_name": {"name": prov_data.get("datastore")}},
+            'environment': {'host_name': {'name': prov_data.get('host')},
+                            'datastore_name': {'name': prov_data.get('datastore')}},
         }
+
+        from cfme.infrastructure.provider.rhevm import RHEVMProvider
+        if self.provider.one_of(RHEVMProvider):
+            provisioning_data['environment'] = {'automatic_placement': True}
+
         view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
         cells = {'Description': 'Publish from [{}] to [{}]'.format(self.name, template_name)}
         provision_request = self.appliance.collections.requests.instantiate(cells=cells)
