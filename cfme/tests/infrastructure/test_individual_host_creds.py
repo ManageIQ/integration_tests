@@ -50,7 +50,9 @@ def get_host_data_by_name(provider_key, host_name):
                      unblock=lambda creds: creds == 'default'),
                   BZ(1584280, forced_streams=['5.9'],
                      unblock=lambda provider, creds: not provider.one_of(RHEVMProvider) or
-                     creds != 'web_services')])
+                     creds != 'web_services'),
+                  BZ(1619626, forced_streams=['5.9', '5.10'],
+                     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
 @pytest.mark.uncollectif(
@@ -108,7 +110,9 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
                   BZ(1584246, forced_streams=['5.8', '5.9'],
                      unblock=lambda provider: not provider.one_of(VMwareProvider)),
                   BZ(1584261, forced_streams=['5.8'],
-                     unblock=lambda creds: creds == 'default')])
+                     unblock=lambda creds: creds == 'default'),
+                  BZ(1619626, forced_streams=['5.9', '5.10'],
+                     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
 @pytest.mark.uncollectif(
