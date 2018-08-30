@@ -302,7 +302,8 @@ def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
                                        ['provisioning', 'host'],
                                        ['provisioning', 'datastore']],
                       override=True)
-@pytest.mark.parametrize('vnic_profile', ['<No Profile>', '<Use template nics>'])
+@pytest.mark.parametrize('vnic_profile', ['<No Profile>', '<Use template nics>'],
+                         ids=['no_profile', 'use_template_nics'])
 def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, vnic_profile):
     """ Tests provision VM with other than specific vnic profile selected - <No Profile>
         and <Use template nics>.
@@ -327,7 +328,7 @@ def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, v
 
     wait_for(
         lambda: vm.exists_on_provider,
-        num_sec=240, delay=5
+        num_sec=300, delay=5
     )
 
     if vnic_profile == '<No Profile>':
