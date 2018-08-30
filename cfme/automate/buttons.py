@@ -9,6 +9,7 @@ from widgetastic.widget import (
     ColourInput,
     ConditionalSwitchableView,
     ParametrizedView,
+    Select,
     Text,
     View,
 )
@@ -79,8 +80,10 @@ class ButtonFormCommon(AutomateCustomizationView):
         display = Checkbox(name='display')
         hover = Input(name='description')
         image = FonticonPicker('button_icon')
+        icon_color = ColourInput(id="button_color")
         open_url = Checkbox('open_url')
-        # TODO: Display for, Submit by after converted to BootstrapSelect
+        display_for = Select(id="display_for")
+        submit = Select(id="submit_how")
 
     class advanced(PotentiallyInvisibleTab):  # noqa
         # TODO: Enablement & Visibility
@@ -275,9 +278,11 @@ class ButtonCollection(BaseCollection):
 
     ENTITY = BaseButton
 
-    def instantiate(self, group, text, hover, type='Default', dialog=None, playbook_cat_item=None,
-                    inventory=None, hosts=None, image=None, open_url=None, system=None,
-                    request=None, attributes=None):
+    def instantiate(
+        self, group, text, hover, type="Default", dialog=None, display_for=None, submit=None,
+        playbook_cat_item=None, inventory=None, hosts=None, image=None, open_url=None, system=None,
+        request=None, attributes=None,
+    ):
         if image:
             pass
         elif self.appliance.version < '5.9':
@@ -294,9 +299,11 @@ class ButtonCollection(BaseCollection):
             args = [group, text, hover, image, playbook_cat_item, inventory, hosts]
         return button_class.from_collection(self, *args, **kwargs)
 
-    def create(self, text, hover, type='Default', group=None, dialog=None, playbook_cat_item=None,
-               inventory=None, hosts=None, image=None, open_url=None, system=None, request=None,
-               attributes=None):
+    def create(
+        self, text, hover, type="Default", group=None, dialog=None, display_for=None, submit=None,
+        playbook_cat_item=None, inventory=None, hosts=None, image=None, open_url=None, system=None,
+        request=None, attributes=None
+    ):
         self.group = group or self.parent
         if image:
             pass
@@ -312,6 +319,8 @@ class ButtonCollection(BaseCollection):
                 'hover': hover,
                 'image': image,
                 'open_url': open_url,
+                'display_for': display_for,
+                'submit': submit,
                 'form': {
                     'dialog': dialog,
                     'playbook_cat_item': playbook_cat_item,
@@ -332,10 +341,12 @@ class ButtonCollection(BaseCollection):
             view.flash.assert_message('Button "{}" was added'.format(hover))
         else:
             view.flash.assert_message('Custom Button "{}" was added'.format(hover))
-        return self.instantiate(self.group, text, hover, type, dialog=dialog,
-                                playbook_cat_item=playbook_cat_item, inventory=inventory,
-                                hosts=hosts, image=image, open_url=open_url, system=system,
-                                request=request, attributes=attributes)
+
+        return self.instantiate(
+            self.group, text, hover, type, dialog=dialog, display_for=display_for, submit=submit,
+            playbook_cat_item=playbook_cat_item, inventory=inventory, hosts=hosts, image=image,
+            open_url=open_url, system=system, request=request, attributes=attributes,
+        )
 
 
 @navigator.register(ButtonCollection, 'All')
