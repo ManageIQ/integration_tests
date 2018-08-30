@@ -86,7 +86,7 @@ def test_custom_button_display(request, display, setup_obj, button_group):
     for destination in DISPLAY_NAV[display]:
         obj = setup_obj.parent if destination == "All" else setup_obj
 
-        # Note: For VM, custum button not display on All page but only VM page.
+        # Note: For VM, custom button not display on All page but only VM page.
         if obj_type == "VM_INSTANCE" and destination == "All":
             destination = "VMsOnly"
 
