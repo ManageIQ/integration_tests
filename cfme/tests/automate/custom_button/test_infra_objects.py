@@ -15,7 +15,7 @@ pytestmark = [
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE),
 ]
 
-INFRA_OBJECTS = ["PROVIDER"]
+INFRA_OBJECTS = ["PROVIDER", "HOST", "VM_INSTANCE"]
 
 DISPLAY_NAV = {
     "Single entity": ["Details"],
@@ -45,6 +45,10 @@ def setup_obj(button_group, provider):
 
     if obj_type == "PROVIDER":
         obj = provider
+    elif obj_type == "HOST":
+        obj = provider.hosts.all()[0]
+    elif obj_type == "VM_INSTANCE":
+        obj = provider.appliance.provider_based_collection(provider).all()[0]
     else:
         logger.error("No object collected for custom button object type '{}'".format(obj_type))
     return obj
@@ -69,7 +73,7 @@ def test_custom_button_display(request, display, setup_obj, button_group):
         * Check for button group and button
     """
 
-    group, _ = button_group
+    group, obj_type = button_group
     button = group.buttons.create(
         text=fauxfactory.gen_alphanumeric(),
         hover=fauxfactory.gen_alphanumeric(),
@@ -80,7 +84,13 @@ def test_custom_button_display(request, display, setup_obj, button_group):
     request.addfinalizer(button.delete_if_exists)
 
     for destination in DISPLAY_NAV[display]:
-        view = navigate_to(setup_obj, destination)
+        obj = setup_obj.parent if destination == "All" else setup_obj
+
+        # Note: For VM, custum button not display on All page but only VM page.
+        if obj_type == "VM_INSTANCE" and destination == "All":
+            destination = "VMsOnly"
+
+        view = navigate_to(obj, destination)
         custom_button_group = Dropdown(view, group.hover)
         assert custom_button_group.is_displayed
         assert custom_button_group.has_item(button.text)
