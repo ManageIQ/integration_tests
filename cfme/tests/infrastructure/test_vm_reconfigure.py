@@ -99,7 +99,6 @@ def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, c
 
 @pytest.mark.rhel_testing
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6996')])
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
     'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
@@ -139,7 +138,6 @@ def test_vm_reconfig_add_remove_disk_cold(
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6996')])
 def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
     """ Cancel reconfiguration changes """
     config_vm = small_vm.configuration.copy()
