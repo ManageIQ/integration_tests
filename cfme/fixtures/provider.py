@@ -495,6 +495,16 @@ def dportgroup_template_modscope(provider):
     return _get_template(provider, 'dportgroup_template')
 
 
+@pytest.fixture(scope="function")
+def rhel7_minimal(provider):
+    return _get_template(provider, 'rhel7_minimal')
+
+
+@pytest.fixture(scope="module")
+def rhel7_minimal_modscope(provider):
+    return _get_template(provider, 'rhel7_minimal')
+
+
 def _walk_to_obj_parent(obj):
     old = None
     while True:

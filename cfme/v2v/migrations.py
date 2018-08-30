@@ -315,30 +315,7 @@ class MigrationDashboardView(BaseLoggedInPage):
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
     migr_dropdown = MigrationDropdown(text="Not Started Plans")
     # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
-    progress_bar = MigrationProgressBar(locator='.//div[3]/div/div[3]/div[3]/div/div')
-
-    def _get_status(self, plan_name):
-        """Returns status of migration plan"""
-        # TODO: Error handling with try-except
-        not_started = "Not Started Plans"
-        self.migr_dropdown.item_select(not_started)
-        if not self.migration_plans_not_started_list.is_plan_completed(plan_name):
-            in_progress = "In Progress Plans"
-            self.migr_dropdown.item_select(in_progress)
-            wait_for(lambda: bool(self.progress_bar.is_plan_started(plan_name)),
-                     message="migration plan is starting, be patient please", delay=5, num_sec=3600)
-            if self.progress_bar.is_plan_started(plan_name):
-                flag = in_progress
-            else:
-                completed = "Completed Plans"
-                self.migr_dropdown.item_select(completed)
-                if self.migration_plans_completed_list.is_plan_completed(plan_name):
-                    flag = completed
-                # TODO: Add archived plans tab to kk's widget
-        else:
-            flag = not_started
-        self.migr_dropdown.item_select(flag)
-        return flag
+    progress_card = MigrationProgressBar(locator='.//div[3]/div/div[3]/div[3]/div/div')
 
     @property
     def is_displayed(self):
@@ -544,6 +521,11 @@ class InfrastructureMappingCollection(BaseCollection):
         view.form.fill(form_data)
         return infra_map
 
+    def delete(self, mapping):
+        view = navigate_to(self, 'All', wait_for_view=True)
+        mapping_list = view.infra_mapping_list
+        mapping_list.delete_mapping(mapping.name)
+
 
 @attr.s
 class MigrationPlan(BaseEntity):
@@ -593,9 +575,10 @@ class MigrationPlanCollection(BaseCollection):
         for vm in vm_list:
             view.vms.filter_by_name(vm.name)
             for row in view.vms.table.rows():
-                if row.vm_name.read() in vm_list:
+                if vm.name in row.vm_name.read():
                     row.select.fill(True)
             view.vms.clear_filters.click()
+        view.next_btn.click()
         view.next_btn.click()
 
         if start_migration:
@@ -651,4 +634,12 @@ class MigrationPlanRequestDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.migration_plans_not_started_list.select_plan(self.obj.ENTITY.name)
+        try:
+            self.prerequisite_view.migration_plans_not_started_list.select_plan(
+                self.obj.ENTITY.name)
+        except NoSuchElementException:
+            try:
+                self.prerequisite_view.migration_plans_completed_list.select_plan(
+                    self.obj.ENTITY.name)
+            except NoSuchElementException:
+                self.prerequisite_view.progress_card.select_plan(self.obj.ENTITY.name)

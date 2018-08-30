@@ -4726,15 +4726,12 @@ class HiddenFileInput(BaseFileInput):
 class MigrationProgressBar(Widget):
     """Represents in-progress plan widget for v2v migration"""
 
-    ROOT = ParametrizedLocator("{@locator}")
-    TITLE_LOCATOR = './/h3[contains(@class,"card-pf-title")]'
-    ITEM_LOCATOR = './/div[contains(@class,"in-progress")]'
+    ITEM_LOCATOR = './/div[contains(@class,"card-pf-match-height")]'
+    TITLE_LOCATOR = './/div[h3[contains(@class,"card-pf-title")]]'
     TIMER_LOCATOR = './/div[contains(@class,"active-migration-elapsed-time")]'
-    # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
     SIZE_LOCATOR = './/strong[contains(@id,"size-migrated")]'
-    # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
     VMS_LOCATOR = './/strong[contains(@id,"vms-migrated")]'
-    PROGRESS_BAR = './/div[contains(@class,"progress")]/div[contains(@class,"in-progress")]'
+    SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
 
     def __init__(self, parent, locator, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4747,42 +4744,57 @@ class MigrationProgressBar(Widget):
     def read(self):
         return self.all_items
 
-    def _get_vm_element(self, item_name):
-        for el in self.browser.elements(self.TITLE_LOCATOR):
-            if self.browser.text(el) == item_name:
-                return item_name
-        raise ItemNotFound("Item: {} not found".format(item_name))
+    def _get_card_element(self, plan_name):
+        for el in self.browser.elements(self.ITEM_LOCATOR):
+            if plan_name in self.browser.text(el):
+                return el
+        raise ItemNotFound("No plan found with plan name : {}".format(plan_name))
 
-    def get_clock(self, vm_name):
+    def get_clock(self, plan_name):
         """Returns in-process time of migration at that time"""
-        el = self._get_vm_element(vm_name)
+        el = self._get_card_element(plan_name)
         return self.browser.text(self.TIMER_LOCATOR, parent=el)
 
-    def get_migrated_size(self, size):
+    def get_migrated_size(self, plan_name):
         """Returns size of disk migrated at that time"""
-        el = self._get_vm_element(size)
+        el = self._get_card_element(plan_name)
         text = self.browser.text(self.SIZE_LOCATOR, parent=el)
         return re.findall(r"\d+\.\d+", text)[0]
 
-    def get_total_size(self, size):
+    def get_total_size(self, plan_name):
         """Returns total size of disk been migrated"""
-        el = self._get_vm_element(size)
+        el = self._get_card_element(plan_name)
         text = self.browser.text(self.SIZE_LOCATOR, parent=el)
         return re.findall(r"\d+\.\d+", text)[1]
 
-    def migrated_vms(self, no):
+    def migrated_vms(self, plan_name):
         """Returns number of vm/s are in migration process"""
-        el = self._get_vm_element(no)
+        el = self._get_card_element(plan_name)
         text = self.browser.text(self.VMS_LOCATOR, parent=el)
         return re.findall(r"\d+", text)[0]
 
-    def total_vm_to_be_migrated(self, no):
+    def total_vm_to_be_migrated(self, plan_name):
         """Returns number of vm/s in migration process"""
-        el = self._get_vm_element(no)
+        el = self._get_card_element(plan_name)
         text = self.browser.text(self.VMS_LOCATOR, parent=el)
         return re.findall(r"\d+", text)[1]
 
     def is_plan_started(self, plan_name):
-        """Returns true if migration plan is in in-progress state"""
-        el = self._get_vm_element(plan_name)
-        return self.browser.is_displayed(self.TIMER_LOCATOR, parent=el)
+        """Returns true if migration plan card is shown in-progress state, spinners are gone"""
+        el = self._get_card_element(plan_name)
+        return (self.browser.is_displayed(self.TIMER_LOCATOR, parent=el) and
+         not self.browser.is_displayed(self.SPINNER_LOCATOR, parent=el))
+
+    def is_plan_visible(self, plan_name):
+        """Returns true if migration plan card is shown in-progress section, else False"""
+        try:
+            self._get_card_element(plan_name)
+            return True
+        except ItemNotFound:
+            # means plan is not under "In Progress Plans"
+            return False
+
+    def select_plan(self, plan_name):
+        """Find item by text and click to view details."""
+        el = self._get_card_element(plan_name)
+        self.browser.click(self.TITLE_LOCATOR, parent=el)
