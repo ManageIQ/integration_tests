@@ -4,6 +4,7 @@ from widgetastic.exceptions import NoSuchElementException
 
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 general_list_pages = [
     ('servers', None, 'Details', False),
@@ -48,9 +49,9 @@ general_list_pages = [
 
     ('candus', None, 'Details', False),
     ('map_tags', None, 'All', False),
-    ('category', None, 'All', False),
+    ('categories', None, 'All', False),
     ('red_hat_updates', RedHatUpdates, 'Details', False),
-    ('analysis_profile', None, 'All', True),
+    ('analysis_profiles', None, 'All', True),
     ('system_schedules', None, 'Add', False),
     ('users', None, 'All', True),
     ('groups', None, 'All', True),
@@ -63,7 +64,7 @@ details_pages = [
     ('groups', None, 'Details', False),
     ('roles', None, 'Details', False),
     ('tenants', None, 'Details', False),
-    ('analysis_profile', None, 'Details', False),
+    ('analysis_profiles', None, 'Details', False),
     ('system_schedules', None, 'All', True),
     ('system_schedules', None, 'Details', False),
     ('tag', None, 'All', False),
@@ -88,6 +89,8 @@ def schedule(appliance):
     schedule.delete()
 
 
+@pytest.mark.meta(blockers=[BZ(1623091, forced_streams=['5.10'],
+                  unblock=lambda place_info: 'Database' not in place_info[2])])
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])
