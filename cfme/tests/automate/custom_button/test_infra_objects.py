@@ -69,7 +69,7 @@ def test_custom_button_display(request, display, setup_obj, button_group):
         * Check for button group and button
     """
 
-    group, type = button_group
+    group, _ = button_group
     button = group.buttons.create(
         text=fauxfactory.gen_alphanumeric(),
         hover=fauxfactory.gen_alphanumeric(),
