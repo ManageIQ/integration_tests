@@ -1,6 +1,7 @@
 import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.utils import Version, VersionPick
 
 from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
@@ -42,7 +43,10 @@ class CloudNetwork(Taggable, BaseEntity):
     def parent_provider(self):
         """ Return object of parent cloud provider """
         view = navigate_to(self, 'Details')
-        provider_name = view.entities.relationships.get_text_of('Parent ems cloud')
+        parent_cloud_text = VersionPick({Version.lowest(): 'Parent ems cloud',
+                                         '5.10': 'Parent Cloud Provider'}
+                                        ).pick(self.appliance.version)
+        provider_name = view.entities.relationships.get_text_of(parent_cloud_text)
         return providers.get_crud_by_name(provider_name)
 
     @property
