@@ -3,7 +3,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.exceptions import MenuItemNotFound
-from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
