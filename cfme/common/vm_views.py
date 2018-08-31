@@ -92,11 +92,18 @@ class InstanceEntity(JSBaseEntity):
                 return {}
 
             try:
-                state = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get('style')
+                state_property = 'src' if self.browser.product_version == 'master' else 'style'
+                state = quad_data.xpath(self.QUADRANT.format(pos="b"))[0].get(state_property)
+
                 try:
                     state = state.split('"')[1]
                 except IndexError:
+                    pass
+                try:
                     state = state.split("'")[1]
+                except IndexError:
+                    pass
+
                 state = os.path.split(state)[1]
                 state = os.path.splitext(state)[0]
                 state = state.split("-")[1]
