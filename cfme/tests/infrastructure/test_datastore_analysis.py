@@ -3,7 +3,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.exceptions import MenuItemNotFound
-from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
@@ -66,7 +65,7 @@ def datastores_hosts_setup(provider, datastore):
         host.update_credentials_rest(credentials=host_data['credentials'])
     yield
     for host in hosts:
-        host.remove_hosts_credentials()
+        host.remove_credentials_rest()
 
 
 @pytest.fixture(scope='function')
