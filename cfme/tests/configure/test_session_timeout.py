@@ -47,13 +47,13 @@ def test_bind_timeout_rest(appliance, request):
     Notes:
         Written for BZ 1553394
     """
-    old_bind = appliance.get_yaml_config().get('authentication', {}).get('bind_timeout')
+    old_bind = appliance.advanced_settings.get('authentication', {}).get('bind_timeout')
     if not old_bind:
         pytest.skip('Unable to locate authentication:bind_timeout in advanced settings REST')
-    request.addfinalizer(lambda: appliance.set_yaml_config(
+    request.addfinalizer(lambda: appliance.update_advanced_settings(
         {'authentication': {'bind_timeout': int(old_bind)}})
     )
 
     offset = int(old_bind) + 10
-    appliance.set_yaml_config({'authentication': {'bind_timeout': int(offset)}})
-    assert int(appliance.get_yaml_config()['authentication']['bind_timeout']) == offset
+    appliance.update_advanced_settings({'authentication': {'bind_timeout': int(offset)}})
+    assert int(appliance.advanced_settings['authentication']['bind_timeout']) == offset
