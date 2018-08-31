@@ -35,7 +35,7 @@ class InstanceQuadIconEntity(BaseQuadIconEntity):
                 state = br.get_attribute('src', self.QUADRANT.format(pos='b'))
 
             state = os.path.split(state)[1]
-            state = os.path.splitext(state)[0]
+            state = state.split("-")[1]
         except NoSuchElementException:
             return {}
         except IndexError:
