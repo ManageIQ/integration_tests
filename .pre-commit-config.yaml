@@ -8,7 +8,7 @@ repos:
   rev: v1.2.0
   hooks:
   - id: seed-isort-config
-    args: [--exclude, "^data/.*|^scripts/latest_template_tester_report.py|^sprout/|^scripts/gh-find.py"]
+    args: [--exclude, "^data/.*|^sprout/"]
 - repo: https://github.com/pre-commit/mirrors-isort
   rev: v4.3.4
   hooks:
