@@ -9,6 +9,7 @@ from . import InfraProvider
 class KubeVirtProvider(InfraProvider):
     type_name = "kubevirt"
     settings_key = 'ems_kubevirt'
+    db_types = ["Kubevirt::InfraManager"]
     mgmt_class = None
 
     parent_provider = attr.ib(default=None)
