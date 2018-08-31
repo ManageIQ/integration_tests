@@ -103,7 +103,7 @@ py==1.5.3
 pyasn1==0.4.2
 pycodestyle==2.3.1
 pycparser==2.18
-pycryptodome==3.6.1
+pycryptodome==3.6.6
 pyflakes==1.6.0
 pygal==2.4.0
 PyGithub==1.39
@@ -135,7 +135,7 @@ selenium==3.12.0
 selenium-smart-locator==0.2.0
 Send2Trash==1.5.0
 sentaku==0.6.2
-setuptools-scm==3.0.6
+setuptools-scm==3.1.0
 shyaml==0.5.2
 simplegeneric==0.8.1
 simplejson==3.15.0
