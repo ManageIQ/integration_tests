@@ -321,7 +321,6 @@ class ClusterCollection(BaseCollection):
 
     def all(self):
         """returning all cluster objects and support filtering as per provider"""
-        cluster_obj = []
         provider = self.filters.get("provider")
         clusters = self.appliance.rest_api.collections.clusters.all
         if provider:
@@ -332,13 +331,11 @@ class ClusterCollection(BaseCollection):
             ]
         else:
             providers = self.appliance.rest_api.collections.providers
-            for cluster in clusters:
-                cluster_obj.append(
-                    self.instantiate(
-                        name=cluster.name,
-                        provider=get_crud_by_name(providers.find_by(id=cluster.ems_id)[0]["name"]),
-                    )
-                )
+            providers_db = {prov.id: get_crud_by_name(prov.name) for prov in providers}
+            cluster_obj = [
+                self.instantiate(name=cluster.name, provider=providers_db[cluster.ems_id])
+                for cluster in clusters
+            ]
         return cluster_obj
 
 
