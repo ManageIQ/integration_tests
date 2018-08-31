@@ -236,8 +236,8 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
         inventory_to_match = self.INVENTORY_TO_MATCH
 
         # Retrieve the stats and inventory from wrapanapi
-        server_stats = client.server_stats(*stats_to_match, requester=self)
-        server_inventory = client.server_inventory(*inventory_to_match, requester=self)
+        server_stats = client.server_stats(self, stats_to_match)
+        server_inventory = client.server_inventory(self, inventory_to_match)
 
         # Refresh the browser
         if ui:
