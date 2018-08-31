@@ -309,7 +309,7 @@ def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_asse
     Metadata:
         test_flag: timelines, events
     """
-    event = 'start'
+    event = 'create'
     targets = (new_instance.appliance.server,)
     inst_event = InstEvent(new_instance, event)
     logger.info('Will generate event %r on machine %r', event, new_instance.name)
