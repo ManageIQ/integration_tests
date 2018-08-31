@@ -88,7 +88,7 @@ def order(self):
     if self.ansible_dialog_values:
         view.fill(self.ansible_dialog_values)
     msg = "Order Request was Submitted"
-    msg_type = "info"
+    msg_type = "success"
     view.submit_button.click()
     view = self.create_view(RequestsView)
     view.flash.assert_no_error()
