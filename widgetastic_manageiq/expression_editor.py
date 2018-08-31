@@ -102,9 +102,12 @@ class ExpressionEditor(View, Pretty):
     ROOT = "//div[@id='exp_editor_div']"
     MAKE_BUTTON = "//span[not(contains(@style,'none'))]//img[@alt='{}']"
     ATOM_ROOT = "./div[@id='exp_atom_editor_div']"
-    EXPRESSIONS_ROOT = VersionPick(
-        {Version.lowest(): "./fieldset/div", "5.10": ".//div[@class='panel-body']"}
-    )
+    # fmt: off
+    EXPRESSIONS_ROOT = VersionPick({
+        Version.lowest(): "./fieldset/div",
+        "5.10": ".//div[@class='panel-body']",
+    })
+    # fmt: on
     EXPRESSION_TEXT = "//a[contains(@id,'exp_')]"
     COMMIT = Button(title="Commit expression element changes")
     DISCARD = Button(title="Discard expression element changes")
