@@ -5,7 +5,6 @@ from itertools import dropwhile
 import fauxfactory
 import pytest
 from widgetastic_patternfly import SelectItemNotFound
-from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common.host_views import HostsView
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -198,7 +197,7 @@ def test_quick_search_without_host_filter(host_collection, request, hosts, hosts
     request.addfinalizer(view.entities.search.clear_simple_search)
     view.flash.assert_no_error()
     # Check it is there
-    all_hosts_visible = host_collection.all(infra_provider)
+    all_hosts_visible = view.entities.get_all()
     assert len(all_hosts_visible) == 1 and median_host in [host.name for host in all_hosts_visible]
 
 
@@ -214,7 +213,7 @@ def test_quick_search_with_host_filter(host_collection, request, hosts, hosts_wi
     view.entities.search.simple_search(median_host)
     view.flash.assert_no_error()
     # Check it is there
-    all_hosts_visible = host_collection.all(infra_provider)
+    all_hosts_visible = view.entities.get_all()
     assert len(all_hosts_visible) == 1 and median_host in [host.name for host in all_hosts_visible]
 
 
