@@ -51,6 +51,7 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
     pretty_attrs = ['name', 'hostname', 'ip_address', 'custom_ident']
 
     name = attr.ib()
+    ems_ref = attr.ib(default=None)
     provider = attr.ib(default=None)
     hostname = attr.ib(default=None)
     ip_address = attr.ib(default=None)
@@ -302,7 +303,7 @@ class PhysicalServerCollection(BaseCollection):
         ems_table = self.appliance.db.client['ext_management_systems']
         physical_server_query = (
             self.appliance.db.client.session
-                .query(physical_server_table.name, ems_table.name)
+                .query(physical_server_table.name, physical_server_table.ems_ref, ems_table.name)
                 .join(ems_table, physical_server_table.ems_id == ems_table.id))
         provider = None
 
@@ -310,8 +311,8 @@ class PhysicalServerCollection(BaseCollection):
             provider = self.filters.get('provider')
             physical_server_query = physical_server_query.filter(ems_table.name == provider.name)
         physical_servers = []
-        for name, ems_name in physical_server_query.all():
-            physical_servers.append(self.instantiate(name=name,
+        for name, ems_ref, ems_name in physical_server_query.all():
+            physical_servers.append(self.instantiate(name=name, ems_ref=ems_ref,
                                     provider=provider or get_crud_by_name(ems_name)))
         return physical_servers
 
