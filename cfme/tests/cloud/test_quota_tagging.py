@@ -149,7 +149,7 @@ def test_quota_tagging_cloud_via_lifecycle(request, appliance, provider, prov_da
     recursive_update(prov_data, {
         'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
     prov_data.update({'template_name': template_name})
-    appliance.collections.cloud_instances.create(vm_name, provider, prov_data)
+    appliance.collections.cloud_instances.create(vm_name, provider, prov_data, override=True)
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
     provision_request = appliance.collections.requests.instantiate(request_description)
