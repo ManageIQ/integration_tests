@@ -519,8 +519,10 @@ def test_azure_instance_password_requirements(appliance, request,
                "abcdefgh_1A"):
         view.form.customize.fill({"root_password": pw})
         view.form.submit_button.click()
-        wait_for(lambda: message in (m.text for m in view.flash.messages),
+        wait_for(lambda: message in (m.read() for m in view.flash.messages),
                  fail_condition=False, num_sec=10, delay=.1)
+        for m in view.flash.messages:
+            m.dismiss()
 
 
 @pytest.mark.tier(3)
