@@ -118,7 +118,7 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
         wait_for(verify_vm_uptime, [appliance, provider, vmname], timeout=3610,
            delay=10, message='Waiting for VM to be up for at least one hour')
     else:
-        wait_for(verify_records_rollups_table, [appliance, provider], timeout=3600,
+        wait_for(verify_records_rollups_table, [appliance, provider], timeout=4000,
             delay=10, message='Waiting for hourly rollups')
 
     result = appliance.ssh_client.run_rails_command(
