@@ -15,6 +15,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
@@ -115,7 +116,7 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
 def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     """ Tests change RAM and CPU in provisioning dialog.
 
-    Prerequisities:
+    Prerequisites:
         * A provider set up, supporting provisioning in CFME
 
     Steps:
@@ -166,7 +167,7 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
 def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_name):
     """ Tests disk format selection in provisioning dialog.
 
-    Prerequisities:
+    Prerequisites:
         * A provider set up, supporting provisioning in CFME
 
     Steps:
@@ -206,7 +207,7 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
 def test_power_on_or_off_after_provision(provisioner, prov_data, provider, started, vm_name):
     """ Tests setting the desired power state after provisioning.
 
-    Prerequisities:
+    Prerequisites:
         * A provider set up, supporting provisioning in CFME
 
     Steps:
@@ -236,7 +237,7 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
 def test_tag(provisioner, prov_data, provider, vm_name):
     """ Tests tagging VMs using provisioning dialogs.
 
-    Prerequisities:
+    Prerequisites:
         * A provider set up, supporting provisioning in CFME
 
     Steps:
@@ -267,7 +268,7 @@ def test_tag(provisioner, prov_data, provider, vm_name):
 def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
     """ Tests provision scheduling.
 
-    Prerequisities:
+    Prerequisites:
         * A provider set up, supporting provisioning in CFME
 
     Steps:
@@ -308,7 +309,7 @@ def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, v
     """ Tests provision VM with other than specific vnic profile selected - <No Profile>
         and <Use template nics>.
 
-    Prerequisities:
+    Prerequisites:
         * A provider set up, supporting provisioning in CFME
 
     Steps:
@@ -317,6 +318,7 @@ def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, v
           to values <No Profile>/<Use template nics>
         * Submit the provisioning request, it should provision the vm successfully.
         * Check NIC configuration of provisioned VM
+
     Metadata:
         test_flag: provision
     """
@@ -339,3 +341,32 @@ def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, v
         # Check the vNIC network profile
         profile = nics[0].vnic_profile
         assert not profile, 'The vNIC profile should be empty.'
+
+
+@pytest.mark.rhv2
+@pytest.mark.meta(blockers=[BZ(1625139, forced_streams=['5.9', '5.10'])])
+@pytest.mark.provider([RHEVMProvider],
+                      required_fields=[['provisioning', 'template_2_nics']],
+                      override=True)
+def test_provision_vm_with_2_nics(provisioner, provisioning, prov_data, vm_name):
+    """ Tests provision VM from a template configured with 2 NICs.
+
+    Prerequisites:
+        * A provider set up, supporting provisioning in CFME, template with 2 NICs
+
+    Steps:
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, select template with 2 NICs.
+        * Submit the provisioning request, it should provision the vm successfully.
+        * Check NIC configuration of provisioned VM - it should have 2 NICs attached.
+
+    Metadata:
+        test_flag: provision
+    """
+    template_name = provisioning.get('template_2_nics', None)
+    prov_data['catalog']['vm_name'] = vm_name
+
+    vm = provisioner(template_name, prov_data)
+
+    nics = vm.mgmt.get_nics()
+    assert len(nics) == 2, 'The VM should have 2 NICs attached.'
