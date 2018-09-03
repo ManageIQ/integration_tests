@@ -95,7 +95,14 @@ def pytest_exception_interact(node, call, report):
     # an isinstance(val, WebDriverException) check in addition to the browser fixture check that
     # exists here in commit 825ef50fd84a060b58d7e4dc316303a8b61b35d2
     appliance = find_appliance(node)
-    driver = appliance.browser.widgetastic.selenium
+    try:
+        browser = appliance.browser
+    except AttributeError as e:
+        import warnings
+        warnings.warn(str(e))
+        return
+    else:
+        driver = browser.widgetastic.selenium
     screenshot = take_screenshot(driver)
     template_data['screenshot'] = screenshot.png
     template_data['screenshot_error'] = screenshot.error

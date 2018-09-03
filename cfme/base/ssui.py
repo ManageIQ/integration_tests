@@ -11,7 +11,6 @@ from cfme.utils import conf
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ssui import navigator, SSUINavigateStep, navigate_to
-from cfme.utils.browser import ensure_browser_open, quit
 from cfme.utils.log import logger
 from widgetastic_manageiq import SSUIVerticalNavigation
 from . import Server
@@ -125,7 +124,6 @@ LOGIN_METHODS = ['click_on_login', 'press_enter_after_password']
 @MiqImplementationContext.external_for(Server.login, ViaSSUI)
 def login(self, user=None, method=LOGIN_METHODS[-1]):
     if not user:
-        from cfme.configure.access_control import User
         username = conf.credentials['default']['username']
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)
@@ -180,12 +178,14 @@ class LoginScreen(SSUINavigateStep):
     VIEW = LoginPage
 
     def prerequisite(self):
-        ensure_browser_open(self.obj.appliance.server.address())
+        # ensure_browser_open(self.obj.appliance.server.address())
+        pass  # TODO - wtf
 
     def step(self):
         # Can be either blank or logged in
         del self.view  # In order to unbind the browser
-        quit()
-        ensure_browser_open(self.obj.appliance.server.address())
+        # TODO - wtf
+        # quit()
+        # ensure_browser_open(self.obj.appliance.server.address())
         if not self.view.is_displayed:
             raise Exception('Could not open the login screen')
