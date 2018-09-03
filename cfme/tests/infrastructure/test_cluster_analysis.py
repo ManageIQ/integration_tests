@@ -5,25 +5,25 @@ from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
+
 
 pytestmark = [
+    pytest.mark.tier(2),
     test_requirements.smartstate,
-    pytest.mark.provider([InfraProvider], required_fields=[['remove_test', 'cluster']],
-                         scope="module")
+    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE),
 ]
 
 
-def test_run_cluster_analysis(setup_provider, provider, appliance):
+def test_run_cluster_analysis(appliance, provider):
     """Tests smarthost analysis
 
     Metadata:
         test_flag: cluster_analysis
     """
-    cluster_name = provider.data.remove_test.cluster
-    if cluster_name in 'Cluster in Datacenter' and appliance.version < '5.9':
-        cluster_name = 'Cluster in Datacenter'
-    cluster_col = appliance.collections.clusters
-    test_cluster = cluster_col.instantiate(name=cluster_name, provider=provider)
+    cluster_coll = appliance.collections.clusters.filter({'provider': provider})
+    test_cluster = cluster_coll.all()[0]
     test_cluster.wait_for_exists()
 
     # Initiate analysis
