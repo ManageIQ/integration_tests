@@ -1,5 +1,4 @@
 """Core functionality for starting, restarting, and stopping a selenium browser."""
-import atexit
 from collections import namedtuple
 
 from selenium.common.exceptions import WebDriverException
