@@ -137,26 +137,6 @@ def test_no_template_catalog_item(provider, provisioning, dialog, catalog, appli
 
 @pytest.mark.rhv3
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1609297, forced_streams=['5.9', '5.10'])])
-def test_edit_catalog_after_deleting_provider(provider, catalog_item):
-    """Tests edit catalog item after deleting provider
-    Metadata:
-        test_flag: provision
-    """
-    provider.delete(cancel=False)
-    changes = {'basic_info.description': 'my edited description'}
-    if provider.appliance.version > '5.9.0.20' and provider.one_of(RHEVMProvider):
-        with pytest.raises(AssertionError):
-            catalog_item.update(changes)
-        view = provider.create_view(EditCatalogItemView)
-        view.flash.assert_message("'Environment/Cluster Name' is required", t='error')
-        view.flash.assert_message("'Network/Virtual NIC Profile ID' is required", t='error')
-    else:
-        catalog_item.update(changes)
-
-
-@pytest.mark.rhv3
-@pytest.mark.tier(3)
 def test_request_with_orphaned_template(appliance, provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
