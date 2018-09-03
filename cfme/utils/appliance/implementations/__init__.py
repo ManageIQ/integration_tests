@@ -1,6 +1,6 @@
 from cfme.utils.log import logger
 from cfme.utils import conf
-from webdriver_kaifuki import BrowserManager
+from webdriver_kaifuku import BrowserManager
 
 
 class Implementation(object):
