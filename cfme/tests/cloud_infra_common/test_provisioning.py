@@ -477,7 +477,7 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
                 provider.mgmt.delete_volume(volume_id)
 
 
-def test_provision_with_tag(appliance, vm_name, tag, provider):
+def test_provision_with_tag(appliance, vm_name, tag, provider, request):
     """ Tests tagging instance using provisioning dialogs.
 
     Steps:
@@ -494,6 +494,7 @@ def test_provision_with_tag(appliance, vm_name, tag, provider):
             ['{} *'.format(tag.category.display_name), tag.display_name])}}
     collection = appliance.provider_based_collection(provider)
     instance = collection.create(vm_name, provider, form_values=inst_args)
+    request.addfinalizer(instance.cleanup_on_provider)
     tags = instance.get_tags()
     assert any(
         instance_tag.category.display_name == tag.category.display_name and
