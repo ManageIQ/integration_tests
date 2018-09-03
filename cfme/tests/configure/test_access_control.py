@@ -3,13 +3,14 @@ import traceback
 
 import fauxfactory
 import pytest
+from widgetastic.exceptions import NoSuchElementException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider import base_types
 from cfme.configure.access_control import AddUserView
 from cfme.configure.tasks import TasksView
-from cfme.exceptions import RBACOperationBlocked, CFMEException
+from cfme.exceptions import RBACOperationBlocked
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.services.myservice import MyService
@@ -1100,7 +1101,6 @@ def test_tenant_quota_input_validate(appliance):
 def test_delete_default_tenant(appliance):
     """
     Steps:
-
     1. Login as an 'Administrator' user
     2. Navigate to configuration > access control > tenants
     3. Select default tenant('My Company') from tenants table
@@ -1108,14 +1108,12 @@ def test_delete_default_tenant(appliance):
     5. Check whether default tenant is deleted or not
     """
     roottenant = appliance.collections.tenants.get_root_tenant()
-    view = navigate_to(appliance.collections.tenants, 'All')
     try:
-        for row in view.table.rows():
-            if row.name.text == roottenant.name:
-                row[0].check()
         msg = 'Default Tenant "{}" can not be deleted'.format(roottenant.name)
-        view.toolbar.configuration.item_select('Delete selected items', handle_alert=True)
-    except CFMEException:
+        tenant = appliance.collections.tenants.instantiate(name=roottenant.name)
+        tenant_obj = appliance.collections.tenants
+        tenant_obj.delete(tenant)
+    except NoSuchElementException:
         raise RBACOperationBlocked(match=msg)
 
 
