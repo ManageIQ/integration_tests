@@ -88,3 +88,9 @@ conf/README
 
 # custom imports
 conf/miq_python_startup.py
+
+#geckodriver logs
+geckodriver.log
+
+#vscode workspace config
+.vscode/
