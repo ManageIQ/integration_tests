@@ -18,15 +18,18 @@ from cfme.utils.browser import take_screenshot as take_browser_screenshot
 from cfme.utils.log import logger
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.fixtures.pytest_store import store
+from cfme.utils.appliance import find_appliance
 
 
 @pytest.fixture(scope="function")
 def take_screenshot(request):
     item = request.node
+    appliance = find_appliance(item)
+    driver = appliance.browser.webdriver
 
     def _take_screenshot(name):
         logger.info("Taking a screenshot named {}".format(name))
-        ss, ss_error = take_browser_screenshot()
+        ss, ss_error = take_browser_screenshot(driver)
         g_id = fauxfactory.gen_alpha(length=6)
         if ss:
             fire_art_test_hook(

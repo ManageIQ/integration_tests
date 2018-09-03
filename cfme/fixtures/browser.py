@@ -1,11 +1,9 @@
-import pytest
 from py.error import ENOENT
 import base64
 import six
 from six.moves.urllib_error import URLError
 
-import cfme.utils.browser
-from cfme.utils import browser as browser_module, safe_string
+from cfme.utils import safe_string
 from cfme.utils.browser import take_screenshot
 from cfme.utils.datafile import template_env
 from cfme.utils.log import logger
@@ -31,7 +29,7 @@ def pytest_runtest_setup(item):
         return
 
     if set(getattr(item, 'fixturenames', [])) & browser_fixtures:
-        cfme.utils.browser.ensure_browser_open()
+        appliance.browser.open_browser()
 
 
 def pytest_exception_interact(node, call, report):
@@ -96,8 +94,9 @@ def pytest_exception_interact(node, call, report):
     # screenshots. If removing that conditional now makes this too broad, we should consider
     # an isinstance(val, WebDriverException) check in addition to the browser fixture check that
     # exists here in commit 825ef50fd84a060b58d7e4dc316303a8b61b35d2
-
-    screenshot = take_screenshot()
+    appliance = find_appliance(node)
+    driver = appliance.browser.widgetastic.selenium
+    screenshot = take_screenshot(driver)
     template_data['screenshot'] = screenshot.png
     template_data['screenshot_error'] = screenshot.error
     if screenshot.png:
@@ -134,11 +133,3 @@ def pytest_sessionfinish(session, exitstatus):
     if failed_test_tracking['tests']:
         failed_tests_report = failed_tests_template.render(**failed_test_tracking)
         outfile.write(failed_tests_report)
-
-
-@pytest.fixture(scope='session')
-def browser(appliance):
-    from cfme.utils.appliance import DummyAppliance
-    if isinstance(appliance, DummyAppliance):
-        pytest.xfail("browser not supported with DummyAppliance")
-    return browser_module.browser

@@ -1,5 +1,6 @@
-from cfme.utils.browser import manager
 from cfme.utils.log import logger
+from cfme.utils import conf
+from webdriver_kaifuki import BrowserManager
 
 
 class Implementation(object):
@@ -9,6 +10,7 @@ class Implementation(object):
 
     def __init__(self, owner):
         self.owner = owner
+        self.manager = BrowserManager.from_conf(conf.env.get('browser', {}))
 
     @property
     def appliance(self):
@@ -17,16 +19,14 @@ class Implementation(object):
     def __str__(self):
         return 'ViaUI'
 
-    def open_browser(self, url_key=None):
+    def open_browser(self):
         # TODO: self.appliance.server.address() instead of None
-        return manager.ensure_open(url_key)
+        browser = self.manager.ensure_open()
+        browser.get(self.appliance.server.address())
 
     def quit_browser(self):
-        manager.quit()
-        try:
-            del self.widgetastic
-        except AttributeError:
-            pass
+        self.manager.quit()
+        self._reset_cache()
 
     def _reset_cache(self):
         try:

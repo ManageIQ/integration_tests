@@ -4,7 +4,6 @@ import time
 import pytest
 
 from cfme.utils.blockers import BZ
-from cfme.utils.browser import ensure_browser_open, quit
 from cfme.utils.wait import wait_for
 
 
@@ -17,8 +16,8 @@ def test_session_timeout(request, appliance):
 
     @request.addfinalizer  # Wow, why we did not figure this out before?!
     def _finalize():
-        quit()
-        ensure_browser_open()
+        appliance.browser.browser_quit()
+        appliance.browser.browser_open()
         auth_settings.set_session_timeout(hours="24", minutes="0")
 
     auth_settings.set_session_timeout(hours="0", minutes="5")

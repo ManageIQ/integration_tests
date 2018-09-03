@@ -9,7 +9,6 @@ from selenium.common.exceptions import NoSuchElementException
 from widgetastic.browser import Browser, DefaultPlugin
 
 from cfme import exceptions
-from cfme.utils.browser import manager
 from cfme.utils.log import logger, create_sublogger
 from cfme.utils.wait import wait_for
 from cfme.fixtures.pytest_store import store
@@ -198,7 +197,7 @@ class ViaSSUI(Implementation):
     def widgetastic(self):
         """This gives us a widgetastic browser."""
         # TODO: Make this a property that could watch for browser change?
-        browser = self.open_browser(url_key=self.appliance.server.address())
+        browser = self.open_browser()
         wt = MiqSSUIBrowser(browser, self)
-        manager.add_cleanup(self._reset_cache)
+        self.manager.add_cleanup(self._reset_cache)
         return wt

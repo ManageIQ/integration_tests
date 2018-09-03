@@ -95,13 +95,11 @@ import traceback
 import pytest
 
 from cfme.utils import conf, testgen
-from cfme.utils.appliance import current_appliance
-from cfme.utils.browser import browser, ensure_browser_open
-from cfme.utils.browser import take_screenshot
+from cfme.utils.appliance import find_appliance
 from cfme.utils.log import logger
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.fixtures.pytest_store import store
-
+from cfme.utils.browser import take_screenshot
 enable_rbac = False
 
 
@@ -136,19 +134,17 @@ def save_screenshot(node, ss, sse):
             slaveid=store.slaveid)
 
 
-def really_logout():
+def really_logout(appliance):
     """A convenience function logging out
 
     This function simply ensures that we are logged out and that a new browser is loaded
     ready for use.
     """
     try:
-        current_appliance.server.logout()
+        appliance.server.logout()
     except AttributeError:
-        try:
-            browser().quit()
-        except AttributeError:
-            ensure_browser_open()
+        appliance.browser.quit_browser()
+        appliance.browser.open_browser()
 
 
 @pytest.mark.hookwrapper
@@ -168,9 +164,10 @@ def pytest_pyfunc_call(pyfuncitem):
     # Login as the "new" user to run the test under
     if 'rbac_role' in pyfuncitem.fixturenames:
         user = pyfuncitem._request.getfuncargvalue('rbac_role')
-        really_logout()
+        appliance = find_appliance(pyfuncitem)
+        really_logout(appliance)
         logger.info("setting user to {}".format(user))
-        user_obj = current_appliance.collections.users.instantiate(
+        user_obj = find_appliance(pyfuncitem).collections.users.instantiate(
             username=conf.credentials[user]['username'],
             password=conf.credentials[user]['password']
         )
@@ -179,7 +176,7 @@ def pytest_pyfunc_call(pyfuncitem):
         with user_obj:
             outcome = yield
 
-            screenshot, screenshot_error = take_screenshot()
+            screenshot, screenshot_error = take_screenshot(appliance.browser.widgettastic.selenium)
 
         # Handle the Exception
         logger.error(pyfuncitem.location[0])

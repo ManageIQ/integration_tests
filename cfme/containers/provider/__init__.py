@@ -24,7 +24,6 @@ from cfme.common.provider_views import (
     ProviderToolBar)
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.browser import browser
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
@@ -101,14 +100,14 @@ class LoggingableView(View):
         def report_kibana_failure():
             raise RuntimeError("Kibana not found in the window title or content")
 
-        browser_instance = browser()
+        driver = self.browser.selenium
 
-        all_windows_before = browser_instance.window_handles
-        appliance_window = browser_instance.current_window_handle
+        all_windows_before = driver.window_handles
+        appliance_window = driver.current_window_handle
 
         self.monitor.item_select('External Logging')
 
-        all_windows_after = browser_instance.window_handles
+        all_windows_after = driver.window_handles
 
         new_windows = set(all_windows_after) - set(all_windows_before)
 
@@ -116,17 +115,17 @@ class LoggingableView(View):
             raise RuntimeError("No logging window was open!")
 
         logging_window = new_windows.pop()
-        browser_instance.switch_to_window(logging_window)
+        driver.switch_to_window(logging_window)
 
-        logging_url = browser_instance.current_url
+        logging_url = driver.current_url
 
         wait_for(lambda: "kibana" in
-                         browser_instance.title.lower() + " " +
-                         browser_instance.page_source.lower(),
+                         driver.title.lower() + " " +
+                         driver.page_source.lower(),
                  fail_func=report_kibana_failure, num_sec=60, delay=5)
 
-        browser_instance.close()
-        browser_instance.switch_to_window(appliance_window)
+        driver.close()
+        driver.switch_to_window(appliance_window)
 
         return logging_url
 

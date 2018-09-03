@@ -20,7 +20,6 @@ from widgetastic_patternfly import Input
 
 from cfme import exceptions
 from cfme.fixtures.pytest_store import store
-from cfme.utils.browser import manager
 from cfme.utils.log import logger, create_sublogger
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
@@ -351,7 +350,7 @@ class CFMENavigateStep(NavigateStep):
             sleep(10)   # Give it some rest
             self.appliance.wait_for_web_ui()
             self.appliance.browser.quit_browser()
-            self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
+            self.appliance.browser.open_browser()
             self.go(_tries, *args, **go_kwargs)
 
         # Same with rails errors
@@ -386,7 +385,7 @@ class CFMENavigateStep(NavigateStep):
         #     self.view.flush_widget_cache()
         go_kwargs = kwargs.copy()
         go_kwargs.update(nav_args)
-        self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
+        self.appliance.browser.open_browser()
 
         br = self.appliance.browser
 
@@ -470,7 +469,7 @@ class CFMENavigateStep(NavigateStep):
                 logger.exception("Rails exception before force navigate started!: %r:%r at %r",
                     br.widgetastic.text("//body/div[@class='dialog']/h1"),
                     br.widgetastic.text("//body/div[@class='dialog']/p"),
-                    getattr(manager.browser, 'current_url', "error://dead-browser")
+                    getattr(self.manager.browser, 'current_url', "error://dead-browser")
                 )
                 recycle = True
             elif br.widgetastic.elements("//ul[@id='maintab']/li[@class='inactive']") and not\
@@ -597,7 +596,7 @@ class ViaUI(Implementation):
     @cached_property
     def widgetastic(self):
         """This gives us a widgetastic browser."""
-        browser = self.open_browser(url_key=self.appliance.server.address())
+        browser = self.open_browser()
         wt = MiqBrowser(browser, self)
-        manager.add_cleanup(self._reset_cache)
+        self.manager.add_cleanup(self._reset_cache)
         return wt

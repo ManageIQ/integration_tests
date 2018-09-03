@@ -3,13 +3,14 @@ import pytest
 import os
 import shutil
 from cfme.utils.wait import wait_for
-from cfme.utils import browser
 
 
 def clean_temp_directory():
     """ Clean the temporary directory.
 
     """
+    pytest.fail("fix this test - we no longer have firefox profiles availiable")
+    browser = None
     for root, dirs, files in os.walk(browser.firefox_profile_tmpdir):
         for f in files:
             os.unlink(os.path.join(root, f))
@@ -18,13 +19,13 @@ def clean_temp_directory():
 
 
 @pytest.fixture
-def needs_firefox():
+def needs_firefox(appliance):
     """ Fixture which skips the test if not run under firefox.
 
     I recommend putting it in the first place.
     """
-    browser.ensure_browser_open()
-    if browser.browser().name != "firefox":
+    browser = appliance.browser.open_browser()
+    if browser.name != "firefox":
         pytest.skip(msg="This test needs firefox to run")
 
 
@@ -46,6 +47,9 @@ def test_download_report_firefox(needs_firefox, infra_provider, report, filetype
     extension = "." + filetype
     clean_temp_directory()
     report.download(filetype)
+
+    browser = None
+
     wait_for(lambda: any([file.endswith(extension) for file in os.listdir(
         browser.firefox_profile_tmpdir)]), num_sec=60.0)
     clean_temp_directory()
