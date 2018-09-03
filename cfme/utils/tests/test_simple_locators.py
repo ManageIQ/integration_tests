@@ -1,12 +1,15 @@
 import pytest
 from cfme.fixtures.soft_assert import base64_from_text
-from cfme.utils.appliance.implementations.ui import ViaUI
 
 
 @pytest.fixture
 def browser(appliance):
     # account for dummy
-    return getattr(appliance, "browser", None) or ViaUI(appliance)
+    browser = getattr(appliance, "browser", None)
+    if browser is None:
+        pytest.xfail(
+            "cant work without real appliance for now\n"
+            "browser creation needs a little tweaking")
 
 
 @pytest.fixture()
