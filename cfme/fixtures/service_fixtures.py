@@ -47,7 +47,7 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
         catalog_name = template
         provisioning_data = {
             'catalog': {'catalog_name': {'name': catalog_name, 'provider': provider.name},
-                        'vm_name': random_vm_name('serv-fixt'),
+                        'vm_name': random_vm_name('serv'),
                         'provision_type': provision_type},
             'environment': {'host_name': {'name': host},
                             'datastore_name': {'name': datastore}},
@@ -57,7 +57,7 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
         catalog_name = provisioning['image']['name']
         provisioning_data = {
             'catalog': {'catalog_name': {'name': catalog_name, 'provider': provider.name},
-                        'vm_name': random_vm_name('serv-fixt')},
+                        'vm_name': random_vm_name('serv')},
             'properties': {'instance_type': partial_match(provisioning.get('instance_type', None)),
                            'guest_keypair': provisioning.get('guest_keypair', None)},
         }
