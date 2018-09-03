@@ -80,6 +80,7 @@ six>=1.9
 
 debtcollector
 
+webdriver_kaifuku
 # requirements for prt-bot interaction via RabbitMQ
 pika
 
