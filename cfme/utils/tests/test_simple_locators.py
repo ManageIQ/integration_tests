@@ -1,18 +1,25 @@
 import pytest
 from cfme.fixtures.soft_assert import base64_from_text
+from cfme.utils.appliance.implementations.ui import ViaUI
 
 
-@pytest.fixture(scope='module')
-def test_page(datafile, appliance):
-    selenium = appliance.browser.widgetastic.selenium
+@pytest.fixture
+def browser(appliance):
+    # account for dummy
+    return getattr(appliance, "browser", None) or ViaUI(appliance)
+
+
+@pytest.fixture()
+def test_page(datafile, browser):
+    selenium = browser.widgetastic.selenium
     test_page_html = datafile('/utils/test_simple_locators/elements.html').read()
     selenium.get('data:text/html;base64,{}'.format(
         base64_from_text(test_page_html).decode('ascii')))
 
 
 @pytest.fixture(scope='function')
-def assert_len(appliance):
-    sel = appliance.browser.widgetastic.selenium
+def assert_len(browser):
+    sel = browser.widgetastic.selenium
 
     def f(locator, required_len):
         elements_count = 0
