@@ -230,8 +230,7 @@ class DeploymentRoleCollection(BaseCollection):
     # need for the provider arg here will go as it will become a filter
     def all(self):
         view = navigate_to(self, 'All')
-        roles = [self.instantiate(name=item.name)
-                 for item in view.entities.get_all()]
+        roles = [self.instantiate(name=item) for item in view.entities.entity_names]
         return roles
 
     def delete(self, *roles):
@@ -272,6 +271,9 @@ class All(CFMENavigateStep):
             nav_select('Deployment Roles')
         except NoSuchElementException:
             nav_select('Clusters / Deployment Roles')
+
+    def resetter(self):
+        self.view.toolbar.view_selector.select("List View")
 
 
 @navigator.register(DeploymentRoles, 'Details')
