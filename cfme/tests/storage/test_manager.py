@@ -11,35 +11,32 @@ pytestmark = [
     pytest.mark.tier(3),
     test_requirements.storage,
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([OpenStackProvider], scope='module')
+    pytest.mark.provider([OpenStackProvider], scope='function')
 ]
 
 
 MANAGER_TYPE = ['Swift Manager', 'Cinder Manager']
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def provider_cleanup(provider):
     yield
-    provider.delete_rest()
-    provider.wait_for_delete()
+    if provider.exists:
+        provider.delete_rest()
+        provider.wait_for_delete()
 
 
-@pytest.fixture(params=MANAGER_TYPE,
-                      ids=['object_manager', 'block_manager'])
-def collection_manager(request, openstack_provider, appliance):
+@pytest.fixture(params=MANAGER_TYPE, ids=['object_manager', 'block_manager'])
+def manager(request, openstack_provider, appliance):
     if request.param == 'Swift Manager':
-        collection = appliance.collections.object_managers
+        collection = appliance.collections.object_managers.filter({"provider": openstack_provider})
     else:
-        collection = appliance.collections.block_managers
-    manager_name = '{0} {1}'.format(openstack_provider.name, request.param)
-    manager = collection.instantiate(name=manager_name, provider=openstack_provider)
-    yield collection, manager
+        collection = appliance.collections.block_managers.filter({"provider": openstack_provider})
+    yield collection.all()[0]
 
 
-def test_manager_navigation(collection_manager):
-    collection, manager = collection_manager
-    view = navigate_to(collection, 'All')
+def test_manager_navigation(manager):
+    view = navigate_to(manager.parent, 'All')
     assert view.is_displayed
 
     view = navigate_to(manager, 'Details')
@@ -48,7 +45,7 @@ def test_manager_navigation(collection_manager):
     manager.refresh()
 
 
-def test_storage_manager_edit_tag(collection_manager):
+def test_storage_manager_edit_tag(manager):
     """ Test add and remove tag to storage manager
 
     prerequisites:
@@ -59,7 +56,6 @@ def test_storage_manager_edit_tag(collection_manager):
         * Remove tag and check
     """
 
-    manager = collection_manager[1]
     # add tag with category Department and tag communication
     added_tag = manager.add_tag()
     tag_available = manager.get_tags()
@@ -72,7 +68,7 @@ def test_storage_manager_edit_tag(collection_manager):
     assert not tag_available
 
 
-def test_storage_manager_delete(collection_manager, provider_cleanup):
+def test_storage_manager_delete(manager, provider_cleanup):
     """ Test delete storage manager
 
     prerequisites:
@@ -83,9 +79,10 @@ def test_storage_manager_delete(collection_manager, provider_cleanup):
         * Assert flash message
         * Check storage manager exists or not
     """
-    manager = collection_manager[1]
     manager.delete()
     view = manager.create_view(StorageManagerDetailsView)
     view.flash.assert_success_message(
         'Delete initiated for 1 Storage Manager from the CFME Database')
     assert not manager.exists
+    # BZ-1613420
+    manager.provider.delete(cancel=False)
