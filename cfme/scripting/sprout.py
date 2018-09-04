@@ -16,6 +16,7 @@ import sys
 import time
 import yaml
 
+from cfme.test_framework.sprout.client import AuthException
 from cfme.test_framework.sprout.plugin import SproutManager, SproutProvisioningRequest
 from cfme.utils.path import conf_path
 
@@ -46,9 +47,12 @@ def main():
 @click.option('--template-type', 'template_type', default=None, help='A template type')
 @click.option('--preconfigured/--notconfigured', default=True,
               help='Whether the appliance is configured')
+@click.option('--user-key', 'sprout_user_key', default=None,
+              help='Key for sprout user in credentials yaml, '
+                   'alternatively set SPROUT_USER and SPROUT_PASSWORD env vars')
 def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
              override_ram, override_cpu, populate_yaml, provider, provider_type, template_type,
-             preconfigured):
+             preconfigured, sprout_user_key):
     """checks out a sprout provisioning request, and returns it on exit"""
     override_cpu = override_cpu or None
     override_ram = override_ram or None
@@ -58,7 +62,7 @@ def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
                                    provider_type=provider_type, template_type=template_type,
                                    preconfigured=preconfigured)
     print(sr)
-    sm = SproutManager()
+    sm = SproutManager(sprout_user_key=sprout_user_key)
 
     def exit_gracefully(signum, frame):
         sm.destroy_pool()
@@ -84,8 +88,11 @@ def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
     except KeyboardInterrupt:
         try:
             sm.destroy_pool()
-        except:
+        except Exception:
             print("Error in pool destroy")
+
+    except AuthException:
+        print('\nERROR: Sprout client unauthenticated, please provide env vars or --user-key')
 
 
 def populate_config_from_appliances(appliance_data):
