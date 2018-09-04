@@ -215,7 +215,7 @@ class DockerBot(object):
             if not metadata:
                 return {}
             else:
-                ydata = yaml.safe_load(metadata[0])
+                ydata = yaml.safe_load(metadata[0].replace('py.test', 'pytest'))
                 return ydata
 
     def find_files_by_pr(self, pr=None):
@@ -384,7 +384,11 @@ class DockerBot(object):
     def create_pytest_command(self):
         if self.args['auto_gen_test'] and self.args['pr']:
             self.pr_metadata = self.get_pr_metadata(self.args['pr'])
-            pytest = self.pr_metadata.get('pytest', None)
+            try:
+                pytest = self.pr_metadata.get('pytest', None)
+            except AttributeError as e:
+                raise ValueError('malformed prt command: {}\nmetadata: {}'.format(e,
+                                                                                  self.pr_metadata))
             sprout_appliances = self.pr_metadata.get('sprouts', 1)
             if pytest:
                 self.args['pytest'] = "py.test {}".format(pytest)
@@ -563,7 +567,7 @@ if __name__ == "__main__":
                       help='The base branch name',
                       default='master')
     repo.add_argument('--pr',
-                      help='A PR Number (overides --branch)',
+                      help='A PR Number (overrides --branch)',
                       default=None)
     repo.add_argument('--cfme-repo',
                       help='The cfme repo',
