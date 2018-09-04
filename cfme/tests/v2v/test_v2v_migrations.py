@@ -143,7 +143,7 @@ def test_conversion_host_tags(appliance, v2v_providers):
             display_name='V2V - Transformation Method')
             .collections.tags.instantiate(display_name='VDDK'))
 
-    host = v2v_providers[1].hosts[0]
+    host = v2v_providers[1].hosts.all()[0]
     # Remove any prior tags
     host.remove_tags(host.get_tags())
 
