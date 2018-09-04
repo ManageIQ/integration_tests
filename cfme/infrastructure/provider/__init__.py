@@ -192,6 +192,22 @@ class InfraProvider(BaseProvider, CloudInfraProviderMixin, Pretty, Fillable,
         for host in self.hosts.all():
             host.remove_credentials_rest()
 
+    def delete(self, cancel=True):
+        """
+        Deletes an infra provider from CFME using UI
+
+        Args:
+            cancel: Whether to cancel the deletion, defaults to True
+        """
+        view = navigate_to(self, 'Details')
+        item_title = 'Remove this Infrastructure Provider'
+        view.toolbar.configuration.item_select(item_title.format(self.string_name),
+                                               handle_alert=not cancel)
+        if not cancel:
+            msg = ('Delete initiated for 1 {} Provider from '
+                   'the {} Database'.format(self.string_name, self.appliance.product_name))
+            view.flash.assert_success_message(msg)
+
 
 # todo: update all docstrings
 @attr.s
