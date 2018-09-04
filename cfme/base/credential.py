@@ -94,7 +94,7 @@ class Credential(Pretty, Updateable, FromConfigMixin):
         return {
             'username': self.principal,
             'password': self.secret,
-            'confirm_password': None
+            'confirm_password': self.verify_secret
         }
 
     def __eq__(self, other):
