@@ -4,19 +4,23 @@ from functools import partial
 import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import ParametrizedView, View, Text
+from widgetastic.widget import Text, View
 from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, BaseListEntity, BaseQuadIconEntity, BaseTileIconEntity,
-    BootstrapSelect, CompareToolBarActionsView, ItemsToolBarViewSelector, JSBaseEntity,
-    NonJSBaseEntity, SummaryTable, Table)
-from widgetastic_patternfly import (
-    BreadCrumb, BootstrapNav, Button, Dropdown)
+    Accordion,
+    BaseEntitiesView,
+    BootstrapSelect,
+    CompareToolBarActionsView,
+    ItemsToolBarViewSelector,
+    SummaryTable,
+    Table,
+)
+from widgetastic_patternfly import BootstrapNav, BreadCrumb, Button, Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import PolicyProfileAssignable
 from cfme.exceptions import ItemNotFound, RoleNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 
 
 class DeploymentRoleToolbar(View):
@@ -53,32 +57,6 @@ class DeploymentRoleDetailsAccordion(View):
         nav = BootstrapNav('//div[@id="ems_rel"]//ul')
 
 
-class DepRoleQuadIconEntity(BaseQuadIconEntity):
-    @property
-    def data(self):
-        return self.browser.get_attribute("alt", self.QUADRANT.format(pos="a"))
-
-
-class DepRoleTileIconEntity(BaseTileIconEntity):
-    quad_icon = ParametrizedView.nested(DepRoleQuadIconEntity)
-
-
-class DepRoleListEntity(BaseListEntity):
-    pass
-
-
-class NonJSDepRoleEntity(NonJSBaseEntity):
-    quad_entity = DepRoleQuadIconEntity
-    list_entity = DepRoleListEntity
-    tile_entity = DepRoleTileIconEntity
-
-
-class DeploymentRoleEntitiesView(BaseEntitiesView):
-    """The entities on the main list Deployment Role page"""
-
-    entity_class = JSBaseEntity
-
-
 class DeploymentRoleDetailsEntities(View):
     """The entities on the Deployment Role details page"""
     breadcrumb = BreadCrumb()
@@ -110,7 +88,7 @@ class DeploymentRoleView(BaseLoggedInPage):
 class DeploymentRoleAllView(DeploymentRoleView):
     """The all Deployment Role page"""
     toolbar = View.nested(DeploymentRoleToolbar)
-    including_entities = View.include(DeploymentRoleEntitiesView, use_parent=True)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
     @property
     def is_displayed(self):
@@ -126,7 +104,7 @@ class DeploymentRoleAllForProviderView(DeploymentRoleView):
     breadcrumb = BreadCrumb()
     toolbar = View.nested(DeploymentRoleToolbar)
     sidebar = View.nested(DeploymentRoleDetailsAccordion)
-    including_entities = View.include(DeploymentRoleEntitiesView, use_parent=True)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
     @property
     def is_displayed(self):
@@ -230,8 +208,7 @@ class DeploymentRoleCollection(BaseCollection):
     # need for the provider arg here will go as it will become a filter
     def all(self):
         view = navigate_to(self, 'All')
-        roles = [self.instantiate(name=item.name)
-                 for item in view.entities.get_all()]
+        roles = [self.instantiate(name=item) for item in view.entities.entity_names]
         return roles
 
     def delete(self, *roles):
