@@ -222,7 +222,7 @@ def test_datastores_summary(soft_assert, appliance, request):
         row['Free Space'] = extract_num(row['Free Space'])
         row['Total Space'] = extract_num(row['Total Space'])
         row['Number of Hosts'] = int(row['Number of Hosts'])
-        row['Number of VMs'] = int(row['Number of VMs'])
+        row['Number of VMs'] = int(row['Number of VMs'].replace(',', ''))
 
         report_rows_list.append(row)
 
