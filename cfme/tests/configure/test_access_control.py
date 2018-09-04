@@ -1111,8 +1111,7 @@ def test_delete_default_tenant(appliance):
     try:
         msg = 'Default Tenant "{}" can not be deleted'.format(roottenant.name)
         tenant = appliance.collections.tenants.instantiate(name=roottenant.name)
-        tenant_obj = appliance.collections.tenants
-        tenant_obj.delete(tenant)
+        appliance.collections.tenants.delete(tenant)
     except NoSuchElementException:
         raise RBACOperationBlocked(match=msg)
 
