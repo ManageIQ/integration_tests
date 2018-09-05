@@ -1,23 +1,18 @@
-import tempfile
-
 import pytest
 from os import path as os_path
 from wait_for import wait_for
 
 from cfme.base.ui import navigate_to
-from cfme.utils import os
 from cfme.utils.appliance import ApplianceException
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
-from cfme.utils.repo_gen import process_url, build_file
-from cfme.utils.version import get_stream
 
 pytestmark = [pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="rails server")]
 
 
 def pytest_generate_tests(metafunc):
-    if metafunc.function in {test_upgrade_single_inplace, test_db_migrate_replication}:
+    if metafunc.function in {test_db_migrate_replication}:
         return
 
     argnames, argvalues, idlist = ['db_url', 'db_version', 'db_desc'], [], []
@@ -61,23 +56,6 @@ def temp_appliance_global_region(temp_appliance_unconfig_funcscope_rhevm):
     temp_appliance_unconfig_funcscope_rhevm.wait_for_evm_service()
     temp_appliance_unconfig_funcscope_rhevm.wait_for_web_ui()
     return temp_appliance_unconfig_funcscope_rhevm
-
-
-@pytest.fixture(scope="function")
-def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
-    """Reconfigure appliance partitions and adds repo file for upgrade"""
-    update_url = ('update_url_' + ''.join([i for i in get_stream(appliance.version)
-        if i.isdigit()]))
-    temp_appliance_preconfig_funcscope_upgrade.db.extend_partition()
-    urls = process_url(cfme_data['basic_info'][update_url])
-    output = build_file(urls)
-    with tempfile.NamedTemporaryFile('w') as f:
-        f.write(output)
-        f.flush()
-        os.fsync(f.fileno())
-        temp_appliance_preconfig_funcscope_upgrade.ssh_client.put_file(
-            f.name, '/etc/yum.repos.d/update.repo')
-    return temp_appliance_preconfig_funcscope_upgrade
 
 
 @pytest.mark.ignore_stream('5.5', 'upstream')
@@ -186,16 +164,3 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     def is_provider_replicated(app, app2):
         return set(app.managed_provider_names) == set(app2.managed_provider_names)
     wait_for(is_provider_replicated, func_args=[app, app2], timeout=30)
-
-
-def test_upgrade_single_inplace(appliance_preupdate, appliance):
-    """Tests appliance upgrade between streams"""
-    appliance_preupdate.evmserverd.stop()
-    result = appliance_preupdate.ssh_client.run_command('yum update -y', timeout=3600)
-    assert result.success, "update failed {}".format(result.output)
-    appliance_preupdate.db.migrate()
-    appliance_preupdate.db.automate_reset()
-    appliance_preupdate.db.restart_db_service()
-    appliance_preupdate.start_evm_service()
-    appliance_preupdate.wait_for_web_ui()
-    assert appliance.version == appliance_preupdate.version
