@@ -3,8 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.infrastructure.provider import InfraProvider
-from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -175,29 +173,6 @@ def test_button_crud(appliance, dialog, request, buttongroup, obj_type):
     assert button.exists
     button.delete()
     assert not button.exists
-
-
-@pytest.mark.rhv3
-@pytest.mark.provider([InfraProvider], scope='function', selector=ONE)
-@pytest.mark.tier(3)
-def test_button_on_host(appliance, request, provider, setup_provider):
-    """Tests button on host
-
-    Metadata:
-        test_flag: inventory
-    """
-    buttongroup = appliance.collections.button_groups.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
-        type=appliance.collections.button_groups.HOST)
-    request.addfinalizer(buttongroup.delete_if_exists)
-    button = buttongroup.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
-        system="Request", request="InspectMe")
-    request.addfinalizer(button.delete_if_exists)
-    host = provider.hosts.all()[0]
-    host.execute_button(buttongroup.hover, button.text, handle_alert=None)
 
 
 @pytest.mark.meta(blockers=[BZ(1460774, forced_streams=["5.8", "upstream"])])
