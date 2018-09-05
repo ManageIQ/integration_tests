@@ -4,7 +4,6 @@ import random
 import yaml
 
 from cfme import test_requirements
-from cfme.intelligence.reports import menus
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.path import data_path
@@ -28,8 +27,8 @@ def shuffle(l):
 
 
 @pytest.fixture(scope="function")
-def report_menus(group):
-    report_menus = menus.ReportMenu()
+def report_menus(group, appliance):
+    report_menus = appliance.collections.intel_report_menus.instantiate()
     yield report_menus
     report_menus.reset_to_default(group)
 

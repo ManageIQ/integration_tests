@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Module handling report menus contents"""
+import attr
+
 from contextlib import contextmanager
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from widgetastic.widget import Text
 from widgetastic_manageiq import ManageIQTree, FolderManager
@@ -43,14 +45,13 @@ class EditReportMenusView(CloudIntelReportsView):
         )
 
 
-class ReportMenu(Navigatable):
+@attr.s
+class ReportMenu(BaseEntity):
     """
         This is a fake class mainly needed for navmazing navigation.
 
     """
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance)
-        self.group = None
+    group = None
 
     def go_to_group(self, group_name):
         self.group = group_name
@@ -169,6 +170,13 @@ class ReportMenu(Navigatable):
             # If no exception happens, save!
             view.manager.commit()
             view.save_button.click()
+
+
+@attr.s
+class ReportMenusCollection(BaseCollection):
+    """Collection object for the :py:class:'cfme.intelligence.reports.ReportMenu'."""
+
+    ENTITY = ReportMenu
 
 
 @navigator.register(ReportMenu)
