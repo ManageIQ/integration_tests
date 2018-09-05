@@ -118,15 +118,6 @@ class InstanceEntity(JSBaseEntity):
                 policy = None
 
             data_dict['policy'] = policy
-        else:
-            data_dict['os'] = data_dict['quad']['topLeft']['tooltip']
-            data_dict['vendor'] = data_dict['quad']['bottomLeft']['tooltip']
-            try:
-                data_dict['no_snapshots'] = data_dict['total_snapshots']
-            # openstack instances require this
-            except KeyError:
-                data_dict['no_snapshots'] = data_dict['quad']['bottomRight']['tooltip']
-            data_dict['state'] = data_dict['quad']['topRight']['tooltip']
 
         return data_dict
 
