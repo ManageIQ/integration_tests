@@ -14,6 +14,7 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
+from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import (
     Accordion, ItemsToolBarViewSelector, ManageIQTree, SummaryTable, Text, TimelinesView,
@@ -317,6 +318,25 @@ class ClusterCollection(BaseCollection):
         view.flash.assert_message(flash_msg)
         for cluster in clusters:
             cluster.wait_for_disappear()
+
+    def all(self):
+        """returning all cluster objects and support filtering as per provider"""
+        provider = self.filters.get("provider")
+        clusters = self.appliance.rest_api.collections.clusters.all
+        if provider:
+            cluster_obj = [
+                self.instantiate(name=cluster.name, provider=provider)
+                for cluster in clusters
+                if provider.id == cluster.ems_id
+            ]
+        else:
+            providers = self.appliance.rest_api.collections.providers
+            providers_db = {prov.id: get_crud_by_name(prov.name) for prov in providers}
+            cluster_obj = [
+                self.instantiate(name=cluster.name, provider=providers_db[cluster.ems_id])
+                for cluster in clusters
+            ]
+        return cluster_obj
 
 
 @navigator.register(ClusterCollection, 'All')

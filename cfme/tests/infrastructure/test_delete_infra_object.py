@@ -21,9 +21,8 @@ def test_delete_cluster_appear_after_refresh(provider, appliance):
     Metadata:
         test_flag: delete_object
     """
-    cluster_name = provider.data['remove_test']['cluster']
-    cluster_col = appliance.collections.clusters
-    test_cluster = cluster_col.instantiate(name=cluster_name, provider=provider)
+    cluster_col = appliance.collections.clusters.filter({'provider': provider})
+    test_cluster = cluster_col.all()[0]
     test_cluster.delete(cancel=False, wait=True)
     provider.refresh_provider_relationships()
     test_cluster.wait_for_exists()
@@ -124,7 +123,6 @@ def test_delete_cluster_from_table(provider, appliance):
     Metadata:
         test_flag: delete_object
     """
-    cluster_name = provider.data['remove_test']['cluster']
-    cluster_col = appliance.collections.clusters
-    cluster1 = cluster_col.instantiate(name=cluster_name, provider=provider)
+    cluster_col = appliance.collections.clusters.filter({"provider": provider})
+    cluster1 = cluster_col.all()[0]
     cluster_col.delete(cluster1)
