@@ -12,7 +12,6 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import conf
 from cfme.utils.appliance import Navigatable, NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -136,8 +135,8 @@ class CompanyCategoriesAllView(RegionView):
     @property
     def is_displayed(self):
         return (
-            self.company_categories.is_active() and
-            self.table.is_displayed
+            self.tags.is_active() and
+            self.company_categories.is_active()
         )
 
 
@@ -207,7 +206,7 @@ class Category(Pretty, BaseEntity, Updateable):
                 cancel:
         """
         view = navigate_to(self, 'Edit')
-        view.fill({
+        change = view.fill({
             'name': updates.get('name'),
             'display_name': updates.get('display_name'),
             'long_description': updates.get('description'),
@@ -215,7 +214,8 @@ class Category(Pretty, BaseEntity, Updateable):
             'single_value': updates.get('single_value'),
             'capture_candu': updates.get('capture_candu'),
         })
-        if cancel:
+
+        if cancel or not change:
             view.cancel_button.click()
         else:
             view.save_button.click()

@@ -1,10 +1,11 @@
 import pytest
+from datetime import datetime, timedelta
 
 from cfme import test_requirements
 from cfme.common.candu_views import UtilizationZoomView
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.tests.candu import compare_data
+from cfme.tests.candu import compare_data, compare_data_with_unit
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -31,6 +32,8 @@ HOST_GRAPHS = ['host_cpu',
                'host_cpu_state']
 
 INTERVAL = ['Hourly', 'Daily']
+
+GROUP_BY = ['VM Location']
 
 
 @pytest.fixture(scope='function')
@@ -157,3 +160,81 @@ def test_graph_screen(provider, interval, graph_type, host, enable_candu):
     view.table.clear_cache()
     table_data = view.table.read()
     compare_data(table_data=table_data, graph_data=graph_data, legends=legends)
+
+
+@pytest.mark.uncollectif(lambda provider, interval:
+                         provider.one_of(RHEVMProvider) and
+                         interval == "Daily")
+@pytest.mark.parametrize('gp_by', GROUP_BY, ids=['vm_tag'])
+@pytest.mark.parametrize('interval', INTERVAL)
+@pytest.mark.parametrize('graph_type', HOST_GRAPHS)
+def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_candu):
+    """Test Host graphs group by VM tag for hourly and Daily
+
+    prerequisites:
+        * C&U enabled appliance
+        * C&U data collection enabled for Tag category
+        * VM should be taged with proper tag category
+
+    Steps:
+        * Capture historical data for host and vm
+        * Navigate to Host Utilization Page
+        * Select interval(Hourly or Daily)
+        * Select group by option with VM tag
+        * Check graph displayed or not
+        * Zoom graph to get Table
+        * Check tag assigned to VM available in chart legends
+        * Compare table and graph data
+
+    Bugzillas:
+        * 1367560
+    """
+    # Capture historical data for cu-24x7 and its host
+    candu_tag_vm.capture_historical_data()
+    host = candu_tag_vm.host
+    host.capture_historical_data()
+    host.wait_candu_data_available(timeout=1500)
+    provider.refresh_provider_relationships()
+
+    view = navigate_to(host, 'candu', wait_for_view=True)
+    back_date = datetime.now() - timedelta(days=1)
+    data = {'interval': interval, 'group_by': gp_by}
+
+    # Note: If we won't choose backdate then  we have wait for 30min at least for metric collection
+    if interval == "Hourly":
+        data.update({"calendar": back_date})
+    view.options.fill(data)
+
+    # Check graph displayed or not
+    try:
+        graph = getattr(view.interval_type, graph_type)
+    except AttributeError as e:
+        logger.error(e)
+    assert graph.is_displayed
+
+    def refresh():
+        provider.refresh_provider_relationships()
+        host.capture_historical_data()
+        provider.browser.refresh()
+        view.wait_displayed(timeout='20s')
+        view.options.fill(data)
+
+    # wait, for specific vm tag data. It take time to reload metrics with specific vm tag.
+    wait_for(lambda: "London" in graph.all_legends,
+    delay=120, timeout=1500, fail_func=refresh)
+
+    graph.zoom_in()
+    view = view.browser.create_view(UtilizationZoomView)
+
+    # check for chart and tag London available or not in legend list.
+    view.flush_widget_cache()
+    assert view.chart.is_displayed
+    legends = view.chart.all_legends
+    assert "London" in legends
+
+    # compare graph and table data
+    graph_data = view.chart.all_data
+    # Clear cache of table widget before read else it will mismatch headers.
+    view.table.clear_cache()
+    table_data = view.table.read()
+    compare_data_with_unit(table_data=table_data, graph_data=graph_data, legends=legends)

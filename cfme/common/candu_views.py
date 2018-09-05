@@ -7,6 +7,7 @@ from widgetastic_patternfly import BootstrapSelect, DatePicker
 class OptionForm(View):
     interval = BootstrapSelect(id='perf_typ')
     compare_to = BootstrapSelect(id='compare_to')
+    group_by = BootstrapSelect(id='perf_cat')
     show_weeks_back = BootstrapSelect(id='perf_days')
     show_mints_back = BootstrapSelect(id='perf_minutes')
     range = Text("//div[label[contains(.,'Range')]]//p")
@@ -83,7 +84,7 @@ class HostInfraUtilizationView(View):
     @property
     def is_displayed(self):
         expected_title = "{} Capacity & Utilization".format(self.context['object'].name)
-        return self.title.text == expected_title
+        return self.title.text == expected_title and self.options.interval.is_displayed
 
 
 class AzoneCloudUtilizationView(View):
