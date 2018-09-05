@@ -10,7 +10,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.polarion('CMP-9878')
 def test_reload_button_provider(provider):
     """ This test verifies the data integrity of the fields in
         the Relationships table after clicking the "reload"

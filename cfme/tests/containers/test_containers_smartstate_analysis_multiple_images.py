@@ -31,17 +31,10 @@ TESTED_ATTRIBUTES__openscap_on = TESTED_ATTRIBUTES__openscap_off + (
 )
 
 TEST_ITEMS = (
-    pytest.mark.polarion('CMP-9497')(
-        ContainersTestItem(Image, 'CMP-9497',
-                           is_openscap=False,
-                           tested_attr=TESTED_ATTRIBUTES__openscap_off)
-    ),
-    pytest.mark.polarion('CMP-10065')(
-        ContainersTestItem(Image, 'CMP-10065',
-                           is_openscap=True,
-                           tested_attr=TESTED_ATTRIBUTES__openscap_on)
-    )
-)
+    ContainersTestItem(Image, 'openscap_multi_image_on', is_openscap=False,
+                       tested_attr=TESTED_ATTRIBUTES__openscap_off),
+    ContainersTestItem(Image, 'openscap_multi_image_off', is_openscap=True,
+                       tested_attr=TESTED_ATTRIBUTES__openscap_on))
 
 TASKS_RUN_PARALLEL = 3
 TASK_TIMEOUT = 20

@@ -9,18 +9,9 @@ pytestmark = [
 ]
 
 container_test_items = [
-    ('container_provider'),
-    ('container_projects'),
-    ('container_routes'),
-    ('container_services'),
-    ('container_replicators'),
-    ('container_pods'),
-    ('container_nodes'),
-    ('container_volumes'),
-    ('container_image_registries'),
-    ('container_images'),
-    ('container_templates')
-]
+    'container_provider', 'container_projects', 'container_routes', 'container_services',
+    'container_replicators', 'container_pods', 'container_nodes', 'container_volumes',
+    'container_image_registries', 'container_images', 'container_templates']
 
 
 def get_collection_entity(appliance, collection_name, provider):
@@ -53,7 +44,6 @@ def get_collection_entity(appliance, collection_name, provider):
         return item_collection.instantiate(**d)
 
 
-@pytest.mark.polarion('CMP-10837')
 @pytest.mark.parametrize('test_param', container_test_items, ids=[cti for cti in
                                                                   container_test_items])
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])

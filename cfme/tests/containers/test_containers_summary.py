@@ -21,7 +21,6 @@ pytestmark = [
 tested_objects = [Service, Route, Project, Pod, Image, Container, ImageRegistry, Node]
 
 
-@pytest.mark.polarion('CMP-10575')
 def test_containers_summary_objects(provider, soft_assert):
     """ Containers overview page > Widgets > Widgets summary
        This test checks that the amount of a selected object in the system is shown correctly

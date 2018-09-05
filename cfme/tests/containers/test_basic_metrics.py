@@ -59,7 +59,6 @@ def wait_for_metrics_rollup(provider):
 # TODO This test needs to be reevaluated. This is not testing anyting in CFME.
 
 
-@pytest.mark.polarion('CMP-10205')
 def test_basic_metrics(provider):
     """ Basic Metrics availability test
         This test checks that the Metrics service is up

@@ -26,7 +26,6 @@ def is_monitoring_menu_visible(appliance):
     return is_menu_visible(appliance, 'Monitor')
 
 
-@pytest.mark.polarion('CMP-10614')
 def test_datawarehouse_invisible(is_datawarehouse_menu_visible):
     # This should be the default state
     # Verifies BZ#1421175
@@ -34,7 +33,6 @@ def test_datawarehouse_invisible(is_datawarehouse_menu_visible):
 
 
 @pytest.mark.uncollectif(lambda: current_version() > "5.8")
-@pytest.mark.polarion('CMP-10613')
 def test_monitoring_invisible(is_monitoring_menu_visible):
     # This should be the default state
     # Verifies BZ#1421173

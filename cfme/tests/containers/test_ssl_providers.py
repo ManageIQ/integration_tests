@@ -18,37 +18,22 @@ alphanumeric_name = gen_alphanumeric(10)
 long_alphanumeric_name = gen_alphanumeric(100)
 integer_name = str(gen_integer(0, 100000000))
 provider_names = alphanumeric_name, integer_name, long_alphanumeric_name
-AVAILABLE_SEC_PROTOCOLS = ('SSL trusting custom CA',
-                           'SSL without validation',
-                           'SSL')
+AVAILABLE_SEC_PROTOCOLS = ('SSL trusting custom CA', 'SSL without validation', 'SSL')
 
-DEFAULT_SEC_PROTOCOLS = (
-    pytest.mark.polarion('CMP-10598')('SSL trusting custom CA'),
-    pytest.mark.polarion('CMP-10597')('SSL without validation'),
-    pytest.mark.polarion('CMP-10599')('SSL')
-)
+DEFAULT_SEC_PROTOCOLS = ('SSL trusting custom CA', 'SSL without validation', 'SSL')
 
 checked_item = namedtuple('TestItem', ['default_sec_protocol', 'metrics_sec_protocol'])
+
 TEST_ITEMS = (
-    pytest.mark.polarion('CMP-10593')
-    (checked_item('SSL trusting custom CA', 'SSL trusting custom CA')),
-    pytest.mark.polarion('CMP-10594')
-    (checked_item('SSL trusting custom CA', 'SSL without validation')),
-    pytest.mark.polarion('CMP-10589')
-    (checked_item('SSL trusting custom CA', 'SSL')),
-    pytest.mark.polarion('CMP-10595')
-    (checked_item('SSL without validation', 'SSL trusting custom CA')),
-    pytest.mark.polarion('CMP-10596')
-    (checked_item('SSL without validation', 'SSL without validation')),
-    pytest.mark.polarion('CMP-10590')
-    (checked_item('SSL without validation', 'SSL')),
-    pytest.mark.polarion('CMP-10588')
-    (checked_item('SSL', 'SSL trusting custom CA')),
-    pytest.mark.polarion('CMP-10592')
-    (checked_item('SSL', 'SSL without validation')),
-    pytest.mark.polarion('CMP-10588')
-    (checked_item('SSL', 'SSL')),
-)
+    checked_item('SSL trusting custom CA', 'SSL trusting custom CA'),
+    checked_item('SSL trusting custom CA', 'SSL without validation'),
+    checked_item('SSL trusting custom CA', 'SSL'),
+    checked_item('SSL without validation', 'SSL trusting custom CA'),
+    checked_item('SSL without validation', 'SSL without validation'),
+    checked_item('SSL without validation', 'SSL'),
+    checked_item('SSL', 'SSL trusting custom CA'),
+    checked_item('SSL', 'SSL without validation'),
+    checked_item('SSL', 'SSL'))
 
 
 @pytest.fixture(scope="module")
@@ -56,7 +41,6 @@ def sync_ssl_certificate(provider):
     provider.sync_ssl_certificate()
 
 
-@pytest.mark.polarion('CMP-9836')
 @pytest.mark.usefixtures('has_no_containers_providers')
 def test_add_provider_naming_conventions(provider, appliance, soft_assert, sync_ssl_certificate):
     """" This test is checking ability to add Providers with different names:
@@ -117,7 +101,7 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert, sync_ssl_
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS, ids=[
     'Default: {} /  Metrics: {}'.format(
-        ti.args[1].default_sec_protocol, ti.args[1].metrics_sec_protocol)
+        ti.default_sec_protocol, ti.metrics_sec_protocol)
     for ti in TEST_ITEMS])
 @pytest.mark.usefixtures('has_no_containers_providers')
 def test_add_mertics_provider_ssl(provider, appliance, test_item,

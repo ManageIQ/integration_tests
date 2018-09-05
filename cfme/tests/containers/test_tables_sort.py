@@ -20,17 +20,14 @@ pytestmark = [
 
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-9924')(ContainersTestItem(
-        ContainersProvider, 'CMP-9924', collection_name=None)),
-    pytest.mark.polarion('CMP-9926')(ContainersTestItem(
-        Route, 'CMP-9926', collection_name='container_routes')),
-    pytest.mark.polarion('CMP-9928')(ContainersTestItem(
-        Replicator, 'CMP-9928', collection_name='container_replicators'))
-]
+    ContainersTestItem(ContainersProvider, 'container_provider_table_sort', collection_name=None),
+    ContainersTestItem(Route, 'route_table_sort', collection_name='container_routes'),
+    ContainersTestItem(Replicator, 'replicator_table_sort',
+                       collection_name='container_replicators')]
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
-                         ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
+                         ids=[ti.pretty_id() for ti in TEST_ITEMS])
 def test_tables_sort(test_item, soft_assert, appliance):
 
     view = navigate_to((test_item.obj if test_item.obj is ContainersProvider

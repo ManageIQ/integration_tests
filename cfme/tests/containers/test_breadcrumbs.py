@@ -42,7 +42,6 @@ def clear_search(view):
     view.entities.search.search_button.click()
 
 
-@pytest.mark.polarion('CMP-10576')
 def test_breadcrumbs(provider, appliance, soft_assert):
 
     for data_set in TESTED_OBJECTS:

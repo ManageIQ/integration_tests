@@ -17,11 +17,8 @@ pytestmark = [
                          scope='function')]
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-10634')(ContainersTestItem(
-        ContainersProvider, 'CMP-10634', collection_obj=None)),
-    pytest.mark.polarion('CMP-10635')(ContainersTestItem(
-        Node, 'CMP-10635', collection_obj=NodeCollection))
-]
+    ContainersTestItem(ContainersProvider, 'test_logging_containerprovider', collection_obj=None),
+    ContainersTestItem(Node, 'test_logging_node', collection_obj=NodeCollection)]
 
 NUM_OF_DEFAULT_LOG_ROUTES = 2
 

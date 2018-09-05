@@ -25,7 +25,6 @@ def check_buttons_status(view, pause_option, resume_option):
     return True, None
 
 
-@pytest.mark.polarion('CMP-9880')
 def test_edit_selected_containers_provider(provider):
     '''Testing Configuration -> Edit... button functionality
     Step:
