@@ -1,4 +1,5 @@
 import pytest
+import random
 
 from collections import namedtuple
 from six import iteritems
@@ -14,6 +15,8 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 """ The Following fixtures are for provisioning one preconfigured or unconfigured appliance for
     testing from an FQDN provider unless there are no provisions available"""
 
+prov_types = ['rhevm', 'openstack', 'virtualcenter']
+
 
 @pytest.fixture()
 def unconfigured_appliance(appliance, pytestconfig):
@@ -22,7 +25,7 @@ def unconfigured_appliance(appliance, pytestconfig):
             preconfigured=False,
             count=1,
             config=pytestconfig,
-            provider_type='rhevm',
+            provider_type=random.choice(prov_types),
     ) as apps:
         yield apps[0]
 
@@ -34,7 +37,7 @@ def unconfigured_appliance_secondary(appliance, pytestconfig):
             preconfigured=False,
             count=1,
             config=pytestconfig,
-            provider_type='rhevm',
+            provider_type=random.choice(prov_types),
     ) as apps:
         yield apps[0]
 
@@ -46,7 +49,7 @@ def unconfigured_appliances(appliance, pytestconfig):
             preconfigured=False,
             count=3,
             config=pytestconfig,
-            provider_type='rhevm',
+            provider_type=random.choice(prov_types),
     ) as apps:
         yield apps
 
@@ -58,7 +61,7 @@ def configured_appliance(appliance, pytestconfig):
             preconfigured=True,
             count=1,
             config=pytestconfig,
-            provider_type='rhevm',
+            provider_type=random.choice(prov_types),
     ) as apps:
         yield apps[0]
 
