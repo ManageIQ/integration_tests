@@ -540,7 +540,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
             cancel: Whether to cancel the deletion, defaults to True
         """
         view = navigate_to(self, 'Details')
-        item_title = 'Remove this {} Provider from Inventory'
+        item_title = 'Remove this {} Provider'
         view.toolbar.configuration.item_select(item_title.format(self.string_name),
                                                handle_alert=not cancel)
         if not cancel:
