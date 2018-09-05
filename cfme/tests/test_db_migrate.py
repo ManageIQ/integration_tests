@@ -13,7 +13,7 @@ pytestmark = [pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason
 
 
 def pytest_generate_tests(metafunc):
-    if metafunc.function in {test_upgrade_single_inplace, test_db_migrate_replication}:
+    if metafunc.function in {test_db_migrate_replication}:
         return
 
     argnames, argvalues, idlist = ['db_url', 'db_version', 'db_desc'], [], []
@@ -57,19 +57,6 @@ def temp_appliance_global_region(temp_appliance_unconfig_funcscope_rhevm):
     temp_appliance_unconfig_funcscope_rhevm.evmserverd.wait_for_running()
     temp_appliance_unconfig_funcscope_rhevm.wait_for_web_ui()
     return temp_appliance_unconfig_funcscope_rhevm
-
-
-@pytest.fixture(scope="function")
-def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
-    """Reconfigure appliance partitions and adds repo file for upgrade"""
-    series = appliance.version.series()
-    update_url = "update_url_{}".format(series.replace('.', ''))
-    temp_appliance_preconfig_funcscope_upgrade.db.extend_partition()
-    urls = cfme_data["basic_info"][update_url]
-    temp_appliance_preconfig_funcscope_upgrade.ssh_client.run_command(
-        "curl {} -o /etc/yum.repos.d/update.repo".format(urls)
-    )
-    return temp_appliance_preconfig_funcscope_upgrade
 
 
 @pytest.mark.ignore_stream('5.5', 'upstream')
@@ -178,17 +165,3 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     def is_provider_replicated(app, app2):
         return set(app.managed_provider_names) == set(app2.managed_provider_names)
     wait_for(is_provider_replicated, func_args=[app, app2], timeout=30)
-
-
-def test_upgrade_single_inplace(appliance_preupdate, appliance):
-    """Tests appliance upgrade between streams"""
-    appliance_preupdate.evmserverd.stop()
-    result = appliance_preupdate.ssh_client.run_command('yum update -y', timeout=3600)
-    assert result.success, "update failed {}".format(result.output)
-    appliance_preupdate.db.migrate()
-    appliance_preupdate.db.automate_reset()
-    appliance_preupdate.db_service.restart()
-    appliance_preupdate.evmserverd.start()
-    appliance_preupdate.wait_for_web_ui()
-    result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
-    assert result.output in appliance.version
