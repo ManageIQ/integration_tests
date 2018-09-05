@@ -111,6 +111,60 @@ def test_provision(request, appliance, provider, provision_data):
     assert found_vms, 'VM `{}` not found'.format(vm_name)
 
 
+@pytest.mark.rhv2
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(RHEVMProvider),
+                         reason='These profile names are RHV specific.')
+@pytest.mark.parametrize('vnic_profile', ['empty_vnic_profile', 'specific_vnic_profile'])
+def test_provision_vlan(request, appliance, provision_data, vnic_profile, provider):
+    """Tests provision via REST API for vlan Empty/Specific vNic profile.
+    Prerequisities:
+        * Have a provider set up with templates suitable for provisioning.
+    Steps:
+        * POST /api/provision_requests (method ``create``) the JSON with provisioning data. The
+            request is returned.
+        * Apart from the usual provisioning settings, set vlan
+          to values <Empty>/profile_name (network_name)
+        * Query the request by its id until the state turns to ``finished`` or ``provisioned``.
+        * Check the VM's vNic profile is as expected.
+    Metadata:
+        test_flag: rest, provision
+    """
+    vm_name = provision_data['vm_fields']['vm_name']
+    profile_name = provider.data["provisioning"]["vlan"]
+    if vnic_profile == 'empty_vnic_profile':
+        vnic_profile = '<Empty>'
+    # For 'specific_vnic_profile'
+    else:
+        vnic_profile = '{0} ({0})'.format(profile_name)
+    provision_data['vm_fields']['vlan'] = vnic_profile
+    request.addfinalizer(lambda: clean_vm(appliance, provider, vm_name))
+    appliance.rest_api.collections.provision_requests.action.create(**provision_data)
+    assert_response(appliance)
+    provision_request = appliance.collections.requests.instantiate(description=vm_name,
+                                                                   partial_check=True)
+    provision_request.wait_for_request()
+    msg = "Provisioning failed with the message {}".format(
+        provision_request.rest.message)
+    assert provision_request.is_succeeded(), msg
+    found_vms = appliance.rest_api.collections.vms.find_by(name=vm_name)
+    assert found_vms, 'VM `{}` not found'.format(vm_name)
+    # Check the VM vNIC
+    vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
+    nics = vm.mgmt.get_nics()
+    assert nics, 'The VM should have a NIC attached.'
+    # Check the vNIC network profile
+    profile = nics[0].vnic_profile
+    if vnic_profile == '<Empty>':
+        assert not profile, 'vNIC profile is not Empty as expected.'
+    # For 'specific_vnic_profile'
+    else:
+        vnic_srv = provider.mgmt.api.system_service().vnic_profiles_service()
+        profile_via_provider = vnic_srv.profile_service(profile.id).get()
+        assert profile_via_provider.name == profile_name, \
+            "The vNIC profile name is {}, but should be {}".\
+            format(profile_via_provider.name, profile_name)
+
+
 @pytest.mark.rhv3
 @pytest.mark.meta(server_roles="+notifier")
 def test_provision_emails(request, provision_data, provider, appliance, smtp_test):
