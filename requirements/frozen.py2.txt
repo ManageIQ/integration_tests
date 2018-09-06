@@ -247,7 +247,7 @@ python-string-utils==0.6.0
 python-swiftclient==3.5.0
 pytz==2018.4
 pyvcloud==19.1.2
-pyvmomi==6.7.0
+pyvmomi==6.7.0.2018.9
 pywinrm==0.3.0
 PyYAML==3.12
 pyzmq==17.0.0
