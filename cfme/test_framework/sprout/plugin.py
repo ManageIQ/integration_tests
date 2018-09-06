@@ -222,7 +222,8 @@ class SproutManager(object):
         if provision_request.template_type:
             kargs['template_type'] = provision_request.template_type
 
-        self.pool = self.client.provision_appliances(**kargs)
+        apps, pool_id = self.client.provision_appliances(**kargs)
+        self.pool = pool_id
         log.info("Pool %s. Waiting for fulfillment ...", self.pool)
 
         if provision_request.desc is not None:
