@@ -1107,11 +1107,13 @@ def test_delete_default_tenant(appliance):
     4. Delete using 'configuration > Delete selected items'
     5. Check whether default tenant is deleted or not
     """
+    view = navigate_to(appliance.collections.tenants, "All")
     roottenant = appliance.collections.tenants.get_root_tenant()
     try:
         msg = 'Default Tenant "{}" can not be deleted'.format(roottenant.name)
         tenant = appliance.collections.tenants.instantiate(name=roottenant.name)
         appliance.collections.tenants.delete(tenant)
+        assert view.flash.read()[0] == msg
     except NoSuchElementException:
         raise RBACOperationBlocked(match=msg)
 
