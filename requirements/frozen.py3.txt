@@ -241,7 +241,7 @@ python-string-utils==0.6.0
 python-swiftclient==3.5.0
 pytz==2018.4
 pyvcloud==19.1.2
-pyvmomi==6.7.0
+pyvmomi==6.7.0.2018.9
 pywinrm==0.3.0
 PyYAML==3.12
 pyzmq==17.0.0
@@ -265,7 +265,7 @@ selenium==3.12.0
 selenium-smart-locator==0.2.0
 Send2Trash==1.5.0
 sentaku==0.6.2
-setuptools-scm==3.0.6
+setuptools-scm==3.1.0
 shyaml==0.5.2
 simplegeneric==0.8.1
 simplejson==3.15.0
@@ -297,7 +297,7 @@ Werkzeug==0.14.1
 widgetastic.core==0.21.6
 widgetastic.patternfly==0.0.37
 widgetsnbextension==3.2.1
-wrapanapi==3.0.23
+wrapanapi==3.0.24
 wrapt==1.10.11
 xmltodict==0.11.0
 yaycl==0.3.0
