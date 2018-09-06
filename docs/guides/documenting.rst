@@ -119,7 +119,7 @@ in the docs/build/ directory, which can then be opened in a browser::
 
 .. link refs
 .. _`pep 257`: http://www.python.org/dev/peps/pep-0257/
-.. _`google python style guide`: http://google-styleguide.googlecode.com/svn/trunk/pyguide.html#Comments
+.. _`google python style guide`: https://github.com/google/styleguide/blob/gh-pages/pyguide.md
 .. _`cartouche`: http://cartouche.readthedocs.org/
 .. _`sphinx`: http://sphinx-doc.org/
 .. _`readthedocs`: https://readthedocs.org/
