@@ -1,14 +1,17 @@
 import re
+from threading import Timer
+
 import pytest
 import random
 import attr
+from cached_property import cached_property
 from six.moves.urllib.parse import urlparse
-from threading import Timer
+
 from cfme.utils import at_exit, conf
 # todo: use own logger after logfix merge
 from cfme.utils.log import logger as log
 from cfme.utils.path import project_path
-from .client import SproutClient, SproutException
+from .client import SproutClient, SproutException, AuthException
 from cfme.utils.wait import wait_for
 
 
@@ -50,6 +53,9 @@ def pytest_addoption(parser):
     group._addoption('--sprout-ignore-preconfigured', dest='sprout_template_preconfigured',
                      default=True, action="store_false",
                      help="Allows to use not preconfigured templates")
+    group._addoption('--sprout-user-key', default=None,
+                     help='Key for sprout user in credentials yaml, '
+                          'alternatively set SPROUT_USER and SPROUT_PASSWORD env vars')
 
 
 def dump_pool_info(log, pool_data):
@@ -74,8 +80,12 @@ def mangle_in_sprout_appliances(config):
     """
     provision_request = SproutProvisioningRequest.from_config(config)
 
-    mgr = config._sprout_mgr = SproutManager()
-    requested_appliances = mgr.request_appliances(provision_request)
+    mgr = config._sprout_mgr = SproutManager(config.option.sprout_user_key)
+    try:
+        requested_appliances = mgr.request_appliances(provision_request)
+    except AuthException:
+        log.exception('Sprout client not authenticated, please provide env vars or sprout_user_key')
+        raise
     config.option.appliances[:] = []
     appliances = config.option.appliances
     log.info("Appliances were provided:")
@@ -119,19 +129,19 @@ class SproutProvisioningRequest(object):
     """data holder for provisioning metadata"""
 
     group = attr.ib()
-    count = attr.ib()
-    version = attr.ib()
-    provider = attr.ib()
-    provider_type = attr.ib()
-    template_type = attr.ib()
-    preconfigured = attr.ib()
-    date = attr.ib()
-    lease_time = attr.ib()
-    desc = attr.ib()
-    provision_timeout = attr.ib()
+    count = attr.ib(default=1)
+    version = attr.ib(default=None)
+    provider = attr.ib(default=None)
+    provider_type = attr.ib(default=None)
+    template_type = attr.ib(default=None)
+    preconfigured = attr.ib(default=True)
+    date = attr.ib(default=None)
+    lease_time = attr.ib(default=60)
+    desc = attr.ib(default=None)
+    provision_timeout = attr.ib(default=60)
 
-    cpu = attr.ib()
-    ram = attr.ib()
+    cpu = attr.ib(default=0)
+    ram = attr.ib(default=0)
 
     @classmethod
     def from_config(cls, config):
@@ -154,10 +164,15 @@ class SproutProvisioningRequest(object):
 
 @attr.s
 class SproutManager(object):
-    client = attr.ib(default=attr.Factory(SproutClient.from_config))
+    sprout_user_key = attr.ib(default=None)
     pool = attr.ib(init=False, default=None)
     lease_time = attr.ib(init=False, default=None, repr=False)
     timer = attr.ib(init=False, default=None, repr=False)
+
+    @cached_property
+    def client(self):
+        """Provide additional kwargs to from_config for auth passing"""
+        return SproutClient.from_config(sprout_user_key=self.sprout_user_key)
 
     def request_appliances(self, provision_request):
         self.request_pool(provision_request)
@@ -202,13 +217,12 @@ class SproutManager(object):
             'lease_time': provision_request.lease_time,
             'cpu': provision_request.cpu,
             'ram': provision_request.ram,
+            'stream': provision_request.group,
         }
         if provision_request.template_type:
             kargs['template_type'] = provision_request.template_type
 
-        self.pool = self.client.request_appliances(
-            provision_request.group, **kargs
-        )
+        self.pool = self.client.provision_appliances(**kargs)
         log.info("Pool %s. Waiting for fulfillment ...", self.pool)
 
         if provision_request.desc is not None:

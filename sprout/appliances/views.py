@@ -374,7 +374,7 @@ def my_appliances(request, show_user="my"):
     pools = pools.select_related('group', 'provider', 'owner')
     page = request.GET.get("page")
     try:
-        per_page = int(request.GET.get("per_page", 5))
+        per_page = int(request.GET.get("per_page", 25))
     except (ValueError, TypeError):
         per_page = 5
 

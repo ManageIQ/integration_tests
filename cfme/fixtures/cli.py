@@ -6,9 +6,8 @@ from six import iteritems
 
 import cfme.utils.auth as authutil
 from cfme.test_framework.sprout.client import SproutClient
-from cfme.utils.conf import cfme_data, credentials, auth_data
+from cfme.utils.conf import credentials, auth_data
 from cfme.utils.log import logger
-from cfme.utils.version import get_stream
 from cfme.utils.wait import wait_for
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
@@ -18,25 +17,24 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
 
 @contextmanager
-def fqdn_appliance(appliance, preconfigured, count):
-    version = appliance.version.vstring
-    stream = get_stream(appliance.version)
-    sprout_client = SproutClient.from_config()
+def fqdn_appliance(appliance, preconfigured, count, config):
+    sprout_client = SproutClient.from_config(sprout_user_key=config.option.sprout_user_key or None)
     apps, request_id = sprout_client.provision_appliances(
-        provider_type='rhevm', count=count, version=version, preconfigured=preconfigured,
-        stream=stream)
+        provider_type='rhevm',
+        count=count,
+        version=appliance.version.vstring,
+        preconfigured=preconfigured,
+        stream=appliance.version.stream(),
+    )
     try:
         yield apps
     finally:
-        for app in apps:
-            app.ssh_client.close()
-        if request_id:
-            sprout_client.destroy_pool(request_id)
+        sprout_client.destroy_pool(request_id)
 
 
 @pytest.fixture()
-def unconfigured_appliance(appliance):
-    with fqdn_appliance(appliance, preconfigured=False, count=1) as apps:
+def unconfigured_appliance(appliance, pytestconfig):
+    with fqdn_appliance(appliance, preconfigured=False, count=1, config=pytestconfig) as apps:
         yield apps[0]
 
 
