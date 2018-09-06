@@ -10,6 +10,7 @@ from cfme.common import TagPageView, Taggable, PolicyProfileAssignable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.providers import get_crud_by_name
 
 
 class StorageManagerToolbar(View):
@@ -163,6 +164,29 @@ class BlockManagerCollection(BaseCollection):
     manager_type = 'Block Storage Managers'
     navigation_path = ['Storage', 'Block Storage', 'Managers']
 
+    def all(self):
+        """returning all block storage manager objects and support filtering as per provider"""
+        provider = self.filters.get("provider")
+        blocks = ("Cinder Manager", "EBS Storage Manager")
+        prov_db = {prov.id: prov for prov in self.appliance.rest_api.collections.providers.all}
+        managers = [
+            prov for prov in prov_db.values() if any(block in prov.name for block in blocks)
+        ]
+
+        if provider:
+            return [
+                self.instantiate(name=mag.name, provider=provider)
+                for mag in managers
+                if provider.id == mag.parent_ems_id
+            ]
+        else:
+            return [
+                self.instantiate(
+                    name=mag.name, provider=get_crud_by_name(prov_db[mag.parent_ems_id].name)
+                )
+                for mag in managers
+            ]
+
 
 @attr.s
 class ObjectManagerCollection(BaseCollection):
@@ -170,6 +194,28 @@ class ObjectManagerCollection(BaseCollection):
     ENTITY = StorageManager
     manager_type = 'Object Storage Managers'
     navigation_path = ['Storage', 'Object Storage', 'Managers']
+
+    def all(self):
+        """returning all object storage manager objects and support filtering as per provider"""
+        provider = self.filters.get("provider")
+        prov_db = {prov.id: prov for prov in self.appliance.rest_api.collections.providers.all}
+        managers = [
+            prov for prov in prov_db.values() if "Swift Manager" in prov.name
+        ]
+
+        if provider:
+            return [
+                self.instantiate(name=mag.name, provider=provider)
+                for mag in managers
+                if provider.id == mag.parent_ems_id
+            ]
+        else:
+            return [
+                self.instantiate(
+                    name=mag.name, provider=get_crud_by_name(prov_db[mag.parent_ems_id].name)
+                )
+                for mag in managers
+            ]
 
 
 @navigator.register(BlockManagerCollection, 'All')
