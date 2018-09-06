@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import partial_match
 
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -149,9 +148,9 @@ def test_v2v_ui_no_providers(appliance, v2v_providers, soft_assert):
     view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
     soft_assert(view.configure_providers.is_displayed)
     soft_assert(not view.create_infrastructure_mapping.is_displayed)
-    # Test with no providers added migration plans not visible
+    # Test with no provider_setup added migration plans not visible
     # soft_assert(not view.create_migration_plan.is_displayed)
-    # Following leaves to appliance in the state it was before this test deleted providers
+    # Following leaves to appliance in the state it was before this test deleted provider_setup
     if is_provider_1_deleted:
         v2v_providers[0].create(validate_inventory=True)
     if is_provider_2_deleted:
@@ -210,6 +209,7 @@ def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_
 
     vm_selected = view.vms.select_by_name('v2v')
     view.next_btn.click()
+    view.next_btn.click()
     view.options.wait_displayed()
     view.options.run_migration.select("Save migration plan to run later")
     # Test Create migration plan -Create and Read
@@ -220,23 +220,22 @@ def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_
     view.general.name.fill(plan_name)
     view.general.description.fill(fauxfactory.gen_string("alphanumeric", length=150))
     # following assertion will fail in 5.9.4 as they have not backported this change to 5.9.4
-    # soft_assert(view.general.name_help_text.read() == 'Please enter a unique name')
+    soft_assert(view.general.name_help_text.read() == 'Please enter a unique name')
 
     view = navigate_to(migration_plan_collection, 'All', wait_for_view=True)
     soft_assert(plan_name in view.migration_plans_not_started_list.read())
     soft_assert(view.infra_mapping_list.get_associated_plans(mapping.name) == plan_name)
     soft_assert(view.migration_plans_not_started_list.get_plan_description(plan_name) ==
      plan_description)
+    # Test Associated Plans count  correctly Displayed in Map List view
     soft_assert(str(len(vm_selected)) in view.migration_plans_not_started_list.
         get_vm_count_in_plan(plan_name))
+    soft_assert(view.infra_mapping_list.get_associated_plans_count(mapping.name) ==
+     '1 Associated Plan')
+    soft_assert(view.infra_mapping_list.get_associated_plans(mapping.name) == plan_name)
     view.migration_plans_not_started_list.select_plan(plan_name)
     view = appliance.browser.create_view(MigrationPlanRequestDetailsView)
     view.wait_displayed()
     soft_assert(set(view.migration_request_details_list.read()) == set(vm_selected))
     view = navigate_to(infrastructure_mapping_collection, 'All')
     view.migration_plans_not_started_list.migrate_plan(plan_name)
-
-    # Test Associated Plans count  correctly Displayed in Map List view
-    soft_assert(view.infra_mapping_list.get_associated_plans_count(mapping.name) ==
-     '1 Associated Plan')
-    soft_assert(view.infra_mapping_list.get_associated_plans(mapping.name) == plan_name)
