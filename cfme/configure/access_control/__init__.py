@@ -1527,7 +1527,8 @@ class TenantCollection(BaseCollection):
 
         for tenant in tenants:
             try:
-                view.table.row(name=tenant.name).check()
+                row = view.table.row(name=tenant.name)
+                row[0].check()
             except Exception:
                 logger.exception('Failed to check element "%s"', tenant.name)
         else:
