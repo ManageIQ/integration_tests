@@ -3,9 +3,8 @@ from lxml.html import document_fromstring
 from widgetastic.utils import Parameter
 from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_manageiq import (
-    BaseEntitiesView, JSBaseEntity, BaseListEntity, BaseQuadIconEntity, BaseTileIconEntity,
-    BootstrapTreeview, Button, ItemsToolBarViewSelector, Search, SummaryTable, TimelinesView,
-    BaseNonInteractiveEntitiesView, ManageIQTree, NonJSBaseEntity)
+    BaseEntitiesView, JSBaseEntity, BootstrapTreeview, Button, ItemsToolBarViewSelector, Search,
+    SummaryTable, TimelinesView, BaseNonInteractiveEntitiesView, ManageIQTree)
 from widgetastic_patternfly import BreadCrumb, Dropdown, Accordion
 
 from cfme.base.login import BaseLoggedInPage
@@ -20,31 +19,6 @@ class ComputePhysicalInfrastructureServersView(BaseLoggedInPage):
         return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ["Compute", "Physical Infrastructure",
                                                        "Servers"])
-
-
-class PhysicalServerQuadIconEntity(BaseQuadIconEntity):
-    @property
-    def data(self):
-        return {
-            'no_host': int(self.browser.text(self.QUADRANT.format(pos="a"))),
-            'state': self.browser.get_attribute("style", self.QUADRANT.format(pos="b")),
-            'vendor': self.browser.get_attribute("alt", self.QUADRANT.format(pos="c")),
-            'creds': self.browser.get_attribute("alt", self.QUADRANT.format(pos="d"))
-        }
-
-
-class PhysicalServerTileIconEntity(BaseTileIconEntity):
-    quad_icon = ParametrizedView.nested(PhysicalServerQuadIconEntity)
-
-
-class PhysicalServerListEntity(BaseListEntity):
-    pass
-
-
-class NonJSPhysicalServerEntity(NonJSBaseEntity):
-    quad_entity = PhysicalServerQuadIconEntity
-    list_entity = PhysicalServerListEntity
-    tile_entity = PhysicalServerTileIconEntity
 
 
 class PhysicalServerEntity(JSBaseEntity):

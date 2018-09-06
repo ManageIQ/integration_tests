@@ -3,47 +3,14 @@ from lxml.html import document_fromstring
 
 from widgetastic_patternfly import BreadCrumb, Dropdown, BootstrapSelect, Tab
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import View, Text, ConditionalSwitchableView, ParametrizedView
+from widgetastic.widget import View, Text, ConditionalSwitchableView
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.host_views import HostEntitiesView
 from widgetastic_manageiq import (
     ParametrizedSummaryTable, Button, TimelinesView, DetailsToolBarViewSelector,
-    ItemsToolBarViewSelector, Checkbox, Input, BaseEntitiesView, PaginationPane, BaseTileIconEntity,
-    BaseQuadIconEntity, BaseListEntity, NonJSBaseEntity, JSBaseEntity, Search)
-
-
-class ProviderQuadIconEntity(BaseQuadIconEntity):
-    """ Provider child of Quad Icon entity
-
-    """
-    @property
-    def data(self):
-        br = self.browser
-        try:
-            return {
-                "no_host": int(br.text(self.QUADRANT.format(pos='a'))),
-                "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
-                "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
-            }
-        except (IndexError, TypeError, NoSuchElementException):
-            return {}
-
-
-class ProviderTileIconEntity(BaseTileIconEntity):
-    """ Provider child of Tile Icon entity
-
-    """
-    quad_icon = ParametrizedView.nested(ProviderQuadIconEntity)
-
-
-class NonJSProviderEntity(NonJSBaseEntity):
-    """ Provider child of Proxy entity
-
-    """
-    quad_entity = ProviderQuadIconEntity
-    list_entity = BaseListEntity
-    tile_entity = ProviderTileIconEntity
+    ItemsToolBarViewSelector, Checkbox, Input, BaseEntitiesView, PaginationPane,
+    JSBaseEntity, Search)
 
 
 class ProviderEntity(JSBaseEntity):

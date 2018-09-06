@@ -3,7 +3,6 @@ import os
 from time import sleep
 
 from lxml.html import document_fromstring
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import (
     View, TableRow, Text, TextInput, ParametrizedView, Image, ConditionalSwitchableView)
 from widgetastic_patternfly import (
@@ -14,68 +13,9 @@ from cfme.exceptions import TemplateNotFound
 from cfme.utils.log import logger
 from widgetastic_manageiq import (
     Calendar, Checkbox, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, RadioGroup,
-    BaseEntitiesView, NonJSBaseEntity, BaseListEntity, BaseQuadIconEntity, BaseTileIconEntity,
-    JSBaseEntity, BaseNonInteractiveEntitiesView, PaginationPane, DriftComparison,
+    BaseEntitiesView, JSBaseEntity, BaseNonInteractiveEntitiesView, PaginationPane, DriftComparison,
     ParametrizedSummaryTable
 )
-
-
-class InstanceQuadIconEntity(BaseQuadIconEntity):
-    """ Provider child of Quad Icon entity
-
-    """
-    @property
-    def data(self):
-        br = self.browser
-        try:
-            if br.product_version > '5.8':
-                state = br.get_attribute('style', self.QUADRANT.format(pos='b'))
-                state = state.split('"')[1]
-            else:
-                state = br.get_attribute('src', self.QUADRANT.format(pos='b'))
-
-            state = os.path.split(state)[1]
-            state = os.path.splitext(state)[0]
-        except NoSuchElementException:
-            return {}
-        except IndexError:
-            state = ''
-
-        if br.is_displayed(self.QUADRANT.format(pos='g')):
-            policy = br.get_attribute('src', self.QUADRANT.format(pos='g'))
-        else:
-            policy = None
-
-        return {
-            "os": br.get_attribute('src', self.QUADRANT.format(pos='a')),
-            "state": state,
-            "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
-            "no_snapshot": br.text(self.QUADRANT.format(pos='d')),
-            "policy": policy,
-        }
-
-
-class InstanceTileIconEntity(BaseTileIconEntity):
-    """ Provider child of Tile Icon entity
-
-    """
-    quad_icon = ParametrizedView.nested(InstanceQuadIconEntity)
-
-
-class InstanceListEntity(BaseListEntity):
-    """ Provider child of List entity
-
-    """
-    pass
-
-
-class NonJSInstanceEntity(NonJSBaseEntity):
-    """ Provider child of Proxy entity
-
-    """
-    quad_entity = InstanceQuadIconEntity
-    list_entity = InstanceListEntity
-    tile_entity = InstanceTileIconEntity
 
 
 class InstanceEntity(JSBaseEntity):

@@ -2,11 +2,7 @@
 from lxml.html import document_fromstring
 from widgetastic_manageiq import (
     BaseEntitiesView,
-    NonJSBaseEntity,
     JSBaseEntity,
-    BaseListEntity,
-    BaseQuadIconEntity,
-    BaseTileIconEntity,
     BreadCrumb,
     ItemsToolBarViewSelector,
     SummaryTable,
@@ -29,31 +25,6 @@ class ComputePhysicalInfrastructureSwitchesView(BaseLoggedInPage):
         return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ["Compute", "Physical Infrastructure",
                                                        "Switches"])
-
-
-class PhysicalSwitchQuadIconEntity(BaseQuadIconEntity):
-    @property
-    def data(self):
-        return {
-            'no_port': int(self.browser.text(self.QUADRANT.format(pos="a"))),
-            'state': self.browser.get_attribute("style", self.QUADRANT.format(pos="b")),
-            'vendor': self.browser.get_attribute("alt", self.QUADRANT.format(pos="c")),
-            'health_state': self.browser.get_attribute("alt", self.QUADRANT.format(pos="d"))
-        }
-
-
-class PhysicalSwitchTileIconEntity(BaseTileIconEntity):
-    quad_icon = ParametrizedView.nested(PhysicalSwitchQuadIconEntity)
-
-
-class PhysicalSwitchListEntity(BaseListEntity):
-    pass
-
-
-class NonJSPhysicalSwitchEntity(NonJSBaseEntity):
-    quad_entity = PhysicalSwitchQuadIconEntity
-    list_entity = PhysicalSwitchListEntity
-    tile_entity = PhysicalSwitchTileIconEntity
 
 
 class PhysicalSwitchEntity(JSBaseEntity):
