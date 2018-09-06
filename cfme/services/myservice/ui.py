@@ -151,6 +151,14 @@ class SetOwnershipView(SetOwnershipForm):
             self.title.text == 'Set Ownership of Service "{}"'.format(self.context['object'].name))
 
 
+@MiqImplementationContext.external_for(MyService.get_ownership, ViaUI)
+def get_ownership(self, owner, group):
+    view = navigate_to(self, 'Details')
+    exists = (view.details.lifecycle.get_text_of("Owner") == owner and
+              view.details.lifecycle.get_text_of("Group") == group)
+    return exists
+
+
 class ServiceRetirementView(ServiceRetirementForm):
     title = Text('#explorer_title_text')
 
