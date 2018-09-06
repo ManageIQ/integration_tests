@@ -103,7 +103,6 @@ def pytest_generate_tests(metafunc):
     new_argvalues = []
 
     for index, argvalue_tuple in enumerate(argvalues):
-        argvalue_tuple[0].create_rest()
         args = dict(zip(argnames, argvalue_tuple))
         vma_data = args['provider'].data.vm_analysis_new
         vms = vma_data.vms
@@ -115,11 +114,18 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def vm_analysis_provisioning_data(provider, analysis_type):
-    vma_data = provider.data.vm_analysis_new
+def ssa_provider(provider):
+    "Create customized provider on CFME"
+    provider.create_rest(check_existing=True)
+    return provider
+
+
+@pytest.fixture(scope="module")
+def vm_analysis_provisioning_data(ssa_provider, analysis_type):
+    vma_data = ssa_provider.data.vm_analysis_new
     provisioning_data = vma_data.provisioning
 
-    if not isinstance(provider, CloudProvider):
+    if not ssa_provider.one_of(CloudProvider):
         provisioning_data.setdefault('host', vma_data.provisioning.host)
         provisioning_data.setdefault('datastore', vma_data.provisioning.datastore)
         provisioning_data.setdefault('vlan', vma_data.provisioning.vlan)
@@ -131,8 +137,8 @@ def vm_analysis_provisioning_data(provider, analysis_type):
         provisioning_data.setdefault('cloud_network', vma_data.provisioning.cloud_network)
 
     # If defined, tries to find cluster from provisioning, then provider definition itself
-    if provider.one_of(RHEVMProvider):
-        provider_data = provider.data
+    if ssa_provider.one_of(RHEVMProvider):
+        provider_data = ssa_provider.data
         if 'cluster' not in provisioning_data and 'cluster' not in provider_data.provisioning:
             provisioning_data.cluster = provider_data.default_cluster
         else:
@@ -142,7 +148,7 @@ def vm_analysis_provisioning_data(provider, analysis_type):
     return provisioning_data
 
 
-def set_agent_creds(appliance, request, provider):
+def set_agent_creds(appliance, request, ssa_provider):
     version = appliance.version.vstring
     docker_image_name = "simaishi/amazon-ssa:{}".format(version)
     agent_data = {"ems": {"ems_amazon": {"agent_coordinator": {"agent_label": "test_smartstate",
@@ -151,10 +157,10 @@ def set_agent_creds(appliance, request, provider):
     appliance.update_advanced_settings(agent_data)
 
     # Adding SmartState Docker credentials
-    data = provider.data.endpoints
+    data = ssa_provider.data.endpoints
     username = credentials[data['ssa_agent']['credentials']]['username']
     password = credentials[data['ssa_agent']['credentials']]['password']
-    view = navigate_to(provider, "Edit")
+    view = navigate_to(ssa_provider, "Edit")
     ssa_agent_view = view.browser.create_view(EC2EndpointForm)
     ssa_agent_view.smart_state_docker.fill({'username': username, 'password': password})
     ssa_agent_view.default.validate.click()
@@ -166,17 +172,17 @@ def set_agent_creds(appliance, request, provider):
 
     @request.addfinalizer
     def _remove_docker_creds():
-        view = navigate_to(provider, "Edit")
+        view = navigate_to(ssa_provider, "Edit")
         ssa_agent_view = view.browser.create_view(EC2EndpointForm)
         ssa_agent_view.smart_state_docker.fill({'username': ""})
         ssa_agent_view.smart_state_docker.change_pass.click()
         view.save.click()
 
 
-def set_host_creds(request, appliance, provider, ssa_vm):
+def set_host_creds(request, appliance, ssa_provider, ssa_vm):
     host = ssa_vm.host
-    host_data = [data for data in provider.data['hosts'] if data['name'] == host.name]
-    host.update_credentials_rest(credentials=[h.get('credentials') for h in host_data][0])
+    host_data = [data for data in ssa_provider.data['hosts'] if data['name'] == host.name][0]
+    host.update_credentials_rest(credentials=host_data.get('credentials'))
     appliance.install_vddk()
 
     @request.addfinalizer
@@ -199,34 +205,35 @@ def ssa_compliance_policy(appliance):
 
 
 @pytest.fixture(scope="module")
-def ssa_compliance_profile(appliance, provider, ssa_compliance_policy):
+def ssa_compliance_profile(appliance, ssa_provider, ssa_compliance_policy):
     profile = appliance.collections.policy_profiles.create(
         'ssa_policy_profile_{}'.format(fauxfactory.gen_alpha()), policies=[ssa_compliance_policy])
 
-    provider.assign_policy_profiles(profile.description)
+    ssa_provider.assign_policy_profiles(profile.description)
     yield
-    provider.unassign_policy_profiles(profile.description)
+    ssa_provider.unassign_policy_profiles(profile.description)
     profile.delete()
 
 
 @pytest.fixture(scope="module")
-def ssa_single_vm(request, provider, vm_analysis_provisioning_data, appliance, analysis_type):
+def ssa_single_vm(request, ssa_provider, vm_analysis_provisioning_data, appliance,
+                  analysis_type):
     """ Fixture to provision instance on the provider """
     def _ssa_single_vm():
         template_name = vm_analysis_provisioning_data['image']
         vm_name = 'test-ssa-{}-{}'.format(fauxfactory.gen_alphanumeric(), analysis_type)
-        collection = provider.appliance.provider_based_collection(provider)
+        collection = appliance.provider_based_collection(ssa_provider)
         vm = collection.instantiate(vm_name,
-                                    provider,
+                                    ssa_provider,
                                     template_name=vm_analysis_provisioning_data.image)
         provision_data = vm_analysis_provisioning_data.copy()
         del provision_data['image']
 
-        if "test_ssa_compliance" in request._pyfuncitem.name or provider.one_of(RHEVMProvider):
+        if "test_ssa_compliance" in request._pyfuncitem.name or ssa_provider.one_of(RHEVMProvider):
             provisioning_data = {"catalog": {'vm_name': vm_name},
                                  "environment": {'automatic_placement': True},
                                  "network": {'vlan': partial_match(provision_data['vlan'])}}
-            do_vm_provisioning(vm_name=vm_name, appliance=appliance, provider=provider,
+            do_vm_provisioning(vm_name=vm_name, appliance=appliance, provider=ssa_provider,
                                provisioning_data=provisioning_data, template_name=template_name,
                                request=request, smtp_test=False, num_sec=2500)
         else:
@@ -234,8 +241,8 @@ def ssa_single_vm(request, provider, vm_analysis_provisioning_data, appliance, a
 
         request.addfinalizer(lambda: vm.cleanup_on_provider())
 
-        if provider.one_of(OpenStackProvider):
-            public_net = provider.data['public_network']
+        if ssa_provider.one_of(OpenStackProvider):
+            public_net = ssa_provider.data['public_network']
             vm.mgmt.assign_floating_ip(public_net)
 
         logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
@@ -270,7 +277,7 @@ def ssa_single_vm(request, provider, vm_analysis_provisioning_data, appliance, a
         vm.connect_ip = connect_ip
 
         # TODO:  if rhev and iscsi, it need direct_lun
-        if provider.type == 'rhevm':
+        if ssa_provider.one_of(RHEVMProvider):
             logger.info("Setting a relationship between VM and appliance")
             cfme_rel = InfraVm.CfmeRelationship(vm)
             cfme_rel.set_relationship(appliance.server.name, appliance.server_id())
@@ -281,15 +288,15 @@ def ssa_single_vm(request, provider, vm_analysis_provisioning_data, appliance, a
 
 
 @pytest.fixture(scope="module")
-def ssa_vm(ssa_single_vm, assign_profile_to_vm, provider, request, appliance):
+def ssa_vm(ssa_single_vm, assign_profile_to_vm, ssa_provider, request, appliance):
     """Single vm with assigned profile"""
     ssa_vm = ssa_single_vm()
     assign_profile_to_vm(ssa_vm)
-    if provider.one_of(VMwareProvider):
-        set_host_creds(request, appliance, provider, ssa_vm)
+    if ssa_provider.one_of(VMwareProvider):
+        set_host_creds(request, appliance, ssa_provider, ssa_vm)
 
-    if provider.one_of(EC2Provider):
-        set_agent_creds(appliance, request, provider)
+    if ssa_provider.one_of(EC2Provider):
+        set_agent_creds(appliance, request, ssa_provider)
 
     return ssa_vm
 
@@ -471,7 +478,7 @@ def compare_windows_vm_data(soft_assert):
 @pytest.mark.rhv2
 @pytest.mark.tier(1)
 @pytest.mark.long_running
-def test_ssa_template(provider, soft_assert, vm_analysis_provisioning_data,
+def test_ssa_template(ssa_provider, soft_assert, vm_analysis_provisioning_data,
                       appliance, ssa_vm, compare_windows_vm_data):
     """ Tests SSA can be performed on a template
 
@@ -479,9 +486,9 @@ def test_ssa_template(provider, soft_assert, vm_analysis_provisioning_data,
         test_flag: vm_analysis
     """
     template_name = vm_analysis_provisioning_data['image']
-    template_collection = appliance.provider_based_collection(provider=provider,
+    template_collection = appliance.provider_based_collection(provider=ssa_provider,
                                                               coll_type='templates')
-    template = template_collection.instantiate(template_name, provider)
+    template = template_collection.instantiate(template_name, ssa_provider)
 
     template.smartstate_scan(wait_for_task_result=True)
 
@@ -546,7 +553,7 @@ def test_ssa_compliance(ssa_compliance_profile, ssa_vm,
 @pytest.mark.tier(2)
 @pytest.mark.long_running
 @pytest.mark.meta(blockers=[BZ(1578792, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: vm_system_type != 'redhat')])
+    unblock=lambda ssa_provider: vm_system_type != 'redhat')])
 def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
     """ Tests SSA can be performed and returns sane results
 
@@ -580,9 +587,9 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
 @pytest.mark.long_running
 @pytest.mark.meta(blockers=[
     BZ(1551273, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider)),
+    unblock=lambda ssa_provider: not ssa_provider.one_of(RHEVMProvider)),
     BZ(1578792, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: vm_system_type != 'redhat')])
+    unblock=lambda ssa_provider: vm_system_type != 'redhat')])
 def test_ssa_vm(ssa_vm, soft_assert, vm_system_type):
     """ Tests SSA can be performed and returns sane results
 
@@ -690,7 +697,7 @@ def test_ssa_groups(ssa_vm):
 
 @pytest.mark.long_running
 @pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+    unblock=lambda ssa_provider: not ssa_provider.one_of(RHEVMProvider))])
 def test_ssa_packages(ssa_vm):
     """ Tests SSA fetches correct results for packages
 
@@ -733,7 +740,7 @@ def test_ssa_packages(ssa_vm):
 
 
 @pytest.mark.meta(blockers=[BZ(1553808, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+    unblock=lambda ssa_provider: not ssa_provider.one_of(RHEVMProvider))])
 @pytest.mark.long_running
 def test_ssa_files(ssa_vm):
     """Tests that instances can be scanned for specific file."""
@@ -826,8 +833,8 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
 
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-@pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
-                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'], unblock=lambda
+        ssa_provider: not ssa_provider.one_of(RHEVMProvider))])
 def test_ssa_multiple_vms(ssa_multiple_vms, soft_assert, appliance, compare_linux_vm_data,
                           compare_windows_vm_data):
     """ Tests SSA run while selecting multiple vms at once
