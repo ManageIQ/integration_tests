@@ -32,7 +32,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.conf import cfme_data
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
-from cfme.utils.version import UPSTREAM, VersionPicker
+from cfme.utils.version import UPSTREAM, VersionPicker, LOWEST
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
@@ -639,6 +639,8 @@ class InfraVm(VM):
                 flash_message = VersionPicker({
                     UPSTREAM: "Delete Snapshot initiated for 1 "
                               "VM and Instance from the ManageIQ Database",
+                    LOWEST: "Remove Snapshot initiated for 1 "
+                            "VM and Instance from the CFME Database",
                     '5.9': "Delete Snapshot initiated for 1 VM and Instance from the CFME Database"
                 }).pick(self.parent_vm.appliance.version)
                 view.flash.assert_message(flash_message)
