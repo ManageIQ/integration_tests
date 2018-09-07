@@ -578,4 +578,5 @@ class ContainerProviderEditViewUpdated(ProviderEditView, ContainerProviderSettin
 
     def before_fill(self, values):
         for widget in self.COND_WIDGETS:
-            getattr(self, widget).fill(values.get(widget))
+            if values.get(widget):
+                getattr(self, widget).fill(values.get(widget))
