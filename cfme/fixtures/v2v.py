@@ -91,8 +91,8 @@ def _tag_cleanup(host_obj, tag1, tag2):
     # are not subset of valid tags, we still remove them.
     if len(tags_set) < 2 or not tags_set.issubset(valid_tags):
         host_obj.remove_tags(tags=tags)
-        return True
-    return False
+        return False
+    return True
 
 
 @pytest.fixture(scope='function')
