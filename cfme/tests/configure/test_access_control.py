@@ -3,7 +3,6 @@ import traceback
 
 import fauxfactory
 import pytest
-from widgetastic.exceptions import NoSuchElementException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -1109,13 +1108,11 @@ def test_delete_default_tenant(appliance):
     """
     view = navigate_to(appliance.collections.tenants, "All")
     roottenant = appliance.collections.tenants.get_root_tenant()
-    try:
-        msg = 'Default Tenant "{}" can not be deleted'.format(roottenant.name)
-        tenant = appliance.collections.tenants.instantiate(name=roottenant.name)
-        appliance.collections.tenants.delete(tenant)
-        assert view.flash.read()[0] == msg
-    except NoSuchElementException:
-        raise RBACOperationBlocked(match=msg)
+    msg = 'Default Tenant "{}" can not be deleted'.format(roottenant.name)
+    tenant = appliance.collections.tenants.instantiate(name=roottenant.name)
+    appliance.collections.tenants.delete(tenant)
+    assert view.flash.assert_message(msg)
+    assert roottenant.exists
 
 
 def test_copied_user_password_inheritance(appliance, group_collection, request):
