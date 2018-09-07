@@ -255,7 +255,7 @@ then
     log "invoking complete collectonly with dummy instance before test"
     gate "collectonly.txt" "py.test --collectonly --dummy-appliance --dummy-appliance-version $SPROUT_GROUP --use-provider complete"
 
-    run_n_log "miq sprout checkout --populate-yaml" &
+    run_n_log "miq sprout checkout --populate-yaml --sprout-user-key sprout" &
     sleep 5
     do_or_die "python /check_provisioned.py >> $ARTIFACTOR_DIR/setup.txt" 5 60 "Sprout failed to provision appliance"
 else
