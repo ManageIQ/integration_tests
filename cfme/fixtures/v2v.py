@@ -18,14 +18,20 @@ def v2v_providers(request, second_provider, provider):
 
 
 @pytest.fixture(scope='function')
-def host_creds(v2v_providers):
+def host_creds(request, v2v_providers):
     """Add credentials to conversation host"""
     provider = v2v_providers[1]
-    host = provider.hosts.all()[0]
-    host_data = [data for data in provider.data['hosts'] if data['name'] == host.name]
-    host.update_credentials_rest(credentials=host_data[0]['credentials'])
-    yield host
-    host.remove_credentials_rest()
+    if hasattr(request, 'param') and request.param == 'multi-host':
+        hosts = provider.hosts.all()
+    else:
+        hosts = [(provider.hosts.all())[0]]
+    for host in hosts:
+        host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+        host.update_credentials_rest(credentials=host_data['credentials'])
+
+    yield hosts
+    for host in hosts:
+        host.remove_credentials_rest()
 
 
 def _tag_cleanup(host_obj, tag1, tag2):
@@ -44,23 +50,29 @@ def _tag_cleanup(host_obj, tag1, tag2):
 
     if len(tags_set) < 2 or not tags_set.issubset(valid_tags):
         host_obj.remove_tags(tags=tags)
-        return True
-    return False
+        return False
+    return True
 
 
 @pytest.fixture(scope='function')
-def conversion_tags(appliance, host_creds):
+def conversion_tags(request, appliance, host_creds):
     """Assigning tags to conversation host"""
     tag1 = appliance.collections.categories.instantiate(
         display_name='V2V - Transformation Host *').collections.tags.instantiate(
         display_name='t')
+    if hasattr(request, 'param') and request.param == 'SSH':
+            transformation_method = 'SSH'
+    else:
+        transformation_method = 'VDDK'
     tag2 = appliance.collections.categories.instantiate(
         display_name='V2V - Transformation Method').collections.tags.instantiate(
-        display_name='VDDK')
-    if _tag_cleanup(host_creds, tag1, tag2):
-        host_creds.add_tags(tags=(tag1, tag2))
+        display_name=transformation_method)
+    for host in host_creds:
+        if not _tag_cleanup(host, tag1, tag2):
+            host.add_tags(tags=(tag1, tag2))
     yield
-    host_creds.remove_tags(tags=(tag1, tag2))
+    for host in host_creds:
+        host.remove_tags(tags=(tag1, tag2))
 
 
 def get_vm(request, appliance, second_provider, template, datastore='nfs'):

@@ -312,6 +312,7 @@ class MigrationDashboardView(BaseLoggedInPage):
     configure_providers = Text(locator='//a[text()="Configure Providers"]')
     migration_plans_not_started_list = MigrationPlansList("plans-not-started-list")
     migration_plans_completed_list = MigrationPlansList("plans-complete-list")
+    migration_plans_archived_list = MigrationPlansList("plans-complete-list")
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
     migr_dropdown = MigrationDropdown(text="Not Started Plans")
     # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)

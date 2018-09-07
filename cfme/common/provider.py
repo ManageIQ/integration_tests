@@ -967,7 +967,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
         details['ems_id'] = vm.ems_id
         details['name'] = vm.name
         details['type'] = vm.type
-        details['vendor'] = vm.vendore
+        details['vendor'] = vm.vendor
         details['host_id'] = vm.host_id
         details['power_state'] = vm.power_state
         return details
