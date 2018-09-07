@@ -19,6 +19,7 @@ from cfme.markers.env_markers.provider import providers
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.meta(blockers=[BZ(1626971, forced_streams=['5.10'])]),
     pytest.mark.tier(1),
     pytest.mark.long_running,
     test_requirements.retirement,

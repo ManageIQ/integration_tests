@@ -22,6 +22,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.rest import assert_response
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
+from cfme.utils.version import LOWEST, VersionPicker
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 from . import PolicyProfileAssignable
@@ -183,7 +184,11 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
         view = navigate_to(self, "Details", use_resetter=False)
         if view.entities.summary('Lifecycle').get_text_of('Retirement Date').lower() != 'never':
             try:
-                status = view.entities.summary('Lifecycle').get_text_of('Retirement state').lower()
+                retirement_state = VersionPicker({
+                    LOWEST: 'Retirement state',
+                    '5.10': 'Retirement State'
+                })
+                status = view.entities.summary('Lifecycle').get_text_of(retirement_state).lower()
                 return status == 'retired'
             except NameError:
                 return False
