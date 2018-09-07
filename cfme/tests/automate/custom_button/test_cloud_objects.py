@@ -44,9 +44,14 @@ def setup_objs(button_group, provider):
     obj_type = button_group[1]
 
     if obj_type == "PROVIDER":
-        # To-Do: Add check for block and object storage manager
+        # Note: For the custom button provider object points
+        # provider, storage managers, network managers
+        block_coll = provider.appliance.collections.block_managers.filter({"provider": provider})
+        block_manager = block_coll.all()[0]
+        object_coll = provider.appliance.collections.object_managers.filter({"provider": provider})
+        object_manager = object_coll.all()[0]
         network_manager = provider.appliance.collections.network_providers.all()[0]
-        obj = [provider, network_manager]
+        obj = [provider, network_manager, block_manager, object_manager]
     elif obj_type == "VM_INSTANCE":
         obj = [provider.appliance.provider_based_collection(provider).all()[0]]
     else:
