@@ -157,6 +157,11 @@ class KeyPair(BaseEntity, Taggable):
                 fail_func=refresh
             )
 
+    def download_private_key(self):
+        view = navigate_to(self, "Details")
+        view.toolbar.configuration.item_select('Download private key')
+        view.flash.assert_no_error()
+
     @property
     def exists(self):
         try:
