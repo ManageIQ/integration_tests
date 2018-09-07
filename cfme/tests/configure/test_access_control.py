@@ -24,6 +24,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider')
 ]
 
+
 @pytest.fixture(scope='module')
 def group_collection(appliance):
     return appliance.collections.groups
@@ -1097,14 +1098,21 @@ def test_tenant_quota_input_validate(appliance):
 
 
 def test_delete_default_tenant(appliance):
+    """
+    Steps:
+    1. Login as an 'Administrator' user
+    2. Navigate to configuration > access control > tenants
+    3. Select default tenant('My Company') from tenants table
+    4. Delete using 'configuration > 'Delete selected items'
+    5. Check whether default tenant is deleted or not
+    """
     roottenant = appliance.collections.tenants.get_root_tenant()
+
     view = navigate_to(appliance.collections.tenants, 'All')
-    for row in view.table.rows():
-        if row.name.text == roottenant.name:
-            row[0].check()
     msg = 'Default Tenant "{}" can not be deleted'.format(roottenant.name)
-    with pytest.raises(Exception, match=msg):
-        view.toolbar.configuration.item_select('Delete selected items', handle_alert=True)
+    tenant = appliance.collections.tenants.instantiate(name=roottenant.name)
+    appliance.collections.tenants.delete(tenant)
+    assert view.flash.read()[0] == msg
 
 
 def test_copied_user_password_inheritance(appliance, group_collection, request):
