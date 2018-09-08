@@ -70,7 +70,7 @@ def test_discover_host(request, provider, appliance, host_ips):
     collection = appliance.collections.hosts
 
     def _cleanup():
-        all_hosts = collection.all(provider)
+        all_hosts = collection.filter({"parent": provider}).all()
         if all_hosts:
             collection.delete(*all_hosts)
 
