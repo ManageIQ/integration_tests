@@ -277,3 +277,20 @@ def test_create_instance_with_private_flavor(instance_with_private_flavor, provi
     view = navigate_to(instance_with_private_flavor, 'Details')
     power_state = view.entities.summary('Power Management').get_text_of('Power State')
     assert power_state == OpenStackInstance.STATE_ON
+
+
+@pytest.mark.ignore_stream('5.9')
+def test_reconfigure_instance(new_instance, appliance):
+    new_flavor = new_instance.provider.data['provisioning']['instance_type']
+    view = navigate_to(new_instance, 'Details')
+    curr_flavor = view.entities.summary('Relationships').get_text_of('Flavor')
+    new_instance.reconfigure(new_flavor)
+    view = appliance.browser.create_view(navigator.get_class(new_instance, 'Details').VIEW)
+
+    view.flash.assert_success_message(
+        'Reconfiguring Instance "{}" from {} to {}'.format(new_instance.naem, curr_flavor,
+                                                           new_flavor))
+
+    wait_for(lambda: view.entities.summary('Relationships').get_text_of('Flavor') == new_flavor,
+             timeout=300, delay=10, fail_func=new_instance.refresh_relationships,
+             message='Wait for new flavor to appear')
