@@ -6,6 +6,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme import test_requirements
 
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 
 
@@ -36,6 +37,7 @@ def new_vm(setup_provider, provider):
 
 
 @pytest.mark.rhv1
+@pytest.mark.meta(blockers=[BZ(1627297, forced_streams=['5.10'])])
 def test_vm_migrate(appliance, new_vm, provider):
     """Tests migration of a vm
 
