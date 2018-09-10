@@ -39,20 +39,20 @@ def unconfigured_appliance(appliance, pytestconfig):
 
 
 @pytest.fixture()
-def unconfigured_appliance_secondary(appliance):
-    with fqdn_appliance(appliance, preconfigured=False, count=1) as apps:
+def unconfigured_appliance_secondary(appliance, pytestconfig):
+    with fqdn_appliance(appliance, preconfigured=False, count=1, config=pytestconfig) as apps:
         yield apps[0]
 
 
 @pytest.fixture()
-def unconfigured_appliances(appliance):
-    with fqdn_appliance(appliance, preconfigured=False, count=3) as apps:
+def unconfigured_appliances(appliance, pytestconfig):
+    with fqdn_appliance(appliance, preconfigured=False, count=3, config=pytestconfig) as apps:
         yield apps
 
 
 @pytest.fixture()
-def configured_appliance(appliance):
-    with fqdn_appliance(appliance, preconfigured=True, count=1) as apps:
+def configured_appliance(appliance, pytestconfig):
+    with fqdn_appliance(appliance, preconfigured=True, count=1, config=pytestconfig) as apps:
         yield apps[0]
 
 
