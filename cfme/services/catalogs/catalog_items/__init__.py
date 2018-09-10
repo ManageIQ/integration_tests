@@ -475,7 +475,18 @@ class CatalogItemsCollection(BaseCollection):
         """
         cat_item = self.instantiate(catalog_item_class, *args, **kwargs)
         view = navigate_to(cat_item, 'Add')
-        view.fill(cat_item.fill_dict)
+
+        if self.appliance.version < '5.10':
+            view.fill(cat_item.fill_dict)
+        else:
+            fill_dict = cat_item.fill_dict
+            catalog_name = '{}/{}'.format(
+                self.appliance.company_name,
+                fill_dict['basic_info']['select_catalog']
+            )
+            fill_dict['basic_info']['select_catalog'] = catalog_name
+            view.fill(fill_dict)
+
         view.add.click()
         view = self.create_view(AllCatalogItemView)
         # TODO move this assertion to tests
