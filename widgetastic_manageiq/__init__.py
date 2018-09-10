@@ -4416,7 +4416,6 @@ class MultiSelectList(Widget):
     PARTIAL_TEXT = (
         './div/div/div/span[contains(@class,"dual-pane-mapper-item-container")'
         'and contains(normalize-space(.),"{}")]'
-        "/div[contains(@class,'spinner')]"
     )
     SPINNER_LOCATOR = (
         ".//div[contains(@class, dual-pane-mapper-list-container)]"
@@ -4479,7 +4478,9 @@ class MultiSelectList(Widget):
             return False
         for item in values:
             self.select_by_text(item)
-        return True
+        if values == self.list_selected_items:
+            return True
+        return False
 
     def select_by_text(self, text):
         """Select/click option using text
@@ -4557,6 +4558,10 @@ class InfraMappingTreeView(Widget):
         self._all_item_elements[value or self.selected_item].click()
         return True
 
+    @property
+    def is_empty(self):
+        return len(self.mapping_sources) == 0 and len(self.mapping_targets) == 0
+
 
 class MigrationPlansList(Widget):
     """Represents the list of Migration Plans."""
@@ -4568,24 +4573,33 @@ class MigrationPlansList(Widget):
     ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
     ITEM_TIMER_LOCATOR = './/div[./span[contains(@class,"fa-clock-o")]]'
     ITEM_DESCRIPTION_LOCATOR = './/div[contains(@class,"list-group-item-text")]'
-    ITEM_VM_LOCATOR = ('.//div[./span[contains(@class,"pficon-virtual-machine") '
-            'or contains(@class,"pficon-screen")]]')
-    ITEM_BUTTON_LOCATOR = ('./div[contains(@class,"list-view-pf-actions")]'
-                        '//button[text()="Migrate" or text()="Retry"]')
+    ITEM_VM_LOCATOR = (
+        './/div[./span[contains(@class,"pficon-virtual-machine") '
+        'or contains(@class,"pficon-screen")]]'
+    )
+    ITEM_BUTTON_LOCATOR = (
+        './div[contains(@class,"list-view-pf-actions")]'
+        '//button[text()="Migrate" or text()="Retry"]'
+    )
     ITEM_IS_SUCCESSFUL_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
     ITEM_KEBAB_DROPDOWN_LOCATOR = './/div[contains(@class,"dropdown-kebab-pf")]/button'
     ITEM_ARCHIVE_BUTTON_LOCATOR = './/div[contains(@class,"dropdown-kebab-pf")]/ul/li/a'
-    ITEM_MODAL_ARCHIVE_BUTTON_LOCATOR = ('.//button[contains(@class,"btn btn-primary")'
-                                        ' and text()="Archive"]')
+    ITEM_MODAL_ARCHIVE_BUTTON_LOCATOR = (
+        './/button[contains(@class,"btn btn-primary")' ' and text()="Archive"]'
+    )
     ITEM_MODAL_CANCEL_BUTTON_LOCATOR = './/button[contains(@class,"btn-cancel btn")]'
     ITEM_MODAL_TEXT_LOCATOR = './/div[ contains(@class,"modal-body")]'
-    ITEM_SCHEDULE_BUTTON_LOCATOR = ('./div[contains(@class,"list-view-pf-actions")]'
-                                '//button[text()="Schedule" or text()="Unschedule"]')
+    ITEM_SCHEDULE_BUTTON_LOCATOR = (
+        './div[contains(@class,"list-view-pf-actions")]'
+        '//button[text()="Schedule" or text()="Unschedule"]'
+    )
     ITEM_SCHEDULE_INPUT_LOCATOR = './/input[@id="dateTimeInput"]'
-    ITEM_MODAL_SCHEDULE_LOCATOR = ('.//div[@class="modal-footer"]/'
-                                'button[text()="Schedule" or text()="Unschedule"]')
-    ITEM_MODAL_MINUTE_INCREMENT_LOCATOR = ('.//*[@id="dateTimePicker"]/div/div/div[2]/div[1]'
-                                        '/table/tbody/tr[1]/td[3]')
+    ITEM_MODAL_SCHEDULE_LOCATOR = (
+        './/div[@class="modal-footer"]/' 'button[text()="Schedule" or text()="Unschedule"]'
+    )
+    ITEM_MODAL_MINUTE_INCREMENT_LOCATOR = (
+        './/*[@id="dateTimePicker"]/div/div/div[2]/div[1]' "/table/tbody/tr[1]/td[3]"
+    )
 
     def __init__(self, parent, list_class, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4605,7 +4619,7 @@ class MigrationPlansList(Widget):
             return self.browser.text(self.browser.element(self.ITEM_TIMER_LOCATOR, parent=el))
         except NoSuchElementException:
             # Plan with no clock
-            return None
+            return ""
 
     def get_plan_description(self, plan_name):
         try:
@@ -4613,7 +4627,7 @@ class MigrationPlansList(Widget):
             return self.browser.text(self.browser.element(self.ITEM_DESCRIPTION_LOCATOR, parent=el))
         except NoSuchElementException:
             # Plan with no description
-            return None
+            return ""
 
     def _get_plan_element(self, plan_name):
         for item in self.browser.elements(self.ITEM_LOCATOR):
@@ -4684,14 +4698,14 @@ class MigrationPlansList(Widget):
             if plan_name not in self.all_items:
                 return True
         except NoSuchElementException:
-                return False
+            return False
 
     def schedule_migration(self, plan_name, cancel=False, after_mins=1):
         try:
             el = self._get_plan_element(plan_name)
             schedule_button = self.browser.element(self.ITEM_SCHEDULE_BUTTON_LOCATOR, parent=el)
             schedule_button.click()
-            if schedule_button.text == 'Schedule' and not cancel:
+            if schedule_button.text == "Schedule" and not cancel:
                 schedule_time_input = self.root_browser.element(self.ITEM_SCHEDULE_INPUT_LOCATOR)
                 schedule_time_input.click()
                 for i in range(after_mins):
@@ -4916,12 +4930,15 @@ class MigrationPlanRequestDetailsList(Widget):
     ITEM_IS_SUCCESSFUL_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
     ITEM_ADDITIONAL_INFO_POPUP_LOCATOR = '//div[contains(@class,"task-info-popover")]'
     ITEM_CANCEL_MIGRATION_CHECKBOX_LOCATOR = './/input[@type="checkbox"]'
-    ITEM_CANCEL_MIGRATION_BUTTON_LOCATOR = ('.//button[@class="btn btn-default" and'
-                                            ' text()="Cancel Migration"]')
-    ITEM_MODAL_CANCEL_MIRATION_YES_BUTTON_LOCATOR = ('.//div[@class="modal-footer"]'
-                                                '/button[text()="Cancel Migrations"]')
-    ITEM_MODAL_CANCEL_MIRATION_NO_BUTTON_LOCATOR = ('.//div[@class="modal-footer"]'
-                                                '/button[text()="No"]')
+    ITEM_CANCEL_MIGRATION_BUTTON_LOCATOR = (
+        './/button[@class="btn btn-default" and' ' text()="Cancel Migration"]'
+    )
+    ITEM_MODAL_CANCEL_MIRATION_YES_BUTTON_LOCATOR = (
+        './/div[@class="modal-footer"]' '/button[text()="Cancel Migrations"]'
+    )
+    ITEM_MODAL_CANCEL_MIRATION_NO_BUTTON_LOCATOR = (
+        './/div[@class="modal-footer"]' '/button[text()="No"]'
+    )
     ITEM_MODAL_CANCEL_MIGRATION_VM_LIST_LOCATOR = './/div[@class="modal-body"]/ul'
 
     def __init__(self, parent, list_class, logger=None):
@@ -5020,19 +5037,24 @@ class MigrationPlanRequestDetailsList(Widget):
         # TODO: Add support for reading addtional_info_popup for completed migration if required.
         if self.open_additional_info_popup(vm_name) and not self.is_successful(vm_name):
             el = self.browser.element(self.ITEM_ADDITIONAL_INFO_POPUP_LOCATOR)
-            return {'Status': self.browser.text('./h3', parent=el),
-            'Started': self.browser.text('./div[2]/div/div[1]', parent=el),
-            'Description': self.browser.text('./div[2]/div/div[2]', parent=el),
-            'Conversion Host': (self.browser.text('./div[2]/div/div[3]', parent=el)).split(': ')[1]}
+            return {
+                "Status": self.browser.text("./h3", parent=el),
+                "Started": self.browser.text("./div[2]/div/div[1]", parent=el),
+                "Description": self.browser.text("./div[2]/div/div[2]", parent=el),
+                "Conversion Host": (self.browser.text("./div[2]/div/div[3]", parent=el)).split(
+                    ": "
+                )[1],
+            }
 
     def cancel_migration(self, vm_name, confirmed=True):
         try:
             el = self._get_vm_element(vm_name)
-            self.browser.click(self.ITEM_CANCEL_MIGRATION_CHECKBOX_LOCATOR,
-             parent=el)
+            self.browser.click(self.ITEM_CANCEL_MIGRATION_CHECKBOX_LOCATOR, parent=el)
             self.parent_browser.click(self.ITEM_CANCEL_MIGRATION_BUTTON_LOCATOR)
-            if confirmed and (vm_name in self.root_browser.element(
-                    self.ITEM_MODAL_CANCEL_MIGRATION_VM_LIST_LOCATOR).text):
+            if confirmed and (
+                vm_name
+                in self.root_browser.element(self.ITEM_MODAL_CANCEL_MIGRATION_VM_LIST_LOCATOR).text
+            ):
                 self.root_browser.click(self.ITEM_MODAL_CANCEL_MIRATION_YES_BUTTON_LOCATOR)
             else:
                 self.root_browser.click(self.ITEM_MODAL_CANCEL_MIRATION_NO_BUTTON_LOCATOR)

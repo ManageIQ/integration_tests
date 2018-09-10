@@ -21,14 +21,15 @@ def v2v_providers(request, second_provider, provider):
 def host_creds(request, v2v_providers):
     """Add credentials to conversation host"""
     provider = v2v_providers[1]
-    if hasattr(request, 'param') and request.param == 'multi-host':
-        hosts = provider.hosts.all()
-    else:
-        hosts = [(provider.hosts.all())[0]]
-    for host in hosts:
-        host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
-        host.update_credentials_rest(credentials=host_data['credentials'])
-
+    hosts = provider.hosts.all()
+    try:
+        hosts = hosts if getattr(request, 'param', '') == 'multi-host' else hosts[0:1]
+        for host in hosts:
+            host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+            host.update_credentials_rest(credentials=host_data['credentials'])
+    except Exception:
+        # if above throws ValueError or TypeError or other exception, just skip the test
+        pytest.skip("No data for hosts in providers, failed to retrieve hosts and add creds.")
     yield hosts
     for host in hosts:
         host.remove_credentials_rest()
@@ -38,7 +39,8 @@ def _tag_cleanup(host_obj, tag1, tag2):
     """
         Clean Up Tags
 
-        Returns: Boolean True or False
+        Returns: Boolean True if all Tags were removed/cleaned
+        or False means all required Tags are present on host.
     """
     def extract_tag(tag):
         # Following strip will remove extra asterisk from tag assignment
@@ -47,11 +49,14 @@ def _tag_cleanup(host_obj, tag1, tag2):
     valid_tags = {extract_tag(tag1), extract_tag(tag2)}
     tags = host_obj.get_tags()
     tags_set = set(map(extract_tag, tags))
-
+    # we always neeed 2 tags for migration, if total is less than 2
+    # don't bother checking what tag was it, just remove it and
+    # then add all required tags via add_tags() call. or if tags on host
+    # are not subset of valid tags, we still remove them.
     if len(tags_set) < 2 or not tags_set.issubset(valid_tags):
         host_obj.remove_tags(tags=tags)
-        return False
-    return True
+        return True
+    return False
 
 
 @pytest.fixture(scope='function')
@@ -68,7 +73,9 @@ def conversion_tags(request, appliance, host_creds):
         display_name='V2V - Transformation Method').collections.tags.instantiate(
         display_name=transformation_method)
     for host in host_creds:
-        if not _tag_cleanup(host, tag1, tag2):
+        # if _tag_cleanup() returns True, means all tags were removed
+        if _tag_cleanup(host, tag1, tag2):
+            # so we call add_tags to add only required tags
             host.add_tags(tags=(tag1, tag2))
     yield
     for host in host_creds:
@@ -227,19 +234,12 @@ def form_data_vm_obj_dual_nics(request, appliance, second_provider, provider):
             'description': "Dual Datastore migration of VM from {} to {},& from {} to {}"
                      .format(request.param[0][0], request.param[0][1], request.param[1][0],
                              request.param[1][1])},
-        'datastore': {
-            'Cluster ({})'.format(provider.data.get('clusters')[0]): {
-                'mappings': [_form_data_mapping('datastores', second_provider, provider,
-                                                request.param[0][0], request.param[0][1]),
-                             _form_data_mapping('datastores', second_provider, provider,
-                                                request.param[1][0], request.param[1][1])]
-            }
-        },
         'network': {
             'Cluster ({})'.format(provider.data.get('clusters')[0]): {
                 'mappings': [_form_data_mapping('vlans', second_provider, provider,
-                                                second_provider.data.get('vlans')[0],
-                                                provider.data.get('vlans')[0])]
+                                                request.param[0][0], request.param[0][1]),
+                            _form_data_mapping('vlans', second_provider, provider,
+                                request.param[1][0], request.param[1][1])]
             }
         }
     })

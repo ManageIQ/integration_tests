@@ -4,8 +4,6 @@ import pytest
 import time
 import re
 
-from cfme.exceptions import ItemNotFound
-
 from cfme.fixtures.provider import (dual_network_template, dual_disk_template,
  dportgroup_template, win7_template, win10_template, win2016_template, rhel69_template,
  win2012_template, ubuntu16_template, rhel7_minimal)
@@ -15,8 +13,6 @@ from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-
-from selenium.common.exceptions import StaleElementReferenceException
 
 pytestmark = [
     pytest.mark.ignore_stream('5.8'),
@@ -40,7 +36,7 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
                                             conversion_tags,
                                             form_data_vm_obj_single_datastore):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-
+    # form_data_vm_obj_single_datastore has form_data at [0]
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore[0])
 
     @request.addfinalizer
@@ -48,7 +44,7 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-
+    # form_data_vm_obj_single_datastore has vm_obj list at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
@@ -60,41 +56,10 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
 
-    def _get_plan_status():
-        """MIQ V2V UI is going through redesign as OSP will be integrated.
-
-            # TODO: This also means that mappings/plans may be moved to different pages. Once all of
-            that is settled we will need to move some of the functionality given below to migration
-            plan entity and also account for notifications.
-        """
-        try:
-            is_plan_visible = view.progress_card.is_plan_visible(migration_plan.name)
-        except ItemNotFound:
-            # This will end the wait_for loop and check the plan under completed_plans section
-            return True
-        except StaleElementReferenceException:
-            view.browser.refresh()
-            view.migr_dropdown.item_select("In Progress Plans")
-            return False
-
-        if is_plan_visible:
-            # log current status
-            # uncomment following logs after @Yadnyawalk updates the widget for in progress card
-            # logger.info("For plan %s, current migrated size is %s out of total size %s",
-            #     migration_plan.name, view.progress_card.get_migrated_size(migration_plan.name),
-            #     view.progress_card.get_total_size(migration_plan.name))
-            # logger.info("For plan %s, current migrated VMs are %s out of total VMs %s",
-            #     migration_plan.name, view.progress_card.migrated_vms(migration_plan.name),
-            #     view.progress_card.total_vm_to_be_migrated(migration_plan.name))
-            logger.info("For plan %s, is plan in progress: %s, time elapsed for migration: %s",
-                migration_plan.name, is_plan_visible,
-                view.progress_card.get_clock(migration_plan.name))
-        # return False if plan visible under "In Progress Plans"
-        return not is_plan_visible
-
     # wait until plan is in progress
-    wait_for(func=_get_plan_status, message="migration plan is in progress, be patient please",
-     delay=5, num_sec=3600)
+    wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
+        message="migration plan is in progress, be patient please",
+        delay=5, num_sec=1800)
 
     view.migr_dropdown.item_select("Completed Plans")
     view.wait_displayed()
@@ -113,7 +78,7 @@ def test_single_network_single_vm_migration(request, appliance, v2v_providers, h
                                             form_data_vm_obj_single_network):
     # This test will make use of migration request details page to track status of migration
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-
+    # form_data_vm_obj_single_network has form_data at [0]
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_network[0])
 
     @request.addfinalizer
@@ -121,6 +86,7 @@ def test_single_network_single_vm_migration(request, appliance, v2v_providers, h
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
+    # form_data_vm_obj_single_network has list of vm_obj at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
@@ -135,24 +101,15 @@ def test_single_network_single_vm_migration(request, appliance, v2v_providers, h
                                                              'Details').VIEW)
     view.wait_displayed()
     request_details_list = view.migration_request_details_list
-    vm = request_details_list.read()[0]
+    vms = request_details_list.read()
+    # ideally this will always pass as request details list shows VMs in migration plan
+    # unless we have a bug
+    assert len(vms) > 0, "No VMs displayed on Migration Plan Request Details list."
 
-    def _get_plan_status():
-        clock_reading1 = request_details_list.get_clock(vm)
-        time.sleep(1)  # wait 1 sec to see if clock is ticking
-        logger.info("For vm %s, current message is %s", vm,
-            request_details_list.get_message_text(vm))
-        logger.info("For vm %s, current progress description is %s", vm,
-            request_details_list.get_progress_description(vm))
-        clock_reading2 = request_details_list.get_clock(vm)
-        logger.info("clock_reading1: %s, clock_reading2:%s", clock_reading1, clock_reading2)
-        logger.info("For vm %s, is currently in progress: %s", vm,
-          request_details_list.is_in_progress(vm))
-        return not(request_details_list.is_in_progress(vm) and (clock_reading1 < clock_reading2))
-
-    wait_for(func=_get_plan_status, message="migration plan is in progress, be patient please",
-     delay=5, num_sec=3600)
-    assert (request_details_list.is_successful(vm) and not request_details_list.is_errored(vm))
+    wait_for(func=view.plan_in_progress, message="migration plan is in progress, be patient please",
+     delay=5, num_sec=2700)
+    assert (request_details_list.is_successful(vms[0]) and
+        not request_details_list.is_errored(vms[0]))
 
 
 @pytest.mark.parametrize(
@@ -165,6 +122,7 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
                                         form_data_dual_vm_obj_dual_datastore, soft_assert):
     # This test will make use of migration request details page to track status of migration
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    # form_data_dual_vm_obj_dual_datastore has form_data at [0]
     mapping = infrastructure_mapping_collection.create(form_data_dual_vm_obj_dual_datastore[0])
 
     @request.addfinalizer
@@ -172,7 +130,7 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-
+    # form_data_dual_vm_obj_dual_datastore has list of vm_obj at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
@@ -189,25 +147,8 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
     request_details_list = view.migration_request_details_list
     vms = request_details_list.read()
 
-    def _get_plan_status():
-        migration_plan_in_progress_tracker = []
-        for vm in vms:
-            clock_reading1 = request_details_list.get_clock(vm)
-            time.sleep(1)  # wait 1 sec to see if clock is ticking
-            logger.info("For vm %s, current message is %s", vm,
-                request_details_list.get_message_text(vm))
-            logger.info("For vm %s, current progress description is %s", vm,
-                request_details_list.get_progress_description(vm))
-            clock_reading2 = request_details_list.get_clock(vm)
-            logger.info("clock_reading1: %s, clock_reading2:%s", clock_reading1, clock_reading2)
-            logger.info("For vm %s, is currently in progress: %s", vm,
-              request_details_list.is_in_progress(vm))
-            migration_plan_in_progress_tracker.append(request_details_list.is_in_progress(vm) and
-              (clock_reading1 < clock_reading2))
-        return not any(migration_plan_in_progress_tracker)
-
-    wait_for(func=_get_plan_status, message="migration plan is in progress, be patient please",
-     delay=5, num_sec=3600)
+    wait_for(func=view.plan_in_progress, message="migration plan is in progress, be patient please",
+     delay=5, num_sec=1800)
 
     for vm in vms:
         soft_assert(request_details_list.is_successful(vm) and
@@ -222,6 +163,7 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
 def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conversion_tags,
          form_data_vm_obj_dual_nics):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    # form_data_vm_obj_dual_nics has form_data at [0]
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_dual_nics[0])
 
     @request.addfinalizer
@@ -229,7 +171,7 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-
+    # form_data_vm_obj_dual_nics has vm_obj at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
@@ -241,41 +183,10 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
 
-    def _get_plan_status():
-        """MIQ V2V UI is going through redesign as OSP will be integrated.
-
-            # TODO: This also means that mappings/plans may be moved to different pages. Once all of
-            that is settled we will need to move some of the functionality given below to migration
-            plan entity and also account for notifications.
-        """
-        try:
-            is_plan_visible = view.progress_card.is_plan_visible(migration_plan.name)
-        except ItemNotFound:
-            # This will end the wait_for loop and check the plan under completed_plans section
-            return True
-        except StaleElementReferenceException:
-            view.browser.refresh()
-            view.migr_dropdown.item_select("In Progress Plans")
-            return False
-
-        if is_plan_visible:
-            # log current status
-            # uncomment following logs after @Yadnyawalk updates the widget for in progress card
-            # logger.info("For plan %s, current migrated size is %s out of total size %s",
-            #     migration_plan.name, view.progress_card.get_migrated_size(migration_plan.name),
-            #     view.progress_card.get_total_size(migration_plan.name))
-            # logger.info("For plan %s, current migrated VMs are %s out of total VMs %s",
-            #     migration_plan.name, view.progress_card.migrated_vms(migration_plan.name),
-            #     view.progress_card.total_vm_to_be_migrated(migration_plan.name))
-            logger.info("For plan %s, is plan in progress: %s, time elapsed for migration: %s",
-                migration_plan.name, is_plan_visible,
-                view.progress_card.get_clock(migration_plan.name))
-        # return False if plan visible under "In Progress Plans"
-        return not is_plan_visible
-
     # wait until plan is in progress
-    wait_for(func=_get_plan_status, message="migration plan is in progress, be patient please",
-     delay=5, num_sec=3600)
+    wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
+        message="migration plan is in progress, be patient please",
+        delay=5, num_sec=2700)
 
     view.migr_dropdown.item_select("Completed Plans")
     view.wait_displayed()
@@ -291,7 +202,7 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
 def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, conversion_tags,
                                 form_data_vm_obj_single_datastore):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-
+    # form_data_vm_obj_single_datastore has form_data at [0]
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore[0])
 
     @request.addfinalizer
@@ -299,7 +210,7 @@ def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, c
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-
+    # form_data_vm_obj_single_datastore has vm_obj at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
@@ -310,41 +221,10 @@ def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, c
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
 
-    def _get_plan_status():
-        """MIQ V2V UI is going through redesign as OSP will be integrated.
-
-            # TODO: This also means that mappings/plans may be moved to different pages. Once all of
-            that is settled we will need to move some of the functionality given below to migration
-            plan entity and also account for notifications.
-        """
-        try:
-            is_plan_visible = view.progress_card.is_plan_visible(migration_plan.name)
-        except ItemNotFound:
-            # This will end the wait_for loop and check the plan under completed_plans section
-            return True
-        except StaleElementReferenceException:
-            view.browser.refresh()
-            view.migr_dropdown.item_select("In Progress Plans")
-            return False
-
-        if is_plan_visible:
-            # log current status
-            # uncomment following logs after @Yadnyawalk updates the widget for in progress card
-            # logger.info("For plan %s, current migrated size is %s out of total size %s",
-            #     migration_plan.name, view.progress_card.get_migrated_size(migration_plan.name),
-            #     view.progress_card.get_total_size(migration_plan.name))
-            # logger.info("For plan %s, current migrated VMs are %s out of total VMs %s",
-            #     migration_plan.name, view.progress_card.migrated_vms(migration_plan.name),
-            #     view.progress_card.total_vm_to_be_migrated(migration_plan.name))
-            logger.info("For plan %s, is plan in progress: %s, time elapsed for migration: %s",
-                migration_plan.name, is_plan_visible,
-                view.progress_card.get_clock(migration_plan.name))
-        # return False if plan visible under "In Progress Plans"
-        return not is_plan_visible
-
     # wait until plan is in progress
-    wait_for(func=_get_plan_status, message="migration plan is in progress, be patient please",
-     delay=5, num_sec=3600)
+    wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
+        message="migration plan is in progress, be patient please",
+        delay=5, num_sec=3600)
 
     view.migr_dropdown.item_select("Completed Plans")
     view.wait_displayed()
@@ -364,7 +244,7 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
                                     form_data_multiple_vm_obj_single_datastore,
                                     soft_assert):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-
+    # form_data_multiple_vm_obj_single_datastore has form_data at [0]
     mapping = infrastructure_mapping_collection.create(
         form_data_multiple_vm_obj_single_datastore[0])
 
@@ -373,7 +253,7 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-
+    # form_data_multiple_vm_obj_single_datastore has list of vm_objects at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
@@ -388,27 +268,10 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
                                                              'Details').VIEW)
     view.wait_displayed()
     request_details_list = view.migration_request_details_list
-    vms = request_details_list.read()
     view.items_on_page.item_select('15')
+    vms = request_details_list.read()
 
-    def _get_plan_status():
-        migration_plan_in_progress_tracker = []
-        for vm in vms:
-            clock_reading1 = request_details_list.get_clock(vm)
-            time.sleep(1)  # wait 1 sec to see if clock is ticking
-            logger.info("For vm %s, current message is %s", vm,
-                request_details_list.get_message_text(vm))
-            logger.info("For vm %s, current progress description is %s", vm,
-                request_details_list.get_progress_description(vm))
-            clock_reading2 = request_details_list.get_clock(vm)
-            logger.info("clock_reading1: %s, clock_reading2:%s", clock_reading1, clock_reading2)
-            logger.info("For vm %s, is currently in progress: %s", vm,
-              request_details_list.is_in_progress(vm))
-            migration_plan_in_progress_tracker.append(request_details_list.is_in_progress(vm) and
-              (clock_reading1 < clock_reading2))
-        return not any(migration_plan_in_progress_tracker)
-
-    wait_for(func=_get_plan_status, message="migration plan is in progress, be patient please",
+    wait_for(func=view.plan_in_progress, message="migration plan is in progress, be patient please",
      delay=5, num_sec=3600)
 
     for vm in vms:
@@ -451,7 +314,7 @@ def test_single_vm_migration_with_ssh(request, appliance, v2v_providers, host_cr
                                     conversion_tags,
                                     form_data_vm_obj_single_datastore):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-
+    # form_data_vm_obj_single_datastore has form_data at [0]
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore[0])
 
     @request.addfinalizer
@@ -459,7 +322,7 @@ def test_single_vm_migration_with_ssh(request, appliance, v2v_providers, host_cr
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-
+    # form_data_vm_obj_single_datastore has list of vm_obj at [0]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
@@ -471,48 +334,17 @@ def test_single_vm_migration_with_ssh(request, appliance, v2v_providers, host_cr
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
 
-    def _get_plan_status():
-        """MIQ V2V UI is going through redesign as OSP will be integrated.
-
-            # TODO: This also means that mappings/plans may be moved to different pages. Once all of
-            that is settled we will need to move some of the functionality given below to migration
-            plan entity and also account for notifications.
-        """
-        try:
-            is_plan_visible = view.progress_card.is_plan_visible(migration_plan.name)
-        except ItemNotFound:
-            # This will end the wait_for loop and check the plan under completed_plans section
-            return True
-        except StaleElementReferenceException:
-            view.browser.refresh()
-            view.migr_dropdown.item_select("In Progress Plans")
-            return False
-
-        if is_plan_visible:
-            # log current status
-            # uncomment following logs after @Yadnyawalk updates the widget for in progress card
-            # logger.info("For plan %s, current migrated size is %s out of total size %s",
-            #     migration_plan.name, view.progress_card.get_migrated_size(migration_plan.name),
-            #     view.progress_card.get_total_size(migration_plan.name))
-            # logger.info("For plan %s, current migrated VMs are %s out of total VMs %s",
-            #     migration_plan.name, view.progress_card.migrated_vms(migration_plan.name),
-            #     view.progress_card.total_vm_to_be_migrated(migration_plan.name))
-            logger.info("For plan %s, is plan in progress: %s, time elapsed for migration: %s",
-                migration_plan.name, is_plan_visible,
-                view.progress_card.get_clock(migration_plan.name))
-        # return False if plan visible under "In Progress Plans"
-        return not is_plan_visible
-
     # wait until plan is in progress
-    wait_for(func=_get_plan_status, message="migration plan is in progress, be patient please",
-     delay=5, num_sec=3600)
+    wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
+        message="migration plan is in progress, be patient please",
+        delay=5, num_sec=1800)
 
     view.migr_dropdown.item_select("Completed Plans")
     view.wait_displayed()
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
-        migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
-            migration_plan.name), view.migration_plans_completed_list.get_clock(
-            migration_plan.name))
+        migration_plan.name,
+        view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
+        view.migration_plans_completed_list.get_clock(migration_plan.name))
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
 
 
@@ -524,6 +356,8 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
                                     form_data_vm_obj_single_datastore,
                                     power_state):
     # Test VM migration power state and tags are preserved
+    # form_data_vm_obj_single_datastore has list of vm_obj at [1]
+    # as this is single_vm_migration it only has one vm_obj, which we extract on next line
     vm = form_data_vm_obj_single_datastore[1][0]
     if power_state not in vm.mgmt.state:
         if power_state == 'RUNNING':
@@ -536,7 +370,7 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
     vm.set_retirement_date(offset={'hours': 1})
 
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-
+    # form_data_vm_obj_single_datastore has form_data at [0]
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore[0])
 
     @request.addfinalizer
@@ -544,7 +378,7 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-
+    # form_data_vm_obj_single_datastore has list of vm_obj at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
@@ -556,47 +390,17 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
 
-    def _get_plan_status():
-        """MIQ V2V UI is going through redesign as OSP will be integrated.
-
-            # TODO: This also means that mappings/plans may be moved to different pages. Once all of
-            that is settled we will need to move some of the functionality given below to migration
-            plan entity and also account for notifications.
-        """
-        try:
-            is_plan_visible = view.progress_card.is_plan_visible(migration_plan.name)
-        except ItemNotFound:
-            # This will end the wait_for loop and check the plan under completed_plans section
-            return True
-        except StaleElementReferenceException:
-            view.browser.refresh()
-            view.migr_dropdown.item_select("In Progress Plans")
-            return False
-
-        if is_plan_visible:
-            # log current status
-            # uncomment following logs after @Yadnyawalk updates the widget for in progress card
-            # logger.info("For plan %s, current migrated size is %s out of total size %s",
-            #     migration_plan.name, view.progress_card.get_migrated_size(migration_plan.name),
-            #     view.progress_card.get_total_size(migration_plan.name))
-            # logger.info("For plan %s, current migrated VMs are %s out of total VMs %s",
-            #     migration_plan.name, view.progress_card.migrated_vms(migration_plan.name),
-            #     view.progress_card.total_vm_to_be_migrated(migration_plan.name))
-            logger.info("For plan %s, is plan in progress: %s, time elapsed for migration: %s",
-                migration_plan.name, is_plan_visible,
-                view.progress_card.get_clock(migration_plan.name))
-        # return False if plan visible under "In Progress Plans"
-        return not is_plan_visible
-
     # wait until plan is in progress
-    wait_for(func=_get_plan_status, message="migration plan is in progress, be patient please",
-     delay=5, num_sec=3600)
+    wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
+        message="migration plan is in progress, be patient please",
+        delay=5, num_sec=1800)
+
     view.migr_dropdown.item_select("Completed Plans")
     view.wait_displayed()
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
-        migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
-            migration_plan.name), view.migration_plans_completed_list.get_clock(
-            migration_plan.name))
+        migration_plan.name,
+        view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
+        view.migration_plans_completed_list.get_clock(migration_plan.name))
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
     # check power state on migrated VM
     rhv_prov = v2v_providers[1]
@@ -609,6 +413,7 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
         if tag.display_name in t.display_name:
             owner_tag = t
     assert owner_tag is not None and tag.display_name in owner_tag.display_name
+    # If Never is not there, that means retirement is set.
     assert 'Never' not in vm_obj.retirement_date
 
 
@@ -619,7 +424,7 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
                                     conversion_tags, soft_assert,
                                     form_data_multiple_vm_obj_single_datastore):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-
+    # form_data_multiple_vm_obj_single_datastore has form_data at [0]
     mapping = infrastructure_mapping_collection.create(
         form_data_multiple_vm_obj_single_datastore[0])
 
@@ -628,7 +433,7 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-
+    # form_data_multiple_vm_obj_single_datastore has list of vm_objs at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
@@ -668,24 +473,7 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
         assert len(hosts_dict[host]) > 0, ("Conversion Host: {} not being utilized for migration!"
             .format(host))
 
-    def _get_plan_status():
-        migration_plan_in_progress_tracker = []
-        for vm in vms:
-            clock_reading1 = request_details_list.get_clock(vm)
-            time.sleep(1)  # wait 1 sec to see if clock is ticking
-            logger.info("For vm %s, current message is %s", vm,
-                request_details_list.get_message_text(vm))
-            logger.info("For vm %s, current progress description is %s", vm,
-                request_details_list.get_progress_description(vm))
-            clock_reading2 = request_details_list.get_clock(vm)
-            logger.info("clock_reading1: %s, clock_reading2:%s", clock_reading1, clock_reading2)
-            logger.info("For vm %s, is currently in progress: %s", vm,
-              request_details_list.is_in_progress(vm))
-            migration_plan_in_progress_tracker.append(request_details_list.is_in_progress(vm) and
-              (clock_reading1 < clock_reading2))
-        return not any(migration_plan_in_progress_tracker)
-
-    wait_for(func=_get_plan_status, message="migration plan is in progress, be patient please",
+    wait_for(func=view.plan_in_progress, message="migration plan is in progress, be patient please",
      delay=5, num_sec=14400)
 
     for vm in vms:
@@ -699,7 +487,7 @@ def test_single_vm_scheduled_migration(request, appliance, v2v_providers, host_c
                                     conversion_tags, soft_assert,
                                     form_data_vm_obj_single_datastore):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-
+    # form_data_vm_obj_single_datastore has form_data at [0]
     mapping = infrastructure_mapping_collection.create(
         form_data_vm_obj_single_datastore[0])
 
@@ -708,7 +496,7 @@ def test_single_vm_scheduled_migration(request, appliance, v2v_providers, host_c
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-
+    # form_data_vm_obj_single_datastore has list of vm_obj at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
@@ -727,47 +515,17 @@ def test_single_vm_scheduled_migration(request, appliance, v2v_providers, host_c
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
 
-    def _get_plan_status():
-        """MIQ V2V UI is going through redesign as OSP will be integrated.
-
-            # TODO: This also means that mappings/plans may be moved to different pages. Once all of
-            that is settled we will need to move some of the functionality given below to migration
-            plan entity and also account for notifications.
-        """
-        try:
-            is_plan_visible = view.progress_card.is_plan_visible(migration_plan.name)
-        except ItemNotFound:
-            # This will end the wait_for loop and check the plan under completed_plans section
-            return True
-        except StaleElementReferenceException:
-            view.browser.refresh()
-            view.migr_dropdown.item_select("In Progress Plans")
-            return False
-
-        if is_plan_visible:
-            # log current status
-            # uncomment following logs after @Yadnyawalk updates the widget for in progress card
-            # logger.info("For plan %s, current migrated size is %s out of total size %s",
-            #     migration_plan.name, view.progress_card.get_migrated_size(migration_plan.name),
-            #     view.progress_card.get_total_size(migration_plan.name))
-            # logger.info("For plan %s, current migrated VMs are %s out of total VMs %s",
-            #     migration_plan.name, view.progress_card.migrated_vms(migration_plan.name),
-            #     view.progress_card.total_vm_to_be_migrated(migration_plan.name))
-            logger.info("For plan %s, is plan in progress: %s, time elapsed for migration: %s",
-                migration_plan.name, is_plan_visible,
-                view.progress_card.get_clock(migration_plan.name))
-        # return False if plan visible under "In Progress Plans"
-        return not is_plan_visible
-
     # wait until plan is in progress
-    wait_for(func=_get_plan_status, message="migration plan is in progress, be patient please",
-     delay=5, num_sec=3600)
+    wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
+        message="migration plan is in progress, be patient please",
+        delay=5, num_sec=1800)
+
     view.migr_dropdown.item_select("Completed Plans")
     view.wait_displayed()
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
-        migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
-            migration_plan.name), view.migration_plans_completed_list.get_clock(
-            migration_plan.name))
+        migration_plan.name,
+        view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
+        view.migration_plans_completed_list.get_clock(migration_plan.name))
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
 
 
@@ -777,8 +535,10 @@ def test_single_vm_scheduled_migration(request, appliance, v2v_providers, host_c
 def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, host_creds,
                                         conversion_tags,
                                         form_data_multiple_vm_obj_single_datastore, soft_assert):
+    # TODO: Improve this test to cover cancel operation at various stages in migration.
     # This test will make use of migration request details page to track status of migration
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    # form_data_multiple_vm_obj_single_datastore has form_data at [0]
     mapping = infrastructure_mapping_collection.create(
         form_data_multiple_vm_obj_single_datastore[0])
 
@@ -787,7 +547,7 @@ def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, h
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-
+    # form_data_multiple_vm_obj_single_datastore has list of vm_obj at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
@@ -804,7 +564,7 @@ def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, h
     request_details_list = view.migration_request_details_list
     vms = request_details_list.read()
 
-    def _get_plan_status():
+    def _get_plan_status_and_cancel():
         migration_plan_in_progress_tracker = []
         for vm in vms:
             clock_reading1 = request_details_list.get_clock(vm)
@@ -814,7 +574,7 @@ def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, h
             current_progress_text = request_details_list.get_progress_description(vm)
             current_data_transferred, total_data_to_transfer = map(float, re.findall("\d+\.\d+",
                 current_progress_text))
-            if current_data_transferred > (total_data_to_transfer / 2):
+            if current_data_transferred > (total_data_to_transfer / 10):
                 request_details_list.cancel_migration(vm, confirmed=True)
             logger.info("For vm %s, current progress description is %s", vm,
                 current_progress_text)
@@ -826,8 +586,8 @@ def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, h
               (clock_reading1 < clock_reading2))
         return not any(migration_plan_in_progress_tracker)
 
-    wait_for(func=_get_plan_status, message="migration plan is in progress, be patient please",
-     delay=5, num_sec=3600)
+    wait_for(func=_get_plan_status_and_cancel, message="migration plan is in progress,"
+        "be patient please", delay=5, num_sec=3600)
 
     for vm in vms:
         soft_assert(request_details_list.is_cancelled(vm))
