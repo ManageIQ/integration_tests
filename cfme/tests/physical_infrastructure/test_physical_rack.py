@@ -8,14 +8,23 @@ pytestmark = [pytest.mark.tier(3), pytest.mark.provider([LenovoProvider], scope=
 
 
 @pytest.fixture(scope="module")
+def physical_rack(appliance, provider, setup_provider):
+    try:
+        # Get and return the first physical rack
+        physical_racks = appliance.collections.physical_racks.filter({"provider": provider}).all()
+        return physical_racks[0]
+    except IndexError:
+        pytest.skip("No rack resource found")
+
+
+def test_physical_rack_details_dropdowns(physical_rack):
+    """Navigate to the physical rack details page and verify the refresh button"""
+    physical_rack.refresh()
+
+
 def physical_rack_collection(appliance, provider, setup_provider_modscope):
     # Get and return the physical rack collection
     return appliance.collections.physical_racks
-
-
-def test_physical_racks_view_displayed(physical_rack_collection, provider):
-    physical_racks_view = navigate_to(physical_rack_collection, 'All')
-    assert physical_racks_view.is_displayed
 
 
 def test_physical_racks_view_dropdowns(physical_rack_collection):

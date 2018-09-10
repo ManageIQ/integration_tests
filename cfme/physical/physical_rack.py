@@ -2,27 +2,33 @@
 """A model of an Infrastructure PhysicalRack in CFME."""
 import attr
 
-from cached_property import cached_property
+from lxml.html import document_fromstring
 from navmazing import NavigateToAttribute
+from widgetastic_patternfly import Dropdown, Accordion
+from widgetastic.widget import Text, View
 
+from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
-from cfme.common.physical_rack_views import (
-    PhysicalRackDetailsView,
-    PhysicalRacksView,
-)
 from cfme.exceptions import (
     ItemNotFound,
     StatsDoNotMatch,
-    HostStatsNotContains,
+    RackStatsDoesNotContain,
     ProviderHasNoProperty
 )
 from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
-from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import (
+    BaseEntitiesView,
+    JSBaseEntity,
+    BreadCrumb,
+    ItemsToolBarViewSelector,
+    SummaryTable,
+    ManageIQTree
+)
 
 
 @attr.s
@@ -35,7 +41,6 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
         provider: The physical provider.
 
     Usage:
-
         myrack = PhysicalRack()
         myrack.create()
 
@@ -43,23 +48,12 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
     pretty_attrs = ['name', 'custom_ident']
 
     name = attr.ib()
-    provider = attr.ib(default=None)
+    provider = attr.ib()
     custom_ident = attr.ib(default=None)
     db_id = None
 
     INVENTORY_TO_MATCH = ['power_state']
     STATS_TO_MATCH = ['cores_capacity', 'memory_capacity']
-
-    def load_details_page(self, refresh=False):
-        """Load the PhysicalRack details page.
-
-        Args:
-            refresh (bool): Whether to perform the page refresh, defaults to False
-        """
-        view = navigate_to(self, "Details")
-        if refresh:
-            view.browser.refresh()
-            view.flush_widget_cache()
 
     def refresh(self, cancel=False):
         """Perform 'Refresh Relationships and Power States' for the rack.
@@ -69,7 +63,7 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
         """
         view = navigate_to(self, "Details")
         view.toolbar.configuration.item_select("Refresh Relationships and Power States",
-            handle_alert=cancel)
+                                               handle_alert=cancel)
 
     def wait_for_physical_rack_state_change(self, desired_state, timeout=300):
         """Wait for PhysicalRack to come to desired state. This function waits just the needed amount of
@@ -93,32 +87,12 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
 
         Returns: :py:class:`bool`
         """
-        view = navigate_to(self.parent, "All")
         try:
-            view.entities.get_entity(name=self.name, surf_pages=True)
+            navigate_to(self, 'Details')
         except ItemNotFound:
             return False
         else:
             return True
-
-    @cached_property
-    def get_db_id(self):
-        if self.db_id is None:
-            self.db_id = self.appliance.physical_rack_id(self.name)
-            return self.db_id
-        else:
-            return self.db_id
-
-    def wait_to_appear(self):
-        """Waits for the rack to appear in the UI."""
-        view = navigate_to(self.parent, "All")
-        logger.info("Waiting for the rack to appear...")
-        wait_for(
-            lambda: self.exists,
-            message="Wait for the rack to appear",
-            num_sec=1000,
-            fail_func=view.browser.refresh
-        )
 
     def validate_stats(self, ui=False):
         """ Validates that the detail page matches the physical rack's information.
@@ -139,7 +113,7 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
 
         # Refresh the browser
         if ui:
-            self.load_details(refresh=True)
+            navigate_to(self, 'Details', wait_for_view=True)
 
         # Verify that the stats retrieved from wrapanapi match those retrieved
         # from the UI
@@ -152,7 +126,7 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
                     msg = "The {} stat does not match. (rack: {}, rack stat: {}, cfme stat: {})"
                     raise StatsDoNotMatch(msg.format(stat, self.name, rack_stat, cfme_stat))
             except KeyError:
-                raise HostStatsNotContains(
+                raise RackStatsDoesNotContain(
                     "Rack stats information does not contain '{}'".format(stat))
             except AttributeError:
                 raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(stat))
@@ -170,7 +144,7 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
                     raise StatsDoNotMatch(msg.format(inventory, self.name, rack_inventory,
                                                      cfme_inventory))
             except KeyError:
-                raise HostStatsNotContains(
+                raise RackStatsDoesNotContain(
                     "Rack inventory information does not contain '{}'".format(inventory))
             except AttributeError:
                 msg = "Provider does not know how to get '{}'"
@@ -183,7 +157,7 @@ class PhysicalRackCollection(BaseCollection):
 
     ENTITY = PhysicalRack
 
-    def select_entity_rows(self, physical_racks):
+    def select_entity_rows(self, *physical_racks):
         """ Select all physical rack objects """
         physical_racks = list(physical_racks)
         checked_physical_racks = list()
@@ -202,19 +176,94 @@ class PhysicalRackCollection(BaseCollection):
             self.appliance.db.client.session
                 .query(physical_rack_table.name, ems_table.name)
                 .join(ems_table, physical_rack_table.ems_id == ems_table.id))
-        provider = None
+        provider = self.filters.get('provider')
 
-        if self.filters.get('provider'):
-            provider = self.filters.get('provider')
+        if provider:
             physical_rack_query = physical_rack_query.filter(ems_table.name == provider.name)
-        physical_racks = []
-        for name, ems_name in physical_rack_query.all():
-            physical_racks.append(self.instantiate(name=name,
-                                                   provider=provider or get_crud_by_name(ems_name)))
-        return physical_racks
+        return [
+            self.instantiate(name, provider or get_crud_by_name(ems_name))
+            for name, ems_name in physical_rack_query.all()
+        ]
 
 
-@navigator.register(PhysicalRackCollection)
+class ComputePhysicalInfrastructureRacksView(BaseLoggedInPage):
+    """Common parts for rack views."""
+    title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
+
+    @property
+    def in_compute_physical_infrastructure_racks(self):
+        return (self.logged_in_as_current_user and
+                self.navigation.currently_selected == ["Compute", "Physical Infrastructure",
+                                                       "Racks"])
+
+
+class PhysicalRackEntity(JSBaseEntity):
+    @property
+    def data(self):
+        data_dict = super(PhysicalRackEntity, self).data
+        if 'quadicon' in data_dict and data_dict['quadicon']:
+            quad_data = document_fromstring(data_dict['quadicon'])
+            data_dict['no_host'] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)
+        return data_dict
+
+
+class PhysicalRackDetailsToolbar(View):
+    """Represents physical rack toolbar and its controls."""
+    configuration = Dropdown(text="Configuration")
+
+
+class PhysicalRackDetailsEntities(View):
+    """Represents Details page Entities."""
+    properties = SummaryTable(title="Properties")
+    relationships = SummaryTable(title="Relationships")
+
+
+class PhysicalRackDetailsView(ComputePhysicalInfrastructureRacksView):
+    """Main PhysicalRack details page."""
+    breadcrumb = BreadCrumb()
+    toolbar = View.nested(PhysicalRackDetailsToolbar)
+    entities = View.nested(PhysicalRackDetailsEntities)
+
+    @property
+    def is_displayed(self):
+        title = "{name} (Summary)".format(name=self.context["object"].name)
+        return (self.in_compute_physical_infrastructure_racks and
+                self.breadcrumb.active_location == title)
+
+
+class PhysicalRacksToolbar(View):
+    """Represents hosts toolbar and its controls."""
+    configuration = Dropdown(text="Configuration")
+    view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class PhysicalRackSideBar(View):
+    """Represents left side bar. It usually contains navigation, filters, etc."""
+
+    @View.nested
+    class filters(Accordion): # noqa
+        tree = ManageIQTree()
+
+
+class PhysicalRackEntitiesView(BaseEntitiesView):
+    """Represents the view with different items like hosts."""
+    @property
+    def entity_class(self):
+        return PhysicalRackEntity().pick(self.browser.product_version)
+
+
+class PhysicalRacksView(ComputePhysicalInfrastructureRacksView):
+    toolbar = View.nested(PhysicalRacksToolbar)
+    sidebar = View.nested(PhysicalRackSideBar)
+    including_entities = View.include(PhysicalRackEntitiesView, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        return (self.in_compute_physical_infrastructure_racks and
+                self.title.text == "Physical Racks")
+
+
+@navigator.register(PhysicalRackCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = PhysicalRacksView
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
@@ -223,7 +272,7 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select("Compute", "Physical Infrastructure", "Racks")
 
 
-@navigator.register(PhysicalRack)
+@navigator.register(PhysicalRack, 'Details')
 class Details(CFMENavigateStep):
     VIEW = PhysicalRackDetailsView
     prerequisite = NavigateToAttribute("parent", "All")
