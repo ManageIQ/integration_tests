@@ -31,7 +31,7 @@ def temp_vm(appliance, provider, provisioning):
             'first_name': 'Template',
             'last_name': 'Provisioner',
             'notes': note}})
-    view = navigate_to(vm, 'Provision')
+    view = navigate_to(vm.parent, 'Provision')
     view.form.fill_with(prov_data, on_change=view.form.submit_button)
     view.flash.assert_no_error()
     vm.wait_to_appear()
