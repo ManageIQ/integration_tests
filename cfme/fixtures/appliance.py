@@ -19,29 +19,48 @@ from cfme.test_framework.sprout.client import SproutClient
 
 
 @contextmanager
-def temp_appliances(count=1, preconfigured=True, lease_time=180, stream=None, provider_type=None,
-                    **kwargs):
+def sprout_appliances(
+    appliance,
+    config,
+    count=1,
+    preconfigured=True,
+    lease_time=120,
+    stream=None,
+    provider_type=None,
+    version=None,
+    **kwargs
+):
     """ Provisions one or more appliances for testing
 
     Args:
+        appliance: appliance object, used for version/stream defaults
+        config: pytestconfig object to lookup sprout_user_key
         count: Number of appliances
         preconfigured: True if the appliance should be already configured, False otherwise
         lease_time: Lease time in minutes (3 hours by default)
+        stream: defaults to appliance stream
+        provider_type: no default, sprout chooses, string type otherwise
+        version: defaults to appliance version, string type otherwise
     """
-    apps = []
-    request_id = None
+    sprout_client = SproutClient.from_config(sprout_user_key=config.option.sprout_user_key or None)
+    # if version is passed and stream is not, don't default to appliance stream
+    # if stream is passed and version is not, don't default to appliance version
+    # basically, let stream/version work independently, and only default if neither are set
+    req_version = version or (appliance.version.vstring if not stream else None)
+    req_stream = stream or (appliance.version.stream() if not version else None)
+    apps, request_id = sprout_client.provision_appliances(
+        provider_type=provider_type,
+        count=count,
+        version=req_version,
+        preconfigured=preconfigured,
+        stream=req_stream,
+        lease_time=lease_time,
+        **kwargs
+    )
     try:
-        sprout_client = SproutClient.from_config()
-        apps, request_id = sprout_client.provision_appliances(provider_type=provider_type,
-                                                              count=count, lease_time=lease_time,
-                                                              preconfigured=preconfigured,
-                                                              stream=stream, **kwargs)
         yield apps
     finally:
-        for app in apps:
-            app.ssh_client.close()
-        if request_id:
-            sprout_client.destroy_pool(request_id)
+        sprout_client.destroy_pool(request_id)
 
 
 # Single appliance, configured
@@ -51,29 +70,32 @@ def temp_appliance_preconfig(temp_appliance_preconfig_modscope):
 
 
 @pytest.fixture(scope="module")
-def temp_appliance_preconfig_modscope():
-    with temp_appliances(preconfigured=True) as appliances:
+def temp_appliance_preconfig_modscope(appliance, pytestconfig):
+    with sprout_appliances(appliance, config=pytestconfig, preconfigured=True) as appliances:
         yield appliances[0]
 
 
 @pytest.fixture(scope="class")
-def temp_appliance_preconfig_clsscope():
-    with temp_appliances(preconfigured=True) as appliances:
+def temp_appliance_preconfig_clsscope(appliance, pytestconfig):
+    with sprout_appliances(appliance, config=pytestconfig, preconfigured=True) as appliances:
         yield appliances[0]
 
 
 @pytest.fixture(scope="function")
-def temp_appliance_preconfig_funcscope():
-    with temp_appliances(preconfigured=True) as appliances:
+def temp_appliance_preconfig_funcscope(appliance, pytestconfig):
+    with sprout_appliances(appliance, config=pytestconfig, preconfigured=True) as appliances:
         yield appliances[0]
 
 
 @pytest.fixture(scope="function")
-def temp_appliance_preconfig_funcscope_upgrade(appliance):
-    stream = (int(''.join([i for i in get_stream(appliance.version)
-        if i.isdigit()])) - 1)
-    stream = "downstream-{}z".format(stream)
-    with temp_appliances(preconfigured=True, stream=stream) as appliances:
+def temp_appliance_preconfig_funcscope_upgrade(appliance, pytestconfig):
+    stream_digits = ''.join([i for i in get_stream(appliance.version) if i.isdigit()])
+    with sprout_appliances(
+            appliance,
+            config=pytestconfig,
+            preconfigured=True,
+            stream="downstream-{}z".format(int(stream_digits) - 1)  # n-1 stream for upgrade
+    ) as appliances:
         yield appliances[0]
 
 
@@ -84,26 +106,31 @@ def temp_appliance_unconfig(temp_appliance_unconfig_modscope):
 
 
 @pytest.fixture(scope="module")
-def temp_appliance_unconfig_modscope():
-    with temp_appliances(preconfigured=False) as appliances:
+def temp_appliance_unconfig_modscope(appliance, pytestconfig):
+    with sprout_appliances(appliance, config=pytestconfig, preconfigured=False) as appliances:
         yield appliances[0]
 
 
 @pytest.fixture(scope="class")
-def temp_appliance_unconfig_clsscope():
-    with temp_appliances(preconfigured=False) as appliances:
+def temp_appliance_unconfig_clsscope(appliance, pytestconfig):
+    with sprout_appliances(appliance, config=pytestconfig, preconfigured=False) as appliances:
         yield appliances[0]
 
 
 @pytest.fixture(scope="function")
-def temp_appliance_unconfig_funcscope():
-    with temp_appliances(preconfigured=False) as appliances:
+def temp_appliance_unconfig_funcscope(appliance, pytestconfig):
+    with sprout_appliances(appliance, config=pytestconfig, preconfigured=False) as appliances:
         yield appliances[0]
 
 
 @pytest.fixture(scope="function")
-def temp_appliance_unconfig_funcscope_rhevm():
-    with temp_appliances(preconfigured=False, provider_type='rhevm') as appliances:
+def temp_appliance_unconfig_funcscope_rhevm(appliance, pytestconfig):
+    with sprout_appliances(
+            appliance,
+            config=pytestconfig,
+            preconfigured=False,
+            provider_type='rhevm'
+    ) as appliances:
         yield appliances[0]
 
 
@@ -114,24 +141,45 @@ def temp_appliances_unconfig(temp_appliances_unconfig_modscope):
 
 
 @pytest.fixture(scope="module")
-def temp_appliances_unconfig_modscope():
-    with temp_appliances(count=2, preconfigured=False) as appliances:
+def temp_appliances_unconfig_modscope(appliance, pytestconfig):
+    with sprout_appliances(
+            appliance,
+            config=pytestconfig,
+            count=2,
+            preconfigured=False
+    ) as appliances:
         yield appliances
 
 
 @pytest.fixture(scope="function")
-def temp_appliances_unconfig_funcscope_rhevm():
-    with temp_appliances(count=2, preconfigured=False, provider_type='rhevm') as appliances:
+def temp_appliances_unconfig_funcscope_rhevm(appliance, pytestconfig):
+    with sprout_appliances(
+            appliance,
+            config=pytestconfig,
+            count=2,
+            preconfigured=False,
+            provider_type='rhevm'
+    ) as appliances:
         yield appliances
 
 
 @pytest.fixture(scope="class")
-def temp_appliances_unconfig_clsscope():
-    with temp_appliances(count=2, preconfigured=False) as appliances:
+def temp_appliances_unconfig_clsscope(appliance, pytestconfig):
+    with sprout_appliances(
+            appliance,
+            config=pytestconfig,
+            count=2,
+            preconfigured=False
+    ) as appliances:
         yield appliances
 
 
 @pytest.fixture(scope="function")
-def temp_appliances_unconfig_funcscope():
-    with temp_appliances(count=2, preconfigured=False) as appliances:
+def temp_appliances_unconfig_funcscope(appliance, pytestconfig):
+    with sprout_appliances(
+            appliance,
+            config=pytestconfig,
+            count=2,
+            preconfigured=False
+    ) as appliances:
         yield appliances
