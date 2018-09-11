@@ -227,6 +227,7 @@ def pytest_runtest_protocol(item):
     yield
 
 
+@pytest.mark.trylast
 def pytest_runtest_teardown(item, nextitem):
     name, location = get_test_idents(item)
     app = find_appliance(item)
