@@ -8,7 +8,8 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -77,8 +78,7 @@ def verify_retirement_state(retire_vm):
     """
     # wait for the info block showing a date as retired date
     # Use lambda for is_retired since its a property
-    view_cls = navigator.get_class(retire_vm, 'Details').VIEW
-    view = retire_vm.appliance.browser.create_view(view_cls)
+    view = navigate_to(retire_vm, 'Details')
     assert wait_for(
         lambda: retire_vm.is_retired, delay=5, num_sec=15 * 60,
         fail_func=view.toolbar.reload.click,
@@ -188,6 +188,7 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged, appliance)
 
 
 @pytest.mark.rhv3
+@pytest.mark.meta(blockers=[BZ(1627758, forced_streams=['5.10'])])
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
 def test_set_retirement_date(retire_vm, warn):
     """Tests setting retirement date and verifies configured date is reflected in UI
@@ -202,6 +203,7 @@ def test_set_retirement_date(retire_vm, warn):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1627758, forced_streams=['5.10'])])
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
 @pytest.mark.ignore_stream('5.8')
 @pytest.mark.uncollectif(lambda provider: provider.one_of(InfraProvider))  # TODO remove when common
@@ -228,6 +230,7 @@ def test_set_retirement_offset(retire_vm, warn):
 
 
 @pytest.mark.rhv3
+@pytest.mark.meta(blockers=[BZ(1627758, forced_streams=['5.10'])])
 def test_unset_retirement_date(retire_vm):
     """Tests cancelling a scheduled retirement by removing the set date
     """
@@ -242,6 +245,7 @@ def test_unset_retirement_date(retire_vm):
 
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1627758, forced_streams=['5.10'])])
 @pytest.mark.parametrize('remove_date', [True, False], ids=['remove_date', 'set_future_date'])
 def test_resume_retired_instance(retire_vm, provider, remove_date):
     """Test resuming a retired instance, should be supported for infra and cloud, though the

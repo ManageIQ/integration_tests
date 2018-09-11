@@ -9,6 +9,7 @@ from cfme import test_requirements
 from cfme.infrastructure.virtual_machines import InfraVmSummaryView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -50,6 +51,7 @@ def generate_retirement_date(delta=None):
 
 @pytest.mark.rhv3
 @pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[BZ(1627758, forced_streams=['5.10'])])
 def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
     """ Tests extending a retirement using an AE method.
 
