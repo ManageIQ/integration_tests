@@ -88,9 +88,9 @@ class SproutClient(object):
         user_key = kwargs.pop('sprout_user_key') if 'sprout_user_key' in kwargs else None
         # First choose env var creds, then look in kwargs for a sprout_user_key to lookup
         user = (os.environ.get("SPROUT_USER") or
-                credentials.get(user_key, {}).get("username") if user_key else None)
+                (credentials.get(user_key, {}).get("username") if user_key else None))
         password = (os.environ.get("SPROUT_PASSWORD") or
-                    credentials.get(user_key, {}).get("password") if user_key else None)
+                    (credentials.get(user_key, {}).get("password") if user_key else None))
         if user and password:
             auth = user, password
         else:
