@@ -85,9 +85,12 @@ class SproutClient(object):
     def from_config(cls, **kwargs):
         host = env.get("sprout", {}).get("hostname", "localhost")
         port = env.get("sprout", {}).get("port", 8000)
-        user = os.environ.get("SPROUT_USER", credentials.get("sprout", {}).get("username"))
-        password = os.environ.get(
-            "SPROUT_PASSWORD", credentials.get("sprout", {}).get("password"))
+        user_key = kwargs.pop('sprout_user_key') if 'sprout_user_key' in kwargs else None
+        # First choose env var creds, then look in kwargs for a sprout_user_key to lookup
+        user = (os.environ.get("SPROUT_USER") or
+                (credentials.get(user_key, {}).get("username") if user_key else None))
+        password = (os.environ.get("SPROUT_PASSWORD") or
+                    (credentials.get(user_key, {}).get("password") if user_key else None))
         if user and password:
             auth = user, password
         else:
@@ -96,9 +99,9 @@ class SproutClient(object):
 
     def provision_appliances(
             self, count=1, preconfigured=False, version=None, stream=None, provider=None,
-            provider_type=None, lease_time=120, ram=None, cpu=None, **kwargs):
+            provider_type=None, lease_time=60, ram=None, cpu=None, **kwargs):
         # provisioning may take more time than it is expected in some cases
-        wait_time = kwargs.get('wait_time', 300)
+        wait_time = kwargs.get('wait_time', 900)
         # If we specify version, stream is ignored because we will get that specific version
         if version:
             stream = get_stream(version)
@@ -110,9 +113,17 @@ class SproutClient(object):
             stream = get_stream(current_appliance.version)
             version = current_appliance.version.vstring
         request_id = self.call_method(
-            'request_appliances', preconfigured=preconfigured, version=version,
-            provider_type=provider_type, group=stream, provider=provider, lease_time=lease_time,
-            ram=ram, cpu=cpu, count=count, **kwargs
+            'request_appliances',
+            preconfigured=preconfigured,
+            version=version,
+            provider_type=provider_type,
+            group=stream,
+            provider=provider,
+            lease_time=lease_time,
+            ram=ram,
+            cpu=cpu,
+            count=count,
+            **kwargs
         )
         wait_for(
             lambda: self.call_method('request_check', str(request_id))['finished'],
