@@ -8,7 +8,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
-from cfme.utils.testgen import parametrize
 from cfme.utils.version import Version, VersionPicker
 from cfme.utils.wait import wait_for
 
@@ -63,7 +62,7 @@ def pytest_generate_tests(metafunc):
             argid = '{}-{}'.format(reg_method, 'proxy_off')
             idlist.append(argid)
             argvalues.append(argval)
-        parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+        metafunc.parametrize(argnames, argvalues, ids=idlist, scope="function")
 
 
 @pytest.fixture(scope="function")
