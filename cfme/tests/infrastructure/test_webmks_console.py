@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 """Test for WebMKS Remote Consoles of VMware Providers."""
-import imghdr
-import pytest
 import socket
 
+import imghdr
+import pytest
+from wait_for import wait_for
+
 from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.utils import ssh
 from cfme.utils.conf import credentials
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
-from wait_for import wait_for
-from cfme.markers.env_markers.provider import providers
 
 
 pytestmark = [
@@ -23,14 +25,14 @@ pytestmark = [
 
 
 @pytest.fixture(scope="function")
-def vm_obj(appliance, provider, setup_provider, console_template, vm_name):
+def vm_obj(appliance, provider, setup_provider, console_template):
     """VM creation/deletion fixture.
 
     Create a VM on the provider with the given template, and return the vm_obj.
 
     Clean up VM when test is done.
     """
-    vm_obj = appliance.collections.infra_vms.instantiate(vm_name,
+    vm_obj = appliance.collections.infra_vms.instantiate(random_vm_name('webmks'),
                                                          provider,
                                                          console_template.name)
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
