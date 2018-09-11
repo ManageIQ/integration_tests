@@ -150,12 +150,12 @@ def fire_art_hook(config, hook, **hook_args):
     if client is None:
         assert UNDER_TEST, 'missing artifactor is only valid for inprocess tests'
     else:
-        client.fire_hook(hook, **hook_args)
+        return client.fire_hook(hook, **hook_args)
 
 
 def fire_art_test_hook(node, hook, **hook_args):
     name, location = get_test_idents(node)
-    fire_art_hook(
+    return fire_art_hook(
         node.config, hook,
         test_name=name,
         test_location=location,
