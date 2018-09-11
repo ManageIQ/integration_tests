@@ -341,7 +341,7 @@ def _get_template(provider, template_type_name):
     """
     try:
         template_type = provider.data.templates.get(template_type_name)
-    except AttributeError:
+    except (AttributeError, KeyError):
         logger.error("Wanted template %s on %s but it is not there!", template, provider.key)
         pytest.skip('No {} for provider {}'.format(template_type_name, provider.key))
     if not isinstance(template_type, Mapping):
