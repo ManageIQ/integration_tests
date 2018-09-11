@@ -15,13 +15,19 @@ def pytest_addoption(parser):
                      help="Collect also manual tests (only for --collect-only)")
 
 
-def pytest_collection_modifyitems(session, config, items):
+def pytest_collection_modifyitems(config, items):
     if config.getvalue('include_manual'):
         return
-    len_collected = len(items)
     is_manual = config.getvalue('manual')
-    items[:] = [item for item in items if bool(item.get_marker('manual')) == is_manual]
 
-    len_filtered = len(items)
-    filtered_count = len_collected - len_filtered
-    store.uncollection_stats['manual'] = filtered_count
+    keep, discard = [], []
+    for item in items:
+        if bool(item.get_closest_marker("manual")) == is_manual:
+            keep.append(item)
+        else:
+            discard.append(item)
+
+    items[:] = keep
+    config.hook.pytest_deselected(items=discard)
+
+    store.uncollection_stats['manual'] = len(discard)

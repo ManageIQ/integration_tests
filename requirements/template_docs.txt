@@ -50,6 +50,7 @@ pytesseract
 
 PyGithub
 pytest==3.4.1
+pytest-polarion-collect
 python-bugzilla>=1.2.0
 python-dateutil
 python-jenkins

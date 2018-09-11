@@ -87,7 +87,7 @@ pytest_plugins = (
     'cfme.fixtures.video',
     'cfme.fixtures.virtual_machine',
     'cfme.fixtures.widgets',
-    'cfme.fixtures.testcases_tools',
+    'cfme.fixtures.xunit_tools',
     'cfme.fixtures.ansible_fixtures',
     'cfme.fixtures.base',
     'cfme.fixtures.cli',
