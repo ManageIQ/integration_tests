@@ -5,7 +5,7 @@ import pytest
 import tempfile
 
 from cfme.containers.provider.openshift import OpenshiftProvider
-from cfme.fixtures.appliance import temp_appliances
+from cfme.fixtures.appliance import sprout_appliances
 from cfme.utils import ssh, trackerbot
 from cfme.utils.appliance import stack, IPAppliance
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -99,9 +99,15 @@ def template_tags(appliance):
 
 
 @pytest.fixture
-def temp_pod_appliance(provider, appliance_data):
-    with temp_appliances(preconfigured=False, provider_type='openshift',
-                         provider=provider.key, template_type='openshift_pod') as appliances:
+def temp_pod_appliance(appliance, provider, appliance_data, pytestconfig):
+    with sprout_appliances(
+            appliance,
+            config=pytestconfig,
+            preconfigured=False,
+            provider_type='openshift',
+            provider=provider.key,
+            template_type='openshift_pod'
+    ) as appliances:
         with appliances[0] as appliance:
             appliance.openshift_creds = appliance_data['openshift_creds']
             appliance.is_pod = True
