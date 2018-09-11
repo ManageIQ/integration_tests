@@ -4,6 +4,7 @@ from wrapanapi import VmState
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.virtual_machines import deploy_template
@@ -34,6 +35,7 @@ def vm_crud(provider):
 @pytest.mark.provider([RHEVMProvider], override=True, scope="module",
                       required_fields=[['templates', 'small_template']],
                       selector=ONE_PER_TYPE)
+@pytest.mark.meta(blockers=[BZ(1622952, forced_streams=['5.10'])])
 def test_publish_vm_to_template(request, setup_provider, vm_crud):
     """ Try to publish VM to template.
     Steps:
