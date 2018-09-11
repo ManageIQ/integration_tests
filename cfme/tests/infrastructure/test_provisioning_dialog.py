@@ -15,6 +15,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
@@ -112,6 +113,7 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
 
 
 @pytest.mark.rhv2
+@pytest.mark.meta(blockers=[BZ(1627673, forced_streams=['5.10'])])
 def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     """ Tests change RAM and CPU in provisioning dialog.
 
