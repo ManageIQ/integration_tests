@@ -281,12 +281,12 @@ def test_vm_noquads(appliance, request, set_vm_quad):
 
 
 @pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:11215'])
-def test_template_noquads(request, set_template_quad):
+def test_template_noquads(appliance, set_template_quad):
     """
         This test checks that Template Quadrant when switched off from Mysetting page under
         Visual Tab under "Show Template Quadrants" option works properly.
     """
-    view = navigate_to(vms.InfraTemplate, 'TemplatesOnly')
+    view = navigate_to(appliance.collections.infra_templates, 'TemplatesOnly')
     view.toolbar.view_selector.select('Grid View')
     # Here data property will return an empty dict when the Quadrants option is deactivated.
     assert not view.entities.get_first_entity().data
