@@ -36,6 +36,8 @@ elif HAS_YUM:
 elif HAS_APT:
     INSTALL_COMMAND = 'apt-get install -y'
     # No separate debuginfo for apt
+else:
+    INSTALL_COMMAND = ''
 
 if not IS_ROOT:
     INSTALL_COMMAND = 'sudo ' + INSTALL_COMMAND
@@ -135,6 +137,7 @@ elif os.path.exists(OS_RELEASE_FILE):
 
 else:
     INSTALL_COMMAND = None
+    REQUIRED_PACKAGES = None
 
 
 def retry_install_once(command, shell):
