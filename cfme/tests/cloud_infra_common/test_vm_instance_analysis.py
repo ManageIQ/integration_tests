@@ -145,7 +145,7 @@ def set_hosts_credentials(appliance, request, provider):
     hosts = provider.hosts.all()
     for host in hosts:
         try:
-            host_data, = [host for host in provider.data['hosts'] if host['name'] == host.name]
+            host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
         except ValueError:
             pytest.skip('Multiple hosts with the same name found, only expecting one')
 
@@ -191,15 +191,16 @@ def set_agent_creds(appliance, request, provider):
 
 @pytest.fixture(scope="module")
 def local_setup_provider(request, setup_provider_modscope, provider, appliance):
-
     # TODO: allow for vddk parameterization
     if provider.one_of(VMwareProvider):
         appliance.install_vddk()
         request.addfinalizer(appliance.uninstall_vddk)
-        set_hosts_credentials(appliance, request, provider)
 
     if provider.one_of(EC2Provider):
         set_agent_creds(appliance, request, provider)
+
+    if provider.one_of(InfraProvider):
+        set_hosts_credentials(appliance, request, provider)
 
     # Make sure all roles are set
     appliance.server.settings.enable_server_roles('automate', 'smartproxy', 'smartstate')
@@ -245,8 +246,13 @@ def ssa_single_vm(request, local_setup_provider, provider, vm_analysis_provision
 
         if "test_ssa_compliance" in request._pyfuncitem.name or provider.one_of(RHEVMProvider):
             provisioning_data = {"catalog": {'vm_name': vm_name},
-                                 "environment": {'automatic_placement': True},
-                                 "network": {'vlan': partial_match(provision_data['vlan'])}}
+                                 "environment": {'automatic_placement': True}}
+
+            if provider.one_of(RHEVMProvider):
+                provisioning_data.update(
+                    {"network": {'vlan': partial_match(provision_data['vlan'])}}
+                )
+
             do_vm_provisioning(vm_name=vm_name, appliance=appliance, provider=provider,
                                provisioning_data=provisioning_data, template_name=template_name,
                                request=request, smtp_test=False, num_sec=2500)
