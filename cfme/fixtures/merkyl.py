@@ -28,7 +28,7 @@ class MerkylInspector(object):
         res = fire_art_test_hook(
             self.node, 'get_log_merkyl', ip=self.ip,
             filename=log_name, grab_result=True)
-        return res['merkyl_content']
+        return res.get('merkyl_content', '')
 
     def add_log(self, log_name):
         """ Adds a log file to the merkyl process.
