@@ -20,6 +20,30 @@ def clean_commit(commit_msg):
     return commit_msg.strip(" ")
 
 
+VALID_LABELS = [
+    u'LegacyBranch',
+    u'blackify',
+    u'blockers-only',
+    u'collections-conversion',
+    u'doc',
+    u'enhancement',
+    u'fix-framework',
+    u'fix-locator-or-text',
+    u'fix-test',
+    u'implement-ssui',
+    u'infra-related',
+    u'issue-bug',
+    u'issue-rfe',
+    u'new-test-or-feature',
+    u'other',
+    u'py3-compat',
+    u'rc-regression-fix',
+    u'sprout',
+    u'tech-debt',
+    u'widgetastic-conversion',
+]
+
+
 @click.command(help="Assist in generating release changelog")
 @click.argument('tag')
 @click.option('--old-tag', default=None,
@@ -50,17 +74,11 @@ def main(tag, old_tag, report_type, line_limit):
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     commits = proc.stdout.read()
 
-    valid_labels = [
-        u'fix-locator-or-text', u'infra-related', u'fix-test', u'doc',
-        u'other', u'enhancement', u'fix-framework', u'new-test-or-feature', u'tech-debt',
-        u'widgetastic-conversion', u'collections-conversion', u'sprout'
-    ]
-
     print('integration_tests {} Released'.format(tag))
     print('')
     print('Includes: {} -> {}'.format(old_tag, tag))
 
-    max_len_labels = len(reduce((lambda x, y: x if len(x) > len(y) else y), valid_labels))
+    max_len_labels = len(reduce((lambda x, y: x if len(x) > len(y) else y), VALID_LABELS))
 
     now = datetime.date.today()
     start_of_week = now - datetime.timedelta(days=30)
@@ -84,7 +102,7 @@ def main(tag, old_tag, report_type, line_limit):
     for pr in items:
         prs[pr['number']] = pr
         for label in pr['labels']:
-            if label['name'] in valid_labels:
+            if label['name'] in VALID_LABELS:
                 pr['label'] = label['name']
                 break
         else:
@@ -93,7 +111,7 @@ def main(tag, old_tag, report_type, line_limit):
     if pr_nums_without_label:
         print("ERROR: The following PRs don't have any of recognized labels: {}"
               .format(', '.join(pr_nums_without_label)))
-        print("Recognized labels: {}".format(', '.join(valid_labels)))
+        print("Recognized labels: {}".format(', '.join(VALID_LABELS)))
         return 1
 
     if report_type in ['full', 'brief']:
