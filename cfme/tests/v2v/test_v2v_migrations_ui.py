@@ -4,11 +4,13 @@ import pytest
 
 from widgetastic.exceptions import NoSuchElementException
 
+from cfme.fixtures.provider import rhel7_minimal
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.tests.services.test_service_rbac import new_user, new_group, new_role
+from cfme.utils.wait import wait_for
 from cfme.v2v.migrations import MigrationPlanRequestDetailsView
 
 pytestmark = [
@@ -245,6 +247,73 @@ def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_
     soft_assert(set(view.migration_request_details_list.read()) == set(vm_selected))
     view = navigate_to(infrastructure_mapping_collection, 'All')
     view.migration_plans_not_started_list.migrate_plan(plan_name)
+
+    # Test Archive completed migration  plan
+    wait_for(func=view.plan_in_progress, func_args=[plan_name], delay=5, num_sec=300,
+        handle_exception=True)
+    view.migr_dropdown.item_select("Completed Plans")
+    view.wait_displayed()
+    view.migration_plans_completed_list.archive_plan(plan_name)
+    view.migr_dropdown.item_select("Archived Plans")
+    view.wait_displayed()
+    soft_assert(plan_name in view.migration_plans_archived_list.read())
+
+
+@pytest.mark.parametrize('form_data_multiple_vm_obj_single_datastore', [['nfs', 'nfs',
+    [rhel7_minimal, rhel7_minimal]]], indirect=True)
+def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers,
+        form_data_multiple_vm_obj_single_datastore, soft_assert):
+    infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    migration_plan_collection = appliance.collections.v2v_plans
+
+    mapping = infrastructure_mapping_collection.create(
+        form_data_multiple_vm_obj_single_datastore[0])
+
+    # creating two plans, with 1 VM in each, hence vm_list[0]/[1]
+    plan1 = migration_plan_collection.create(
+        name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
+        .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
+        vm_list=[form_data_multiple_vm_obj_single_datastore.vm_list[0]], start_migration=False)
+    plan2 = migration_plan_collection.create(
+        name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
+        .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
+        vm_list=[form_data_multiple_vm_obj_single_datastore.vm_list[1]], start_migration=False)
+
+    view = navigate_to(migration_plan_collection, 'All')
+
+    plans_list_before_sort = view.migration_plans_not_started_list.read()
+    view.sort_direction.click()
+    plans_list_after_sort = view.migration_plans_not_started_list.read()
+    soft_assert(plans_list_before_sort != plans_list_after_sort)
+
+    view.migration_plans_not_started_list.schedule_migration(plan1.name, after_mins=5)
+    view.wait_displayed()
+    view.migration_plans_not_started_list.schedule_migration(plan2.name, after_mins=10)
+    view.wait_displayed()
+    view.sort_type_dropdown.item_select("Scheduled Time")
+    plans_list_before_sort = view.migration_plans_not_started_list.read()
+    view.sort_direction.click()
+    plans_list_after_sort = view.migration_plans_not_started_list.read()
+    soft_assert(plans_list_before_sort != plans_list_after_sort)
+    view.migration_plans_not_started_list.schedule_migration(plan1.name)
+    view.wait_displayed()
+    view.migration_plans_not_started_list.schedule_migration(plan2.name)
+
+    view.migration_plans_not_started_list.migrate_plan(plan1.name)
+    view.migr_dropdown.item_select("Not Started Plans")
+    view.wait_displayed()
+    view.migration_plans_not_started_list.migrate_plan(plan2.name)
+    view.migr_dropdown.item_select("In Progress Plans")
+    wait_for(func=view.plan_in_progress, func_args=[plan1.name], delay=5, num_sec=300,
+        handle_exception=True)
+    wait_for(func=view.plan_in_progress, func_args=[plan2.name], delay=5, num_sec=300,
+        handle_exception=True)
+    view.migr_dropdown.item_select("Completed Plans")
+    view.wait_displayed()
+    plans_list_before_sort = view.migration_plans_completed_list.read()
+    view.sort_direction.click()
+    plans_list_after_sort = view.migration_plans_completed_list.read()
+    soft_assert(plans_list_before_sort != plans_list_after_sort)
 
 
 def test_migration_rbac(appliance, new_credential, v2v_providers):
