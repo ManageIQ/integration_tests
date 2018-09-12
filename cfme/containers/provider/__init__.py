@@ -46,6 +46,7 @@ class ContainersProviderDefaultEndpoint(DefaultEndpoint):
     def view_value_mapping(self):
         out = {'hostname': self.hostname,
                'password': self.token,
+               'confirm_password': self.token,
                'api_port': self.api_port,
                'sec_protocol': self.sec_protocol}
 
@@ -54,8 +55,6 @@ class ContainersProviderDefaultEndpoint(DefaultEndpoint):
                 {"username": self.ssh_creds.principal,
                  "password": self.ssh_creds.secret,
                  "hostname": self.master_hostname})
-
-        out['confirm_password'] = None
 
         return out
 
@@ -384,7 +383,7 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.toolbar.configuration.item_select('Add a new Containers Provider')
+        self.prerequisite_view.toolbar.configuration.item_select('Add Existing Containers Provider')
 
 
 @navigator.register(ContainersProvider, 'Details')
