@@ -6,6 +6,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils import conf
+from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
 
@@ -408,7 +409,8 @@ def test_appliance_log_error():
     pass
 
 
-def test_codename_in_log(configured_appliance):
+@pytest.mark.ignore_stream('5.9')
+def test_codename_in_log(appliance):
     """
     check whether logs contains a mention of appliance codename
 
@@ -417,20 +419,30 @@ def test_codename_in_log(configured_appliance):
         casecomponent: appl
     """
     log = '/var/www/miq/vmdb/log/evm.log'
-    configured_appliance.ssh_client.run_command('echo > {}'.format(log))
-    configured_appliance.ssh_client.run_command('appliance_console_cli --server=restart')
+    appliance.ssh_client.run_command('echo > {}'.format(log))
+    appliance.ssh_client.run_command('appliance_console_cli --server=restart')
 
+    @wait_for_decorator
     def codename_in_log():
-        configured_appliance.ssh_client.run_command(r'egrep "Codename: \w+$" {}'.format(log))
-    wait_for(codename_in_log, timeout=30)
+        r = appliance.ssh_client.run_command(r'egrep "Codename: \w+$" {}'.format(log))
+        return r.success
 
 
-def test_codename_in_stdout(configured_appliance):
-    cursor = configured_appliance.ssh_client.run_command(
+@pytest.mark.ignore_stream('5.9')
+def test_codename_in_stdout(appliance):
+    """
+    check whether stdout contains a mention of appliance codename
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+    """
+    cursor = appliance.ssh_client.run_command(
         'journalctl -u evmserverd --show-cursor | tail -n1').output.split('-- cursor: ')[1]
-    configured_appliance.ssh_client.run_command('appliance_console_cli --server=restart')
+    appliance.ssh_client.run_command('appliance_console_cli --server=restart')
 
+    @wait_for_decorator
     def codename_in_stdout():
-        configured_appliance.ssh_client.run_command(
-            r'journalctl -u evmserverd -c "{}" | egrep "Codename: \w+$"'.format(cursor))
-    wait_for(codename_in_stdout, timeout=30)
+        r = appliance.ssh_client.run_command(
+            r'journalctl -u evmserverd -c "{}" | egrep -i "codename: \w+$"'.format(cursor))
+        return r.success
