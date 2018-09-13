@@ -423,3 +423,14 @@ def test_codename_in_log(configured_appliance):
     def codename_in_log():
         configured_appliance.ssh_client.run_command(r'egrep "Codename: \w+$" {}'.format(log))
     wait_for(codename_in_log, timeout=30)
+
+
+def test_codename_in_stdout(configured_appliance):
+    cursor = configured_appliance.ssh_client.run_command(
+        'journalctl -u evmserverd --show-cursor | tail -n1').output.split('-- cursor: ')[1]
+    configured_appliance.ssh_client.run_command('appliance_console_cli --server=restart')
+
+    def codename_in_stdout():
+        configured_appliance.ssh_client.run_command(
+            r'journalctl -u evmserverd -c "{}" | egrep "Codename: \w+$"'.format(cursor))
+    wait_for(codename_in_stdout, timeout=30)
