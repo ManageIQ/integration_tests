@@ -13,10 +13,10 @@ import re
 
 from cfme import test_requirements
 from cfme.utils import conf, testgen
-from cfme.utils.ssh import SSHClient
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.ftp import FTPClient
+from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
@@ -160,10 +160,10 @@ def check_ftp(ftp, server_name, server_zone_id):
         assert zip_files, "No logs found!"
     # Check the times of the files by names
     datetimes = []
-    for file in zip_files:
+    for zip_file in zip_files:
         # files looks like "Current_region_0_default_1_EVM_1_20170127_043343_20170127_051010.zip"
         # 20170127_043343 - date and time
-        date = file.name.split("_")
+        date = zip_file.name.split("_")
         date_from = date[7] + date[8]
         # removing ".zip" from last item
         date_to = date[9] + date[10][:-4]
@@ -176,15 +176,15 @@ def check_ftp(ftp, server_name, server_zone_id):
                                username=ftp.login,
                                password=ftp.password) as log_ssh:
                     result = log_ssh.run_command(
-                        "unzip -l ~{} | grep ROOT/var/log/tower/setup".format(file.path),
+                        "unzip -l ~{} | grep ROOT/var/log/tower/setup".format(zip_file.path),
                         ensure_user=True)
                     assert '.log' in result.output
                     log_file_size, log_date, log_time, log_path = result.output.split()
                     assert int(log_file_size) > 0, "Log file is empty!"
 
         except ValueError:
-            assert False, "Wrong file matching of {}".format(file.name)
-        datetimes.append((date_from, date_to, file.name))
+            assert False, "Wrong file matching of {}".format(zip_file.name)
+        datetimes.append((date_from, date_to, zip_file.name))
 
     # Check for the gaps
     if len(datetimes) > 1:
@@ -264,7 +264,8 @@ def catalog(appliance, ansible_catalog_item):
 
 @pytest.fixture
 def service_request(appliance, ansible_catalog_item):
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+    request_descr = \
+        "Provisioning Service [{name}] from [{name}]".format(name=ansible_catalog_item.name)
     service_request_ = appliance.collections.requests.instantiate(description=request_descr)
     yield service_request_
 
