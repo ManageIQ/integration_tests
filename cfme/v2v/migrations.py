@@ -335,6 +335,7 @@ class MigrationDashboardView(BaseLoggedInPage):
         try:
             try:
                 is_plan_visible = self.progress_card.is_plan_visible(plan_name)
+                plan_time_elapsed = self.progress_card.get_clock(plan_name)
             except ItemNotFound:
                 # This will end the wait_for loop and check the plan under completed_plans section
                 return True
@@ -350,7 +351,7 @@ class MigrationDashboardView(BaseLoggedInPage):
                 self.logger.info("For plan %s, is plan in progress: %s,"
                     "time elapsed for migration: %s",
                     plan_name, is_plan_visible,
-                    self.progress_card.get_clock(plan_name))
+                    plan_time_elapsed)
             # return False if plan visible under "In Progress Plans"
             return not is_plan_visible
         except StaleElementReferenceException:

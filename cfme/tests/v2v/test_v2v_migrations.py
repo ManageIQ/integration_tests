@@ -43,6 +43,14 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
+    src_vm_obj = form_data_vm_obj_single_datastore[1][0]
+    wait_for(lambda: src_vm_obj.ip_address is not None,
+        message="Waiting for VM to display IP in CFME",
+        fail_func=src_vm_obj.refresh_relationships,
+        delay=5, timeout=300)
+
+    src_vm_ip_addr = src_vm_obj.ip_address
+
     migration_plan_collection = appliance.collections.v2v_plans
     # form_data_vm_obj_single_datastore has vm_obj list at [1]
     migration_plan = migration_plan_collection.create(
@@ -67,7 +75,14 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
         migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
             migration_plan.name), view.migration_plans_completed_list.get_clock(
             migration_plan.name))
+    # validate MAC address matches between source and target VMs
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
+    src_vm = form_data_vm_obj_single_datastore[1][0]
+    rhv_prov = v2v_providers[1]
+    collection = rhv_prov.appliance.provider_based_collection(rhv_prov)
+    migrated_vm = collection.instantiate(src_vm.name, rhv_prov)
+    assert src_vm.mac_address == migrated_vm.mac_address
+    assert src_vm_ip_addr == migrated_vm.ip_address
 
 
 @pytest.mark.parametrize('form_data_vm_obj_single_network', [['DPortGroup', 'ovirtmgmt',
@@ -110,6 +125,12 @@ def test_single_network_single_vm_migration(request, appliance, v2v_providers, h
      delay=5, num_sec=2700)
     assert (request_details_list.is_successful(vms[0]) and
         not request_details_list.is_errored(vms[0]))
+    # validate MAC address matches between source and target VMs
+    src_vm = form_data_vm_obj_single_network[1][0]
+    rhv_prov = v2v_providers[1]
+    collection = rhv_prov.appliance.provider_based_collection(rhv_prov)
+    migrated_vm = collection.instantiate(src_vm.name, rhv_prov)
+    assert src_vm.mac_address == migrated_vm.mac_address
 
 
 @pytest.mark.parametrize(
@@ -154,6 +175,13 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
         soft_assert(request_details_list.is_successful(vm) and
          not request_details_list.is_errored(vm))
 
+    rhv_prov = v2v_providers[1]
+    collection = rhv_prov.appliance.provider_based_collection(rhv_prov)
+    # validate MAC address matches between source and target VMs
+    for src_vm in form_data_dual_vm_obj_dual_datastore[1]:
+        migrated_vm = collection.instantiate(src_vm.name, rhv_prov)
+        soft_assert(src_vm.mac_address == migrated_vm.mac_address)
+
 
 @pytest.mark.parametrize(
     'form_data_vm_obj_dual_nics', [[['VM Network', 'ovirtmgmt'],
@@ -195,6 +223,12 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
             migration_plan.name), view.migration_plans_completed_list.get_clock(
             migration_plan.name))
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
+    # validate MAC address matches between source and target VMs
+    src_vm = form_data_vm_obj_dual_nics[1][0]
+    rhv_prov = v2v_providers[1]
+    collection = rhv_prov.appliance.provider_based_collection(rhv_prov)
+    migrated_vm = collection.instantiate(src_vm.name, rhv_prov)
+    assert src_vm.mac_address == migrated_vm.mac_address
 
 
 @pytest.mark.parametrize('form_data_vm_obj_single_datastore', [['nfs', 'nfs', dual_disk_template]],
@@ -233,6 +267,12 @@ def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, c
             migration_plan.name), view.migration_plans_completed_list.get_clock(
             migration_plan.name))
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
+    # validate MAC address matches between source and target VMs
+    src_vm = form_data_vm_obj_single_datastore[1][0]
+    rhv_prov = v2v_providers[1]
+    collection = rhv_prov.appliance.provider_based_collection(rhv_prov)
+    migrated_vm = collection.instantiate(src_vm.name, rhv_prov)
+    assert src_vm.mac_address == migrated_vm.mac_address
 
 
 @pytest.mark.parametrize('form_data_multiple_vm_obj_single_datastore', [['nfs', 'nfs',
@@ -277,6 +317,13 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
     for vm in vms:
         soft_assert(request_details_list.is_successful(vm) and
          not request_details_list.is_errored(vm))
+
+    rhv_prov = v2v_providers[1]
+    collection = rhv_prov.appliance.provider_based_collection(rhv_prov)
+    # validate MAC address matches between source and target VMs
+    for src_vm in form_data_multiple_vm_obj_single_datastore[1]:
+        migrated_vm = collection.instantiate(src_vm.name, rhv_prov)
+        soft_assert(src_vm.mac_address == migrated_vm.mac_address)
 
 
 def test_conversion_host_tags(appliance, v2v_providers):
