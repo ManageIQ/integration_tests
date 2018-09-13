@@ -5038,8 +5038,9 @@ class MigrationProgressBar(Widget):
     def is_plan_started(self, plan_name):
         """Returns true if migration plan card is shown in-progress state, spinners are gone"""
         el = self._get_card_element(plan_name)
-        return (self.browser.is_displayed(self.TIMER_LOCATOR, parent=el) and
-         not self.browser.is_displayed(self.SPINNER_LOCATOR, parent=el))
+        return self.browser.is_displayed(
+            self.TIMER_LOCATOR, parent=el
+        ) and not self.browser.is_displayed(self.SPINNER_LOCATOR, parent=el)
 
     def is_plan_visible(self, plan_name):
         """Returns true if migration plan card is shown in-progress section, else False"""
