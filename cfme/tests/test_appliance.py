@@ -406,3 +406,20 @@ def test_appliance_log_error():
         initialEstimate: 1/2h
     """
     pass
+
+
+def test_codename_in_log(configured_appliance):
+    """
+    check whether logs contains a mention of appliance codename
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+    """
+    log = '/var/www/miq/vmdb/log/evm.log'
+    configured_appliance.ssh_client.run_command('echo > {}'.format(log))
+    configured_appliance.ssh_client.run_command('appliance_console_cli --server=restart')
+
+    def codename_in_log():
+        configured_appliance.ssh_client.run_command(r'egrep "Codename: \w+$" {}'.format(log))
+    wait_for(codename_in_log, timeout=30)
