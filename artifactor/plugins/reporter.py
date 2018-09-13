@@ -300,7 +300,7 @@ class ReporterBase(object):
                 )
                 proc_name = process_pytest_path(v["name"])[-1]
                 link = (
-                    '<a href="#{}">{} {} {} ' '<span style="color:#888888"><em>[{}]</em></span></a>'
+                    '<a href="#{}">{} {} {} <span style="color:#888888"><em>[{}]</em></span></a>'
                 ).format(v["name"], proc_name, teststring, label, pretty_time)
                 # Do we really need the os.path.split (now process_pytest_path) here?
                 # For me it seems the name is always the leaf
