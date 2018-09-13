@@ -14,6 +14,7 @@ from cfme.services.catalogs import ServicesCatalogView
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.version import LOWEST, VersionPicker
 from cfme.utils.wait import wait_for
 
 
@@ -299,6 +300,15 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         except CandidateNotFound:
             return False
 
+    @property
+    def catalog_name(self):
+        # In 5.10 catalog name is appended with 'My Company'
+        cat_name = VersionPicker({
+            LOWEST: getattr(self.catalog, 'name', None),
+            '5.10': 'My Company/{}'.format(getattr(self.catalog, 'name', None))
+        }).pick(self.appliance.version)
+        return cat_name
+
 
 @attr.s
 class CloudInfraCatalogItem(BaseCatalogItem):
@@ -320,7 +330,7 @@ class CloudInfraCatalogItem(BaseCatalogItem):
                 'name': self.name,
                 'description': self.description,
                 'display': self.display_in,
-                'select_catalog': getattr(self.catalog, 'name', None),
+                'select_catalog': self.catalog_name,
                 'select_dialog': self.dialog
             },
             'request_info': {'provisioning': self.prov_data}
@@ -345,7 +355,7 @@ class NonCloudInfraCatalogItem(BaseCatalogItem):
             'name': self.name,
             'description': self.description,
             'display': self.display_in,
-            'select_catalog': getattr(self.catalog, 'name', None),
+            'select_catalog': self.catalog_name,
             'select_dialog': self.dialog,
         }
 
