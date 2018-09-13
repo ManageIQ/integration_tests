@@ -221,14 +221,14 @@ def generate_html_report(api, stream, filename, appliance_template):
                 elif provider_in_the_list(list_provider_keys('openstack'),
                                           stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(images_uploaded(stream)['template_rhos']))
-                    map(lambda (x): report.write('\n{}: Passed'.format(x)), provider_in_the_list(
-                        list_provider_keys('openstack'), stream_data['passed_on_providers']))
+                    list(map(lambda x: report.write('\n{}: Passed'.format(x)), provider_in_the_list(
+                        list_provider_keys('openstack'), stream_data['passed_on_providers'])))
                 elif provider_in_the_list(list_provider_keys('openstack'),
                                           stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(images_uploaded(stream)['template_rhos']))
-                    map(lambda (x): report.write('\n{}: Failed'.format(x)),
+                    list(map(lambda x: report.write('\n{}: Failed'.format(x)),
                         provider_in_the_list(list_provider_keys('openstack'),
-                                             stream_data['failed_on_providers']))
+                                             stream_data['failed_on_providers'])))
                 else:
                     print('\n\nMISSING: OpenStack template is not available on any '
                           'rhos providers yet')
@@ -242,15 +242,15 @@ def generate_html_report(api, stream, filename, appliance_template):
                                           stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_rhevm']))
-                    map(lambda(x): report.write('\n{}: Passed'.format(x)), provider_in_the_list(
-                        list_provider_keys('rhevm'), stream_data['passed_on_providers']))
+                    list(map(lambda x: report.write('\n{}: Passed'.format(x)), provider_in_the_list(
+                        list_provider_keys('rhevm'), stream_data['passed_on_providers'])))
                 elif provider_in_the_list(list_provider_keys('rhevm'),
                                           stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(
                         images_uploaded(stream)['template_rhevm']))
-                    map(lambda(x): report.write('\n{}: Failed'.format(x)),
+                    list(map(lambda x: report.write('\n{}: Failed'.format(x)),
                         provider_in_the_list(list_provider_keys('rhevm'),
-                                             stream_data['failed_on_providers']))
+                                             stream_data['failed_on_providers'])))
                 else:
                     print('\n\nMISSING: RHEVM template is not available on any '
                           'rhevm providers yet')
@@ -264,15 +264,15 @@ def generate_html_report(api, stream, filename, appliance_template):
                                           stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_vsphere']))
-                    map(lambda (x): report.write('\n{}: Passed'.format(x)), provider_in_the_list(
-                        list_provider_keys('virtualcenter'), stream_data['passed_on_providers']))
+                    list(map(lambda x: report.write('\n{}: Passed'.format(x)), provider_in_the_list(
+                        list_provider_keys('virtualcenter'), stream_data['passed_on_providers'])))
                 elif provider_in_the_list(list_provider_keys('virtualcenter'),
                                           stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(
                         images_uploaded(stream)['template_vsphere']))
-                    map(lambda (x): report.write('\n{}: Failed'.format(x)),
+                    list(map(lambda x: report.write('\n{}: Failed'.format(x)),
                         provider_in_the_list(list_provider_keys('virtualcenter'),
-                                             stream_data['failed_on_providers']))
+                                             stream_data['failed_on_providers'])))
                 else:
                     print('\n\nMISSING: VIRTUALCENTER template is not available on any '
                           'vmware providers yet')
@@ -286,15 +286,15 @@ def generate_html_report(api, stream, filename, appliance_template):
                                           stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_scvmm']))
-                    map(lambda (x): report.write('\n{}: Passed'.format(x)), provider_in_the_list(
-                        list_provider_keys('scvmm'), stream_data['passed_on_providers']))
+                    list(map(lambda x: report.write('\n{}: Passed'.format(x)), provider_in_the_list(
+                        list_provider_keys('scvmm'), stream_data['passed_on_providers'])))
                 elif provider_in_the_list(list_provider_keys('scvmm'),
                                           stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(
                         images_uploaded(stream)['template_scvmm']))
-                    map(lambda (x): report.write('\n{}: Failed'.format(x)),
+                    list(map(lambda x: report.write('\n{}: Failed'.format(x)),
                         provider_in_the_list(list_provider_keys('scvmm'),
-                                             stream_data['failed_on_providers']))
+                                             stream_data['failed_on_providers'])))
                 else:
                     print('\n\nMISSING: SCVMM template is not available on any '
                           'scvmm providers yet')
@@ -302,9 +302,9 @@ def generate_html_report(api, stream, filename, appliance_template):
                                  'scvmm providers yet')
                 report.seek(0, 0)
                 lines = report.readlines()
-                template_missing = filter(lambda (x): "MISSING" in x, lines)
-                template_passed = filter(lambda (x): "PASSED" in x, lines)
-                template_failed = filter(lambda (x): "FAILED" in x, lines)
+                template_missing = filter(lambda x: "MISSING" in x, lines)
+                template_passed = filter(lambda x: "PASSED" in x, lines)
+                template_failed = filter(lambda x: "FAILED" in x, lines)
                 if template_failed:
                     status = "FAILED"
 

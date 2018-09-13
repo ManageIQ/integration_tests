@@ -18,23 +18,51 @@ from wait_for import TimedOutError, wait_for
 from widgetastic.exceptions import NoSuchElementException, WidgetOperationFailed
 from widgetastic.log import logged
 from widgetastic.utils import (
-    ParametrizedLocator, Parameter, ParametrizedString, attributize_string, VersionPick, Version,
-    partial_match)
+    ParametrizedLocator,
+    Parameter,
+    ParametrizedString,
+    attributize_string,
+    VersionPick,
+    Version,
+    partial_match,
+)
 from widgetastic.widget import (
     FileInput as BaseFileInput,
-    Table as VanillaTable, TableColumn as VanillaTableColumn, TableRow as VanillaTableRow,
-    Widget, View, Select, TextInput, Text, Checkbox, ParametrizedView, ClickableMixin,
-    ConditionalSwitchableView, do_not_read_this_widget)
+    Table as VanillaTable,
+    TableColumn as VanillaTableColumn,
+    TableRow as VanillaTableRow,
+    Widget,
+    View,
+    Select,
+    TextInput,
+    Text,
+    Checkbox,
+    ParametrizedView,
+    ClickableMixin,
+    ConditionalSwitchableView,
+    do_not_read_this_widget,
+)
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview, BootstrapSelect,
-    Button, Dropdown, Input, VerticalNavigation, NavDropdown, Tab, BreadCrumb)
+    Accordion as PFAccordion,
+    BootstrapSwitch,
+    BootstrapTreeview,
+    BootstrapSelect,
+    Button,
+    Dropdown,
+    Input,
+    VerticalNavigation,
+    NavDropdown,
+    Tab,
+    BreadCrumb,
+)
 
 from cfme.exceptions import ItemNotFound
 
 
 class DynamicTableAddError(Exception):
     """Raised when an attempt to add or save a row to a `widgetastic_manageiq.DynamicTable` fails"""
+
     pass
 
 
@@ -44,17 +72,19 @@ ManageIQTree = BootstrapTreeview
 
 class SummaryFormItem(Widget):
     """The UI item that shows the values for objects that are NOT VMs, Providers and such ones."""
+
     LOCATOR = (
-        './/h3[normalize-space(.)={}]/following-sibling::div/div'
-        '//label[normalize-space(.)={}]/following-sibling::div')
-    SINGLE_ITEM_LOCATOR = '//label[normalize-space(.)={}]/following-sibling::div'
+        ".//h3[normalize-space(.)={}]/following-sibling::div/div"
+        "//label[normalize-space(.)={}]/following-sibling::div"
+    )
+    SINGLE_ITEM_LOCATOR = "//label[normalize-space(.)={}]/following-sibling::div"
 
     def __init__(self, parent, group_title, item_name, text_filter=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self.group_title = group_title
         self.item_name = item_name
         if text_filter is not None and not callable(text_filter):
-            raise TypeError('text_filter= must be a callable')
+            raise TypeError("text_filter= must be a callable")
         self.text_filter = text_filter
 
     def __locator__(self):
@@ -154,8 +184,15 @@ class MultiBoxSelect(View):
     move_into_button = Button(**{"data-submit": Parameter("@move_into")})
     move_from_button = Button(**{"data-submit": Parameter("@move_from")})
 
-    def __init__(self, parent, move_into="choices_chosen_div", move_from="members_chosen_div",
-            available_items="choices_chosen", chosen_items="members_chosen", logger=None):
+    def __init__(
+        self,
+        parent,
+        move_into="choices_chosen_div",
+        move_from="members_chosen_div",
+        available_items="choices_chosen",
+        chosen_items="members_chosen",
+        logger=None,
+    ):
         View.__init__(self, parent, logger=logger)
         self.available_items = available_items
         self.chosen_items = chosen_items
@@ -204,8 +241,10 @@ class CheckboxSelect(Widget):
     @property
     def checkboxes(self):
         """All checkboxes."""
-        return {Checkbox(self, id=el.get_attribute("id")) for el in self.browser.elements(
-            ".//input[@type='checkbox']", parent=self)}
+        return {
+            Checkbox(self, id=el.get_attribute("id"))
+            for el in self.browser.elements(".//input[@type='checkbox']", parent=self)
+        }
 
     @property
     def selected_checkboxes(self):
@@ -265,7 +304,7 @@ class CheckboxSelect(Widget):
             # Has to be only single
             return Checkbox(
                 self,
-                locator=".//*[normalize-space(.)={}]/input[@type='checkbox']".format(quote(text))
+                locator=".//*[normalize-space(.)={}]/input[@type='checkbox']".format(quote(text)),
             )
 
     def fill(self, values):
@@ -313,7 +352,7 @@ class BootstrapSwitchSelect(View):
 
     @ParametrizedView.nested
     class _bootstrap_switch(ParametrizedView):  # noqa
-        PARAMETERS = ("id_attr", )
+        PARAMETERS = ("id_attr",)
         switch = BootstrapSwitch(id=Parameter("id_attr"))
 
     def switch_by_text(self, text):
@@ -378,24 +417,31 @@ class TableRow(VanillaTableRow):
 
 
 class Table(VanillaTable):
-    CHECKBOX_ALL = '|'.join([
-        './thead/tr/th[1]/input[contains(@class, "checkall")]',
-        './tr/th[1]/input[contains(@class, "checkall")]',
-        './/input[@id="masterToggle"]',
-        './/th[1]/input[@id="check-all"]'
-    ])
-    SORTED_BY_LOC = '|'.join([
-        # Old one
-        './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]',
-        # New one
-        './thead/tr/th[./div/i[contains(@class, "fa-sort-")]]'])
-    SORTED_BY_CLASS_LOC = '|'.join([
-        # Old one
-        './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]',
-        # New one
-        './thead/tr/th/div/i[contains(@class, "fa-sort-")]'])
-    SORT_LINK = VersionPick({Version.lowest(): './thead/tr/th[{}]/a',
-                            '5.9': './thead/tr/th[{}]'})
+    CHECKBOX_ALL = "|".join(
+        [
+            './thead/tr/th[1]/input[contains(@class, "checkall")]',
+            './tr/th[1]/input[contains(@class, "checkall")]',
+            './/input[@id="masterToggle"]',
+            './/th[1]/input[@id="check-all"]',
+        ]
+    )
+    SORTED_BY_LOC = "|".join(
+        [
+            # Old one
+            './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]',
+            # New one
+            './thead/tr/th[./div/i[contains(@class, "fa-sort-")]]',
+        ]
+    )
+    SORTED_BY_CLASS_LOC = "|".join(
+        [
+            # Old one
+            './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]',
+            # New one
+            './thead/tr/th/div/i[contains(@class, "fa-sort-")]',
+        ]
+    )
+    SORT_LINK = VersionPick({Version.lowest(): "./thead/tr/th[{}]/a", "5.9": "./thead/tr/th[{}]"})
     Row = TableRow
 
     @property
@@ -436,47 +482,47 @@ class Table(VanillaTable):
         Returns:
             ``asc`` or ``desc``
         """
-        klass = self.browser.get_attribute('class', self.SORTED_BY_CLASS_LOC, parent=self)
+        klass = self.browser.get_attribute("class", self.SORTED_BY_CLASS_LOC, parent=self)
         # We get two group matches and one of them will always be None, therefore empty filter
         # for filtering the None out
         try:
-            return filter(
-                None, re.search(r'(sorting_|fa-sort-)(asc|desc)', klass).groups())[1]
+            return filter(None, re.search(r"(sorting_|fa-sort-)(asc|desc)", klass).groups())[1]
         except IndexError:
             raise ValueError(
-                'Could not figure out which column is used for sorting now. The class was {!r}'
-                .format(klass))
+                "Could not figure out which column is used for sorting now."
+                " The class was {!r}".format(klass)
+            )
         except AttributeError:
-            raise TypeError('SORTED_BY_CLASS_LOC tag did not provide any class. Maybe fix Table?')
+            raise TypeError("SORTED_BY_CLASS_LOC tag did not provide any class. Maybe fix Table?")
 
     def click_sort(self, column):
         """Clicks the sorting link in the given column. The column gets attributized."""
-        self.logger.info('click_sort(%r)', column)
+        self.logger.info("click_sort(%r)", column)
         column = attributize_string(column)
         column_position = self.header_index_mapping[self.attributized_headers[column]]
         self.browser.click(self.SORT_LINK.format(column_position + 1), parent=self)
 
-    def sort_by(self, column, order='asc'):
+    def sort_by(self, column, order="asc"):
         """Sort table by column and in given direction.
 
         Args:
             column: Name of the column, can be normal or attributized.
             order: Sorting order. ``asc`` or ``desc``.
         """
-        self.logger.info('sort_by(%r, %r)', column, order)
+        self.logger.info("sort_by(%r, %r)", column, order)
         column = attributize_string(column)
 
         # Sort column
         if self.sorted_by != column:
             self.click_sort(column)
         else:
-            self.logger.debug('sort_by(%r, %r): column already selected', column, order)
+            self.logger.debug("sort_by(%r, %r): column already selected", column, order)
 
         # Sort order
         if self.sort_order != order:
-            self.logger.info('sort_by(%r, %r): changing the sort order', column, order)
+            self.logger.info("sort_by(%r, %r): changing the sort order", column, order)
             self.click_sort(column)
-            self.logger.debug('sort_by(%r, %r): order already selected', column, order)
+            self.logger.debug("sort_by(%r, %r): order already selected", column, order)
 
 
 class SummaryTable(VanillaTable):
@@ -488,8 +534,9 @@ class SummaryTable(VanillaTable):
     Args:
         title: Title of the table (eg. ``Properties``)
     """
+
     BASELOC = './/table[./thead/tr/th[contains(@align, "left") and normalize-space(.)={}]]'
-    Image = namedtuple('Image', ['alt', 'title', 'src'])
+    Image = namedtuple("Image", ["alt", "title", "src"])
 
     def __init__(self, parent, title, *args, **kwargs):
         VanillaTable.__init__(self, parent, self.BASELOC.format(quote(title)), *args, **kwargs)
@@ -499,7 +546,7 @@ class SummaryTable(VanillaTable):
         """Returns a list of the field names in the table (the left column)."""
         fields_names = []
         for field in self:
-            if self.browser.get_attribute('class', field[0]):
+            if self.browser.get_attribute("class", field[0]):
                 fields_names.append(field[0].text)
         return fields_names
 
@@ -512,23 +559,27 @@ class SummaryTable(VanillaTable):
         Returns:
             An instance of :py:class:`VanillaRow` or list of :py:class:`WebElement`
         """
-        rowspan_path = './tbody//td[contains(text(), {})]/following-sibling::td'.format(
-            quote(field_name))
+        rowspan_path = "./tbody//td[contains(text(), {})]/following-sibling::td".format(
+            quote(field_name)
+        )
         try:
-            rowspan_attribute = self.browser.get_attribute('rowspan', self.row((0, field_name))[0])
+            rowspan_attribute = self.browser.get_attribute("rowspan", self.row((0, field_name))[0])
         except IndexError:
-            raise NameError('Could not find field with name {!r}'.format(field_name))
+            raise NameError("Could not find field with name {!r}".format(field_name))
         if not rowspan_attribute:
             return self.row((0, field_name))
         else:
-            rowspan_image_element = self.browser.element('{}/*[self::i or self::img]'.format(
-                rowspan_path), self)
-            rowspan_child_class = rowspan_image_element.get_attribute('class')
+            rowspan_image_element = self.browser.element(
+                "{}/*[self::i or self::img]".format(rowspan_path), self
+            )
+            rowspan_child_class = rowspan_image_element.get_attribute("class")
             if not rowspan_child_class:
-                rowspan_child_class = rowspan_image_element.get_attribute('alt')
+                rowspan_child_class = rowspan_image_element.get_attribute("alt")
             multiple_fields = self.browser.elements(
-                './tbody//*[self::i or self::img][contains(@class|@alt, {})]/parent::td'.format(
-                    quote(rowspan_child_class), self))
+                "./tbody//*[self::i or self::img][contains(@class|@alt, {})]/parent::td".format(
+                    quote(rowspan_child_class), self
+                )
+            )
             return multiple_fields
 
     def get_text_of(self, field_name):
@@ -556,14 +607,15 @@ class SummaryTable(VanillaTable):
             A 3-tuple: ``alt``, ``title``, ``src``.
         """
         try:
-            img_el = self.browser.element('./img', parent=self.get_field(field_name)[1])
+            img_el = self.browser.element("./img", parent=self.get_field(field_name)[1])
         except NoSuchElementException:
             return None
 
         return self.Image(
-            self.browser.get_attribute('alt', img_el),
-            self.browser.get_attribute('title', img_el),
-            self.browser.get_attribute('src', img_el))
+            self.browser.get_attribute("alt", img_el),
+            self.browser.get_attribute("title", img_el),
+            self.browser.get_attribute("src", img_el),
+        )
 
     def click_at(self, field_name):
         """Clicks the field with this name.
@@ -578,8 +630,8 @@ class SummaryTable(VanillaTable):
 
 
 class NestedSummaryTable(SummaryTable):
-    HEADER_IN_ROWS = './tbody/tr[1]/td'
-    HEADERS = './tbody/tr[1]/td/strong'
+    HEADER_IN_ROWS = "./tbody/tr[1]/td"
+    HEADERS = "./tbody/tr[1]/td/strong"
 
     def __init__(self, parent, title, *args, **kwargs):
         SummaryTable.__init__(self, parent, title, *args, **kwargs)
@@ -594,7 +646,7 @@ class NestedSummaryTable(SummaryTable):
 
 class ParametrizedSummaryTable(ParametrizedView):
 
-    PARAMETERS = ("title", )
+    PARAMETERS = ("title",)
     _table = SummaryTable(title=Parameter("title"))
 
     @property
@@ -619,16 +671,20 @@ class ParametrizedSummaryTable(ParametrizedView):
 
 
 class ContainerSummaryTable(SummaryTable):
-    BASELOC = './/div[@head-title={}]//table'
+    BASELOC = ".//div[@head-title={}]//table"
 
 
 class StatusBox(Widget, ClickableMixin):
-    card = Text(ParametrizedLocator('.//div[@pf-aggregate-status-card and (normalize-space'
-                                    '(.//h2/a/span[contains(@class, '
-                                    '"card-pf-aggregate-status-count")]/following::'
-                                    'text())={@name|quote} or normalize-space(.//span'
-                                    '[contains(@class, "card-pf-aggregate-status-title")]'
-                                    '/text())={@name|quote})]'))
+    card = Text(
+        ParametrizedLocator(
+            ".//div[@pf-aggregate-status-card and (normalize-space"
+            "(.//h2/a/span[contains(@class, "
+            '"card-pf-aggregate-status-count")]/following::'
+            "text())={@name|quote} or normalize-space(.//span"
+            '[contains(@class, "card-pf-aggregate-status-title")]'
+            "/text())={@name|quote})]"
+        )
+    )
 
     def __init__(self, parent, name, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -640,7 +696,7 @@ class StatusBox(Widget, ClickableMixin):
     @property
     def value(self):
         text = self.card.read()
-        match = re.search(r'\d+', text)
+        match = re.search(r"\d+", text)
         return int(match.group())
 
     def read(self):
@@ -651,7 +707,8 @@ class Accordion(PFAccordion):
     @property
     def is_dimmed(self):
         return bool(
-            self.browser.elements('.//div[contains(@id, "tree") and contains(@class, "dimmed")]'))
+            self.browser.elements('.//div[contains(@id, "tree") and contains(@class, "dimmed")]')
+        )
 
 
 class Calendar(TextInput):
@@ -680,14 +737,15 @@ class Calendar(TextInput):
     def fill(self, value):
         # input = self.browser.element(self.name)
         if isinstance(value, date):
-            date_str = value.strftime('%m/%d/%Y')
+            date_str = value.strftime("%m/%d/%Y")
         else:
             date_str = str(value)
         self.move_to()
         # need to write to a readonly field: resort to evil
         if self.browser.get_attribute("ng-model", self) is not None:
-            self.browser.execute_script(self.set_angularjs_value_script, self.browser.element(self),
-             date_str)
+            self.browser.execute_script(
+                self.set_angularjs_value_script, self.browser.element(self), date_str
+            )
         else:
             self.browser.set_attribute("value", date_str, self)
             # Now when we set the value, we need to simulate a change event.
@@ -701,8 +759,9 @@ class Calendar(TextInput):
                 self.browser.execute_script(script, self.browser.element(self))
             except WebDriverException as e:
                 self.logger.warning(
-                    "An exception was raised during handling of the Cal #{}'s change event:\n{}"
-                    .format(self.name, str(e)))
+                    "An exception was raised during handling of the Cal #{}'s change event:"
+                    "\n{}".format(self.name, str(e))
+                )
         self.browser.plugin.ensure_page_safe()
         return True
 
@@ -732,7 +791,6 @@ class SNMPHostsField(View):
 
 
 class SNMPTrapsField(Widget):
-
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
 
@@ -755,11 +813,15 @@ class SNMPTrapsField(Widget):
             if len(trap) == 2:
                 trap += (None,)
             oid, type_, value = trap
-            result.append(any((
-                self.fill_oid_field(i, oid),
-                self.fill_type_field(i, type_),
-                self.fill_value_field(i, value)
-            )))
+            result.append(
+                any(
+                    (
+                        self.fill_oid_field(i, oid),
+                        self.fill_type_field(i, type_),
+                        self.fill_value_field(i, value),
+                    )
+                )
+            )
         return any(result)
 
     def read(self):
@@ -795,32 +857,33 @@ class ScriptBox(Widget):
     @property
     def name(self):
         if not self.item_name:
-            self.item_name = 'ManageIQ.editor'
+            self.item_name = "ManageIQ.editor"
         return self.item_name
 
     @property
     def script(self):
-        return self.browser.execute_script('{}.getValue();'.format(self.name))
+        return self.browser.execute_script("{}.getValue();".format(self.name))
 
     def fill(self, value):
         if self.script == value:
             return False
-        self.browser.execute_script('{}.setValue(arguments[0]);'.format(self.name), value)
-        self.browser.execute_script('{}.save();'.format(self.name))
+        self.browser.execute_script("{}.setValue(arguments[0]);".format(self.name), value)
+        self.browser.execute_script("{}.save();".format(self.name))
         return True
 
     def read(self):
         return self.script
 
     def get_value(self):
-        script = self.browser.execute_script('return {}.getValue();'.format(self.name))
+        script = self.browser.execute_script("return {}.getValue();".format(self.name))
         script = script.replace('\\"', '"').replace("\\n", "\n")
         return script
 
     def workaround_save_issue(self):
         # We need to fire off the handlers manually in some cases ...
         self.browser.execute_script(
-            "{}._handlers.change.map(function(handler) {{ handler() }});".format(self.item_name))
+            "{}._handlers.change.map(function(handler) {{ handler() }});".format(self.item_name)
+        )
 
 
 class SettingsGroupSubmenu(NavDropdown):
@@ -831,8 +894,9 @@ class SettingsGroupSubmenu(NavDropdown):
     REQUIRES: Parent must implement widgetastic_patternfly.NavDropdown so that we can reference the
         parent state for collapse, expand or is_displayed
     """
+
     GROUP_SUBMENU = './/ul[contains(@class, "dropdown-menu scrollable-menu")]'
-    SELECTED_GROUP_MARKER = ' (Current Group)'
+    SELECTED_GROUP_MARKER = " (Current Group)"
 
     def __init__(self, parent, locator, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -878,7 +942,7 @@ class SettingsGroupSubmenu(NavDropdown):
                     not be expanded
         """
         if not self.expandable:
-            raise WidgetOperationFailed('{} is not expandable'.format(self.locator))
+            raise WidgetOperationFailed("{} is not expandable".format(self.locator))
 
         # Make sure the Settings menu is expanded
         if not self.parent.expanded:
@@ -887,9 +951,9 @@ class SettingsGroupSubmenu(NavDropdown):
         # Hover over 'Change Group'
         self.move_to()
         if not self.expanded:
-            raise WidgetOperationFailed('Could not expand {}'.format(self.locator))
+            raise WidgetOperationFailed("Could not expand {}".format(self.locator))
         else:
-            self.logger.info('expanded')
+            self.logger.info("expanded")
 
     def collapse(self):
         """ Collapse the Settings->group menu
@@ -902,15 +966,15 @@ class SettingsGroupSubmenu(NavDropdown):
 
         self.browser.move_to_element(self.parent)
         if self.expanded:
-            raise WidgetOperationFailed('Could not collapse {}'.format(self.locator))
+            raise WidgetOperationFailed("Could not collapse {}".format(self.locator))
         else:
-            self.logger.info('collapsed')
+            self.logger.info("collapsed")
 
     @property
     def text(self):
         """ Returns the text of the element. """
         try:
-            return self.browser.text('./a', parent=self)
+            return self.browser.text("./a", parent=self)
         except NoSuchElementException:
             return None
 
@@ -921,8 +985,8 @@ class SettingsGroupSubmenu(NavDropdown):
             return [self.text]
         return [
             self.browser.text(element)
-            for element
-            in self.browser.elements('{}/li'.format(self.GROUP_SUBMENU), parent=self)]
+            for element in self.browser.elements("{}/li".format(self.GROUP_SUBMENU), parent=self)
+        ]
 
     def has_item(self, item):
         """
@@ -941,11 +1005,15 @@ class SettingsGroupSubmenu(NavDropdown):
             item - string to check for in the list of enabled items
         """
         if not self.has_item(item):
-            raise WidgetOperationFailed('There is no such item "{}". Available items: {}'.format(
-                item, '; '.join(self.items)))
+            raise WidgetOperationFailed(
+                'There is no such item "{}". Available items: {}'.format(
+                    item, "; ".join(self.items)
+                )
+            )
         element = self.browser.element(
-            './ul/li[normalize-space(.)={}]'.format(quote(item)), parent=self)
-        return 'disabled' not in self.browser.classes(element)
+            "./ul/li[normalize-space(.)={}]".format(quote(item)), parent=self
+        )
+        return "disabled" not in self.browser.classes(element)
 
     def select_item(self, item):
         """
@@ -955,11 +1023,11 @@ class SettingsGroupSubmenu(NavDropdown):
             item - string to select in the group list
         """
         if not self.item_enabled(item):
-            raise WidgetOperationFailed('Cannot click disabled item {}'.format(item))
+            raise WidgetOperationFailed("Cannot click disabled item {}".format(item))
 
         self.expand()
-        self.logger.info('selecting item {}'.format(item))
-        self.browser.click('./ul/li[normalize-space(.)={}]'.format(quote(item)), parent=self)
+        self.logger.info("selecting item {}".format(item))
+        self.browser.click("./ul/li[normalize-space(.)={}]".format(quote(item)), parent=self)
 
     def read(self):
         """ Returns the text of the group element """
@@ -976,17 +1044,18 @@ class SettingsNavDropdown(NavDropdown):
         - expand/collapse
     """
 
-    groups = SettingsGroupSubmenu('./ul/li[2]')
+    groups = SettingsGroupSubmenu("./ul/li[2]")
 
 
 class SSUIVerticalNavigation(VerticalNavigation):
     """The Patternfly Vertical navigation."""
+
     CURRENTLY_SELECTED = './/li[contains(@class, "active")]/a/span'
 
 
 class SSUIInput(Input):
 
-    locator = ParametrizedLocator('.//*[self::input and @uib-tooltip={@text|quote}]')
+    locator = ParametrizedLocator(".//*[self::input and @uib-tooltip={@text|quote}]")
 
     def __init__(self, parent, text, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -1001,8 +1070,7 @@ class SSUIlist(Widget, ClickableMixin):
     @ParametrizedView.nested
     class list(ParametrizedView):  # noqa
         PARAMETERS = ("item_name",)
-        list_item = Text(
-            ParametrizedLocator('.//div/span/*[normalize-space(.)={item_name|quote}]'))
+        list_item = Text(ParametrizedLocator(".//div/span/*[normalize-space(.)={item_name|quote}]"))
 
         def list_click(self):
             """Clicks the list item with this name."""
@@ -1032,10 +1100,11 @@ class SSUIDropdown(Dropdown):
 
     ROOT = ParametrizedLocator(
         './/span[contains(@class, "dropdown") and .//button[contains(@class, "dropdown-toggle")]'
-        '/span[normalize-space(.)={@text|quote}]]')
-    BUTTON_LOCATOR = './/button'
-    ITEMS_LOCATOR = './ul/li/a'
-    ITEM_LOCATOR = './/ul/li/a[normalize-space(.)={}]'
+        "/span[normalize-space(.)={@text|quote}]]"
+    )
+    BUTTON_LOCATOR = ".//button"
+    ITEMS_LOCATOR = "./ul/li/a"
+    ITEM_LOCATOR = ".//ul/li/a[normalize-space(.)={}]"
 
     def __init__(self, parent, text, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -1058,10 +1127,9 @@ class SSUIConfigDropdown(Dropdown):
     """This is a special dropdown where the dropdown options
        are appended to the body and not to the dropdown."""
 
-    ROOT = ParametrizedLocator(
-        './/button[@id={@text|quote}]')
+    ROOT = ParametrizedLocator(".//button[@id={@text|quote}]")
 
-    BUTTON_LOCATOR = '//button'
+    BUTTON_LOCATOR = "//button"
     ITEMS_LOCATOR = '//ul[contains(@class, "dropdown-menu")]/li/a'
     ITEM_LOCATOR = '//ul[contains(@class, "dropdown-menu")]/li/a[normalize-space(.)={}]'
 
@@ -1079,7 +1147,9 @@ class SSUIPrimarycard(Widget, ClickableMixin):
         card = Text(
             ParametrizedLocator(
                 './/div[@class="ss-dashboard__card-primary__count"]//h2'
-                '[./following-sibling::h3[normalize-space(.)={item_name|quote}]]'))
+                "[./following-sibling::h3[normalize-space(.)={item_name|quote}]]"
+            )
+        )
 
         def card_click(self):
             """Clicks the primary card with this name."""
@@ -1124,10 +1194,13 @@ class SSUIAggregatecard(Widget, ClickableMixin):
     @ParametrizedView.nested
     class aggregate_card(ParametrizedView):  # noqa
         PARAMETERS = ("item_name",)
-        card = Text(ParametrizedLocator(
-                    './/div[@class="card-pf-body"]'
-                    '/p[./preceding-sibling::h2[normalize-space(.)={item_name|quote}]]'
-                    '/span[2]'))
+        card = Text(
+            ParametrizedLocator(
+                './/div[@class="card-pf-body"]'
+                "/p[./preceding-sibling::h2[normalize-space(.)={item_name|quote}]]"
+                "/span[2]"
+            )
+        )
 
         def card_click(self):
             """Clicks the primary card with this name."""
@@ -1167,8 +1240,12 @@ class SSUIServiceCatalogcard(Widget, ClickableMixin):
     class catalog_card(ParametrizedView):  # noqa
         PARAMETERS = ("item_name",)
 
-        card = Text(ParametrizedLocator('.//div[@class="card-content"]/div'
-                                        '/ss-card/h3[normalize-space(.)={item_name|quote}]'))
+        card = Text(
+            ParametrizedLocator(
+                './/div[@class="card-content"]/div'
+                "/ss-card/h3[normalize-space(.)={item_name|quote}]"
+            )
+        )
 
         def card_click(self):
             """Clicks the primary card with this name."""
@@ -1194,14 +1271,22 @@ class Notification(Widget, ClickableMixin):
     class notification_drawer(ParametrizedView):  # noqa
         PARAMETERS = ("message",)
         notification_bell = Text('.//li/a[contains(@title, "notifications")]/*')
-        events = VersionPick({
-            Version.lowest(): Text(".//h4[contains(@class, 'panel-title')]"),
-            '5.9': Text(".//h4[contains(@class, 'panel-title')]"
-                        "/a[contains(normalize-space(.), 'Success')]"),
-        })
-        find_event = Text(ParametrizedLocator('.//div[contains(@class, "drawer-pf-notification")]'
-                                              '/div/span'
-                                              '[contains(normalize-space(.), {message|quote})]'))
+        events = VersionPick(
+            {
+                Version.lowest(): Text(".//h4[contains(@class, 'panel-title')]"),
+                "5.9": Text(
+                    ".//h4[contains(@class, 'panel-title')]"
+                    "/a[contains(normalize-space(.), 'Success')]"
+                ),
+            }
+        )
+        find_event = Text(
+            ParametrizedLocator(
+                './/div[contains(@class, "drawer-pf-notification")]'
+                "/div/span"
+                "[contains(normalize-space(.), {message|quote})]"
+            )
+        )
 
         def click_bell(self):
             """Opens and closes the notification bell at the Nav bar"""
@@ -1238,23 +1323,28 @@ class DialogButton(Button):
     """Multiple buttons with same name are present in Dialog UI.
        So need to specify the div too.
     """
+
     def __locator__(self):
         return (
             './/div[@class="modal-footer"]/*[(self::a or self::button or'
             '(self::input and (@type="button" or @type="submit")))'
-            ' and contains(@class, "btn") {}]'.format(self.locator_conditions))
+            ' and contains(@class, "btn") {}]'.format(self.locator_conditions)
+        )
 
 
 class DragandDropElements(View):
     """Drag elements to a drop place."""
+
     @ParametrizedView.nested
     class dialog_element(ParametrizedView):  # noqa
         PARAMETERS = ("drag_item", "drop_item")
 
-        dragged_element = ParametrizedLocator('.//*[@id="toolbox"]/div/dialog-editor-field-static'
-                                              '/ul/li[normalize-space(.)={drag_item|quote}]')
+        dragged_element = ParametrizedLocator(
+            './/*[@id="toolbox"]/div/dialog-editor-field-static'
+            "/ul/li[normalize-space(.)={drag_item|quote}]"
+        )
 
-        dropped_element = ParametrizedLocator('.//div[normalize-space(.)={drop_item|quote}]')
+        dropped_element = ParametrizedLocator(".//div[normalize-space(.)={drop_item|quote}]")
 
         @property
         def drag_div(self):
@@ -1276,13 +1366,14 @@ class DragandDropElements(View):
 
 class DialogBootstrapSwitch(BootstrapSwitch):
     """New dialog editor has different locator than BootstrapSwitch"""
+
     ROOT = ParametrizedLocator(
-        './/div[./preceding-sibling::label[normalize-space(.)={@label|quote}]]'
-        '/span/div/div[contains(@class, "bootstrap-switch-container")]//input')
+        ".//div[./preceding-sibling::label[normalize-space(.)={@label|quote}]]"
+        '/span/div/div[contains(@class, "bootstrap-switch-container")]//input'
+    )
 
 
 class DragandDrop(View):
-
     def __init__(self, parent, logger=None):
         View.__init__(self, parent=parent, logger=logger)
 
@@ -1296,26 +1387,36 @@ class DialogElement(Widget, ClickableMixin):
 
     @ParametrizedView.nested
     class element(ParametrizedView):  # noqa
-        PARAMETERS = ("element_name", )
+        PARAMETERS = ("element_name",)
 
-        ele_label = Text(ParametrizedLocator(
-            './/dialog-editor-field/div[@class="form-group"]'
-            '/label[normalize-space(.)={element_name|quote}]'))
+        ele_label = Text(
+            ParametrizedLocator(
+                './/dialog-editor-field/div[@class="form-group"]'
+                "/label[normalize-space(.)={element_name|quote}]"
+            )
+        )
 
-        edit_icon = Text(ParametrizedLocator(
-            './/div[contains(normalize-space(.), {element_name|quote})]'
-            '/div/button/span/i[contains(@class, "pficon-edit")]'))
+        edit_icon = Text(
+            ParametrizedLocator(
+                ".//div[contains(normalize-space(.), {element_name|quote})]"
+                '/div/button/span/i[contains(@class, "pficon-edit")]'
+            )
+        )
 
         def edit_icon_click(self):
             """Clicks the edit icon with this name."""
             wait_for(
-                lambda: self.ele_label.is_displayed, delay=5, num_sec=30,
-                message="waiting for element to be displayed"
+                lambda: self.ele_label.is_displayed,
+                delay=5,
+                num_sec=30,
+                message="waiting for element to be displayed",
             )
             self.ele_label.click()
             wait_for(
-                lambda: self.edit_icon.is_displayed, delay=5, num_sec=30,
-                message="waiting for element to be displayed"
+                lambda: self.edit_icon.is_displayed,
+                delay=5,
+                num_sec=30,
+                message="waiting for element to be displayed",
             )
             return self.edit_icon.click()
 
@@ -1340,9 +1441,10 @@ class Paginator(Widget):
 
     It is mainly used in Paginator Pane.
     """
+
     PAGINATOR_CTL = './/ul[@class="pagination"]'
     CUR_PAGE_CTL = './li/span/input[@name="limitstart"]/..'
-    PAGE_BUTTON_CTL = './li[contains(@class, {})]/span'
+    PAGE_BUTTON_CTL = "./li[contains(@class, {})]/span"
 
     def __locator__(self):
         return self._paginator
@@ -1352,44 +1454,46 @@ class Paginator(Widget):
         return self.browser.element(self.PAGINATOR_CTL, parent=self.parent_view)
 
     def _is_enabled(self, element):
-        return 'disabled' not in self.browser.classes(element.find_element_by_xpath('..'))
+        return "disabled" not in self.browser.classes(element.find_element_by_xpath(".."))
 
     def _click_button(self, cmd):
-        cur_page_btn = self.browser.element(self.PAGE_BUTTON_CTL.format(quote(cmd)),
-                                            parent=self._paginator)
+        cur_page_btn = self.browser.element(
+            self.PAGE_BUTTON_CTL.format(quote(cmd)), parent=self._paginator
+        )
         if self._is_enabled(cur_page_btn):
             self.browser.click(cur_page_btn)
         else:
-            raise NoSuchElementException('such button {} is absent/grayed out'.format(cmd))
+            raise NoSuchElementException("such button {} is absent/grayed out".format(cmd))
 
     def next_page(self):
-        self._click_button('next')
+        self._click_button("next")
 
     def prev_page(self):
-        self._click_button('prev')
+        self._click_button("prev")
 
     def last_page(self):
-        self._click_button('last')
+        self._click_button("last")
 
     def first_page(self):
-        self._click_button('first')
+        self._click_button("first")
 
     def page_info(self):
         cur_page = self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator)
         text = cur_page.text
-        return re.search(r'(\d+)?-?(\d+)\s+of\s+(\d+)', text).groups()
+        return re.search(r"(\d+)?-?(\d+)\s+of\s+(\d+)", text).groups()
 
 
 class ReportDataControllerMixin(object):
     """
     This is helper mixin for several widgets which use Miq JS API
     """
+
     def _invoke_cmd(self, cmd, data=None):
-        raw_data = {'controller': 'reportDataController', 'action': cmd}
+        raw_data = {"controller": "reportDataController", "action": cmd}
         if data:
-            raw_data['data'] = [data]
+            raw_data["data"] = [data]
         json_data = json.dumps(raw_data)
-        js_cmd = 'sendDataWithRx({data}); return ManageIQ.qe.gtl.result'.format(data=json_data)
+        js_cmd = "sendDataWithRx({data}); return ManageIQ.qe.gtl.result".format(data=json_data)
         self.logger.info("executed command: {cmd}".format(cmd=js_cmd))
         # command result is always stored in this global variable
         self.browser.plugin.ensure_page_safe()
@@ -1398,12 +1502,15 @@ class ReportDataControllerMixin(object):
         return result
 
     def _call_item_method(self, method):
-        raw_data = {'controller': 'reportDataController',
-                    'action': 'get_item',
-                    'data': [self.entity_id]}
+        raw_data = {
+            "controller": "reportDataController",
+            "action": "get_item",
+            "data": [self.entity_id],
+        }
         js_data = json.dumps(raw_data)
-        js_cmd = ('sendDataWithRx({data}); '
-                  'return ManageIQ.qe.gtl.result.{method}()').format(data=js_data, method=method)
+        js_cmd = ("sendDataWithRx({data}); " "return ManageIQ.qe.gtl.result.{method}()").format(
+            data=js_data, method=method
+        )
         self.logger.info("executed command: {cmd}".format(cmd=js_cmd))
         self.browser.plugin.ensure_page_safe()
         result = self.browser.execute_script(js_cmd)
@@ -1414,19 +1521,18 @@ class ReportDataControllerMixin(object):
         updated_keys = keys.copy()
         for key in updated_keys:
             # js api compares values in lower case but don't replace space with underscore
-            updated_keys[key.replace('_', ' ')] = str(updated_keys.pop(key))
+            updated_keys[key.replace("_", " ")] = str(updated_keys.pop(key))
 
-        raw_data = {'controller': 'reportDataController',
-                    'action': 'query',
-                    'data': [updated_keys]}
-        js_cmd = ('sendDataWithRx({data}); '
-                  'return ManageIQ.qe.gtl.result').format(data=json.dumps(raw_data))
+        raw_data = {"controller": "reportDataController", "action": "query", "data": [updated_keys]}
+        js_cmd = ("sendDataWithRx({data}); " "return ManageIQ.qe.gtl.result").format(
+            data=json.dumps(raw_data)
+        )
         self.logger.info("executed command: {cmd}".format(cmd=js_cmd))
         self.browser.plugin.ensure_page_safe()
         result = self.browser.execute_script(js_cmd)
         self.browser.plugin.ensure_page_safe()
         try:
-            return [int(eid['id']) for eid in result]
+            return [int(eid["id"]) for eid in result]
         except (TypeError, IndexError):
             return None
 
@@ -1436,11 +1542,14 @@ class JSPaginationPane(View, ReportDataControllerMixin):
 
     The intention of this view is to use it as nested view on f.e. Infrastructure Providers page.
     """
+
     @property
     def is_displayed(self):
         # upstream sometimes shows old pagination page and sometime new one
-        paginator = ("return $('#paging_div').length !== 0 || "
-                     "document.getElementsByTagName('miq-pagination').length != 0")
+        paginator = (
+            "return $('#paging_div').length !== 0 || "
+            "document.getElementsByTagName('miq-pagination').length != 0"
+        )
         return self.browser.execute_script(paginator)
 
     @property
@@ -1448,61 +1557,61 @@ class JSPaginationPane(View, ReportDataControllerMixin):
         return self.is_displayed
 
     def check_all(self):
-        self._invoke_cmd('select_all', True)
+        self._invoke_cmd("select_all", True)
 
     def uncheck_all(self):
-        self._invoke_cmd('select_all', False)
+        self._invoke_cmd("select_all", False)
 
     def sort(self, sort_by, ascending=True):
         # in order to change both sorting and direction, command has to be called twice
-        data = {'columnName': sort_by, 'isAscending': ascending}
-        self._invoke_cmd('set_sorting', data)
+        data = {"columnName": sort_by, "isAscending": ascending}
+        self._invoke_cmd("set_sorting", data)
 
     @property
     def sorted_by(self):
-        return self._invoke_cmd('get_sorting')
+        return self._invoke_cmd("get_sorting")
 
     @property
     def items_per_page(self):
-        return self._invoke_cmd('get_items_per_page')
+        return self._invoke_cmd("get_items_per_page")
 
     def set_items_per_page(self, value):
-        self._invoke_cmd('set_items_per_page', value)
+        self._invoke_cmd("set_items_per_page", value)
 
     @property
     def cur_page(self):
-        return self._invoke_cmd('get_current_page')
+        return self._invoke_cmd("get_current_page")
 
     @property
     def pages_amount(self):
         # this js call returns None from time to time. this is workaround until it is fixed in js
-        return wait_for(self._invoke_cmd, ['get_pages_amount'], num_sec=10, fail_condition=None)[0]
+        return wait_for(self._invoke_cmd, ["get_pages_amount"], num_sec=10, fail_condition=None)[0]
 
     def next_page(self):
-        self._invoke_cmd('next_page')
+        self._invoke_cmd("next_page")
 
     def prev_page(self):
-        self._invoke_cmd('previous_page')
+        self._invoke_cmd("previous_page")
 
     def first_page(self):
-        self._invoke_cmd('first_page')
+        self._invoke_cmd("first_page")
 
     def last_page(self):
-        self._invoke_cmd('last_page')
+        self._invoke_cmd("last_page")
 
     def go_to_page(self, value):
-        self._invoke_cmd('go_to_page', value)
+        self._invoke_cmd("go_to_page", value)
 
     @property
     def items_amount(self):
-        return self._invoke_cmd('pagination_range')['total']
+        return self._invoke_cmd("pagination_range")["total"]
 
     def pages(self):
         """Generator to iterate over pages, yielding after moving to the next page"""
         if self.exists:
             # start iterating at the first page
             if self.cur_page != 1:
-                self.logger.debug('Resetting paginator to first page')
+                self.logger.debug("Resetting paginator to first page")
                 self.first_page()
 
             # Adding 1 to pages_amount to include the last page in loop
@@ -1512,18 +1621,18 @@ class JSPaginationPane(View, ReportDataControllerMixin):
                     # last or only page, stop looping
                     break
                 else:
-                    self.logger.debug('Paginator advancing to next page')
+                    self.logger.debug("Paginator advancing to next page")
                     self.next_page()
         else:
             return
 
     @property
     def min_item(self):
-        return self._invoke_cmd('pagination_range')['start']
+        return self._invoke_cmd("pagination_range")["start"]
 
     @property
     def max_item(self):
-        return self._invoke_cmd('pagination_range')['end']
+        return self._invoke_cmd("pagination_range")["end"]
 
     def find_row_on_pages(self, table, *args, **kwargs):
         """Find first row matching filters provided by kwargs on the given table widget
@@ -1544,8 +1653,9 @@ class JSPaginationPane(View, ReportDataControllerMixin):
             else:
                 return row
         else:
-            raise NoSuchElementException('Row matching filter {} not found on table {}'
-                                         .format(kwargs, table))
+            raise NoSuchElementException(
+                "Row matching filter {} not found on table {}".format(kwargs, table)
+            )
 
     def reset_selection(self):
         if self.is_displayed:
@@ -1560,20 +1670,21 @@ class NonJSPaginationPane(View):
 
     The intention of this view is to use it as nested view on f.e. Infrastructure Providers page.
     """
+
     ROOT = '//div[@id="paging_div"]'
 
-    check_all_items = Checkbox(id='masterToggle')
-    sort_by = BootstrapSelect(id='sort_choice')
-    items_on_page = BootstrapSelect(id='ppsetting')
+    check_all_items = Checkbox(id="masterToggle")
+    sort_by = BootstrapSelect(id="sort_choice")
+    items_on_page = BootstrapSelect(id="ppsetting")
     paginator = Paginator()
 
     @property
     def is_displayed(self):
         # there are cases when paging_div is shown but it is empty
         return (
-            self.check_all_items.is_displayed or
-            self.paginator.is_displayed and
-            self.items_on_page.is_displayed
+            self.check_all_items.is_displayed
+            or self.paginator.is_displayed
+            and self.items_on_page.is_displayed
         )
 
     @property
@@ -1592,12 +1703,12 @@ class NonJSPaginationPane(View):
 
     @property
     def sorted_by(self):
-        raise NotImplementedError('to implement it when needed')
+        raise NotImplementedError("to implement it when needed")
 
     @property
     def items_per_page(self):
         selected = self.items_on_page.selected_option
-        return int(re.sub(r'\s+items', '', selected))
+        return int(re.sub(r"\s+items", "", selected))
 
     def set_items_per_page(self, value):
         """Selects number of items to be displayed on page.
@@ -1609,10 +1720,10 @@ class NonJSPaginationPane(View):
         except ValueError:
             raise ValueError("Value should be integer and not {}".format(value))
 
-        if self.browser.product_version >= '5.8.2':
+        if self.browser.product_version >= "5.8.2":
             items_text = str(value)
         else:
-            items_text = '{} items'.format(value)
+            items_text = "{} items".format(value)
         self.items_on_page.select_by_visible_text(items_text)
 
     def _parse_pages(self):
@@ -1665,7 +1776,7 @@ class NonJSPaginationPane(View):
         if self.exists:
             # start iterating at the first page
             if self.cur_page != 1:
-                self.logger.debug('Resetting paginator to first page')
+                self.logger.debug("Resetting paginator to first page")
                 self.first_page()
 
             # Adding 1 to pages_amount to include the last page in loop
@@ -1675,7 +1786,7 @@ class NonJSPaginationPane(View):
                     # last or only page, stop looping
                     break
                 else:
-                    self.logger.debug('Paginator advancing to next page')
+                    self.logger.debug("Paginator advancing to next page")
                     self.next_page()
         else:
             return
@@ -1711,8 +1822,9 @@ class NonJSPaginationPane(View):
             else:
                 return row
         else:
-            raise NoSuchElementException('Row matching filter {} not found on table {}'
-                                         .format(kwargs, table))
+            raise NoSuchElementException(
+                "Row matching filter {} not found on table {}".format(kwargs, table)
+            )
 
     def reset_selection(self):
         if self.is_displayed:
@@ -1724,10 +1836,12 @@ class NonJSPaginationPane(View):
 
 def PaginationPane(*args, **kwargs):  # noqa
     parent = kwargs.get("parent")
-    verpick_obj = VersionPick({
-        Version.lowest(): NonJSPaginationPane(*args, **kwargs),
-        '5.9': JSPaginationPane(*args, **kwargs),
-    })
+    verpick_obj = VersionPick(
+        {
+            Version.lowest(): NonJSPaginationPane(*args, **kwargs),
+            "5.9": JSPaginationPane(*args, **kwargs),
+        }
+    )
     return verpick_obj.pick(parent.browser.product_version) if parent else verpick_obj
 
 
@@ -1735,8 +1849,8 @@ class SSUIPaginator(Paginator):
     """ Represents Paginator control for SSUI."""
 
     PAGINATOR_CTL = './/ul[@class="pagination"]'
-    CUR_PAGE_CTL = './li[3]/span/..'
-    PAGE_BUTTON_CTL = './li[contains(@class, {})]/span'
+    CUR_PAGE_CTL = "./li[3]/span/.."
+    PAGE_BUTTON_CTL = "./li[contains(@class, {})]/span"
 
 
 class SSUIPaginationPane(NonJSPaginationPane):
@@ -1744,9 +1858,9 @@ class SSUIPaginationPane(NonJSPaginationPane):
 
     ROOT = '//div[@class="pagination-footer"]'
 
-    check_all_items = Checkbox(id='masterToggle')
-    sort_by = BootstrapSelect(id='sort_choice')
-    items_on_page = SSUIDropdown('items')
+    check_all_items = Checkbox(id="masterToggle")
+    sort_by = BootstrapSelect(id="sort_choice")
+    items_on_page = SSUIDropdown("items")
     paginator = SSUIPaginator()
 
     def set_items_per_page(self, value):
@@ -1766,10 +1880,11 @@ class Stepper(View):
         stepper = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
         stepper.increase()
     """
-    ROOT = ParametrizedLocator('{@locator}')
 
-    minus_button = Button('-')
-    plus_button = Button('+')
+    ROOT = ParametrizedLocator("{@locator}")
+
+    minus_button = Button("-")
+    plus_button = Button("+")
     value_field = Input(locator='.//input[contains(@class, "bootstrap-touchspin")]')
 
     def __init__(self, parent, locator, logger=None):
@@ -1789,7 +1904,7 @@ class Stepper(View):
     def set_value(self, value):
         value = int(value)
         if value < 1:
-            raise ValueError('The value cannot be less than 1')
+            raise ValueError("The value cannot be less than 1")
 
         steps = value - self.read()
         if steps == 0:
@@ -1816,8 +1931,10 @@ class RadioGroup(Widget):
         radio_group = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
         radio_group.select(radio_group.button_names()[-1])
     """
-    LABELS = ('.//*[(self::label or (self::div and @class="radio-inline")) '
-              'and input[@type="radio"]]')
+
+    LABELS = (
+        './/*[(self::label or (self::div and @class="radio-inline")) ' 'and input[@type="radio"]]'
+    )
     BUTTON = './/input[@type="radio"]'
 
     def __init__(self, parent, locator, logger=None):
@@ -1843,8 +1960,10 @@ class RadioGroup(Widget):
         names = self.button_names
         for name in names:
             bttn = self.browser.element(self.BUTTON, parent=self._get_parent_label(name))
-            if ('ng-valid-parse' in self.browser.classes(bttn) or
-                    bttn.get_attribute('checked') is not None):
+            if (
+                "ng-valid-parse" in self.browser.classes(bttn)
+                or bttn.get_attribute("checked") is not None
+            ):
                 return name
 
         else:
@@ -1876,10 +1995,11 @@ class ItemsToolBarViewSelector(View):
         view_selector.select('Tile View')
         view_selector.selected
     """
+
     ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
-    grid_button = Button(title='Grid View')
-    tile_button = Button(title='Tile View')
-    list_button = Button(title='List View')
+    grid_button = Button(title="Grid View")
+    tile_button = Button(title="Tile View")
+    list_button = Button(title="List View")
 
     @property
     def _view_buttons(self):
@@ -1920,9 +2040,10 @@ class DetailsToolBarViewSelector(View):
         view_selector.select('Dashboard View')
         view_selector.selected
     """
+
     ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
-    summary_button = Button(title='Summary View')
-    dashboard_button = Button(title='Dashboard View')
+    summary_button = Button(title="Summary View")
+    dashboard_button = Button(title="Dashboard View")
 
     @property
     def _view_buttons(self):
@@ -2036,10 +2157,11 @@ class ReportToolBarViewSelector(View):
         view_selector.select('Graph View')
         view_selector.selected
     """
+
     ROOT = './/div[contains(@class, "toolbar-pf")]'
-    graph_button = Button(title='Graph View')
-    hybrid_button = Button(title='Hybrid View')
-    tabular_button = Button(title='Tabular View')
+    graph_button = Button(title="Graph View")
+    hybrid_button = Button(title="Hybrid View")
+    tabular_button = Button(title="Tabular View")
 
     @property
     def _view_buttons(self):
@@ -2071,26 +2193,26 @@ class ReportToolBarViewSelector(View):
 
 class AdvancedFilterSave(View):
     """ View for Advanced Filter save """
+
     expression_text = Text(
-        locator='//label[contains(text(), "Search Expression")]/following-sibling::div')
-    search_name_field = Input(id='search_name')
-    global_search = Checkbox(id='search_type')
-    save_filter_button = Button('Save')
-    cancel_button = Button('Cancel')
+        locator='//label[contains(text(), "Search Expression")]/following-sibling::div'
+    )
+    search_name_field = Input(id="search_name")
+    global_search = Checkbox(id="search_type")
+    save_filter_button = Button("Save")
+    cancel_button = Button("Cancel")
 
     @property
     def is_displayed(self):
-        return (
-            self.search_name_field.is_displayed and
-            self.global_search.is_displayed
-        )
+        return self.search_name_field.is_displayed and self.global_search.is_displayed
 
 
 class AdvancedFilterLoad(View):
     """ View for load Advanced Filter """
-    filter_dropdown = BootstrapSelect(id='chosen_search')
-    save_filter_button = Button('Load')
-    cancel_button = Button('Cancel')
+
+    filter_dropdown = BootstrapSelect(id="chosen_search")
+    save_filter_button = Button("Load")
+    cancel_button = Button("Cancel")
 
     @property
     def is_displayed(self):
@@ -2099,13 +2221,12 @@ class AdvancedFilterLoad(View):
 
 class AdvancedFilterUserInput(View):
     """ View for Advanced Filter user input """
-    USER_INPUT_FIELD = (
-        '//div[@id="user_input_filter"]//div[contains(normalize-space(.), {})]/input')
-    user_input_cancel = Button('Cancel')
-    user_input_apply = Button(title='Apply the current filter (Enter)')
+
+    USER_INPUT_FIELD = '//div[@id="user_input_filter"]//div[contains(normalize-space(.), {})]/input'
+    user_input_cancel = Button("Cancel")
+    user_input_apply = Button(title="Apply the current filter (Enter)")
     # We have different close button for user input
-    close_button = Text(
-        locator='//div[@id="quicksearchbox"]//button[@data-dismiss="modal"]')
+    close_button = Text(locator='//div[@id="quicksearchbox"]//button[@data-dismiss="modal"]')
 
     @property
     def is_displayed(self):
@@ -2114,14 +2235,16 @@ class AdvancedFilterUserInput(View):
 
 class AdvancedSearchView(View):
     """ Advanced Search View """
+
     from . import expression_editor as exp_editor
+
     search_exp_editor = exp_editor.ExpressionEditor()
 
-    load_filter_button = Button('Load')
-    apply_filter_button = Button('Apply')
-    save_filter_button = Button('Save')
-    delete_filter_button = Button('Delete')
-    reset_filter_button = Button('Reset')
+    load_filter_button = Button("Load")
+    apply_filter_button = Button("Apply")
+    save_filter_button = Button("Save")
+    delete_filter_button = Button("Delete")
+    reset_filter_button = Button("Reset")
     close_button = Text(locator='//div[@id="advsearchModal"]//button[@data-dismiss="modal"]')
 
     save_filter_form = View.nested(AdvancedFilterSave)
@@ -2131,27 +2254,32 @@ class AdvancedSearchView(View):
     @property
     def is_displayed(self):
         return (
-            self.search_exp_editor.is_displayed or
-            self.save_filter_form.is_displayed or
-            self.load_filter_form.is_displayed or
-            self.filter_user_input_form.is_displayed
+            self.search_exp_editor.is_displayed
+            or self.save_filter_form.is_displayed
+            or self.load_filter_form.is_displayed
+            or self.filter_user_input_form.is_displayed
         )
 
 
 class Search(View):
     """ Represents search_text control """
-    search_input = Input(id="search_text")
-    search_button = Text("//div[@id='searchbox']//div[contains(@class, 'form-group')]"
-                         "/*[self::a or (self::button and @type='submit')]")
 
-    clear_button = Text(".//*[@id='searchbox']//div[contains(@class, 'clear') "
-                        "and not(contains(@style, 'display: none'))]/div/button")
+    search_input = Input(id="search_text")
+    search_button = Text(
+        "//div[@id='searchbox']//div[contains(@class, 'form-group')]"
+        "/*[self::a or (self::button and @type='submit')]"
+    )
+
+    clear_button = Text(
+        ".//*[@id='searchbox']//div[contains(@class, 'clear') "
+        "and not(contains(@style, 'display: none'))]/div/button"
+    )
     filter_clear_button = Text('//a[contains(@href, "adv_search_clear")]')
-    advanced_search_button = Button(title='Advanced Search')
+    advanced_search_button = Button(title="Advanced Search")
 
     advanced_search_form = View.nested(AdvancedSearchView)
 
-# ================================= Simple Search ====================================
+    # ================================= Simple Search ====================================
 
     @property
     def has_quick_search_box(self):
@@ -2174,8 +2302,7 @@ class Search(View):
         """ Checks if simple search field is emply """
         return not bool(self.search_input.value)
 
-
-# ================================= Advanced Search ===============================
+    # ================================= Advanced Search ===============================
     @property
     def is_advanced_search_opened(self):
         """Checks whether the advanced search box is currently opened"""
@@ -2220,8 +2347,9 @@ class Search(View):
         except NoSuchElementException:
             return False
 
-    def save_filter(self, expression_program, save_name, global_search=False, apply_filter=False,
-                    cancel=False):
+    def save_filter(
+        self, expression_program, save_name, global_search=False, apply_filter=False, cancel=False
+    ):
         """Fill the filtering expression and save it
 
             Args:
@@ -2235,10 +2363,9 @@ class Search(View):
         self.open_advanced_search()
         self.advanced_search_form.search_exp_editor.fill(expression_program)
         self.advanced_search_form.save_filter_button.click()
-        updated = self.advanced_search_form.save_filter_form.fill({
-            'search_name_field': save_name,
-            'global_search': global_search
-        })
+        updated = self.advanced_search_form.save_filter_form.fill(
+            {"search_name_field": save_name, "global_search": global_search}
+        )
         if cancel:
             self.advanced_search_form.save_filter_form.cancel_button.click()
         elif updated:
@@ -2248,8 +2375,15 @@ class Search(View):
                 self.close_advanced_search()
         return updated
 
-    def load_filter(self, saved_filter=None, report_filter=None, fill_callback=None,
-                    apply_filter=False, cancel_on_user_filling=False, cancel=False):
+    def load_filter(
+        self,
+        saved_filter=None,
+        report_filter=None,
+        fill_callback=None,
+        apply_filter=False,
+        cancel_on_user_filling=False,
+        cancel=False,
+    ):
         """Load saved filter
 
             Args:
@@ -2263,17 +2397,20 @@ class Search(View):
         self.open_advanced_search()
         if self.advanced_search_form.load_filter_button.disabled:
             raise NoSuchElementException(
-                'Load Filter button disabled, cannot load filter: {}'.format(saved_filter))
+                "Load Filter button disabled, cannot load filter: {}".format(saved_filter)
+            )
         assert saved_filter is not None or report_filter is not None, "At least 1 param required!"
 
         self.advanced_search_form.load_filter_button.click()
         # We apply it to the whole form but it will fill only one of the selects
         if saved_filter is not None:
             updated = self.advanced_search_form.load_filter_form.fill(
-                {'filter_dropdown': saved_filter})
+                {"filter_dropdown": saved_filter}
+            )
         else:
             updated = self.advanced_search_form.load_filter_form.fill(
-                {'filter_dropdown': report_filter})
+                {"filter_dropdown": report_filter}
+            )
         if cancel:
             self.advanced_search_form.load_filter_form.cancel_button.click()
         elif updated:
@@ -2311,19 +2448,27 @@ class Search(View):
         """
         user_input_form = self.advanced_search_form.filter_user_input_form
         wait_for(
-            lambda: self.advanced_search_form.load_filter_button.is_displayed, fail_condition=True,
-            num_sec=10, delay=2, message='Waiting for button became active')
+            lambda: self.advanced_search_form.load_filter_button.is_displayed,
+            fail_condition=True,
+            num_sec=10,
+            delay=2,
+            message="Waiting for button became active",
+        )
         if isinstance(user_input, dict):
             for user_input_label, user_input_value in user_input.items():
                 field_for_input = self.browser.element(
-                    user_input_form.USER_INPUT_FIELD.format(quote(user_input_label)))
+                    user_input_form.USER_INPUT_FIELD.format(quote(user_input_label))
+                )
                 field_for_input.send_keys(user_input_value)
             if cancel_on_user_filling:
                 user_input_form.user_input_cancel.click()
             else:
                 wait_for(
                     lambda: user_input_form.user_input_apply.is_displayed,
-                    num_sec=10, delay=2, message='Waiting for button became active')
+                    num_sec=10,
+                    delay=2,
+                    message="Waiting for button became active",
+                )
                 user_input_form.user_input_apply.click()
 
     @property
@@ -2340,8 +2485,13 @@ class Search(View):
         """Make sure the advanced search box is opened. """
         if not self.is_advanced_search_opened:
             self.advanced_search_button.click()
-            wait_for(lambda: self.is_advanced_search_opened, fail_condition=False,
-                     num_sec=10, delay=2, message='Waiting for advanced search to open')
+            wait_for(
+                lambda: self.is_advanced_search_opened,
+                fail_condition=False,
+                num_sec=10,
+                delay=2,
+                message="Waiting for advanced search to open",
+            )
 
     def close_advanced_search(self):
         """Checks if the advanced search box is open and if it does, closes it."""
@@ -2351,8 +2501,13 @@ class Search(View):
                 self.advanced_search_form.close_button.click()
             else:
                 self.advanced_search_form.filter_user_input_form.close_button.click()
-            wait_for(lambda: self.is_advanced_search_opened, fail_condition=True,
-                     num_sec=10, delay=2, message='Waiting for advanced search to close')
+            wait_for(
+                lambda: self.is_advanced_search_opened,
+                fail_condition=True,
+                num_sec=10,
+                delay=2,
+                message="Waiting for advanced search to close",
+            )
 
     def remove_search_filters(self):
         """If any filter is applied in the quadicon view, it will be disabled."""
@@ -2371,9 +2526,9 @@ class UpDownSelect(View):
         down_loc: Locator with Move Down arrow.
     """
 
-    select = Select(ParametrizedLocator('{@select_loc}'))
-    up = Text(ParametrizedLocator('{@up_loc}'))
-    down = Text(ParametrizedLocator('{@down_loc}'))
+    select = Select(ParametrizedLocator("{@select_loc}"))
+    up = Text(ParametrizedLocator("{@up_loc}"))
+    down = Text(ParametrizedLocator("{@down_loc}"))
 
     def __init__(self, parent, select_loc, up_loc, down_loc, logger=None):
         View.__init__(self, parent, logger=logger)
@@ -2425,7 +2580,7 @@ class UpDownSelect(View):
     def fill(self, items):
         if not isinstance(items, (list, tuple)):
             items = [items]
-        current_items = self.items[:len(items)]
+        current_items = self.items[: len(items)]
         if current_items == items:
             return False
         items = map(str, items)
@@ -2439,7 +2594,7 @@ class AlertEmail(View):
 
     @ParametrizedView.nested
     class recipients(ParametrizedView):  # noqa
-        PARAMETERS = ("email", )
+        PARAMETERS = ("email",)
         ALL_EMAILS = ".//a[starts-with(@title, 'Remove')]"
         email = Text(ParametrizedLocator(".//a[text()={email|quote}]"))
 
@@ -2448,7 +2603,7 @@ class AlertEmail(View):
 
         @classmethod
         def all(cls, browser):
-            return [(browser.text(e), ) for e in browser.elements(cls.ALL_EMAILS)]
+            return [(browser.text(e),) for e in browser.elements(cls.ALL_EMAILS)]
 
     ROOT = ParametrizedLocator(".//div[@id={@id|quote}]")
     RECIPIENTS = "./div[@id='edit_to_email_div']//a"
@@ -2495,7 +2650,8 @@ class TimelinesZoomSlider(View):
     """This control represents Timeline's Zoom Slider
 
     """
-    ROOT = ParametrizedLocator('{@locator}')
+
+    ROOT = ParametrizedLocator("{@locator}")
     zoom_in_button = Text(locator='//button[@id="timeline-pf-zoom-in"]')  # "+" button
     zoom_out_button = Text(locator='//button[@id="timeline-pf-zoom-out"]')  # "-" button
 
@@ -2505,15 +2661,15 @@ class TimelinesZoomSlider(View):
 
     @property
     def value(self):
-        return float(self.browser.get_attribute('value', self))
+        return float(self.browser.get_attribute("value", self))
 
     @cached_property
     def max(self):
-        return float(self.browser.get_attribute('max', self))
+        return float(self.browser.get_attribute("max", self))
 
     @cached_property
     def min(self):
-        return float(self.browser.get_attribute('min', self))
+        return float(self.browser.get_attribute("min", self))
 
     def zoom_in(self):
         self.zoom_in_button.click()
@@ -2537,19 +2693,20 @@ class TimelinesFilter(View):
     """represents Filter Part of Timelines view
 
     """
+
     # common
-    event_type = BootstrapSelect(id='tl_show')
-    event_category = BootstrapSelect(id='tl_category_management')
+    event_type = BootstrapSelect(id="tl_show")
+    event_category = BootstrapSelect(id="tl_category_management")
     time_period = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
-    time_range = BootstrapSelect(id='tl_range')
-    time_position = BootstrapSelect(id='tl_timepivot')
+    time_range = BootstrapSelect(id="tl_range")
+    time_position = BootstrapSelect(id="tl_timepivot")
     calendar = TextInput(locator='.//input[@class="form-control"]')
     # todo: implement correct switch between management/policy views when switchable views done
     apply = Text(locator='.//div[contains(@class, "timeline-apply")]')
     # management controls
-    detailed_events = Checkbox(name='showDetailedEvents')
+    detailed_events = Checkbox(name="showDetailedEvents")
     # policy controls
-    policy_event_category = BootstrapSelect(id='tl_category_policy')
+    policy_event_category = BootstrapSelect(id="tl_category_policy")
     policy_event_status = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
 
 
@@ -2559,20 +2716,25 @@ class TimelinesChart(View):
     # currently only event collection is available
     # todo: to add widgets for all controls and add chart objects interaction functionality
     """
-    ROOT = ParametrizedLocator('{@locator}')
-    CATEGORIES = './/*[name()="g" and contains(@class, "timeline-pf-labels")]' \
-                 '//*[name()="text" and @class="timeline-pf-label"]'
 
-    EVENTS = '(.//*[name()="g" and contains(@class, "timeline-pf-drops-container")]/*[name()="g" ' \
-             'and @class="timeline-pf-drop-line"])[{pos}]/*[name()="text" ' \
-             'and contains(@class, "timeline-pf-drop")]'
+    ROOT = ParametrizedLocator("{@locator}")
+    CATEGORIES = (
+        './/*[name()="g" and contains(@class, "timeline-pf-labels")]'
+        '//*[name()="text" and @class="timeline-pf-label"]'
+    )
+
+    EVENTS = (
+        '(.//*[name()="g" and contains(@class, "timeline-pf-drops-container")]/*[name()="g" '
+        'and @class="timeline-pf-drop-line"])[{pos}]/*[name()="text" '
+        'and contains(@class, "timeline-pf-drop")]'
+    )
 
     legend = Table(locator='//div[@id="legend"]/table')
     zoom = TimelinesZoomSlider(locator='//input[@id="timeline-pf-slider"]')
 
     class TimelinesEvent(object):
         def __repr__(self):
-            attrs = [attr for attr in self.__dict__.keys() if not attr.startswith('_')]
+            attrs = [attr for attr in self.__dict__.keys() if not attr.startswith("_")]
             params = ", ".join(["{}={}".format(attr, getattr(self, attr)) for attr in attrs])
             return "TimelinesEvent({})".format(params)
 
@@ -2585,7 +2747,7 @@ class TimelinesChart(View):
         prepared_categories = []
         for num, element in enumerate(br.elements(self.CATEGORIES), start=1):
             # categories have number of events inside them
-            mo = re.search(r'^(.*?)(\s\(\s*\d+\s*\)\s*)*$', br.text(element))
+            mo = re.search(r"^(.*?)(\s\(\s*\d+\s*\)\s*)*$", br.text(element))
             category_name = mo.groups()[0]
 
             if len(categories) == 0 or (len(categories) > 0 and category_name in categories):
@@ -2593,7 +2755,7 @@ class TimelinesChart(View):
         return prepared_categories
 
     def _is_group(self, evt):
-        return 'timeline-pf-event-group' in self.browser.classes(evt)
+        return "timeline-pf-event-group" in self.browser.classes(evt)
 
     def _prepare_event(self, evt, category):
         node = document_fromstring(evt)
@@ -2603,20 +2765,23 @@ class TimelinesChart(View):
 
         # parsing event and preparing its attributes
         event = self.TimelinesEvent()
-        for line in node.text_content().split('\n'):
-            attr_name, attr_val = re.search(r'^(.*?):(.*)$', line).groups()
-            attr_name = attr_name.strip().lower().replace(' ', '_')
+        for line in node.text_content().split("\n"):
+            attr_name, attr_val = re.search(r"^(.*?):(.*)$", line).groups()
+            attr_name = attr_name.strip().lower().replace(" ", "_")
             setattr(event, attr_name, attr_val.strip())
         event.category = category
         return event
 
     def _click_group(self, group):
-        self.browser.execute_script("""jQuery.fn.art_click = function () {
+        self.browser.execute_script(
+            """jQuery.fn.art_click = function () {
                                     this.each(function (i, e) {
                                     var evt = new MouseEvent("click");
                                     e.dispatchEvent(evt);
                                     });};
-                                    $(arguments[0]).art_click();""", group)
+                                    $(arguments[0]).art_click();""",
+            group,
+        )
 
     def get_events(self, *categories):
 
@@ -2628,8 +2793,8 @@ class TimelinesChart(View):
             for raw_event in self.browser.elements(self.EVENTS.format(pos=cat_position)):
                 if not self._is_group(raw_event):
                     # if ordinary event
-                    event_text = self.browser.get_attribute('data-content', raw_event)
-                    self.logger.debug('RAW events in get_events: %r', event_text)
+                    event_text = self.browser.get_attribute("data-content", raw_event)
+                    self.logger.debug("RAW events in get_events: %r", event_text)
                     events.append(self._prepare_event(event_text, cat_name))
                 else:
                     # if event group
@@ -2638,16 +2803,17 @@ class TimelinesChart(View):
                     self._click_group(raw_event)
                     self.legend.wait_displayed()
                     for row in self.legend.rows():
-                        event_text = self.browser.get_attribute('innerHTML', row['Event'])
+                        event_text = self.browser.get_attribute("innerHTML", row["Event"])
                         events.append(self._prepare_event(event_text, cat_name))
-        self.logger.debug('ALL events in get_events array: %r', events)
+        self.logger.debug("ALL events in get_events array: %r", events)
         return events
 
 
 class TimelinesView(View):
     """represents Timelines page
     """
-    title = Text(locator='//h1')
+
+    title = Text(locator="//h1")
     breadcrumb = BreadCrumb()
 
     @View.nested
@@ -2660,23 +2826,25 @@ class TimelinesView(View):
 
     @property
     def is_displayed(self):
-        return self.title.text == 'Timelines'
+        return self.title.text == "Timelines"
 
     @property
     def is_timelines(self):
         """method to check title text for base Timelines without overriding is_displayed"""
-        return self.title.text == 'Timelines'
+        return self.title.text == "Timelines"
 
 
 class AttributeValueForm(View):
     @View.nested
     class fields(ParametrizedView):  # noqa
-        PARAMETERS = ('id', )
+        PARAMETERS = ("id",)
 
         attribute = Input(
-            locator=ParametrizedLocator('.//input[@id=concat({@attr_prefix|quote}, {id|quote})]'))
+            locator=ParametrizedLocator(".//input[@id=concat({@attr_prefix|quote}, {id|quote})]")
+        )
         value = Input(
-            locator=ParametrizedLocator('.//input[@id=concat({@val_prefix|quote}, {id|quote})]'))
+            locator=ParametrizedLocator(".//input[@id=concat({@val_prefix|quote}, {id|quote})]")
+        )
 
         @property
         def attr_prefix(self):
@@ -2689,7 +2857,7 @@ class AttributeValueForm(View):
         # TODO: Figure out how to smuggle some extra data to the all classmethod
         # TODO: since it is now impossible to pass the attr_prefix to it.
 
-    ATTRIBUTES = ParametrizedLocator('.//input[starts-with(@id, {@attr_prefix|quote})]')
+    ATTRIBUTES = ParametrizedLocator(".//input[starts-with(@id, {@attr_prefix|quote})]")
 
     def __init__(self, parent, attr_prefix, val_prefix, start=1, end=5, logger=None):
         View.__init__(self, parent, logger=logger)
@@ -2705,8 +2873,9 @@ class AttributeValueForm(View):
     @property
     def current_attributes(self):
         attributes = [
-            (i, self.browser.get_attribute('value', e))
-            for i, e in enumerate(self.browser.elements(self.ATTRIBUTES), self.start)]
+            (i, self.browser.get_attribute("value", e))
+            for i, e in enumerate(self.browser.elements(self.ATTRIBUTES), self.start)
+        ]
         return [a for a in attributes if a]
 
     def attribute_to_id(self, attribute):
@@ -2729,23 +2898,25 @@ class AttributeValueForm(View):
         changed = False
         for id, attr in self.current_attributes:
             field = self.fields(id=str(id))
-            if field.attribute.fill(''):
+            if field.attribute.fill(""):
                 changed = True
-            if field.value.fill(''):
+            if field.value.fill(""):
                 changed = True
         return changed
 
     def fill(self, values):
-        if hasattr(values, 'items') and hasattr(values, 'keys'):
+        if hasattr(values, "items") and hasattr(values, "keys"):
             values = list(values.items())
         if len(values) > self.count:
             raise ValueError(
-                'This form is supposed to have only {} fields, passed {} items'.format(
-                    self.count, len(values)))
+                "This form is supposed to have only {} fields, passed {} items".format(
+                    self.count, len(values)
+                )
+            )
         changed = self.clear()
         for id, (key, value) in enumerate(values, self.start):
             field = self.fields(id=str(id))
-            if field.fill({'attribute': key, 'value': value}):
+            if field.fill({"attribute": key, "value": value}):
                 changed = True
         return changed
 
@@ -2762,6 +2933,7 @@ class FileInput(BaseFileInput):
         while this is merge-able as it adds functionality, we should clearly mark this as technical
         debt needing a better resource management exposed from widgetastic or our wrappers
     """
+
     def fill(self, value):
         if not os.path.isfile(value):
             f = NamedTemporaryFile()
@@ -2777,13 +2949,16 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
     It is expected that some properties like "data" will be overridden in its children
 
     """
-    ENTITY_XPATH = ('./tbody/tr/td/*[(self::a or self::span) and ((contains(@href, "?") '
-                    'and substring(substring-before(@href, "?"), '
-                    'string-length(substring-before(@href, "?"))-string-length("/{entity_id}")+1)='
-                    '"/{entity_id}") or substring(@href, string-length(@href)-'
-                    'string-length("/{entity_id}")+1)="/{entity_id}")]')
-    PARAMETERS = ('entity_id',)
-    ROOT = ParametrizedLocator('.//table[{xpath}]'.format(xpath=ENTITY_XPATH))
+
+    ENTITY_XPATH = (
+        './tbody/tr/td/*[(self::a or self::span) and ((contains(@href, "?") '
+        'and substring(substring-before(@href, "?"), '
+        'string-length(substring-before(@href, "?"))-string-length("/{entity_id}")+1)='
+        '"/{entity_id}") or substring(@href, string-length(@href)-'
+        'string-length("/{entity_id}")+1)="/{entity_id}")]'
+    )
+    PARAMETERS = ("entity_id",)
+    ROOT = ParametrizedLocator(".//table[{xpath}]".format(xpath=ENTITY_XPATH))
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
     label = Text(locator=ParametrizedLocator(ENTITY_XPATH))
     checkbox = Checkbox(locator='./tbody/tr/td/input[@type="checkbox"]')
@@ -2801,7 +2976,7 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
 
     @property
     def name(self):
-        return self.browser.get_attribute('title', self.label)
+        return self.browser.get_attribute("title", self.label)
 
     @property
     def data(self):
@@ -2831,27 +3006,28 @@ class BaseTileIconEntity(ParametrizedView):
     """ represents Tile Icon entity. one of states entity can be in
 
     """
-    PARAMETERS = ('entity_id',)
-    ROOT = ParametrizedLocator('.//table[.//table[{}]]'.format(BaseQuadIconEntity.ENTITY_XPATH))
+
+    PARAMETERS = ("entity_id",)
+    ROOT = ParametrizedLocator(".//table[.//table[{}]]".format(BaseQuadIconEntity.ENTITY_XPATH))
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
     quad_icon = ParametrizedView.nested(BaseQuadIconEntity)
 
     @property
     def is_checked(self):
-        return self.quad_icon(self.context['entity_id']).is_checked
+        return self.quad_icon(self.context["entity_id"]).is_checked
 
     def check(self):
-        return self.quad_icon(self.context['entity_id']).check()
+        return self.quad_icon(self.context["entity_id"]).check()
 
     def uncheck(self):
-        return self.quad_icon(self.context['entity_id']).uncheck()
+        return self.quad_icon(self.context["entity_id"]).uncheck()
 
     @property
     def name(self):
-        return self.quad_icon(self.context['entity_id']).name
+        return self.quad_icon(self.context["entity_id"]).name
 
     def click(self):
-        self.quad_icon(self.context['entity_id']).click()
+        self.quad_icon(self.context["entity_id"]).click()
 
     @property
     def data(self):
@@ -2859,7 +3035,7 @@ class BaseTileIconEntity(ParametrizedView):
         which is different for each entity type.
         This is property which should hold such data.
         """
-        quad_data = self.quad_icon(self.context['entity_id']).data
+        quad_data = self.quad_icon(self.context["entity_id"]).data
         br = self.browser
         # it seems we don't have list widget in other places.
         # so, this code just parses it, creates dict and adds it to quad icon dict
@@ -2869,16 +3045,17 @@ class BaseTileIconEntity(ParametrizedView):
         return quad_data
 
     def read(self):
-        return self.quad_icon(self.context['entity_id']).read()
+        return self.quad_icon(self.context["entity_id"]).read()
 
     def fill(self, values):
-        return self.quad_icon(self.context['entity_id']).fill()
+        return self.quad_icon(self.context["entity_id"]).fill()
 
     @property
     def is_displayed(self):
         try:
-            return (super(BaseTileIconEntity, self).is_displayed and
-                    self.browser.is_displayed(self.LIST))
+            return super(BaseTileIconEntity, self).is_displayed and self.browser.is_displayed(
+                self.LIST
+            )
         except NoSuchElementException:
             return False
 
@@ -2887,9 +3064,10 @@ class BaseListEntity(ParametrizedView, ClickableMixin):
     """ represents List entity. one of states entity can be in
 
     """
-    PARAMETERS = ('entity_id',)
-    ROOT = ParametrizedLocator('.//tr[contains(@onclick, "miqRowClick(\'{entity_id}\'")]')
-    parent_table = Table(locator='./ancestor::table[1]')
+
+    PARAMETERS = ("entity_id",)
+    ROOT = ParametrizedLocator(".//tr[contains(@onclick, \"miqRowClick('{entity_id}'\")]")
+    parent_table = Table(locator="./ancestor::table[1]")
     checkbox = Checkbox(locator='.//input[@type="checkbox"]')
 
     @property
@@ -2904,7 +3082,7 @@ class BaseListEntity(ParametrizedView, ClickableMixin):
 
     @property
     def name(self):
-        return self.data['name'] if 'name' in self.data else None
+        return self.data["name"] if "name" in self.data else None
 
     @property
     def data(self):
@@ -2914,8 +3092,8 @@ class BaseListEntity(ParametrizedView, ClickableMixin):
         """
         br = self.browser
         col_names = [col_name for col_name in self.parent_table.headers]
-        col_names = map(lambda c: c.replace(' ', '_').lower() if c else c, col_names)
-        col_values = [br.text(val) for val in br.elements('./td', parent=self)]
+        col_names = map(lambda c: c.replace(" ", "_").lower() if c else c, col_names)
+        col_values = [br.text(val) for val in br.elements("./td", parent=self)]
         return dict(col for col in zip(col_names, col_values) if col[0] is not None)
 
     def read(self):
@@ -2929,6 +3107,7 @@ class NonJSBaseEntity(View):
     """ represents Proxy class which represents Entity despite of state it is in.
         it passes calls to concrete entity taking into account which entity type is displayed atm
     """
+
     quad_entity = BaseQuadIconEntity
     list_entity = BaseListEntity
     tile_entity = BaseTileIconEntity
@@ -2955,7 +3134,7 @@ class NonJSBaseEntity(View):
             return self._name
 
     def __getattr__(self, name):
-        if name.startswith('__'):
+        if name.startswith("__"):
             return self.__dict__[name]
 
         item = self._get_existing_entity()
@@ -2968,9 +3147,9 @@ class NonJSBaseEntity(View):
         try:
             return repr(self._get_existing_entity())
         except NoSuchElementException:
-            return '< {c} name {n}, id {id} >'.format(c=self.__class__,
-                                                      n=self.name or "",
-                                                      id=self.entity_id or "")
+            return "< {c} name {n}, id {id} >".format(
+                c=self.__class__, n=self.name or "", id=self.entity_id or ""
+            )
 
     @property
     def is_displayed(self):
@@ -2985,6 +3164,7 @@ class JSBaseEntity(View, ReportDataControllerMixin):
     """ represents Entity, no matter what state it is in.
         It is implemented using ManageIQ JS API
     """
+
     QUADRANT = './/div[@class="flobj {pos}72"]/*[self::p or self::img or self::div]'
 
     def __init__(self, parent, entity_id, name=None, logger=None):
@@ -2994,7 +3174,7 @@ class JSBaseEntity(View, ReportDataControllerMixin):
 
     @property
     def is_checked(self):
-        checked = self._call_item_method('is_selected')
+        checked = self._call_item_method("is_selected")
         if checked is None:
             return False
         else:
@@ -3003,18 +3183,18 @@ class JSBaseEntity(View, ReportDataControllerMixin):
     @property
     def name(self):
         if self.is_displayed:
-            return self.data['name'] if 'name' in self.data else None
+            return self.data["name"] if "name" in self.data else None
         else:
-            return getattr(self, '_name', None)
+            return getattr(self, "_name", None)
 
     def check(self):
-        self._call_item_method('select')
+        self._call_item_method("select")
 
     def uncheck(self):
-        self._call_item_method('unselect')
+        self._call_item_method("unselect")
 
     def click(self):
-        self._call_item_method('click')
+        self._call_item_method("click")
 
     @property
     def data(self):
@@ -3022,10 +3202,10 @@ class JSBaseEntity(View, ReportDataControllerMixin):
         which is different for each entity type.
         This is property which should hold such data.
         """
-        data = self._invoke_cmd('get_item', self.entity_id)['item']
-        cells = data.pop('cells')
-        cells = {str(key).replace(' ', '_').lower(): value for key, value in cells.items()}
-        data = {str(key).replace(' ', '_').lower(): value for key, value in data.items()}
+        data = self._invoke_cmd("get_item", self.entity_id)["item"]
+        cells = data.pop("cells")
+        cells = {str(key).replace(" ", "_").lower(): value for key, value in cells.items()}
+        data = {str(key).replace(" ", "_").lower(): value for key, value in data.items()}
         data.update(cells)
         return data
 
@@ -3041,7 +3221,7 @@ class JSBaseEntity(View, ReportDataControllerMixin):
     @property
     def is_displayed(self):
         try:
-            return self._invoke_cmd('is_displayed', self.entity_id)
+            return self._invoke_cmd("is_displayed", self.entity_id)
         except WebDriverException:
             # there is sometimes an exception if such entity is not displayed
             return False
@@ -3051,6 +3231,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
     """ represents Entities view with regard to view selector state
 
     """
+
     elements = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
     title = Text('//div[@id="main-content"]//h1')
     search = View.nested(Search)
@@ -3059,27 +3240,27 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
     @property
     def _current_page_elements(self):
         elements = []
-        if self.browser.product_version < '5.9':
+        if self.browser.product_version < "5.9":
             br = self.browser
             for el in br.elements(self.elements):
-                el_id = br.get_attribute('href', el).split('/')[-1]
-                el_name = br.get_attribute('title', el)
-                elements.append({'name': el_name, 'entity_id': el_id})
+                el_id = br.get_attribute("href", el).split("/")[-1]
+                el_name = br.get_attribute("title", el)
+                elements.append({"name": el_name, "entity_id": el_id})
         else:
-            entities = self._invoke_cmd('get_all_items')
+            entities = self._invoke_cmd("get_all_items")
             for entity in entities:
                 try:
-                    name = entity['item']['cells']['Name']
+                    name = entity["item"]["cells"]["Name"]
                 except KeyError:
                     # Floating Ip view has an issue. it doesn't have Name though it should
-                    name = entity['item']['cells']['Instance name']
+                    name = entity["item"]["cells"]["Instance name"]
 
-                elements.append({'name': name, 'entity_id': entity['item']['id']})
+                elements.append({"name": name, "entity_id": entity["item"]["id"]})
         return elements
 
     @property
     def entity_ids(self):
-        return [el['entity_id'] for el in self._current_page_elements]
+        return [el["entity_id"] for el in self._current_page_elements]
 
     @property
     def entity_names(self):
@@ -3087,12 +3268,12 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
 
         Returns: all current page entities
         """
-        return [el['name'] for el in self._current_page_elements]
+        return [el["name"] for el in self._current_page_elements]
 
     def get_id_by_name(self, name):
         for el in self._current_page_elements:
-            if el['name'] == name:
-                return el['entity_id']
+            if el["name"] == name:
+                return el["entity_id"]
         return None
 
     def get_entities_by_keys(self, **keys):
@@ -3100,20 +3281,21 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         # So, we decided to switch to List View mode if several keys are passed
         # btw, it isn't necessary in 5.9+
         found_entities = []
-        if self.browser.product_version < '5.9':
+        if self.browser.product_version < "5.9":
             # todo: fix this ugly hack somehow else
-            view_selector = getattr(self.parent.parent.toolbar, 'view_selector', None)
-            if view_selector and view_selector.selected != 'List View':
-                view_selector.select('List View')
+            view_selector = getattr(self.parent.parent.toolbar, "view_selector", None)
+            if view_selector and view_selector.selected != "List View":
+                view_selector.select("List View")
 
-            if type(self).__name__ in ('GridView', 'TileView'):
+            if type(self).__name__ in ("GridView", "TileView"):
                 elements = self.parent.entities._current_page_elements
             else:
                 elements = self._current_page_elements
 
             for el in elements:
-                entity = self.parent.entity_class(parent=self, entity_id=el['entity_id'],
-                                                  name=el['name'])
+                entity = self.parent.entity_class(
+                    parent=self, entity_id=el["entity_id"], name=el["name"]
+                )
                 for key, value in keys.items():
                     try:
                         if entity.data[key] != str(value):
@@ -3123,15 +3305,15 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 else:
                     found_entities.append(entity)
         else:
-            entity_id = keys.pop('entity_id', None)
+            entity_id = keys.pop("entity_id", None)
             if entity_id:
                 found_entities.append(self.parent.entity_class(parent=self, entity_id=entity_id))
-            elif 'id' in keys:
+            elif "id" in keys:
                 # it turned out that there are some views which have entities with internal id
                 # which override entity id in JS code. this is workaround for such case
                 elements = self._current_page_elements
                 for el in elements:
-                    entity = self.parent.entity_class(parent=self, entity_id=el['entity_id'])
+                    entity = self.parent.entity_class(parent=self, entity_id=el["entity_id"])
                     for key, value in keys.items():
                         try:
                             if entity.data[key] != str(value):
@@ -3141,8 +3323,10 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                     else:
                         found_entities.append(entity)
             else:
-                entities = [self.parent.entity_class(parent=self, entity_id=eid)
-                            for eid in self.get_ids_by_keys(**keys)]
+                entities = [
+                    self.parent.entity_class(parent=self, entity_id=eid)
+                    for eid in self.get_ids_by_keys(**keys)
+                ]
                 found_entities.extend(entities)
         return found_entities
 
@@ -3160,14 +3344,21 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         Returns: all entities (QuadIcon/etc.) displayed by view
         """
         if not surf_pages:
-            return [self.parent.entity_class(parent=self, entity_id=el['entity_id'],
-                                             name=el['name']) for el in self._current_page_elements]
+            return [
+                self.parent.entity_class(parent=self, entity_id=el["entity_id"], name=el["name"])
+                for el in self._current_page_elements
+            ]
         else:
             entities = []
             for _ in self.paginator.pages():
-                entities.extend([self.parent.entity_class(parent=self, entity_id=el['entity_id'],
-                                                          name=el['name'])
-                                for el in self._current_page_elements])
+                entities.extend(
+                    [
+                        self.parent.entity_class(
+                            parent=self, entity_id=el["entity_id"], name=el["name"]
+                        )
+                        for el in self._current_page_elements
+                    ]
+                )
             return entities
 
     def get_entity(self, surf_pages=False, use_search=False, **keys):
@@ -3179,15 +3370,15 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
 
         Returns: matched entity (QuadIcon/etc.)
         """
-        if use_search and 'name' in keys:
+        if use_search and "name" in keys:
             self.search.clear_simple_search()
-            self.search.simple_search(text=keys['name'])
+            self.search.simple_search(text=keys["name"])
 
         for _ in self.paginator.pages():
-            if len(keys) == 1 and 'name' in keys:
-                entity_id = self.get_id_by_name(name=keys['name'])
-            elif len(keys) == 1 and 'entity_id' in keys:
-                entity_id = keys['entity_id']
+            if len(keys) == 1 and "name" in keys:
+                entity_id = self.get_id_by_name(name=keys["name"])
+            elif len(keys) == 1 and "entity_id" in keys:
+                entity_id = keys["entity_id"]
             else:
                 entity_id = None
                 try:
@@ -3233,7 +3424,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         elif isinstance(conditions, (list, tuple)):
             conditions = conditions[:]
         else:
-            raise ValueError('Wrong conditions passed')
+            raise ValueError("Wrong conditions passed")
 
         def apply_to_current_page(conditions):
             entities = []
@@ -3242,6 +3433,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 map(func, cur_entities)
                 entities.extend(cur_entities)
             return entities
+
         return apply_to_current_page(conditions)
 
 
@@ -3249,21 +3441,23 @@ class BaseEntitiesView(View):
     """
     should represent the view with different entities like providers
     """
+
     @property
     def entity_class(self):
-        if self.browser.product_version < '5.9':
+        if self.browser.product_version < "5.9":
             return NonJSBaseEntity
         else:
             return JSBaseEntity
 
-    entities = ConditionalSwitchableView(reference='parent.toolbar.view_selector',
-                                         ignore_bad_reference=True)
+    entities = ConditionalSwitchableView(
+        reference="parent.toolbar.view_selector", ignore_bad_reference=True
+    )
 
-    @entities.register('Grid View', default=True)
+    @entities.register("Grid View", default=True)
     class GridView(EntitiesConditionalView):
         pass
 
-    @entities.register('List View')
+    @entities.register("List View")
     class ListView(EntitiesConditionalView):
         elements = Table(locator='//div[@id="gtl_div"]//table')
 
@@ -3281,22 +3475,26 @@ class BaseEntitiesView(View):
         @property
         def _current_page_elements(self):
             elements = []
-            if self.browser.product_version < '5.9':
+            if self.browser.product_version < "5.9":
                 br = self.browser
                 for row in self.elements.rows():
                     # ex: miqRowClick('2', '/ems_infra/', false); return false;
-                    attr = br.get_attribute('onclick', row)
+                    attr = br.get_attribute("onclick", row)
                     el_id = re.search(r"miqRowClick\('([\d|r]+)", attr).group(1)
-                    el_name = row.name.text if getattr(row, 'name', None) else ''
-                    elements.append({'name': el_name, 'entity_id': el_id})
+                    el_name = row.name.text if getattr(row, "name", None) else ""
+                    elements.append({"name": el_name, "entity_id": el_id})
             else:
-                entities = self._invoke_cmd('get_all_items')
+                entities = self._invoke_cmd("get_all_items")
                 for entity in entities:
-                    elements.append({'name': entity['item']['cells'].get('Name', None),
-                                     'entity_id': entity['item']['id']})
+                    elements.append(
+                        {
+                            "name": entity["item"]["cells"].get("Name", None),
+                            "entity_id": entity["item"]["id"],
+                        }
+                    )
             return elements
 
-    @entities.register('Tile View')
+    @entities.register("Tile View")
     class TileView(EntitiesConditionalView):
         pass
 
@@ -3317,7 +3515,7 @@ class DashboardWidgetsPicker(View):
 
     @View.nested
     class dashboard_widgets(ParametrizedView):  # noqa
-        PARAMETERS = ("title", )
+        PARAMETERS = ("title",)
         ALL_WIDGETS = ".//div[starts-with(@id, 'w_')]"
         DIV = ParametrizedLocator(".//div[contains(@title, {title|quote})]")
         remove_link = Text(ParametrizedLocator(".//div[contains(@title, {title|quote})]//a/i"))
@@ -3332,8 +3530,7 @@ class DashboardWidgetsPicker(View):
         @classmethod
         def all(cls, browser):
             return [
-                (e.get_attribute("title").split('"')[1], ) for
-                e in browser.elements(cls.ALL_WIDGETS)
+                (e.get_attribute("title").split('"')[1],) for e in browser.elements(cls.ALL_WIDGETS)
             ]
 
     def add_dashboard_widget(self, widget):
@@ -3483,7 +3680,7 @@ class DynamicTable(VanillaTable):
     """
 
     def __init__(self, *args, **kwargs):
-        self.action_row = kwargs.pop('action_row', 0)  # pull this off and pass the rest up
+        self.action_row = kwargs.pop("action_row", 0)  # pull this off and pass the rest up
         super(DynamicTable, self).__init__(*args, **kwargs)
 
     def row_add(self):
@@ -3503,8 +3700,9 @@ class DynamicTable(VanillaTable):
         try:
             self[pos_action_index].click()
         except IndexError:  # self.action_row must have been None
-            raise DynamicTableAddError('DynamicTable action_row index "{}" not found in table'
-                                       .format(self.action_row))
+            raise DynamicTableAddError(
+                'DynamicTable action_row index "{}" not found in table'.format(self.action_row)
+            )
         return pos_action_index
 
     def row_save(self, row=None):
@@ -3519,8 +3717,9 @@ class DynamicTable(VanillaTable):
         try:
             self[row or self.action_row].actions.click()
         except IndexError:  # self.action_row must have been None
-            raise DynamicTableAddError('DynamicTable action_row index "{}" not found in table'
-                                       .format(self.action_row))
+            raise DynamicTableAddError(
+                'DynamicTable action_row index "{}" not found in table'.format(self.action_row)
+            )
         return self._process_negative_index(nindex=-1)  # use process_negative_index to get last row
 
 
@@ -3529,7 +3728,8 @@ class FolderManager(Widget):
     (Cloud Intel/Reports/Edit Report Menus).
 
     """
-    ROOT = ParametrizedLocator('{@locator}')
+
+    ROOT = ParametrizedLocator("{@locator}")
 
     top_button = Button(title="Move selected folder top")
     up_button = Button(title="Move selected folder up")
@@ -3647,13 +3847,16 @@ class ViewButtonGroup(Widget):
         title: Title of the section where the group is located.
         name: Name in front of the button group.
     """
+
     ROOT = ParametrizedLocator(
-        './/fieldset[./h3[normalize-space(.)={@title|quote}]]'
-        '/div[./label[normalize-space(.)={@name|quote}]]')
-    ALL_ITEMS = './div/ul/li//i'
+        ".//fieldset[./h3[normalize-space(.)={@title|quote}]]"
+        "/div[./label[normalize-space(.)={@name|quote}]]"
+    )
+    ALL_ITEMS = "./div/ul/li//i"
     ACTIVE_ITEM = './div/ul/li[contains(@class, "active")]//i'
     PARTICULAR_ITEM = (
-        './div/ul/li//i[normalize-space(@title)={name} or normalize-space(@alt)={name}]')
+        "./div/ul/li//i[normalize-space(@title)={name} or normalize-space(@alt)={name}]"
+    )
 
     def __init__(self, parent, title, name, logger=None):
         super(ViewButtonGroup, self).__init__(parent, logger=logger)
@@ -3666,15 +3869,16 @@ class ViewButtonGroup(Widget):
         result = []
         for item_element in self.browser.elements(self.ALL_ITEMS):
             result.append(
-                self.browser.get_attribute('alt', item_element) or
-                self.browser.get_attribute('title', item_element))
+                self.browser.get_attribute("alt", item_element)
+                or self.browser.get_attribute("title", item_element)
+            )
         return result
 
     @property
     def active_button(self):
         """Returns the currently active button."""
         selected = self.browser.element(self.ACTIVE_ITEM)
-        return self.browser.get_attribute('title', selected)
+        return self.browser.get_attribute("title", selected)
 
     def select_button(self, name):
         """Selects a button by its alt/title.
@@ -3699,28 +3903,31 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
     """Represents Quadicons appearing in views like Edit Tags, etc.
 
     """
-    elements = ('//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/*[self::a or '
-                'self::span]')
+
+    elements = (
+        '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/*[self::a or ' "self::span]"
+    )
 
     @property
     def _current_page_elements(self):
         elements = []
-        if self.browser.product_version < '5.9':
+        if self.browser.product_version < "5.9":
             br = self.browser
             for el in br.elements(self.elements):
-                el_id = br.get_attribute('href', el).split('?')[0].split('/')[-1]
-                el_name = br.get_attribute('title', el)
-                elements.append({'name': el_name, 'entity_id': el_id})
+                el_id = br.get_attribute("href", el).split("?")[0].split("/")[-1]
+                el_name = br.get_attribute("title", el)
+                elements.append({"name": el_name, "entity_id": el_id})
         else:
-            entities = self._invoke_cmd('get_all_items')
+            entities = self._invoke_cmd("get_all_items")
             for entity in entities:
-                elements.append({'name': entity['item']['cells']['Name'],
-                                 'entity_id': entity['item']['id']})
+                elements.append(
+                    {"name": entity["item"]["cells"]["Name"], "entity_id": entity["item"]["id"]}
+                )
         return elements
 
     @property
     def entity_ids(self):
-        return [el['entity_id'] for el in self._current_page_elements]
+        return [el["entity_id"] for el in self._current_page_elements]
 
     @property
     def entity_names(self):
@@ -3728,18 +3935,18 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
 
         Returns: all current page entities
         """
-        return [el['name'] for el in self._current_page_elements]
+        return [el["name"] for el in self._current_page_elements]
 
     def get_id_by_name(self, name):
         for el in self._current_page_elements:
-            if el['name'] == name:
-                return el['entity_id']
+            if el["name"] == name:
+                return el["entity_id"]
         return None
 
     def get_entity_by_keys(self, **keys):
-        if self.browser.product_version < '5.9':
+        if self.browser.product_version < "5.9":
             for el in self._current_page_elements:
-                entity = self.entity_class(parent=self, entity_id=el['entity_id'], name=el['name'])
+                entity = self.entity_class(parent=self, entity_id=el["entity_id"], name=el["name"])
                 for key, value in keys.items():
                     try:
                         if entity.data[key] != str(value):
@@ -3749,7 +3956,7 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
                 else:
                     return entity
         else:
-            entity_id = keys.pop('entity_id', None)
+            entity_id = keys.pop("entity_id", None)
             if entity_id:
                 return self.entity_class(parent=self, entity_id=entity_id)
             else:
@@ -3761,7 +3968,7 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
 
     @property
     def entity_class(self):
-        if self.browser.product_version < '5.9':
+        if self.browser.product_version < "5.9":
             return NonJSBaseEntity
         else:
             return JSBaseEntity
@@ -3781,10 +3988,10 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
 
         Returns: matched entities (QuadIcon/etc.)
         """
-        if len(keys) == 1 and 'name' in keys:
-            entity_id = self.get_id_by_name(name=keys['name'])
-        elif len(keys) == 1 and 'entity_id' in keys:
-            entity_id = keys['entity_id']
+        if len(keys) == 1 and "name" in keys:
+            entity_id = self.get_id_by_name(name=keys["name"])
+        elif len(keys) == 1 and "entity_id" in keys:
+            entity_id = keys["entity_id"]
         else:
             entity_id = None
             entity = self.get_entity_by_keys(**keys)
@@ -3818,7 +4025,8 @@ class FonticonPicker(Widget):
     Args:
         name: Value of the ``input-name`` of ``miq-fonticon-picker``.
     """
-    ROOT = ParametrizedLocator('.//miq-fonticon-picker[@input-name={@name|quote}]/*')
+
+    ROOT = ParametrizedLocator(".//miq-fonticon-picker[@input-name={@name|quote}]/*")
 
     def __init__(self, parent, name, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -3826,13 +4034,18 @@ class FonticonPicker(Widget):
 
     @property
     def value(self):
-        selected = self.browser.execute_script(jsmin('''
+        selected = self.browser.execute_script(
+            jsmin(
+                """
             var scope = angular.element(arguments[0]).scope();
             return scope.$ctrl.selected;
-        '''), self.browser.element(self))
+        """
+            ),
+            self.browser.element(self),
+        )
         if not selected:
             return None
-        return selected.rsplit(' ', 1)[-1] or None
+        return selected.rsplit(" ", 1)[-1] or None
 
     def read(self):
         return self.value
@@ -3841,21 +4054,28 @@ class FonticonPicker(Widget):
         if value == self.value:
             return False
 
-        self.browser.execute_script(jsmin('''
+        self.browser.execute_script(
+            jsmin(
+                """
             var scope = angular.element(arguments[0]).scope();
             scope.$ctrl.selected = 'fa ' + arguments[1];
             scope.$apply();
             scope.$ctrl.iconChanged({ selected: scope.$ctrl.selected });
-        '''), self.browser.element(self), value)
+        """
+            ),
+            self.browser.element(self),
+            value,
+        )
         self.browser.plugin.ensure_page_safe()
         return True
 
 
 class PotentiallyInvisibleTab(Tab):
     """Tab, that can be potentially invisible."""
+
     def select(self):
         if not self.is_displayed:
-            self.logger.info('Tab not present and ignoring turned on - not touching the tab.')
+            self.logger.info("Tab not present and ignoring turned on - not touching the tab.")
             return
         return super(PotentiallyInvisibleTab, self).select()
 
@@ -3893,7 +4113,7 @@ class DriftComparison(Widget):
         locator: Locator for Drift Analysis Sections Comparison Table.
     """
 
-    ROOT = ParametrizedLocator('{@locator}')
+    ROOT = ParametrizedLocator("{@locator}")
     ALL_SECTIONS = ".//tr[@data-exp-id]"
     CELLS = "./td//i"
     SECTION = ".//th[contains(text(), {})]/ancestor::tr"
@@ -3924,8 +4144,7 @@ class DriftComparison(Widget):
             Return:
                 bool: True if changed, otherwise False
         """
-        cells = self.browser.elements(
-            self.CELLS, parent=self.section_element(drift_section))
+        cells = self.browser.elements(self.CELLS, parent=self.section_element(drift_section))
         attrs = [self.browser.get_attribute("class", cell) for cell in cells]
         return "drift-delta" in attrs
 
@@ -3936,8 +4155,10 @@ class DriftComparison(Widget):
             Return:
                 int: id numder
         """
-        elements = self.browser.elements("{}/following-sibling::tr".format(
-            self.SECTION.format(quote(drift_section))), parent=self)
+        elements = self.browser.elements(
+            "{}/following-sibling::tr".format(self.SECTION.format(quote(drift_section))),
+            parent=self,
+        )
         return self.browser.get_attribute("data-parent", elements[0])
 
     def section_attributes(self, drift_section):
@@ -3948,8 +4169,10 @@ class DriftComparison(Widget):
                 list: attributes elements
         """
         att_id = self.parent_id(drift_section)
-        return [child for child in self.browser.elements(self.INDENT.format(
-            id=quote(att_id)), parent=self)]
+        return [
+            child
+            for child in self.browser.elements(self.INDENT.format(id=quote(att_id)), parent=self)
+        ]
 
     def check_section_attribute_availability(self, drift_section):
         """Check if at least one attribute is available in the DOM
@@ -4035,7 +4258,7 @@ class LineChart(Widget, ClickableMixin):
         elif locator:
             self.locator = locator
         else:
-            raise TypeError('You need to specify either id or locator')
+            raise TypeError("You need to specify either id or locator")
 
     def zoom_in(self):
         """For zoom in to chart"""
@@ -4055,8 +4278,10 @@ class LineChart(Widget, ClickableMixin):
     @property
     def _elements(self):
         br = self.browser
-        return {x.get_attribute('textContent'): el for (x, el) in zip(br.elements(self.X_AXIS),
-                                                                      br.elements(self.RECT))}
+        return {
+            x.get_attribute("textContent"): el
+            for (x, el) in zip(br.elements(self.X_AXIS), br.elements(self.RECT))
+        }
 
     @property
     def _element_ids(self):
@@ -4073,7 +4298,7 @@ class LineChart(Widget, ClickableMixin):
     def legend_is_displayed(self, leg):
         if isinstance(leg, six.string_types):
             leg = self._legends.get(leg)
-        return 'c3-legend-item-hidden' not in self.browser.classes(leg)
+        return "c3-legend-item-hidden" not in self.browser.classes(leg)
 
     @property
     def _get_data(self):
@@ -4081,8 +4306,9 @@ class LineChart(Widget, ClickableMixin):
         for el in self._elements.values():
             self.tooltip.clear_cache()
             self.browser.move_to_element(el)
-            tooltip_data = {self.tooltip.headers[0]: {row[0].text: row[1].text
-                                                      for row in self.tooltip.rows()}}
+            tooltip_data = {
+                self.tooltip.headers[0]: {row[0].text: row[1].text for row in self.tooltip.rows()}
+            }
             data.update(tooltip_data)
         return data
 
@@ -4167,6 +4393,7 @@ class LineChart(Widget, ClickableMixin):
             tooltip_data.update({row[0].text: row[1].text})
         return tooltip_data
 
+
 # Widget and its form views for Infra Planning Wizard
 
 
@@ -4179,16 +4406,22 @@ class MultiSelectList(Widget):
     Usage:
         e.g. target_clusters = MultiSelectList('target_clusters')
     """
-    ROOT = ParametrizedLocator('.//div[contains(@id,{@div_id|quote})]')
+
+    ROOT = ParametrizedLocator(".//div[contains(@id,{@div_id|quote})]")
     ITEMS_LOCATOR = './div/div/div/span[contains(@class,"dual-pane-mapper-item-container")]'
     SELECTED_ITEMS_LOCATOR = (
         './div[contains(@class,"selected")]/div/div'
-        '/span[contains(@class,"dual-pane-mapper-item-container")]')
+        '/span[contains(@class,"dual-pane-mapper-item-container")]'
+    )
     PARTIAL_TEXT = (
         './div/div/div/span[contains(@class,"dual-pane-mapper-item-container")'
-        'and contains(normalize-space(.),"{}")]')
-    SPINNER_LOCATOR = (".//div[contains(@class, dual-pane-mapper-list-container)]"
-        "/div[contains(@class,'spinner')]")
+        'and contains(normalize-space(.),"{}")]'
+        "/div[contains(@class,'spinner')]"
+    )
+    SPINNER_LOCATOR = (
+        ".//div[contains(@class, dual-pane-mapper-list-container)]"
+        "/div[contains(@class,'spinner')]"
+    )
 
     def __init__(self, parent, div_id, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4275,7 +4508,8 @@ class InfraMappingTreeView(Widget):
     Args:
         tree_class(str): Class name of the div representing this TreeView
     """
-    ROOT = ParametrizedLocator('.//div[contains(@class,{@tree_class|quote})]')
+
+    ROOT = ParametrizedLocator(".//div[contains(@class,{@tree_class|quote})]")
     ROOT_ITEMS = './/ul/li[./span[contains(@class,"expand-icon")] and position() > 1]'
     ITEMS_LOCATOR = './/ul/li[./span[contains(@class, "glyphicon")] and position() > 1]'
     SELECTED_NODE = './/li[contains(@class, "node-selected")]'
@@ -4327,15 +4561,17 @@ class InfraMappingTreeView(Widget):
 class MigrationPlansList(Widget):
     """Represents the list of Migration Plans."""
 
-    ROOT = ParametrizedLocator('.//div[contains(@class,{@list_class|quote})]')
+    ROOT = ParametrizedLocator(".//div[contains(@class,{@list_class|quote})]")
     ITEM_LOCATOR = ParametrizedLocator('.//div[contains(@class,"{@list_class}__list-item")]')
     # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
     # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
     ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
     ITEM_TIMER_LOCATOR = './/div[./span[contains(@class,"fa-clock-o")]]'
     ITEM_DESCRIPTION_LOCATOR = './/div[contains(@class,"list-group-item-text")]'
-    ITEM_VM_LOCATOR = ('.//div[./span[contains(@class,"pficon-virtual-machine") '
-            'or contains(@class,"pficon-screen")]]')
+    ITEM_VM_LOCATOR = (
+        './/div[./span[contains(@class,"pficon-virtual-machine") '
+        'or contains(@class,"pficon-screen")]]'
+    )
     ITEM_BUTTON_LOCATOR = './div[contains(@class,"list-view-pf-actions")]//button'
     ITEM_IS_SUCCESSFUL_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
 
@@ -4362,8 +4598,7 @@ class MigrationPlansList(Widget):
     def get_plan_description(self, plan_name):
         try:
             el = self._get_plan_element(plan_name)
-            return self.browser.text(self.browser.element(self.ITEM_DESCRIPTION_LOCATOR,
-                 parent=el))
+            return self.browser.text(self.browser.element(self.ITEM_DESCRIPTION_LOCATOR, parent=el))
         except NoSuchElementException:
             # Plan with no description
             return None
@@ -4417,8 +4652,9 @@ class MigrationPlansList(Widget):
         """Returns true if plan is completed with success"""
         try:
             el = self._get_plan_element(plan_name)
-            return self.browser.is_displayed(self.browser.element(self.ITEM_IS_SUCCESSFUL_LOCATOR,
-                                                                  parent=el))
+            return self.browser.is_displayed(
+                self.browser.element(self.ITEM_IS_SUCCESSFUL_LOCATOR, parent=el)
+            )
         except NoSuchElementException:
             return False
 
@@ -4426,7 +4662,7 @@ class MigrationPlansList(Widget):
 class InfraMappingList(Widget):
     """Represents the list of Infrastructure Mappings."""
 
-    ROOT = ParametrizedLocator('.//div[contains(@class,{@list_class|quote})]')
+    ROOT = ParametrizedLocator(".//div[contains(@class,{@list_class|quote})]")
     ITEM_LOCATOR = './div[contains(@class,"list-group-item")]'
     # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
     # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
@@ -4438,15 +4674,17 @@ class InfraMappingList(Widget):
     # Locates Associated Plans Button
     ITEM_ASSOCIATED_PLANS_BUTTON_LOCATOR = './/div[./span[contains(@class,"pficon-catalog")]]'
     # Locates Associated Plans list
-    ITEM_ASSOCIATED_PLANS_LIST_LOCATOR = ('.//div[contains(@class,'
-    '"infra-mapping-associated-plans-row")]')
+    ITEM_ASSOCIATED_PLANS_LIST_LOCATOR = (
+        ".//div[contains(@class," '"infra-mapping-associated-plans-row")]'
+    )
     SOURCE_ITEMS_LIST_LOCATOR = './/div[contains(@class,"infra-mapping-item-source")]/div'
     TARGET_ITEMS_LIST_LOCATOR = './/div[contains(@class,"infra-mapping-item-target")]'
     ITEM_EXPAND_LOCATOR = './span[contains(@class,"fa-angle-down")]'
     ITEM_COLLAPSE_DETAILS_BUTTON_LOCATOR = './/span[contains(@class, "pficon-close")]'
     ITEM_PROMPT_DELETE_BUTTON_LOCATOR = './/div[@role="document"]//button[@class="btn btn-primary"]'
-    ITEM_PROMPT_CANCEL_BUTTON_LOCATOR = ('.//div[@role="document"]'
-        '//button[@class="btn-cancel btn btn-default"]')
+    ITEM_PROMPT_CANCEL_BUTTON_LOCATOR = (
+        './/div[@role="document"]' '//button[@class="btn-cancel btn btn-default"]'
+    )
     ITEM_DELETE_TRASH_ICON_LOCATOR = './/button[./span[contains(@class,"pficon-delete")]]'
 
     def __init__(self, parent, list_class, logger=None):
@@ -4490,11 +4728,19 @@ class InfraMappingList(Widget):
         try:
             el = self._get_map_element(map_name)
             associated_plans_button_el = self.browser.element(
-                self.ITEM_ASSOCIATED_PLANS_BUTTON_LOCATOR, parent=el)
-            if len(self.browser.elements(self.ITEM_EXPAND_LOCATOR,
-                    parent=associated_plans_button_el)) == 0:
-                self.browser.click(self.browser.element(
-                    self.ITEM_ASSOCIATED_PLANS_BUTTON_LOCATOR, parent=el))
+                self.ITEM_ASSOCIATED_PLANS_BUTTON_LOCATOR, parent=el
+            )
+            if (
+                len(
+                    self.browser.elements(
+                        self.ITEM_EXPAND_LOCATOR, parent=associated_plans_button_el
+                    )
+                )
+                == 0
+            ):
+                self.browser.click(
+                    self.browser.element(self.ITEM_ASSOCIATED_PLANS_BUTTON_LOCATOR, parent=el)
+                )
         except NoSuchElementException:
             raise ItemNotFound("There are no associated plans with map {}".format(map_name))
 
@@ -4504,18 +4750,21 @@ class InfraMappingList(Widget):
     def get_map_description(self, map_name):
         """Get status text of the given mapping."""
         el = self._get_map_element(map_name)
-        return self.browser.text(self.browser.element(self.ITEM_STATUS_LOCATOR,
-             parent=el))
+        return self.browser.text(self.browser.element(self.ITEM_STATUS_LOCATOR, parent=el))
 
     def _get_sources(self, map_name):
         el = self._get_map_element(map_name)
-        return [self.browser.text(item) for item
-         in self.browser.elements(self.SOURCE_ITEMS_LIST_LOCATOR, parent=el)]
+        return [
+            self.browser.text(item)
+            for item in self.browser.elements(self.SOURCE_ITEMS_LIST_LOCATOR, parent=el)
+        ]
 
     def _get_targets(self, map_name):
         el = self._get_map_element(map_name)
-        return [self.browser.text(item) for item
-         in self.browser.elements(self.TARGET_ITEMS_LIST_LOCATOR, parent=el)]
+        return [
+            self.browser.text(item)
+            for item in self.browser.elements(self.TARGET_ITEMS_LIST_LOCATOR, parent=el)
+        ]
 
     def get_map_source_clusters(self, map_name):
         """Returns all source clusters of a mapping by map_name."""
@@ -4551,8 +4800,9 @@ class InfraMappingList(Widget):
         """Returns count of number of plans associated with a mapping by map_name."""
         try:
             el = self._get_map_element(map_name)
-            return self.browser.text(self.browser.element(self.ITEM_ASSOCIATED_PLANS_BUTTON_LOCATOR,
-                 parent=el)).split("Associated Plans")[0]
+            return self.browser.text(
+                self.browser.element(self.ITEM_ASSOCIATED_PLANS_BUTTON_LOCATOR, parent=el)
+            ).split("Associated Plans")[0]
         except NoSuchElementException:
             # Plan with no associated plans
             return 0
@@ -4565,8 +4815,9 @@ class InfraMappingList(Widget):
         try:
             self.expand_map_associated_plans(map_name)
             el = self._get_map_element(map_name)
-            return self.browser.text(self.browser.element(self.ITEM_ASSOCIATED_PLANS_LIST_LOCATOR,
-                     parent=el))
+            return self.browser.text(
+                self.browser.element(self.ITEM_ASSOCIATED_PLANS_LIST_LOCATOR, parent=el)
+            )
         except ItemNotFound:
             # If there is no plan associated
             return None
@@ -4577,8 +4828,11 @@ class InfraMappingList(Widget):
             el = self._get_map_element(map_name)
             self.browser.click(self.ITEM_COLLAPSE_DETAILS_BUTTON_LOCATOR, parent=el)
         except NoSuchElementException:
-            raise ItemNotFound('Collapse button not present,'
-                'map clusters/networks/datastores/associated_plans details is not expaded.')
+
+            raise ItemNotFound(
+                "Collapse button not present,"
+                "map clusters/networks/datastores/associated_plans details is not expaded."
+            )
 
     def delete_mapping(self, map_name, cancel=False):
         try:
@@ -4600,7 +4854,7 @@ class InfraMappingList(Widget):
 class MigrationPlanRequestDetailsList(Widget):
     """Represents the list of Migration Plan Request Details."""
 
-    ROOT = ParametrizedLocator('.//div[contains(@class,{@list_class|quote})]')
+    ROOT = ParametrizedLocator(".//div[contains(@class,{@list_class|quote})]")
     ITEM_LOCATOR = ParametrizedLocator('./div[contains(@class,"list-group-item")]')
     # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
     # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
@@ -4636,16 +4890,14 @@ class MigrationPlanRequestDetailsList(Widget):
     def get_message_text(self, vm_name):
         try:
             el = self._get_vm_element(vm_name)
-            return self.browser.text(self.browser.element(self.ITEM_MESSAGE_LOCATOR,
-                 parent=el))
+            return self.browser.text(self.browser.element(self.ITEM_MESSAGE_LOCATOR, parent=el))
         except NoSuchElementException:
             # Plan not started yet
             return None
 
     def get_clock(self, vm_name):
         el = self._get_vm_element(vm_name)
-        return self.browser.text(self.browser.element(self.ITEM_TIMER_LOCATOR,
-            parent=el))
+        return self.browser.text(self.browser.element(self.ITEM_TIMER_LOCATOR, parent=el))
 
     def open_additional_info_popup(self, vm_name):
         try:
@@ -4658,8 +4910,9 @@ class MigrationPlanRequestDetailsList(Widget):
 
     def get_progress_description(self, vm_name):
         el = self._get_vm_element(vm_name)
-        return self.browser.text(self.browser.element(self.ITEM_PROGRESS_DESCRIPTION_LOCATOR,
-            parent=el))
+        return self.browser.text(
+            self.browser.element(self.ITEM_PROGRESS_DESCRIPTION_LOCATOR, parent=el)
+        )
 
     def download_log(self, vm_name):
         try:
@@ -4682,8 +4935,9 @@ class MigrationPlanRequestDetailsList(Widget):
         """ Checks if spinner is present indicating progress."""
         try:
             el = self._get_vm_element(vm_name)
-            return self.browser.element(self.ITEM_PROGRESS_SPINNER_LOCATOR,
-             parent=el).is_displayed()
+            return self.browser.element(
+                self.ITEM_PROGRESS_SPINNER_LOCATOR, parent=el
+            ).is_displayed()
         except NoSuchElementException:
             # This means element not present, so not in-progress
             return False
@@ -4692,8 +4946,7 @@ class MigrationPlanRequestDetailsList(Widget):
         """ Checks if check icon is present indicating success."""
         try:
             el = self._get_vm_element(vm_name)
-            return self.browser.is_displayed(self.ITEM_IS_SUCCESSFUL_LOCATOR,
-             parent=el)
+            return self.browser.is_displayed(self.ITEM_IS_SUCCESSFUL_LOCATOR, parent=el)
         except NoSuchElementException:
             # This means element not present, so plan may not have started
             return False
@@ -4701,10 +4954,12 @@ class MigrationPlanRequestDetailsList(Widget):
     def read_additional_info_popup(self, vm_name):
         if self.open_additional_info_popup(vm_name):
             el = self.browser.element(self.ITEM_ADDITIONAL_INFO_POPUP_LOCATOR)
-            return {'Status': self.browser.text('./h3', parent=el),
-            'Started': self.browser.text('./div[2]/div/div[1]', parent=el),
-            'Description': self.browser.text('./div[2]/div/div[2]', parent=el),
-            'Conversion Host': self.browser.text('./div[2]/div/div[3]', parent=el)}
+            return {
+                "Status": self.browser.text("./h3", parent=el),
+                "Started": self.browser.text("./div[2]/div/div[1]", parent=el),
+                "Description": self.browser.text("./div[2]/div/div[2]", parent=el),
+                "Conversion Host": self.browser.text("./div[2]/div/div[3]", parent=el),
+            }
 
 
 class HiddenFileInput(BaseFileInput):
@@ -4713,6 +4968,7 @@ class HiddenFileInput(BaseFileInput):
     Prerequisite:
         Type of input field should be file (type='file')
     """
+
     def fill(self, filepath):
         self.browser.set_attribute("style", "display", self)
         self.browser.send_keys(filepath, self)
@@ -4782,8 +5038,9 @@ class MigrationProgressBar(Widget):
     def is_plan_started(self, plan_name):
         """Returns true if migration plan card is shown in-progress state, spinners are gone"""
         el = self._get_card_element(plan_name)
-        return (self.browser.is_displayed(self.TIMER_LOCATOR, parent=el) and
-         not self.browser.is_displayed(self.SPINNER_LOCATOR, parent=el))
+        return self.browser.is_displayed(
+            self.TIMER_LOCATOR, parent=el
+        ) and not self.browser.is_displayed(self.SPINNER_LOCATOR, parent=el)
 
     def is_plan_visible(self, plan_name):
         """Returns true if migration plan card is shown in-progress section, else False"""

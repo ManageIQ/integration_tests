@@ -1,5 +1,6 @@
-from cfme.utils.log import logger as log
 import pytest
+
+from cfme.utils.log import logger as log
 
 
 def test_pass():

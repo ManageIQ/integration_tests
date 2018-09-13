@@ -13,7 +13,7 @@ from conf import intersphinx_mapping
 
 class App(object):
     # Fake app for passing to fetch_inventory
-    srcdir = '.'
+    srcdir = "."
 
     def __init__(self, package_name):
         self.name = package_name
@@ -25,10 +25,10 @@ class App(object):
 def main():
     for package_name, (uri, inv) in intersphinx_mapping.items():
         if inv is None:
-            inv = 'objects.inv'
+            inv = "objects.inv"
         inv_uri = os.path.join(uri, inv)
         app = App(package_name)
-        inventory = intersphinx.fetch_inventory(app, '', inv_uri)
+        inventory = intersphinx.fetch_inventory(app, "", inv_uri)
         for k in inventory.keys():
             print("{} {}".format(app.name, k))
             for name, value in inventory[k].items():

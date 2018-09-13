@@ -13,26 +13,20 @@ artifactor:
 from collections import defaultdict
 
 from artifactor import ArtifactorBasePlugin
-
 from cfme.utils.path import log_path
 
 # preseed the normal statuses, but let defaultdict handle
 # any unexpected statuses, which should probably never happen
 
-test_report = log_path.join('test-report.json')
-test_counts = defaultdict(int, {
-    'passed': 0,
-    'failed': 0,
-    'skipped': 0,
-    'error': 0,
-    'xpassed': 0,
-    'xfailed': 0
-})
+test_report = log_path.join("test-report.json")
+test_counts = defaultdict(
+    int, {"passed": 0, "failed": 0, "skipped": 0, "error": 0, "xpassed": 0, "xfailed": 0}
+)
 
 
 class PostResult(ArtifactorBasePlugin):
     def plugin_initialize(self):
-        self.register_plugin_hook('finish_session', self.post_result)
+        self.register_plugin_hook("finish_session", self.post_result)
         if test_report.check():
             test_report.remove()
 
@@ -42,25 +36,27 @@ class PostResult(ArtifactorBasePlugin):
     @ArtifactorBasePlugin.check_configured
     def post_result(self, old_artifacts, log_dir):
         report = {}
-        report['tests'] = old_artifacts
+        report["tests"] = old_artifacts
 
         def _inc_test_count(test):
             error = ""
-            if 'statuses' in test:
-                test_counts[test['statuses']['overall']] += 1
+            if "statuses" in test:
+                test_counts[test["statuses"]["overall"]] += 1
             else:
                 error += str(test)
-            with log_path.join('no_status.log').open('a') as f:
+            with log_path.join("no_status.log").open("a") as f:
                 f.write(error)
 
         for a_test in old_artifacts.values():
             _inc_test_count(a_test)
-        report['test_counts'] = test_counts
-        report['test_counts']['total'] = sum(test_counts.values())
+        report["test_counts"] = test_counts
+        report["test_counts"]["total"] = sum(test_counts.values())
 
         from cfme.fixtures.ui_coverage import ui_coverage_percent
+
         if ui_coverage_percent:
-            report['ui_coverage_percent'] = ui_coverage_percent
+            report["ui_coverage_percent"] = ui_coverage_percent
 
         import json
+
         test_report.write(json.dumps(report, indent=2))

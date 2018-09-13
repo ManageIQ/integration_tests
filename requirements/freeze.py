@@ -3,15 +3,16 @@
 outputs the frozen packages
 """
 from __future__ import print_function
-import sys
+
 import argparse
-import subprocess
-import tempfile
+import os
 import shutil
+import subprocess
+import sys
+import tempfile
 from contextlib import contextmanager
 
 from cfme.scripting import quickstart
-import os
 
 os.environ.pop("PYTHONPATH", "")
 
@@ -19,13 +20,9 @@ parser = argparse.ArgumentParser(description=__doc__.strip())
 parser.add_argument("--venv", default=None)
 parser.add_argument("--keep-venv", action="store_true")
 parser.add_argument("--template", default="requirements/template.txt")
+parser.add_argument("--out", default=None, help="the file where packages should be written to")
 parser.add_argument(
-    "--out", default=None, help="the file where packages should be written to"
-)
-parser.add_argument(
-    "--upgrade-only",
-    default=None,
-    help="updates only the given package instead of all of them",
+    "--upgrade-only", default=None, help="updates only the given package instead of all of them"
 )
 
 

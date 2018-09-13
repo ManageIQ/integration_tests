@@ -16,13 +16,14 @@ artifactor:
                 - /var/www/miq/vmdb/log/automation.log
 """
 
-from artifactor import ArtifactorBasePlugin
 import os.path
+
 import requests
+
+from artifactor import ArtifactorBasePlugin
 
 
 class Merkyl(ArtifactorBasePlugin):
-
     class Test(object):
         def __init__(self, ident, ip, port):
             self.ident = ident
@@ -32,16 +33,16 @@ class Merkyl(ArtifactorBasePlugin):
             self.extra_files = set()
 
     def plugin_initialize(self):
-        self.register_plugin_hook('setup_merkyl', self.start_session)
-        self.register_plugin_hook('start_test', self.start_test)
-        self.register_plugin_hook('finish_test', self.finish_test)
-        self.register_plugin_hook('teardown_merkyl', self.finish_session)
-        self.register_plugin_hook('get_log_merkyl', self.get_log)
-        self.register_plugin_hook('add_log_merkyl', self.add_log)
+        self.register_plugin_hook("setup_merkyl", self.start_session)
+        self.register_plugin_hook("start_test", self.start_test)
+        self.register_plugin_hook("finish_test", self.finish_test)
+        self.register_plugin_hook("teardown_merkyl", self.finish_session)
+        self.register_plugin_hook("get_log_merkyl", self.get_log)
+        self.register_plugin_hook("add_log_merkyl", self.add_log)
 
     def configure(self):
-        self.files = self.data.get('log_files', [])
-        self.port = self.data.get('port', '8192')
+        self.files = self.data.get("log_files", [])
+        self.port = self.data.get("port", "8192")
         self.tests = {}
         self.configured = True
 
@@ -68,7 +69,7 @@ class Merkyl(ArtifactorBasePlugin):
         url = "http://{}:{}/get/{}".format(ip, self.port, tail)
         doc = requests.get(url, timeout=15)
         content = doc.content
-        return {'merkyl_content': content}, None
+        return {"merkyl_content": content}, None
 
     @ArtifactorBasePlugin.check_configured
     def add_log(self, test_name, test_location, filename):
@@ -102,10 +103,18 @@ class Merkyl(ArtifactorBasePlugin):
 
         del self.tests[test_ident]
         for filename, contents in artifacts:
-            self.fire_hook('filedump', test_location=test_location, test_name=test_name,
-                description="Merkyl: {}".format(filename), slaveid=slaveid,
-                contents=contents, file_type="log", display_type="danger",
-                display_glyph="align-justify", group_id="merkyl")
+            self.fire_hook(
+                "filedump",
+                test_location=test_location,
+                test_name=test_name,
+                description="Merkyl: {}".format(filename),
+                slaveid=slaveid,
+                contents=contents,
+                file_type="log",
+                display_type="danger",
+                display_glyph="align-justify",
+                group_id="merkyl",
+            )
         return None, None
 
     @ArtifactorBasePlugin.check_configured

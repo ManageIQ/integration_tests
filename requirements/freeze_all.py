@@ -19,9 +19,7 @@ RUNS = [
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--upgrade-only",
-    default=None,
-    help="updates only the given package instead of all of them",
+    "--upgrade-only", default=None, help="updates only the given package instead of all of them"
 )
 
 # todo loop over pythons here and disallow virtualenv
@@ -36,9 +34,7 @@ def main(conf):
     """
     with freeze.maybe_transient_venv_dir(None, False) as venv:
         for template, out in RUNS:
-            out = out.replace(
-                ".txt", ".py{major}.txt".format(major=sys.version_info[0])
-            )
+            out = out.replace(".txt", ".py{major}.txt".format(major=sys.version_info[0]))
             args = argparse.Namespace(
                 venv=venv,
                 keep=True,

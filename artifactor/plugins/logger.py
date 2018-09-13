@@ -13,12 +13,12 @@ artifactor:
 """
 import os
 from logging import makeLogRecord
+
 from artifactor import ArtifactorBasePlugin
 from cfme.utils.log import make_file_handler
 
 
 class Logger(ArtifactorBasePlugin):
-
     class Test(object):
         def __init__(self, ident):
             self.ident = ident
@@ -31,13 +31,13 @@ class Logger(ArtifactorBasePlugin):
                 self.handler = None
 
     def plugin_initialize(self):
-        self.register_plugin_hook('start_test', self.start_test)
-        self.register_plugin_hook('finish_test', self.finish_test)
-        self.register_plugin_hook('log_message', self.log_message)
+        self.register_plugin_hook("start_test", self.start_test)
+        self.register_plugin_hook("finish_test", self.finish_test)
+        self.register_plugin_hook("log_message", self.log_message)
 
     def configure(self):
         self.configured = True
-        self.level = self.data.get('level', 'DEBUG')
+        self.level = self.data.get("level", "DEBUG")
 
     @ArtifactorBasePlugin.check_configured
     def start_test(self, artifact_path, test_name, test_location, slaveid):
@@ -56,14 +56,23 @@ class Logger(ArtifactorBasePlugin):
             filename,
             root=artifact_path,
             # we overwrite
-            mode='w',
-            level=self.level)
+            mode="w",
+            level=self.level,
+        )
 
-        self.fire_hook('filedump', test_location=test_location, test_name=test_name,
-            description="cfme.log", slaveid=slaveid, contents="", file_type="log",
-            display_glyph="align-justify", dont_write=True,
+        self.fire_hook(
+            "filedump",
+            test_location=test_location,
+            test_name=test_name,
+            description="cfme.log",
+            slaveid=slaveid,
+            contents="",
+            file_type="log",
+            display_glyph="align-justify",
+            dont_write=True,
             os_filename=os.path.join(artifact_path, filename),
-            group_id="pytest-logfile")
+            group_id="pytest-logfile",
+        )
 
     @ArtifactorBasePlugin.check_configured
     def finish_test(self, artifact_path, test_name, test_location, slaveid):
@@ -75,8 +84,8 @@ class Logger(ArtifactorBasePlugin):
     @ArtifactorBasePlugin.check_configured
     def log_message(self, log_record, slaveid):
         # json transport fallout: args must be a dict or a tuple, json makes a tuple into a list
-        args = log_record['args']
-        log_record['args'] = tuple(args) if isinstance(args, list) else args
+        args = log_record["args"]
+        log_record["args"] = tuple(args) if isinstance(args, list) else args
         record = makeLogRecord(log_record)
         if not slaveid:
             slaveid = "Master"
