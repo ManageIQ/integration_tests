@@ -166,6 +166,7 @@ def set_ownership(self, owner, group):
     view.save_button.click()
     view = self.create_view(DetailsMyServiceView)
     view.wait_displayed('15s')  # WA for StaleElementException in 5.8 testing
+    view.flush_widget_cache()
     # TODO - remove sleep when BZ 1518954 is fixed
     time.sleep(10)
     if self.appliance.version >= "5.8":
@@ -185,6 +186,9 @@ def edit_tags(self, tag, value):
     view.save.click()
     view = self.create_view(DetailsMyServiceView)
     view.wait_displayed('15s')  # WA for StaleElementException in 5.8 testing
+    view.flush_widget_cache()
+    # TODO - remove sleep when BZ 1518954 is fixed
+    time.sleep(10)
     assert view.notification.assert_message("Tagging successful.")
 
 
