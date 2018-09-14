@@ -15,7 +15,7 @@ pytestmark = [
     pytest.mark.provider([OpenStackProvider], selector=ONE_PER_TYPE),
 ]
 
-CLOUD_OBJECTS = ["PROVIDER", "VM_INSTANCE"]
+CLOUD_OBJECTS = ["PROVIDER", "VM_INSTANCE", "AZONE"]
 
 DISPLAY_NAV = {
     "Single entity": ["Details"],
@@ -49,6 +49,10 @@ def setup_objs(button_group, provider):
         obj = [provider, network_manager]
     elif obj_type == "VM_INSTANCE":
         obj = [provider.appliance.provider_based_collection(provider).all()[0]]
+    elif obj_type == "AZONE":
+        obj = [
+            provider.appliance.collections.cloud_av_zones.filter({"provider": provider}).all()[0]
+        ]
     else:
         logger.error("No object collected for custom button object type '{}'".format(obj_type))
     return obj
