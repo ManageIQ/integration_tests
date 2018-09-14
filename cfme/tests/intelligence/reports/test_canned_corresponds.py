@@ -3,6 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.net import ip_address, resolve_hostname
@@ -45,7 +46,7 @@ def test_providers_summary(appliance, soft_assert):
         if provider["MS Type"] in skipped_providers:
             continue
         provider_object = appliance.collections.infra_providers.instantiate(InfraProvider,
-            name=provider["Name"])
+                                                                            name=provider["Name"])
         details_view = navigate_to(provider_object, 'Details')
         props = details_view.entities.summary("Properties")
 
@@ -81,9 +82,12 @@ def test_cluster_relationships(appliance, soft_assert):
         if not provider_name.strip():
             # If no provider name specified, ignore it
             continue
-        provider = get_crud_by_name(provider_name).mgmt
+        provider = get_crud_by_name(provider_name)
         host_name = relation["Host Name"].strip()
-        verified_cluster = [item for item in provider.list_cluster() if name in item]
+        cluster_list = provider.mgmt.list_clusters() if isinstance(
+            provider, SCVMMProvider) else provider.mgmt.list_cluster()
+
+        verified_cluster = [item for item in cluster_list if name in item]
         soft_assert(verified_cluster, "Cluster {} not found in {}".format(name, provider_name))
         if not host_name:
             continue  # No host name
@@ -91,7 +95,10 @@ def test_cluster_relationships(appliance, soft_assert):
         if host_ip is None:
             # Don't check
             continue
-        for host in provider.list_host():
+
+        host_list = provider.mgmt.list_hosts() if isinstance(
+            provider, SCVMMProvider) else provider.mgmt.list_host()
+        for host in host_list:
             if ip_address.match(host) is None:
                 host_is_ip = False
                 ip_from_provider = resolve_hostname(host, force=True)
