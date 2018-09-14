@@ -140,12 +140,21 @@ class CloudNetworkCollection(BaseCollection):
         return network
 
     def all(self):
-        if self.filters.get('parent'):
-            view = navigate_to(self.filters.get('parent'), 'CloudNetworks')
+        """returning all Cloud Network objects and support filtering as per provider"""
+        provider_id = self.filters.get("provider").id if self.filters.get("provider") else None
+        networks_all = self.appliance.rest_api.collections.cloud_networks.all
+        prov_db = {prov.id: prov for prov in self.appliance.rest_api.collections.providers}
+
+        nw_objs = []
+        for nw in networks_all:
+            prov_name = prov_db[prov_db[nw.ems_id].parent_ems_id]["name"]
+            prov = providers.get_crud_by_name(prov_name)
+            nw_objs.append(self.instantiate(name=nw.name, provider_obj=prov))
+
+        if provider_id:
+            return [nw for nw in nw_objs if nw.provider_obj.id == provider_id]
         else:
-            view = navigate_to(self, 'All')
-        list_networks_obj = view.entities.get_all(surf_pages=True)
-        return [self.instantiate(name=n.name, provider_obj=None) for n in list_networks_obj]
+            return nw_objs
 
 
 @navigator.register(CloudNetworkCollection, 'All')
