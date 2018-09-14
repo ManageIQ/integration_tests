@@ -23,6 +23,20 @@ DISPLAY_NAV = {
     "Single and list": ["All", "Details"],
 }
 
+OBJ_TYPE_59 = [
+    "CLOUD_TENANT",
+    "CLOUD_VOLUME",
+    "CLUSTER",
+    "CONTAINER_NODE",
+    "CONTAINER_PROJECT",
+    "DATASTORE",
+    "GENERIC",
+    "HOST",
+    "PROVIDER",
+    "SERVICE",
+    "TEMPLATE",
+    "VM_INSTANCE"]
+
 
 @pytest.fixture(
     params=CLOUD_OBJECTS, ids=[obj.capitalize() for obj in CLOUD_OBJECTS], scope="module"
@@ -58,10 +72,14 @@ def setup_objs(button_group, provider):
     return obj
 
 
+@pytest.mark.uncollectif(
+    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
+    and appliance.version < "5.10"
+)
 @pytest.mark.parametrize(
     "display", DISPLAY_NAV.keys(), ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
 )
-def test_custom_button_display(request, display, setup_objs, button_group):
+def test_custom_button_display(appliance, request, display, setup_objs, button_group):
     """ Test custom button display on a targeted page
 
     prerequisites:
