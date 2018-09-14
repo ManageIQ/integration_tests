@@ -158,6 +158,10 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin):
 
         return mapping
 
+    @property
+    def is_provider_enabled(self):
+        return self.appliance.rest_api.collections.providers.get(name=self.name).enabled
+
     @variable(alias='db')
     def num_route(self):
         return self._num_db_generic('container_routes')
@@ -431,3 +435,19 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin):
             result = False
         finally:
             return result
+
+    def pause(self):
+        """ Pause the OCP provider.
+
+            Returns:
+                API response.
+        """
+        return self.appliance.rest_api.collections.providers.get(name=self.name).action.pause()
+
+    def resume(self):
+        """ Resume the OCP provider.
+
+            Returns:
+                API response.
+        """
+        return self.appliance.rest_api.collections.providers.get(name=self.name).action.resume()

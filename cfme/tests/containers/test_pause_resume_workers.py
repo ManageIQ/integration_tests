@@ -1,7 +1,10 @@
+import fauxfactory
 import pytest
 
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log_validator import LogValidator
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [
@@ -46,3 +49,75 @@ def test_pause_and_resume_provider_workers(appliance, provider):
     view.toolbar.configuration.item_select(provider.resume_provider_text, handle_alert=True)
     ems_worker_state = check_ems_state_in_diagnostics(appliance, provider)
     assert ems_worker_state, "Diagnostics shows that workers are not running after resume provider"
+
+
+@pytest.mark.ignore_stream('5.9')
+@pytest.mark.parametrize('from_collections', [True, False], ids=['from_collection', 'from_entity'])
+def test_pause_and_resume_single_provider_api(appliance, provider, from_collections, app_creds,
+                                              soft_assert, request):
+    """
+    Test enabling and disabling a single provider via the CFME API through the ManageIQ API Client
+    collection and entity classes.
+
+    RFE: BZ 1507812
+    """
+    evm_tail_disable = LogValidator('/var/www/miq/vmdb/log/evm.log',
+                                    matched_patterns=['.*Disabling EMS \[{}\] id \[{}\].*'
+                                                      .format(provider.name, str(provider.id))],
+                                    hostname=appliance.hostname,
+                                    username=app_creds['sshlogin'],
+                                    password=app_creds['password'])
+    evm_tail_disable.fix_before_start()
+    if from_collections:
+        rep_disable = appliance.collections.containers_providers.pause_providers(provider)
+        # collections class returns a list of dicts containing the API response.
+        soft_assert(rep_disable[0].get('success'), 'Disabling provider {} failed'
+                    .format(provider.name))
+    else:
+        rep_disable = provider.pause()
+        # entity class returns a dict containing the API response
+        soft_assert(rep_disable.get('success'), 'Disabling provider {} failed'
+                    .format(provider.name))
+    soft_assert(not provider.is_provider_enabled, 'Provider {} is still enabled'
+                .format(provider.name))
+    evm_tail_disable.validate_logs()
+    # Verify all monitoring workers have been shut down
+    assert wait_for(lambda: not check_ems_state_in_diagnostics(appliance, provider))
+    # Create a project on the OpenShift provider via wrapanapi
+    project_name = fauxfactory.gen_alpha(8).lower()
+    provider.mgmt.create_project(name=project_name)
+
+    @request.addfinalizer
+    def _finalize():
+        provider.mgmt.delete_project(name=project_name)
+
+    project = appliance.collections.container_projects.instantiate(name=project_name,
+                                                                   provider=provider)
+    # Trigger an appliance refresh
+    provider.refresh_provider_relationships()
+    soft_assert(not project.exists, 'Project {} exists even though provider has been disabled'
+                .format(project_name))
+    evm_tail_enable = LogValidator('/var/www/miq/vmdb/log/evm.log',
+                                   matched_patterns=['.*Enabling EMS \[{}\] id \[{}\].*'
+                                                     .format(provider.name, str(provider.id))],
+                                   hostname=appliance.hostname,
+                                   username=app_creds['sshlogin'],
+                                   password=app_creds['password'])
+    evm_tail_enable.fix_before_start()
+    if from_collections:
+        rep_enable = appliance.collections.containers_providers.resume_providers(provider)
+        soft_assert(rep_enable[0].get('success'), 'Enabling provider {} failed'
+                    .format(provider.name))
+    else:
+        rep_enable = provider.resume()
+        soft_assert(rep_enable.get('success'), 'Enabling provider {} failed'.format(provider.name))
+    soft_assert(provider.is_provider_enabled, 'Provider {} is still disabled'.format(provider.name))
+    evm_tail_enable.validate_logs()
+    provider.refresh_provider_relationships()
+    soft_assert(project.exists, 'Project {} does not exists even though provider has been enabled'
+                .format(project_name))
+
+# TODO Add the following test when multi provider marker is implemented
+
+# def test_pause_and_resume_multiple_provider_api(appliance, provider, second_provider, app_creds,
+#                                                 soft_assert, request):
