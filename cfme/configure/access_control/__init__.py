@@ -458,6 +458,13 @@ class MyCompanyTagsWithExpression(Tab):
     tag_settings.register('Tags Based On Expression', widget=MyCompanyTagsExpressionView)
 
 
+class MyCompanyTagsWithoutExpression(Tab):
+    """ Represents 'My company tags' tab in Group Form """
+    TAB_NAME = "My Company Tags"
+
+    tag_settings = View.nested(MyCompanyTagsTree)
+
+
 class Hosts_And_Clusters(Tab):  # noqa
     """ Represents 'Hosts and Clusters' tab in Group Form """
     TAB_NAME = "Hosts & Clusters"
@@ -486,7 +493,7 @@ class GroupForm(ConfigurationView):
     cancel_button = Button('Cancel')
     retrieve_button = Button('Retrieve')
 
-    my_company_tags = View.nested(MyCompanyTagsWithExpression)
+    my_company_tags = View.nested(MyCompanyTagsWithoutExpression)
     hosts_and_clusters = View.nested(Hosts_And_Clusters)
     vms_and_templates = View.nested(Vms_And_Templates)
 
