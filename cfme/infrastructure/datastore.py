@@ -29,6 +29,7 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.pretty import Pretty
+from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import TimedOutError, wait_for
 
 
@@ -359,6 +360,24 @@ class DatastoreCollection(BaseCollection):
     """Collection class for :py:class:`cfme.infrastructure.datastore.Datastore`"""
     ENTITY = Datastore
 
+    def all(self):
+        "Returning all datastore objects with filtering support as per provider"
+        provider = self.filters.get("provider")
+        datastores = self.appliance.rest_api.collections.data_stores
+        datastores = datastores.all_include_attributes(attributes=["hosts"])
+        datastore_db = {ds.name: ds.hosts[0]["ems_id"] for ds in datastores}
+        provider_db = {
+            prov.id: get_crud_by_name(prov.name)
+            for prov in self.appliance.rest_api.collections.providers.all
+        }
+        datastores = [
+            self.instantiate(name=name, provider=provider_db[prov_id])
+            for name, prov_id in datastore_db.items()
+        ]
+        return (
+            [ds for ds in datastores if ds.provider.id == provider.id] if provider else datastores
+        )
+
     def delete(self, *datastores):
         """
         Note:
@@ -453,9 +472,3 @@ class Utilization(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.monitoring.item_select("Utilization")
-
-
-def get_all_datastores():
-    """Returns names (from quadicons) of all datastores"""
-    view = navigate_to(Datastore, 'All')
-    return [ds.name for ds in view.entities.get_all()]
