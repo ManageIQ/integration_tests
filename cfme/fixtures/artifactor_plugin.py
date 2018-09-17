@@ -29,14 +29,14 @@ import os
 import pytest
 
 from artifactor import ArtifactorClient
+from cfme.fixtures.pytest_store import write_line, store
+from cfme.markers.polarion import extract_polarion_ids
+from cfme.utils.appliance import find_appliance
 from cfme.utils.blockers import BZ, Blocker
 from cfme.utils.conf import env, credentials
 from cfme.utils.log import logger
 from cfme.utils.net import random_port, net_check
 from cfme.utils.wait import wait_for
-from cfme.fixtures.pytest_store import write_line, store
-from cfme.markers.polarion import extract_polarion_ids
-from cfme.utils.appliance import find_appliance
 
 UNDER_TEST = False  # set to true for artifactor using tests
 
@@ -299,7 +299,7 @@ def shutdown(config):
     if app is not None:
         with lock:
             proc = config._art_proc
-            if proc:
+            if proc and proc.returncode is None:
                 if not store.slave_manager:
                     write_line('collecting artifacts')
                     fire_art_hook(config, 'finish_session')
@@ -307,6 +307,4 @@ def shutdown(config):
                               ip=app.hostname)
                 if not store.slave_manager:
                     config._art_client.terminate()
-                    proc = config._art_proc
-                    if proc:
-                        proc.wait()
+                    proc.wait()
