@@ -55,6 +55,19 @@ class MerkylInspector(object):
             self.node, 'add_log_merkyl', ip=self.ip,
             filename=log_name, grab_result=True)
 
+    def reset_log(self, log_name):
+        """ Resets log
+
+        This function clears content of a log file that merkyl is tailing.
+        Note that file stays open and merkyl keeps tailing it.
+
+        Args:
+            log_name: Full path to the log file that you want to reset
+        """
+        fire_art_test_hook(
+            self.node, 'reset_log_merkyl', ip=self.ip,
+            filename=log_name, grab_result=True)
+
     def search_log(self, needle, log_name):
         """ A simple search, test if needle is in cached log_contents.
 

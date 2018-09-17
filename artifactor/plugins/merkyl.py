@@ -39,6 +39,7 @@ class Merkyl(ArtifactorBasePlugin):
         self.register_plugin_hook("teardown_merkyl", self.finish_session)
         self.register_plugin_hook("get_log_merkyl", self.get_log)
         self.register_plugin_hook("add_log_merkyl", self.add_log)
+        self.register_plugin_hook("reset_log_merkyl", self.reset_log)
 
     def configure(self):
         self.files = self.data.get("log_files", [])
@@ -70,6 +71,15 @@ class Merkyl(ArtifactorBasePlugin):
         doc = requests.get(url, timeout=15)
         content = doc.content
         return {"merkyl_content": content}, None
+
+    @ArtifactorBasePlugin.check_configured
+    def reset_log(self, test_name, test_location, filename):
+        test_ident = "{location}/{name}".format(location=test_location, name=test_name)
+        ip = self.tests[test_ident].ip
+
+        _, tail = os.path.split(filename)
+        url = "http://{ip}:{port}/reset/{filename}".format(ip=ip, port=self.port, filename=tail)
+        requests.get(url, timeout=15)
 
     @ArtifactorBasePlugin.check_configured
     def add_log(self, test_name, test_location, filename):
