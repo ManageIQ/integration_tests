@@ -461,7 +461,7 @@ def prepare_template_deploy(self, template_id):
     template = Template.objects.get(id=template_id)
     try:
         if not template.provider.is_working:
-            raise RuntimeError('Provider is not working.')
+            raise RuntimeError('Provider {} is not working.'.format(template.provider))
         if template.vm_mgmt is None or not template.vm_mgmt.exists:
             template.set_status("Deploying the template.")
             provider_data = template.provider.provider_data
@@ -584,7 +584,7 @@ def prepare_template_poweroff(self, template_id):
     template = Template.objects.get(id=template_id)
     try:
         if not template.provider.is_working:
-            raise RuntimeError('Provider is not working.')
+            raise RuntimeError('Provider {} is not working.'.format(template.provider))
         template.set_status("Powering off")
         # TODO: change after openshift wrapanapi refactor
         if isinstance(template.provider_api, Openshift):
@@ -604,7 +604,7 @@ def prepare_template_finish(self, template_id):
     template = Template.objects.get(id=template_id)
     try:
         if not template.provider.is_working:
-            raise RuntimeError('Provider is not working.')
+            raise RuntimeError('Provider {} is not working.'.format(template.provider))
         template.set_status("Finishing template creation with an api mark_as_template call")
         # TODO: change after openshift wrapanapi refactor
         if isinstance(template.provider_api, Openshift):
@@ -1025,7 +1025,7 @@ def appliance_power_on(self, appliance_id):
         return
     try:
         if not appliance.provider.is_working:
-            raise RuntimeError('Provider is not working.')
+            raise RuntimeError('Provider {} is not working.'.format(appliance.provider))
         # TODO: change after openshift wrapanapi refactor
         # we could use vm.ensure_state(VmState.RUNNING) here in future
         if appliance.is_openshift:
@@ -1124,7 +1124,7 @@ def appliance_power_off(self, appliance_id):
         return
     try:
         if not appliance.provider.is_working:
-            raise RuntimeError('Provider is not working.')
+            raise RuntimeError('Provider {} is not working.'.format(appliance.provider))
         api = appliance.provider_api
         # TODO: change after openshift wrapanapi refactor
         # we could use vm.ensure_state(VmState.STOPPED) here in future
@@ -1187,7 +1187,7 @@ def appliance_suspend(self, appliance_id):
         return
     try:
         if not appliance.provider.is_working:
-            raise RuntimeError('Provider is not working.')
+            raise RuntimeError('Provider {} is not working.'.format(appliance.provider))
         # TODO: change after openshift wrapanapi refactor
         # we could use vm.ensure_state(VmState.SUSPENDED) here in future
         if appliance.is_openshift:
@@ -1233,7 +1233,7 @@ def retrieve_appliance_ip(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
         if not appliance.provider.is_working:
-            raise RuntimeError('Provider is not working.')
+            raise RuntimeError('Provider {} is not working.'.format(appliance.provider))
         appliance.set_status("Retrieving IP address.")
         # TODO: change after openshift wrapanapi refactor
         if appliance.is_openshift:
@@ -1581,7 +1581,7 @@ def anyvm_delete(self, provider, vm):
 def delete_template_from_provider(self, template_id):
     template = Template.objects.get(id=template_id)
     if not template.provider.is_working:
-        raise RuntimeError('Provider is not working.')
+        raise RuntimeError('Provider {} is not working.'.format(template.provider))
     try:
         # TODO: change after openshift wrapanapi refactor
         if isinstance(template.provider.api, Openshift):
@@ -1612,7 +1612,7 @@ def appliance_rename(self, appliance_id):
         return None
 
     if not appliance.provider.is_working:
-        raise RuntimeError('Provider is not working.')
+        raise RuntimeError('Provider {} is not working.'.format(appliance.provider))
     if (not appliance.provider.allow_renaming or appliance.is_openshift or
             not hasattr(appliance.vm_mgmt, 'rename')):
         self.logger.info("Appliance {} cannot be renamed".format(appliance_id))
@@ -1749,7 +1749,7 @@ def obsolete_template_deleter(self):
 def connect_direct_lun(self, appliance_id):
     appliance = Appliance.objects.get(id=appliance_id)
     if not appliance.provider.is_working:
-        raise RuntimeError('Provider is not working.')
+        raise RuntimeError('Provider {} is not working.'.format(appliance.provider))
     # TODO: change after openshift wrapanapi refactor
     if not appliance.is_openshift and not hasattr(appliance.vm_mgmt, "connect_direct_lun"):
         return False
