@@ -117,7 +117,7 @@ def test_zone_add_blank_name():
 @pytest.mark.sauce
 def test_zone_add_blank_description():
     zc = current_appliance.collections.zones
-    with pytest.raises(Exception, match="Description is required"):
+    with pytest.raises(Exception, match="Description can't be blank"):
         zc.create(
             name=fauxfactory.gen_alphanumeric(5),
             description=''
