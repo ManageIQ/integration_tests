@@ -42,7 +42,9 @@ class NetworkRouter(Taggable, BaseEntity):
         """Deletes current cloud router"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Delete this Router', handle_alert=True)
-        view.flash.assert_success_message('Delete initiated for 1 Network Router.')
+        wait_for(lambda: view.flash.messages, fail_condition=[], num_sec=10, delay=.1)
+        message = 'Delete initiated for 1 Network Router.'
+        view.flash.assert_success_message(message)
 
     def edit(self, name=None, change_external_gw=None, ext_network=None, ext_network_subnet=None):
         """Edit this router

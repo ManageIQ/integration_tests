@@ -434,6 +434,7 @@ class NetworkRouterDetailsView(BaseLoggedInPage):
 
 class NetworkRouterAddView(BaseLoggedInPage):
     """ Represents Add NetworkRouters page """
+    title = Text('//div[@id="main-content"]//h1')
     network_manager = Select(id='ems_id')
     router_name = TextInput(name='name')
     ext_gateway = BootstrapSwitch(name='external_gateway')
@@ -442,7 +443,11 @@ class NetworkRouterAddView(BaseLoggedInPage):
     cloud_tenant = Select(name='cloud_tenant_id')
     add = Button('Add')
 
-    is_displayed = displayed_not_implemented
+    @property
+    def is_displayed(self):
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Network Routers'] and
+                self.title.text == 'Add New Network Router')
 
 
 class NetworkRouterEditView(BaseLoggedInPage):
@@ -546,7 +551,7 @@ class SecurityGroupDetailsView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return (super(BaseLoggedInPage, self).is_displayed and
-                self.navigation.currently_selected == ['Networks', 'Security Groups'] and
+                self.navigation.currently_selected == ['Networks', 'Providers'] and
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
 
 

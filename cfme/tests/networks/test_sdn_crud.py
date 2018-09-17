@@ -1,9 +1,11 @@
 import pytest
+import fauxfactory
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.utils.wait import wait_for
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
@@ -41,3 +43,25 @@ def test_sdn_crud(provider, appliance):
     provider.wait_for_delete()
 
     assert not network_provider.exists
+
+
+@pytest.mark.ignore_stream('5.9')
+@pytest.mark.provider([OpenStackProvider], scope='function', override=True)
+def test_router_crud(provider, appliance):
+    router_name = 'test_router_crud-{}'.format(fauxfactory.gen_alphanumeric().lower())
+    routers = appliance.collections.network_routers
+    router = routers.create(name=router_name,
+                            provider=provider,
+                            tenant=provider.data.networks.cloud_tenant,
+                            network_manager=provider.data.networks.network_manager)
+    assert router.exists
+
+    router.delete()
+    provider.refresh_provider_relationships()
+
+    def router_doesnt_exists():
+        # Navigate somewhere else then to Router Details to enforce page refresh.
+        collection = appliance.collections.network_providers.filter({'provider': provider})
+        return router.name not in (r.name for r in collection.all())
+
+    wait_for(router_doesnt_exists, fail_condition=False, timeout=240, delay=1)
