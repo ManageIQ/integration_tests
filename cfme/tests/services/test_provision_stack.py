@@ -165,6 +165,7 @@ def _cleanup(appliance=None, provision_request=None, service=None):
         myservice.delete()
 
 
+@pytest.mark.meta(blockers=[BZ(1628384, forced_streams=['5.10'])])
 def test_provision_stack(order_stack):
     """Tests stack provisioning
 
@@ -175,7 +176,7 @@ def test_provision_stack(order_stack):
     assert provision_request.is_succeeded()
 
 
-@pytest.mark.meta(blockers=[BZ(1575935, forced_streams=['5.8', '5.9'])])
+@pytest.mark.meta(blockers=[BZ(1628384, forced_streams=['5.10'])])
 def test_reconfigure_service(appliance, service_catalogs, request):
     """Tests service reconfiguring
 
@@ -194,6 +195,7 @@ def test_reconfigure_service(appliance, service_catalogs, request):
 
 @pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider),
                          reason='EC2 locks template between Stack order and template removal')
+@pytest.mark.meta(blockers=[BZ(1628384, forced_streams=['5.10'])])
 def test_remove_non_read_only_orch_template(appliance, provider, template, service_catalogs,
                                             request):
     """
@@ -214,6 +216,7 @@ def test_remove_non_read_only_orch_template(appliance, provider, template, servi
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider),
                          reason='Only EC2 locks orchestration template')
+@pytest.mark.meta(blockers=[BZ(1628384, forced_streams=['5.10'])])
 def test_remove_read_only_orch_template_neg(appliance, provider, template, service_catalogs,
                                             request):
     """
@@ -235,6 +238,7 @@ def test_remove_read_only_orch_template_neg(appliance, provider, template, servi
         template.delete()
 
 
+@pytest.mark.meta(blockers=[BZ(1628384, forced_streams=['5.10'])])
 def test_retire_stack(order_stack):
     """Tests stack retirement.
 
