@@ -369,7 +369,8 @@ def providers(metafunc, filters=None, selector=ALL, fixture_name='provider'):
 
 
 def providers_by_class(
-        metafunc, classes, required_fields=None, selector=ALL, fixture_name='provider'):
+        metafunc, classes, required_fields=None, selector=ALL, fixture_name='provider',
+        required_flags=None):
     """ Gets providers by their class
 
     Args:
@@ -388,7 +389,7 @@ def providers_by_class(
         # Using the parametrize wrapper
         pytest_generate_tests = testgen.parametrize([GCEProvider], scope='module')
     """
-    pf = DPFilter(classes=classes, required_fields=required_fields)
+    pf = DPFilter(classes=classes, required_fields=required_fields, required_flags=required_flags)
     return providers(metafunc, filters=[pf], selector=selector, fixture_name=fixture_name)
 
 
