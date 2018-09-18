@@ -9,13 +9,9 @@ from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_patternfly import Accordion, Dropdown
 from widgetastic_manageiq import (
     BaseEntitiesView,
-    BaseListEntity,
-    BaseQuadIconEntity,
-    BaseTileIconEntity,
     ItemsToolBarViewSelector,
     JSBaseEntity,
     ManageIQTree,
-    NonJSBaseEntity,
     Search,
     SummaryTable,
 )
@@ -57,33 +53,6 @@ class DatastoreSideBar(View):
     class clusters(Accordion):  # noqa
         ACCORDION_NAME = "Datastore Clusters"
         tree = ManageIQTree()
-
-
-class DatastoreQuadIconEntity(BaseQuadIconEntity):
-    @property
-    def data(self):
-        try:
-            return {
-                'type': self.browser.get_attribute("alt", self.QUADRANT.format(pos="a")),
-                'no_vm': int(self.browser.text(self.QUADRANT.format(pos="b"))),
-                'no_host': int(self.browser.text(self.QUADRANT.format(pos="c"))),
-            }
-        except (IndexError, NoSuchElementException):
-            return {}
-
-
-class DatastoreTileIconEntity(BaseTileIconEntity):
-    quad_icon = ParametrizedView.nested(DatastoreQuadIconEntity)
-
-
-class DatastoreListEntity(BaseListEntity):
-    pass
-
-
-class NonJSDatastoreEntity(NonJSBaseEntity):
-    quad_entity = DatastoreQuadIconEntity
-    list_entity = DatastoreListEntity
-    tile_entity = DatastoreTileIconEntity
 
 
 class DatastoreEntity(JSBaseEntity):

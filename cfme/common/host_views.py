@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Parameter
 from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_patternfly import (
@@ -8,9 +7,9 @@ from widgetastic_patternfly import (
 
 from cfme.base.login import BaseLoggedInPage
 from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, BaseListEntity, BaseQuadIconEntity, BaseTileIconEntity, Button,
+    Accordion, BaseEntitiesView, Button,
     Checkbox, DriftComparison, Input, ItemsToolBarViewSelector, JSBaseEntity, ManageIQTree,
-    NonJSBaseEntity, PaginationPane, ParametrizedSummaryTable, Table, TimelinesView, Search)
+    PaginationPane, ParametrizedSummaryTable, Table, TimelinesView, Search)
 
 
 class ComputeInfrastructureHostsView(BaseLoggedInPage):
@@ -26,34 +25,6 @@ class ComputeInfrastructureHostsView(BaseLoggedInPage):
             self.logged_in_as_current_user and (_host_page("Hosts") or _host_page("Nodes") or
                                                 _host_page("Hosts / Nodes"))
         )
-
-
-class HostQuadIconEntity(BaseQuadIconEntity):
-    @property
-    def data(self):
-        try:
-            return {
-                'no_vm': int(self.browser.text(self.QUADRANT.format(pos="a"))),
-                'state': self.browser.get_attribute("style", self.QUADRANT.format(pos="b")),
-                'vendor': self.browser.get_attribute("alt", self.QUADRANT.format(pos="c")),
-                'creds': self.browser.get_attribute("alt", self.QUADRANT.format(pos="d"))
-            }
-        except (IndexError, NoSuchElementException):
-            return {}
-
-
-class HostTileIconEntity(BaseTileIconEntity):
-    quad_icon = ParametrizedView.nested(HostQuadIconEntity)
-
-
-class HostListEntity(BaseListEntity):
-    pass
-
-
-class NonJSHostEntity(NonJSBaseEntity):
-    quad_entity = HostQuadIconEntity
-    list_entity = HostListEntity
-    tile_entity = HostTileIconEntity
 
 
 class HostEntity(JSBaseEntity):

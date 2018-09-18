@@ -7,7 +7,7 @@ from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview as CbTree,
     BootstrapSwitch, CandidateNotFound, Dropdown)
 from widgetastic_manageiq import (
-    UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity, SummaryForm)
+    UpDownSelect, PaginationPane, SummaryFormItem, Table, SummaryForm)
 from widgetastic_manageiq.expression_editor import GroupTagExpressionEditor
 
 from cfme.base.credential import Credential
@@ -1236,10 +1236,6 @@ class TenantForm(ConfigurationView):
     description = Input(name='description')
     add_button = Button('Add')
     cancel_button = Button('Cancel')
-
-
-class ListEntity(BaseListEntity):
-    pass
 
 
 class TenantQuotaForm(View):
