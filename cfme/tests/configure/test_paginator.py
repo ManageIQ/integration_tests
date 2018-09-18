@@ -62,7 +62,7 @@ details_pages = [
     ('groups', None, 'Details', False),
     ('roles', None, 'Details', False),
     ('tenants', None, 'Details', False),
-    ('analysis_profile', None, 'Details', False),
+    ('analysis_profiles', None, 'Details', False),
     ('system_schedules', None, 'All', True),
     ('system_schedules', None, 'Details', False),
     ('tag', None, 'All', False),
