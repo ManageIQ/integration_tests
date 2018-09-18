@@ -145,7 +145,7 @@ def set_hosts_credentials(appliance, request, provider):
     hosts = provider.hosts.all()
     for host in hosts:
         try:
-            host_data, = [host for host in provider.data['hosts'] if host['name'] == host.name]
+            host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
         except ValueError:
             pytest.skip('Multiple hosts with the same name found, only expecting one')
 
@@ -190,15 +190,16 @@ def set_agent_creds(appliance, request, provider):
 
 @pytest.fixture(scope="module")
 def local_setup_provider(request, setup_provider_modscope, provider, appliance):
-
     # TODO: allow for vddk parameterization
     if provider.one_of(VMwareProvider):
         appliance.install_vddk()
         request.addfinalizer(appliance.uninstall_vddk)
-        set_hosts_credentials(appliance, request, provider)
 
     if provider.one_of(EC2Provider):
         set_agent_creds(appliance, request, provider)
+
+    if provider.one_of(InfraProvider):
+        set_hosts_credentials(appliance, request, provider)
 
     # Make sure all roles are set
     appliance.server.settings.enable_server_roles('automate', 'smartproxy', 'smartstate')
