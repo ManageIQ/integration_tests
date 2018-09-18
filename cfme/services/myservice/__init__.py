@@ -20,6 +20,7 @@ class MyService(Updateable, Navigatable, Taggable, sentaku.modeling.ElementMixin
     exists = sentaku.ContextualProperty()
     delete = sentaku.ContextualMethod()
     set_ownership = sentaku.ContextualMethod()
+    get_ownership = sentaku.ContextualMethod()
     edit_tags = sentaku.ContextualMethod()
     check_vm_add = sentaku.ContextualMethod()
     download_file = sentaku.ContextualMethod()

@@ -1029,6 +1029,9 @@ class Role(Updateable, Pretty, BaseEntity):
         flash_blocked_msg = "Read Only Role \"{}\" can not be edited".format(self.name)
         edit_role_txt = 'Edit this Role'
         view = navigate_to(self, 'Details')
+        # TODO: Remove following code when toolbar disappear issue (BZ1630012) get patched
+        if not view.toolbar.configuration.is_displayed:
+            view.browser.refresh()
         if not view.toolbar.configuration.item_enabled(edit_role_txt):
             raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
                 edit_role_txt))
