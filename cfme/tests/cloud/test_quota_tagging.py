@@ -112,6 +112,13 @@ def set_entity_quota_source(max_quota_test_instance, entity):
         max_quota_test_instance.fields = {'quota_source_type': {'value': entity}}
 
 
+@pytest.fixture(params=['user', 'group'])
+def set_entity_quota_source_change(max_quota_test_instance, request):
+    entity_value = request.param
+    with update(max_quota_test_instance):
+        max_quota_test_instance.fields = {'quota_source_type': {'value': entity_value}}
+
+
 @pytest.fixture(params=[('groups', 'group', 'EvmGroup-super_administrator'),
                         ('users', 'user', 'Administrator')], ids=['group', 'user'], scope='module')
 def entities(appliance, request, max_quota_test_instance):
@@ -179,6 +186,31 @@ def test_quota_tagging_cloud_via_services(appliance, request, provider, setup_pr
         service_catalogs.order()
     # nav to requests page to check quota validation
     request_description = 'Provisioning Service [{0}] from [{0}]'.format(catalog_item.name)
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(provision_request.remove_request)
+    assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+def test_cloud_quota_by_lifecycle(request, appliance, provider, setup_provider,
+                                  set_entity_quota_source_change, prov_data, vm_name,
+                                  template_name):
+    """Testing cloud quota for user and group by provisioning instance via lifecycle
+
+    Steps;
+    1. Navigate to Automation > automate > Explorer
+    2. Create new Domain and copy 'quota' and 'quota_source' method
+    3. Change 'value' of 'open source type' to 'user' or 'group' (one by one) in 'quota' method
+    4. Provision instance via lifecycle
+    5. Make sure that provisioned 'template' is having more than assigned quota
+    6. Check whether instance provision 'Denied' with reason 'Quota Exceeded'
+    """
+    recursive_update(prov_data, {
+        'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
+    prov_data.update({'template_name': template_name})
+    appliance.collections.cloud_instances.create(vm_name, provider, prov_data, override=True)
+    # nav to requests page to check quota validation
+    request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
