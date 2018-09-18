@@ -11,6 +11,7 @@ from cfme.common.candu_views import AzoneCloudUtilizationView
 from cfme.exceptions import AvailabilityZoneNotFound, ItemNotFound
 from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     BaseEntitiesView, TimelinesView, ItemsToolBarViewSelector, Text, Table, SummaryTable, Accordion,
@@ -144,6 +145,29 @@ class AvailabilityZone(BaseEntity, Taggable):
 @attr.s
 class AvailabilityZoneCollection(BaseCollection):
     ENTITY = AvailabilityZone
+
+    def all(self):
+        """returning all Availability Zone objects and support filtering as per provider"""
+        provider = self.filters.get("provider")
+        azones = self.appliance.rest_api.collections.availability_zones.all
+        if provider:
+            azone_objs = [
+                self.instantiate(name=azone.name, provider=provider)
+                for azone in azones
+                if provider.id == azone.ems_id
+            ]
+        else:
+            providers = self.appliance.rest_api.collections.providers
+            providers_db = {
+                prov.id: get_crud_by_name(prov.name)
+                for prov in providers
+                if "Manager" not in prov.name
+            }
+            azone_objs = [
+                self.instantiate(name=azone.name, provider=providers_db[azone.ems_id])
+                for azone in azones
+            ]
+        return azone_objs
 
 
 @navigator.register(AvailabilityZoneCollection, 'All')

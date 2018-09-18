@@ -15,13 +15,27 @@ pytestmark = [
     pytest.mark.provider([OpenStackProvider], selector=ONE_PER_TYPE),
 ]
 
-CLOUD_OBJECTS = ["PROVIDER", "VM_INSTANCE"]
+CLOUD_OBJECTS = ["PROVIDER", "VM_INSTANCE", "AZONE"]
 
 DISPLAY_NAV = {
     "Single entity": ["Details"],
     "List": ["All"],
     "Single and list": ["All", "Details"],
 }
+
+OBJ_TYPE_59 = [
+    "CLOUD_TENANT",
+    "CLOUD_VOLUME",
+    "CLUSTER",
+    "CONTAINER_NODE",
+    "CONTAINER_PROJECT",
+    "DATASTORE",
+    "GENERIC",
+    "HOST",
+    "PROVIDER",
+    "SERVICE",
+    "TEMPLATE",
+    "VM_INSTANCE"]
 
 
 @pytest.fixture(
@@ -54,15 +68,23 @@ def setup_objs(button_group, provider):
         obj = [provider, network_manager, block_manager, object_manager]
     elif obj_type == "VM_INSTANCE":
         obj = [provider.appliance.provider_based_collection(provider).all()[0]]
+    elif obj_type == "AZONE":
+        obj = [
+            provider.appliance.collections.cloud_av_zones.filter({"provider": provider}).all()[0]
+        ]
     else:
         logger.error("No object collected for custom button object type '{}'".format(obj_type))
     return obj
 
 
+@pytest.mark.uncollectif(
+    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
+    and appliance.version < "5.10"
+)
 @pytest.mark.parametrize(
     "display", DISPLAY_NAV.keys(), ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
 )
-def test_custom_button_display(request, display, setup_objs, button_group):
+def test_custom_button_display(appliance, request, display, setup_objs, button_group):
     """ Test custom button display on a targeted page
 
     prerequisites:
