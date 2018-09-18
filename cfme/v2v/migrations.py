@@ -1,6 +1,7 @@
 import attr
 import csv
 import tempfile
+import time
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from selenium.webdriver.common.keys import Keys
@@ -19,6 +20,8 @@ from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.wait import wait_for
+
+from selenium.common.exceptions import StaleElementReferenceException
 
 
 # Widgets
@@ -121,14 +124,13 @@ class InfraMappingWizardClustersView(View):
                        ...
                     }
         """
-        source_clusters_filled = []
-        target_clusters_filled = []
         for mapping in values['mappings']:
-            source_clusters_filled.append(self.source_clusters.fill(mapping['sources']))
-            target_clusters_filled.append(self.target_clusters.fill(mapping['target']))
+            self.source_clusters.fill(mapping['sources'])
+            self.target_clusters.fill(mapping['target'])
             self.add_mapping.click()
-        was_change = any(source_clusters_filled) and any(target_clusters_filled)
+        was_change = not self.mappings_tree.is_empty
         if was_change:
+            self.logger.info("Fill operation was successful, click Next.")
             self.next_btn.click()
         return was_change
 
@@ -163,16 +165,16 @@ class InfraMappingWizardDatastoresView(View):
                         ...
                     }
         """
-        source_datastores_filled = []
-        target_datastores_filled = []
         for cluster in values:
-            self.cluster_selector.fill(cluster)
+            if self.cluster_selector.is_displayed:
+                self.cluster_selector.fill(cluster)
             for mapping in values[cluster]['mappings']:
-                source_datastores_filled.append(self.source_datastores.fill(mapping['sources']))
-                target_datastores_filled.append(self.target_datastores.fill(mapping['target']))
+                self.source_datastores.fill(mapping['sources'])
+                self.target_datastores.fill(mapping['target'])
                 self.add_mapping.click()
-        was_change = any(source_datastores_filled) and any(target_datastores_filled)
+        was_change = not self.mappings_tree.is_empty
         if was_change:
+            self.logger.info("Fill operation was successful, click Next.")
             self.next_btn.click()
         return was_change
 
@@ -208,16 +210,16 @@ class InfraMappingWizardNetworksView(View):
                         ...
                     }
         """
-        source_networks_filled = []
-        target_networks_filled = []
         for cluster in values:
-            self.cluster_selector.fill(cluster)
+            if self.cluster_selector.is_displayed:
+                self.cluster_selector.fill(cluster)
             for mapping in values[cluster]['mappings']:
-                source_networks_filled.append(self.source_networks.fill(mapping['sources']))
-                target_networks_filled.append(self.target_networks.fill(mapping['target']))
+                self.source_networks.fill(mapping['sources'])
+                self.target_networks.fill(mapping['target'])
                 self.add_mapping.click()
-        was_change = any(source_networks_filled) and any(target_networks_filled)
+        was_change = not self.mappings_tree.is_empty
         if was_change:
+            self.logger.info("Fill operation was successful, click Next.")
             self.next_btn.click()
         return was_change
 
@@ -312,6 +314,7 @@ class MigrationDashboardView(BaseLoggedInPage):
     configure_providers = Text(locator='//a[text()="Configure Providers"]')
     migration_plans_not_started_list = MigrationPlansList("plans-not-started-list")
     migration_plans_completed_list = MigrationPlansList("plans-complete-list")
+    migration_plans_archived_list = MigrationPlansList("plans-complete-list")
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
     migr_dropdown = MigrationDropdown(text="Not Started Plans")
     # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
@@ -322,6 +325,38 @@ class MigrationDashboardView(BaseLoggedInPage):
         return (self.navigation.currently_selected == ['Compute', 'Migration'] and
             (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
             (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0))
+
+    def plan_in_progress(self, plan_name):
+        """MIQ V2V UI is going through redesign as OSP will be integrated.
+
+            # TODO: This also means that mappings/plans may be moved to different pages. Once all of
+            that is settled we will need to refactor and also account for notifications.
+        """
+        try:
+            try:
+                is_plan_visible = self.progress_card.is_plan_visible(plan_name)
+            except ItemNotFound:
+                # This will end the wait_for loop and check the plan under completed_plans section
+                return True
+            if is_plan_visible:
+                # log current status
+                # uncomment following logs after @Yadnyawalk updates the widget for in progress card
+                # logger.info("For plan %s, current migrated size is %s out of total size %s",
+                #     migration_plan.name, view.progress_card.get_migrated_size(plan_name),
+                #     view.progress_card.get_total_size(migration_plan.name))
+                # logger.info("For plan %s, current migrated VMs are %s out of total VMs %s",
+                #     migration_plan.name, view.progress_card.migrated_vms(migration_plan.name),
+                #     view.progress_card.total_vm_to_be_migrated(migration_plan.name))
+                self.logger.info("For plan %s, is plan in progress: %s,"
+                    "time elapsed for migration: %s",
+                    plan_name, is_plan_visible,
+                    self.progress_card.get_clock(plan_name))
+            # return False if plan visible under "In Progress Plans"
+            return not is_plan_visible
+        except StaleElementReferenceException:
+            self.browser.refresh()
+            self.migr_dropdown.item_select("In Progress Plans")
+            return False
 
 
 class AddInfrastructureMappingView(View):
@@ -462,7 +497,7 @@ class MigrationPlanRequestDetailsView(View):
         except NoSuchElementException:
             # Ignore as button won't be visible if there were no filters applied.
             self.logger.info("Clear Filters button not present, ignoring.")
-        self.filter_with_vm_name(vm_name)
+        self.filter_by_vm_name(vm_name)
         status = {"Message": self.migration_request_details_list.get_message_text(vm_name),
         "Description": self.migration_request_details_list.get_progress_description(vm_name),
         "Time Elapsed": self.migration_request_details_list.get_clock(vm_name)}
@@ -494,6 +529,33 @@ class MigrationPlanRequestDetailsView(View):
         except NoSuchElementException:
             raise ItemNotFound("Migration plan is in Not Started State,"
                 " hence sort_by dropdown not visible")
+
+    def plan_in_progress(self, vms_count=5):
+        """Reuturn True or False, depending on migration plan status.
+
+        If none of the VM migrations are in progress, return True.
+        """
+        if vms_count > 5:
+            self.items_on_page.item_select("15")
+        migration_plan_in_progress_tracker = []
+        vms = self.migration_request_details_list.read()
+        for vm in vms:
+            clock_reading1 = self.migration_request_details_list.get_clock(vm)
+            time.sleep(1)  # wait 1 sec to see if clock is ticking
+            self.logger.info("For vm %s, current message is %s", vm,
+                self.migration_request_details_list.get_message_text(vm))
+            self.logger.info("For vm %s, current progress description is %s", vm,
+                self.migration_request_details_list.get_progress_description(vm))
+            clock_reading2 = self.migration_request_details_list.get_clock(vm)
+            self.logger.info("clock_reading1: %s, clock_reading2:%s", clock_reading1,
+                clock_reading2)
+            self.logger.info("For vm %s, is currently in progress: %s", vm,
+              self.migration_request_details_list.is_in_progress(vm))
+            migration_plan_in_progress_tracker.append(
+                self.migration_request_details_list.is_in_progress(vm) and (
+                    clock_reading1 < clock_reading2))
+        return not any(migration_plan_in_progress_tracker)
+
 
 # Collections Entities
 
