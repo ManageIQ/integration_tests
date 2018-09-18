@@ -675,13 +675,12 @@ class ContainerSummaryTable(SummaryTable):
 
 class StatusBox(Widget, ClickableMixin):
     card = Text(
-        ParametrizedLocator(
-            ".//div[@pf-aggregate-status-card and (normalize-space"
-            "(.//h2/a/span[contains(@class, "
-            '"card-pf-aggregate-status-count")]/following::'
-            "text())={@name|quote} or normalize-space(.//span"
-            '[contains(@class, "card-pf-aggregate-status-title")]'
-            "/text())={@name|quote})]"
+        locator=ParametrizedLocator(
+            './/div[contains(@class, "card-pf-aggregate-status") '
+            'and h2[contains(@class, "card-pf-title")]'
+            "//span[normalize-space(following::text())={@name|quote} "
+            'or (contains(@class, "card-pf-aggregate-status-title") '
+            "and normalize-space(.)={@name|quote})]]"
         )
     )
 
