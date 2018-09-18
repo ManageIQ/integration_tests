@@ -18,10 +18,15 @@ def test_api_port(provider):
     api_port = int(view_details.entities.summary('Properties').get_text_of('API Port'))
     assert api_port == port, 'Invalid API Port'
 
+
 def test_credentials_quads(provider):
     view = navigate_to(provider, 'All')
     prov_item = view.entities.get_entity(name=provider.name, surf_pages=True)
-    assert prov_item.data.get('creds') and 'checkmark' in prov_item.data['creds']
+    valid_message = 'Authentication credentials are valid'
+    if provider.appliance.version >= '5.10':
+        assert valid_message in prov_item.data['quad']['bottomRight']['tooltip']
+    else:
+        assert prov_item.data.get('creds') and 'checkmark' in prov_item.data['creds']
 
 
 def test_delete_provider(provider):
