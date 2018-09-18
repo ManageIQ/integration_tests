@@ -35,7 +35,7 @@ from cfme.utils.providers import get_crud_by_name
 from cfme.utils.version import UPSTREAM, VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    Accordion, ConditionalSwitchableView, ManageIQTree, NonJSPaginationPane,
+    Accordion, ConditionalSwitchableView, ManageIQTree, PaginationPane,
     SummaryTable, Table, TimelinesView, CompareToolBarActionsView, Search)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
@@ -136,7 +136,7 @@ class VmsTemplatesAllView(InfraVmView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
-    pagination = View.nested(NonJSPaginationPane)
+    pagination = PaginationPane
 
     @property
     def is_displayed(self):

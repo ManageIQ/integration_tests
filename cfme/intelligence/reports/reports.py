@@ -7,8 +7,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Text, Checkbox, View, ParametrizedView, Table as VanillaTable
-from widgetastic_manageiq import (PaginationPane, Table, ReportToolBarViewSelector,
-                                  NonJSPaginationPane)
+from widgetastic_manageiq import (PaginationPane, Table, ReportToolBarViewSelector)
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, CandidateNotFound
 
@@ -155,7 +154,8 @@ class SavedReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
     table = VanillaTable(".//div[@id='report_html_div']/table")
     # PaginationPane() is not working on Report Details page
-    paginator = View.nested(NonJSPaginationPane)
+    # TODO: double check and raise GH to devs
+    paginator = PaginationPane()
     view_selector = View.nested(ReportToolBarViewSelector)
 
     @ParametrizedView.nested
