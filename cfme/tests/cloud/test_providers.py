@@ -228,6 +228,9 @@ def test_cloud_provider_crud(provider, enable_regions):
         test_flag: crud
     """
     provider.create()
+    if provider.appliance.version > '5.10.0.4':
+        view = navigate_to(provider, "Details")
+        view.toolbar.view_selector.select('Summary View')
     provider.validate_stats(ui=True)
 
     old_name = provider.name
