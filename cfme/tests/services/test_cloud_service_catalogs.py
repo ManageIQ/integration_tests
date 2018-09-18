@@ -10,6 +10,7 @@ from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -30,6 +31,7 @@ def vm_name():
     return random_vm_name(context='provs')
 
 
+@pytest.mark.meta(blockers=[BZ(1626232, forced_streams=['5.10'])])
 def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog, catalog, request,
                             provisioning):
     """Tests cloud catalog item
