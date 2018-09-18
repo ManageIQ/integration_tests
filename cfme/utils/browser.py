@@ -258,7 +258,7 @@ class BrowserManager(object):
                 browser_kwargs['desired_capabilities']['marionette'] = False
             return cls(WharfFactory(webdriver_class, browser_kwargs, wharf))
         else:
-            if webdriver_name == "Remote":
+            if webdriver_name.lower() == "remote":
                 if browser_conf[
                         'webdriver_options'][
                             'desired_capabilities']['browserName'].lower() == 'chrome':
