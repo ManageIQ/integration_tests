@@ -16,9 +16,10 @@ from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.ftp import FTPClient
-from cfme.utils.providers import get_crud
+from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
 from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.log_depot]
 
@@ -159,19 +160,31 @@ def check_ftp(ftp, server_name, server_zone_id):
         assert zip_files, "No logs found!"
     # Check the times of the files by names
     datetimes = []
-    for file in zip_files:
+    for zip_file in zip_files:
         # files looks like "Current_region_0_default_1_EVM_1_20170127_043343_20170127_051010.zip"
         # 20170127_043343 - date and time
-        date = file.name.split("_")
+        date = zip_file.name.split("_")
         date_from = date[7] + date[8]
         # removing ".zip" from last item
         date_to = date[9] + date[10][:-4]
         try:
             date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
             date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
+            # if the file is correct, check ansible logs (~/ROOT/var/log/tower/setup-*) are there
+            if ftp.login != 'anonymous':  # can't login as anon using SSH
+                with SSHClient(hostname=ftp.host,
+                               username=ftp.login,
+                               password=ftp.password) as log_ssh:
+                    result = log_ssh.run_command(
+                        "unzip -l ~{} | grep ROOT/var/log/tower/setup".format(zip_file.path),
+                        ensure_user=True)
+                    assert '.log' in result.output
+                    log_file_size, log_date, log_time, log_path = result.output.split()
+                    assert int(log_file_size) > 0, "Log file is empty!"
+
         except ValueError:
-            assert False, "Wrong file matching of {}".format(file.name)
-        datetimes.append((date_from, date_to, file.name))
+            assert False, "Wrong file matching of {}".format(zip_file.name)
+        datetimes.append((date_from, date_to, zip_file.name))
 
     # Check for the gaps
     if len(datetimes) > 1:
@@ -183,12 +196,86 @@ def check_ftp(ftp, server_name, server_zone_id):
             )
 
 
+@pytest.fixture(scope="module")
+def wait_for_ansible(appliance):
+    appliance.server.settings.enable_server_roles("embedded_ansible")
+    appliance.wait_for_embedded_ansible()
+    yield
+    appliance.server.settings.disable_server_roles("embedded_ansible")
+
+
+@pytest.fixture(scope="module")
+def ansible_repository(appliance, wait_for_ansible):
+    repositories = appliance.collections.ansible_repositories
+    repository = repositories.create(
+        name=fauxfactory.gen_alpha(),
+        url="https://github.com/quarckster/ansible_playbooks",
+        description=fauxfactory.gen_alpha())
+    view = navigate_to(repository, "Details")
+    refresh = view.toolbar.refresh.click
+    wait_for(
+        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
+        timeout=60,
+        fail_func=refresh
+    )
+    yield repository
+
+    if repository.exists:
+        repository.delete()
+
+
+@pytest.fixture(scope="module")
+def ansible_catalog_item(appliance, ansible_repository):
+    cat_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
+        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(),
+        display_in_catalog=True,
+        provisioning={
+            "repository": ansible_repository.name,
+            "playbook": "dump_all_variables.yml",
+            "machine_credential": "CFME Default Credential",
+            "create_new": True,
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
+            "extra_vars": [("some_var", "some_value")]
+        }
+    )
+    yield cat_item
+
+    if cat_item.exists:
+        cat_item.delete()
+
+
+@pytest.fixture(scope="module")
+def catalog(appliance, ansible_catalog_item):
+    catalog_ = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
+                                                     description='my catalog',
+                                                     items=[ansible_catalog_item.name])
+    ansible_catalog_item.catalog = catalog_
+    yield catalog_
+
+    if catalog_.exists:
+        catalog_.delete()
+        ansible_catalog_item.catalog = None
+
+
+@pytest.fixture
+def service_request(appliance, ansible_catalog_item):
+    request_descr = \
+        "Provisioning Service [{name}] from [{name}]".format(name=ansible_catalog_item.name)
+    service_request_ = appliance.collections.requests.instantiate(description=request_descr)
+    yield service_request_
+
+    if service_request_.exists():
+        service_request_.remove_request()
+
+
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
-@pytest.mark.meta(blockers=[BZ(1603163, unblock=lambda log_depot: log_depot.protocol != "anon_ftp",
-                            forced_streams=["5.6", "5.7", "5.8", "upstream"])]
+@pytest.mark.meta(blockers=[BZ(1627273, unblock=lambda log_depot: log_depot.protocol != "ftp",
+                            forced_streams=["5.10", "upstream"])]
                   )
-def test_collect_log_depot(log_depot, appliance, configured_depot, request):
+def test_collect_log_depot(log_depot, appliance, service_request, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
 
     Will be extended and improved.
