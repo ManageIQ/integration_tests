@@ -308,9 +308,9 @@ def condition_for_expressions(request, condition_collection, appliance):
         condition_class,
         fauxfactory.gen_alphanumeric(),
         expression="fill_field({} : Name, IS NOT EMPTY)".format(
-            condition_class.FIELD_VALUE.pick(appliance.version)),
+            condition_class.FIELD_VALUE),
         scope="fill_field({} : Name, INCLUDES, {})".format(
-            condition_class.FIELD_VALUE.pick(appliance.version), fauxfactory.gen_alpha())
+            condition_class.FIELD_VALUE, fauxfactory.gen_alpha())
     )
     yield condition
     condition.delete()
@@ -320,11 +320,11 @@ def condition_for_expressions(request, condition_collection, appliance):
 def condition_prerequisites(request, condition_collection, appliance):
     condition_class = request.param
     expression = "fill_field({} : Name, =, {})".format(
-        condition_class.FIELD_VALUE.pick(appliance.version),
+        condition_class.FIELD_VALUE,
         fauxfactory.gen_alphanumeric()
     )
     scope = "fill_field({} : Name, =, {})".format(
-        condition_class.FIELD_VALUE.pick(appliance.version),
+        condition_class.FIELD_VALUE,
         fauxfactory.gen_alphanumeric()
     )
     return condition_class, scope, expression
@@ -390,7 +390,7 @@ def policy_and_condition(request, policy_collection, condition_collection, appli
     if policy_class in PHYS_POLICIES and appliance.version < "5.9":
         pytest.skip("Physical Infrastructure Policies are available in CFME 5.9 and newer.")
     expression = "fill_field({} : Name, =, {})".format(
-        condition_class.FIELD_VALUE.pick(appliance.version),
+        condition_class.FIELD_VALUE,
         fauxfactory.gen_alphanumeric()
     )
     condition = condition_collection.create(

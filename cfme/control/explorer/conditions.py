@@ -9,6 +9,7 @@ from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from . import ControlExplorerView
 
@@ -332,19 +333,18 @@ class VMCondition(BaseCondition):
 
 class ReplicatorCondition(BaseCondition):
 
-    TREE_NODE = "Replicator"
-    PRETTY = FIELD_VALUE = "Container Replicator"
+    TREE_NODE = PRETTY = FIELD_VALUE = "Replicator"
 
 
 class PodCondition(BaseCondition):
 
-    TREE_NODE = "Pod"
-    PRETTY = FIELD_VALUE = "Container Pod"
+    TREE_NODE = PRETTY = FIELD_VALUE = "Pod"
 
 
 class ContainerNodeCondition(BaseCondition):
 
-    TREE_NODE = PRETTY = FIELD_VALUE = "Container Node"
+    TREE_NODE = "Container Node"
+    PRETTY = FIELD_VALUE = "Node"
 
 
 class ContainerImageCondition(BaseCondition):
