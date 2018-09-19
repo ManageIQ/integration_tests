@@ -524,21 +524,20 @@ class VMControlPolicy(BasePolicy):
 class ReplicatorControlPolicy(BasePolicy):
 
     TYPE = "Control"
-    TREE_NODE = "Replicator"
-    PRETTY = "Container Replicator"
+    TREE_NODE = PRETTY = "Replicator"
 
 
 class PodControlPolicy(BasePolicy):
 
     TYPE = "Control"
-    TREE_NODE = "Pod"
-    PRETTY = "Container Pod"
+    TREE_NODE = PRETTY = "Pod"
 
 
 class ContainerNodeControlPolicy(BasePolicy):
 
     TYPE = "Control"
-    PRETTY = TREE_NODE = "Container Node"
+    TREE_NODE = "Container Node"
+    PRETTY = "Node"
 
 
 class ContainerImageControlPolicy(BasePolicy):
