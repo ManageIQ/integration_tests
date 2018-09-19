@@ -6,7 +6,7 @@ import pytest
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for, TimedOutError
 
 
 pytestmark = [
@@ -152,7 +152,6 @@ def test_edit_subnet(subnet):
     subnet.edit(new_name=fauxfactory.gen_alpha())
     wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
-    subnet.browser.refresh()
     wait_for(lambda: subnet.exists, delay=15, timeout=600, fail_func=subnet.browser.refresh)
     assert subnet.exists
 
@@ -162,7 +161,6 @@ def test_delete_subnet(subnet):
     subnet.delete()
     wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=800,
              delay=30)
-    subnet.browser.refresh()
     wait_for(lambda: not subnet.exists,
              delay=30, timeout=800, fail_func=subnet.browser.refresh)
     assert not subnet.exists
@@ -186,7 +184,6 @@ def test_edit_router(router):
     router.edit(name=fauxfactory.gen_alpha())
     wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
-    router.browser.refresh()
     wait_for(lambda: router.exists,
              delay=15, timeout=600, fail_func=router.browser.refresh)
     assert router.exists
@@ -221,7 +218,6 @@ def test_add_gateway_to_router(router, ext_subnet):
                 ext_network_subnet=ext_subnet.name)
     wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
-    router.browser.refresh()
     wait_for(lambda: router.cloud_network == ext_subnet.network,
              delay=15, timeout=600, fail_func=router.browser.refresh)
     assert router.cloud_network == ext_subnet.network
@@ -229,16 +225,18 @@ def test_add_gateway_to_router(router, ext_subnet):
 
 def test_add_interface_to_router(router, subnet):
     """Adds interface (subnet) to router"""
+    view = navigate_to(router, 'Details')
+    subnets_count_before_adding = int(view.entities.relationships.get_text_of('Cloud Subnets'))
     router.add_interface(subnet.name)
     wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=800,
              delay=30)
-    router.browser.refresh()
     # TODO: verify the exact entities' names and relationships, not only count
-    view = navigate_to(router, 'Details')
-    wait_for(lambda: int(view.entities.relationships.get_text_of('Cloud Subnets')) == 1,
-             delay=30, timeout=800, fail_func=router.browser.refresh)
-    subnets_count = int(view.entities.relationships.get_text_of('Cloud Subnets'))
-    assert subnets_count == 1  # Compare to '1' because clean router was used initially
+    try:
+        wait_for(lambda: int(view.entities.relationships.get_text_of('Cloud Subnets')) ==
+                 (subnets_count_before_adding + 1),
+                 delay=30, timeout=800, fail_func=router.browser.refresh)
+    except TimedOutError:
+        assert False, "After waiting an interface to the router is still not added"
 
 
 def test_list_networks(provider, appliance):
