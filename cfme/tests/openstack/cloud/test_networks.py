@@ -122,7 +122,6 @@ def test_edit_network(network):
     network.edit(name=fauxfactory.gen_alpha())
     wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
-    network.browser.refresh()
     wait_for(lambda: network.exists,
              delay=15, timeout=600, fail_func=network.browser.refresh)
     assert network.exists
@@ -133,7 +132,6 @@ def test_delete_network(network):
     network.delete()
     wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
-    network.browser.refresh()
     wait_for(lambda: not network.exists,
              delay=15, timeout=600, fail_func=network.browser.refresh)
     assert not network.exists
@@ -162,11 +160,11 @@ def test_edit_subnet(subnet):
 def test_delete_subnet(subnet):
     """Deletes private subnet"""
     subnet.delete()
-    wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
-             delay=10)
+    wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=800,
+             delay=30)
     subnet.browser.refresh()
     wait_for(lambda: not subnet.exists,
-             delay=15, timeout=600, fail_func=subnet.browser.refresh)
+             delay=30, timeout=800, fail_func=subnet.browser.refresh)
     assert not subnet.exists
 
 
@@ -197,12 +195,11 @@ def test_edit_router(router):
 def test_delete_router(router, appliance):
     """Deletes router"""
     router.delete()
-    wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
-             delay=10)
-    router.browser.refresh()
+    wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=800,
+             delay=30)
     navigate_to(appliance.collections.network_routers, 'All')
     wait_for(lambda: not router.exists,
-             delay=15, timeout=600, fail_func=router.browser.refresh)
+             delay=30, timeout=800, fail_func=router.browser.refresh)
     assert not router.exists
 
 
@@ -233,13 +230,13 @@ def test_add_gateway_to_router(router, ext_subnet):
 def test_add_interface_to_router(router, subnet):
     """Adds interface (subnet) to router"""
     router.add_interface(subnet.name)
-    wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
-             delay=10)
+    wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=800,
+             delay=30)
     router.browser.refresh()
     # TODO: verify the exact entities' names and relationships, not only count
     view = navigate_to(router, 'Details')
     wait_for(lambda: int(view.entities.relationships.get_text_of('Cloud Subnets')) == 1,
-             delay=15, timeout=600, fail_func=router.browser.refresh)
+             delay=30, timeout=800, fail_func=router.browser.refresh)
     subnets_count = int(view.entities.relationships.get_text_of('Cloud Subnets'))
     assert subnets_count == 1  # Compare to '1' because clean router was used initially
 
