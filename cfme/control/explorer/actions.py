@@ -170,7 +170,7 @@ class Action(BaseEntity, Updateable, Pretty):
             updates: Provided by update() context manager.
             cancel: Whether to cancel the update (default False).
         """
-        view = navigate_to(self, "Edit", wait_for_view=True)
+        view = navigate_to(self, "Edit")
         changed = view.fill(updates)
         if changed:
             view.save_button.click()
@@ -228,7 +228,7 @@ class ActionCollection(BaseCollection):
     def create(self, description, action_type, action_values=None):
         """Create an Action in the UI."""
         action_values = action_values or {}
-        view = navigate_to(self, "Add", wait_for_view=True)
+        view = navigate_to(self, "Add")
         view.fill({
             "description": description,
             "action_type": action_type,

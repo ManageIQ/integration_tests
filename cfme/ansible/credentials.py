@@ -270,7 +270,7 @@ class Credential(BaseEntity, Taggable):
             "Red Hat Virtualization": rhv_credential_fill_dict,
             "Google Compute Engine": gce_credential_fill_dict
         }
-        edit_page = navigate_to(self, "Edit", wait_for_view=True)
+        edit_page = navigate_to(self, "Edit")
         changed = edit_page.fill({"name": updates.get("name")})
         form_changed = edit_page.credential_form.fill(credential_type_map[self.credential_type])
         if changed or form_changed:
@@ -298,7 +298,7 @@ class Credential(BaseEntity, Taggable):
             return False
 
     def delete(self):
-        view = navigate_to(self, "Details", wait_for_view=True)
+        view = navigate_to(self, "Details")
         if self.appliance.version < "5.9":
             remove_str = "Remove this Credential"
         else:
@@ -324,7 +324,7 @@ class CredentialsCollection(BaseCollection):
     ENTITY = Credential
 
     def create(self, name, credential_type, **credentials):
-        add_page = navigate_to(self, "Add", wait_for_view=True)
+        add_page = navigate_to(self, "Add")
         machine_credential_fill_dict = {
             "username": credentials.get("username"),
             "password": credentials.get("password"),

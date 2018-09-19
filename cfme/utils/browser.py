@@ -206,7 +206,6 @@ class WharfFactory(BrowserFactory):
             command_executor=command_executor,
         )
 
-
     def create(self, url_key):
 
         def inner():

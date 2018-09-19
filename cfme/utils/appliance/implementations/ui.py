@@ -511,7 +511,7 @@ class CFMENavigateStep(NavigateStep):
         )
 
     def go(self, _tries=0, *args, **kwargs):
-        nav_args = {'use_resetter': True, 'wait_for_view': True}
+        nav_args = {'use_resetter': True, 'wait_for_view': 10}
         self.log_message("Beginning Navigation...", level="info")
         start_time = time.time()
         if _tries > 2:
@@ -555,7 +555,7 @@ class CFMENavigateStep(NavigateStep):
                 'DISABLE_NAVIGATE_ASSERT', False):
             waited = True
             wait_for(
-                lambda: view.is_displayed, num_sec=10,
+                lambda: view.is_displayed, num_sec=nav_args['wait_for_view'],
                 message="Waiting for view [{}] to display".format(view.__class__.__name__)
             )
         self.log_message(

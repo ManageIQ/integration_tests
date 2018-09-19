@@ -1373,7 +1373,7 @@ class Tenant(Updateable, BaseEntity, Taggable):
         Note: In case updates is the same as original tenant/project data, update will be canceled,
             as 'Save' button will not be active
         """
-        view = navigate_to(self, 'Edit', wait_for_view=True)
+        view = navigate_to(self, 'Edit')
         changed = view.form.fill(updates)
         if changed:
             view.save_button.click()
@@ -1413,7 +1413,7 @@ class Tenant(Updateable, BaseEntity, Taggable):
 
     def set_quota(self, **kwargs):
         """ Sets tenant quotas """
-        view = navigate_to(self, 'ManageQuotas', wait_for_view=True)
+        view = navigate_to(self, 'ManageQuotas')
         changed = view.form.fill({'cpu_cb': kwargs.get('cpu_cb'),
                                   'cpu_txt': kwargs.get('cpu'),
                                   'memory_cb': kwargs.get('memory_cb'),

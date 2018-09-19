@@ -136,7 +136,7 @@ class Repository(BaseEntity, Fillable, Taggable):
             updates (dict): :py:class:`dict` of the updates.
         """
         original_updated_at = self.db_object.updated_at
-        view = navigate_to(self, "Edit", wait_for_view=True)
+        view = navigate_to(self, "Edit")
         changed = view.fill(updates)
         if changed:
             view.save_button.click()
@@ -218,7 +218,7 @@ class RepositoryCollection(BaseCollection):
 
         Returns: an instance of :py:class:`cfme.ansible.repositories.Repository`
         """
-        add_page = navigate_to(self, "Add", wait_for_view=True)
+        add_page = navigate_to(self, "Add")
         fill_dict = {
             "name": name,
             "description": description,
