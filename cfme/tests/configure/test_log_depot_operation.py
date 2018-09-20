@@ -150,7 +150,7 @@ def configured_depot(log_depot, depot_machine_ip, appliance):
     server_log_depot.clear()
 
 
-def check_ftp(ftp, server_name, server_zone_id):
+def check_ftp(ftp, server_name, server_zone_id, check_ansible_logs=False):
     server_string = server_name + "_" + str(server_zone_id)
     with ftp:
         # Files must have been created after start with server string in it (for ex. EVM_1)
@@ -171,7 +171,7 @@ def check_ftp(ftp, server_name, server_zone_id):
             date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
             date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
             # if the file is correct, check ansible logs (~/ROOT/var/log/tower/setup-*) are there
-            if ftp.login != 'anonymous':  # can't login as anon using SSH
+            if ftp.login != 'anonymous' and check_ansible_logs:  # can't login as anon using SSH
                 with SSHClient(hostname=ftp.host,
                                username=ftp.login,
                                password=ftp.password) as log_ssh:
@@ -297,7 +297,8 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
     # Start the collection
     configured_depot.collect_all()
     # Check it on FTP
-    check_ftp(log_depot.ftp, appliance.server.name, appliance.server.zone.id)
+    check_ftp(ftp=log_depot.ftp, server_name=appliance.server.name,
+              server_zone_id=appliance.server.zone.id, check_ansible_logs=True)
 
 
 @pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])

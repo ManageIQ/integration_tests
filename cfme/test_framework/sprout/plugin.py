@@ -55,7 +55,7 @@ def pytest_addoption(parser):
                      help="Allows to use not preconfigured templates")
     group._addoption('--sprout-user-key', default=None,
                      help='Key for sprout user in credentials yaml, '
-                          'alternatively set SPROUT_USER and SPROUT_PASSWORD env vars')
+                          'used if SPROUT_USER and SPROUT_PASSWORD are not in env vars')
 
 
 def dump_pool_info(log, pool_data):
