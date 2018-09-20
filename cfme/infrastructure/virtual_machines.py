@@ -678,6 +678,8 @@ class InfraVm(VM):
                     UPSTREAM: "Revert to a Snapshot initiated for 1 VM and Instance "
                               "from the ManageIQ Database",
                     '5.9': "Revert to a Snapshot initiated for 1 VM and Instance from "
+                           "the CFME Database",
+                    '5.8': "Revert To Snapshot initiated for 1 VM and Instance from "
                            "the CFME Database"
                 }).pick(self.parent_vm.appliance.version)
                 view.flash.assert_message(flash_message)
