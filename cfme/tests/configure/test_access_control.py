@@ -411,10 +411,7 @@ def test_group_crud_with_tag(provider, tag_value, group_collection):
     """
     tag_for_create, tag_for_update = tag_value
 
-    if provider.key == 'vsphere55':
-        path = 'VM_Template-Folder'
-    else:
-        path = 'Discovered virtual machine'
+    path = 'VM_Template-Folder' if provider.key == 'vsphere55' else 'Discovered virtual machine'
 
     group = group_collection.create(
         description='grp{}'.format(fauxfactory.gen_alphanumeric()),
