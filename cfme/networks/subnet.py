@@ -197,3 +197,12 @@ class EditSubnet(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Cloud Subnet')
+
+
+@navigator.register(Subnet, 'DetailsThroughProvider')
+class SubnetThroughProvider(CFMENavigateStep):
+    VIEW = SubnetDetailsView
+    prerequisite = NavigateToAttribute('provider_obj', 'CloudSubnets')
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()

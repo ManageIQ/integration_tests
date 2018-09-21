@@ -656,6 +656,7 @@ class OneProviderComponentsToolbar(View):
 
 class OneProviderSubnetView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
+    title = Text('//div[@id="main-content"]//h1')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(SubnetSideBar)
     including_entities = View.include(SubnetEntities, use_parent=True)
