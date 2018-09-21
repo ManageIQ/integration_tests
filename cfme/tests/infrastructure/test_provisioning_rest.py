@@ -6,6 +6,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response, query_resource_attributes
+from cfme.utils.version import VersionPicker, LOWEST
 from cfme.utils.wait import wait_for
 
 
@@ -176,8 +177,10 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
         test_flag: rest, provision
     """
     def check_one_approval_mail_received():
-        return len(smtp_test.get_emails(
-            subject_like="%%Your Virtual Machine configuration was Approved%%")) == 1
+        return len(smtp_test.get_emails(subject_like=VersionPicker({
+            LOWEST: "%%Your Virtual Machine configuration was Approved%%",
+            "5.10": "%%Your Virtual Machine Request was Approved%%"
+        }).pick())) == 1
 
     def check_one_completed_mail_received():
         return len(smtp_test.get_emails(

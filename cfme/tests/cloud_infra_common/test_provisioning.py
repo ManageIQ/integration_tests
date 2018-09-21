@@ -17,10 +17,12 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.log import logger
 from cfme.utils.update import update
+from cfme.utils.version import VersionPicker, LOWEST
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -143,25 +145,34 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
 
     # It will provision two of them
     vm_names = [vm_name + "001", vm_name + "002"]
+    requester = "" if BZ(1628240, forced_streams=['5.10']).blocks else "vm_provision@cfmeqe.com "
     collection = appliance.provider_based_collection(provider)
     inst_args = {'catalog': {
         'vm_name': vm_name,
         'num_vms': '2'
     }}
-    vm = collection.create(vm_name, provider, form_values=inst_args, wait=False)
 
+    vm = collection.create(vm_name, provider, form_values=inst_args, wait=False)
+    subject = VersionPicker({
+        LOWEST: "your request for a new vms was not autoapproved",
+        "5.10": "your virtual machine request is pending"
+    }).pick()
     wait_for(
         lambda:
         len(filter(
             lambda mail:
-            "your request for a new vms was not autoapproved" in normalize_text(mail["subject"]),
+            subject in normalize_text(mail["subject"]),
             smtp_test.get_emails())) == 1,
         num_sec=90, delay=5)
+    subject = VersionPicker({
+        LOWEST: "virtual machine request was not approved",
+        "5.10": "virtual machine request from {}pending approval".format(requester)
+    }).pick()
     wait_for(
         lambda:
         len(filter(
             lambda mail:
-            "virtual machine request was not approved" in normalize_text(mail["subject"]),
+            subject in normalize_text(mail["subject"]),
             smtp_test.get_emails())) == 1,
         num_sec=90, delay=5)
     smtp_test.clear_database()
@@ -189,11 +200,15 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
                                                                  provider).cleanup_on_provider()
                      for name in vm_names]
         )
+    subject = VersionPicker({
+        LOWEST: "your virtual machine configuration was approved",
+        "5.10": "your virtual machine request was approved"
+    }).pick()
     wait_for(
         lambda:
         len(filter(
             lambda mail:
-            "your virtual machine configuration was approved" in normalize_text(mail["subject"]),
+            subject in normalize_text(mail["subject"]),
             smtp_test.get_emails())) == 1,
         num_sec=120, delay=5)
     smtp_test.clear_database()
@@ -210,11 +225,15 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
 
     # Wait for e-mails to appear
     def verify():
+        subject = VersionPicker({
+            LOWEST: "your virtual machine request has completed vm {}".format(
+                normalize_text(vm_name)),
+            "5.10": "your virtual machine request has completed vm name {}".format(
+                normalize_text(vm_name))
+        }).pick()
         return (
             len(filter(
-                lambda mail:
-                "your virtual machine request has completed vm {}".format(normalize_text(vm_name))
-                in normalize_text(mail["subject"]),
+                lambda mail: subject in normalize_text(mail["subject"]),
                 smtp_test.get_emails())) == len(vm_names)
         )
     wait_for(verify, message="email receive check", delay=5)
