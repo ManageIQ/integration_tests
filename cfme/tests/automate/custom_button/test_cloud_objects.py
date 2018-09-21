@@ -15,7 +15,15 @@ pytestmark = [
     pytest.mark.provider([OpenStackProvider], selector=ONE_PER_TYPE),
 ]
 
-CLOUD_OBJECTS = ["PROVIDER", "VM_INSTANCE", "AZONE"]
+CLOUD_OBJECTS = [
+    "PROVIDER",
+    "VM_INSTANCE",
+    "AZONE",
+    "CLOUD_SUBNET",
+    "SECURITY_GROUP",
+    "ROUTER",
+    "CLOUD_OBJECT_STORE_CONTAINER",
+]
 
 DISPLAY_NAV = {
     "Single entity": ["Details"],
@@ -35,7 +43,8 @@ OBJ_TYPE_59 = [
     "PROVIDER",
     "SERVICE",
     "TEMPLATE",
-    "VM_INSTANCE"]
+    "VM_INSTANCE",
+]
 
 
 @pytest.fixture(
@@ -71,6 +80,18 @@ def setup_objs(button_group, provider):
     elif obj_type == "AZONE":
         obj = [
             provider.appliance.collections.cloud_av_zones.filter({"provider": provider}).all()[0]
+        ]
+    elif obj_type == "CLOUD_SUBNET":
+        obj = [provider.appliance.collections.network_subnets.all()[0]]
+    elif obj_type == "SECURITY_GROUP":
+        obj = [provider.appliance.collections.network_security_groups.all()[0]]
+    elif obj_type == "ROUTER":
+        obj = [provider.appliance.collections.network_routers.all()[0]]
+    elif obj_type == "CLOUD_OBJECT_STORE_CONTAINER":
+        obj = [
+            provider.appliance.collections.object_store_containers.filter(
+                {"provider": provider}
+            ).all()[0]
         ]
     else:
         logger.error("No object collected for custom button object type '{}'".format(obj_type))
