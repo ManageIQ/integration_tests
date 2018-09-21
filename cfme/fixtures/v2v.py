@@ -1,10 +1,14 @@
 import fauxfactory
+import itertools
 import pytest
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
 from cfme.fixtures.provider import setup_or_skip
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
 
 
 @pytest.fixture(scope='function')
@@ -19,19 +23,41 @@ def v2v_providers(request, second_provider, provider):
 
 @pytest.fixture(scope='function')
 def host_creds(request, v2v_providers):
-    """Add credentials to conversation host"""
-    provider = v2v_providers[1]
-    hosts = provider.hosts.all()
+    """Add credentials to VMware and RHV hosts."""
+    if len(v2v_providers) > 2:
+        pytest.skip("There are more than two providers in v2v_providers fixture,"
+                    "which is invalid, skipping.")
     try:
-        hosts = hosts if getattr(request, 'param', '') == 'multi-host' else hosts[0:1]
-        for host in hosts:
-            host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+        vmware_provider, rhv_provider = None, None
+        for provider in v2v_providers:
+            if provider.one_of(VMwareProvider):
+                vmware_provider = provider
+            elif provider.one_of(RHEVMProvider):
+                rhv_provider = provider
+            else:
+                pytest.skip("Provider {} is not a valid provider for v2v tests".
+                    format(provider.name))
+        if not vmware_provider or not rhv_provider:
+            pytest.skip("Something went wrong with VMware or RHV provider, skipping test.")
+
+        vmware_hosts = vmware_provider.hosts.all()
+        for host in vmware_hosts:
+            host_data, = [data for data in vmware_provider.data['hosts']
+                          if data['name'] == host.name]
+            host.update_credentials_rest(credentials=host_data['credentials'])
+
+        rhv_hosts = rhv_provider.hosts.all()
+        rhv_hosts = rhv_hosts if getattr(request, 'param', '') == 'multi-host' else rhv_hosts[0:1]
+        for host in rhv_hosts:
+            host_data, = [data for data in rhv_provider.data['hosts'] if data['name'] == host.name]
             host.update_credentials_rest(credentials=host_data['credentials'])
     except Exception:
         # if above throws ValueError or TypeError or other exception, just skip the test
+        logger.exception("Exception when trying to add the host credentials.")
         pytest.skip("No data for hosts in providers, failed to retrieve hosts and add creds.")
-    yield hosts
-    for host in hosts:
+    # only yield RHV hosts as they will be required to tag with conversion_tags fixture
+    yield rhv_hosts
+    for host in itertools.chain(rhv_hosts, vmware_hosts):
         host.remove_credentials_rest()
 
 
