@@ -341,6 +341,32 @@ class ContainersProviderCollection(BaseCollection):
         obj.create(**create_kwargs)
         return obj
 
+    def pause_providers(self, *providers):
+        """ Pause the OCP providers.
+            Args:
+                *providers: Provider objects to be paused
+
+            Returns:
+                API response.
+         """
+        prov_entities = [self.appliance.rest_api.collections.providers.get(name=provider.name)
+                         for provider in providers]
+
+        return self.appliance.rest_api.collections.providers.action.pause(*prov_entities)
+
+    def resume_providers(self, *providers):
+        """ Resume the OCP providers.
+            Args:
+                *providers: Provider objects to be resumed
+
+            Returns:
+                API response.
+         """
+        prov_entities = [self.appliance.rest_api.collections.providers.get(name=provider.name)
+                         for provider in providers]
+
+        return self.appliance.rest_api.collections.providers.action.resume(*prov_entities)
+
 
 @navigator.register(ContainersProviderCollection, 'All')
 @navigator.register(ContainersProvider, 'All')
