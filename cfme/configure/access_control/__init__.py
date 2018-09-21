@@ -1520,10 +1520,10 @@ class TenantCollection(BaseCollection):
     def delete(self, *tenants):
 
         view = navigate_to(self, 'All')
-
         for tenant in tenants:
             try:
-                view.table.row(name=tenant.name).check()
+                row = view.table.row(name=tenant.name)
+                row[0].check()
             except Exception:
                 logger.exception('Failed to check element "%s"', tenant.name)
         else:
