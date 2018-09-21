@@ -277,19 +277,21 @@ class BasicProvisionFormView(View):
     class customize(Tab):  # noqa
         TAB_NAME = 'Customize'
         # Common
-        dns_servers = Input(name='customize__dns_servers')
-        dns_suffixes = Input(name='customize__dns_suffixes')
         customize_type = BootstrapSelect('customize__sysprep_enabled')
-        specification_name = Table('//div[@id="prov_vc_div"]/table')
-        admin_username = Input(name='customize__root_username')
         root_password = Input(name='customize__root_password')
-        linux_host_name = Input(name='customize__linux_host_name')
-        linux_domain_name = Input(name='customize__linux_domain_name')
+        address_mode = RadioGroup(locator=('//div[@id="customize"]'
+                                           '//div[./div[contains(@class, "radio")]]'))
+        hostname = Input(name='customize__hostname')
         ip_address = Input(name='customize__ip_addr')
         subnet_mask = Input(name='customize__subnet_mask')
         gateway = Input(name='customize__gateway')
+        dns_servers = Input(name='customize__dns_servers')
+        dns_suffixes = Input(name='customize__dns_suffixes')
+        specification_name = Table('//div[@id="prov_vc_div"]/table')
+        admin_username = Input(name='customize__root_username')
+        linux_host_name = Input(name='customize__linux_host_name')
+        linux_domain_name = Input(name='customize__linux_domain_name')
         custom_template = SelectTable('//div[@id="prov_template_div"]/table')
-        hostname = Input(name='customize__hostname')
 
     @View.nested
     class schedule(Tab):  # noqa

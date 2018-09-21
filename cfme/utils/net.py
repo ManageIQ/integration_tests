@@ -66,8 +66,9 @@ def net_check(port, addr=None, force=False):
     if port not in _ports[addr] or force:
         # First try DNS resolution
         try:
-            addr = socket.gethostbyname(addr)
-
+            addr_info = socket.getaddrinfo(addr, port)[0]
+            sockaddr = addr_info[4]
+            addr = sockaddr[0]
             # Then try to connect to the port
             try:
                 socket.create_connection((addr, port), timeout=10)
