@@ -411,19 +411,22 @@ def test_group_crud_with_tag(provider, tag_value, group_collection):
         * Save group
     """
     tag_for_create, tag_for_update = tag_value
+
+    path = 'VM_Template-Folder' if provider.key == 'vsphere55' else 'Discovered virtual machine'
+
     group = group_collection.create(
         description='grp{}'.format(fauxfactory.gen_alphanumeric()),
         role='EvmRole-approver',
         tag=tag_for_create,
         host_cluster=([provider.data['name']], True),
         vm_template=([provider.data['name'], provider.data['datacenters'][0],
-                     'Discovered virtual machine'], True)
+                     path], True)
     )
     with update(group):
         group.tag = tag_for_update
         group.host_cluster = ([provider.data['name']], False)
         group.vm_template = ([provider.data['name'], provider.data['datacenters'][0],
-                             'Discovered virtual machine'], False)
+                             path], False)
     group.delete()
 
 
