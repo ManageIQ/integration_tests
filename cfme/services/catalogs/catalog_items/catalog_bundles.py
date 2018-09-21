@@ -8,6 +8,7 @@ from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from . import (AllCatalogItemView, BasicInfoForm, DetailsCatalogItemView, NonCloudInfraCatalogItem,
     ServicesCatalogView)
+from cfme.utils.version import LOWEST, VersionPicker
 
 
 class CatalogBundleFormView(ServicesCatalogView):
@@ -80,11 +81,18 @@ class CatalogBundlesCollection(BaseCollection):
                dialog=None, domain="ManageIQ (Locked)"):
         # TODO Move this logic into the view, the main obstacle is filling 'catalog_items'
         view = navigate_to(self, 'Add')
+
+        # In 5.10 catalog name is appended with 'My Company'
+        cat_name = VersionPicker({
+            LOWEST: getattr(catalog, 'name', None),
+            '5.10': 'My Company/{}'.format(getattr(catalog, 'name', None))
+        }).pick(self.appliance.version)
+
         view.basic_info.fill({
             'name': name,
             'description': description,
             'display': display_in,
-            'select_catalog': getattr(catalog, "name", None),
+            'select_catalog': cat_name,
             'select_dialog': dialog
         })
         if view.basic_info.field_entry_point.value == "":

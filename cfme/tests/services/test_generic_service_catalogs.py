@@ -2,11 +2,12 @@
 import fauxfactory
 import pytest
 
-from selenium.common.exceptions import NoSuchElementException
+from widgetastic_patternfly import CandidateNotFound
 
 from cfme import test_requirements
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.rest import (
     assert_response,
@@ -43,17 +44,18 @@ def test_delete_catalog_deletes_service(appliance, dialog, catalog):
         dialog=dialog)
     catalog.delete()
     service_catalogs = ServiceCatalogs(appliance, catalog, catalog_item.name)
-    with pytest.raises(NoSuchElementException):
+    with pytest.raises(CandidateNotFound):
         service_catalogs.order()
 
 
 def test_delete_catalog_item_deletes_service(appliance, catalog_item):
     catalog_item.delete()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
-    with pytest.raises(NoSuchElementException):
+    with pytest.raises(CandidateNotFound):
         service_catalogs.order()
 
 
+@pytest.mark.meta(blockers=[BZ(1631040, forced_streams=['5.10'])])
 def test_service_circular_reference(appliance, catalog_item):
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = appliance.collections.catalog_bundles.create(
@@ -71,6 +73,7 @@ def test_service_circular_reference(appliance, catalog_item):
         catalog_bundle.update({'catalog_items': sec_catalog_bundle.name})
 
 
+@pytest.mark.meta(blockers=[BZ(1626232, forced_streams=['5.10'])])
 def test_service_generic_catalog_bundle(appliance, catalog_item):
     bundle_name = "generic_" + fauxfactory.gen_alphanumeric()
     appliance.collections.catalog_bundles.create(
@@ -88,6 +91,7 @@ def test_service_generic_catalog_bundle(appliance, catalog_item):
     assert provision_request.is_succeeded(), msg
 
 
+@pytest.mark.meta(blockers=[BZ(1626232, forced_streams=['5.10'])])
 def test_bundles_in_bundle(appliance, catalog_item):
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     appliance.collections.catalog_bundles.create(
