@@ -1,17 +1,14 @@
-import tempfile
-
 import pytest
+from cfme.utils.conf import cfme_data
 
 from cfme.configure.configuration.region_settings import RedHatUpdates
+from cfme.fixtures.pytest_store import store
 from cfme.test_framework.sprout.client import SproutClient, SproutException
 from cfme.utils import conf
-from cfme.utils import os
+from cfme.utils.appliance import find_appliance
 from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-from cfme.fixtures.pytest_store import store
-from cfme.utils.repo_gen import process_url, build_file
-from cfme.utils.appliance import find_appliance
 
 pytestmark = [
     pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
@@ -72,14 +69,10 @@ def appliance_preupdate(old_version, appliance):
         raise SproutException('No provision available')
 
     apps[0].db.extend_partition()
-    urls = process_url(conf.cfme_data['basic_info'][update_url])
-    output = build_file(urls)
-    with tempfile.NamedTemporaryFile('w') as f:
-        f.write(output)
-        f.flush()
-        os.fsync(f.fileno())
-        apps[0].ssh_client.put_file(
-            f.name, '/etc/yum.repos.d/update.repo')
+    urls = cfme_data["basic_info"][update_url]
+    apps[0].ssh_client.run_command(
+        "curl {} -o /etc/yum.repos.d/update.repo".format(urls)
+    )
     yield apps[0]
     apps[0].ssh_client.close()
     sp.destroy_pool(pool_id)
@@ -96,7 +89,8 @@ def test_update_yum(appliance_preupdate, appliance):
         assert result.success, "update failed {}".format(result.output)
     appliance_preupdate.evmserverd.start()
     appliance_preupdate.wait_for_web_ui()
-    assert appliance.version == appliance_preupdate.version
+    result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
+    assert result.output in appliance.version
 
 
 @pytest.fixture(scope="function")
@@ -137,11 +131,12 @@ def test_embedded_ansible_update(update_embedded_appliance, appliance, old_versi
         role continues to function correctly after the update has completed"""
     def is_appliance_updated(appliance):
         """Checks if cfme-appliance has been updated"""
-        assert appliance.version == update_embedded_appliance.version
+        result = update_embedded_appliance.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
+        assert result.output in appliance.version
 
     wait_for(is_appliance_updated, func_args=[update_embedded_appliance], num_sec=900)
     assert wait_for(func=lambda: update_embedded_appliance.is_embedded_ansible_running, num_sec=30)
     assert wait_for(func=lambda: update_embedded_appliance.is_rabbitmq_running, num_sec=30)
     assert wait_for(func=lambda: update_embedded_appliance.is_nginx_running, num_sec=30)
     assert update_embedded_appliance.ssh_client.run_command(
-        'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
+        'curl -kL https://localhost/ansibleapi | grep "AWX REST API"')

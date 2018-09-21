@@ -89,12 +89,14 @@ def temp_appliance_preconfig_funcscope(appliance, pytestconfig):
 
 @pytest.fixture(scope="function")
 def temp_appliance_preconfig_funcscope_upgrade(appliance, pytestconfig):
-    stream_digits = ''.join([i for i in get_stream(appliance.version) if i.isdigit()])
+    split_version = (str(appliance.version).split("."))
     with sprout_appliances(
             appliance,
             config=pytestconfig,
             preconfigured=True,
-            stream="downstream-{}z".format(int(stream_digits) - 1)  # n-1 stream for upgrade
+            stream="downstream-{}{}z".format(
+                split_version[0], (int(split_version[1]) - 1)
+            )  # n-1 stream for upgrade
     ) as appliances:
         yield appliances[0]
 

@@ -1,17 +1,13 @@
-import tempfile
+from os import path as os_path
 
 import pytest
-from os import path as os_path
 from wait_for import wait_for
 
 from cfme.base.ui import navigate_to
-from cfme.utils import os
 from cfme.utils.appliance import ApplianceException
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
-from cfme.utils.repo_gen import process_url, build_file
-from cfme.utils.version import get_stream
 
 pytestmark = [pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="rails server")]
 
@@ -66,17 +62,13 @@ def temp_appliance_global_region(temp_appliance_unconfig_funcscope_rhevm):
 @pytest.fixture(scope="function")
 def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
     """Reconfigure appliance partitions and adds repo file for upgrade"""
-    update_url = ('update_url_' + ''.join([i for i in get_stream(appliance.version)
-        if i.isdigit()]))
+    series = appliance.version.series()
+    update_url = "update_url_{}".format(series.replace('.', ''))
     temp_appliance_preconfig_funcscope_upgrade.db.extend_partition()
-    urls = process_url(cfme_data['basic_info'][update_url])
-    output = build_file(urls)
-    with tempfile.NamedTemporaryFile('w') as f:
-        f.write(output)
-        f.flush()
-        os.fsync(f.fileno())
-        temp_appliance_preconfig_funcscope_upgrade.ssh_client.put_file(
-            f.name, '/etc/yum.repos.d/update.repo')
+    urls = cfme_data["basic_info"][update_url]
+    temp_appliance_preconfig_funcscope_upgrade.ssh_client.run_command(
+        "curl {} -o /etc/yum.repos.d/update.repo".format(urls)
+    )
     return temp_appliance_preconfig_funcscope_upgrade
 
 
@@ -198,4 +190,5 @@ def test_upgrade_single_inplace(appliance_preupdate, appliance):
     appliance_preupdate.db.restart_db_service()
     appliance_preupdate.start_evm_service()
     appliance_preupdate.wait_for_web_ui()
-    assert appliance.version == appliance_preupdate.version
+    result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
+    assert result.output in appliance.version

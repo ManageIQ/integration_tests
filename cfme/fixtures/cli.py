@@ -1,6 +1,6 @@
-import pytest
-
 from collections import namedtuple
+
+import pytest
 from six import iteritems
 
 import cfme.utils.auth as authutil
