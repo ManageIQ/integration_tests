@@ -76,6 +76,7 @@ network_routers = cfme.networks.network_router:NetworkRouterCollection
 network_security_groups = cfme.networks.security_group:SecurityGroupCollection
 network_subnets = cfme.networks.subnet:SubnetCollection
 network_topology_elements = cfme.networks.topology:NetworkTopologyElementsCollection
+nuage_network_subnets = cfme.networks.provider.nuage:NuageSubnetCollection
 object_managers = cfme.storage.manager:ObjectManagerCollection
 object_store_containers = cfme.storage.object_store_container:ObjectStoreContainerCollection
 object_store_objects = cfme.storage.object_store_object:ObjectStoreObjectCollection
