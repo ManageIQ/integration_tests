@@ -17,7 +17,7 @@ pytestmark = [
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE),
 ]
 
-INFRA_OBJECTS = ["PROVIDER", "HOST", "VM_INSTANCE", "DATASTORE"]
+INFRA_OBJECTS = ["PROVIDER", "HOST", "VM_INSTANCE", "DATASTORE", "CLUSTER"]
 
 DISPLAY_NAV = {
     "Single entity": ["Details"],
@@ -55,6 +55,8 @@ def setup_obj(button_group, provider):
         obj = provider.appliance.provider_based_collection(provider).all()[0]
     elif obj_type == "DATASTORE":
         obj = provider.appliance.collections.datastores.filter({"provider": provider}).all()[0]
+    elif obj_type == "CLUSTER":
+        obj = provider.appliance.collections.clusters.all()[0]
     else:
         logger.error("No object collected for custom button object type '{}'".format(obj_type))
     return obj
