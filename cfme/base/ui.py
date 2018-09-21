@@ -966,7 +966,8 @@ class RegionView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        return self.accordions.settings.tree.currently_selected == [self.obj.settings_string]
+        match_string = [self.context['object'].settings_string]
+        return self.accordions.settings.tree.currently_selected == match_string
 
 
 class RegionChangeNameView(RegionView):
