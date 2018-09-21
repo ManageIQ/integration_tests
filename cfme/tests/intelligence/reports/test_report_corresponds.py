@@ -34,7 +34,6 @@ def report_vms(appliance, infra_provider):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.rhv3
 @pytest.mark.meta(blockers=[BZ(1531600, forced_streams=['5.9'])])
 @test_requirements.report
 def test_custom_vm_report(soft_assert, report_vms):
