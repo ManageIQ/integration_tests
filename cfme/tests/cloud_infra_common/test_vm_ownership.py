@@ -206,7 +206,8 @@ def test_group_ownership_on_user_or_group_role(
 
 
 @pytest.mark.provider([VMwareProvider], override=True, scope="module")
-def test_template_set_ownership(request, provider, setup_provider, vm_crud):
+@pytest.mark.meta(blockers=[BZ(1622952, forced_streams=['5.10'])])
+def test_template_set_ownership(appliance, request, provider, setup_provider, vm_crud):
     """ Sets ownership to an infra template.
 
     First publishes a template from a VM, then tries to unset an ownership of that template,
@@ -214,10 +215,27 @@ def test_template_set_ownership(request, provider, setup_provider, vm_crud):
     VM is removed via fixture.
     Tests BZ 1446801 in RHCF3-14353
     """
+
+    # setup the test
+    # publish a vm to a template
     template = vm_crud.publish_to_template(template_name=random_vm_name(context='ownrs'))
-    template.set_ownership('<No Owner>')
-    template.set_ownership('Administrator')
-    template.delete()
+    # instantiate a user representing no owner
+    user_no_owner = appliance.collections.users.instantiate(name="<No Owner>")
+    # instantiate a user representing Administrator
+    user_admin = appliance.collections.users.instantiate(name="Administrator")
+
+    # run the test
+    try:
+        # unset ownership
+        template.set_ownership(user=user_no_owner)
+        # set ownership back to admin
+        template.set_ownership(user=user_admin)
+    except Exception as e:
+        # in case of any unforseen exception, raise it
+        raise e
+    finally:
+        # in every case, delete template we created
+        template.mgmt.delete()
 
 
 # @pytest.mark.meta(blockers=[1202947])
