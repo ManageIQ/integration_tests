@@ -72,5 +72,5 @@ def configure_auth(appliance, auth_mode, auth_provider, user_type, request, fix_
     yield
     # return to original auth config
     appliance.server.authentication.auth_settings = original_config
-    appliance.httpd.restart()
+    appliance.evmserverd.restart()
     appliance.wait_for_web_ui()
