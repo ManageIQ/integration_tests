@@ -85,9 +85,7 @@ class SproutClient(object):
     def from_config(cls, **kwargs):
         host = env.get("sprout", {}).get("hostname", "localhost")
         port = env.get("sprout", {}).get("port", 8000)
-        user_key = kwargs.pop('sprout_user_key', None)
-        if user_key is None:
-            user_key = 'sprout'
+        user_key = kwargs.pop('sprout_user_key') if 'sprout_user_key' in kwargs else None
         # First choose env var creds, then look in kwargs for a sprout_user_key to lookup
         user = (os.environ.get("SPROUT_USER") or
                 (credentials.get(user_key, {}).get("username") if user_key else None))

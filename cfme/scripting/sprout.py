@@ -49,7 +49,7 @@ def main():
               help='Whether the appliance is configured')
 @click.option('--user-key', 'sprout_user_key', default=None,
               help='Key for sprout user in credentials yaml, '
-                   'used if SPROUT_USER and SPROUT_PASSWORD are not in env vars')
+                   'alternatively set SPROUT_USER and SPROUT_PASSWORD env vars')
 def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
              override_ram, override_cpu, populate_yaml, provider, provider_type, template_type,
              preconfigured, sprout_user_key):
