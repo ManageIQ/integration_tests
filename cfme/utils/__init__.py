@@ -11,8 +11,12 @@ from functools import partial
 from cached_property import cached_property
 from werkzeug.local import LocalProxy
 
-
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
+
+
+class TriesExceeded(Exception):
+    """Default exception raised when tries() method doesn't catch a func exception"""
+    pass
 
 
 class FakeObject(object):
@@ -123,15 +127,17 @@ def tries(num_tries, exceptions, f, *args, **kwargs):
     Raises:
         What ``f`` raises if the try count is exceeded.
     """
+    caught_exception = TriesExceeded('Tries were exhausted without a func exception')
     tries = 0
     while tries < num_tries:
         tries += 1
         try:
             return f(*args, **kwargs)
         except exceptions as e:
+            caught_exception = e
             pass
     else:
-        raise e
+        raise caught_exception
 
 
 # There are some environment variables that get smuggled in anyway.
