@@ -5,7 +5,8 @@
 Author: Milan Falešník <mfalesni@redhat.com>
 Since: 2013-02-20
 """
-from datetime import datetime
+from datetime import datetime, timedelta
+from ftplib import FTP
 
 import fauxfactory
 import pytest
@@ -141,10 +142,11 @@ def configured_depot(log_depot, depot_machine_ip, appliance):
     server_log_depot = appliance.server.collect_logs
     with update(server_log_depot):
         server_log_depot.depot_type = log_depot.protocol
-        server_log_depot.depot_name = fauxfactory.gen_alphanumeric()
-        server_log_depot.uri = uri
-        server_log_depot.username = log_depot.credentials.username
-        server_log_depot.password = log_depot.credentials.password
+        if log_depot.protocol != 'dropbox':
+            server_log_depot.depot_name = fauxfactory.gen_alphanumeric()
+            server_log_depot.uri = uri
+            server_log_depot.username = log_depot.credentials.username
+            server_log_depot.password = log_depot.credentials.password
     yield server_log_depot
     server_log_depot.clear()
 
@@ -291,10 +293,40 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
         ftp.recursively_delete()
 
     # Start the collection
+    collect_time = datetime.utcnow() - timedelta(hours=4)  # time on dropbox is UTC-4
     configured_depot.collect_all()
     # Check it on FTP
-    check_ftp(ftp=log_depot.ftp, server_name=appliance.server.name,
-              server_zone_id=appliance.server.zone.id, check_ansible_logs=True)
+    if log_depot.protocol != 'dropbox':
+        check_ftp(ftp=log_depot.ftp, server_name=appliance.server.name,
+                  server_zone_id=appliance.server.zone.id, check_ansible_logs=True)
+    else:  # check for logs on dropbox
+        username = conf.credentials['rh_dropbox']['username']
+        password = conf.credentials['rh_dropbox']['password']
+
+        dropbox = FTP(host='flopbox.corp.redhat.com', user=username, passwd=password)
+        contents = dropbox.nlst()
+
+        server_string = appliance.server.name + "_" + str(appliance.server.zone.id)
+        date_group = '(_.*?){4}'
+        pattern = re.compile(
+            r"(^test_cfme_can_be_deleted)(.*?){}{}[.]zip$".format(server_string, date_group))
+        zip_files = filter(pattern.match, contents)
+        assert zip_files, "No logs found!"
+        # Check the time of the last file
+        zip_file = zip_files[-1]
+        # file look like "Current_region_0_default_1_EVM_1_20170127_043343_20170127_051010.zip"
+        # 20170127_043343 - date and time
+        date = zip_file.split("_")
+        date_from = date[-4] + date[-3]
+        # removing ".zip" from the name
+        date_to = date[-2] + date[-1][:-4]
+
+        try:
+            date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
+            date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
+        except ValueError:
+            assert False, "Wrong file matching of {}".format(zip_file)
+        assert date_to >= collect_time
 
 
 @pytest.mark.tier(3)

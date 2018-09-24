@@ -194,6 +194,8 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             if self.appliance.version < '5.9':
                 fill_dict['depot_creds']['confirm_password'] = updates.get('password')
         updated = view.fill(fill_dict)
+        if depot_type == 'Red Hat Dropbox':
+            updated = True
         try:
             view.depot_creds.validate_button.click()
             view.flash.assert_message('Log Depot Settings were validated')
@@ -271,7 +273,9 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             view = navigate_to(self, 'DiagnosticsCollectLogs')
         last_collection = self.last_collection
         # Initiate the collection
-        view.toolbar.collect.item_select(selection)
+        view.toolbar.collect.item_select(selection, handle_alert=None)
+        if self.browser.alert_present:
+            self.browser.handle_alert(prompt='test_cfme_can_be_deleted')
         slave_servers = self.appliance.server.slave_servers
         first_slave_server = slave_servers[0] if slave_servers else None
 
