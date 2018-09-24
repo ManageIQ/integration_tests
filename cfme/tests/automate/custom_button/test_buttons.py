@@ -24,7 +24,7 @@ OBJ_TYPE_59 = [
     "HOST",
     "PROVIDER",
     "SERVICE",
-    "TEMPLATE",
+    "TEMPLATE_IMAGE",
     "VM_INSTANCE",
 ]
 
@@ -55,7 +55,7 @@ OBJ_TYPE = [
     "SERVICE",
     "SWITCH",
     "TENANT",
-    "TEMPLATE",
+    "TEMPLATE_IMAGE",
     "VM_INSTANCE",
 ]
 

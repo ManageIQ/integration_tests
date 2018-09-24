@@ -569,7 +569,7 @@ class ButtonGroupCollection(BaseCollection):
     SERVICE = "Service"
     SWITCH = "Virtual Infra Switch"
     TENANT = "Tenant"
-    TEMPLATE = "VM Template and Image"
+    TEMPLATE_IMAGE = "VM Template and Image"
     VM_INSTANCE = "VM and Instance"
 
     def instantiate(self, text, hover, type, image=None, display=None, icon_color=None):

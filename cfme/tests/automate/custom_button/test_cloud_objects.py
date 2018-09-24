@@ -18,6 +18,7 @@ pytestmark = [
 CLOUD_OBJECTS = [
     "PROVIDER",
     "VM_INSTANCE",
+    "TEMPLATE_IMAGE",
     "AZONE",
     "CLOUD_SUBNET",
     "SECURITY_GROUP",
@@ -42,7 +43,7 @@ OBJ_TYPE_59 = [
     "HOST",
     "PROVIDER",
     "SERVICE",
-    "TEMPLATE",
+    "TEMPLATE_IMAGE",
     "VM_INSTANCE",
 ]
 
@@ -77,6 +78,8 @@ def setup_objs(button_group, provider):
         obj = [provider, network_manager, block_manager, object_manager]
     elif obj_type == "VM_INSTANCE":
         obj = [provider.appliance.provider_based_collection(provider).all()[0]]
+    elif obj_type == "TEMPLATE_IMAGE":
+        obj = [provider.appliance.collections.cloud_images.all()[0]]
     elif obj_type == "AZONE":
         obj = [
             provider.appliance.collections.cloud_av_zones.filter({"provider": provider}).all()[0]
