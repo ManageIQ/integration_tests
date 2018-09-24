@@ -185,9 +185,8 @@ def check_ftp(ftp, server_name, server_zone_id):
 
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
-@pytest.mark.meta(blockers=[BZ(1603163, unblock=lambda log_depot: log_depot.protocol != "anon_ftp",
-                            forced_streams=["5.6", "5.7", "5.8", "upstream"])]
-                  )
+@pytest.mark.uncollectif(lambda appliance, log_depot: appliance.version < '5.9' and
+                         log_depot.protocol == 'anon_ftp')  # BZ1341502 fixed for 5.9 and above
 def test_collect_log_depot(log_depot, appliance, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
 
