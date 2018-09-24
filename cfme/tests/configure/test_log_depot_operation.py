@@ -313,20 +313,21 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
         zip_files = filter(pattern.match, contents)
         assert zip_files, "No logs found!"
         # Check the time of the last file
-        zip_file = zip_files[-1]
-        # file look like "Current_region_0_default_1_EVM_1_20170127_043343_20170127_051010.zip"
-        # 20170127_043343 - date and time
-        date = zip_file.split("_")
-        date_from = date[-4] + date[-3]
-        # removing ".zip" from the name
-        date_to = date[-2] + date[-1][:-4]
-
-        try:
-            date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
-            date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
-        except ValueError:
-            assert False, "Wrong file matching of {}".format(zip_file)
-        assert date_to >= collect_time
+        datetimes = []
+        for zip_file in zip_files:
+            # files look like "Current_region_0_default_1_EVM_1_20170127_043343_20170127_051010.zip"
+            # 20170127_043343 - date and time
+            date = zip_file.split("_")
+            date_from = date[-4] + date[-3]
+            # removing ".zip" from the name
+            date_to = date[-2] + date[-1][:-4]
+            try:
+                date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
+                date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
+            except ValueError:
+                assert False, "Wrong file matching of {}".format(zip_file)
+            datetimes.append(date_to)
+        assert max(datetimes) >= collect_time
 
 
 @pytest.mark.tier(3)
