@@ -116,7 +116,7 @@ def get_obj(relationship, appliance, **kwargs):
     elif relationship == "Network Manager":
         network_providers_col = appliance.collections.network_providers
         provider = kwargs.get("provider")
-        view = navigate_to(provider, "Details")
+        view = navigate_to(provider, "Details")  # resetter selects summary view
         network_prov_name = view.entities.summary("Relationships").get_text_of("Network Manager")
         obj = network_providers_col.instantiate(prov_class=NetworkProvider, name=network_prov_name)
     return obj
@@ -129,7 +129,7 @@ def host(appliance, provider):
 
 
 def wait_for_relationship_refresh(provider):
-    view = navigate_to(provider, 'Details')
+    view = navigate_to(provider, 'Details')  # resetter selects summary view
     logger.info('Waiting for relationship refresh')
     wait_for(
         lambda: (view.entities.summary("Status").get_text_of('Last Refresh') ==
@@ -168,7 +168,7 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
     Metadata:
         test_flag: inventory
     """
-    provider_view = navigate_to(provider, "Details")
+    provider_view = navigate_to(provider, "Details")  # resetter selects summary view
     if provider_view.entities.summary("Relationships").get_text_of(relationship) == "0":
         pytest.skip("There are no relationships for {}".format(relationship))
     provider_view.entities.summary("Relationships").click_at(relationship)
@@ -183,7 +183,7 @@ def test_cloud_provider_relationships(appliance, provider, setup_provider, relat
     """Tests relationship navigation for a cloud provider"""
     # Version dependent strings
     relationship = _fix_item(appliance, relationship)
-    provider_view = navigate_to(provider, "Details")
+    provider_view = navigate_to(provider, "Details")  # resetter selects summary view
     if provider_view.entities.summary("Relationships").get_text_of(relationship) == "0":
         pytest.skip("There are no relationships for {}".format(relationship))
     obj = get_obj(relationship, appliance, provider=provider)
