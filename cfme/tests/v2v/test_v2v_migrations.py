@@ -5,10 +5,12 @@ import pytest
 from cfme.fixtures.provider import (dual_network_template, dual_disk_template,
  dportgroup_template, win7_template, win10_template, win2016_template, rhel69_template,
  win2012_template, ubuntu16_template, rhel7_minimal)
+from cfme.fixtures.v2v import _form_data
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -552,3 +554,57 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
     src_vm = form_data_vm_obj_single_datastore.vm_obj[0]
     migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
     assert src_vm.mac_address == migrated_vm.mac_address
+
+
+def test_migration_long_name(request, appliance, v2v_providers, host_creds, conversion_tags):
+    """Test to check VM name with 64 character should work"""
+    source_datastores_list = v2v_providers.vmware_provider.data.get('datastores', [])
+    source_datastore = [d.name for d in source_datastores_list if d.type == 'nfs'][0]
+    # Following code will create vm name with 64 characters
+    vm_name = "{}{}".format(random_vm_name(context="v2v"), fauxfactory.gen_alpha(51))
+    collection = appliance.provider_based_collection(v2v_providers.vmware_provider)
+    vm_obj = collection.instantiate(
+        name=vm_name,
+        provider=v2v_providers.vmware_provider,
+        template_name=rhel7_minimal(v2v_providers.vmware_provider)['name'])
+    vm_obj.create_on_provider(
+        timeout=2400,
+        find_in_cfme=True,
+        allow_skip="default",
+        datastore=source_datastore)
+    request.addfinalizer(lambda: vm_obj.cleanup_on_provider())
+    form_data = _form_data(v2v_providers.vmware_provider, v2v_providers.rhv_provider)
+
+    infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    mapping = infrastructure_mapping_collection.create(form_data)
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+
+    migration_plan_collection = appliance.collections.v2v_plans
+    migration_plan = migration_plan_collection.create(
+        name="plan_long_name{}".format(fauxfactory.gen_alphanumeric()),
+        description="desc_long_name{}".format(fauxfactory.gen_alphanumeric()),
+        infra_map=mapping.name,
+        vm_list=[vm_obj],
+        start_migration=True)
+
+    # explicit wait for spinner of in-progress status card
+    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
+        message="migration plan is starting, be patient please", delay=5, num_sec=150,
+        handle_exception=True)
+
+    # wait until plan is in progress
+    wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
+        message="migration plan is in progress, be patient please",
+        delay=15, num_sec=1800)
+
+    view.migr_dropdown.item_select("Completed Plans")
+    view.wait_displayed()
+    logger.info("For plan {plan_name}, migration status : {count}, total time elapsed: {clock}"
+                .format(plan_name=migration_plan.name,
+                count=view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
+                clock=view.migration_plans_completed_list.get_clock(migration_plan.name)))
+    assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
