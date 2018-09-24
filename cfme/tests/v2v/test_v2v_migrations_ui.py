@@ -8,6 +8,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.tests.services.test_service_rbac import new_user, new_group, new_role
 from cfme.v2v.migrations import MigrationPlanRequestDetailsView
 
 pytestmark = [
@@ -241,3 +242,29 @@ def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_
     soft_assert(set(view.migration_request_details_list.read()) == set(vm_selected))
     view = navigate_to(infrastructure_mapping_collection, 'All')
     view.migration_plans_not_started_list.migrate_plan(plan_name)
+
+
+def test_migration_rbac(appliance, new_credential, conversion_tags, host_creds, v2v_providers):
+    """Test migration with role-based access control"""
+    role = new_role(appliance=appliance,
+                    product_features=[(['Everything'], False), (['Everything'], True)])
+    group = new_group(appliance=appliance, role=role.name)
+    user = new_user(appliance=appliance, group=group, credential=new_credential)
+
+    product_features = [(['Everything', 'Compute', 'Migration'], False)]
+    role.update({'product_features': product_features})
+    with user:
+        view = navigate_to(appliance.server, 'Dashboard', wait_for_view=True)
+        nav_tree = view.navigation.nav_item_tree()
+        # Checks migration option is disabled in navigation
+        assert 'Migration' not in nav_tree['Compute'], ('Trying to find Migration in nav_tree, '
+                                                        'should be absent :{}'.format(nav_tree))
+
+    product_features = [(['Everything'], False), (['Everything'], True)]
+    role.update({'product_features': product_features})
+    with user:
+        view = navigate_to(appliance.server, 'Dashboard', wait_for_view=True)
+        nav_tree = view.navigation.nav_item_tree()
+        # Checks migration option is enabled in navigation
+        assert 'Migration' in nav_tree['Compute'], ('Trying to find Migration in nav_tree, '
+                                                    'should be absent :{}'.format(nav_tree))
