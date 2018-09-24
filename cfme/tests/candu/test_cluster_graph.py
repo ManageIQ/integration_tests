@@ -69,12 +69,16 @@ def test_graph_screen(provider, cluster, host, graph_type, interval, enable_cand
         * Compare table and graph data
     """
     host.capture_historical_data()
+    if provider.one_of(VMwareProvider):
+        cluster.name = '{} in {}'.format(cluster.name, provider.data['datacenters'][0])
+    else:
+        cluster.name = '{} in {}'.format(cluster.name, provider.data['default_cluster'])
     cluster.wait_candu_data_available(timeout=1200)
 
     view = navigate_to(cluster, "Utilization")
     view.options.interval.fill(interval)
 
-    # Check garph displayed or not
+    # Check graph displayed or not
     try:
         graph = getattr(view, graph_type)
     except AttributeError as e:
