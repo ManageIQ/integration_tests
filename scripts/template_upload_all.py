@@ -28,6 +28,7 @@ from urllib2 import urlopen, HTTPError
 
 from miq_version import TemplateName
 
+from cfme.utils import path
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger, add_stdout_handler
 

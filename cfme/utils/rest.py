@@ -237,7 +237,7 @@ def query_resource_attributes(resource, soft_assert=None):
 
     if soft_assert:
         for failure in outcome.failed:
-            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+            soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
 
     return outcome

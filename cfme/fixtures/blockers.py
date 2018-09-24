@@ -68,7 +68,7 @@ def pytest_collection_modifyitems(session, config, items):
     if not config.getvalue("list_blockers"):
         return
     store.terminalreporter.write("Loading blockers ...\n", bold=True)
-    blocking = set([])
+    blocking = set()
     for item in items:
         if "blockers" not in item._metadata:
             continue

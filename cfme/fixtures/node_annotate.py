@@ -24,7 +24,7 @@ class MarkFromMap(object):
     @classmethod
     def from_parsed_list(cls, parsed, key, map_value):
         data = dict(map(itemgetter('id', key), parsed))
-        mark_map = dict((k, map_value(v)) for k, v in data.items())
+        mark_map = {k: map_value(v) for k, v in data.items()}
         return cls(mark_map)
 
 

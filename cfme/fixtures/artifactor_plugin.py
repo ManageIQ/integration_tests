@@ -179,7 +179,7 @@ def pytest_runtest_protocol(item):
                                     stdout=subprocess.PIPE)
             proc.wait()
             session_fw_version = proc.stdout.read().strip()
-        except:
+        except Exception:
             session_fw_version = None
         fire_art_hook(
             item.config, 'session_info',
@@ -200,7 +200,7 @@ def pytest_runtest_protocol(item):
     try:
         params = item.callspec.params
         param_dict = {p: get_name(v) for p, v in params.items()}
-    except:
+    except Exception:
         param_dict = {}
     ip = appliance.hostname
     # This pre_start_test hook is needed so that filedump is able to make get the test

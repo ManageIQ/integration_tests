@@ -634,7 +634,7 @@ def top_to_appliance(top_file):
 
     top_keys = ['datetimes', 'cpuus', 'cpusy', 'cpuni', 'cpuid', 'cpuwa', 'cpuhi', 'cpusi', 'cpust',
         'memtot', 'memuse', 'memfre', 'buffer', 'swatot', 'swause', 'swafre', 'cached']
-    top_app = dict((key, []) for key in top_keys)
+    top_app = {key: [] for key in top_keys}
 
     cur_time = None
     miqtop_ahead = True

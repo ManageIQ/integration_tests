@@ -18,7 +18,7 @@ def _cleanup_report(report):
     try:
         logger.info('Cleaning up report %s', report.menu_name)
         report.delete()
-    except:
+    except Exception:
         logger.warning('Failed to clean up report %s', report.menu_name)
 
 

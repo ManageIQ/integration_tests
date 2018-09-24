@@ -1,7 +1,6 @@
 import fauxfactory
 import pytest
 
-from cfme.services.catalogs.catalog import Catalog
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to

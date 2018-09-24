@@ -14,7 +14,6 @@ from contextlib import contextmanager
 
 import pytest
 
-from cfme.utils.version import get_stream
 from cfme.test_framework.sprout.client import SproutClient
 
 

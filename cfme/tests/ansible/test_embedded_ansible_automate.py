@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-from widgetastic_patternfly import Button as WButton
 
 from cfme import test_requirements
 from cfme.automate.simulation import simulate

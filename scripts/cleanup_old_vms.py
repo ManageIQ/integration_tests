@@ -8,6 +8,8 @@ from collections import namedtuple
 from operator import attrgetter
 from multiprocessing import Manager, Pool
 
+from six.moves import input
+
 import pytz
 from tabulate import tabulate
 from wrapanapi.exceptions import VMInstanceNotFound
@@ -309,7 +311,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, tags=None, prompt=True):
         scan_fail_vms.append(scan_fail_queue.get())
 
     if vms_to_delete and prompt:
-        yesno = raw_input('Delete these VMs? [y/N]: ')
+        yesno = input('Delete these VMs? [y/N]: ')
         if str(yesno).lower() != 'y':
             logger.info('Exiting.')
             return 0

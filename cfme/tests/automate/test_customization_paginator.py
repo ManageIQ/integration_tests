@@ -82,7 +82,7 @@ def test_paginator(some_dialogs, soft_assert, appliance):
         current_rec_end = view.paginator.max_item
 
         assert int(current_rec_offset) <= int(current_rec_end) <= int(current_total), \
-            "Incorrect paginator value, expected {0} <= {1} <= {2}".format(
+            "Incorrect paginator value, expected {} <= {} <= {}".format(
                 current_rec_offset, current_rec_end, current_total)
 
     assert {dlg.label for dlg in some_dialogs} <= dialogs_found, \

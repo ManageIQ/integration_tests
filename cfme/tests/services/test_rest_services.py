@@ -236,7 +236,7 @@ class TestServiceRESTAPI(object):
             if failure.name == 'metric_rollups' and BZ(
                     1540254, forced_streams=['5.9', 'upstream']).blocks:
                 continue
-            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+            soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
 
     def test_edit_service(self, appliance, services):
@@ -848,7 +848,7 @@ class TestServiceCatalogsRESTAPI(object):
             if failure.name == 'service_templates' and BZ(
                     1546942, forced_streams=['5.8']).blocks:
                 continue
-            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+            soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
 
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
@@ -1293,7 +1293,7 @@ class TestBlueprintsRESTAPI(object):
             if failure.name == 'service_templates' and BZ(
                     1546952, forced_streams=['5.8']).blocks:
                 continue
-            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+            soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
 
     @pytest.mark.tier(3)

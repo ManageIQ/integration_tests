@@ -20,7 +20,7 @@ def dig_code(node):
     lc_info = proc.stdout.readlines()
     contact_stats = defaultdict(int)
     for line in lc_info:
-        contact = re.findall('.{8} \(\<(.*?)\> ', line)
+        contact = re.findall(r'.{8} \(\<(.*?)\> ', line)
         contact_stats[contact[0]] += 1
     sorted_x = sorted(contact_stats.items(), key=operator.itemgetter(1), reverse=True)
     results = []
@@ -44,7 +44,7 @@ def pytest_runtest_teardown(item, nextitem):
                 qa_arr.append("{},{:.2f}%\n".format(results[idx][0], results[idx][1]))
             if qa_arr:
                 qa_string = "".join(qa_arr)
-        except:
+        except Exception:
             pass
     fire_art_test_hook(
         item,

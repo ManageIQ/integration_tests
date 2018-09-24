@@ -4,11 +4,9 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.workloads import VmsInstances
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for_decorator

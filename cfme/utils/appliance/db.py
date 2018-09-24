@@ -566,7 +566,7 @@ class ApplianceDB(AppliancePlugin):
             # enable external DB with cli
             result = client.run_command(
                 'appliance_console_cli '
-                '--hostname {0} --region {1} --dbname {2} --username {3} --password {4}'.format(
+                '--hostname {} --region {} --dbname {} --username {} --password {}'.format(
                     self.address, region, db_name, db_username, db_password
                 )
             )

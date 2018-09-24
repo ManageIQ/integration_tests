@@ -242,7 +242,7 @@ class DockerBot(object):
                                 files.append(filen['filename'])
                         if filen['filename'].endswith('requirements/frozen.txt'):
                             self.requirements_update = True
-                except:
+                except Exception:
                     return None
                 page += 1
             return files
@@ -420,7 +420,7 @@ class DockerBot(object):
         try:
             with open('.yaml_key') as f:
                 key = f.read()
-        except:
+        except Exception:
             key = None
         return key
 

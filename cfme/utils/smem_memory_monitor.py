@@ -569,7 +569,7 @@ def generate_summary_html(directory, version_string, appliance_results, process_
             version_string))
         html_file.write('<td>{}</td>\n'.format(start.replace(microsecond=0)))
         html_file.write('<td>{}</td>\n'.format(end.replace(microsecond=0)))
-        html_file.write('<td>{}</td>\n'.format(unicode(timediff).partition('.')[0]))
+        html_file.write('<td>{}</td>\n'.format(str(timediff).partition('.')[0]))
         html_file.write('<td>{}</td>\n'.format(round(appliance_results[end]['total'], 2)))
         html_file.write('<td>{}</td>\n'.format(round(appliance_results[start]['used'], 2)))
         html_file.write('<td>{}</td>\n'.format(round(appliance_results[end]['used'], 2)))
@@ -793,7 +793,7 @@ def generate_summary_html(directory, version_string, appliance_results, process_
                             ordered_name, pid, pid))
                     html_file.write('<td>{}</td>\n'.format(start.replace(microsecond=0)))
                     html_file.write('<td>{}</td>\n'.format(end.replace(microsecond=0)))
-                    html_file.write('<td>{}</td>\n'.format(unicode(timediff).partition('.')[0]))
+                    html_file.write('<td>{}</td>\n'.format(str(timediff).partition('.')[0]))
                     rss_change = process_results[ordered_name][pid][end]['rss'] - \
                         process_results[ordered_name][pid][start]['rss']
                     html_file.write('<td>{}</td>\n'.format(

@@ -594,7 +594,7 @@ def test_attributes_present(appliance, collection_name):
     attrs = 'href,id,href_slug'
     collection = getattr(appliance.rest_api.collections, collection_name)
     response = appliance.rest_api.get(
-        '{0}{1}{2}'.format(collection._href, '?expand=resources&attributes=', attrs))
+        '{}{}{}'.format(collection._href, '?expand=resources&attributes=', attrs))
     assert_response(appliance)
     for resource in response.get('resources', []):
         assert 'id' in resource
@@ -702,7 +702,7 @@ class TestPicturesRESTAPI(object):
         for failure in outcome.failed:
             if failure.name in bad_attrs and BZ(1547852, forced_streams=['5.9']).blocks:
                 continue
-            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+            soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
 
     def test_add_picture(self, appliance):

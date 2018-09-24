@@ -43,7 +43,7 @@ def test_query_vm_attributes(vm, soft_assert):
         # this one is expected because additional arguments are needed
         if failure.type == 'subcollection' and failure.name == 'metric_rollups':
             continue
-        soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+        soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
             failure.type, failure.name, failure.response.status_code, failure.error))
 
 

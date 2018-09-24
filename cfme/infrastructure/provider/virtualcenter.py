@@ -91,30 +91,21 @@ class VMwareProvider(InfraProvider):
     # Following methods will only work if the remote console window is open
     # and if selenium focused on it. These will not work if the selenium is
     # focused on Appliance window.
-    def get_console_connection_status(self):
+
+    def _remote_control_attribute(self, xpath):
         try:
-            return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
-                self._console_connection_status_element).text
-        except:
+            return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(xpath)
+        except Exception:
             raise ItemNotFound("Element not found on screen, is current focus on console window?")
+
+    def get_console_connection_status(self):
+        return self._remote_control_attribute(self._console_connection_status_element).text
 
     def get_remote_console_canvas(self):
-        try:
-            return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
-                self._canvas_element)
-        except:
-            raise ItemNotFound("Element not found on screen, is current focus on console window?")
+        return self._remote_control_attribute(self._canvas_element)
 
     def get_console_ctrl_alt_del_btn(self):
-        try:
-            return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
-                self._ctrl_alt_del_xpath)
-        except:
-            raise ItemNotFound("Element not found on screen, is current focus on console window?")
+        return self._remote_control_attribute(self._ctrl_alt_del_xpath)
 
     def get_console_fullscreen_btn(self):
-        try:
-            return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
-                self._fullscreen_xpath)
-        except:
-            raise ItemNotFound("Element not found on screen, is current focus on console window?")
+        return self._remote_control_attribute(self._fullscreen_xpath)

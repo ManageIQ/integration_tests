@@ -4,7 +4,6 @@ from cfme import test_requirements
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
-from cfme.utils.blockers import GH
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),

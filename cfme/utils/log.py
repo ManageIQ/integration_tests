@@ -206,7 +206,7 @@ class PrefixAddingLoggerFilter(logging.Filter):
 
     def filter(self, record):
         if self.prefix:
-            record.msg = "{0}{1}".format(safe_string(self.prefix), safe_string(record.msg))
+            record.msg = "{}{}".format(safe_string(self.prefix), safe_string(record.msg))
         return True
 
 

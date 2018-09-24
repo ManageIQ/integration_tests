@@ -3,10 +3,10 @@
 import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic_patternfly import (Accordion, BootstrapSwitch, BreadCrumb, Button,
+from widgetastic_patternfly import (BootstrapSwitch, BreadCrumb, Button,
                                     Dropdown, TextInput, View)
 
-from widgetastic.widget import Text, Select
+from widgetastic.widget import Select
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable

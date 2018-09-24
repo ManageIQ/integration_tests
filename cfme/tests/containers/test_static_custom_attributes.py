@@ -21,8 +21,8 @@ pytestmark = [
 
 def get_random_string(length):
     valid_chars = digits + ascii_letters + ' !@#$%^&*()'
-    out = ''.join([choice(valid_chars) for _ in xrange(length)])
-    return re.sub('\s+', ' ', out)
+    out = ''.join([choice(valid_chars) for _ in range(length)])
+    return re.sub(r'\s+', ' ', out)
 
 
 ATTRIBUTES_DATASET = [

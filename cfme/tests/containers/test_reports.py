@@ -272,7 +272,7 @@ def test_report_number_of_images_per_node(appliance, provider, soft_assert):
         # Use 'in' since the image name in the API may include also registry and tag
         is_image = filter(lambda img_nm: img_nm in expected_image, pod_images)
         soft_assert(is_image,
-                    'Expected image for pod "{0}" in node {1} is "{2}". found images: {3}'
+                    'Expected image for pod "{}" in node {} is "{}". found images: {}'
                     .format(pod_name, node, expected_image, pod_images))
 
 

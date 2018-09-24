@@ -2,7 +2,7 @@
 
 """Library for event testing.
 """
-
+import six
 from cached_property import cached_property
 from contextlib import contextmanager
 from collections import Iterable
@@ -216,7 +216,7 @@ class Event(object):
             # weird thing happens here. getattr sometimes takes value not equal to python_type
             # so, force type conversion has to be done
             if evt_value and evt_type is not default_type:
-                if evt_type is unicode:
+                if evt_type is six.text_type:
                     evt_value = evt_value.encode('utf8')
                 else:
                     evt_value = default_type(evt_value)

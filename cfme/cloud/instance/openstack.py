@@ -6,10 +6,11 @@ from widgetastic_patternfly import Button, BootstrapSelect
 from widgetastic_manageiq import CheckboxSelect, Select, Input
 from widgetastic.utils import partial_match
 
-from cfme.exceptions import OptionNotAvailable, DestinationNotFound
+from cfme.exceptions import DestinationNotFound
 from cfme.common.vm_views import RightSizeView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from . import Instance, InstanceCollection, CloudInstanceView
+
 
 @attr.s
 class OpenStackInstance(Instance):

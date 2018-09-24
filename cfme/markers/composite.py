@@ -65,7 +65,7 @@ def pytest_collection_modifyitems(session, config, items):
                     continue
                 else:
                     new_items.append(item)
-            except:
+            except Exception:
                 new_items.append(item)
 
         items[:] = new_items

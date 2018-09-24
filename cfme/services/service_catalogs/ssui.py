@@ -2,7 +2,7 @@ import time
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text
-from widgetastic_patternfly import Input, Button, BootstrapSelect
+from widgetastic_patternfly import Button
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
 from cfme.services.service_catalogs import ServiceCatalogs, BaseOrderForm

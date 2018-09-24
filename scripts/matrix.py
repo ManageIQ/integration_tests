@@ -97,7 +97,7 @@ for test_data in elem:
             suite.tests = []
             suite.cache_params = []
             suite.description = suite_description
-            suite.params = set(['No param'])
+            suite.params = {'No param'}
             suite.cache_tests = {}
 
         if item_param:

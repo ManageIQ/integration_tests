@@ -30,9 +30,7 @@ repos:
   - id: debug-statements
     exclude: ^(sprout|scripts|cfme/fixtures/rdb.py)
   - id: flake8
-    <<: *exclude
 - repo: https://github.com/asottile/pyupgrade
   rev: v1.6.0
   hooks:
   - id: pyupgrade
-    <<: *exclude

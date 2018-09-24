@@ -32,7 +32,7 @@ logging.getLogger("pika").propagate = False
 
 def send_message_to_bot(msg):
 
-    required_fields = set(['rabbitmq_url', 'gh_queue', 'gh_channel', 'gh_message_type'])
+    required_fields = {'rabbitmq_url', 'gh_queue', 'gh_channel', 'gh_message_type'}
     if not required_fields.issubset(docker_conf.viewkeys()):
         logger.warn("Skipping - docker.yaml doesn't have {}".format(required_fields))
         return

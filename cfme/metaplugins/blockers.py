@@ -92,7 +92,7 @@ def resolve_blockers(item, blockers):
         if blocker.blocks:
             use_blockers.append(blocker)
     # Unblocking
-    discard_blockers = set([])
+    discard_blockers = set()
     for blocker in use_blockers:
         unblock_func = kwargify(blocker.kwargs.get("unblock"))
         local_env = {"blocker": blocker}

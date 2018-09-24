@@ -71,7 +71,7 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
             if failure.name in ('cloud_networks', 'cloud_subnets', 'security_groups') and BZ(
                     1546112, forced_streams=['5.9', 'upstream']).blocks:
                 continue
-        soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+        soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
             failure.type, failure.name, failure.response.status_code, failure.error))
 
 

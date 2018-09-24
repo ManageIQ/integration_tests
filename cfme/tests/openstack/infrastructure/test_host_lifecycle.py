@@ -1,7 +1,6 @@
 import pytest
 
 from cfme.exceptions import HostNotFound
-from cfme.infrastructure.openstack_node import OpenstackNode
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for

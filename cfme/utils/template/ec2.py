@@ -40,7 +40,7 @@ class EC2TemplateUpload(ProviderTemplateUpload):
                                                file_path=self.file_path,
                                                file_name=self.template_name)
             return True
-        except:
+        except Exception:
             return False
 
     @log_wrap("import image from bucket")

@@ -15,6 +15,7 @@ from widgetastic_manageiq import (
     Accordion, ItemsToolBarViewSelector, PaginationPane, SummaryTable, Table, BaseEntitiesView,
     Search)
 
+
 class StackToolbar(View):
     """The toolbar on the stacks page"""
     configuration = Dropdown('Configuration')

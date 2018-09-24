@@ -125,7 +125,6 @@ LOGIN_METHODS = ['click_on_login', 'press_enter_after_password']
 @MiqImplementationContext.external_for(Server.login, ViaSSUI)
 def login(self, user=None, method=LOGIN_METHODS[-1]):
     if not user:
-        from cfme.configure.access_control import User
         username = conf.credentials['default']['username']
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)

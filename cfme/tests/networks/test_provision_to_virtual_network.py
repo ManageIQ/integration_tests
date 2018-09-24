@@ -1,7 +1,6 @@
 import fauxfactory
 import pytest
 from widgetastic.utils import partial_match
-from wrapanapi.exceptions import NotFoundError
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider

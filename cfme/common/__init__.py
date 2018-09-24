@@ -42,7 +42,7 @@ class PolicyProfileAssignable(object):
         try:
             return self._assigned_policy_profiles
         except AttributeError:
-            self._assigned_policy_profiles = set([])
+            self._assigned_policy_profiles = set()
             return self._assigned_policy_profiles
 
     def assign_policy_profiles(self, *policy_profile_names):

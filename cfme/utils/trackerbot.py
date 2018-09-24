@@ -173,10 +173,10 @@ def mark_unusable_as_untested(api, template_name, provider_type):
         return
 
     # Now find all tested provider templates. If they are tested BUT unusable, mark untested
-    tested_providers = set(
+    tested_providers = {
         p['key'].lower() for p in get_tested_providers(api, template_name)
         if p['type'] == provider_type
-    )
+    }
 
     tested_unusable_providers = [p for p in tested_providers if p not in usable_providers]
 
@@ -197,7 +197,7 @@ def check_if_tested(api, template_name, provider_type):
         False otherwise
     """
     tested_providers = get_tested_providers(api, template_name)
-    tested_types = set(p['type'].lower() for p in tested_providers)
+    tested_types = {p['type'].lower() for p in tested_providers}
     return provider_type.lower() in tested_types
 
 

@@ -146,7 +146,7 @@ def get_testcase_data(name, tests, processed_test, item, legacy=False):
     manual = item.get_marker('manual')
     if not manual:
         # The master here should probably link the latest "commit" eventually
-        automation_script = 'http://github.com/{0}/{1}/blob/master/{2}#L{3}'.format(
+        automation_script = 'http://github.com/{}/{}/blob/master/{}#L{}'.format(
             xunit['gh_owner'],
             xunit['gh_repo'],
             item.location[0],
@@ -157,7 +157,7 @@ def get_testcase_data(name, tests, processed_test, item, legacy=False):
         # Description with timestamp and link to test case source.
         # The timestamp will not be visible in Polarion, but will cause Polarion
         # to update the "Updated" field even when there's no other change.
-        description = '{0}<br id="{1}"/><br/><a href="{2}">Test Source</a>'.format(
+        description = '{}<br id="{}"/><br/><a href="{}">Test Source</a>'.format(
             description, timestamp, automation_script)
     else:
         custom_fields['caseautomation'] = "manualonly"

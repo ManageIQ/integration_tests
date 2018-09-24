@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import attr
 
-from cfme.exceptions import OptionNotAvailable
 from . import Instance, InstanceCollection
 
 

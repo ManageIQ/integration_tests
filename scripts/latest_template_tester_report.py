@@ -50,7 +50,7 @@ def make_ssh_client(rhevip, sshname, sshpass):
 def get_latest_tested_template_on_stream(api, template_stream_name, template_name):
     stream = {}
     try:
-        wait_for_images_on_web_repo(template_stream_name, template_name)
+        wait_for_images_on_web_repo(api, template_stream_name, template_name)
         wait_for_templates_on_providers(api, template_stream_name, template_name)
     except Exception as e:
         print(e)
@@ -117,7 +117,7 @@ def images_uploaded(stream):
     return name_dict
 
 
-def all_images_uploaded(stream, template=None):
+def all_images_uploaded(api, stream, template=None):
     if get_untested_templates(api, stream, template):
         print('report will not be generated, proceed with the next untested provider')
         sys.exit()
@@ -132,10 +132,10 @@ def all_images_uploaded(stream, template=None):
     return True
 
 
-def wait_for_images_on_web_repo(stream, template):
+def wait_for_images_on_web_repo(api, stream, template):
     try:
         print('wait for images upload to latest directory')
-        wait_for(all_images_uploaded, [stream, template],
+        wait_for(all_images_uploaded, [api, stream, template],
                  fail_condition=False, delay=5, timeout='30m')
         return True
     except Exception as e:

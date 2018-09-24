@@ -125,9 +125,9 @@ class Bugzilla(object):
             bug = id
         else:
             bug = self.get_bug(id)
-        expanded = set([])
-        found = set([])
-        stack = set([bug])
+        expanded = set()
+        found = set()
+        stack = {bug}
         while stack:
             b = stack.pop()
             if b.status == "CLOSED" and b.resolution == "DUPLICATE":
@@ -145,7 +145,7 @@ class Bugzilla(object):
     def resolve_blocker(self, blocker, version=None, ignore_bugs=None, force_block_streams=None):
         # ignore_bugs is mutable but is not mutated here! Same force_block_streams
         force_block_streams = force_block_streams or []
-        ignore_bugs = set([]) if not ignore_bugs else ignore_bugs
+        ignore_bugs = set() if not ignore_bugs else ignore_bugs
         if isinstance(id, BugWrapper):
             bug = blocker
         else:
@@ -156,7 +156,7 @@ class Bugzilla(object):
             version = bug.product.latest_version
         is_upstream = version == bug.product.latest_version
         variants = self.get_bug_variants(bug)
-        filtered = set([])
+        filtered = set()
         version_series = ".".join(str(version).split(".")[:2])
         for variant in sorted(variants, key=lambda variant: variant.id):
             if variant.id in ignore_bugs:

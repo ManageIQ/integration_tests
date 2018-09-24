@@ -5,7 +5,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.physical.provider.lenovo import LenovoProvider
-from cfme.utils import testgen
 from cfme.utils.update import update
 
 pytestmark = [

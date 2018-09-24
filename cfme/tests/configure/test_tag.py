@@ -25,6 +25,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider')
 ]
 
+
 @pytest.fixture
 def category(appliance):
     cg = appliance.collections.categories.create(

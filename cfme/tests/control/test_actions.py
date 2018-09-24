@@ -147,7 +147,7 @@ def _get_vm(request, provider, template_name, vm_name):
     vm = collection.instantiate(vm_name, provider, template_name)
 
     try:
-        vm_mgmt = deploy_template(
+        deploy_template(
             provider.key,
             vm_name,
             template_name=template_name,

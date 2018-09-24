@@ -1,6 +1,7 @@
 import pytest
 from cfme.fixtures.soft_assert import base64_from_text
 
+
 @pytest.fixture(scope='module')
 def test_page(browser, datafile, appliance):
     selenium = appliance.browser.widgetastic.selenium

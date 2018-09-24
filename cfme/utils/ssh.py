@@ -69,18 +69,21 @@ class SSHResult(object):
         # Handling bool(x) or if x:
         return self.rc == 0
 
+    def __bool__(self):
+        return self.rc == 0
+
     def __int__(self):
         # handling int(x)
         return self.rc
 
-    def __cmp__(self, other):
+    def __eq__(self, other):
         # Handling comparison to strings or numbers
         if isinstance(other, int):
-            return cmp(self.rc, other)
+            return self.rc == other
         elif isinstance(other, six.string_types):
-            return cmp(self.output, other)
+            return self.output == other
         else:
-            raise ValueError('You can only compare SSHResult with str or int')
+            raise NotImplementedError('You can only compare SSHResult with str or int')
 
     @property
     def success(self):
@@ -446,7 +449,7 @@ class SSHClient(paramiko.SSHClient):
             tmp_folder_name = 'automation-{}'.format(fauxfactory.gen_alpha().lower())
             logger.info('For this purpose, temporary folder name is /tmp/%s', tmp_folder_name)
             # Clean up container's temporary folder
-            self.run_command('rm -rf /tmp/{0}'.format(tmp_folder_name))
+            self.run_command('rm -rf /tmp/{}'.format(tmp_folder_name))
             # Create/Clean up the host's temporary folder
             self.run_command(
                 'rm -rf /tmp/{0}; mkdir -p /tmp/{0}'.format(tmp_folder_name), ensure_host=True)
