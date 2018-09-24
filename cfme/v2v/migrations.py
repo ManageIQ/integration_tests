@@ -390,11 +390,18 @@ class AddMigrationPlanView(View):
         import_btn = Button('Import')
         importcsv = Button('Import CSV')
         hidden_field = HiddenFileInput(locator='.//input[contains(@accept,".csv")]')
-        table = Table('.//div[contains(@class, "container-fluid")]/table',
-                      column_widgets={"Select": Checkbox(locator=".//input")})
+        # TODO: Replace string keys by integer keys after row indexing issue get fixed
+        # TODO: Replace Text by Button or GenericLocatorWidget after button text get added
+        table = Table('.//div[contains(@class, "container-fluid")]/table', column_widgets={
+            'Select': Checkbox(locator=".//input"),
+            1: Text('.//span/button[contains(@class,"btn btn-link")]')})
         filter_by_dropdown = SelectorDropdown('id', 'filterFieldTypeMenu')
         search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
         clear_filters = Text(".//a[text()='Clear All Filters']")
+        error_text = Text('.//h3[contains(@class,"blank-slate-pf-main-action") and '
+                          'contains(text(), "Error:")]')
+        error_icon = Text(locator='.//span[contains(@class, "pficon-error-circle-o")]')
+        popover_text = Text(locator='.//div[contains(@class, "popover-content")]')
 
         @property
         def is_displayed(self):
@@ -638,7 +645,7 @@ class MigrationPlanCollection(BaseCollection):
             view.vms.filter_by_name(vm.name)
             for row in view.vms.table.rows():
                 if vm.name in row.vm_name.read():
-                    row.select.fill(True)
+                    row[0].fill(True)
             view.vms.clear_filters.click()
         view.next_btn.click()
         view.next_btn.click()

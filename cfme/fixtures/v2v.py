@@ -128,7 +128,7 @@ def _form_data(second_provider, provider):
         'general': {
             'name': 'infra_map_{}'.format(fauxfactory.gen_alphanumeric()),
             'description': "Single Datastore migration of VM from {ds_type1} to"
-                           " {ds_type2},".format(ds_type1='nfs', ds_type2='nfs')
+                           " {ds_type2}".format(ds_type1='nfs', ds_type2='nfs')
         },
         'cluster': {
             'mappings': [_form_data_mapping('clusters', second_provider, provider)]
