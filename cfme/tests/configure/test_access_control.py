@@ -578,7 +578,10 @@ def test_role_crud(appliance):
 
 @pytest.mark.tier(3)
 def test_rolename_required_error_validation(appliance):
-    with pytest.raises(Exception, match="Name can't be blank"):
+    # When trying to create a role with no name, the Add button is disabled.
+    # We are waiting for an Exception saying that there are no success
+    # or fail messages, because the Add button cannot be clicked.
+    with pytest.raises(Exception, match="Available messages: \[\]"):
         appliance.collections.roles.create(
             name=None,
             vm_restriction='Only User Owned'
