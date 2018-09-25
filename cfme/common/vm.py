@@ -563,7 +563,7 @@ class BaseVMCollection(BaseCollection):
                 logger.info('Waiting for cfme provision request for vm %s', vm.name)
                 if auto_approve:
                     provision_request.approve_request(method='ui', reason="Approved")
-                provision_request.wait_for_request(method='ui', num_sec=900)
+                provision_request.wait_for_request(method='ui', num_sec=2500)
                 if provision_request.is_succeeded(method='ui'):
                     logger.info('Waiting for vm %s to appear on provider %s', vm.name,
                                 provider.key)
