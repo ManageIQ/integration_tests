@@ -4,8 +4,7 @@ import attr
 from lxml.html import document_fromstring
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import ParametrizedView, Text, View
+from widgetastic.widget import Text, View
 from widgetastic_patternfly import Accordion, Dropdown
 from widgetastic_manageiq import (
     BaseEntitiesView,
@@ -338,6 +337,7 @@ class DatastoreCollection(BaseCollection):
         provider_db = {
             prov.id: get_crud_by_name(prov.name)
             for prov in self.appliance.rest_api.collections.providers.all
+            if not getattr(prov, "parent_ems_id", False)
         }
         datastores = [
             self.instantiate(name=name, provider=provider_db[prov_id])
