@@ -84,7 +84,7 @@ def ensure_vm_running(small_vm):
 
 @pytest.mark.rhel_testing
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[BZ(1591606, forced_streams=['5.9', '5.10'])])
+@pytest.mark.meta(blockers=[BZ(1632782, forced_streams=['5.10'])])
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
 def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, change_type):
     orig_config = small_vm.configuration.copy()
@@ -158,7 +158,7 @@ def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
 @pytest.mark.rhv1
 @pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider))
 @pytest.mark.parametrize('change_type', ['sockets', 'memory'])
-@pytest.mark.meta(blockers=[BZ(1591606, forced_streams=['5.9', '5.10'])])
+@pytest.mark.meta(blockers=[BZ(1632782, forced_streams=['5.10'])])
 def test_vm_reconfig_add_remove_hw_hot(provider, small_vm, ensure_vm_running, change_type):
     """Change number of CPU sockets and amount of memory while VM is runnng.
         Chaning number of cores per socket on running VM is not supported by RHV."""
