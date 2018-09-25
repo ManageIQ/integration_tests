@@ -75,7 +75,7 @@ def test_host_filter_without_user_input(host_collection, hosts, hosts_with_vm_co
     hosts_advanced_search.flash.assert_no_error()
 
     view = host_collection.appliance.browser.create_view(HostsView)
-    hosts_on_page = len(view.entities.get_all())
+    hosts_on_page = len(view.entities.entity_names)
     assert more_than_median_hosts == hosts_on_page
 
 
@@ -91,7 +91,7 @@ def test_host_filter_with_user_input(host_collection, hosts, hosts_with_vm_count
                                                           {"COUNT": median_vm_count})
     hosts_advanced_search.flash.assert_no_error()
     view = host_collection.appliance.browser.create_view(HostsView)
-    hosts_on_page = len(view.entities.get_all())
+    hosts_on_page = len(view.entities.entity_names)
     assert more_than_median_hosts == hosts_on_page
 
 
