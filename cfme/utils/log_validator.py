@@ -46,16 +46,32 @@ class LogValidator(object):
         self._remote_file_tail = SSHTail(remote_filename, **kwargs)
         self.matches = {}
 
+    def update_matched_patterns(self, new_patterns):
+        """
+        Updates matched patterns with a new array of regular expressions
+        and resets matches dictionary.
+
+        This is used when we validate logs periodically and we don't want
+        to iterate through already found patterns
+
+        Args:
+            new_patterns: new array of expected regex patterns to be matched
+        """
+        self.matched_patterns = new_patterns
+        self.matches = {}
+
     def fix_before_start(self):
         self._remote_file_tail.set_initial_file_end()
 
-    def validate_logs(self):
+    def validate_logs(self, auto_fail=True):
         for line in self._remote_file_tail:
             if self._check_skip_logs(line):
                 continue
             self._check_fail_logs(line)
             self._check_match_logs(line)
-        self._verify_match_logs()
+        if auto_fail:
+            self._verify_match_logs()
+        return list(self.matches)
 
     def _check_skip_logs(self, line):
         for pattern in self.skip_patterns:

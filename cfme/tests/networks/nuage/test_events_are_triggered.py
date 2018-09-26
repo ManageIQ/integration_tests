@@ -49,11 +49,6 @@ def test_creating_entities_triggers_targeted_refresh(targeted_refresh, with_nuag
     we check whether Automation Instances are properly set to trigger targeted refresh
     when event comes.
 
-    config:
-        Before running this test you have to configure merkyl (see how in
-        cfme/fixtures/merkyl.py) and make sure you have port 8192 opened
-        on your appliance.
-
     Steps:
         * Deploy entities outside of CFME (directly in the provider)
         * Verify that targeted refreshes where triggered
