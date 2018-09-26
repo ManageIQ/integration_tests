@@ -4,8 +4,10 @@ import pytest
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.base.ui import LoginPage
-from cfme.utils import conf, version
+from cfme.utils import conf
 from cfme.utils.appliance import ViaSSUI, ViaUI
+from cfme.utils.blockers import BZ
+from cfme.utils.version import LOWEST, UPSTREAM, VersionPicker
 
 pytestmark = pytest.mark.usefixtures('browser')
 
@@ -21,7 +23,7 @@ pytestmark = pytest.mark.usefixtures('browser')
                                              (ViaSSUI, 'click_on_login'),
                                              (ViaSSUI, 'press_enter_after_password')])
 @pytest.mark.uncollectif(lambda context, appliance: context == ViaSSUI and
-                         appliance.version == version.UPSTREAM)
+                         appliance.version == UPSTREAM)
 def test_login(context, method, appliance):
     """ Tests that the appliance can be logged into and shows dashboard page. """
 
@@ -60,6 +62,7 @@ def test_bad_password(context, request, appliance):
 
 
 @pytest.mark.parametrize('context', [ViaUI])
+@pytest.mark.meta(blockers=[BZ(1632718, forced_streams=['5.10'])])
 def test_update_password(context, request, appliance):
     """ Test updating password from the login screen. """
 
@@ -72,6 +75,10 @@ def test_update_password(context, request, appliance):
         credential=new_creds,
         groups=user_group
     )
+    error_message = VersionPicker({
+        LOWEST: "Incorrect username or password",
+        '5.10': "Login failed: Unauthorized"
+    }).pick(appliance.version)
 
     # Try to login as the new user to verify it has been created
     logged_in_page = appliance.server.login(user)
@@ -84,8 +91,19 @@ def test_update_password(context, request, appliance):
     changed_pass_page.logout()
 
     # Try to login with the user with old password
-    error_message = "Incorrect username or password"
     with pytest.raises(Exception, match=error_message):
         appliance.server.login(user)
 
+    # Now try changing password with invalid default password
+    new_cred = Credential(principal=username, secret="made_up_invalid_pass")
+    user2 = appliance.collections.users.instantiate(credential=new_cred, name=username)
+    with pytest.raises(Exception, match=error_message):
+        appliance.server.update_password(new_password='changeme', user=user2)
+
+    # Workaround for emptying the password fields.
+    # If this wasn't here, we would change the password for admin user while
+    # deleting our user. Which is bad.
+    appliance.server.browser.refresh()
+
+    # Delete the user we created
     user.delete()
