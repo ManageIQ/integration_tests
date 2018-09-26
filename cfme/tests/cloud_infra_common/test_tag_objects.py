@@ -108,6 +108,7 @@ def test_tag_cloud_objects(tagging_check, cloud_test_item, tag_place):
 
 @pytest.mark.provider([CloudProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
+@pytest.mark.uncollectif(lambda cloud_test_item: cloud_test_item[0] == 'cloud_keypairs')
 def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility, appliance,
                              request, tag):
     """ Tests infra provider and its items honors tag visibility
@@ -119,11 +120,8 @@ def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
         3. As admin remove tag
         4. Login as restricted user, item is not visible for user
     """
-    if isinstance(cloud_test_item, KeyPair) and appliance.version < '5.9':
-        pytest.skip('Keypairs visibility works starting 5.9')
-
-        check_item_visibility(cloud_test_item, visibility)
-        request.addfinalizer(lambda: tag_cleanup(cloud_test_item, tag))
+    check_item_visibility(cloud_test_item, visibility)
+    request.addfinalizer(lambda: tag_cleanup(cloud_test_item, tag))
 
 
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
