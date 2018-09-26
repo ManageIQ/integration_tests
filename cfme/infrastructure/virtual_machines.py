@@ -949,8 +949,9 @@ class InfraVm(VM):
     @property
     def host(self):
         vm_api = self.appliance.rest_api.collections.vms.get(name=self.name)
-        vm_api.reload(attributes='host_name')
-        host = self.appliance.collections.hosts.instantiate(name=vm_api.host_name,
+        vm_host = vm_api.host
+        vm_host.reload(attributes='name')
+        host = self.appliance.collections.hosts.instantiate(name=vm_host.name,
                                                             provider=self.provider)
         return host
 
