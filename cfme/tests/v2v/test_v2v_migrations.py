@@ -551,7 +551,7 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
     # wait until plan is in progress
     wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
         message="migration plan is in progress, be patient please",
-        delay=5, num_sec=1800)
+        delay=5, num_sec=3600)
 
     view.switch_to("Completed Plans")
     view.wait_displayed()
