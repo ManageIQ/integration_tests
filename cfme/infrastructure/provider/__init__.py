@@ -331,9 +331,9 @@ class Details(CFMENavigateStep):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
     def resetter(self):
-        """Reset view and selection"""
+        """Reset view to Summary View if available"""
         view_selector = self.view.toolbar.view_selector
-        if view_selector.selected != 'Summary View':
+        if view_selector.is_displayed and view_selector.selected != 'Summary View':
             view_selector.select('Summary View')
 
 
