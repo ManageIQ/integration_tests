@@ -5,7 +5,7 @@ import math
 import os
 import re
 from collections import namedtuple
-from datetime import date
+from datetime import date, datetime, timedelta
 from tempfile import NamedTemporaryFile
 
 import six
@@ -4273,12 +4273,36 @@ class MigrationPlansList(Widget):
         try:
             el = self._get_plan_element(plan_name)
             schedule_button = self.browser.element(self.ITEM_SCHEDULE_BUTTON_LOCATOR, parent=el)
+            wait_for(
+                lambda: schedule_button.is_enabled(),
+                delay=5,
+                num_sec=30,
+                message="waiting for schedule button to be enabled.",
+            )
             schedule_button.click()
             if schedule_button.text == "Schedule" and not cancel:
                 schedule_time_input = self.root_browser.element(self.ITEM_SCHEDULE_INPUT_LOCATOR)
                 schedule_time_input.click()
-                for i in range(after_mins):
-                    self.root_browser.click(self.ITEM_MODAL_MINUTE_INCREMENT_LOCATOR)
+                try:
+                    for i in range(after_mins):
+                        self.root_browser.click(self.ITEM_MODAL_MINUTE_INCREMENT_LOCATOR)
+                except NoSuchElementException:  # Throws this in FF browser
+                    self.logger.info(
+                        "Schedule using dateTimePicker failed, using datetime and timedelta."
+                    )
+
+                    current_time = datetime.strptime(
+                        schedule_time_input.get_attribute("value"), "%m/%d/%Y %I:%M %p"
+                    )
+                    schedule_time_input.clear()
+                    schedule_time_input.send_keys(
+                        datetime.strftime(
+                            current_time + timedelta(minutes=after_mins), "%m/%d/%Y %I:%M %p"
+                        )
+                    )
+                    # clicking on title to lose focus from dateTimePicker & activate schedule button
+                    self.root_browser.click('.//h4[@class="modal-title"]')
+
             if not cancel:
                 self.root_browser.click(self.ITEM_MODAL_SCHEDULE_LOCATOR)
             else:
