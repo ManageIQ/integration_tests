@@ -4554,6 +4554,10 @@ class MigrationPlanRequestDetailsList(Widget):
         './/div[@class="modal-footer"]' '/button[text()="No"]'
     )
     ITEM_MODAL_CANCEL_MIGRATION_VM_LIST_LOCATOR = './/div[@class="modal-body"]/ul'
+    ITEM_NOTIFICATION_TOAST_DISMISS_BUTTON_LOCATOR = (
+        './/div[contains(@class,"alert-dismissable")]/button/span[contains(@class,"pficon-close")]'
+    )
+    ITEM_PROGRESS_BAR_LOCATOR = './/div[@class="progress-bar"]'
 
     def __init__(self, parent, list_class, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4637,6 +4641,17 @@ class MigrationPlanRequestDetailsList(Widget):
             # This means element not present, so not in-progress
             return False
 
+    def progress_percent(self, vm_name):
+        el = self._get_vm_element(vm_name)
+        # get style attribute value as u'width: xx.xx%;'
+        # extract numeric part and return
+        return float(
+            self.browser.element(self.ITEM_PROGRESS_BAR_LOCATOR, parent=el)
+            .get_attribute("style")
+            .split(": ")[1]
+            .split("%")[0]
+        )
+
     def is_successful(self, vm_name):
         """ Checks if check icon is present indicating success."""
         try:
@@ -4664,7 +4679,16 @@ class MigrationPlanRequestDetailsList(Widget):
         try:
             el = self._get_vm_element(vm_name)
             self.browser.click(self.ITEM_CANCEL_MIGRATION_CHECKBOX_LOCATOR, parent=el)
-            self.parent_browser.click(self.ITEM_CANCEL_MIGRATION_BUTTON_LOCATOR)
+            try:
+                self.parent_browser.click(self.ITEM_CANCEL_MIGRATION_BUTTON_LOCATOR)
+            except WebDriverException:
+                for dismiss_button in self.root_browser.elements(
+                    self.ITEM_NOTIFICATION_TOAST_DISMISS_BUTTON_LOCATOR
+                ):
+                    self.logger.info("Toast Notification seems to have appeared, dismissing.")
+                    dismiss_button.click()
+                self.parent_browser.click(self.ITEM_CANCEL_MIGRATION_BUTTON_LOCATOR)
+
             if confirmed and (
                 vm_name
                 in self.root_browser.element(self.ITEM_MODAL_CANCEL_MIGRATION_VM_LIST_LOCATOR).text
