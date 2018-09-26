@@ -517,7 +517,7 @@ class HostsCollection(BaseCollection):
     def all(self):
         """returning all hosts objects"""
         from cfme.infrastructure.provider import InfraProvider
-        parent = self.filters.get('parent')
+        parent = self.filters.get('parent') or self.filters.get('provider')
         if parent:
             rest_api_entity = parent.rest_api_entity
             rest_api_entity.reload(attributes=['hosts'])
@@ -635,13 +635,23 @@ class HostsCollection(BaseCollection):
 @navigator.register(HostsCollection)
 class All(CFMENavigateStep):
     VIEW = HostsView
-    prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
+
+    def prerequisite(self):
+        parent = self.obj.filters.get('parent') or self.obj.filters.get('provider')
+        if parent:
+            return navigate_to(self.obj.parent, 'Details')
+        else:
+            return navigate_to(self.obj.appliance.server, 'LoggedIn')
 
     def step(self):
-        try:
-            self.prerequisite_view.navigation.select("Compute", "Infrastructure", "Hosts")
-        except NoSuchElementException:
-            self.prerequisite_view.navigation.select("Compute", "Infrastructure", "Nodes")
+        parent = self.obj.filters.get('parent') or self.obj.filters.get('provider')
+        if parent:
+            self.prerequisite_view.entities.summary('Relationships').click_at('Hosts')
+        else:
+            try:
+                self.prerequisite_view.navigation.select("Compute", "Infrastructure", "Hosts")
+            except NoSuchElementException:
+                self.prerequisite_view.navigation.select("Compute", "Infrastructure", "Nodes")
 
 
 @navigator.register(Host)

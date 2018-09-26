@@ -124,10 +124,7 @@ def get_obj(relationship, appliance, **kwargs):
 
 @pytest.fixture
 def host(appliance, provider):
-    host_collection = appliance.collections.hosts.filter({'provider': provider})
-    expression = 'fill_field(Host / Node : Parent Cluster, IS NOT NULL)'
-    view = navigate_to(host_collection, 'All')
-    view.entities.search.advanced_search(expression)
+    host_collection = provider.hosts
     return random.choice(host_collection.all())
 
 
