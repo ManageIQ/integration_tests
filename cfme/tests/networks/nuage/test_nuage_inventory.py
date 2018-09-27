@@ -42,6 +42,30 @@ def test_subnet_details_stats(provider, with_nuage_sandbox):
     subnet.validate_stats(subnet_stats)
 
 
+def test_network_router_details_stats(appliance, provider, with_nuage_sandbox):
+    """
+    This test creates Nuage enterprise and its entities, including network router.
+    Then it validates inventory of created network router.
+    Steps:
+        * Deploy some entities outside of MIQ (directly in the provider)
+        * Create dictionary with stats that will be validated
+        * Find created network router in database and validate its stats
+    """
+    sandbox = with_nuage_sandbox
+    router_stats = {
+        'name_value': sandbox['domain'].name,
+        'type_value': 'ManageIQ/Providers/Nuage/Network Manager/Network Router',
+        'network_manager_value': provider.name,
+        'cloud_tenant_value': sandbox['domain'].parent_object.name,
+        'cloud_subnets_num': len(sandbox['domain'].subnets.get()),
+        'floating_ips_num': len(sandbox['domain'].floating_ips),
+        'security_groups_num': len(sandbox['domain'].policy_groups)
+    }
+    provider.refresh_provider_relationships()
+    router = object_in_vmdb_with_timeout('nuage_network_routers', provider, sandbox['domain'].id)
+    router.validate_stats(router_stats)
+
+
 def object_in_vmdb_with_timeout(table, provider, ems_ref):
 
     def object_from_vmdb():

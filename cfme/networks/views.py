@@ -712,6 +712,7 @@ class OneProviderCloudNetworkView(BaseLoggedInPage):
 
 class OneProviderNetworkRouterView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
+    title = Text('//div[@id="main-content"]//h1')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(NetworkRouterSideBar)
     including_entities = View.include(NetworkRouterEntities, use_parent=True)

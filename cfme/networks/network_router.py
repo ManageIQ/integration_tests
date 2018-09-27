@@ -209,3 +209,12 @@ class AddInterface(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select('Add Interface to this Router')
+
+
+@navigator.register(NetworkRouter, 'DetailsThroughProvider')
+class RouterThroughProvider(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('provider_obj', 'NetworkRouters')
+    VIEW = NetworkRouterDetailsView
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
