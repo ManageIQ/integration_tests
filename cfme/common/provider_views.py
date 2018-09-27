@@ -230,6 +230,7 @@ class ProviderVmsTemplatesView(BaseLoggedInPage):
     class toolbar(View):  # noqa
         configuration = Dropdown(text='Configuration')
         policy = Dropdown(text='Policy')
+        power = Dropdown(text='Power')
         download = Dropdown(text='Download')
         view_selector = View.nested(ItemsToolBarViewSelector)
 

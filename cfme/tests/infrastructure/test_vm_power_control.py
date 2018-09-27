@@ -335,7 +335,7 @@ class TestVmDetailsPowerControlPerProvider(object):
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1496383, forced_streams=['5.7', '5.8', '5.9', 'upstream'])])
+@pytest.mark.meta(blockers=[BZ(1496383, forced_streams=['5.9', '5.10', 'upstream'])])
 def test_no_template_power_control(provider, soft_assert):
     """ Ensures that no power button is displayed for templates.
 
@@ -355,7 +355,10 @@ def test_no_template_power_control(provider, soft_assert):
     """
     view = navigate_to(provider, 'ProviderTemplates')
     view.toolbar.view_selector.select('Grid View')
-    soft_assert(not view.toolbar.power.is_enabled, "Power displayed in template grid view!")
+    if provider.appliance.version < '5.10':
+        soft_assert(not view.toolbar.power.is_enabled, "Power enabled in template grid view!")
+    else:
+        soft_assert(not view.toolbar.power.is_displayed, "Power displayed in template grid view!")
 
     # Ensure selecting a template doesn't cause power menu to appear
     templates = view.entities.all_entity_names
@@ -364,7 +367,7 @@ def test_no_template_power_control(provider, soft_assert):
                                                                                    provider)
 
     # Check the power button with checking the quadicon
-    view = navigate_to(selected_template.parent, 'AllForProvider', use_resetter=False)
+    view = navigate_to(selected_template, 'AllForProvider', use_resetter=False)
     entity = view.entities.get_entity(name=selected_template.name, surf_pages=True)
     entity.check()
     soft_assert(not view.toolbar.power.is_enabled,
@@ -372,7 +375,10 @@ def test_no_template_power_control(provider, soft_assert):
 
     # Ensure there isn't a power button on the details page
     entity.click()
-    soft_assert(not view.toolbar.power.is_enabled, "Power displayed in template details!")
+    if provider.appliance.version < '5.10':
+        soft_assert(not view.toolbar.power.is_enabled, "Power enabled in template details!")
+    else:
+        soft_assert(not view.toolbar.power.is_displayed, "Power displayed in template details!")
 
 
 @pytest.mark.rhv3
