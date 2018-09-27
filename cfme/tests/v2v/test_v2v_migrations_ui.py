@@ -31,7 +31,7 @@ pytestmark = [
 
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
 def test_infra_mapping_ui_assertions(appliance, v2v_providers, form_data_single_datastore,
-                                    soft_assert):
+                                    host_creds, conversion_tags, soft_assert):
     # TODO: This test case does not support update
     # as update is not a supported feature for mapping.
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
@@ -52,6 +52,15 @@ def test_infra_mapping_ui_assertions(appliance, v2v_providers, form_data_single_
      mapping_list.get_map_source_networks(mapping.name)[0])
     soft_assert(mapping.form_data['network'].values()[0]['mappings'][0]['target'][0].format() in
      mapping_list.get_map_target_networks(mapping.name)[0])
+
+    rhv_prov = v2v_providers.rhv_provider
+    host = rhv_prov.hosts.all()[0]
+    host.refresh(cancel=True)
+    view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
+    mapping_list = view.infra_mapping_list
+    soft_assert(mapping_list.get_map_source_networks(mapping.name) != [])
+    soft_assert(mapping_list.get_map_target_networks(mapping.name) != [])
+
     mapping_list.delete_mapping(mapping.name)
     view.browser.refresh()
     view.wait_displayed()
