@@ -10,13 +10,12 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI, ViaUI
-from cfme.utils.blockers import GH
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.update import update
 
 
 pytestmark = [
-    pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7479')]),
     pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 ]
 
@@ -167,6 +166,8 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider, setup_p
 
 
 @pytest.mark.rhv2
+@pytest.mark.meta(blockers=[BZ(1633540, forced_streams=['5.10'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 # Here set_entity_quota_tag is used for setting the tag value.
 # Here custom_prov_data is used to provide the value fo the catalog item to be created.
