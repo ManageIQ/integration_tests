@@ -5,6 +5,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -88,3 +89,34 @@ def test_provider_log_updated(appliance, provider, log_exists):
             )
         ).output
         assert log_before != log_after, "Log hashes are the same"
+
+
+@pytest.mark.meta(blockers=[BZ(1633656,
+                               unblock=lambda provider: provider.one_of(AzureProvider, EC2Provider),
+                               forced_streams=["5.10", "upstream"])]
+                  )
+def test_provider_log_level(appliance, provider, log_exists):
+    """
+    Tests that log level in advanced settings affects log files
+
+    Steps:
+    1. Change log level to debug
+    2. Refresh provider
+    3. Check logs contain debug level
+    4. Reset level back
+
+    Metadata:
+        test_flag: log
+    """
+    if log_exists:
+        log_level = appliance.server.advanced_settings['log']['level_{}'.format(provider.log_name)]
+        # set log level to debug
+        appliance.server.update_advanced_settings(
+            {'log': {'level_{}'.format(provider.log_name): 'debug'}})
+        wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        debug_in_logs = appliance.ssh_client.run_command(
+            "cat /var/www/miq/vmdb/log/{}.log | grep DEBUG".format(provider.log_name)).output
+        # set log level back
+        appliance.server.update_advanced_settings(
+            {'log': {'level_{}'.format(provider.log_name): log_level}})
+        assert 'DEBUG' in debug_in_logs
