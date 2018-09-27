@@ -327,7 +327,8 @@ class MigrationDashboardView(BaseLoggedInPage):
     def is_displayed(self):
         return (self.navigation.currently_selected == ['Compute', 'Migration'] and
             (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
-            (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0))
+            (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0) and
+            len(self.browser.elements(".//div[contains(@class,'pficon-warning-triangle-o')]")) < 1)
 
     def plan_in_progress(self, plan_name):
         """MIQ V2V UI is going through redesign as OSP will be integrated.
@@ -393,6 +394,10 @@ class AddMigrationPlanView(View):
         name_help_text = Text(locator='.//div[contains(@id,"name")]/span')
         description = TextInput(name='description')
         select_vm = RadioGroup('.//div[contains(@id,"vm_choice_radio")]')
+
+        @property
+        def is_displayed(self):
+            return self.infra_map.is_displayed and self.name.is_displayed
 
     @View.nested
     class vms(View):  # noqa

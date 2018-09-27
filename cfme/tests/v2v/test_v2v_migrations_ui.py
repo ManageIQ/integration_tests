@@ -4,17 +4,18 @@ import pytest
 
 from widgetastic.exceptions import NoSuchElementException
 
-from cfme.fixtures.provider import rhel7_minimal
+from cfme.fixtures.provider import small_template
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.tests.services.test_service_rbac import new_user, new_group, new_role
 from cfme.utils.wait import wait_for
-from cfme.v2v.migrations import MigrationPlanRequestDetailsView
+from cfme.v2v.migrations import (
+    MigrationPlanRequestDetailsView, MigrationDashboardView, AddMigrationPlanView
+)
 
 pytestmark = [
-    pytest.mark.ignore_stream('5.8'),
     pytest.mark.provider(
         classes=[RHEVMProvider],
         selector=ONE_PER_VERSION,
@@ -222,46 +223,44 @@ def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_
     view.options.run_migration.select("Save migration plan to run later")
     # Test Create migration plan -Create and Read
     view.options.create.click()
+    view.results.close.click()
     # Test plan has unique name
-    view = navigate_to(migration_plan_collection, 'Add')
+    view = appliance.browser.create_view(MigrationDashboardView)
+    view.wait_displayed()
+    view.create_migration_plan.click()
+    view = appliance.browser.create_view(AddMigrationPlanView)
+    view.general.wait_displayed()
     view.general.infra_map.select_by_visible_text(mapping.name)
     view.general.name.fill(plan_name)
     view.general.description.fill(fauxfactory.gen_string("alphanumeric", length=150))
-    # following assertion will fail in 5.9.4 as they have not backported this change to 5.9.4
     soft_assert('a unique name' in view.general.name_help_text.read())
+    view.cancel_btn.click()
 
-    view = navigate_to(migration_plan_collection, 'All')
+    view = appliance.browser.create_view(MigrationDashboardView)
     soft_assert(plan_name in view.migration_plans_not_started_list.read())
-    soft_assert(view.infra_mapping_list.get_associated_plans(mapping.name) == plan_name)
     soft_assert(view.migration_plans_not_started_list.get_plan_description(plan_name) ==
      plan_description)
     # Test Associated Plans count  correctly Displayed in Map List view
     soft_assert(str(len(vm_selected)) in view.migration_plans_not_started_list.
         get_vm_count_in_plan(plan_name))
+    view.browser.refresh()
+    view.wait_displayed()
     soft_assert(view.infra_mapping_list.get_associated_plans_count(mapping.name) ==
      '1 Associated Plan')
     soft_assert(view.infra_mapping_list.get_associated_plans(mapping.name) == plan_name)
     view.migration_plans_not_started_list.select_plan(plan_name)
     view = appliance.browser.create_view(MigrationPlanRequestDetailsView)
     view.wait_displayed()
+    view.items_on_page.item_select('15')
     soft_assert(set(view.migration_request_details_list.read()) == set(vm_selected))
+
     view = navigate_to(infrastructure_mapping_collection, 'All')
     view.migration_plans_not_started_list.migrate_plan(plan_name)
 
-    # Test Archive completed migration  plan
-    wait_for(func=view.plan_in_progress, func_args=[plan_name], delay=5, num_sec=300,
-        handle_exception=True)
-    view.migr_dropdown.item_select("Completed Plans")
-    view.wait_displayed()
-    view.migration_plans_completed_list.archive_plan(plan_name)
-    view.migr_dropdown.item_select("Archived Plans")
-    view.wait_displayed()
-    soft_assert(plan_name in view.migration_plans_archived_list.read())
-
 
 @pytest.mark.parametrize('form_data_multiple_vm_obj_single_datastore', [['nfs', 'nfs',
-    [rhel7_minimal, rhel7_minimal]]], indirect=True)
-def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers,
+    [small_template, small_template]]], indirect=True)
+def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, conversion_tags,
         form_data_multiple_vm_obj_single_datastore, soft_assert):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     migration_plan_collection = appliance.collections.v2v_plans
@@ -299,21 +298,32 @@ def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers,
     view.wait_displayed()
     view.migration_plans_not_started_list.schedule_migration(plan2.name)
 
-    view.migration_plans_not_started_list.migrate_plan(plan1.name)
-    view.migr_dropdown.item_select("Not Started Plans")
-    view.wait_displayed()
-    view.migration_plans_not_started_list.migrate_plan(plan2.name)
-    view.migr_dropdown.item_select("In Progress Plans")
-    wait_for(func=view.plan_in_progress, func_args=[plan1.name], delay=5, num_sec=300,
-        handle_exception=True)
-    wait_for(func=view.plan_in_progress, func_args=[plan2.name], delay=5, num_sec=300,
-        handle_exception=True)
+    for plan in (plan1, plan2):
+        view.migr_dropdown.item_select("Not Started Plans")
+        view.wait_displayed()
+        view.migration_plans_not_started_list.migrate_plan(plan.name)
+        view.migr_dropdown.item_select("In Progress Plans")
+        wait_for(func=view.progress_card.is_plan_started, func_args=[plan.name],
+            message="migration plan is starting, be patient please", delay=5, num_sec=150,
+            handle_exception=True)
+        wait_for(func=view.plan_in_progress, func_args=[plan.name], delay=5, num_sec=600,
+            handle_exception=True)
+
     view.migr_dropdown.item_select("Completed Plans")
     view.wait_displayed()
     plans_list_before_sort = view.migration_plans_completed_list.read()
     view.sort_direction.click()
     plans_list_after_sort = view.migration_plans_completed_list.read()
     soft_assert(plans_list_before_sort != plans_list_after_sort)
+    # Test Archive completed migration  plan
+    view.browser.refresh()
+    view.wait_displayed()
+    view.migr_dropdown.item_select("Completed Plans")
+    view.wait_displayed()
+    view.migration_plans_completed_list.archive_plan(plan1.name)
+    view.migr_dropdown.item_select("Archived Plans")
+    view.wait_displayed()
+    soft_assert(plan1.name in view.migration_plans_archived_list.read())
 
 
 def test_migration_rbac(appliance, new_credential, v2v_providers):
