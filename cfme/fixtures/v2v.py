@@ -1,6 +1,7 @@
 import fauxfactory
 import itertools
 import pytest
+from collections import namedtuple
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
@@ -11,14 +12,32 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
 
+FormDataVmObj = namedtuple(
+    'FormDataVmObj', ['form_data', 'vm_list']
+)
+
+
 @pytest.fixture(scope='function')
 def v2v_providers(request, second_provider, provider):
     """ Fixture to setup providers """
-    setup_or_skip(request, second_provider)
-    setup_or_skip(request, provider)
-    yield second_provider, provider
-    second_provider.delete_if_exists(cancel=False)
-    provider.delete_if_exists(cancel=False)
+    V2vProviders = namedtuple(
+        'V2vProviders', ['vmware_provider', 'rhv_provider']
+    )
+    vmware_provider, rhv_provider = None, None
+    for provider in [second_provider, provider]:
+        if provider.one_of(VMwareProvider):
+            vmware_provider = provider
+        elif provider.one_of(RHEVMProvider):
+            rhv_provider = provider
+        else:
+            pytest.skip("Provider {} is not a valid provider for v2v tests".
+                format(provider.name))
+    v2v_providers = V2vProviders(vmware_provider=vmware_provider, rhv_provider=rhv_provider)
+    setup_or_skip(request, v2v_providers.vmware_provider)
+    setup_or_skip(request, v2v_providers.rhv_provider)
+    yield v2v_providers
+    v2v_providers.vmware_provider.delete_if_exists(cancel=False)
+    v2v_providers.rhv_provider.delete_if_exists(cancel=False)
 
 
 @pytest.fixture(scope='function')
@@ -28,17 +47,8 @@ def host_creds(request, v2v_providers):
         pytest.skip("There are more than two providers in v2v_providers fixture,"
                     "which is invalid, skipping.")
     try:
-        vmware_provider, rhv_provider = None, None
-        for provider in v2v_providers:
-            if provider.one_of(VMwareProvider):
-                vmware_provider = provider
-            elif provider.one_of(RHEVMProvider):
-                rhv_provider = provider
-            else:
-                pytest.skip("Provider {} is not a valid provider for v2v tests".
-                    format(provider.name))
-        if not vmware_provider or not rhv_provider:
-            pytest.skip("Something went wrong with VMware or RHV provider, skipping test.")
+        vmware_provider = v2v_providers.vmware_provider
+        rhv_provider = v2v_providers.rhv_provider
 
         vmware_hosts = vmware_provider.hosts.all()
         for host in vmware_hosts:
@@ -168,10 +178,10 @@ def form_data_multiple_vm_obj_single_datastore(request, appliance, second_provid
             }
         }
     })
-    vm_obj = []
+    vm_list = []
     for template_name in request.param[2]:
-        vm_obj.append(get_vm(request, appliance, second_provider, template_name))
-    return form_data, vm_obj
+        vm_list.append(get_vm(request, appliance, second_provider, template_name))
+    return FormDataVmObj(form_data=form_data, vm_list=vm_list)
 
 
 @pytest.fixture(scope='function')
@@ -243,7 +253,7 @@ def form_data_dual_vm_obj_dual_datastore(request, appliance, second_provider, pr
     # creating 2 VMs on two different datastores and returning its object list
     vm_obj1 = get_vm(request, appliance, second_provider, request.param[0][2], request.param[0][0])
     vm_obj2 = get_vm(request, appliance, second_provider, request.param[1][2], request.param[1][0])
-    return form_data, [vm_obj1, vm_obj2]
+    return FormDataVmObj(form_data=form_data, vm_list=[vm_obj1, vm_obj2])
 
 
 @pytest.fixture(scope='function')
@@ -270,7 +280,7 @@ def form_data_vm_obj_dual_nics(request, appliance, second_provider, provider):
         }
     })
     vm_obj = get_vm(request, appliance, second_provider, request.param[2])
-    return form_data, [vm_obj]
+    return FormDataVmObj(form_data=form_data, vm_list=[vm_obj])
 
 
 @pytest.fixture(scope='function')
@@ -289,7 +299,7 @@ def form_data_vm_obj_single_datastore(request, appliance, second_provider, provi
         }
     })
     vm_obj = get_vm(request, appliance, second_provider, request.param[2], request.param[0])
-    return form_data, [vm_obj]
+    return FormDataVmObj(form_data=form_data, vm_list=[vm_obj])
 
 
 @pytest.fixture(scope='function')
@@ -307,7 +317,7 @@ def form_data_vm_obj_single_network(request, appliance, second_provider, provide
         }
     })
     vm_obj = get_vm(request, appliance, second_provider, request.param[2])
-    return form_data, [vm_obj]
+    return FormDataVmObj(form_data=form_data, vm_list=[vm_obj])
 
 
 def _form_data_mapping(selector, second_provider, provider, source_list=None, target_list=None):
