@@ -94,3 +94,27 @@ def test_update_password(context, request, appliance):
         appliance.server.login(user)
 
     user.delete()
+
+
+@pytest.mark.parametrize('context', [ViaUI])
+def test_leading_whitespace_password(context, request, appliance):
+    """ Test password with leading whitespace """
+
+    # First, create a temporary new user
+    username = 'user_temp_{}'.format(fauxfactory.gen_alphanumeric(4).lower())
+    password = " password"
+    new_creds = Credential(principal=username, secret=password)
+    user_group = appliance.collections.groups.instantiate(description="EvmGroup-vm_user")
+    user = appliance.collections.users.create(
+        name=username,
+        credential=new_creds,
+        groups=user_group
+    )
+
+    # Try to login with new user
+    logged_in_page = appliance.server.login(user)
+    assert logged_in_page.is_displayed
+    logged_in_page.logout()
+
+    # Delete the user
+    request.addfinalizer(user.delete)
