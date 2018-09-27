@@ -3,7 +3,7 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Fillable
 from widgetastic.exceptions import NoSuchElementException
-
+from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import Server
 from cfme.common.provider import BaseProvider, provider_types
 from cfme.common.provider_views import (PhysicalProviderAddView,
@@ -16,6 +16,7 @@ from cfme.utils.log import logger
 from cfme.utils.net import resolve_hostname
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
+from widgetastic_manageiq import StatusBox
 
 
 @attr.s(hash=False)
@@ -161,3 +162,25 @@ class Add(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select(
             'Add a New Physical Infrastructure Provider'
         )
+
+class PhysicalOverviewView(BaseLoggedInPage):
+    providers = StatusBox('Providers')
+    chassis = StatusBox('Chassis')
+    racks = StatusBox('Racks')
+    servers = StatusBox('Servers')
+    storages = StatusBox('Storages')
+    switches = StatusBox('Switches')
+
+    @property
+    def is_displayed(self):
+        return self.navigation.currently_selected == ["Compute",
+            "Physical Infrastructure", "Overview"]
+
+
+@navigator.register(PhysicalProviderCollection, 'Overview')
+class Overview(CFMENavigateStep):
+    VIEW = PhysicalOverviewView
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        self.prerequisite_view.navigation.select("Compute", "Physical Infrastructure", "Overview")
