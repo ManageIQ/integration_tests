@@ -51,7 +51,7 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
     # vm_obj is a list, with only 1 VM object, hence [0]
     src_vm_obj = form_data_vm_obj_single_datastore.vm_list[0]
 
-    src_vm_obj = form_data_vm_obj_single_datastore[1][0]
+    src_vm_obj = form_data_vm_obj_single_datastore.vm_obj[0]
     wait_for(lambda: src_vm_obj.ip_address is not None,
         message="Waiting for VM to display IP in CFME",
         fail_func=src_vm_obj.refresh_relationships,
