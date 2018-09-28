@@ -125,9 +125,18 @@ class ProviderTemplateUpload(object):
             raise TemplateUploadException("Cannot get image URL.")
         else:
             image_name = self.image_pattern.findall(string_from_url)
-            if len(image_name):
+            if len(image_name) == 1:
                 # return 0th element of image_name, likely multiple formats for same provider type
                 return '/'.join([self.image_url, image_name[0]])  # TODO support multiple formats
+            elif len(image_name) > 1:
+                if 'manageiq' in self.image_url:  # Upstream ovirt build
+                    index = (i for i, string in enumerate(image_name) if 'ovirt' in string
+                        and 'qc2' in string).next()
+                    return '/'.join([self.image_url, image_name[index]])
+                elif 'cfme' in self.image_url:     # Downstream RHV build
+                    index = (i for i, string in enumerate(image_name) if 'rhevm' in string
+                        and 'qcow2' in string).next()
+                    return '/'.join([self.image_url, image_name[index]])
 
     @property
     def image_name(self):
