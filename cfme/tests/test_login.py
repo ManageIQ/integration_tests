@@ -4,8 +4,10 @@ import pytest
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.base.ui import LoginPage
-from cfme.utils import conf, version
+from cfme.utils import conf
 from cfme.utils.appliance import ViaSSUI, ViaUI
+from cfme.utils.blockers import BZ
+from cfme.utils.version import LOWEST, UPSTREAM, VersionPicker
 
 pytestmark = pytest.mark.usefixtures('browser')
 
@@ -21,7 +23,7 @@ pytestmark = pytest.mark.usefixtures('browser')
                                              (ViaSSUI, 'click_on_login'),
                                              (ViaSSUI, 'press_enter_after_password')])
 @pytest.mark.uncollectif(lambda context, appliance: context == ViaSSUI and
-                         appliance.version == version.UPSTREAM)
+                         appliance.version == UPSTREAM)
 def test_login(context, method, appliance):
     """ Tests that the appliance can be logged into and shows dashboard page. """
 
@@ -39,6 +41,8 @@ def test_login(context, method, appliance):
 @pytest.mark.tier(2)
 @pytest.mark.sauce
 @pytest.mark.parametrize('context', [ViaUI])
+# BZ 1632718 is only relevant for Chrome browser
+@pytest.mark.meta(blockers=[BZ(1632718, forced_streams=['5.10'])])
 def test_bad_password(context, request, appliance):
     """ Tests logging in with a bad password. """
 
@@ -46,10 +50,11 @@ def test_bad_password(context, request, appliance):
     password = "badpassword@#$"
     cred = Credential(principal=username, secret=password)
     user = appliance.collections.users.instantiate(credential=cred, name='Administrator')
-    if appliance.version.is_in_series('5.7'):
-        error_message = "Sorry, the username or password you entered is incorrect."
-    else:
-        error_message = "Incorrect username or password"
+
+    error_message = VersionPicker({
+        LOWEST: "Incorrect username or password",
+        '5.10': "Login failed: Unauthorized"
+    }).pick(appliance.version)
 
     with appliance.context.use(context):
         with pytest.raises(Exception, match=error_message):
