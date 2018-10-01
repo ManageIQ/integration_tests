@@ -10,6 +10,15 @@ pytestmark = [pytest.mark.tier(3),
               pytest.mark.usefixtures('infra_provider')]
 
 
+def test_default_filters_reset(appliance):
+    tree_path = ['Cloud', 'Instances', 'Images', 'Platform / Openstack']
+    view = navigate_to(appliance.user.my_settings, "DefaultFilters")
+    node = view.tabs.default_filters.tree.CheckNode(tree_path)
+    view.tabs.default_filters.tree.fill(node)
+    view.tabs.default_filters.reset.click()
+    assert view.flash.assert_message('All changes have been reset')
+
+
 def test_cloudimage_defaultfilters(appliance):
     filters = [['Cloud', 'Instances', 'Images', 'Platform / Amazon']]
     tree_path = ['All Images', 'Global Filters', 'Platform / Amazon']

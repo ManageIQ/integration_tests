@@ -264,6 +264,7 @@ class DefaultViewsForm(View):
 class DefaultFiltersForm(View):
     tree = CheckableBootstrapTreeview('df_treebox')
     save = Button('Save')
+    reset = Button('Reset')
 
 
 class TimeProfilesView(BaseLoggedInPage):
