@@ -28,6 +28,7 @@ def tagged_vm(tag, provider):
     yield tag_vm
     tag_vm.appliance.server.login_admin()
     tag_vm.remove_tag(tag=tag)
+    tag_vm.delete()
 
 
 @pytest.mark.rhv3
