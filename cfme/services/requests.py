@@ -191,7 +191,7 @@ class Request(BaseEntity):
             cancel: Whether to cancel the deletion.
         """
         view = navigate_to(self, 'Details')
-        view.toolbar.delete.click(handle_alert=True)
+        view.toolbar.delete.click(handle_alert=not cancel)
 
     @variable(alias='rest')
     def is_finished(self):
