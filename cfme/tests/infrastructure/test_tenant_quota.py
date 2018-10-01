@@ -11,12 +11,12 @@ from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI, ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import GH
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 
 pytestmark = [
     test_requirements.quota,
-    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
+    pytest.mark.meta(server_roles="+automate"),
     test_requirements.vm_migrate,
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module", selector=ONE_PER_TYPE)
@@ -197,6 +197,7 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, provider, se
 
 
 @pytest.mark.rhv2
+@pytest.mark.meta(blockers=[BZ(1626232, forced_streams=['5.10'])])
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
