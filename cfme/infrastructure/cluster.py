@@ -331,7 +331,11 @@ class ClusterCollection(BaseCollection):
             ]
         else:
             providers = self.appliance.rest_api.collections.providers
-            providers_db = {prov.id: get_crud_by_name(prov.name) for prov in providers}
+            providers_db = {
+                prov.id: get_crud_by_name(prov.name)
+                for prov in providers
+                if not getattr(prov, "parent_ems_id", False)
+            }
             cluster_obj = [
                 self.instantiate(name=cluster.name, provider=providers_db[cluster.ems_id])
                 for cluster in clusters
