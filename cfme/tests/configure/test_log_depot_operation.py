@@ -306,7 +306,7 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
         dropbox = FTP(host='flopbox.corp.redhat.com', user=username, passwd=password)
         contents = dropbox.nlst()
 
-        server_string = appliance.server.name + "_" + str(appliance.server.zone.id)
+        server_string = '{}_{}'.format(appliance.server.name, appliance.server.zone.id)
         date_group = '(_.*?){4}'
         pattern = re.compile(
             r"(^test_cfme_can_be_deleted)(.*?){}{}[.]zip$".format(server_string, date_group))
@@ -318,9 +318,9 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
             # files look like "Current_region_0_default_1_EVM_1_20170127_043343_20170127_051010.zip"
             # 20170127_043343 - date and time
             date = zip_file.split("_")
-            date_from = date[-4] + date[-3]
+            date_from = '{}{}'.format(date[-4], date[-3])
             # removing ".zip" from the name
-            date_to = date[-2] + date[-1][:-4]
+            date_to = '{}{}'.format(date[-2], date[-1][:-4])
             try:
                 date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
                 date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
