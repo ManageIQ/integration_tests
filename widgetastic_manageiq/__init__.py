@@ -688,6 +688,10 @@ class StatusBox(Widget, ClickableMixin):
         Widget.__init__(self, parent, logger=logger)
         self.name = name
 
+    @property
+    def is_displayed(self):
+        return self.card.is_displayed
+
     def click(self, *args, **kwargs):
         self.card.click(*args, **kwargs)
 
@@ -699,6 +703,25 @@ class StatusBox(Widget, ClickableMixin):
 
     def read(self):
         return {self.name: self.value}
+
+
+class ParametrizedStatusBox(ParametrizedView):
+    PARAMETERS = ("name",)
+    _card = StatusBox(name=Parameter("name"))
+
+    @property
+    def is_displayed(self):
+        return self._card.is_displayed
+
+    @property
+    def value(self):
+        return self._card.value
+
+    def click(self):
+        self._card.click()
+
+    def read(self):
+        return self._card.read()
 
 
 class Accordion(PFAccordion):
