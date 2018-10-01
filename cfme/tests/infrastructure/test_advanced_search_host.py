@@ -137,7 +137,7 @@ def test_host_filter_save_and_load(host_collection, request, hosts, hosts_with_v
         filter_name, fill_callback={"COUNT": median_vm_count}, apply_filter=True)
     hosts_advanced_search.flash.assert_no_error()
     request.addfinalizer(hosts_advanced_search.entities.search.delete_filter)
-    assert len(more_than_median_hosts) == len(host_collection.all(infra_provider))
+    assert len(more_than_median_hosts) == len(hosts_advanced_search.entities.entity_names)
 
 
 def test_host_filter_save_and_cancel_load(host_collection, request, hosts, hosts_with_vm_count,
