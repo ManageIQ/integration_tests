@@ -136,7 +136,7 @@ class Repository(BaseEntity, Fillable, Taggable):
             updates (dict): :py:class:`dict` of the updates.
         """
         original_updated_at = self.db_object.updated_at
-        view = navigate_to(self, "Edit")
+        view = navigate_to(self, "Edit", wait_for_view=True)
         changed = view.fill(updates)
         if changed:
             view.save_button.click()
