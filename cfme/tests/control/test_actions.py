@@ -38,7 +38,8 @@ from wrapanapi import VmState
 
 pytestmark = [
     pytest.mark.long_running,
-    pytest.mark.meta(server_roles="+automate +smartproxy +smartstate"),
+    pytest.mark.meta(server_roles="+automate +smartproxy +smartstate",
+                     blockers=[BZ(1633606, forced_streams=['5.10'])]),
     pytest.mark.tier(2),
     test_requirements.control
 ]
