@@ -4,7 +4,7 @@ import pytest
 import yaml
 
 from cfme import test_requirements
-from cfme.intelligence.reports.schedules import ScheduleCollection
+from cfme.intelligence.reports.schedules import NewScheduleView, ScheduleCollection
 from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -264,3 +264,23 @@ def test_reports_delete_saved_report(appliance, request):
     view.configuration.item_select(
         item='Delete selected Saved Reports', handle_alert=True)
     assert not report.exists
+
+
+def test_reports_create_schedule_for_base_report_once(appliance, request):
+    report = appliance.collections.reports.instantiate(
+        type="Configuration Management",
+        subtype="Virtual Machines",
+        menu_name="Hardware Information for VMs",
+    )
+    view = navigate_to(report, "Details")
+    view.configuration.item_select("Add a new Schedule")
+    add_view = report.create_view(NewScheduleView)
+    data = {"hour": "12", "minute": "10"}
+    add_view.fill(data)
+    add_view.add_button.click()
+    assert view.flash.assert_message('Schedule "{}" was added'.format(report.menu_name))
+
+    def _finalize():
+        view.configuration.item_select("Delete this Schedule", handle_alert=True)
+
+    request.addfinalizer(_finalize)
