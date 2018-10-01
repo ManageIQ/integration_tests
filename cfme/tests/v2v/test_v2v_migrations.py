@@ -561,7 +561,6 @@ def test_migration_long_name(request, appliance, v2v_providers, host_creds, conv
     source_datastores_list = v2v_providers.vmware_provider.data.get('datastores', [])
     source_datastore = [d.name for d in source_datastores_list if d.type == 'nfs'][0]
     # Following code will create vm name with 64 characters
-<<<<<<< HEAD
     vm_name = "{}{}".format(random_vm_name(context="v2v"), fauxfactory.gen_alpha(51))
     collection = appliance.provider_based_collection(v2v_providers.vmware_provider)
     vm_obj = collection.instantiate(
@@ -573,17 +572,6 @@ def test_migration_long_name(request, appliance, v2v_providers, host_creds, conv
         find_in_cfme=True,
         allow_skip="default",
         datastore=source_datastore)
-=======
-    vm_name = random_vm_name(context="v2v") + fauxfactory.gen_alpha(51)
-    collection = appliance.provider_based_collection(v2v_providers[0])
-    vm_obj = collection.instantiate(name=vm_name,
-                                    provider=v2v_providers[0],
-                                    template_name=rhel7_minimal(v2v_providers[0])['name'])
-    vm_obj.create_on_provider(timeout=2400,
-                              find_in_cfme=True,
-                              allow_skip="default",
-                              datastore=source_datastore)
->>>>>>> Changed format string and appliance object
     request.addfinalizer(lambda: vm_obj.cleanup_on_provider())
     form_data = _form_data(v2v_providers.vmware_provider, v2v_providers.rhv_provider)
 
@@ -615,15 +603,8 @@ def test_migration_long_name(request, appliance, v2v_providers, host_creds, conv
 
     view.migr_dropdown.item_select("Completed Plans")
     view.wait_displayed()
-<<<<<<< HEAD
     logger.info("For plan {plan_name}, migration status : {count}, total time elapsed: {clock}"
                 .format(plan_name=migration_plan.name,
                 count=view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
                 clock=view.migration_plans_completed_list.get_clock(migration_plan.name)))
-=======
-    logger.info("For plan {}, migration status after completion: {}, total time elapsed: {}".
-                format(migration_plan.name,
-                view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
-                view.migration_plans_completed_list.get_clock(migration_plan.name)))
->>>>>>> Changed format string and appliance object
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
