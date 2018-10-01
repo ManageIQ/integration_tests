@@ -98,7 +98,6 @@ def test_custom_button_import_export(appliance, setup_groups_buttons):
     # Export custom buttons
     dir_ = appliance.ssh_client.run_command("mkdir /tmp/custom_buttons")
     assert dir_.success
-    appliance.ssh_client.run_command("vmdb")
     export = appliance.ssh_client.run_command(
         "cd /var/www/miq/vmdb/; rake evm:export:custom_buttons -- --directory /tmp/custom_buttons"
     )
@@ -114,7 +113,6 @@ def test_custom_button_import_export(appliance, setup_groups_buttons):
         assert not gp.exists
 
     # Import custom buttons
-    appliance.ssh_client.run_command("vmdb")
     import_ = appliance.ssh_client.run_command(
         "cd /var/www/miq/vmdb/; rake evm:import:custom_buttons -- --source /tmp/custom_buttons"
     )
