@@ -4,14 +4,15 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
-from cfme.utils.blockers import GH
+from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
+    pytest.mark.meta(server_roles="+automate"),
     test_requirements.ssui,
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
@@ -22,6 +23,8 @@ pytestmark = [
 
 
 @pytest.mark.rhv2
+@pytest.mark.meta(blockers=[BZ(1633540, forced_streams=['5.10'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_catalog_crud_ssui(appliance, setup_provider,
                                    context, order_service):

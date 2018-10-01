@@ -155,6 +155,8 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
 
 
 @pytest.mark.rhv3
+@pytest.mark.meta(blockers=[BZ(1633540, forced_streams=['5.10'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
