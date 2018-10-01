@@ -120,8 +120,7 @@ def test_cluster_relationships(appliance, soft_assert):
 
 
 @pytest.mark.rhv2
-@pytest.mark.meta(blockers=[BZ(1504010, forced_streams=['5.7', '5.8', 'upstream']),
-                            BZ(1571254, forced_streams=['5.8', '5.9'])])
+@pytest.mark.meta(blockers=[BZ(1571254, forced_streams=['5.9', '5.10'])])
 def test_operations_vm_on(soft_assert, appliance, request):
     """Tests vm power options from on
 
