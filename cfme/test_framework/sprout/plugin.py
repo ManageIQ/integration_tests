@@ -218,6 +218,7 @@ class SproutManager(object):
             'cpu': provision_request.cpu,
             'ram': provision_request.ram,
             'stream': provision_request.group,
+            'wait_time': provision_request.provision_timeout * 60
         }
         if provision_request.template_type:
             kargs['template_type'] = provision_request.template_type
