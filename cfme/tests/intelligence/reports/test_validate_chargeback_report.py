@@ -200,7 +200,7 @@ def resource_usage(vm_ownership, appliance, provider):
 
         rc, out = appliance.ssh_client.run_rails_command(
             "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
-            vm.perf_capture('realtime', 4.hour.ago.utc, Time.now.utc)\""
+            vm.perf_capture('realtime', 5.hour.ago.utc, Time.now.utc)\""
             .format(provider.id, repr(vm_name)))
         assert rc == 0, "Failed to capture VM C&U data:".format(out)
 
