@@ -50,16 +50,16 @@ def test_provider_log_rotate(appliance, provider, log_exists):
     Metadata:
         test_flag: log
     """
-    if log_exists:
-        appliance.ssh_client.run_command("logrotate -f /etc/logrotate.d/miq_logs.conf")
-        logs_count = appliance.ssh_client.run_command(
-            "ls -l /var/www/miq/vmdb/log/{}.log*|wc -l".format(
-                provider.log_name
-            )
-        ).output
-        assert logs_count > 1, "{}.log wasn't rotated by default miq_logs.conf".format(
+    assert log_exists, "Log file {}.log doesn't exist".format(provider.log_name)
+    appliance.ssh_client.run_command("logrotate -f /etc/logrotate.d/miq_logs.conf")
+    logs_count = appliance.ssh_client.run_command(
+        "ls -l /var/www/miq/vmdb/log/{}.log*|wc -l".format(
             provider.log_name
         )
+    ).output
+    assert logs_count > 1, "{}.log wasn't rotated by default miq_logs.conf".format(
+        provider.log_name
+    )
 
 
 def test_provider_log_updated(appliance, provider, log_exists):
@@ -75,20 +75,20 @@ def test_provider_log_updated(appliance, provider, log_exists):
     Metadata:
         test_flag: log
     """
-    if log_exists:
-        log_before = appliance.ssh_client.run_command(
-            "md5sum /var/www/miq/vmdb/log/{}.log | awk '{{ print $1 }}'".format(
-                provider.log_name
-            )
-        ).output
+    assert log_exists, "Log file {}.log doesn't exist".format(provider.log_name)
+    log_before = appliance.ssh_client.run_command(
+        "md5sum /var/www/miq/vmdb/log/{}.log | awk '{{ print $1 }}'".format(
+            provider.log_name
+        )
+    ).output
 
-        wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-        log_after = appliance.ssh_client.run_command(
-            "md5sum /var/www/miq/vmdb/log/{}.log | awk '{{ print $1 }}'".format(
-                provider.log_name
-            )
-        ).output
-        assert log_before != log_after, "Log hashes are the same"
+    wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+    log_after = appliance.ssh_client.run_command(
+        "md5sum /var/www/miq/vmdb/log/{}.log | awk '{{ print $1 }}'".format(
+            provider.log_name
+        )
+    ).output
+    assert log_before != log_after, "Log hashes are the same"
 
 
 @pytest.mark.meta(blockers=[BZ(1633656,
@@ -108,15 +108,15 @@ def test_provider_log_level(appliance, provider, log_exists):
     Metadata:
         test_flag: log
     """
-    if log_exists:
-        log_level = appliance.server.advanced_settings['log']['level_{}'.format(provider.log_name)]
-        # set log level to debug
-        appliance.server.update_advanced_settings(
-            {'log': {'level_{}'.format(provider.log_name): 'debug'}})
-        wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-        debug_in_logs = appliance.ssh_client.run_command(
-            "cat /var/www/miq/vmdb/log/{}.log | grep DEBUG".format(provider.log_name)).output
-        # set log level back
-        appliance.server.update_advanced_settings(
-            {'log': {'level_{}'.format(provider.log_name): log_level}})
-        assert 'DEBUG' in debug_in_logs
+    assert log_exists, "Log file {}.log doesn't exist".format(provider.log_name)
+    log_level = appliance.server.advanced_settings['log']['level_{}'.format(provider.log_name)]
+    # set log level to debug
+    appliance.server.update_advanced_settings(
+        {'log': {'level_{}'.format(provider.log_name): 'debug'}})
+    wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+    debug_in_logs = appliance.ssh_client.run_command(
+        "cat /var/www/miq/vmdb/log/{}.log | grep DEBUG".format(provider.log_name))
+    # set log level back
+    appliance.server.update_advanced_settings(
+        {'log': {'level_{}'.format(provider.log_name): log_level}})
+    assert debug_in_logs.success
