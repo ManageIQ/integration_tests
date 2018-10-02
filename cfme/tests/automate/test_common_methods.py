@@ -51,7 +51,7 @@ def generate_retirement_date(delta=None):
 
 @pytest.mark.rhv3
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1627758, forced_streams=['5.10'])])
+@pytest.mark.meta(blockers=[BZ(1627758, forced_streams=['5.9', '5.10'])])
 def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
     """ Tests extending a retirement using an AE method.
 
