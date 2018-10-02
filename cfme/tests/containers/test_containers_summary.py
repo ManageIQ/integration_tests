@@ -33,8 +33,8 @@ def test_containers_summary_objects(provider, soft_assert):
            * Checks the amount is equal
        """
     view = navigate_to(ContainersOverview, 'All')
-    # Collecting status boxes values:
-    status_box_values = {obj: getattr(view, obj.PLURAL.split(' ')[-1].lower()).value
+    # Collecting status boxes values from overview page cards
+    status_box_values = {obj: view.status_cards(obj.PLURAL.split(' ')[-1]).value
                          for obj in tested_objects}
     # Comparing to the values in the relationships tables:
     view = navigate_to(provider, 'Details')

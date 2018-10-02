@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from navmazing import NavigateToAttribute
-from widgetastic_manageiq import StatusBox
+from widgetastic_manageiq import ParametrizedStatusBox
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
@@ -13,15 +13,7 @@ class ContainersOverview(Navigatable):
 
 
 class ContainersOverviewView(BaseLoggedInPage):
-    providers = StatusBox('Providers')
-    nodes = StatusBox('Nodes')
-    containers = StatusBox('Containers')
-    registries = StatusBox('Registries')
-    projects = StatusBox('Projects')
-    pods = StatusBox('Pods')
-    services = StatusBox('Services')
-    images = StatusBox('Images')
-    routes = StatusBox('Routes')
+    status_cards = ParametrizedStatusBox()
     # TODO: Add widgets for utilization trends
 
     @property
@@ -39,5 +31,5 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # We should wait ~2 seconds for the StatusBox population
-        wait_for(lambda: self.view.providers.value,
+        wait_for(lambda: self.view.status_cards('Providers').value,
                  num_sec=10, delay=1, silent_failure=True)
