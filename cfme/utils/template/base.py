@@ -22,8 +22,6 @@ from cfme.utils.log import logger
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
 
-import pytest
-
 NUM_OF_TRIES = 3
 lock = Lock()
 
@@ -127,7 +125,7 @@ class ProviderTemplateUpload(object):
             raise TemplateUploadException("Cannot get image URL.")
         else:
             image_name = self.image_pattern.findall(string_from_url)
-            if len(image_name) == 1:
+            if len(image_name):
                 # return 0th element of image_name, likely multiple formats for same provider type
                 return '/'.join([self.image_url, image_name[0]])  # TODO support multiple formats
 
