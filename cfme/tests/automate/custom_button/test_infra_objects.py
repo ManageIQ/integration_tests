@@ -50,7 +50,7 @@ def setup_obj(button_group, provider):
     if obj_type == "PROVIDER":
         obj = provider
     elif obj_type == "HOST":
-        obj = provider.hosts.all()[0]
+        obj = provider.appliance.collections.hosts.all()[0]
     elif obj_type == "VM_INSTANCE":
         obj = provider.appliance.provider_based_collection(provider).all()[0]
     elif obj_type == "TEMPLATE_IMAGE":
@@ -163,8 +163,13 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
         # Entity count depends on the destination for `All` available entities and
         # `Details` means a single entity.
         if destination in ["All", "VMsOnly", "TemplatesOnly"]:
-            entity_count = len(view.entities.entity_names)
-            view.paginator.check_all()
+            try:
+                paginator = view.paginator
+            except AttributeError:
+                paginator = view.entities.paginator
+
+            entity_count = paginator.items_amount
+            paginator.check_all()
         else:
             entity_count = 1
 
