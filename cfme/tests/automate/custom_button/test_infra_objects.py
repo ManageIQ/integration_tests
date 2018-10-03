@@ -17,7 +17,7 @@ pytestmark = [
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE),
 ]
 
-INFRA_OBJECTS = ["PROVIDER", "HOST", "VM_INSTANCE", "DATASTORE", "CLUSTER"]
+INFRA_OBJECTS = ["PROVIDER", "HOST", "VM_INSTANCE", "TEMPLATE_IMAGE", "DATASTORE", "CLUSTER"]
 
 DISPLAY_NAV = {
     "Single entity": ["Details"],
@@ -53,6 +53,8 @@ def setup_obj(button_group, provider):
         obj = provider.hosts.all()[0]
     elif obj_type == "VM_INSTANCE":
         obj = provider.appliance.provider_based_collection(provider).all()[0]
+    elif obj_type == "TEMPLATE_IMAGE":
+        obj = provider.appliance.collections.infra_templates.all()[0]
     elif obj_type == "DATASTORE":
         obj = provider.appliance.collections.datastores.filter({"provider": provider}).all()[0]
     elif obj_type == "CLUSTER":
@@ -97,6 +99,10 @@ def test_custom_button_display(request, display, setup_obj, button_group):
         # Note: For VM, custom button not display on All page but only VM page.
         if obj_type == "VM_INSTANCE" and destination == "All":
             destination = "VMsOnly"
+
+        # Note: For VM Template, custom button not display on All page but only TemplatesOnly.
+        if obj_type == "TEMPLATE_IMAGE" and destination == "All":
+            destination = "TemplatesOnly"
 
         view = navigate_to(obj, destination)
         custom_button_group = Dropdown(view, group.hover)
@@ -146,13 +152,17 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
         if obj_type == "VM_INSTANCE" and destination == "All":
             destination = "VMsOnly"
 
+        # Note: For VM Template, custom button not display on All page but only TemplatesOnly.
+        if obj_type == "TEMPLATE_IMAGE" and destination == "All":
+            destination = "TemplatesOnly"
+
         view = navigate_to(obj, destination)
         custom_button_group = Dropdown(view, group.hover)
         assert custom_button_group.has_item(button.text)
 
         # Entity count depends on the destination for `All` available entities and
         # `Details` means a single entity.
-        if destination in ["All", "VMsOnly"]:
+        if destination in ["All", "VMsOnly", "TemplatesOnly"]:
             entity_count = len(view.entities.entity_names)
             view.paginator.check_all()
         else:
