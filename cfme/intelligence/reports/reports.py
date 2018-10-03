@@ -11,6 +11,7 @@ from widgetastic_manageiq import (PaginationPane, Table, ReportToolBarViewSelect
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, CandidateNotFound
 
+from cfme.intelligence.reports.schedules import NewScheduleView
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -312,6 +313,42 @@ class Report(BaseEntity, Updateable):
     def saved_reports(self):
         return self.collections.saved_reports
 
+    def create_schedule(self, name=None, description=None, active=None,
+            timer=None, emails=None, email_options=None):
+
+        view = navigate_to(self, "ScheduleReport")
+        view.fill({
+            "name": name,
+            "description": description,
+            "active": active,
+            "run": timer.get("run"),
+            "time_zone": timer.get("time_zone"),
+            "starting_date": timer.get("starting_date"),
+            "hour": timer.get("hour"),
+            "minute": timer.get("minute"),
+            "emails_send": bool(emails),
+            "emails": emails,
+            "send_if_empty": email_options.get("send_if_empty"),
+            "send_txt": email_options.get("send_txt"),
+            "send_csv": email_options.get("send_csv"),
+            "send_pdf": email_options.get("send_pdf")
+        })
+
+        view.add_button.click()
+        view.flash.assert_no_error()
+
+        schedule = self.appliance.collections.schedules.instantiate(
+            name=name or self.menu_name,
+            description=description,
+            filter=(self.company_name, self.subtype, self.menu_name),
+            active=active,
+            emails=emails,
+            email_options=email_options,
+        )
+
+        assert schedule.exists
+        return schedule
+
     def queue(self, wait_for_finish=False):
         view = navigate_to(self, "Details")
         view.report_info.queue_button.click()
@@ -555,6 +592,20 @@ class ReportDetails(CFMENavigateStep):
         )
         self.view.report_info.select()
 
+
+@navigator.register(Report, "ScheduleReport")
+class ReportSchedule(CFMENavigateStep):
+    VIEW = NewScheduleView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        self.prerequisite_view.reports.tree.click_path(
+            "All Reports",
+            self.obj.type or self.obj.company_name,
+            self.obj.subtype or "Custom",
+            self.obj.menu_name
+        )
+        self.prerequisite_view.configuration.item_select("Add a new Schedule")
 
 @navigator.register(SavedReport, "Details")
 class SavedReportDetails(CFMENavigateStep):

@@ -4,7 +4,6 @@ import pytest
 import yaml
 
 from cfme import test_requirements
-from cfme.intelligence.reports.schedules import NewScheduleView, ScheduleCollection
 from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -272,15 +271,18 @@ def test_reports_create_schedule_for_base_report_once(appliance, request):
         subtype="Virtual Machines",
         menu_name="Hardware Information for VMs",
     )
-    view = navigate_to(report, "Details")
-    view.configuration.item_select("Add a new Schedule")
-    add_view = report.create_view(NewScheduleView)
-    data = {"hour": "12", "minute": "10"}
-    add_view.fill(data)
-    add_view.add_button.click()
-    assert view.flash.assert_message('Schedule "{}" was added'.format(report.menu_name))
+    data = {
+        "timer": {"hour": "12", "minute": "10"},
+        "emails": "test@example.com",
+        "email_options": {
+            "send_if_empty": True,
+            "send_pdf": True,
+            "send_csv": True,
+            "send_txt": True,
+        },
+    }
+    schedule = report.create_schedule(**data)
 
-    def _finalize():
-        view.configuration.item_select("Delete this Schedule", handle_alert=True)
+    assert schedule.enabled
 
-    request.addfinalizer(_finalize)
+    request.addfinalizer(schedule.delete)
