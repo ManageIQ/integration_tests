@@ -3,7 +3,8 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic_patternfly import Input, BootstrapSelect, Button, Dropdown
 from widgetastic_manageiq import SummaryFormItem, Table
-from widgetastic.widget import View, RowNotFound, Text
+from widgetastic.exceptions import RowNotFound
+from widgetastic.widget import View, Text
 
 from cfme.base.ui import ServerDiagnosticsView
 from cfme.modeling.base import BaseCollection, BaseEntity
