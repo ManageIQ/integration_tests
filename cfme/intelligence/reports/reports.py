@@ -433,7 +433,10 @@ class SavedReport(Updateable, BaseEntity):
     def download(self, extension):
         extensions_mapping = {"txt": "Text", "csv": "CSV", "pdf": "PDF"}
         view = navigate_to(self, "Details")
-        view.download("Download as {}".format(extensions_mapping[extension]))
+        if self.appliance.version > '5.10' and extension == "pdf":
+            view.download("Print or export as {}".format(extensions_mapping[extension]))
+        else:
+            view.download("Download as {}".format(extensions_mapping[extension]))
 
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
