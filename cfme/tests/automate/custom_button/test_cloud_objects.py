@@ -19,6 +19,7 @@ CLOUD_OBJECTS = [
     "PROVIDER",
     "VM_INSTANCE",
     "AZONE",
+    "CLOUD_NETWORK",
     "CLOUD_SUBNET",
     "SECURITY_GROUP",
     "ROUTER",
@@ -93,6 +94,8 @@ def setup_objs(button_group, provider):
                 {"provider": provider}
             ).all()[0]
         ]
+    elif obj_type == "CLOUD_NETWORK":
+        obj = [provider.appliance.collections.cloud_networks.all()[0]]
     else:
         logger.error("No object collected for custom button object type '{}'".format(obj_type))
     return obj
