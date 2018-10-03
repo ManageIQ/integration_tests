@@ -257,8 +257,8 @@ def test_migration_rbac(appliance, new_credential, conversion_tags, host_creds, 
         view = navigate_to(appliance.server, 'Dashboard', wait_for_view=True)
         nav_tree = view.navigation.nav_item_tree()
         # Checks migration option is disabled in navigation
-        assert 'Migration' not in nav_tree['Compute'], ('Trying to find Migration in nav_tree, '
-                                                        'should be absent :{}'.format(nav_tree))
+        assert 'Migration' not in nav_tree['Compute'], ('Migration found in nav tree, '
+                                                        'rbac should not allow this')
 
     product_features = [(['Everything'], False), (['Everything'], True)]
     role.update({'product_features': product_features})
@@ -266,5 +266,5 @@ def test_migration_rbac(appliance, new_credential, conversion_tags, host_creds, 
         view = navigate_to(appliance.server, 'Dashboard', wait_for_view=True)
         nav_tree = view.navigation.nav_item_tree()
         # Checks migration option is enabled in navigation
-        assert 'Migration' in nav_tree['Compute'], ('Trying to find Migration in nav_tree, '
-                                                    'should be absent :{}'.format(nav_tree))
+        assert 'Migration' in nav_tree['Compute'], ('Migration not found in nav tree, '
+                                                    'rbac should allow this')
