@@ -22,6 +22,8 @@ from cfme.utils.log import logger
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
 
+import pytest
+
 NUM_OF_TRIES = 3
 lock = Lock()
 
@@ -128,15 +130,6 @@ class ProviderTemplateUpload(object):
             if len(image_name) == 1:
                 # return 0th element of image_name, likely multiple formats for same provider type
                 return '/'.join([self.image_url, image_name[0]])  # TODO support multiple formats
-            elif len(image_name) > 1:
-                if 'manageiq' in self.image_url:  # Upstream ovirt build
-                    index = (i for i, string in enumerate(image_name) if 'ovirt' in string
-                        and 'qc2' in string).next()
-                    return '/'.join([self.image_url, image_name[index]])
-                elif 'cfme' in self.image_url:     # Downstream RHV build
-                    index = (i for i, string in enumerate(image_name) if 'rhevm' in string
-                        and 'qcow2' in string).next()
-                    return '/'.join([self.image_url, image_name[index]])
 
     @property
     def image_name(self):

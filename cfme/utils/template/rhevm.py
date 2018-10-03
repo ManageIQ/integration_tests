@@ -12,7 +12,8 @@ from cfme.utils.log import logger
 class RHEVMTemplateUpload(ProviderTemplateUpload):
     provider_type = 'rhevm'
     log_name = 'RHEVM'
-    image_pattern = re.compile(r'<a href="?\'?([^"\']*(?:ovirt|rhevm)[^"\'>]*)')
+    image_pattern = re.compile(
+        r'<a href="?\'?([^"\']*(?:(?:rhevm|ovirt)[^"\']*\.(?:qcow2|qc2))[^"\'>]*)')
 
     @log_wrap('add glance to rhevm provider')
     def add_glance_to_provider(self):
