@@ -19,6 +19,7 @@ from cfme.networks.views import (
     NetworkProviderAddView,
     OneProviderBalancerView,
     OneProviderCloudNetworkView,
+    OneProviderCloudTenantView,
     OneProviderFloatingIpView,
     OneProviderNetworkPortView,
     OneProviderNetworkRouterView,
@@ -471,3 +472,18 @@ class OpenTopologyFromDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.overview.click_at('Topology')
+
+
+@navigator.register(NetworkProvider, 'CloudTenants')
+class OpenCloudTenants(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+    VIEW = OneProviderCloudTenantView
+
+    def step(self):
+        item = 'Cloud Tenants'
+        item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
+        if item_amt > 0:
+            self.prerequisite_view.entities.relationships.click_at(item)
+        else:
+            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
+

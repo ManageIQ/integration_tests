@@ -815,3 +815,66 @@ class OneProviderFloatingIpView(BaseLoggedInPage):
             and self.navigation.currently_selected == ["Networks", "Providers"]
             and self.entities.title.text == title
         )
+
+
+class CloudTenantSideBar(View):
+    """ Represents left side bar, usually contains navigation, filters, etc """
+    pass
+
+
+class CloudTenantDetailsToolBar(View):
+    """ Represents toolbar of summary of cloud tenant """
+    configuration = Dropdown(text='Configuration')
+    policy = Dropdown(text='Policy')
+    download = Button(title='Download summary in PDF format')
+
+
+class CloudTenantDetailsSideBar(View):
+    """ Represents left side bar of cloud tenant details """
+    @View.nested
+    class properties(Accordion):  # noqa
+        ACCORDION_NAME = "Properties"
+        tree = ManageIQTree()
+
+    @View.nested
+    class relationships(Accordion):  # noqa
+        ACCORDION_NAME = "Relationships"
+        tree = ManageIQTree()
+
+
+class CloudTenantEntities(BaseEntitiesView):
+    """ Represents central view where all QuadIcons, etc are displayed """
+    pass
+
+
+class CloudTenantDetailsView(BaseLoggedInPage):
+    """ Represents detail view of cloud tenant """
+    title = Text('//div[@id="main-content"]//h1')
+    toolbar = View.nested(CloudTenantDetailsToolBar)
+    sidebar = View.nested(CloudTenantDetailsSideBar)
+    search = View.nested(Search)
+
+    @View.nested
+    class entities(View):  # noqa
+        """ Represents details page when it's switched to Summary/Table view """
+        properties = SummaryTable(title="Properties")
+        relationships = SummaryTable(title="Relationships")
+        smart_management = SummaryTable(title="Smart Management")
+
+    @property
+    def is_displayed(self):
+        return (self.navigation.currently_selected == ['Compute', 'Clouds', 'Tenants'] and
+                self.title.text == '{} (Summary)'.format(self.context['object'].name))
+
+
+class OneProviderCloudTenantView(BaseLoggedInPage):
+    """ Represents whole All CloudTenants page """
+    toolbar = View.nested(OneProviderComponentsToolbar)
+    sidebar = View.nested(CloudTenantSideBar)
+    including_entities = View.include(CloudTenantEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        return (self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.entities.title.text == '{} (All Cloud Tenants)'.format(
+                    self.context['object'].name))

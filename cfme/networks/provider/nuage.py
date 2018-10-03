@@ -7,6 +7,7 @@ from wrapanapi.systems import NuageSystem
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm, EventsEndpoint
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.networks.security_group import SecurityGroupCollection
+from cfme.networks.cloud_tenant import CloudTenant, CloudTenantCollection
 from cfme.networks.subnet import Subnet, SubnetCollection
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -253,3 +254,62 @@ class NuageSubnetCollection(SubnetCollection):
             ems_ref=subnet.ems_ref,
             provider_obj=provider
         ) if subnet else None
+
+
+@attr.s
+class NuageCloudTenant(CloudTenant, ValidateStatsMixin):
+    ems_ref = attr.ib(default=None)
+    provider_obj = attr.ib(default=None)
+
+    @variable(alias="ui")
+    def name_value(self):
+        view = navigate_to(self, 'DetailsThroughProvider')
+        return view.entities.properties.get_text_of('Name')
+
+    @variable(alias="ui")
+    def network_manager_value(self):
+        view = navigate_to(self, 'DetailsThroughProvider')
+        return view.entities.relationships.get_text_of('Network Manager')
+
+    @variable(alias="ui")
+    def cloud_subnets_num(self):
+        view = navigate_to(self, 'DetailsThroughProvider')
+        return int(view.entities.relationships.get_text_of('Cloud Subnets'))
+
+    @variable(alias="ui")
+    def network_routers_num(self):
+        view = navigate_to(self, 'DetailsThroughProvider')
+        return int(view.entities.relationships.get_text_of('Network Routers'))
+
+    @variable(alias="ui")
+    def security_groups_num(self):
+        view = navigate_to(self, 'DetailsThroughProvider')
+        return int(view.entities.relationships.get_text_of('Security Groups'))
+
+    @variable(alias="ui")
+    def floating_ips_num(self):
+        view = navigate_to(self, 'DetailsThroughProvider')
+        return int(view.entities.relationships.get_text_of('Floating IPs'))
+
+    @variable(alias="ui")
+    def network_ports_num(self):
+        view = navigate_to(self, 'DetailsThroughProvider')
+        return int(view.entities.relationships.get_text_of('Network Ports'))
+
+
+@attr.s
+class NuageCloudTenantCollection(CloudTenantCollection):
+    ENTITY = NuageCloudTenant
+
+    def find_by_ems_ref(self, ems_ref, provider):
+        """Fetch NuageCloudTenant instance with provided ems_ref"""
+        tenants_table = self.appliance.db.client['cloud_tenants']
+        tenant = (self.appliance.db.client.session
+                  .query(tenants_table.name, tenants_table.ems_ref)
+                  .filter(tenants_table.ems_ref == ems_ref).first())
+
+        return self.instantiate(
+            name=tenant.name,
+            ems_ref=tenant.ems_ref,
+            provider_obj=provider
+        ) if tenant else None

@@ -42,6 +42,38 @@ def test_subnet_details_stats(provider, with_nuage_sandbox):
     subnet.validate_stats(subnet_stats)
 
 
+def test_cloud_tenant_details_stats(provider, with_nuage_sandbox):
+    """
+    This test creates Nuage enterprise (cloud tenant) and its entities.
+    Then it validates inventory of created tenant.
+
+    Steps:
+        * Deploy some entities outside of MIQ (directly in the provider)
+        * Create dictionary with stats that will be validated
+        * Find created subnet in database and validate its stats
+    """
+    sandbox = with_nuage_sandbox
+    subnets = []
+    [subnets.extend(z.subnets) for d in sandbox['enterprise'].domains for z in d.zones]
+    l2_groups = sum([len(d.policy_groups) for d in sandbox['enterprise'].l2_domains])
+    groups = sum([len(d.policy_groups) for d in sandbox['enterprise'].domains])
+    vports = sum([len(s.vports) for s in subnets])
+    l2_vports = sum([len(d.vports) for d in sandbox['enterprise'].l2_domains])
+    tenant_stats = {
+        'name_value': sandbox['enterprise'].name,
+        'network_manager_value': provider.name,
+        'cloud_subnets_num': len(subnets) + len(sandbox['enterprise'].l2_domains),
+        'network_routers_num': len(sandbox['enterprise'].domains),
+        'security_groups_num': l2_groups + groups,
+        'floating_ips_num': sum([len(d.floating_ips) for d in sandbox['enterprise'].domains]),
+        'network_ports_num': vports + l2_vports,
+    }
+    provider.refresh_provider_relationships()
+    tenant = object_in_vmdb_with_timeout(
+        'nuage_network_tenants', provider, sandbox['enterprise'].id)
+    tenant.validate_stats(tenant_stats)
+
+
 def object_in_vmdb_with_timeout(table, provider, ems_ref):
 
     def object_from_vmdb():
