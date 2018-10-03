@@ -535,7 +535,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                     "echo '-w /etc/sysconfig/network-scripts/ifcfg-eth0 -p wa' >> "
                     "/etc/audit/rules.d/audit.rules", ensure_host=True)
                 self.httpd.daemon_reload()
-                self.auditd.restart()
+                # cannot restart through systemctl
+                ssh_client.run_command('service auditd restart', ensure_host=True)
 
             ipapp.wait_for_ssh()
 
