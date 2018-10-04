@@ -2,12 +2,16 @@ import attr
 import copy
 
 from widgetastic_patternfly import BootstrapSelect, Input
+from widgetastic.exceptions import NoSuchElementException
 from wrapanapi.systems import RedfishSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.physical.physical_server import (
     PhysicalServer,
     PhysicalServerCollection)
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
+from cfme.utils.varmeth import variable
 from . import PhysicalProvider
 
 
@@ -31,7 +35,7 @@ class RedfishEndpointForm(DefaultEndpointForm):
 
 @attr.s(hash=False)
 class RedfishProvider(PhysicalProvider):
-    STATS_TO_MATCH = ['num_server']
+    STATS_TO_MATCH = ['num_server', 'num_chassis', 'num_racks']
     type_name = 'redfish'
     endpoints_form = RedfishEndpointForm
     string_name = 'Physical Infrastructure'
@@ -67,6 +71,23 @@ class RedfishProvider(PhysicalProvider):
             'name': self.name,
             'prov_type': 'Redfish'
         }
+
+    def get_detail(self, label):
+        view = navigate_to(self, 'Details')
+        try:
+            stat = view.entities.summary('Relationships').get_text_of(label)
+            logger.info("{}: {}".format(label, stat))
+        except NoSuchElementException:
+            logger.error("Couldn't find number of {}".format(label))
+        return stat
+
+    @variable(alias='ui')
+    def num_chassis(self):
+        return int(self.get_detail('Physical Chassis'))
+
+    @variable(alias='ui')
+    def num_racks(self):
+        return int(self.get_detail('Physical Racks'))
 
 
 @attr.s
