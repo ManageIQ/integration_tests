@@ -7,6 +7,7 @@ import sentaku
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.version import LATEST
@@ -130,7 +131,8 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
             name = server.name
         except AttributeError:
             logger.error('The EVM has no name, setting it to EVM')
-            if self.appliance.version == LATEST or self.appliance.is_pod:
+            if (self.appliance.version == LATEST or self.appliance.is_pod
+            or BZ(1635178, forced_streams='5.9').blocks):
                 name = 'EVM'
             else:
                 name = server.name
