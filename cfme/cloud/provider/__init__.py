@@ -235,10 +235,11 @@ class Discover(CFMENavigateStep):
 
 @navigator.register(CloudProvider, 'Details')
 class Details(CFMENavigateStep):
+    """Nav class for summary details view"""
     VIEW = CloudProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
     def resetter(self):

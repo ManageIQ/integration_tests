@@ -1,13 +1,15 @@
 import pytest
 from collections import namedtuple
 
-from cfme.containers.provider import ContainersProvider
-from cfme.containers.pod import Pod
-from cfme.containers.service import Service
-from cfme.containers.project import Project
-from cfme.containers.route import Route
+from cfme.containers.container import Container
+from cfme.containers.image_registry import ImageRegistry
+from cfme.containers.node import Node
 from cfme.containers.overview import ContainersOverview
-
+from cfme.containers.pod import Pod
+from cfme.containers.project import Project
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.route import Route
+from cfme.containers.service import Service
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -20,17 +22,17 @@ pytestmark = [
 
 DataSet = namedtuple('DataSet', ['object', 'name'])
 
-
-# TODO: Add Image, Container, ImageRegistry
-# TODO Add Node back into the list when other classes are updated to use WT views and widgets.
-tested_objects = (Project, Pod, Service, Route, ContainersProvider)
+tested_objects = (
+    ImageRegistry, Container, Project, Pod, Service, Route, ContainersProvider, Node
+)
 
 
 def get_api_object_counts(appliance):
     out = {
         ContainersProvider: 0,
-        # TODO Add back in with Node.
-        # Node: 0,
+        Container: 0,
+        ImageRegistry: 0,
+        Node: 0,
         Pod: 0,
         Service: 0,
         Project: 0,
@@ -39,12 +41,15 @@ def get_api_object_counts(appliance):
     for provider in appliance.managed_known_providers:
         if isinstance(provider, ContainersProvider):
             out[ContainersProvider] += 1
-            # TODO Add back in with Node
-            # out[Node] += len(provider.mgmt.list_node())
+            out[Node] += len(provider.mgmt.list_node())
             out[Pod] += len(provider.mgmt.list_pods())
             out[Service] += len(provider.mgmt.list_service())
             out[Project] += len(provider.mgmt.list_project())
             out[Route] += len(provider.mgmt.list_route())
+            # TODO image count? list_templates too high, list_image_stream_images too low
+            # TODO container count? list_container returning different count than MIQ reports
+            out[ImageRegistry] += len(provider.mgmt.list_image_registry())
+            out[Container] += len(provider.mgmt.list_container())
     return out
 
 
@@ -61,7 +66,7 @@ def test_containers_overview_data_integrity(appliance, soft_assert):
     api_values = get_api_object_counts(appliance)
 
     for cls in tested_objects:
-        statusbox_value = getattr(view, cls.PLURAL.split(' ')[-1].lower()).value
+        statusbox_value = view.status_cards(cls.PLURAL.split(' ')[-1]).value
         soft_assert(
             api_values[cls] == statusbox_value,
             'There is a mismatch between API and UI values: {}: {} (API) != {} (UI)'.format(

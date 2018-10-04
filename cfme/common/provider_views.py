@@ -8,9 +8,19 @@ from widgetastic.widget import View, Text, ConditionalSwitchableView
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.host_views import HostEntitiesView
 from widgetastic_manageiq import (
-    ParametrizedSummaryTable, Button, TimelinesView, DetailsToolBarViewSelector,
-    ItemsToolBarViewSelector, Checkbox, Input, BaseEntitiesView, PaginationPane,
-    JSBaseEntity, Search)
+    ParametrizedSummaryTable,
+    Button,
+    TimelinesView,
+    DetailsToolBarViewSelector,
+    ItemsToolBarViewSelector,
+    Checkbox,
+    Input,
+    BaseEntitiesView,
+    PaginationPane,
+    JSBaseEntity,
+    Search,
+    ParametrizedStatusBox
+)
 
 
 class ProviderEntity(JSBaseEntity):
@@ -65,19 +75,18 @@ class ProviderDetailsView(BaseLoggedInPage):
         """
          represents Details page when it is switched to Dashboard aka Widgets view
         """
-        # todo: need to develop this page
-        pass
+        cards = ParametrizedStatusBox()
 
     @property
     def is_displayed(self):
-        if (not self.toolbar.view_selector.is_displayed or
-                self.toolbar.view_selector.selected == 'Summary View'):
-            subtitle = 'Summary'
-        else:
-            subtitle = 'Dashboard'
+        subtitle = 'Summary'
+        if self.toolbar.view_selector.is_displayed:
+            subtitle = self.toolbar.view_selector.selected.split(' ')[0]
 
-        title = '{name} ({subtitle})'.format(name=self.context['object'].name,
-                                             subtitle=subtitle)
+        title = '{name} ({subtitle})'.format(
+            name=self.context['object'].name,
+            subtitle=subtitle
+        )
         return (self.logged_in_as_current_user and
                 self.breadcrumb.is_displayed and
                 self.breadcrumb.active_location == title)
