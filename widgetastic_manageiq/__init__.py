@@ -4681,6 +4681,8 @@ class MigrationProgressBar(Widget):
     SIZE_LOCATOR = './/strong[contains(@id,"size-migrated")]'
     VMS_LOCATOR = './/strong[contains(@id,"vms-migrated")]'
     SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
+    PROGRESS_BARS = './/div[@class="progress-bar"]'
+    PROGRESS_DESCRIPTION = './/div[contains(@class,"progress-description")]'
 
     def __init__(self, parent, locator, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4748,3 +4750,17 @@ class MigrationProgressBar(Widget):
         """Find item by text and click to view details."""
         el = self._get_card_element(plan_name)
         self.browser.click(self.TITLE_LOCATOR, parent=el)
+
+    def get_progress_percent(self, plan_name):
+        """Returns datastore and vm progress bar percentage"""
+        el = self._get_card_element(plan_name)
+        _desc = [
+            desc.text.lower()
+            for desc in self.browser.elements(self.PROGRESS_DESCRIPTION, parent=el)
+        ]
+        # extracting style attribute values and returning it as percentage xx.xx%
+        _val = [
+            float(div.get_attribute("style").split(": ")[1].split("%")[0])
+            for div in self.browser.elements(self.PROGvalRESS_BARS, parent=el)
+        ]
+        return dict(zip(_desc, _val))
