@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 
@@ -13,7 +14,8 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([VMwareProvider],
     scope='module',
-    required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
+    required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')]),
+    pytest.mark.meta(blockers=[BZ(1636120, forced_streams=['5.10'])])
 ]
 
 

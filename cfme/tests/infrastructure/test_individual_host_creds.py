@@ -16,7 +16,8 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.provider([InfraProvider], required_fields=['hosts'], scope='module')
+    pytest.mark.provider([InfraProvider], required_fields=['hosts'], scope='module'),
+    pytest.mark.meta(blockers=[BZ(1636120, forced_streams=['5.10'])]),
 ]
 
 

@@ -7,11 +7,13 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.drift,
-    pytest.mark.tier(3)
+    pytest.mark.tier(3),
+    pytest.mark.meta(blockers=[BZ(1636120, forced_streams=['5.10'])]),
 ]
 
 
