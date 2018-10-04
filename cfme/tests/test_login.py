@@ -12,6 +12,35 @@ from cfme.utils.version import LOWEST, UPSTREAM, VersionPicker
 pytestmark = pytest.mark.usefixtures('browser')
 
 
+def new_cred(username, password):
+    username = username or conf.credentials['default']['username']
+    password = password or conf.credentials['default']['password']
+    cred = Credential(principal=username, secret=password)
+    return cred
+
+
+def new_user_instantiate(appliance, username=None, password=None, name=None):
+    cred = new_cred(username=username, password=password)
+    name = name or 'Administrator'
+    user = appliance.collections.users.instantiate(credential=cred, name=name)
+    return user
+
+
+def new_user_create(appliance, request, username=None, password=None, group=None, name=None):
+    cred = new_cred(username=username, password=password)
+    user_group = appliance.collections.groups.instantiate(
+        description=group or "EvmGroup-vm_user"
+    )
+    name = name or username
+    user = appliance.collections.users.create(
+        name=name,
+        credential=cred,
+        groups=user_group
+    )
+    request.addfinalizer(user.delete)
+    return user
+
+
 @pytest.mark.rhel_testing
 @test_requirements.drift
 @pytest.mark.tier(1)
@@ -46,10 +75,10 @@ def test_login(context, method, appliance):
 def test_bad_password(context, request, appliance):
     """ Tests logging in with a bad password. """
 
-    username = conf.credentials['default']['username']
-    password = "badpassword@#$"
-    cred = Credential(principal=username, secret=password)
-    user = appliance.collections.users.instantiate(credential=cred, name='Administrator')
+    user = new_user_instantiate(
+        appliance,
+        password="badpassword@#$",
+    )
 
     error_message = VersionPicker({
         LOWEST: "Incorrect username or password",
@@ -71,13 +100,13 @@ def test_update_password(context, request, appliance):
 
     # First, create a temporary new user
     username = 'user_temp_{}'.format(fauxfactory.gen_alphanumeric(4).lower())
-    new_creds = Credential(principal=username, secret='redhat')
-    user_group = appliance.collections.groups.instantiate(description="EvmGroup-vm_user")
-    user = appliance.collections.users.create(
-        name=username,
-        credential=new_creds,
-        groups=user_group
+    user = new_user_create(
+        appliance,
+        request,
+        username=username,
+        group="EvmGroup-vm_user"
     )
+
     error_message = VersionPicker({
         LOWEST: "Incorrect username or password",
         '5.10': "Login failed: Unauthorized"
@@ -98,8 +127,11 @@ def test_update_password(context, request, appliance):
         appliance.server.login(user)
 
     # Now try changing password with invalid default password
-    new_cred = Credential(principal=username, secret="made_up_invalid_pass")
-    user2 = appliance.collections.users.instantiate(credential=new_cred, name=username)
+    user2 = new_user_instantiate(
+        appliance,
+        username=username,
+        password="made_up_invalid_pass"
+    )
     with pytest.raises(Exception, match=error_message):
         appliance.server.update_password(new_password='changeme', user=user2)
 
@@ -108,5 +140,4 @@ def test_update_password(context, request, appliance):
     # deleting our user. Which is bad.
     appliance.server.browser.refresh()
 
-    # Delete the user we created
-    user.delete()
+    # The user we created will be deleted via finalizer
