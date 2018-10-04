@@ -35,7 +35,7 @@ class ProviderClustersView(ClusterView):
         """Determine if this page is currently being displayed"""
         return (
             self.logged_in_as_current_user and
-            self.entities.title.text == '{p}(All Clusters)'.format(p=self.context['object'].name))
+            self.entities.title.text == '{p} (All Clusters)'.format(p=self.context['object'].name))
 
     toolbar = View.nested(ClusterToolbar)
     breadcrumb = BreadCrumb()
