@@ -1,12 +1,13 @@
 import fauxfactory
-import json
 import os
 import pytest
 import tempfile
+import yaml
+
 
 from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.fixtures.appliance import sprout_appliances
-from cfme.utils import ssh, trackerbot
+from cfme.utils import ssh, trackerbot, conf
 from cfme.utils.appliance import stack, IPAppliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -84,18 +85,35 @@ def appliance_data(provider):
     return app_data
 
 
+def read_host_file(appliance, path):
+    """ Read file on the host """
+    out = appliance.ssh_client.run_command('cat {}'.format(path), ensure_host=True)
+    if out.failed:
+        pytest.fail("Can't read pvc file")
+
+    return out.output
+
+
 @pytest.fixture
-def template_tags(appliance):
+def template(appliance):
     try:
         api = trackerbot.api()
         stream = get_stream(appliance.version.vstring)
         template_data = trackerbot.latest_template(api, stream)
-        template = api.template(template_data['latest_template']).get()
-        # TODO: fix this in trackerbot by adding appropriate serialization to Template
-        tags = json.loads(template['custom_data'].replace("'", '"').replace('u"', '"'))
-        return tags['TAGS']
+        return api.template(template_data['latest_template']).get()
     except BaseException:
         pytest.skip("trackerbot is unreachable")
+
+
+@pytest.fixture
+def template_tags(template):
+    return template['custom_data']['TAGS']
+
+
+@pytest.fixture
+def template_folder(template):
+    upload_folder = conf.cfme_data['template_upload']['template_upload_openshift']['upload_folder']
+    return os.path.join(upload_folder, template['name'])
 
 
 @pytest.fixture
@@ -324,3 +342,59 @@ def test_aws_smartstate_pod():
         initialEstimate: None
     """
     pass
+
+
+def test_pod_appliance_db_backup_restore(temp_pod_appliance, provider, setup_provider,
+                                         template_folder):
+    """
+    This test does the following:
+      - adds openshift provider where openshift based appliance is situated
+      - creates pvc and db backup in it
+      - stops appliance
+      - restores db from snapshot
+      - starts appliance and finds that appliance in CloudForms
+    """
+    template_folder = template_folder
+    appliance = temp_pod_appliance
+    assert provider.mgmt.is_vm_running(appliance.project)
+
+    # add backup pvc
+    output = read_host_file(appliance, os.path.join(template_folder, 'cfme-backup-pvc.yaml'))
+
+    # oc create -f miq-backup-pvc.yaml
+    # todo: move to wrapanapi
+    backup_pvc = provider.mgmt.rename_structure(yaml.safe_load(output))
+    provider.mgmt.create_persistent_volume_claim(namespace=appliance.project, **backup_pvc)
+    # check pvc is bound to pv
+    provider.mgmt.wait_persistent_volume_claim_status(namespace=appliance.project,
+                                                      name=backup_pvc['metadata']['name'],
+                                                      status='Bound')
+    # back up secrets and pvc
+    # $ oc get secret -o yaml --export=true > secrets.yaml
+    # $ oc get pvc -o yaml --export=true > pvc.yaml
+    # todo: add later
+
+    # run backup
+    # oc create -f miq-backup-job.yaml
+    output = read_host_file(appliance, os.path.join(template_folder, 'cfme-backup-job.yaml'))
+    is_successful = provider.mgmt.run_job(appliance.project, body=yaml.safe_load(output))
+    assert is_successful, " backup job hasn't finished in time"
+
+    # restore procedure
+    # scale down pods
+    provider.mgmt.stop_vm(appliance.project)
+    assert provider.mgmt.wait_vm_stopped(appliance.project)
+    # run restore job
+    # oc create -f miq-restore-job.yaml
+    output = read_host_file(appliance, os.path.join(template_folder, 'cfme-restore-job.yaml'))
+    is_successful = provider.mgmt.run_job(appliance.project, body=yaml.safe_load(output))
+    assert is_successful, " restore job hasn't finished in time"
+
+    # check restore job results
+    # scale up pods
+    provider.mgmt.start_vm(appliance.project)
+    assert provider.mgmt.wait_vm_running(appliance.project)
+    # check that appliance is running and provider is available again
+    collection = appliance.collections.container_projects
+    proj = collection.instantiate(name=appliance.project, provider=provider)
+    assert navigate_to(proj, 'Dashboard')

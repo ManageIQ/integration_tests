@@ -320,7 +320,8 @@ Werkzeug==0.14.1
 widgetastic.core==0.30.3
 widgetastic.patternfly==0.0.40
 widgetsnbextension==3.4.2
-wrapanapi==3.0.33
+#wrapanapi==3.0.33
+git+git://github.com/izapolsk/wrapanapi.git@backup_restore_test#egg=wrapanapi
 wrapt==1.10.11
 xmltodict==0.11.0
 yaycl==0.3.0
