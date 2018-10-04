@@ -210,10 +210,10 @@ def test_very_long_name_with_special_characters(request, provider):
     assert ca.name in view.entities.summary('Custom Attributes').fields
 
 
-@pytest.mark.meta(blockers=[BZ(1540647, forced_streams=["5.8", "5.9"])])
+# BZ 540647 was closed as no fix. Code was added that strips underscores from attribute names.
 def test_very_long_value_with_special_characters(request, provider):
-    ca = CustomAttribute('very_long_value', get_random_string(1000), None)
+    ca = CustomAttribute('very long value', get_random_string(1000), None)
     request.addfinalizer(lambda: provider.delete_custom_attributes(ca))
     provider.add_custom_attributes(ca)
     view = refresh_and_navigate(provider, 'Details')
-    assert ca.value == view.entities.summary('Custom Attributes').get_text_of('very_long_value')
+    assert ca.value == view.entities.summary('Custom Attributes').get_text_of(ca.name)
