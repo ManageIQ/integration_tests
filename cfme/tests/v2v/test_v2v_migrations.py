@@ -661,7 +661,7 @@ def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, con
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping.name,
         vm_list=form_data_vm_obj_single_datastore.vm_list,
-        start_migration=True,
+        start_migration=True
     )
 
     # explicit wait for spinner of in-progress status card
