@@ -290,9 +290,12 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
     assert not schedule.exists
 
 
-def test_reports_create_schedule_for_custom_report(
+def test_create_custom_report_schedule(
     appliance, request, custom_report_values, schedule_data
 ):
+    """This test case creates a schedule for custom reports and tests if it was created
+    successfully.
+    """
     custom_report = appliance.collections.reports.create(**custom_report_values)
     schedule_data["filter"] = (
         "My Company (All Groups)",
@@ -302,6 +305,8 @@ def test_reports_create_schedule_for_custom_report(
     try:
         custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
     except (MoveTargetOutOfBoundsException, NoSuchElementException):
+        # Temporary workaround - running the `create` method first time raises exceptions,
+        # but running it again works fine.
         custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
     assert custom_report_schedule.exists
 
