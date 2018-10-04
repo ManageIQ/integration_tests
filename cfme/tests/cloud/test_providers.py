@@ -30,6 +30,7 @@ from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError
 from cfme.fixtures.provider import enable_provider_regions
 from cfme.fixtures.pytest_store import store
+from wait_for import wait_for
 
 pytestmark = [pytest.mark.provider([CloudProvider], scope="function")]
 
@@ -483,6 +484,45 @@ def test_select_key_pair_none_while_provisioning(appliance, request, has_no_clou
     view.form.properties.guest_keypair.fill('<None>')
     # check drop down was updated with selected value
     assert view.form.properties.guest_keypair.read() == '<None>'
+
+
+@pytest.mark.tier(3)
+@pytest.mark.provider([AzureProvider], override=True)
+def test_azure_instance_password_requirements(appliance, request,
+        has_no_cloud_providers, setup_provider):
+    """
+        Requirement: Have an Azure provider
+        1. Compute -> Cloud -> Instances
+        2. Click on Provision Instances in Toolbar
+        3. Select template.
+        4. Go to Customisation, fill password that doesn't match the criteria:
+            * must be 12-72 characters
+            * have 3 of the following - one lowercase character, one uppercase character,
+              one number and one special character
+        5. Error message should be displayed.
+    """
+    view = navigate_to(appliance.collections.cloud_instances, 'Provision')
+    view.image_table[0].click()
+    view.form.continue_button.click()
+    message = (
+        "'Customize/Password' must be correctly formatted. The password must be 12-72 characters, "
+        "and have 3 of the following - one lowercase character, one uppercase character, "
+        "one number and one special character.")
+
+    view.form.customize.fill({
+        "admin_username": "some_value",
+    })
+
+    for pw in ("abcdefghijkl_",
+               "ABCDEFGHIJKL_",
+               "ABCDEFGHIJKLa",
+               "abcdefgh_1A"):
+        view.form.customize.fill({"root_password": pw})
+        view.form.submit_button.click()
+        wait_for(lambda: message in (m.read() for m in view.flash.messages),
+                 fail_condition=False, num_sec=10, delay=.1)
+        for m in view.flash.messages:
+            m.dismiss()
 
 
 @pytest.mark.tier(3)
