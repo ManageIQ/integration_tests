@@ -324,7 +324,7 @@ class DockerBot(object):
                 print("To use dev_pr you must have a gh_dev_repo and gh_dev_owner defined")
                 ec += 1
 
-        self.check_arg('browser', 'firefox')
+        self.check_arg('browser', 'chrome')
 
         self.check_arg('pytest', None)
         self.check_arg('pytest_con', 'py_test_base')
