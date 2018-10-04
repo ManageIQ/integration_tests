@@ -208,7 +208,7 @@ class VolumeBackupCollection(BaseCollection):
                 logger.warning('The volume backup table is probably not present (=empty)')
         return backups
 
-    def delete(self, *backups):
+    def delete(self, *backups, **kwargs):
         """Delete one or more backups
 
         Args:
@@ -226,14 +226,15 @@ class VolumeBackupCollection(BaseCollection):
 
             view.toolbar.configuration.item_select('Delete selected Backups', handle_alert=True)
 
-            wait_for(
-                lambda: not bool({backup.name for backup in backups} &
-                                 set(view.entities.all_entity_names)),
-                message="Wait backups to disappear",
-                delay=20,
-                timeout=800,
-                fail_func=random.choice(backups).refresh
-            )
+            if kwargs.get('wait', True):
+                wait_for(
+                    lambda: not bool({backup.name for backup in backups} &
+                                     set(view.entities.all_entity_names)),
+                    message="Wait backups to disappear",
+                    delay=20,
+                    timeout=800,
+                    fail_func=random.choice(backups).refresh
+                )
 
         else:
             raise BackupNotFoundError('No Volume Backups for Deletion')
