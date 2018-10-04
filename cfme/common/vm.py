@@ -499,7 +499,7 @@ class BaseVMCollection(BaseCollection):
                              provider.data.get('provisioning').get('template'))
             vm.template_name = template_name
             form_values.update({'template_name': template_name})
-        view = navigate_to(self, 'Provision')
+        view = navigate_to(self, 'Provision', wait_for_view=0)
         view.form.fill(form_values)
 
         if cancel:
