@@ -246,7 +246,14 @@ def run(**kwargs):
                 mgmt_sys[provider]['template_upload'].get('block_upload')):
             logger.info('Skipping upload on {} due to block_upload'.format(provider))
             continue
-
+        if (mgmt_sys[provider].get('template_upload').get('block_upstream') and
+                'upstream' in kwargs['stream']):
+            logger.info('Skipping upload on %s due to block_upstream', provider)
+            continue
+        if (mgmt_sys[provider].get('template_upload').get('block_downstream') and
+                'downstream' in kwargs['stream']):
+            logger.info('Skipping upload on %s due to block_downstream', provider)
+            continue
         if kwargs['provider_data']:
             if mgmt_sys[provider]['type'] != 'openstack':
                 continue

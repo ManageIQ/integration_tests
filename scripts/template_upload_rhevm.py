@@ -680,7 +680,17 @@ def run(**kwargs):
         if (mgmt_sys[provider].get('template_upload') and
                 mgmt_sys[provider]['template_upload'].get('block_upload')):
             # Providers template_upload section indicates upload should not happen on this provider
+            logger.info('Skipping upload on {} due to block_upload'.format(provider))
             continue
+
+        if (mgmt_sys[provider].get('template_upload').get('block_upstream') and
+                'upstream' in kwargs['stream']):
+            logger.info('Skipping upload on %s due to block_upstream', provider)
+            continue
+
+        if (mgmt_sys[provider].get('template_upload').get('block_downstream') and
+                'downstream' in kwargs['stream']):
+            logger.info('Skipping upload on %s due to block_downstream', provider)
 
         logger.info("RHEVM:%r verifying provider's state before template upload", provider)
         if not net.is_pingable(rhevip):
