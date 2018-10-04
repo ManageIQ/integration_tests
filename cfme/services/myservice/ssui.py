@@ -148,7 +148,7 @@ class RetireServiceView(MyServicesView):
 
 @MiqImplementationContext.external_for(MyService.update, ViaSSUI)
 def update(self, updates):
-    view = navigate_to(self, 'Edit', wait_for_view=True)
+    view = navigate_to(self, 'Edit')
     view.fill_with(updates, on_change=view.save_button, no_change=view.cancel_button)
     view.flash.assert_no_error()
     view = self.create_view(DetailsMyServiceView, override=updates)
@@ -160,7 +160,7 @@ def update(self, updates):
 
 @MiqImplementationContext.external_for(MyService.set_ownership, ViaSSUI)
 def set_ownership(self, owner, group):
-    view = navigate_to(self, 'SetOwnership', wait_for_view=True)
+    view = navigate_to(self, 'SetOwnership')
     view.fill({'select_owner': owner,
                'select_group': group})
     view.save_button.click()
@@ -178,7 +178,7 @@ def set_ownership(self, owner, group):
 
 @MiqImplementationContext.external_for(MyService.edit_tags, ViaSSUI)
 def edit_tags(self, tag, value):
-    view = navigate_to(self, 'EditTagsFromDetails', wait_for_view=True)
+    view = navigate_to(self, 'EditTagsFromDetails')
     view.fill({'tag_category': tag,
                'tag_name': value})
     view.add_tag.click()
@@ -229,7 +229,7 @@ def launch_vm_console(self, catalog_item):
 
 @MiqImplementationContext.external_for(MyService.retire, ViaSSUI)
 def retire(self):
-    view = navigate_to(self, 'Retire', wait_for_view=True)
+    view = navigate_to(self, 'Retire')
     view.retire.click()
     view = self.create_view(MyServicesView)
     assert wait_for(
@@ -243,7 +243,7 @@ def retire(self):
 
 @MiqImplementationContext.external_for(MyService.service_power, ViaSSUI)
 def service_power(self, power=None):
-    view = navigate_to(self, 'Details', wait_for_view=True)
+    view = navigate_to(self, 'Details')
     view.power_operations.item_select(power)
     view = self.create_view(DetailsMyServiceView)
     wait_for(
@@ -295,7 +295,7 @@ class LaunchVMConsole(SSUINavigateStep):
     VIEW = EditMyServiceView
 
     def prerequisite(self):
-        return navigate_to(self.obj, 'Details', wait_for_view=True)
+        return navigate_to(self.obj, 'Details')
 
     def step(self):
         if self.appliance.version < "5.8":

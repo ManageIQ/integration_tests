@@ -586,12 +586,12 @@ class InfrastructureMappingCollection(BaseCollection):
             description=form_data['general'].get('description', ''),
             form_data=form_data
         )
-        view = navigate_to(self, 'Add', wait_for_view=True)
+        view = navigate_to(self, 'Add')
         view.form.fill(form_data)
         return infra_map
 
     def delete(self, mapping):
-        view = navigate_to(self, 'All', wait_for_view=True)
+        view = navigate_to(self, 'All')
         mapping_list = view.infra_mapping_list
         mapping_list.delete_mapping(mapping.name)
 
@@ -618,7 +618,7 @@ class MigrationPlanCollection(BaseCollection):
             csv_import: (bool) flag for importing vms
             start_migration: (bool) flag for start migration
         """
-        view = navigate_to(self, 'Add', wait_for_view=True)
+        view = navigate_to(self, 'Add')
         view.general.fill({
             'infra_map': infra_map,
             'name': name,

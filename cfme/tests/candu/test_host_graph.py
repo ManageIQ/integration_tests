@@ -196,7 +196,7 @@ def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_can
     host.wait_candu_data_available(timeout=1500)
     provider.refresh_provider_relationships()
 
-    view = navigate_to(host, 'candu', wait_for_view=True)
+    view = navigate_to(host, 'candu')
     back_date = datetime.now() - timedelta(days=1)
     data = {'interval': interval, 'group_by': gp_by}
 

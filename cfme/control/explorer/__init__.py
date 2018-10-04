@@ -19,7 +19,7 @@ class ControlExplorerView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.in_control_explorer and self.configuration.is_displayed
+        return self.in_control_explorer
 
     @View.nested
     class policy_profiles(Accordion):  # noqa

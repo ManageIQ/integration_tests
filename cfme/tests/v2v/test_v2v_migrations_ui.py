@@ -34,7 +34,7 @@ def test_infra_mapping_ui_assertions(appliance, v2v_providers, form_data_single_
     # as update is not a supported feature for mapping.
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
-    view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
+    view = navigate_to(infrastructure_mapping_collection, 'All')
     soft_assert(mapping.name in view.infra_mapping_list.read())
     mapping_list = view.infra_mapping_list
     soft_assert(str(mapping_list.get_map_description(mapping.name)) == mapping.description)
@@ -65,7 +65,7 @@ def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_
     """Perform UI Validations on Infra_Mappings Wizard."""
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
 
-    view = navigate_to(infrastructure_mapping_collection, 'Add', wait_for_view=True)
+    view = navigate_to(infrastructure_mapping_collection, 'Add')
     mapping_name = fauxfactory.gen_string("alphanumeric", length=50)
     view.form.general.name.fill(mapping_name)
 
@@ -135,7 +135,7 @@ def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_
     view.form.result.close.click()
 
     # Test multiple mappings cannot be created with same name:
-    view = navigate_to(infrastructure_mapping_collection, 'Add', wait_for_view=True)
+    view = navigate_to(infrastructure_mapping_collection, 'Add')
     view.form.general.name.fill(mapping_name)
     view.form.general.description.fill('some description')
     soft_assert(view.form.general.name_help_text.read() == 'Please enter a unique name')
@@ -143,12 +143,12 @@ def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_
 
 def test_v2v_ui_no_providers(appliance, v2v_providers, soft_assert):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
+    view = navigate_to(infrastructure_mapping_collection, 'All')
     soft_assert(view.create_infrastructure_mapping.is_displayed)
     is_provider_1_deleted = v2v_providers[0].delete_if_exists(cancel=False)
     is_provider_2_deleted = v2v_providers[1].delete_if_exists(cancel=False)
     # Test after removing Providers, users cannot Create Infrastructure Mapping
-    view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
+    view = navigate_to(infrastructure_mapping_collection, 'All')
     soft_assert(view.configure_providers.is_displayed)
     soft_assert(not view.create_infrastructure_mapping.is_displayed)
     # Test with no provider_setup added migration plans not visible
@@ -167,7 +167,7 @@ def test_v2v_mapping_with_special_chars(appliance, v2v_providers, form_data_sing
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     form_data_single_datastore['general']['name'] = fauxfactory.gen_special(length=10)
     mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
-    view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
+    view = navigate_to(infrastructure_mapping_collection, 'All')
     soft_assert(mapping.name in view.infra_mapping_list.read())
     mapping_list = view.infra_mapping_list
     mapping_list.delete_mapping(mapping.name)
@@ -189,7 +189,7 @@ def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_
 
     mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
 
-    view = navigate_to(migration_plan_collection, 'Add', wait_for_view=True)
+    view = navigate_to(migration_plan_collection, 'Add')
     view.general.infra_map.select_by_visible_text(mapping.name)
     soft_assert(view.general.infra_map.read() == mapping.name)
 
@@ -218,14 +218,14 @@ def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_
     # Test Create migration plan -Create and Read
     view.options.create.click()
     # Test plan has unique name
-    view = navigate_to(migration_plan_collection, 'Add', wait_for_view=True)
+    view = navigate_to(migration_plan_collection, 'Add')
     view.general.infra_map.select_by_visible_text(mapping.name)
     view.general.name.fill(plan_name)
     view.general.description.fill(fauxfactory.gen_string("alphanumeric", length=150))
     # following assertion will fail in 5.9.4 as they have not backported this change to 5.9.4
     soft_assert(view.general.name_help_text.read() == 'Please enter a unique name')
 
-    view = navigate_to(migration_plan_collection, 'All', wait_for_view=True)
+    view = navigate_to(migration_plan_collection, 'All')
     soft_assert(plan_name in view.migration_plans_not_started_list.read())
     soft_assert(view.infra_mapping_list.get_associated_plans(mapping.name) == plan_name)
     soft_assert(view.migration_plans_not_started_list.get_plan_description(plan_name) ==

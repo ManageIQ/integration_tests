@@ -12,11 +12,10 @@ from selenium.common.exceptions import (
     ErrorInResponseException, InvalidSwitchToTargetException,
     InvalidElementStateException, WebDriverException, UnexpectedAlertPresentException,
     NoSuchElementException, StaleElementReferenceException)
-from wait_for import TimedOutError
+
 from widgetastic.browser import Browser, DefaultPlugin
 from widgetastic.utils import VersionPick
 from widgetastic.widget import Text, View
-from widgetastic_patternfly import Input
 
 from cfme import exceptions
 from cfme.fixtures.pytest_store import store
@@ -217,22 +216,6 @@ class MiqBrowserPlugin(DefaultPlugin):
     def after_click(self, element, locator):
         # page_dirty is set to None because otherwise if it was true, all next ensure_page_safe
         # calls would check alert presence which is enormously slow in selenium.
-        if not isinstance(locator, (Input)):
-            browser_type = self.browser.browser_type.lower()
-            if (browser_type == 'chrome' or
-                    (browser_type == 'firefox' and self.browser.browser_version > 45)):
-                # Use WA for Firefox > 45 and also for all versions of Chrome
-                # This is probably not the best approach, but solves the clicking problem for Chrome
-                self.browser.logger.warning('Using the workaround')
-                try:
-                    element = self.browser.element('//body')
-                    wait_for(lambda: element.is_displayed(), num_sec=2, fail_condition=True,
-                             delay=0.5, very_quiet=True)
-                except (StaleElementReferenceException, TimedOutError, NoSuchElementException):
-                    wait_for(
-                        lambda: self.browser.element('//body').is_displayed(),
-                        num_sec=10, handle_exception=True, very_quiet=True
-                    )
         self.browser.page_dirty = None
 
 
@@ -528,7 +511,7 @@ class CFMENavigateStep(NavigateStep):
         )
 
     def go(self, _tries=0, *args, **kwargs):
-        nav_args = {'use_resetter': True, 'wait_for_view': False}
+        nav_args = {'use_resetter': True, 'wait_for_view': 10}
         self.log_message("Beginning Navigation...", level="info")
         start_time = time.time()
         if _tries > 2:
@@ -572,7 +555,7 @@ class CFMENavigateStep(NavigateStep):
                 'DISABLE_NAVIGATE_ASSERT', False):
             waited = True
             wait_for(
-                lambda: view.is_displayed, num_sec=10,
+                lambda: view.is_displayed, num_sec=nav_args['wait_for_view'],
                 message="Waiting for view [{}] to display".format(view.__class__.__name__)
             )
         self.log_message(

@@ -32,7 +32,7 @@ def test_security_group_link(stack):
         view = navigate_to(stack, 'RelationshipSecurityGroups')
     except CandidateNotFound:
         # Assert that the item in the menu is disabled
-        view = navigate_to(stack, 'Details', wait_for_view=True)
+        view = navigate_to(stack, 'Details')
         assert view.sidebar.relationships.nav.is_disabled('Security Groups (0)')
     else:
         # Navigation successful, stack had security groups
@@ -46,7 +46,7 @@ def test_parameters_link(stack):
         view = navigate_to(stack, 'RelationshipParameters')
     except CandidateNotFound:
         # Assert that the item in the menu is disabled
-        view = navigate_to(stack, 'Details', wait_for_view=True)
+        view = navigate_to(stack, 'Details')
         assert view.sidebar.relationships.nav.is_disabled('Parameters (0)')
     else:
         # Navigation successful, stack had parameters
@@ -60,7 +60,7 @@ def test_outputs_link(stack):
         view = navigate_to(stack, 'RelationshipOutputs')
     except CandidateNotFound:
         # Assert there is a non-clickable anchor
-        view = navigate_to(stack, 'Details', wait_for_view=True)
+        view = navigate_to(stack, 'Details')
         assert view.sidebar.relationships.nav.is_disabled('Outputs (0)')
     else:
         assert view.is_displayed
@@ -73,7 +73,7 @@ def test_outputs_link_url(appliance, stack):
         view = navigate_to(stack, 'RelationshipOutputs')
     except CandidateNotFound:
         # Assert there is a non-clickable anchor
-        view = navigate_to(stack, 'Details', wait_for_view=True)
+        view = navigate_to(stack, 'Details')
         assert view.sidebar.relationships.nav.is_disabled('Outputs (0)')
     else:
         # Outputs is a table with clickable rows
@@ -89,7 +89,7 @@ def test_resources_link(stack):
         view = navigate_to(stack, 'RelationshipResources')
     except CandidateNotFound:
         # Assert there is a non-clickable anchor
-        view = navigate_to(stack, 'Details', wait_for_view=True)
+        view = navigate_to(stack, 'Details')
         assert view.sidebar.relationships.nav.is_disabled('Resources (0)')
     else:
         assert view.is_displayed is True

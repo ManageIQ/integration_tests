@@ -41,7 +41,8 @@ def test_control_navigation(destination, appliance):
     Steps:
         * Open each destination of Control tab.
     """
-    view = navigate_to(appliance.server, destination)
+    # some of views like Control -> Log incredibly long first time
+    view = navigate_to(appliance.server, destination, wait_for_view=60)
     assert view.is_displayed
 
 
@@ -52,7 +53,7 @@ def test_control_explorer_tree(control_explorer_view, destination, appliance):
     Steps:
         * Open each accordion tab and click on top node of the tree.
     """
-    navigate_to(appliance.server, 'ControlExplorer')
+    navigate_to(appliance.server, 'ControlExplorer', wait_for_view=30)
     accordion_name = destination.lower().replace(" ", "_")
     accordion = getattr(control_explorer_view, accordion_name)
     accordion.tree.click_path("All {}".format(destination))

@@ -320,7 +320,7 @@ def check_vm_add(self, add_vm_name):
 
 @MiqImplementationContext.external_for(MyService.download_file, ViaUI)
 def download_file(self, extension):
-    view = navigate_to(self, 'All', wait_for_view=True)
+    view = navigate_to(self, 'All')
     view.toolbar.download.item_select('Download as {}'.format(extension))
     view.flash.assert_no_error()
 

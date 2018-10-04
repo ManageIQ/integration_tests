@@ -189,7 +189,7 @@ def test_login_retrieve_group(appliance, request, auth_mode, auth_provider, soft
     group = retrieve_group(appliance, auth_mode, auth_user.username, non_evm_group, auth_provider)
 
     with user_obj:
-        view = navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
+        view = navigate_to(appliance.server, 'LoggedIn')
         soft_assert(view.current_fullname == user_obj.name,
                     'user full name "{}" did not match UI display name "{}"'
                     .format(user_obj.name, view.current_fullname))
@@ -262,7 +262,7 @@ def test_login_local_group(appliance, local_user, local_group, soft_assert):
     appliance.server.authentication.auth_settings = {'auth_settings': {'get_groups': False}}
 
     with local_user:
-        view = navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
+        view = navigate_to(appliance.server, 'LoggedIn')
         soft_assert(view.current_fullname == local_user.name,
                     'user full name "{}" did not match UI display name "{}"'
                     .format(local_user.name, view.current_fullname))
@@ -296,7 +296,7 @@ def test_user_group_switching(appliance, auth_user, auth_mode, auth_provider, so
                     .format(auth_user.groups))
 
     with user_obj:
-        view = navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
+        view = navigate_to(appliance.server, 'LoggedIn')
         # Check there are multiple groups displayed
         assert len(view.group_names) > 1, 'Only a single group is displayed for the user'
         display_other_groups = [g for g in view.group_names if g != view.current_groupname]

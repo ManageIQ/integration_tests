@@ -177,7 +177,7 @@ class ComputeRate(Updateable, Pretty, Navigatable):
     @property
     def exists(self):
         try:
-            navigate_to(self, 'Details', wait_for_view=True)
+            navigate_to(self, 'Details')
         except (ChargebackRateNotFound, TimedOutError):
             return False
         else:
@@ -222,7 +222,7 @@ class ComputeRate(Updateable, Pretty, Navigatable):
         Args:
             cancel: boolean, whether to cancel the action on alert
         """
-        view = navigate_to(self, 'Details', wait_for_view=True)
+        view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Remove from the VMDB', handle_alert=(not cancel))
         view = self.create_view(navigator.get_class(self, 'All').VIEW)
         assert view.is_displayed

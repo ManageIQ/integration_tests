@@ -68,7 +68,7 @@ def test_group_roles(appliance, setup_aws_auth_provider, group_name, role_access
         # fullname overrides user.name attribute, but doesn't impact login with username credential
         user = appliance.collections.users.simple_user(username, password, fullname=fullname)
         with user:
-            view = navigate_to(appliance.server, 'LoggedIn', wait_for_view=True)
+            view = navigate_to(appliance.server, 'LoggedIn')
             assert appliance.server.current_full_name() == user.name
             assert group_name.lower() in [name.lower() for name in appliance.server.group_names()]
             nav_visible = view.navigation.nav_item_tree()

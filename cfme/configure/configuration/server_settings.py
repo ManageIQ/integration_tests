@@ -600,7 +600,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
     @property
     def auth_mode(self):
         """Check UI confiuration of auth mode"""
-        view = navigate_to(self.appliance.server, 'Authentication', wait_for_view=True)
+        view = navigate_to(self.appliance.server, 'Authentication')
         return view.form.auth_mode.read()
 
     @auth_mode.setter
@@ -609,7 +609,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
         if new_mode.capitalize() not in ['Database', 'External']:
             raise ValueError('Setting auth_mode directly only allows for Database and External')
         else:
-            view = navigate_to(self.appliance.server, 'Authentication', wait_for_view=True)
+            view = navigate_to(self.appliance.server, 'Authentication')
             changed = view.form.auth_mode.fill(AUTH_MODES.get(new_mode))
             if changed:
                 view.save.click()
@@ -623,7 +623,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
                 minutes(str): timeout minutes value
             ex. auth_settings.set_session_timeout('0', '30')
         """
-        view = navigate_to(self.appliance.server, 'Authentication', wait_for_view=True)
+        view = navigate_to(self.appliance.server, 'Authentication')
         updated = view.fill({
             "hours_timeout": hours,
             "minutes_timeout": minutes
@@ -657,7 +657,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
         Args:
             values: dict with auth_mode and auth_settings keys
         """
-        view = navigate_to(self.appliance.server, 'Authentication', wait_for_view=True)
+        view = navigate_to(self.appliance.server, 'Authentication')
         if view.form.fill(values):
             try:
                 view.save.click()
@@ -698,7 +698,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
             raise ValueError('You have tried to configure auth with unexpected settings: '
                              '%r on mode %r', auth_provider, auth_mode)
 
-        view = navigate_to(self.appliance.server, 'Authentication', wait_for_view=True)
+        view = navigate_to(self.appliance.server, 'Authentication')
         changed = view.form.fill({'auth_mode': mode, 'auth_settings': settings})
         if reset:
             view.reset.click()

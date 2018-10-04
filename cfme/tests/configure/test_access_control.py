@@ -1097,7 +1097,7 @@ def test_tenant_quota_input_validate(appliance):
     fields = [('cpu', 2.5), ('storage', '1.x'), ('memory', '2.x'), ('vm', 1.5)]
 
     for field in fields:
-        view = navigate_to(roottenant, 'ManageQuotas', wait_for_view=True)
+        view = navigate_to(roottenant, 'ManageQuotas')
         view.form.fill({'{}_cb'.format(field[0]): True, '{}_txt'.format(field[0]): field[1]})
         assert view.save_button.disabled
         view.form.fill({'{}_cb'.format(field[0]): False})

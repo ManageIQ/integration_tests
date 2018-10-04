@@ -442,7 +442,7 @@ class MethodCollection(BaseCollection):
             cancel=False, validate=True, repository=None, playbook=None, machine_credential=None,
             hosts=None, max_ttl=None, escalate_privilege=None, verbosity=None,
             playbook_input_parameters=None, inputs=None):
-        add_page = navigate_to(self, 'Add', wait_for_view=True)
+        add_page = navigate_to(self, 'Add')
         add_page.fill({'location': location})
         if location == 'inline':
             add_page.fill({

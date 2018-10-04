@@ -876,7 +876,7 @@ class InfraVm(VM):
         if not any_changes and not cancel:
             raise ValueError("No changes specified - cannot reconfigure VM.")
 
-        vm_recfg = navigate_to(self, 'Reconfigure', wait_for_view=True)
+        vm_recfg = navigate_to(self, 'Reconfigure')
 
         # We gotta add disks separately
         fill_data = {k: v for k, v in changes.items() if k != 'disks'}

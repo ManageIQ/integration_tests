@@ -255,7 +255,8 @@ class BrowserManager(object):
             if browser_conf[
                 'webdriver_options'][
                     'desired_capabilities']['browserName'].lower() == 'firefox':
-                browser_kwargs['desired_capabilities']['marionette'] = False
+                browser_kwargs['desired_capabilities']['marionette'] = True
+                browser_kwargs['desired_capabilities']['acceptInsecureCerts'] = True
             return cls(WharfFactory(webdriver_class, browser_kwargs, wharf))
         else:
             if webdriver_name.lower() == "remote":
@@ -269,7 +270,8 @@ class BrowserManager(object):
                 if browser_conf[
                         'webdriver_options'][
                             'desired_capabilities']['browserName'].lower() == 'firefox':
-                    browser_kwargs['desired_capabilities']['marionette'] = False
+                    browser_kwargs['desired_capabilities']['marionette'] = True
+                    browser_kwargs['desired_capabilities']['acceptInsecureCerts'] = True
 
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
 

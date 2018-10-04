@@ -242,11 +242,11 @@ def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_ro
 def test_setting_child_quota_more_than_parent(tenants_setup, parent_quota, child_quota,
                                               flash_text):
     test_parent, test_child = tenants_setup
-    view = navigate_to(test_parent, 'ManageQuotas', wait_for_view=True)
+    view = navigate_to(test_parent, 'ManageQuotas')
     view.form.fill({'{}_cb'.format(parent_quota[0]): True,
                     '{}_txt'.format(parent_quota[0]): parent_quota[1]})
     view.save_button.click()
-    view = navigate_to(test_child, 'ManageQuotas', wait_for_view=True)
+    view = navigate_to(test_child, 'ManageQuotas')
     view.form.fill({'{}_cb'.format(child_quota[0]): True,
                     '{}_txt'.format(child_quota[0]): child_quota[1]})
     view.save_button.click()
