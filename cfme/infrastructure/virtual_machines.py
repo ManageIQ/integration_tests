@@ -831,7 +831,7 @@ class InfraVm(VM):
         vm = attr.ib()
 
         def navigate(self):
-            return navigate_to(self.vm, 'EditManagementEngineRelationship')
+            return navigate_to(self.vm, 'EditManagementEngineRelationship', wait_for_view=0)
 
         def is_relationship_set(self):
             return '<Not a Server>' not in self.get_relationship()
