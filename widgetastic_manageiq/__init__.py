@@ -3900,7 +3900,7 @@ class WaitTab(Tab):
                 wait_for(self.is_active, delay=0.1, num_sec=2)
                 break  # no retry, wait passed
             except TimedOutError:
-                self.logger.exception(
+                self.logger.warning(
                     "Tab was not active in 2s{}".format(", retrying" if _tries < _to_try else "")
                 )
                 if _tries >= _to_try:  # raise the TimedOutError if we've tried enough times
@@ -3908,7 +3908,7 @@ class WaitTab(Tab):
         try:
             widget.wait_displayed(timeout=2)
         except TimedOutError:
-            self.logger.exception("Tab widget not displayed, continuing...")
+            self.logger.warning("Tab widget not displayed, continuing...")
 
 
 class PotentiallyInvisibleTab(WaitTab):

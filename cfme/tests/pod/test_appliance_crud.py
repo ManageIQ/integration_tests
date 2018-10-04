@@ -4,6 +4,7 @@ import pytest
 import tempfile
 import yaml
 
+from kubernetes.client.rest import ApiException
 from pytest import config
 
 from cfme.containers.provider.openshift import OpenshiftProvider
@@ -12,7 +13,10 @@ from cfme.test_framework.appliance import PLUGIN_KEY
 from cfme.utils import ssh, trackerbot, conf
 from cfme.utils.appliance import stack, IPAppliance
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.auth import auth_user_data
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 from cfme.utils.version import get_stream
 
 pytestmark = [
@@ -121,6 +125,20 @@ def template_folder(template):
     return os.path.join(upload_folder, template['name'])
 
 
+@pytest.fixture(scope='function')
+def setup_ipa_auth_provider(temp_pod_appliance, ipa_auth_provider):
+    """Add/Remove IPA auth provider"""
+    appliance = temp_pod_appliance
+    original_config = appliance.server.authentication.auth_settings
+    appliance.server.authentication.configure(auth_mode='external',
+                                              auth_provider=ipa_auth_provider)
+    yield
+
+    appliance.server.authentication.auth_settings = original_config
+    appliance.server.login_admin()
+    appliance.server.authentication.configure(auth_mode='database')
+
+
 @pytest.fixture
 def temp_pod_appliance(appliance, provider, appliance_data, pytestconfig):
     with sprout_appliances(
@@ -206,6 +224,26 @@ def temp_pod_ansible_appliance(provider, appliance_data, template_tags):
     finally:
         if provider.mgmt.does_vm_exist(project):
             provider.mgmt.delete_vm(project)
+
+
+@pytest.fixture(scope='function')
+def ipa_user(temp_pod_appliance, ipa_auth_provider):
+    """return a simple user object, see if it exists and delete it on teardown"""
+    # Replace spaces with dashes in UPN type usernames for login compatibility
+    appliance = temp_pod_appliance
+    try:
+        user_data = auth_user_data(ipa_auth_provider.key, 'uid')[0]
+    except IndexError:
+        pytest.fail("No auth users found")
+
+    user = appliance.collections.users.simple_user(
+        user_data.username,
+        credentials[user_data.password].password,
+        fullname=user_data.fullname or user_data.username)
+
+    yield user
+
+    appliance.server.login_admin()
 
 
 def test_crud_pod_appliance(temp_pod_appliance, provider, setup_provider):
@@ -444,6 +482,127 @@ def test_pod_appliance_db_backup_restore(temp_pod_appliance, provider, setup_pro
     provider.mgmt.start_vm(appliance.project)
     assert provider.mgmt.wait_vm_running(appliance.project)
     # check that appliance is running and provider is available again
+    collection = appliance.collections.container_projects
+    proj = collection.instantiate(name=appliance.project, provider=provider)
+    assert navigate_to(proj, 'Dashboard')
+
+
+def test_pod_appliance_basic_ipa_auth(temp_pod_appliance, provider, setup_provider,
+                                      template_folder, ipa_auth_provider, setup_ipa_auth_provider,
+                                      ipa_user):
+    """ Test basic ipa authentication in appliance
+    The test does the following:
+     - enable external httpd authentication in appliance
+     - deploy latest configmap generator
+     - generate new configuration
+     - deploy new httpd configmap configuration
+     - restart httpd pod
+     - to login to appliance using external credentials
+
+    Polarion:
+        assignee: izapolsk
+        initialEstimate: None
+    """
+    appliance = temp_pod_appliance
+    auth_prov = ipa_auth_provider
+
+    logger.info("retrieving necessary configmap-generator version in order to pull it beforehand")
+    image_data = read_host_file(appliance, os.path.join(template_folder,
+                                                        'cfme-httpd-configmap-generator'))
+    image_url = image_data.strip().split()[-1]
+    generator_url, generator_version = image_url.rsplit(':', 1)
+    logger.info("generator image url: %s, version %s", generator_url, generator_version)
+    try:
+        logger.info("check that httpd-scc-sysadmin is present")
+        provider.mgmt.get_scc('httpd-scc-sysadmin')
+    except ApiException as e:
+        logger.info("scc 'httpd-scc-sysadmin' isn't present. adding it")
+        if e.status == 404:
+            sysadmin_template = read_host_file(appliance, os.path.join(template_folder,
+                                                                       'httpd-scc-sysadmin.yaml'))
+            provider.mgmt.create_scc(body=yaml.safe_load(sysadmin_template))
+        else:
+            pytest.fail("Couldn't create required scc")
+
+    logger.info("making configmap generator to be run under appropriate scc")
+    provider.mgmt.append_sa_to_scc(scc_name='httpd-scc-sysadmin',
+                                   namespace=appliance.project,
+                                   sa='httpd-configmap-generator')
+
+    # oc create -f templates/httpd-configmap-generator-template.yaml
+    logger.info("reading and parsing configmap generator template")
+    generator_data = yaml.safe_load(read_host_file(appliance, os.path.join(template_folder,
+                                    'httpd-configmap-generator-template.yaml')))
+
+    generator_dc_name = generator_data['metadata']['name']
+    processing_params = {'HTTPD_CONFIGMAP_GENERATOR_IMG_NAME': generator_url,
+                         'HTTPD_CONFIGMAP_GENERATOR_IMG_TAG': generator_version}
+
+    template_entities = provider.mgmt.process_raw_template(body=generator_data,
+                                                           namespace=appliance.project,
+                                                           parameters=processing_params)
+    # oc new-app --template=httpd-configmap-generator
+    logger.info("deploying configmap generator app")
+    provider.mgmt.create_template_entities(namespace=appliance.project, entities=template_entities)
+    provider.mgmt.wait_pod_running(namespace=appliance.project, name=generator_dc_name)
+
+    logger.info("running configmap generation command inside generator app")
+    output_file = '/tmp/ipa_configmap'
+    generator_cmd = ['/opt/httpd_configmap_generator/bin/httpd_configmap_generator', 'ipa',
+                     '--host={}'.format(appliance.hostname),
+                     '--ipa-server={}'.format(auth_prov.host1),
+                     '--ipa-domain={}'.format(auth_prov.iparealm),  # looks like yaml value is wrong
+                     '--ipa-realm={}'.format(auth_prov.iparealm),
+                     '--ipa-principal={}'.format(auth_prov.ipaprincipal),
+                     '--ipa-password={}'.format(auth_prov.bind_password),
+                     '--output={}'.format(output_file), '-d', '-f']
+
+    # todo: implement this in wrapanapi by resolving chain dc->rc->po/st
+    def get_pod_name(pattern):
+        def func(name):
+            try:
+                all_pods = provider.mgmt.list_pods(namespace=appliance.project)
+                return next(p.metadata.name for p in all_pods if p.metadata.name.startswith(name))
+            except StopIteration:
+                return None
+        return wait_for(func=func, func_args=[pattern], timeout='5m',
+                        delay=5, fail_condition=None)[0]
+
+    logger.info("generator cmd: %s", generator_cmd)
+    generator_pod_name = get_pod_name(generator_dc_name)
+    generator_output = provider.mgmt.run_command(namespace=appliance.project,
+                                                 name=generator_pod_name,
+                                                 cmd=generator_cmd)
+
+    assert 'Saving Auth Config-Map to' in generator_output, "config map generation failed"
+
+    httpd_config = provider.mgmt.run_command(namespace=appliance.project,
+                                             name=generator_pod_name,
+                                             cmd=["/usr/bin/cat", output_file])
+
+    # oc scale dc httpd-configmap-generator --replicas=0
+    logger.info("stopping configmap generator since it is no longer needed")
+    provider.mgmt.scale_entity(name=generator_dc_name, namespace=appliance.project, replicas=0)
+
+    # oc replace configmaps httpd-auth-configs --filename ./ipa_configmap
+    logger.info("replacing auth configmap")
+    new_httpd_config = provider.mgmt.rename_structure(yaml.safe_load(httpd_config))
+    provider.mgmt.replace_config_map(namespace=appliance.project, **new_httpd_config)
+
+    # oc scale dc/httpd --replicas=0
+    # oc scale dc/httpd --replicas=1
+    logger.info("stopping & starting httpd pod in order to re-read current auth configmap")
+    httpd_name = 'httpd'
+    provider.mgmt.scale_entity(name=httpd_name, namespace=appliance.project, replicas=0)
+    provider.mgmt.wait_pod_stopped(namespace=appliance.project, name=httpd_name)
+    provider.mgmt.scale_entity(name=httpd_name, namespace=appliance.project, replicas=1)
+    provider.mgmt.wait_pod_running(namespace=appliance.project, name=httpd_name)
+
+    # connect to appliance and try to login
+    logger.info("trying to login with user from ext auth system")
+    appliance.server.login(user=ipa_user)
+
+    # check that appliance is running and provider is available
     collection = appliance.collections.container_projects
     proj = collection.instantiate(name=appliance.project, provider=provider)
     assert navigate_to(proj, 'Dashboard')
