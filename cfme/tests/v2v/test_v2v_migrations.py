@@ -28,6 +28,13 @@ pytestmark = [
 ]
 
 
+def get_migrated_vm_obj(src_vm_obj, target_provider):
+    """Returns the migrated_vm obj from target_provider."""
+    collection = target_provider.appliance.provider_based_collection(target_provider)
+    migrated_vm = collection.instantiate(src_vm_obj.name, target_provider)
+    return migrated_vm
+
+
 @pytest.mark.parametrize('form_data_vm_obj_single_datastore', [['nfs', 'nfs', rhel7_minimal],
                             ['nfs', 'iscsi', rhel7_minimal], ['iscsi', 'iscsi', rhel7_minimal],
                             ['iscsi', 'nfs', rhel7_minimal], ['iscsi', 'local', rhel7_minimal]],
@@ -36,19 +43,23 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
                                             conversion_tags,
                                             form_data_vm_obj_single_datastore):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    # form_data_vm_obj_single_datastore has form_data at [0]
-    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore[0])
+    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
+    # vm_obj is a list, with only 1 VM object, hence [0]
+    src_vm_obj = form_data_vm_obj_single_datastore.vm_list[0]
+    wait_for(lambda: src_vm_obj.ip_address is not None,
+        message="Waiting for VM to display IP in CFME",
+        fail_func=src_vm_obj.refresh_relationships,
+        delay=5, timeout=300)
 
     migration_plan_collection = appliance.collections.v2v_plans
-    # form_data_vm_obj_single_datastore has vm_obj list at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore[1], start_migration=True)
+        vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
@@ -67,7 +78,10 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
         migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
             migration_plan.name), view.migration_plans_completed_list.get_clock(
             migration_plan.name))
+    # validate MAC address matches between source and target VMs
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
+    migrated_vm = get_migrated_vm_obj(src_vm_obj, v2v_providers.rhv_provider)
+    assert src_vm_obj.mac_address == migrated_vm.mac_address
 
 
 @pytest.mark.parametrize('form_data_vm_obj_single_network', [['DPortGroup', 'ovirtmgmt',
@@ -78,19 +92,17 @@ def test_single_network_single_vm_migration(request, appliance, v2v_providers, h
                                             form_data_vm_obj_single_network):
     # This test will make use of migration request details page to track status of migration
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    # form_data_vm_obj_single_network has form_data at [0]
-    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_network[0])
+    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_network.form_data)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-    # form_data_vm_obj_single_network has list of vm_obj at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_network[1], start_migration=True)
+        vm_list=form_data_vm_obj_single_network.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
@@ -110,6 +122,10 @@ def test_single_network_single_vm_migration(request, appliance, v2v_providers, h
      delay=5, num_sec=2700)
     assert (request_details_list.is_successful(vms[0]) and
         not request_details_list.is_errored(vms[0]))
+    # validate MAC address matches between source and target VMs
+    src_vm = form_data_vm_obj_single_network.vm_list.pop()
+    migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
+    assert src_vm.mac_address == migrated_vm.mac_address
 
 
 @pytest.mark.parametrize(
@@ -122,19 +138,18 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
                                         form_data_dual_vm_obj_dual_datastore, soft_assert):
     # This test will make use of migration request details page to track status of migration
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    # form_data_dual_vm_obj_dual_datastore has form_data at [0]
-    mapping = infrastructure_mapping_collection.create(form_data_dual_vm_obj_dual_datastore[0])
+    mapping = infrastructure_mapping_collection.create(form_data_dual_vm_obj_dual_datastore.
+                                                       form_data)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-    # form_data_dual_vm_obj_dual_datastore has list of vm_obj at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_dual_vm_obj_dual_datastore[1], start_migration=True)
+        vm_list=form_data_dual_vm_obj_dual_datastore.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
@@ -154,6 +169,12 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
         soft_assert(request_details_list.is_successful(vm) and
          not request_details_list.is_errored(vm))
 
+    src_vms_list = form_data_dual_vm_obj_dual_datastore.vm_list
+    # validate MAC address matches between source and target VMs
+    for src_vm in src_vms_list:
+        migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
+        soft_assert(src_vm.mac_address == migrated_vm.mac_address)
+
 
 @pytest.mark.parametrize(
     'form_data_vm_obj_dual_nics', [[['VM Network', 'ovirtmgmt'],
@@ -163,19 +184,17 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
 def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conversion_tags,
          form_data_vm_obj_dual_nics):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    # form_data_vm_obj_dual_nics has form_data at [0]
-    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_dual_nics[0])
+    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_dual_nics.form_data)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-    # form_data_vm_obj_dual_nics has vm_obj at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_vm_obj_dual_nics[1], start_migration=True)
+        vm_list=form_data_vm_obj_dual_nics.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
@@ -195,6 +214,10 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
             migration_plan.name), view.migration_plans_completed_list.get_clock(
             migration_plan.name))
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
+    # validate MAC address matches between source and target VMs
+    src_vm = form_data_vm_obj_dual_nics.vm_list.pop()
+    migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
+    assert src_vm.mac_address == migrated_vm.mac_address
 
 
 @pytest.mark.parametrize('form_data_vm_obj_single_datastore', [['nfs', 'nfs', dual_disk_template]],
@@ -202,19 +225,17 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
 def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, conversion_tags,
                                 form_data_vm_obj_single_datastore):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    # form_data_vm_obj_single_datastore has form_data at [0]
-    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore[0])
+    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-    # form_data_vm_obj_single_datastore has vm_obj at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore[1], start_migration=True)
+        vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
     # explicit wait for spinner of in-progress status card
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
@@ -233,6 +254,10 @@ def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, c
             migration_plan.name), view.migration_plans_completed_list.get_clock(
             migration_plan.name))
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
+    # validate MAC address matches between source and target VMs
+    src_vm = form_data_vm_obj_single_datastore.vm_list.pop()
+    migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
+    assert src_vm.mac_address == migrated_vm.mac_address
 
 
 @pytest.mark.parametrize('form_data_multiple_vm_obj_single_datastore', [['nfs', 'nfs',
@@ -244,20 +269,18 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
                                     form_data_multiple_vm_obj_single_datastore,
                                     soft_assert):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    # form_data_multiple_vm_obj_single_datastore has form_data at [0]
     mapping = infrastructure_mapping_collection.create(
-        form_data_multiple_vm_obj_single_datastore[0])
+        form_data_multiple_vm_obj_single_datastore.form_data)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-    # form_data_multiple_vm_obj_single_datastore has list of vm_objects at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_multiple_vm_obj_single_datastore[1], start_migration=True)
+        vm_list=form_data_multiple_vm_obj_single_datastore.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
@@ -278,6 +301,12 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
         soft_assert(request_details_list.is_successful(vm) and
          not request_details_list.is_errored(vm))
 
+    src_vms_list = form_data_multiple_vm_obj_single_datastore.vm_list
+    # validate MAC address matches between source and target VMs
+    for src_vm in src_vms_list:
+        migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
+        soft_assert(src_vm.mac_address == migrated_vm.mac_address)
+
 
 def test_conversion_host_tags(appliance, v2v_providers):
     """Tests following cases:
@@ -293,7 +322,8 @@ def test_conversion_host_tags(appliance, v2v_providers):
             display_name='V2V - Transformation Method')
             .collections.tags.instantiate(display_name='VDDK'))
 
-    host = v2v_providers[1].hosts.all()[0]
+    # We just pick the first available host hence [0]
+    host = v2v_providers.rhv_provider.hosts.all()[0]
     # Remove any prior tags
     host.remove_tags(host.get_tags())
 
@@ -314,19 +344,17 @@ def test_single_vm_migration_with_ssh(request, appliance, v2v_providers, host_cr
                                     conversion_tags,
                                     form_data_vm_obj_single_datastore):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    # form_data_vm_obj_single_datastore has form_data at [0]
-    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore[0])
+    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-    # form_data_vm_obj_single_datastore has list of vm_obj at [0]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore[1], start_migration=True)
+        vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
@@ -346,6 +374,10 @@ def test_single_vm_migration_with_ssh(request, appliance, v2v_providers, host_cr
         view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
         view.migration_plans_completed_list.get_clock(migration_plan.name))
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
+    # validate MAC address matches between source and target VMs
+    src_vm = form_data_vm_obj_single_datastore.vm_list.pop()
+    migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
+    assert src_vm.mac_address == migrated_vm.mac_address
 
 
 @pytest.mark.parametrize('form_data_vm_obj_single_datastore', [['nfs', 'nfs', rhel7_minimal]],
@@ -356,33 +388,30 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
                                     form_data_vm_obj_single_datastore,
                                     power_state):
     # Test VM migration power state and tags are preserved
-    # form_data_vm_obj_single_datastore has list of vm_obj at [1]
     # as this is single_vm_migration it only has one vm_obj, which we extract on next line
-    vm = form_data_vm_obj_single_datastore[1][0]
-    if power_state not in vm.mgmt.state:
+    src_vm = form_data_vm_obj_single_datastore.vm_list[0]
+    if power_state not in src_vm.mgmt.state:
         if power_state == 'RUNNING':
-            vm.mgmt.start()
+            src_vm.mgmt.start()
         elif power_state == 'STOPPED':
-            vm.mgmt.stop()
+            src_vm.mgmt.stop()
     tag = (appliance.collections.categories.instantiate(display_name='Owner *').collections.tags
         .instantiate(display_name='Production Linux Team'))
-    vm.add_tag(tag)
-    vm.set_retirement_date(offset={'hours': 1})
+    src_vm.add_tag(tag)
+    src_vm.set_retirement_date(offset={'hours': 1})
 
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    # form_data_vm_obj_single_datastore has form_data at [0]
-    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore[0])
+    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-    # form_data_vm_obj_single_datastore has list of vm_obj at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore[1], start_migration=True)
+        vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
@@ -403,8 +432,8 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
         view.migration_plans_completed_list.get_clock(migration_plan.name))
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
     # check power state on migrated VM
-    rhv_prov = v2v_providers[1]
-    migrated_vm = rhv_prov.mgmt.get_vm((form_data_vm_obj_single_datastore[1][0]).name)
+    rhv_prov = v2v_providers.rhv_provider
+    migrated_vm = rhv_prov.mgmt.get_vm(src_vm.name)
     assert power_state in migrated_vm.state
     # check tags
     vm_obj = appliance.collections.infra_vms.instantiate(migrated_vm.name, rhv_prov)
@@ -424,20 +453,18 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
                                     conversion_tags, soft_assert,
                                     form_data_multiple_vm_obj_single_datastore):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    # form_data_multiple_vm_obj_single_datastore has form_data at [0]
     mapping = infrastructure_mapping_collection.create(
-        form_data_multiple_vm_obj_single_datastore[0])
+        form_data_multiple_vm_obj_single_datastore.form_data)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-    # form_data_multiple_vm_obj_single_datastore has list of vm_objs at [1]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_multiple_vm_obj_single_datastore[1], start_migration=True)
+        vm_list=form_data_multiple_vm_obj_single_datastore.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
