@@ -254,7 +254,7 @@ def test_migration_rbac(appliance, new_credential, conversion_tags, host_creds, 
     product_features = [(['Everything', 'Compute', 'Migration'], False)]
     role.update({'product_features': product_features})
     with user:
-        view = navigate_to(appliance.server, 'Dashboard', wait_for_view=True)
+        view = navigate_to(appliance.server, 'Dashboard')
         nav_tree = view.navigation.nav_item_tree()
         # Checks migration option is disabled in navigation
         assert 'Migration' not in nav_tree['Compute'], ('Migration found in nav tree, '

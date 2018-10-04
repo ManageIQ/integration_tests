@@ -36,7 +36,7 @@ def migration_plan(appliance, infra_map, csv=False):
     """Function to create migration plan and select csv import option"""
     plan_name = "map_{}".format(fauxfactory.gen_alpha(10))
     plan_obj = appliance.collections.v2v_plans
-    view = navigate_to(plan_obj, 'Add', wait_for_view=True)
+    view = navigate_to(plan_obj, 'Add')
     view.general.fill({
         'infra_map': infra_map.name,
         'name': plan_name,

@@ -7,6 +7,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.tests.candu import compare_data, compare_data_with_unit
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -16,7 +17,8 @@ pytestmark = [
     test_requirements.c_and_u,
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([VMwareProvider, RHEVMProvider],
-                         required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
+                         required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')]),
+    pytest.mark.meta(blockers=[BZ(1636120, forced_streams=['5.10'])])
 ]
 
 
