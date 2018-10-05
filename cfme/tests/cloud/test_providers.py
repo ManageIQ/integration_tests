@@ -477,7 +477,7 @@ def test_select_key_pair_none_while_provisioning(appliance, request, has_no_clou
     provider.create()
     provider.validate()
 
-    view = navigate_to(appliance.collections.cloud_instances, 'Provision')
+    view = navigate_to(appliance.collections.cloud_instances, 'Provision', wait_for_view=0)
     view.image_table[0].click()
     view.form.continue_button.click()
 
