@@ -239,3 +239,37 @@ def test_radiobutton_dialog_element(appliance, request):
     }
     dialog, element = create_dialog(appliance, element_data)
     request.addfinalizer(dialog.delete_if_exists)
+
+
+def test_remove_dialog_element(appliance, request):
+    """Tests remove dialog element
+
+    Testing BZ 1522870.
+    """
+    element_1_data = {
+        'element_information': {
+            'ele_label': "ele_label_" + fauxfactory.gen_alphanumeric(),
+            'ele_name': fauxfactory.gen_alphanumeric(),
+            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'choose_type': "Text Box",
+        }
+    }
+    element_2_data = {
+        'element_information': {
+            'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
+            'ele_name': fauxfactory.gen_alphanumeric(),
+            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'choose_type': "Radio Button",
+
+        }
+    }
+    service_dialog = appliance.collections.service_dialogs
+    sd = service_dialog.create(label='label_' + fauxfactory.gen_alphanumeric(),
+                               description="my dialog")
+    tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
+                         tab_desc="my tab desc")
+    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
+                           box_desc="my box desc")
+    element = box.elements.create(element_data=[element_1_data, element_2_data])
+    request.addfinalizer(sd.delete_if_exists)
+    element.remove_elements(elements=[element_1_data])

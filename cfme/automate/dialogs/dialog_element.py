@@ -162,6 +162,18 @@ class Element(BaseEntity):
         assert view.is_displayed
         view.flash.assert_no_error()
 
+    def remove_elements(self, elements):
+        """Method to remove elements from section.
+
+        Args:
+            elements: list of elements to be removed from section.
+        """
+        view = navigate_to(self, 'Edit')
+        for element in elements:
+            label = element.get('element_information').get("ele_label")
+            view.element.remove_element(element_name=label)
+        view.save_button.click()
+        view.flash.assert_no_error()
 
 @attr.s
 class ElementCollection(BaseCollection):

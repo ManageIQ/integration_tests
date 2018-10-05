@@ -1423,6 +1423,13 @@ class DialogElement(Widget, ClickableMixin):
             )
         )
 
+        remove_icon = Text(
+            ParametrizedLocator(
+                ".//div[contains(normalize-space(.), {element_name|quote})]"
+                '/div/button/span/i[contains(@class, "fa-times")]'
+            )
+        )
+
         def edit_icon_click(self):
             """Clicks the edit icon with this name."""
             wait_for(
@@ -1440,6 +1447,23 @@ class DialogElement(Widget, ClickableMixin):
             )
             return self.edit_icon.click()
 
+        def remove_icon_click(self):
+            """Clicks the edit icon with this name."""
+            wait_for(
+                lambda: self.ele_label.is_displayed,
+                delay=5,
+                num_sec=30,
+                message="waiting for element to be displayed",
+            )
+            self.ele_label.click()
+            wait_for(
+                lambda: self.remove_icon.is_displayed,
+                delay=5,
+                num_sec=30,
+                message="waiting for element to be displayed",
+            )
+            return self.remove_icon.click()
+
     def edit_element(self, element_name):
         """Clicks the edit_icon_click.
 
@@ -1447,6 +1471,14 @@ class DialogElement(Widget, ClickableMixin):
             element_name: Name of the element
         """
         return self.element(element_name).edit_icon_click()
+
+    def remove_element(self, element_name):
+        """Clicks the remove_icon_click.
+
+        Args:
+            element_name: Name of the element
+        """
+        return self.element(element_name).remove_icon_click()
 
     def drag_and_drop(self, dragged_widget, dropped_widget):
         dragged_widget_el = self.element(dragged_widget).drag_drop_div
