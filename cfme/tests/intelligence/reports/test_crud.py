@@ -265,7 +265,7 @@ def test_reports_delete_saved_report(appliance, request):
     assert not report.exists
 
 
-def test_reports_create_schedule_for_base_report_once(appliance, request):
+def test_reports_crud_schedule_for_base_report_once(appliance, request):
     report = appliance.collections.reports.instantiate(
         type="Configuration Management",
         subtype="Virtual Machines",
@@ -284,5 +284,5 @@ def test_reports_create_schedule_for_base_report_once(appliance, request):
     schedule = report.create_schedule(**data)
 
     assert schedule.enabled
-
-    request.addfinalizer(schedule.delete)
+    schedule.delete(cancel=False)
+    assert not schedule.exists
