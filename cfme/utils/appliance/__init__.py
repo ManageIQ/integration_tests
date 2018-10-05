@@ -996,8 +996,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             logger.info('Database is not online, restarting')
             try:
                 self.db_service.restart()
-            except SystemdException:
-                return 'postgres failed to start'
+            except SystemdException as ex:
+                return 'postgres failed to start: \n{}'.format(ex.message)
             else:
                 return 'postgres was not running for unknown reasons'
 
@@ -1522,7 +1522,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             timeout: Number of seconds to wait until timeout (default ``900``)
         """
         log_callback('Waiting for evmserverd to be running')
-        result, _ = wait_for(self.evmserverd.running,
+        result, _ = wait_for(lambda: self.evmserverd.running,
                              num_sec=timeout, fail_condition=False, delay=10)
         return result
 
