@@ -20,6 +20,7 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_t
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.update import Updateable
+from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     BaseEntitiesView,
@@ -49,6 +50,7 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
 
     name = attr.ib()
     provider = attr.ib()
+    ems_ref = attr.ib(default=None)
     custom_ident = attr.ib(default=None)
     db_id = None
 
@@ -65,6 +67,17 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
         view.toolbar.configuration.item_select("Refresh Relationships and Power States",
                                                handle_alert=cancel)
 
+    def load_details(self, refresh=False):
+        """To be compatible with the Taggable mixin.
+
+        Args:
+            refresh (bool): Whether to perform the page refresh, defaults to False
+        """
+        view = navigate_to(self, "Details")
+        if refresh:
+            view.browser.refresh()
+            view.flush_widget_cache()
+
     def wait_for_physical_rack_state_change(self, desired_state, timeout=300):
         """Wait for PhysicalRack to come to desired state. This function waits just the needed amount of
            time thanks to wait_for.
@@ -80,6 +93,11 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
             return "currentstate-{}".format(desired_state) in entity.data['state']
 
         wait_for(_looking_for_state_change, fail_func=view.browser.refresh, num_sec=timeout)
+
+    @variable(alias="ui")
+    def rack_name(self):
+        view = navigate_to(self, "Details")
+        return view.entities.properties.get_text_of("Rack name")
 
     @property
     def exists(self):
@@ -168,21 +186,24 @@ class PhysicalRackCollection(BaseCollection):
             checked_physical_racks.append(physical_rack)
         return view
 
-    def all(self):
+    def all(self, provider=None):
         """returning all physical_racks objects"""
         physical_rack_table = self.appliance.db.client['physical_racks']
         ems_table = self.appliance.db.client['ext_management_systems']
         physical_rack_query = (
             self.appliance.db.client.session
-                .query(physical_rack_table.name, ems_table.name)
+                .query(physical_rack_table.name, physical_rack_table.ems_ref, ems_table.name)
                 .join(ems_table, physical_rack_table.ems_id == ems_table.id))
-        provider = self.filters.get('provider')
+
+        if provider is None:
+            provider = self.filters.get('provider')
 
         if provider:
             physical_rack_query = physical_rack_query.filter(ems_table.name == provider.name)
         return [
-            self.instantiate(name, provider or get_crud_by_name(ems_name))
-            for name, ems_name in physical_rack_query.all()
+            self.instantiate(name=name, ems_ref=ems_ref, provider=provider
+                or get_crud_by_name(ems_name))
+            for name, ems_ref, ems_name in physical_rack_query.all()
         ]
 
 
