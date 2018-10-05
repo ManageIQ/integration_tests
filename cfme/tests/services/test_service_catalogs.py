@@ -15,9 +15,7 @@ from cfme.utils.wait import wait_for_decorator
 
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate",
-                     blockers=[BZ(1633540, forced_streams=['5.10'],
-                        unblock=lambda provider: not provider.one_of(RHEVMProvider))]),
+    pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,

@@ -10,6 +10,7 @@ from cfme.services.service_catalogs import ServiceCatalogs, BaseOrderForm
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from cfme.utils.blockers import BZ
+from cfme.utils.version import VersionPicker, LOWEST
 
 
 class ServicesCatalogsView(BaseLoggedInPage):
@@ -88,7 +89,10 @@ def order(self):
     if self.ansible_dialog_values:
         view.fill(self.ansible_dialog_values)
     msg = "Order Request was Submitted"
-    msg_type = "info"
+    msg_type = VersionPicker({
+        LOWEST: "success",
+        "5.10": "info"
+    }).pick()
     view.submit_button.click()
     view = self.create_view(RequestsView)
     view.flash.assert_no_error()
