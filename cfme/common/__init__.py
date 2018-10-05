@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import six
 import random
-from navmazing import NavigateToSibling
+from navmazing import NavigateToSibling, NavigationDestinationNotFound
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
 from widgetastic_patternfly import (
     BreadCrumb, BootstrapSelect, Button, CheckableBootstrapTreeview, DropdownItemNotFound,
@@ -9,9 +9,10 @@ from widgetastic_patternfly import (
 from widgetastic.widget import Table, Text, View
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.exceptions import DestinationNotFound, ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView
 
 
@@ -397,8 +398,16 @@ class Taggable(TaggableCommonBase):
             tenant: string, tags tenant, default is "My Company Tags"
 
         Returns: :py:class:`list` List of Tag objects
+
+        Raises:
+            ItemNotFound: when nav destination DNE, or times out on wait (is_displayed was false)
         """
-        view = navigate_to(self, 'Details')
+        try:
+            view = navigate_to(self, 'Details')
+        except (NavigationDestinationNotFound, DestinationNotFound):
+            raise ItemNotFound('Details page does not exit for: {}'.format(self))
+        except TimedOutError:
+            raise ItemNotFound('Timed out navigating to details for: {}'.format(self))
         tags = []
         entities = view.entities
         if hasattr(entities, 'smart_management'):
