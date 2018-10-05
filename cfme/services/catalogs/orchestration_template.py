@@ -130,9 +130,9 @@ class AddDialogView(DialogForm):
     @property
     def is_displayed(self):
         return (
-            self.title.text == 'Adding a new Service Dialog from '
-                               'Orchestration Template "{}"'.format(self.obj.name) and
-            self.orchestration_templates.is_opened
+            self.orchestration_templates.is_opened and
+            self.title.text == 'Adding a new Service Dialog from Orchestration Template "{}"'
+                               .format(self.context['object'].name)
         )
 
 

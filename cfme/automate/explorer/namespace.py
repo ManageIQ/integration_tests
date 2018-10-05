@@ -69,7 +69,9 @@ class NamespaceEditView(NamespaceForm):
             check_tree_path(
                 self.datastore.tree.currently_selected,
                 self.context['object'].tree_path) and
-            self.title.text == 'Editing Automate Namespace "{}"'.format(self.obj.name))
+            self.title.text == 'Editing Automate Namespace "{}"'
+                               .format(self.context['object'].name)
+        )
 
 
 class Namespace(BaseEntity):

@@ -143,7 +143,9 @@ class InstanceEditView(AutomateExplorerView):
     def is_displayed(self):
         return (
             self.in_explorer and
-            self.title.text == 'Editing Automate Instance "{}"'.format(self.obj.name))
+            self.title.text == 'Editing Automate Instance "{}"'
+                               .format(self.context['object'].name)
+        )
 
 
 class Instance(BaseEntity, Copiable):
