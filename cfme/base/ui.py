@@ -761,7 +761,7 @@ class ServerDiagnosticsView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        return self.prerequisite_view.accordions.diagnostics.tree.currently_selected == [
+        return self.accordions.diagnostics.tree.currently_selected == [
             self.context['object'].zone.region.settings_string,
             "Zone: {} (current)".format(self.context['object'].zone.description),
             "Server: {} [{}] (current)".format(
