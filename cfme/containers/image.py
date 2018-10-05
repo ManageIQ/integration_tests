@@ -63,6 +63,21 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
     def sha256(self):
         return self.id.split('@')[-1]
 
+    @property
+    def last_scan_attempt_on(self):
+        """ Get 'Last Scan Attempt On' property for OCP Image.
+
+            Returns:
+                datetime or None.
+        """
+        try:
+            # API does not accept a unicode string, setting the image name to a string
+            return (self.appliance.rest_api.collections.container_images.
+                    get(name=str(self.name)).last_scan_attempt_on)
+        # If no scan has been performed on the image, it will return an AttributeError
+        except AttributeError:
+            return None
+
     def perform_smartstate_analysis(self, wait_for_finish=False, timeout='20M'):
         """Performing SmartState Analysis on this Image
         """
@@ -118,6 +133,17 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
             return True
         else:
             raise ValueError("{} is not a known state for compliance".format(text))
+
+    def scan(self):
+        """ Start SmartState Analysis Scan of OCP Image.
+
+            Returns:
+                API response.
+        """
+
+        # API does not accept a unicode string, setting the image name to a string
+        return (self.appliance.rest_api.collections.container_images.
+                get(name=str(self.name)).action.scan())
 
 
 @attr.s

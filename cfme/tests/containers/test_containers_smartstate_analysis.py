@@ -107,3 +107,32 @@ def test_containers_smartstate_analysis(provider, test_item, soft_assert,
         value = wait_for_retval.out
         soft_assert(verifier(value),
             '{}.{} attribute has unexpected value ({})'.format(tbl, attr, value))
+
+
+@pytest.mark.ignore_stream('5.9')
+@pytest.mark.parametrize(('test_item'), TEST_ITEMS)
+def test_containers_smartstate_analysis_api(provider, test_item, soft_assert,
+                                        delete_all_container_tasks, random_image_instance):
+    """
+       Test initiating a SmartState Analysis scan via the CFME API through the ManageIQ API Client
+       entity class.
+
+       RFE: BZ 1486362
+    """
+
+    if test_item.is_openscap:
+        random_image_instance.assign_policy_profiles('OpenSCAP profile')
+    else:
+        random_image_instance.unassign_policy_profiles('OpenSCAP profile')
+
+    original_scan = random_image_instance.last_scan_attempt_on
+
+    random_image_instance.scan()
+
+    task = provider.appliance.collections.tasks.instantiate(
+        name="Container Image Analysis: '{}'".format(random_image_instance.name), tab='AllTasks')
+
+    task.wait_for_finished()
+
+    soft_assert(original_scan != random_image_instance.last_scan_attempt_on,
+                'SmartState Anaysis scan has failed')
