@@ -4754,13 +4754,13 @@ class MigrationProgressBar(Widget):
     def get_progress_percent(self, plan_name):
         """Returns datastore and vm progress bar percentage"""
         el = self._get_card_element(plan_name)
-        _desc = [
-            desc.text.lower()
-            for desc in self.browser.elements(self.PROGRESS_DESCRIPTION, parent=el)
+        desc = [
+            _desc.text.lower()
+            for _desc in self.browser.elements(self.PROGRESS_DESCRIPTION, parent=el)
         ]
         # extracting style attribute values and returning it as percentage xx.xx%
-        _val = [
+        val = [
             float(div.get_attribute("style").split(": ")[1].split("%")[0])
-            for div in self.browser.elements(self.PROGvalRESS_BARS, parent=el)
+            for div in self.browser.elements(self.PROGRESS_BARS, parent=el)
         ]
-        return dict(zip(_desc, _val))
+        return dict(zip(desc, val))
