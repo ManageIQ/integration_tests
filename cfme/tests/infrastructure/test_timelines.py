@@ -38,7 +38,7 @@ def new_vm(provider):
 @pytest.fixture()
 def mark_vm_as_appliance(new_vm, appliance):
     # set diagnostics vm
-    relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship')
+    relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship', wait_for_view=0)
     server_name = "{name} ({sid})".format(name=appliance.server.name, sid=appliance.server.sid)
     relations_view.form.server.select_by_visible_text(server_name)
     relations_view.form.save_button.click()
