@@ -1,7 +1,7 @@
 import pytest
 
 from cfme.utils.appliance.implementations.ui import navigate_to
-
+from cfme.utils.version import current_version
 
 LANDING_PAGES = [
     'Cloud Intel / Dashboard',
@@ -36,7 +36,6 @@ LANDING_PAGES = [
     'Compute / Infrastructure / Datastores',
     'Compute / Infrastructure / PXE',
     'Compute / Infrastructure / Networking',
-    'Compute / Infrastructure / Requests',
     'Compute / Infrastructure / Topology',
     'Compute / Containers / Overview',
     'Compute / Containers / Providers',
@@ -63,13 +62,6 @@ LANDING_PAGES = [
     'Networks / Network Ports',
     'Networks / Load Balancers',
     'Networks / Topology',
-    'Middleware / Providers',
-    'Middleware / Domains',
-    'Middleware / Servers',
-    'Middleware / Deployments',
-    'Middleware / Datasources',
-    'Middleware / Messagings',
-    'Middleware / Topology',
     'Storage / Block Storage / Managers',
     'Storage / Block Storage / Volumes',
     'Storage / Block Storage / Volume Snapshots',
@@ -102,6 +94,18 @@ LANDING_PAGES = [
     'Red Hat Access Insights']
 
 
+LANDING_PAGES_5_9 = LANDING_PAGES + [
+    "Compute / Infrastructure / Requests",
+    "Middleware / Providers",
+    "Middleware / Domains",
+    "Middleware / Servers",
+    "Middleware / Deployments",
+    "Middleware / Datasources",
+    "Middleware / Messagings",
+    "Middleware / Topology",
+]
+
+
 @pytest.fixture(scope='module')
 def my_settings(appliance):
     return appliance.user.my_settings
@@ -131,7 +135,11 @@ def set_to_default(page, my_settings):
     view.tabs.visual.save.click()
 
 
-@pytest.mark.parametrize('start_page', LANDING_PAGES, scope="module")
+@pytest.mark.parametrize(
+    "start_page",
+    LANDING_PAGES if current_version() > "5.10" else LANDING_PAGES_5_9,
+    scope="module",
+)
 def test_landing_page_admin(start_page, appliance, my_settings, request):
     """
             This test checks the functioning of the landing page; 'Start at Login'
