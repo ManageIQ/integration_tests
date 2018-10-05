@@ -55,6 +55,7 @@ class VolumeDetailsAccordion(View):
 
 class VolumeView(BaseLoggedInPage):
     """Base class for header and nav check"""
+
     @property
     def in_volume(self):
         return (
@@ -84,11 +85,10 @@ class VolumeDetailsView(VolumeView):
             provider = self.entities.relationships.get_text_of('Cloud Provider')
         except NameError:
             provider = self.entities.relationships.get_text_of('Parent Cloud Provider')
-        return (
-            self.in_volume and
-            self.entities.title.text == expected_title and
-            self.entities.breadcrumb.active_location == expected_title and
-            provider == self.context['object'].provider.name)
+        return (self.in_volume and
+                self.entities.title.text == expected_title and
+                self.entities.breadcrumb.active_location == expected_title and
+                provider == self.context['object'].provider.name)
 
     toolbar = View.nested(VolumeDetailsToolbar)
     sidebar = View.nested(VolumeDetailsAccordion)
@@ -131,10 +131,18 @@ class VolumeEditView(VolumeView):
     save = Button('Save')
 
 
+class VolumeBackupEntities(View):
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+
+
 class VolumeBackupView(VolumeView):
     @property
     def is_displayed(self):
-        return False
+        expected_title = 'Create Backup for Cloud Volume "{}"'.format(self.context['object'].name)
+        return (
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title)
 
     backup_name = TextInput(name='backup_name')
     # options
@@ -144,6 +152,8 @@ class VolumeBackupView(VolumeView):
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')
+
+    entities = View.nested(VolumeBackupEntities)
 
 
 class VolumeSnapshotView(VolumeView):
@@ -160,7 +170,6 @@ class VolumeSnapshotView(VolumeView):
 
 @attr.s
 class Volume(BaseEntity, Updateable, Taggable):
-
     name = attr.ib()
     provider = attr.ib()
 

@@ -98,17 +98,25 @@ class VolumeBackupDetailsView(VolumeBackupView):
     entities = View.nested(VolumeBackupDetailsEntities)
 
 
+class VolumeRestoreEntities(View):
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+
+
 class VolumeRestoreView(VolumeBackupView):
     """The restore Volume backup view"""
     @property
     def is_displayed(self):
-        return False
+        expected_title = 'Restore Cloud Volume Backup "{}"'.format(self.context['object'].name)
+        return (self.entities.title.text == expected_title and
+                self.entities.breadcrumb.active_location == expected_title)
 
     volume_name = BootstrapSelect(name='volume_id')
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('cancel')
 
+    entities = View.nested(VolumeRestoreEntities)
 
 @attr.s
 class VolumeBackup(BaseEntity, Taggable):
