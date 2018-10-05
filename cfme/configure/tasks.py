@@ -67,11 +67,18 @@ class TasksView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return (
-            self.tabs.mytasks.is_displayed and
-            self.tabs.myothertasks.is_displayed and
-            self.tabs.alltasks.is_displayed and
-            self.tabs.allothertasks.is_displayed)
+        if self.context['object'].appliance.version < '5.10':
+            return (
+                self.tabs.mytasks.is_displayed and
+                self.tabs.myothertasks.is_displayed and
+                self.tabs.alltasks.is_displayed and
+                self.tabs.allothertasks.is_displayed
+            )
+        else:
+            return (
+                self.tabs.mytasks.is_displayed and
+                self.tabs.alltasks.is_displayed
+            )
 
 
 @attr.s
