@@ -50,20 +50,23 @@ def setup_obj(appliance, button_group):
     """ Setup object for specific custom button object type."""
     obj_type = button_group[1]
 
-    if obj_type == "CONTAINER_IMAGE":
-        obj = appliance.collections.container_images.all()[0]
-    elif obj_type == "CONTAINER_NODE":
-        obj = appliance.collections.container_nodes.all()[0]
-    elif obj_type == "CONTAINER_POD":
-        obj = appliance.collections.container_pods.all()[0]
-    elif obj_type == "CONTAINER_PROJECT":
-        obj = appliance.collections.container_projects.all()[0]
-    elif obj_type == "CONTAINER_TEMPLATE":
-        obj = appliance.collections.container_templates.all()[0]
-    elif obj_type == "CONTAINER_VOLUME":
-        obj = appliance.collections.container_volumes.all()[0]
-    else:
-        logger.error("No object collected for custom button object type '{}'".format(obj_type))
+    try:
+        if obj_type == "CONTAINER_IMAGE":
+            obj = appliance.collections.container_images.all()[0]
+        elif obj_type == "CONTAINER_NODE":
+            obj = appliance.collections.container_nodes.all()[0]
+        elif obj_type == "CONTAINER_POD":
+            obj = appliance.collections.container_pods.all()[0]
+        elif obj_type == "CONTAINER_PROJECT":
+            obj = appliance.collections.container_projects.all()[0]
+        elif obj_type == "CONTAINER_TEMPLATE":
+            obj = appliance.collections.container_templates.all()[0]
+        elif obj_type == "CONTAINER_VOLUME":
+            obj = appliance.collections.container_volumes.all()[0]
+        else:
+            logger.error("No object collected for custom button object type '{}'".format(obj_type))
+    except IndexError:
+        pytest.skip("Object not found for {}".format(obj_type))
     return obj
 
 
