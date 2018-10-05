@@ -243,7 +243,7 @@ def test_appliance_console_restore_db_local(request, get_appliances_with_provide
     appl2.db.create()
     command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
-    appl2.start_evm_service()
+    appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
     assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
@@ -266,10 +266,10 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
     manager.quit()
-    appl1.start_evm_service()
+    appl1.evmserverd.start()
     appl1.wait_for_web_ui()
     appl1.reboot()
-    appl1.start_evm_service()
+    appl1.evmserverd.start()
     appl1.wait_for_web_ui()
     appl1.ssh_client.run_command(
         'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
@@ -302,8 +302,8 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
     appl2.appliance_console.run_commands(command_set)
-    appl1.start_evm_service()
-    appl2.start_evm_service()
+    appl1.evmserverd.start()
+    appl2.evmserverd.start()
     appl1.wait_for_web_ui()
     appl2.wait_for_web_ui()
     # Assert providers exist after restore and replicated to second appliances
@@ -339,9 +339,9 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
     appl1.db.create()
     command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
-    appl1.start_evm_service()
+    appl1.evmserverd.start()
     appl1.wait_for_web_ui()
-    appl2.start_evm_service()
+    appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers after restore on both apps
     assert providers_before_restore == set(appl1.managed_provider_names), (
@@ -376,8 +376,8 @@ def test_appliance_console_restore_db_replicated(
     appl1.db.drop()
     appl1.db.create()
     appl1.appliance_console.run_commands(command_set)
-    appl1.start_evm_service()
-    appl2.start_evm_service()
+    appl1.evmserverd.start()
+    appl2.evmserverd.start()
     appl1.wait_for_web_ui()
     appl2.wait_for_web_ui()
     # reconfigure replication between appliances, lost during restore
@@ -420,7 +420,7 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
     appl1.appliance_console.run_commands(command_set)
     appl1.ssh_client.run_command("systemctl start rh-postgresql95-repmgr")
     appl2.ssh_client.run_command("systemctl start rh-postgresql95-repmgr")
-    appl3.start_evm_service()
+    appl3.evmserverd.start()
     appl3.wait_for_web_ui()
     # Assert providers still exist after restore
     assert providers_before_restore == set(appl3.managed_provider_names), (
@@ -466,7 +466,7 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
     appl2.db.create()
     command_set = ('ap', '', '4', '2', nfs_dump, TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
-    appl2.start_evm_service()
+    appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
     assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
@@ -500,7 +500,7 @@ def test_appliance_console_restore_db_samba(request, get_appliances_with_provide
     appl2.db.create()
     command_set = ('ap', '', '4', '3', smb_dump, usr, pwd, TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
-    appl2.start_evm_service()
+    appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
     assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (

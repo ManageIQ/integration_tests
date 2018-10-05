@@ -35,7 +35,7 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
     app = temp_appliance_preconfig
     app.evmserverd.stop()
     app.db.extend_partition()
-    app.start_evm_service()
+    app.app.evmserverd.start()
     return app
 
 
@@ -45,7 +45,7 @@ def temp_appliance_remote(temp_appliance_preconfig_funcscope):
     app = temp_appliance_preconfig_funcscope
     app.evmserverd.stop()
     app.db.extend_partition()
-    app.start_evm_service()
+    app.app.evmserverd.start()
     return app
 
 
@@ -111,7 +111,7 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
     app.db.fix_auth_dbyml()
     # start evmserverd, wait for web UI to start and try to log in
     try:
-        app.start_evm_service()
+        app.evmserverd.start()
     except ApplianceException:
         result = app.ssh_client.run_rake_command("evm:start")
         assert result.success, "Couldn't start evmserverd: {}".format(result.output)
@@ -162,7 +162,7 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     app.db.fix_auth_dbyml()
     # start evmserverd, wait for web UI to start and try to log in
     try:
-        app.start_evm_service()
+        app.evmserverd.start()
     except ApplianceException:
         result = app.ssh_client.run_rake_command("evm:start")
         assert result.success, "Couldn't start evmserverd: {}".format(result.output)
@@ -188,7 +188,7 @@ def test_upgrade_single_inplace(appliance_preupdate, appliance):
     appliance_preupdate.db.migrate()
     appliance_preupdate.db.automate_reset()
     appliance_preupdate.db_service.restart()
-    appliance_preupdate.start_evm_service()
+    appliance_preupdate.evmserverd.start()
     appliance_preupdate.wait_for_web_ui()
     result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
     assert result.output in appliance.version

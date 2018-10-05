@@ -11,7 +11,7 @@ def customer_db_migrate(temp_appliance_preconfig):
     app = temp_appliance_preconfig
     app.evmserverd.stop()
     app.db.extend_partition()
-    app.start_evm_service()
+    app.evmserverd.start()
 
     # Download the database
     db_url = cfme_data['db_backups']['MBU_LAB']['url']
@@ -35,7 +35,7 @@ def customer_db_migrate(temp_appliance_preconfig):
     app.db.fix_auth_dbyml()
     # start evmserverd, wait for web UI to start and try to log in
     try:
-        app.start_evm_service()
+        app.evmserverd.start()
     except ApplianceException:
         result = app.ssh_client.run_rake_command("evm:start")
         assert result.success, "Couldn't start evmserverd: {}".format(result.output)

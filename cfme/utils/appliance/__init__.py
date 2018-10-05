@@ -559,7 +559,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
             if on_gce:
                 # evm serverd does not auto start on GCE instance..
-                self.start_evm_service(log_callback=log_callback)
+                self.evmserverd.start(log_callback=log_callback)
             self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
 
             # Some conditionally ran items require the evm service be
@@ -572,7 +572,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 self.configure_vm_console_cert(log_callback=log_callback)
                 restart_evm = True
             if restart_evm:
-                self.restart_evm_service(log_callback=log_callback)
+                self.evmserverd.restart(log_callback=log_callback)
             self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def configure_gce(self, log_callback=None):
@@ -1010,7 +1010,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         # try to start EVM
         logger.info('Checking appliance evmserverd service')
         try:
-            self.restart_evm_service()
+            self.evmserverd.restart()
         except ApplianceException as ex:
             return 'evmserverd failed to start:\n{}'.format(ex.args[0])
 
@@ -1103,7 +1103,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             self.ssh_client.patch_file(local_path, remote_path, md5)
 
         self.precompile_assets()
-        self.restart_evm_service()
+        self.evmserverd.restart()
         logger.info("Waiting for Web UI to start")
         wait_for(
             func=self.is_web_ui_running,
@@ -1469,50 +1469,28 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         else:
             return unsure
 
-    @logger_wrap("Status of EVM service: {}")
-    def is_evm_service_running(self, log_callback=None):
-        """Checks the ``evmserverd`` service status on this appliance
-        """
-        return self.evmserverd.running
-
-    @logger_wrap("Start EVM Service: {}")
-    def start_evm_service(self, log_callback=None):
-        """Starts the ``evmserverd`` service on this appliance
-        """
-        self.evmserverd.start()
-
-    @logger_wrap("Stop EVM Service: {}")
-    def stop_evm_service(self, log_callback=None):
-        """Stops the ``evmserverd`` service on this appliance
-        """
-        self.evmserverd.stop()
-
     @logger_wrap("Restart EVM Service: {}")
-    def restart_evm_service(self, rude=False, log_callback=None):
-        """Restarts the ``evmserverd`` service on this appliance
-        """
+    def restart_evm_rude(self, log_callback=None):
+        """Restarts the ``evmserverd`` service on this appliance"""
         store.terminalreporter.write_line('evmserverd is being restarted, be patient please')
         with self.ssh_client as ssh:
-            if rude:
-                self.evmserverd.stop()
-                log_callback('Waiting for evm service to stop')
-                try:
-                    wait_for(
-                        self.evmserverd.running, num_sec=120, fail_condition=True, delay=5,
-                        message='evm service to stop')
-                except TimedOutError:
-                    # Don't care if it's still running
-                    pass
-                log_callback('killing any remaining processes and restarting postgres')
-                ssh.run_command('killall -9 ruby')
-                self.db_service.restart()
-                log_callback('Waiting for database to be available')
+            self.evmserverd.stop()
+            log_callback('Waiting for evm service to stop')
+            try:
                 wait_for(
-                    lambda: self.db.is_online, num_sec=90, delay=5,
-                    message="database to be available")
-                self.evmserverd.start()
-            else:
-                self.evmserverd.restart()
+                    self.evmserverd.running, num_sec=120, fail_condition=True, delay=5,
+                    message='evm service to stop')
+            except TimedOutError:
+                # Don't care if it's still running
+                pass
+            log_callback('killing any remaining processes and restarting postgres')
+            ssh.run_command('killall -9 ruby')
+            self.db_service.restart()
+            log_callback('Waiting for database to be available')
+            wait_for(
+                lambda: self.db.is_online, num_sec=90, delay=5,
+                message="database to be available")
+            self.evmserverd.start()
 
     @logger_wrap("Waiting for EVM service: {}")
     def wait_for_evm_service(self, timeout=900, log_callback=None):
@@ -2276,7 +2254,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             ssh_client.run_command(
                 'cd /var/www/miq/vmdb; git checkout dev_branch/{}'.format(branch))
             ssh_client.run_command('cd /var/www/miq/vmdb; bin/update')
-            self.start_evm_service()
+            self.evmserverd.start()
             self.wait_for_evm_service()
             self.wait_for_web_ui()
 
@@ -2544,7 +2522,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def _switch_migration_ui(self, enable):
         self.update_advanced_settings({'product': {'transformation': enable}})
         self.appliance.server.logout()
-        self.restart_evm_service()
+        self.evmserverd.restart()
         self.wait_for_evm_service()
         self.wait_for_web_ui()
 
@@ -2666,7 +2644,7 @@ class Appliance(IPAppliance):
         name_to_set = kwargs.get('name_to_set')
         if name_to_set is not None and name_to_set != self.name:
             self.rename(name_to_set)
-            self.restart_evm_service(log_callback=log_callback)
+            self.evmserverd.restart(log_callback=log_callback)
             self.wait_for_web_ui(log_callback=log_callback)
 
         # Try to set a resolvable FQDN on openstack
