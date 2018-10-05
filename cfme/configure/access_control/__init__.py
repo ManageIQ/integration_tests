@@ -66,6 +66,7 @@ class AllUserView(ConfigurationView):
     """ All Users View."""
     toolbar = View.nested(AccessControlToolbar)
     entities = View.nested(UsersEntities)
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -1271,6 +1272,7 @@ class AllTenantView(ConfigurationView):
     """ All Tenants View """
     toolbar = View.nested(AccessControlToolbar)
     table = Table('//*[@id="miq-gtl-view"]/miq-data-table/div/table')
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
