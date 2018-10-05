@@ -163,6 +163,7 @@ class Add(CFMENavigateStep):
             'Add a New Physical Infrastructure Provider'
         )
 
+
 class PhysicalOverviewView(BaseLoggedInPage):
     providers = StatusBox('Providers')
     chassis = StatusBox('Chassis')
