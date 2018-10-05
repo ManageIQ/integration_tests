@@ -97,7 +97,7 @@ class ClassEditView(ClassForm):
     def is_displayed(self):
         return (
             self.in_explorer and
-            self.title.text == 'Editing Class "{}"'.format(self.obj.name))
+            self.title.text == 'Editing Class "{}"'.format(self.context['object'].name))
 
 
 class Class(BaseEntity, Copiable):

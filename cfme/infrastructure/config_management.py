@@ -150,7 +150,8 @@ class ConfigManagementAllView(ConfigManagementView):
     @property
     def is_displayed(self):
         """Is this view being displayed?"""
-        if self.obj.appliance.version >= '5.8' and self.obj.type == 'Ansible Tower':
+        if (self.context['object'].appliance.version >= '5.8' and
+                self.context['object'].type == 'Ansible Tower'):
             title_text = 'All Ansible Tower Providers'
         else:
             title_text = 'All Configuration Manager Providers'
@@ -166,7 +167,7 @@ class ConfigManagementDetailsView(ConfigManagementView):
     @property
     def is_displayed(self):
         """Is this view being displayed?"""
-        titles = [t.format(name=self.obj.name) for t in [
+        titles = [t.format(name=self.context['object'].name) for t in [
             'Configuration Profiles under Red Hat Satellite Provider "{name} Automation Manager"',
             'Inventory Groups under Ansible Tower Provider "{name} Automation Manager"'
         ]]
@@ -182,7 +183,9 @@ class ConfigManagementProfileView(ConfigManagementView):
     @property
     def is_displayed(self):
         """Is this view being displayed?"""
-        title = 'Configured System ({}) "{}"'.format(self.obj.type, self.obj.name)
+        title = 'Configured System ({}) "{}"'.format(
+            self.context['object'].type,
+            self.context['object'].name)
         return self.in_config and self.entities.title.text == title
 
 

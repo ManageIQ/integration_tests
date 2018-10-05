@@ -220,7 +220,7 @@ class ParticularDashboardView(DashboardView):
     def is_displayed(self):
         return (
             super(ParticularDashboardView, self).is_displayed and
-            self.dashboards(title=self.obj.name).is_active)
+            self.dashboards(title=self.context['object'].name).is_active)
 
 
 @attr.s

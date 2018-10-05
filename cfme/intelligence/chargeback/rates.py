@@ -118,7 +118,9 @@ class EditComputeChargebackView(AddComputeChargebackView):
     def is_displayed(self):
         return (
             self.in_chargeback and
-            self.title.text == 'Compute Chargeback Rate "{}"'.format(self.obj.description))
+            self.title.text == 'Compute Chargeback Rate "{}"'
+                               .format(self.context['object'].description)
+        )
 
 
 class AddStorageChargebackView(AddComputeChargebackView):
@@ -130,7 +132,9 @@ class EditStorageChargebackView(EditComputeChargebackView):
     def is_displayed(self):
         return (
             self.in_chargeback and
-            self.title.text == 'Storage Chargeback Rate "{}"'.format(self.obj.description))
+            self.title.text == 'Storage Chargeback Rate "{}"'
+                               .format(self.context['object'].description)
+        )
 
 
 # TODO Inherit BaseEntity and create a parent collection class
