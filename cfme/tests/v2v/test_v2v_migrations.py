@@ -654,15 +654,14 @@ def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, con
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-    # vm_obj is a list, with only 1 VM object, hence [0]
+    # vm_obj is a list, taking only first object with [0] index
     vm_obj = form_data_vm_obj_single_datastore.vm_list[0]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore.vm_list,
-        start_migration=True
-    )
+        vm_list=[vm_obj],
+        start_migration=True)
 
     # explicit wait for spinner of in-progress status card
     view = appliance.browser.create_view(
