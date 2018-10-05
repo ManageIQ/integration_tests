@@ -394,7 +394,7 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
             click_cancel (bool): Whether to cancel form submission
             click_reset (bool): Whether to reset form after filling
         """
-        view = navigate_to(self, 'SetOwnership')
+        view = navigate_to(self, 'SetOwnership', wait_for_view=0)
         fill_result = view.form.fill({
             'user_name': user.name if user else None,
             'group_name': group.description if group else group})
@@ -423,7 +423,7 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
 
     def unset_ownership(self):
         """Remove user ownership and return group to EvmGroup-Administrator"""
-        view = navigate_to(self, 'SetOwnership')
+        view = navigate_to(self, 'SetOwnership', wait_for_view=0)
         fill_result = view.form.fill({
             'user_name': '<No Owner>', 'group_name': 'EvmGroup-administrator'
         })
