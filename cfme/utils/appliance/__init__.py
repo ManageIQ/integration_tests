@@ -41,7 +41,7 @@ from .db import ApplianceDB
 from .implementations.rest import ViaREST
 from .implementations.ssui import ViaSSUI
 from .implementations.ui import ViaUI
-from .services import SystemdService
+from .services import SystemdService, SystemdException
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # EMS types recognized by IP or credentials
@@ -236,8 +236,13 @@ class IPAppliance(object):
     """
     _nav_steps = {}
 
+    auditd = SystemdService.declare(unit_name='auditd')
+    chronyd = SystemdService.declare(unit_name='chronyd')
+    collectd = SystemdService.declare(unit_name='collectd')
+    db_service = SystemdService.declare(unit_name=ApplianceDB.service_name)
     evmserverd = SystemdService.declare(unit_name='evmserverd')
     httpd = SystemdService.declare(unit_name='httpd')
+    merkyl = SystemdService.declare(unit_name='merkyl')
     sssd = SystemdService.declare(unit_name='sssd')
     db = ApplianceDB.declare()
 
@@ -331,11 +336,12 @@ class IPAppliance(object):
 
     def unregister(self):
         """ unregisters appliance from RHSM/SAT6 """
-        self.ssh_client.run_command('subscription-manager remove --all')
-        self.ssh_client.run_command('subscription-manager unregister')
-        self.ssh_client.run_command('subscription-manager clean')
-        self.ssh_client.run_command('mv -f /etc/rhsm/rhsm.conf.kat-backup /etc/rhsm/rhsm.conf')
-        self.ssh_client.run_command('rpm -qa | grep katello-ca-consumer | xargs rpm -e')
+        with self.ssh_client as ssh_client:
+            ssh_client.run_command('subscription-manager remove --all')
+            ssh_client.run_command('subscription-manager unregister')
+            ssh_client.run_command('subscription-manager clean')
+            ssh_client.run_command('mv -f /etc/rhsm/rhsm.conf.kat-backup /etc/rhsm/rhsm.conf')
+            ssh_client.run_command('rpm -qa | grep katello-ca-consumer | xargs rpm -e')
 
     def is_registration_complete(self, used_repo_or_channel):
         """ Checks if an appliance has the correct repos enabled with RHSM or SAT6 """
@@ -522,13 +528,15 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
             # Debugging - ifcfg-eth0 overwritten by unknown process
             # Rules are permanent and will be reloade after machine reboot
-            self.ssh_client.run_command(
-                "cp -pr /etc/sysconfig/network-scripts/ifcfg-eth0 /var/tmp", ensure_host=True)
-            self.ssh_client.run_command(
-                "echo '-w /etc/sysconfig/network-scripts/ifcfg-eth0 -p wa' >> "
-                "/etc/audit/rules.d/audit.rules", ensure_host=True)
-            self.ssh_client.run_command("systemctl daemon-reload", ensure_host=True)
-            self.ssh_client.run_command("service auditd restart", ensure_host=True)
+            with self.ssh_client as ssh_client:
+                ssh_client.run_command(
+                    "cp -pr /etc/sysconfig/network-scripts/ifcfg-eth0 /var/tmp", ensure_host=True)
+                ssh_client.run_command(
+                    "echo '-w /etc/sysconfig/network-scripts/ifcfg-eth0 -p wa' >> "
+                    "/etc/audit/rules.d/audit.rules", ensure_host=True)
+                self.httpd.daemon_reload()
+                # cannot restart through systemctl
+                ssh_client.run_command('service auditd restart', ensure_host=True)
 
             ipapp.wait_for_ssh()
 
@@ -551,7 +559,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
             if on_gce:
                 # evm serverd does not auto start on GCE instance..
-                self.start_evm_service(log_callback=log_callback)
+                self.evmserverd.start(log_callback=log_callback)
             self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
 
             # Some conditionally ran items require the evm service be
@@ -564,7 +572,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 self.configure_vm_console_cert(log_callback=log_callback)
                 restart_evm = True
             if restart_evm:
-                self.restart_evm_service(log_callback=log_callback)
+                self.evmserverd.restart(log_callback=log_callback)
             self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def configure_gce(self, log_callback=None):
@@ -600,7 +608,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             ssh_client.run_command("restorecon -R /etc/sysconfig/network-scripts", ensure_host=True)
             ssh_client.run_command("restorecon /etc/sysconfig/network", ensure_host=True)
             # Stop the evmserverd and move the logs somewhere
-            ssh_client.run_command("systemctl stop evmserverd", ensure_host=True)
+            self.evmserverd.stop()
             ssh_client.run_command("mkdir -p /var/www/miq/vmdb/log/preconfigure-logs",
                 ensure_host=True)
             ssh_client.run_command(
@@ -985,10 +993,11 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         logger.info('Checking appliance database')
         if not self.db.online:
             # postgres isn't running, try to start it
-            cmd = 'systemctl restart {}-postgresql'.format(self.db.postgres_version)
-            result = self.db.ssh_client.run_command(cmd)
-            if result.failed:
-                return 'postgres failed to start:\n{}'.format(result.output)
+            logger.info('Database is not online, restarting')
+            try:
+                self.db_service.restart()
+            except SystemdException as ex:
+                return 'postgres failed to start: \n{}'.format(ex.message)
             else:
                 return 'postgres was not running for unknown reasons'
 
@@ -1001,7 +1010,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         # try to start EVM
         logger.info('Checking appliance evmserverd service')
         try:
-            self.restart_evm_service()
+            self.evmserverd.restart()
         except ApplianceException as ex:
             return 'evmserverd failed to start:\n{}'.format(ex.args[0])
 
@@ -1021,11 +1030,11 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             raise ApplianceException("Chrony isn't installed")
 
         # # checking whether it is enabled and enable it
-        is_enabled_cmd = 'systemctl is-enabled chronyd'
-        if client.run_command(is_enabled_cmd).failed:
+
+        if not self.chronyd.enabled:
             logger.debug("chrony will start on system startup")
-            client.run_command('systemctl enable chronyd')
-            client.run_command('systemctl daemon-reload')
+            self.chronyd.enable()
+            self.chronyd.daemon_reload()
 
         # Retrieve time servers from yamls
         server_template = 'server {srv} iburst'
@@ -1054,9 +1063,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             logger.info("chrony's config file hasn't been changed")
             conf_file_updated = False
 
-        if conf_file_updated or client.run_command('systemctl status chronyd').failed:
+        if conf_file_updated or not self.chronyd.running:
             logger.debug('restarting chronyd')
-            client.run_command('systemctl restart chronyd')
+            self.chronyd.restart()
 
         # check that chrony is running correctly now
         result = client.run_command('chronyc tracking')
@@ -1094,7 +1103,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             self.ssh_client.patch_file(local_path, remote_path, md5)
 
         self.precompile_assets()
-        self.restart_evm_service()
+        self.evmserverd.restart()
         logger.info("Waiting for Web UI to start")
         wait_for(
             func=self.is_web_ui_running,
@@ -1210,32 +1219,37 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def deploy_merkyl(self, start=False, log_callback=None):
         """Deploys the Merkyl log relay service to the appliance"""
 
-        client = self.ssh_client
+        with self.ssh_client as client:
 
-        client.run_command('mkdir -p /root/merkyl')
-        for filename in ['__init__.py', 'merkyl.tpl', ('bottle.py.dontflake', 'bottle.py'),
-                         'allowed.files']:
-            try:
-                src, dest = filename
-            except (TypeError, ValueError):
-                # object is not iterable or too many values to unpack
-                src = dest = filename
-            log_callback('Sending {} to appliance'.format(src))
+            client.run_command('mkdir -p /root/merkyl')
+            for filename in ['__init__.py', 'merkyl.tpl', ('bottle.py.dontflake', 'bottle.py'),
+                             'allowed.files']:
+                try:
+                    src, dest = filename
+                except (TypeError, ValueError):
+                    # object is not iterable or too many values to unpack
+                    src = dest = filename
+                log_callback('Sending {} to appliance'.format(src))
+                client.put_file(data_path.join(
+                    'bundles', 'merkyl', src).strpath, os.path.join('/root/merkyl', dest))
+
             client.put_file(data_path.join(
-                'bundles', 'merkyl', src).strpath, os.path.join('/root/merkyl', dest))
+                'bundles', 'merkyl', 'merkyl').strpath, os.path.join('/etc/init.d/merkyl'))
+            client.run_command('chmod 775 /etc/init.d/merkyl')
+            client.run_command(
+                '/bin/bash -c '
+                '\'if ! [[ $(iptables -L -n | grep "state NEW tcp dpt:8192") ]]; '
+                'then '
+                'iptables -I INPUT 6 -m state --state NEW -m tcp -p tcp --dport 8192 -j ACCEPT; '
+                'fi\'')
 
-        client.put_file(data_path.join(
-            'bundles', 'merkyl', 'merkyl').strpath, os.path.join('/etc/init.d/merkyl'))
-        client.run_command('chmod 775 /etc/init.d/merkyl')
-        client.run_command(
-            '/bin/bash -c \'if ! [[ $(iptables -L -n | grep "state NEW tcp dpt:8192") ]]; then '
-            'iptables -I INPUT 6 -m state --state NEW -m tcp -p tcp --dport 8192 -j ACCEPT; fi\'')
+        self.merkyl.daemon_reload()
 
         if start:
             log_callback("Starting ...")
-            client.run_command('systemctl restart merkyl')
+            self.merkyl.restart()
             log_callback("Setting it to start after reboot")
-            client.run_command("chkconfig merkyl on")
+            self.merkyl.enable()
 
     def get_repofile_list(self):
         """Returns list of repofiles present at the appliance.
@@ -1455,69 +1469,28 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         else:
             return unsure
 
-    def _evm_service_command(self, command, log_callback, expected_exit_code=None):
-        """Runs given systemctl command against the ``evmserverd`` service
-        Args:
-            command: Command to run, e.g. "start"
-            expected_exit_code: If the exit codes don't match, ApplianceException is raised
-        """
-        log_callback("Running command '{}' against the evmserverd service".format(command))
-        with self.ssh_client as ssh:
-            result = ssh.run_command('systemctl {} evmserverd'.format(command))
-
-        if expected_exit_code is not None and result.rc != expected_exit_code:
-            msg = ('Failed to {} evmserverd on {}\nError: {}'
-                   .format(command, self.hostname, result.output))
-            log_callback(msg)
-            raise ApplianceException(msg)
-
-        return result.rc
-
-    @logger_wrap("Status of EVM service: {}")
-    def is_evm_service_running(self, log_callback=None):
-        """Checks the ``evmserverd`` service status on this appliance
-        """
-        return self._evm_service_command("status", log_callback=log_callback) == 0
-
-    @logger_wrap("Start EVM Service: {}")
-    def start_evm_service(self, log_callback=None):
-        """Starts the ``evmserverd`` service on this appliance
-        """
-        self._evm_service_command('start', expected_exit_code=0, log_callback=log_callback)
-
-    @logger_wrap("Stop EVM Service: {}")
-    def stop_evm_service(self, log_callback=None):
-        """Stops the ``evmserverd`` service on this appliance
-        """
-        self._evm_service_command('stop', expected_exit_code=0, log_callback=log_callback)
-
     @logger_wrap("Restart EVM Service: {}")
-    def restart_evm_service(self, rude=False, log_callback=None):
-        """Restarts the ``evmserverd`` service on this appliance
-        """
+    def restart_evm_rude(self, log_callback=None):
+        """Restarts the ``evmserverd`` service on this appliance"""
         store.terminalreporter.write_line('evmserverd is being restarted, be patient please')
         with self.ssh_client as ssh:
-            if rude:
-                self.evmserverd.stop()
-                log_callback('Waiting for evm service to stop')
-                try:
-                    wait_for(
-                        self.is_evm_service_running, num_sec=120, fail_condition=True, delay=10,
-                        message='evm service to stop')
-                except TimedOutError:
-                    # Don't care if it's still running
-                    pass
-                log_callback('killing any remaining processes and restarting postgres')
-                ssh.run_command(
-                    'killall -9 ruby; systemctl restart {}-postgresql'
-                    .format(self.db.postgres_version))
-                log_callback('Waiting for database to be available')
+            self.evmserverd.stop()
+            log_callback('Waiting for evm service to stop')
+            try:
                 wait_for(
-                    lambda: self.db.is_online, num_sec=90, delay=10, fail_condition=False,
-                    message="database to be available")
-                self.evmserverd.start()
-            else:
-                self.evmserverd.restart()
+                    self.evmserverd.running, num_sec=120, fail_condition=True, delay=5,
+                    message='evm service to stop')
+            except TimedOutError:
+                # Don't care if it's still running
+                pass
+            log_callback('killing any remaining processes and restarting postgres')
+            ssh.run_command('killall -9 ruby')
+            self.db_service.restart()
+            log_callback('Waiting for database to be available')
+            wait_for(
+                lambda: self.db.is_online, num_sec=90, delay=5,
+                message="database to be available")
+            self.evmserverd.start()
 
     @logger_wrap("Waiting for EVM service: {}")
     def wait_for_evm_service(self, timeout=900, log_callback=None):
@@ -1527,8 +1500,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             timeout: Number of seconds to wait until timeout (default ``900``)
         """
         log_callback('Waiting for evmserverd to be running')
-        result, wait = wait_for(self.is_evm_service_running, num_sec=timeout,
-                                fail_condition=False, delay=10)
+        result, _ = wait_for(lambda: self.evmserverd.running,
+                             num_sec=timeout, fail_condition=False, delay=10)
         return result
 
     @logger_wrap("Rebooting Appliance: {}")
@@ -2163,18 +2136,19 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     def clean_appliance(self):
         starttime = time()
-        self.ssh_client.run_command('service evmserverd stop')
-        self.ssh_client.run_command('sync; sync; echo 3 > /proc/sys/vm/drop_caches')
-        self.ssh_client.run_command('service collectd stop')
-        self.ssh_client.run_command('service {}-postgresql restart'.format(
-            self.db.postgres_version))
-        self.ssh_client.run_command(
-            'cd /var/www/miq/vmdb; bin/rake evm:db:reset')
+        self.evmserverd.stop()
+        self.ssh_client.run_command('sync; '
+                                    'sync; '
+                                    'echo 3 > /proc/sys/vm/drop_caches')
+        self.collectd.stop()
+        self.db_service.restart()
+        self.ssh_client.run_command('cd /var/www/miq/vmdb; '
+                                    'bin/rake evm:db:reset')
         self.ssh_client.run_rake_command('db:seed')
-        self.ssh_client.run_command('service collectd start')
+        self.collectd.start()
         self.ssh_client.run_command('rm -rf /var/www/miq/vmdb/log/*.log*')
         self.ssh_client.run_command('rm -rf /var/www/miq/vmdb/log/apache/*.log*')
-        self.ssh_client.run_command('service evmserverd start')
+        self.evmserverd.start()
         self.wait_for_evm_service()
         logger.debug('Cleaned appliance in: {}'.format(round(time() - starttime, 2)))
 
@@ -2280,7 +2254,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             ssh_client.run_command(
                 'cd /var/www/miq/vmdb; git checkout dev_branch/{}'.format(branch))
             ssh_client.run_command('cd /var/www/miq/vmdb; bin/update')
-            self.start_evm_service()
+            self.evmserverd.start()
             self.wait_for_evm_service()
             self.wait_for_web_ui()
 
@@ -2548,7 +2522,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def _switch_migration_ui(self, enable):
         self.update_advanced_settings({'product': {'transformation': enable}})
         self.appliance.server.logout()
-        self.restart_evm_service()
+        self.evmserverd.restart()
         self.wait_for_evm_service()
         self.wait_for_web_ui()
 
@@ -2670,7 +2644,7 @@ class Appliance(IPAppliance):
         name_to_set = kwargs.get('name_to_set')
         if name_to_set is not None and name_to_set != self.name:
             self.rename(name_to_set)
-            self.restart_evm_service(log_callback=log_callback)
+            self.evmserverd.restart(log_callback=log_callback)
             self.wait_for_web_ui(log_callback=log_callback)
 
         # Try to set a resolvable FQDN on openstack

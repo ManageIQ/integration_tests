@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import attr
+
+from cfme.utils.log import logger_wrap
 from cfme.utils.quote import quote
 from cfme.utils.wait import wait_for
 from .plugin import AppliancePlugin, AppliancePluginException
@@ -13,13 +15,21 @@ class SystemdException(AppliancePluginException):
 class SystemdService(AppliancePlugin):
     unit_name = attr.ib()
 
-    def _run_service_command(self, command, expected_exit_code=None, unit_name=None):
+    @logger_wrap('SystemdService command runner: {}')
+    def _run_service_command(
+        self,
+        command,
+        expected_exit_code=None,
+        unit_name=None,
+        log_callback=None
+    ):
         """Wrapper around running the command and raising exception on unexpected code
 
         Args:
             command: string command for systemd (stop, start, restart, etc)
             expected_exit_code: the exit code to expect, otherwise raise
             unit_name: optional unit name, defaults to self.unit_name attribute
+            log_callback: logger to log against
 
         Raises:
             SystemdException: When expected_exit_code is not matched
@@ -32,22 +42,45 @@ class SystemdService(AppliancePlugin):
             # TODO: Bring back address
             msg = 'Failed to {} {}\nError: {}'.format(
                 command, self.unit_name, result.output)
-            self.logger.error(msg)
+            if log_callback:
+                log_callback(msg)
+            else:
+                self.logger.error(msg)
             raise SystemdException(msg)
 
         return result
 
-    def stop(self):
-        return self._run_service_command('stop', expected_exit_code=0)
+    def stop(self, log_callback=None):
+        return self._run_service_command(
+            'stop',
+            expected_exit_code=0,
+            log_callback=log_callback
+        )
 
-    def start(self):
-        return self._run_service_command('start', expected_exit_code=0)
+    def start(self, log_callback=None):
+        return self._run_service_command(
+            'start',
+            expected_exit_code=0,
+            log_callback=log_callback
+        )
 
-    def restart(self):
-        return self._run_service_command('restart', expected_exit_code=0)
+    def restart(self, log_callback=None):
+        return self._run_service_command(
+            'restart',
+            expected_exit_code=0,
+            log_callback=log_callback
+        )
 
-    def enable(self):
-        return self._run_service_command('enable', expected_exit_code=0)
+    def enable(self, log_callback=None):
+        return self._run_service_command(
+            'enable',
+            expected_exit_code=0,
+            log_callback=log_callback
+        )
+
+    @property
+    def enabled(self):
+        return self._run_service_command('is-enabled').rc == 0
 
     @property
     def running(self):
@@ -58,8 +91,11 @@ class SystemdService(AppliancePlugin):
                                 fail_condition=False, delay=10)
         return result
 
-    def daemon_reload(self):
+    def daemon_reload(self, log_callback=None):
         """Call daemon-reload, no unit name for this"""
-        return self._run_service_command(command='daemon-reload',
-                                         expected_exit_code=0,
-                                         unit_name='')
+        return self._run_service_command(
+            command='daemon-reload',
+            expected_exit_code=0,
+            unit_name='',
+            log_callback=log_callback
+        )

@@ -57,7 +57,7 @@ def appliance_police(appliance):
         if e.port == 443:
             # Lots of rdbs lately where evm seems to have entirely crashed
             # and (sadly) the only fix is a rude restart
-            appliance.restart_evm_service(rude=True)
+            appliance.restart_evm_rude()
             try:
                 appliance.wait_for_web_ui(900)
                 store.write_line('EVM was frozen and had to be restarted.', purple=True)

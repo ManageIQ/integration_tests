@@ -116,7 +116,7 @@ def test_ntp_server_check(request, appliance, ntp_servers_keys, empty_ntp_dict):
         ntp_settings['interval'] = '1.minutes'  # just modify interval
         appliance.update_advanced_settings({'ntp': ntp_settings})
         # restarting the evmserverd for NTP to work
-        appliance.restart_evm_service(rude=True)
+        appliance.restart_evm_rude()
         appliance.wait_for_web_ui(timeout=1200)
         # Incase if ntpd service is stopped
         appliance.ssh_client.run_command("service chronyd restart")

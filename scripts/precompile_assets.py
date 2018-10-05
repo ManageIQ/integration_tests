@@ -20,7 +20,7 @@ def main():
 
     status = ip_a.precompile_assets()
     if status == 0:
-        ip_a.restart_evm_service()
+        ip_a.evmserverd.restart()
         print("EVM service restarted, UI should be available shortly")
     return status
 

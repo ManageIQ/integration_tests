@@ -150,13 +150,13 @@ class CoverageManager(object):
         self.print_message('installing')
         self._install_simplecov()
         self._install_coverage_hook()
-        self.ipapp.restart_evm_service()
+        self.ipapp.evmserverd.restart()
         self.ipapp.wait_for_web_ui()
 
     def collect(self):
         self.print_message('collecting reports')
         self._collect_reports()
-        self.ipapp.restart_evm_service()
+        self.ipapp.evmserverd.restart()
 
     def merge(self):
         self.print_message('merging reports')

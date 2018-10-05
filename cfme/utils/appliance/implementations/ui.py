@@ -474,7 +474,7 @@ class CFMENavigateStep(NavigateStep):
 
         if restart_evmserverd:
             logger.info("evmserverd restart requested")
-            self.appliance.restart_evm_service()
+            self.appliance.evmserverd.restart()
             self.appliance.wait_for_web_ui()
             self.go(_tries, *args, **go_kwargs)
 

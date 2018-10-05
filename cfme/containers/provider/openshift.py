@@ -372,7 +372,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin):
             appliance_ssh.exec_command("update-ca-trust")
 
             # restarting evemserverd to apply the new SSL certificate
-            self.appliance.restart_evm_service()
+            self.appliance.evmserverd.restart()
             self.appliance.wait_for_evm_service()
             self.appliance.wait_for_web_ui()
 

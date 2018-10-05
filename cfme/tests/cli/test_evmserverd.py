@@ -6,10 +6,10 @@ from cfme.utils.wait import wait_for_decorator
 
 @pytest.fixture(scope="module")
 def start_evmserverd_after_module(appliance):
-    appliance.start_evm_service()
+    appliance.evmserverd.start()
     appliance.wait_for_web_ui()
     yield
-    appliance.restart_evm_service()
+    appliance.evmserverd.restart()
     appliance.wait_for_web_ui()
 
 
@@ -36,8 +36,8 @@ def test_evmserverd_stop(appliance, request):
     server_name_key = 'Server'
 
     server_names = {server[server_name_key] for server in appliance.ssh_client.status["servers"]}
-    request.addfinalizer(appliance.start_evm_service)
-    appliance.stop_evm_service()
+    request.addfinalizer(appliance.evmserverd.start)
+    appliance.evmserverd.stop()
 
     @wait_for_decorator(timeout="2m", delay=5)
     def servers_stopped():

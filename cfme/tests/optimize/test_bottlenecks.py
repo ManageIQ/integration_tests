@@ -17,7 +17,7 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
     app = temp_appliance_preconfig
     app.evmserverd.stop()
     app.db.extend_partition()
-    app.start_evm_service()
+    app.evmserverd.start()
     return app
 
 
@@ -54,7 +54,7 @@ def db_restore(temp_appliance_extended_db):
     app.db.restore()
     app.db.fix_auth_key()
     app.db.fix_auth_dbyml()
-    app.start_evm_service()
+    app.evmserverd.start()
     app.wait_for_web_ui()
 
 
