@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 from __future__ import print_function
-
 from collections import defaultdict
+from functools import reduce
 import datetime
 import re
 import requests
@@ -65,14 +65,11 @@ def main(tag, old_tag, report_type, line_limit):
     line_length = int(line_limit)
 
     if not old_tag:
-        proc = subprocess.Popen(['git', 'describe', '--tags', '--abbrev=0'],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        old_tag = proc.stdout.read().strip("\n")
+        stdout = subprocess.getoutput('git describe --tags --abbrev=0')
+        old_tag = stdout.strip('\n')
     else:
         old_tag = old_tag
-    proc = subprocess.Popen(['git', 'log', '{}..master'.format(old_tag), '--oneline'],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    commits = proc.stdout.read()
+    commits = subprocess.getoutput('git log {}..master --oneline'.format(old_tag))
 
     print('integration_tests {} Released'.format(tag))
     print('')
@@ -118,7 +115,7 @@ def main(tag, old_tag, report_type, line_limit):
         max_len_pr = len(
             reduce((lambda x, y: str(x) if len(str(x)) > len(str(y)) else str(y)), prs.keys()))
 
-        for commit in commits.split("\n"):
+        for commit in commits.split('\n'):
             pr = re.match('.*[#](\d+).*', commit)
             if pr:
                 pr_number = int(pr.groups()[0].replace("#", ''))
