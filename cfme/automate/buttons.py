@@ -311,7 +311,7 @@ class ButtonCollection(BaseCollection):
             image = 'Button Image 1'
         else:
             image = 'fa-user'
-        view = navigate_to(self, 'Add')
+        view = navigate_to(self, 'Add', wait_for_view=0)
         view.options.fill({'type': type})
         view.fill({
             'options': {
@@ -592,7 +592,7 @@ class ButtonGroupCollection(BaseCollection):
         else:
             image = 'fa-user'
 
-        view = navigate_to(self, 'Add')
+        view = navigate_to(self, 'Add', wait_for_view=0)
         view.fill({
             'text': text,
             'hover': hover,

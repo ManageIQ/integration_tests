@@ -24,7 +24,7 @@ def setup_groups_buttons(appliance, provider):
         gp = collection.create(
             text=fauxfactory.gen_alphanumeric(),
             hover=fauxfactory.gen_alphanumeric(),
-            type=getattr(collection, obj_type),
+            type=getattr(collection, obj_type, None),
         )
 
         button = gp.buttons.create(
@@ -34,10 +34,15 @@ def setup_groups_buttons(appliance, provider):
             system="Request",
             request="InspectMe",
         )
+
         if obj_type == "PROVIDER":
             obj = provider
         else:
-            obj = appliance.provider_based_collection(provider).all()[0]
+            try:
+                obj = appliance.provider_based_collection(provider).all()[0]
+            except IndexError:
+                pytest.skip("VM object not collected")
+
         gp_buttons[obj_type] = [gp, button, obj]
 
     yield gp_buttons
@@ -71,7 +76,7 @@ def checks(obj_type_conf):
             assert custom_button_group.has_item(button.text)
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < "5.10")
+@pytest.mark.ignore_stream('5.9')
 def test_custom_button_import_export(appliance, setup_groups_buttons):
     """ Test custom button display on a targeted page
 
