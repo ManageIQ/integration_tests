@@ -439,7 +439,7 @@ class NewButtonGroupView(ButtonGroupFormCommon):
     def is_displayed(self):
         return (
             self.in_customization and
-            self.title.text == 'Adding a new Buttons Group' and
+            self.title.text == 'Adding a new Button Group' and
             self.buttons.is_dimmed and
             self.buttons.is_opened and
             self.buttons.tree.currently_selected == ['Object Types', self.context['object'].type])
