@@ -51,7 +51,7 @@ def setup_obj(appliance, button_group):
     return obj
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < "5.10")
+@pytest.mark.ignore_stream('5.9')
 @pytest.mark.parametrize(
     "display", DISPLAY_NAV.keys(), ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
 )
@@ -89,7 +89,7 @@ def test_custom_button_display(request, display, setup_obj, button_group):
         assert custom_button_group.has_item(button.text)
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < "5.10")
+@pytest.mark.ignore_stream('5.9')
 @pytest.mark.parametrize("submit", SUBMIT, ids=["_".join(item.split()) for item in SUBMIT])
 def test_custom_button_automate(appliance, request, submit, setup_obj, button_group):
     """ Test custom button for automate and requests count as per submit
