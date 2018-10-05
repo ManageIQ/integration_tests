@@ -405,7 +405,7 @@ class Taggable(TaggableCommonBase):
         try:
             view = navigate_to(self, 'Details')
         except (NavigationDestinationNotFound, DestinationNotFound):
-            raise ItemNotFound('Details page does not exit for: {}'.format(self))
+            raise ItemNotFound('Details page does not exist for: {}'.format(self))
         except TimedOutError:
             raise ItemNotFound('Timed out navigating to details for: {}'.format(self))
         tags = []
