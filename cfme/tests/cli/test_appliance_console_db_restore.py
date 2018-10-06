@@ -168,7 +168,7 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     command_set = ('ap', '', '5', '2', app0_ip, '', pwd, '', '2', '0', 'y', app0_ip, '', '', '',
         pwd, TimedCommand(pwd, 360), '')
     appl3.appliance_console.run_commands(command_set)
-    appl3.wait_for_evm_service()
+    appl3.evmserverd.wait_for_running()
     appl3.wait_for_web_ui()
     # Configure primary replication node
     command_set = ('ap', '', '6', '1', '1', '', '', pwd, pwd, app0_ip, 'y',
@@ -434,7 +434,7 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
         return bool(appliance.ssh_client.run_command(
             "grep 'Starting to execute failover' /var/www/miq/vmdb/log/ha_admin.log").success)
     wait_for(is_failover_started, func_args=[appl3], timeout=450, handle_exception=True)
-    appl3.wait_for_evm_service()
+    appl3.evmserverd.wait_for_running()
     appl3.wait_for_web_ui()
     # Assert providers still exist after ha failover
     assert providers_before_restore == set(appl3.managed_provider_names), (

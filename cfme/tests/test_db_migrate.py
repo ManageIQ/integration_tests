@@ -54,7 +54,7 @@ def temp_appliance_global_region(temp_appliance_unconfig_funcscope_rhevm):
     temp_appliance_unconfig_funcscope_rhevm.appliance_console_cli.configure_appliance_internal(
         99, 'localhost', credentials['database']['username'], credentials['database']['password'],
         'vmdb_production', temp_appliance_unconfig_funcscope_rhevm.unpartitioned_disks[0])
-    temp_appliance_unconfig_funcscope_rhevm.wait_for_evm_service()
+    temp_appliance_unconfig_funcscope_rhevm.evmserverd.wait_for_running()
     temp_appliance_unconfig_funcscope_rhevm.wait_for_web_ui()
     return temp_appliance_unconfig_funcscope_rhevm
 

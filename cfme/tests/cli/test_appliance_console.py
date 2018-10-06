@@ -124,7 +124,7 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
     pwd = app_creds['password']
     command_set = ('ap', '', '5', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 360), '')
     unconfigured_appliance.appliance_console.run_commands(command_set)
-    unconfigured_appliance.wait_for_evm_service()
+    unconfigured_appliance.evmserverd.wait_for_running()
     unconfigured_appliance.wait_for_web_ui()
 
 
@@ -142,7 +142,7 @@ def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope)
     command_set = ('ap', '', '5', '4', 'y', TimedCommand('1', 360), '')
     temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl start evmserverd')
-    temp_appliance_preconfig_funcscope.wait_for_evm_service()
+    temp_appliance_preconfig_funcscope.evmserverd.wait_for_running()
     temp_appliance_preconfig_funcscope.wait_for_web_ui()
 
 
@@ -213,7 +213,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     command_set = ('ap', '', '5', '2', app0_ip, '', pwd, '', '2', '0', 'y', app0_ip, '', '', '',
         pwd, TimedCommand(pwd, 360), '')
     apps[2].appliance_console.run_commands(command_set)
-    apps[2].wait_for_evm_service()
+    apps[2].evmserverd.wait_for_running()
     apps[2].wait_for_web_ui()
     # Configure primary replication node
     command_set = ('ap', '', '6', '1', '1', '', '', pwd, pwd, app0_ip, 'y',
@@ -243,7 +243,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
         return bool(appliance.ssh_client.run_command(
             "grep 'Starting to execute failover' /var/www/miq/vmdb/log/ha_admin.log").success)
     wait_for(is_failover_started, func_args=[apps[2]], timeout=450, handle_exception=True)
-    apps[2].wait_for_evm_service()
+    apps[2].evmserverd.wait_for_running()
     apps[2].wait_for_web_ui()
 
 
@@ -270,7 +270,7 @@ def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_cr
     command_set = ('ap', '', '5', '2', ip, '', pwd, '', '3', ip, '', '', '',
         pwd, TimedCommand(pwd, 360), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
-    temp_appliance_unconfig_funcscope.wait_for_evm_service()
+    temp_appliance_unconfig_funcscope.evmserverd.wait_for_running()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
@@ -298,7 +298,7 @@ def test_appliance_console_external_db_create(
     command_set = ('ap', '', '5', '1', '2', '0', 'y', ip, '', '', '', pwd,
         TimedCommand(pwd, 300), '')
     unconfigured_appliance_secondary.appliance_console.run_commands(command_set)
-    unconfigured_appliance_secondary.wait_for_evm_service()
+    unconfigured_appliance_secondary.evmserverd.wait_for_running()
     unconfigured_appliance_secondary.wait_for_web_ui()
 
 
