@@ -36,7 +36,9 @@ class SystemdService(AppliancePlugin):
         """
         unit = self.unit_name if unit_name is None else unit_name
         with self.appliance.ssh_client as ssh:
-            result = ssh.run_command('systemctl {} {}'.format(quote(command), quote(unit)))
+            cmd = 'systemctl {} {}'.format(quote(command), quote(unit))
+            log_callback('Running {}'.format(cmd))
+            result = ssh.run_command(cmd)
 
         if expected_exit_code is not None and result.rc != expected_exit_code:
             # TODO: Bring back address
@@ -87,8 +89,12 @@ class SystemdService(AppliancePlugin):
         return self._run_service_command("status").rc == 0
 
     def wait_for_running(self, timeout=600):
-        result, wait = wait_for(lambda: self.running, num_sec=timeout,
-                                fail_condition=False, delay=10)
+        result, wait = wait_for(
+            lambda: self.running,
+            num_sec=timeout,
+            fail_condition=False,
+            delay=5,
+        )
         return result
 
     def daemon_reload(self, log_callback=None):

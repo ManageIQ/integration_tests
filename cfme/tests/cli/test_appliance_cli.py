@@ -66,7 +66,7 @@ def test_appliance_console_cli_internal_fetch_key(app_creds, unconfigured_applia
         0, 'localhost', app_creds['username'], app_creds['password'], 'vmdb_production',
         unconfigured_appliance.unpartitioned_disks[0], fetch_key_ip, app_creds['sshlogin'],
         app_creds['sshpass'])
-    unconfigured_appliance.wait_for_evm_service()
+    unconfigured_appliance.evmserverd.wait_for_running()
     unconfigured_appliance.wait_for_web_ui()
 
 
@@ -76,7 +76,7 @@ def test_appliance_console_cli_external_join(app_creds, appliance,
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_external_join(
         appliance_ip, app_creds['username'], app_creds['password'], 'vmdb_production', appliance_ip,
         app_creds['sshlogin'], app_creds['sshpass'])
-    temp_appliance_unconfig_funcscope.wait_for_evm_service()
+    temp_appliance_unconfig_funcscope.evmserverd.wait_for_running()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
@@ -87,7 +87,7 @@ def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance
     unconfigured_appliance_secondary.appliance_console_cli.configure_appliance_external_create(5,
         hostname, app_creds['username'], app_creds['password'], 'vmdb_production', hostname,
         app_creds['sshlogin'], app_creds['sshpass'])
-    unconfigured_appliance_secondary.wait_for_evm_service()
+    unconfigured_appliance_secondary.evmserverd.wait_for_running()
     unconfigured_appliance_secondary.wait_for_web_ui()
 
 
@@ -175,7 +175,7 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     apps[2].appliance_console_cli.configure_appliance_external_create(1,
         app0_ip, app_creds['username'], app_creds['password'], 'vmdb_production', app0_ip,
         app_creds['sshlogin'], app_creds['sshpass'])
-    apps[2].wait_for_evm_service()
+    apps[2].evmserverd.wait_for_running()
     apps[2].wait_for_web_ui()
     # Configure primary node
     apps[0].appliance_console_cli.configure_appliance_dedicated_ha_primary(
@@ -202,5 +202,5 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
         return appliance.ssh_client.run_command(
             "grep 'Starting to execute failover' /var/www/miq/vmdb/log/ha_admin.log").success
     wait_for(is_failover_started, func_args=[apps[2]], timeout=450, handle_exception=True)
-    apps[2].wait_for_evm_service()
+    apps[2].evmserverd.wait_for_running()
     apps[2].wait_for_web_ui()

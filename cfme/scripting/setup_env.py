@@ -60,13 +60,13 @@ def setup_distributed_env(cfme_version, provider_type, provider, lease, desc):
     command_set0 = ('ap', '', opt, '1', '1', 'y', '1', 'n', '1', pwd,
         TimedCommand(pwd, 360), '')
     apps[0].appliance_console.run_commands(command_set0)
-    apps[0].wait_for_evm_service()
+    apps[0].evmserverd.wait_for_running()
     apps[0].wait_for_web_ui()
     print("VMDB appliance provisioned and configured {}".format(ip0))
     command_set1 = ('ap', '', opt, '2', ip0, '', pwd, '', '3') + port + ('', '',
         pwd, TimedCommand(pwd, 360), '')
     apps[1].appliance_console.run_commands(command_set1)
-    apps[1].wait_for_evm_service()
+    apps[1].evmserverd.wait_for_running()
     apps[1].wait_for_web_ui()
     print("Non-VMDB appliance provisioned and configured {}".format(ip1))
     print("Appliance pool lease time is {}".format(lease))
@@ -106,7 +106,7 @@ def setup_ha_env(cfme_version, provider_type, provider, lease, desc):
     command_set1 = ('ap', '', opt, '1', '2', '1', 'y') + port + ('', '', pwd,
         TimedCommand(pwd, 360), '')
     apps[1].appliance_console.run_commands(command_set1)
-    apps[1].wait_for_evm_service()
+    apps[1].evmserverd.wait_for_running()
     apps[1].wait_for_web_ui()
     print("Non-VMDB appliance provisioned and region created {}".format(ip1))
     command_set2 = ('ap', '', rep, '1', '1', '', '', pwd, pwd, ip0, 'y', '')
@@ -173,7 +173,7 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
     command_set0 = ('ap', '', opt, '1', '1', 'y', '1', 'n', '99', pwd,
         TimedCommand(pwd, 360), '')
     apps[0].appliance_console.run_commands(command_set0)
-    apps[0].wait_for_evm_service()
+    apps[0].evmserverd.wait_for_running()
     apps[0].wait_for_web_ui()
     print("Done: Global @ {}".format(ip0))
 
@@ -181,7 +181,7 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
     command_set1 = ('ap', '', opt, '2', ip0, '', pwd, '', '1', 'y', '1', 'n', '1', pwd,
         TimedCommand(pwd, 360), '')
     apps[1].appliance_console.run_commands(command_set1)
-    apps[1].wait_for_evm_service()
+    apps[1].evmserverd.wait_for_running()
     apps[1].wait_for_web_ui()
     print("Done: Remote @ {}".format(ip1))
 
@@ -190,7 +190,7 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
         ip2 = apps[2].hostname
         command_set2 = ['ap', '', opt, '2', ip1, '', pwd, '', '3', ip1, '', '', '', pwd, pwd]
         apps[2].appliance_console.run_commands(command_set2)
-        apps[2].wait_for_evm_service()
+        apps[2].evmserverd.wait_for_running()
         apps[2].wait_for_web_ui()
         print("Done: Remote Worker @ {}".format(ip2))
 

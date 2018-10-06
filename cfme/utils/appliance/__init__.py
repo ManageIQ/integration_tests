@@ -560,7 +560,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             if on_gce:
                 # evm serverd does not auto start on GCE instance..
                 self.evmserverd.start(log_callback=log_callback)
-            self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
+            self.evmserverd.wait_for_running(timeout=1200)
 
             # Some conditionally ran items require the evm service be
             # restarted:
@@ -1478,7 +1478,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             log_callback('Waiting for evm service to stop')
             try:
                 wait_for(
-                    self.evmserverd.running, num_sec=120, fail_condition=True, delay=5,
+                    lambda: self.evmserverd.running, num_sec=120, fail_condition=True, delay=5,
                     message='evm service to stop')
             except TimedOutError:
                 # Don't care if it's still running
@@ -1491,18 +1491,6 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 lambda: self.db.is_online, num_sec=90, delay=5,
                 message="database to be available")
             self.evmserverd.start()
-
-    @logger_wrap("Waiting for EVM service: {}")
-    def wait_for_evm_service(self, timeout=900, log_callback=None):
-        """Waits for the evemserverd service to be running
-
-        Args:
-            timeout: Number of seconds to wait until timeout (default ``900``)
-        """
-        log_callback('Waiting for evmserverd to be running')
-        result, _ = wait_for(lambda: self.evmserverd.running,
-                             num_sec=timeout, fail_condition=False, delay=10)
-        return result
 
     @logger_wrap("Rebooting Appliance: {}")
     def reboot(self, wait_for_web_ui=True, log_callback=None):
@@ -2149,7 +2137,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         self.ssh_client.run_command('rm -rf /var/www/miq/vmdb/log/*.log*')
         self.ssh_client.run_command('rm -rf /var/www/miq/vmdb/log/apache/*.log*')
         self.evmserverd.start()
-        self.wait_for_evm_service()
+        self.evmserverd.wait_for_running()
         logger.debug('Cleaned appliance in: {}'.format(round(time() - starttime, 2)))
 
     def set_full_refresh_threshold(self, threshold=100):
@@ -2255,7 +2243,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 'cd /var/www/miq/vmdb; git checkout dev_branch/{}'.format(branch))
             ssh_client.run_command('cd /var/www/miq/vmdb; bin/update')
             self.evmserverd.start()
-            self.wait_for_evm_service()
+            self.evmserverd.wait_for_running()
             self.wait_for_web_ui()
 
     def check_domain_enabled(self, domain):
@@ -2523,7 +2511,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         self.update_advanced_settings({'product': {'transformation': enable}})
         self.appliance.server.logout()
         self.evmserverd.restart()
-        self.wait_for_evm_service()
+        self.evmserverd.wait_for_running()
         self.wait_for_web_ui()
 
     def enable_migration_ui(self):

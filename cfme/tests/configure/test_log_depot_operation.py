@@ -122,7 +122,7 @@ def configured_external_appliance(temp_appliance_preconfig, app_creds_modscope,
         app_creds_modscope['username'], app_creds_modscope['password'], 'vmdb_production',
         hostname, app_creds_modscope['sshlogin'], app_creds_modscope['sshpass'])
     temp_appliance_unconfig.evmserverd.start()
-    temp_appliance_unconfig.wait_for_evm_service()
+    temp_appliance_unconfig.evmserverd.wait_for_running()
     temp_appliance_unconfig.wait_for_web_ui()
     return temp_appliance_unconfig
 
