@@ -100,11 +100,6 @@ def vm_name(provider):
     return random_vm_name("action", max_length=16)
 
 
-@pytest.fixture(scope="module")
-def vm_name_big(provider):
-    return random_vm_name("action", max_length=16)
-
-
 @pytest.fixture(scope="function")
 def vddk_url(provider):
     try:
@@ -190,28 +185,23 @@ def vm(request, provider, setup_provider_modscope, small_template_modscope, vm_n
 
 
 @pytest.fixture(scope="module")
-def vm_big(request, provider, setup_provider_modscope, big_template_modscope, vm_name_big):
-    return _get_vm(request, provider, big_template_modscope.name, vm_name_big)
+def vm_big(request, provider, setup_provider_modscope, big_template_modscope):
+    return _get_vm(
+        request,
+        provider,
+        big_template_modscope.name,
+        random_vm_name("action", max_length=16)
+    )
 
 
 @pytest.fixture(scope="module")
-def name_suffix():
-    return fauxfactory.gen_alphanumeric()
+def policy_name():
+    return "action_testing: policy {}".format(fauxfactory.gen_alphanumeric())
 
 
 @pytest.fixture(scope="module")
-def policy_name(name_suffix):
-    return "action_testing: policy {}".format(name_suffix)
-
-
-@pytest.fixture(scope="module")
-def policy_profile_name(name_suffix):
-    return "action_testing: policy profile {}".format(name_suffix)
-
-
-@pytest.fixture(scope="module")
-def action_collection(appliance):
-    return appliance.collections.actions
+def policy_profile_name():
+    return "action_testing: policy profile {}".format(fauxfactory.gen_alphanumeric())
 
 
 @pytest.fixture(scope="module")
@@ -227,13 +217,8 @@ def compliance_condition(appliance):
 
 
 @pytest.fixture(scope="module")
-def policy_collection(appliance):
-    return appliance.collections.policies
-
-
-@pytest.fixture(scope="module")
-def compliance_policy(vm_name, policy_name, policy_collection):
-    compliance_policy = policy_collection.create(
+def compliance_policy(vm_name, policy_name, appliance):
+    compliance_policy = appliance.collections.policies.create(
         policies.VMCompliancePolicy,
         "complaince_{}".format(policy_name),
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
@@ -243,8 +228,8 @@ def compliance_policy(vm_name, policy_name, policy_collection):
 
 @pytest.fixture(scope="module")
 def policy_for_testing(provider, vm_name, policy_name, policy_profile_name, compliance_policy,
-        compliance_condition, policy_collection, appliance):
-    control_policy = policy_collection.create(
+        compliance_condition, appliance):
+    control_policy = appliance.collections.policies.create(
         policies.VMControlPolicy,
         policy_name,
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
@@ -268,14 +253,14 @@ def host(provider, setup_provider_modscope):
 
 
 @pytest.fixture(scope="module")
-def host_policy(appliance, host, policy_collection, name_suffix):
-    control_policy = policy_collection.create(
+def host_policy(appliance, host):
+    control_policy = appliance.collections.policies.create(
         policies.HostControlPolicy,
-        "action_testing: host policy {}".format(name_suffix)
+        "action_testing: host policy {}".format(fauxfactory.gen_alphanumeric())
     )
     policy_profile_collection = appliance.collections.policy_profiles
     policy_profile = policy_profile_collection.create(
-        "action_testing: host policy profile {}".format(name_suffix),
+        "action_testing: host policy profile {}".format(fauxfactory.gen_alphanumeric()),
         policies=[control_policy]
     )
     host.assign_policy_profiles(policy_profile.description)
@@ -588,8 +573,14 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
 @pytest.mark.meta(blockers=[BZ(1549529, forced_streams=["5.9", "5.10", "upstream"],
                   unblock=lambda provider: provider.one_of(VMwareProvider))])
-def test_action_create_snapshot_and_delete_last(request, action_collection,
-        vm, vm_on, policy_for_testing, provider):
+def test_action_create_snapshot_and_delete_last(
+    appliance,
+    request,
+    vm,
+    vm_on,
+    policy_for_testing,
+    provider
+):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and when it is
@@ -600,7 +591,7 @@ def test_action_create_snapshot_and_delete_last(request, action_collection,
     """
     # Set up the policy and prepare finalizer
     snapshot_name = fauxfactory.gen_alphanumeric()
-    snapshot_create_action = action_collection.create(
+    snapshot_create_action = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
         action_values={"snapshot_name": snapshot_name}
@@ -631,7 +622,7 @@ def test_action_create_snapshot_and_delete_last(request, action_collection,
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
 @pytest.mark.meta(blockers=[BZ(1549529, forced_streams=["5.9", "5.10", "upstream"],
                   unblock=lambda provider: provider.one_of(VMwareProvider))])
-def test_action_create_snapshots_and_delete_them(request, action_collection, vm, vm_on,
+def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on,
         policy_for_testing, provider):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
 
@@ -644,7 +635,7 @@ def test_action_create_snapshots_and_delete_them(request, action_collection, vm,
     """
     # Set up the policy and prepare finalizer
     snapshot_name = fauxfactory.gen_alphanumeric()
-    snapshot_create_action = action_collection.create(
+    snapshot_create_action = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
         action_values={"snapshot_name": snapshot_name}
@@ -748,7 +739,7 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
 )
-def test_action_tag(request, vm, vm_off, policy_for_testing, action_collection):
+def test_action_tag(request, vm, vm_off, policy_for_testing, appliance):
     """ Tests action tag
 
     Metadata:
@@ -758,7 +749,7 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, action_collection):
            for tag in vm.crud.get_tags()):
         vm.crud.remove_tag("Service Level", "Gold")
 
-    tag_assign_action = action_collection.create(
+    tag_assign_action = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Tag",
         action_values={"tag": ("My Company Tags", "Service Level", "Gold")}
@@ -787,7 +778,7 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, action_collection):
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
 )
-def test_action_untag(request, vm, vm_off, policy_for_testing, action_collection, tag):
+def test_action_untag(request, vm, vm_off, policy_for_testing, appliance, tag):
     """ Tests action untag
 
     Metadata:
@@ -805,7 +796,7 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, action_collection
                for vm_tag in vm.crud.get_tags()):
             vm.crud.remove_tag(tag)
 
-    tag_unassign_action = action_collection.create(
+    tag_unassign_action = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Remove Tags",
         action_values={"remove_tag": [tag.category.display_name]}

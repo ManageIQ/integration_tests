@@ -29,7 +29,7 @@ class NewPolicyProfileView(PolicyProfileFormCommon):
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == "Adding a New Policy Profile" and
+            self.title.text == "Adding a new Policy Profile" and
             self.policy_profiles.tree.currently_selected == ["All Policy Profiles"]
         )
 
