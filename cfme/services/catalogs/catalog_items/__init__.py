@@ -484,7 +484,7 @@ class CatalogItemsCollection(BaseCollection):
             An instance of catalog_item_class
         """
         cat_item = self.instantiate(catalog_item_class, *args, **kwargs)
-        view = navigate_to(cat_item, 'Add')
+        view = navigate_to(cat_item, 'Add', wait_for_view=0)
         view.fill(cat_item.fill_dict)
         view.add.click()
         view = self.create_view(AllCatalogItemView)
