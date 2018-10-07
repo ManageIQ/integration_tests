@@ -18,12 +18,13 @@ class BottlenecksTabsView(BottlenecksView):
     # TODO: add chart widget
     @property
     def is_displayed(self):
+        region_number = self.browser.appliance.server.zone.region.number
         return (
             super(BottlenecksView, self).is_displayed and
-            self.title.text == 'Region "Region {}" Bottlenecks Summary'
-            .format(self.browser.appliance.server.zone.region.number) and
+            self.title.text == 'Region "Region {}" Bottlenecks Summary'.format(region_number) and
             self.bottlenecks.is_opened and
-            self.bottlenecks.tree.currently_selected == ["Bottlenecks"])
+            self.bottlenecks.tree.currently_selected == ["Region {}".format(region_number)]
+        )
 
     @View.nested
     class summary(Tab):    # noqa
