@@ -134,7 +134,7 @@ class ConfigManagementView(BaseLoggedInPage):
     def in_config(self):
         """Determine if we're in the config section"""
         if getattr(self.context['object'], 'type', None) == 'Ansible Tower':
-            nav_chain = ['Automation', 'Ansible', 'Ansible Tower']
+            nav_chain = ['Automation', 'Ansible Tower', 'Explorer']
         else:
             nav_chain = ['Configuration', 'Management']
         return (
@@ -153,12 +153,14 @@ class ConfigManagementAllView(ConfigManagementView):
     @property
     def is_displayed(self):
         """Is this view being displayed?"""
-        if (self.context['object'].appliance.version >= '5.8' and
-                self.context['object'].type == 'Ansible Tower'):
+        if self.context['object'].type == 'Ansible Tower':
             title_text = 'All Ansible Tower Providers'
         else:
             title_text = 'All Configuration Management Providers'
-        return self.in_config and self.entities.title.text == title_text
+        return (
+            self.in_config and
+            self.entities.title.text == title_text
+        )
 
 
 class ConfigSystemAllView(ConfigManagementAllView):
@@ -166,9 +168,13 @@ class ConfigSystemAllView(ConfigManagementAllView):
 
     @property
     def is_displayed(self):
+        if self.context['object'].type == 'Ansible Tower':
+            title_text = 'All Ansible Tower Configured Systems'
+        else:
+            title_text = 'All Configured Systems'
         return (
             self.in_config and
-            self.entities.title.text == 'All Configured Systems'
+            self.entities.title.text == title_text
         )
 
 
@@ -181,24 +187,28 @@ class ConfigManagementDetailsView(ConfigManagementView):
     @property
     def is_displayed(self):
         """Is this view being displayed?"""
-        titles = [t.format(name=self.context['object'].name) for t in [
-            'Configuration Profiles under Red Hat Satellite Provider "{name} Automation Manager"',
+        titles = [
+            'Configuration Profiles under Red Hat Satellite Provider '  # continued ...
+            '"{name} Configuration Manager"',
             'Inventory Groups under Ansible Tower Provider "{name} Automation Manager"'
-        ]]
-        return self.in_config and self.entities.title.text in titles
+        ]
+        return (
+            self.in_config and
+            self.entities.title.text in [t.format(name=self.context['object'].name) for t in titles]
+        )
 
 
 class ConfigManagementProfileView(ConfigManagementView):
     """The profile page"""
     toolbar = View.nested(ConfigManagementDetailsToolbar)
     sidebar = View.nested(ConfigManagementSideBar)
-    entities = View.nested(ConfigManagementProfileEntities)
+    including_entities = View.include(ConfigManagementProfileEntities, use_parent=True)
 
     @property
     def is_displayed(self):
         """Is this view being displayed?"""
         title = 'Configured System ({}) "{}"'.format(
-            self.context['object'].type,
+            self.context['object'].manager.type,
             self.context['object'].name)
         return self.in_config and self.entities.title.text == title
 
@@ -277,7 +287,8 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             logger.info(
                 "UI: %s\nYAML: %s",
                 set(config_profiles_names), set(self.yaml_data['config_profiles']))
-            return all(
+            # Just validate any profiles from yaml are in UI - not all are displayed
+            return any(
                 [cp in config_profiles_names for cp in self.yaml_data['config_profiles']])
 
         if not force and self.exists:
@@ -367,15 +378,11 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     @property
     def exists(self):
         """Returns whether the manager exists in the UI or not"""
-        view = navigate_to(self, 'All')
-        view.toolbar.view_selector.select('List View')
         try:
-            view.entities.paginator.find_row_on_pages(view.entities.elements,
-                                                      provider_name=self.ui_name)
-            return True
+            navigate_to(self, 'Details')
         except NoSuchElementException:
-            pass
-        return False
+            return False
+        return True
 
     def refresh_relationships(self, cancel=False):
         """Refreshes relationships and power states of this manager"""
@@ -673,8 +680,14 @@ class SysAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Configuration', 'Management')
-        self.view.sidebar.configured_systems.tree.click_path('All Configured Systems')
+        nav_select = self.prerequisite_view.navigation.select
+        sidebar_path = self.view.sidebar.configured_systems.tree.click_path
+        if self.obj.type == 'Ansible Tower':
+            nav_select(['Automation', 'Ansible Tower', 'Explorer'])
+            sidebar_path('All Ansible Tower Configured Systems')
+        else:
+            nav_select('Configuration', 'Management')
+            sidebar_path('All Configured Systems')
 
 
 @navigator.register(ConfigSystem, 'EditTags')
