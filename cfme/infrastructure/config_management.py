@@ -133,12 +133,14 @@ class ConfigManagementView(BaseLoggedInPage):
     @property
     def in_config(self):
         """Determine if we're in the config section"""
-        if (self.context['object'].appliance.version >= '5.8' and
-                self.context['object'].type == 'Ansible Tower'):
+        if getattr(self.context['object'], 'type', None) == 'Ansible Tower':
             nav_chain = ['Automation', 'Ansible', 'Ansible Tower']
         else:
             nav_chain = ['Configuration', 'Management']
-        return self.logged_in_as_current_user and self.navigation.currently_selected == nav_chain
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == nav_chain
+        )
 
 
 class ConfigManagementAllView(ConfigManagementView):
@@ -155,8 +157,19 @@ class ConfigManagementAllView(ConfigManagementView):
                 self.context['object'].type == 'Ansible Tower'):
             title_text = 'All Ansible Tower Providers'
         else:
-            title_text = 'All Configuration Manager Providers'
+            title_text = 'All Configuration Management Providers'
         return self.in_config and self.entities.title.text == title_text
+
+
+class ConfigSystemAllView(ConfigManagementAllView):
+    """The config system view has a different title"""
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_config and
+            self.entities.title.text == 'All Configured Systems'
+        )
 
 
 class ConfigManagementDetailsView(ConfigManagementView):
@@ -591,15 +604,11 @@ class MgrAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        if self.obj.appliance.version < '5.8' or self.obj.type != 'Ansible Tower':
-            self.prerequisite_view.navigation.select('Configuration', 'Management')
-        else:
+        if self.obj.type == 'Ansible Tower':
             self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
-
-    def resetter(self):
-        if self.obj.appliance.version >= '5.8' and self.obj.type == 'Ansible Tower':
             self.view.sidebar.providers.tree.click_path('All Ansible Tower Providers')
         else:
+            self.prerequisite_view.navigation.select('Configuration', 'Management')
             self.view.sidebar.providers.tree.click_path('All Configuration Manager Providers')
 
 
@@ -660,14 +669,11 @@ class Details(CFMENavigateStep):
 
 @navigator.register(ConfigSystem, 'All')
 class SysAll(CFMENavigateStep):
-    VIEW = ConfigManagementAllView
+    VIEW = ConfigSystemAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Configuration', 'Management')
-
-    def resetter(self):
-        self.view.sidebar.configured_systems.open()
         self.view.sidebar.configured_systems.tree.click_path('All Configured Systems')
 
 
