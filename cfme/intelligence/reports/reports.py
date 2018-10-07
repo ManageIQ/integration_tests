@@ -187,7 +187,7 @@ class SavedReportDetailsView(CloudIntelReportsView):
                 self.context["object"].datetime_in_tree
             ] and
             self.title.text == 'Saved Report "{} - {}"'.format(
-                self.context["object"].report.title,
+                self.context["object"].report.title or self.context['object'].report.menu_name,
                 self.context["object"].queued_datetime_in_title
             )
         )
