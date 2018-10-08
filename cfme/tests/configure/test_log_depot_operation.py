@@ -273,6 +273,9 @@ def service_request(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
+@pytest.mark.uncollectif(lambda appliance, log_depot:
+                         not appliance.is_downstream and log_depot.protocol == 'dropbox',
+                         reason='Dropbox test only for downstream version of product')
 def test_collect_log_depot(log_depot, appliance, service_request, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
 
@@ -299,11 +302,12 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
     if log_depot.protocol != 'dropbox':
         check_ftp(ftp=log_depot.ftp, server_name=appliance.server.name,
                   server_zone_id=appliance.server.zone.id, check_ansible_logs=True)
-    else:  # check for logs on dropbox
+    elif appliance.is_downstream:  # check for logs on dropbox, not applicable for upstream
         username = conf.credentials['rh_dropbox']['username']
         password = conf.credentials['rh_dropbox']['password']
+        host = conf.cfme_data['rh_dropbox']['download_host']
 
-        dropbox = FTP(host='flopbox.corp.redhat.com', user=username, passwd=password)
+        dropbox = FTP(host=host, user=username, passwd=password)
         contents = dropbox.nlst()
 
         server_string = '{}_{}'.format(appliance.server.name, appliance.server.zone.id)

@@ -185,6 +185,8 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
                 'depot_name': updates.get('depot_name'),
                 'uri': updates.get('uri')}
             })
+        else:  # all data is filled automatically for Red Hat Dropbox depot type
+            updated = True
         if depot_type in ['FTP', 'Samba']:
             fill_dict.update({'depot_creds': {
                 'username': updates.get('username'),
@@ -193,9 +195,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             })
             if self.appliance.version < '5.9':
                 fill_dict['depot_creds']['confirm_password'] = updates.get('password')
-        updated = view.fill(fill_dict)
-        if depot_type == 'Red Hat Dropbox':
-            updated = True
+        updated = view.fill(fill_dict) or updated
         try:
             view.depot_creds.validate_button.click()
             view.flash.assert_message('Log Depot Settings were validated')
