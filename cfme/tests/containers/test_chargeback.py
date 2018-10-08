@@ -77,14 +77,14 @@ def gen_report_base(appliance, obj_type, provider, rate_desc, rate_interval):
                               'Memory Used', 'Memory Used Cost',
                               'Provider Name', 'Fixed Total Cost', 'Total Cost'],
             'filter': {
-                'filter_show_costs': 'Project',
+                'filter_show_costs': 'Container Project',
                 'filter_provider': provider.name,
                 'filter_project': 'All Container Projects'
             }
         }
     elif obj_type == 'Image':
         data = {
-            'base_report_on': 'Chargeback Container Images',
+            'base_report_on': 'Chargeback for Images',
             'report_fields': ['Archived', 'Chargeback Rates', 'Fixed Compute Metric',
                               'Cpu Cores Used Cost', 'Cpu Cores Used Metric',
                               'Network I/O Used', 'Network I/O Used Cost',
@@ -101,7 +101,6 @@ def gen_report_base(appliance, obj_type, provider, rate_desc, rate_interval):
 
     data['menu_name'] = title
     data['title'] = title
-    data['provider'] = provider.name
     if rate_interval == 'Hourly':
         data['filter']['interval'] = 'Day'
         data['filter']['interval_end'] = 'Yesterday'
@@ -133,7 +132,7 @@ def assign_custom_compute_rate(obj_type, chargeback_rate, provider):
         :py:class:`ContainersProvider` provider: The containers provider
     """
     if obj_type == 'Image':
-        asignment = assignments.Assign(
+        compute_assign = assignments.ComputeAssign(
             assign_to="Labeled Container Images",
             docker_labels="architecture",
             selections={
@@ -141,8 +140,8 @@ def assign_custom_compute_rate(obj_type, chargeback_rate, provider):
             })
         logger.info('ASSIGNING COMPUTE RATE FOR LABELED CONTAINER IMAGES')
     elif obj_type == 'Project':
-        asignment = assignments.Assign(
-            assign_to="Selected Containers Providers",
+        compute_assign = assignments.ComputeAssign(
+            assign_to="Selected Providers",
             selections={
                 provider.name: {'Rate': chargeback_rate.description}
             })
@@ -150,7 +149,7 @@ def assign_custom_compute_rate(obj_type, chargeback_rate, provider):
     else:
         raise Exception("Unknown object type: {}".format(obj_type))
 
-    asignment.computeassign()
+    compute_assign.assign()
     logger.info('Rate - {}: {}'.format(chargeback_rate.description,
                                        chargeback_rate.fields))
 
@@ -186,7 +185,7 @@ def compute_rate(appliance, rate_type, interval):
 def assign_compute_rate(obj_type, compute_rate, provider):
     assign_custom_compute_rate(obj_type, compute_rate, provider)
     yield compute_rate
-    assignments.Assign(assign_to="<Nothing>").computeassign()
+    assignments.ComputeAssign(assign_to="<Nothing>").assign()
 
 
 @pytest.fixture(scope='module')
