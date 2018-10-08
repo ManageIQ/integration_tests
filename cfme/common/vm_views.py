@@ -361,7 +361,7 @@ class ProvisionView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
 
 class CloneVmView(BaseLoggedInPage):
@@ -374,7 +374,7 @@ class CloneVmView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
 
 class MigrateVmView(BaseLoggedInPage):
@@ -387,7 +387,7 @@ class MigrateVmView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
 
 class PublishVmView(BaseLoggedInPage):
@@ -400,7 +400,7 @@ class PublishVmView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
 
 class RetirementView(BaseLoggedInPage):

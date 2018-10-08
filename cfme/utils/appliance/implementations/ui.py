@@ -530,6 +530,10 @@ class CFMENavigateStep(NavigateStep):
         waited = False
         try:
             here = self.check_for_badness(self.am_i_here, _tries, nav_args, *args, **kwargs)
+        except NotImplementedError:
+            nav_args['wait_for_view'] = 0
+            self.log_message(
+                "is_displayed not implemented for {} view".format(self.VIEW or ""), level="warn")
         except Exception as e:
             self.log_message(
                 "Exception raised [{}] whilst checking if already here".format(e), level="error")

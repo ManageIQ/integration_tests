@@ -98,7 +98,7 @@ class PXEServerDetailsView(PXEMainView):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
 
 class PXEServerForm(View):
@@ -122,7 +122,7 @@ class PXEServerForm(View):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
 
 class PXEServerAddView(PXEServerForm):
@@ -156,7 +156,7 @@ class PXEImageEditView(View):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
 
 class PXEServer(Updateable, Pretty, Navigatable):
@@ -424,7 +424,7 @@ class PXECustomizationTemplateForm(View):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
 
 class PXECustomizationTemplateAddView(PXECustomizationTemplateForm):
@@ -650,7 +650,7 @@ class PXESystemImageTypeDetailsView(PXEMainView):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
 
 class PXESystemImageTypeForm(View):
@@ -660,7 +660,7 @@ class PXESystemImageTypeForm(View):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
 
 class PXESystemImageTypeAddView(PXESystemImageTypeForm):
@@ -718,7 +718,7 @@ class PXESystemImageEditView(PXEMainView):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
     image_type = BootstrapSelect(id='image_typ')
     save = Button('Save')
@@ -905,7 +905,7 @@ class PXEDatastoreDetailsView(PXEMainView):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
 
 class PXEDatastoreForm(View):
@@ -914,7 +914,7 @@ class PXEDatastoreForm(View):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
 
 class PXEDatastoreAddView(PXEDatastoreForm):

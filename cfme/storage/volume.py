@@ -125,7 +125,7 @@ class VolumeAddView(VolumeView):
 class VolumeEditView(VolumeView):
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
     volume_name = TextInput(name='name')
     save = Button('Save')
@@ -159,7 +159,7 @@ class VolumeBackupView(VolumeView):
 class VolumeSnapshotView(VolumeView):
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
 
     snapshot_name = TextInput(name='snapshot_name')
 
