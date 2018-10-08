@@ -52,11 +52,11 @@ def test_provider_log_rotate(appliance, provider, log_exists):
     """
     assert log_exists, "Log file {}.log doesn't exist".format(provider.log_name)
     appliance.ssh_client.run_command("logrotate -f /etc/logrotate.d/miq_logs.conf")
-    logs_count = appliance.ssh_client.run_command(
+    logs_count = int(appliance.ssh_client.run_command(
         "ls -l /var/www/miq/vmdb/log/{}.log*|wc -l".format(
             provider.log_name
         )
-    ).output
+    ).output.rstrip())
     assert logs_count > 1, "{}.log wasn't rotated by default miq_logs.conf".format(
         provider.log_name
     )
