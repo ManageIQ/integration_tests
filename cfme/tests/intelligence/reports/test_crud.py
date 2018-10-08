@@ -11,7 +11,6 @@ from cfme.utils.path import data_path
 from cfme.utils.rest import assert_response
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for_decorator
-from widgetastic.exceptions import NoSuchElementException, MoveTargetOutOfBoundsException
 
 
 report_crud_dir = data_path.join("reports_crud")
@@ -302,12 +301,7 @@ def test_create_custom_report_schedule(
         "Custom",
         custom_report.menu_name,
     )
-    try:
-        custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
-    except (MoveTargetOutOfBoundsException, NoSuchElementException):
-        # Temporary workaround - running the `create` method first time raises exceptions,
-        # but running it again works fine.
-        custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
+    custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
     assert custom_report_schedule.exists
 
     request.addfinalizer(custom_report.delete)
