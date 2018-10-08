@@ -28,7 +28,8 @@ class AutomateCustomizationView(BaseLoggedInPage):
 
 
 class DialogForm(AutomateCustomizationView):
-    title = Text('#explorer_title_text')
+    title = Text('//div[@id= "main-content"]//h1')
+    sub_title = Text('//div[@id= "main-content"]//h2')
 
     label = Input(id='name')
     description = Input(id="description")
@@ -42,8 +43,8 @@ class AddDialogView(DialogForm):
     @property
     def is_displayed(self):
         return (
-            self.in_customization and self.service_dialogs.is_opened and
-            self.create_tab.is_displayed
+            self.in_customization and self.title.text == "Automate Customization" and
+            self.sub_title.text == "General" and self.create_tab.is_displayed
         )
 
 
@@ -54,8 +55,8 @@ class EditDialogView(DialogForm):
     @property
     def is_displayed(self):
         return (
-            self.in_customization and self.service_dialogs.is_opened and
-            self.label.text == self.label
+            self.in_customization and self.title.text == "Automate Customization" and
+            self.sub_title.text == "General" and self.label.read() == self.context['object'].label
         )
 
 

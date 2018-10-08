@@ -12,6 +12,7 @@ from . import AutomateCustomizationView, AddBoxView
 
 
 class ElementForm(AddBoxView):
+    title = Text('//div[@id= "main-content"]//h1')
     ele_save_button = DialogButton('Save')
     ele_cancel_button = DialogButton('Cancel')
     save_button = Button('Save')
@@ -73,7 +74,7 @@ class AddElementView(ElementForm):
     @property
     def is_displayed(self):
         return (
-            self.in_customization and
+            self.in_customization and self.title.text == "Automate Customization" and
             self.component.is_displayed or not self.add_section.is_displayed
         )
 
@@ -86,8 +87,8 @@ class EditElementView(ElementForm):
     @property
     def is_displayed(self):
         return (
-            self.in_customization and self.service_dialogs.is_opened and
-            self.label.text == self.context['object'].dialog.label
+            self.in_customization and self.title.text == "Automate Customization" and
+            self.label.read() == self.context['object'].dialog.label
         )
 
 
