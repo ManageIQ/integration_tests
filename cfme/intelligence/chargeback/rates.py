@@ -187,7 +187,7 @@ class ComputeRate(Updateable, Pretty, Navigatable):
 
     def create(self):
         # Create a rate in UI
-        view = navigate_to(self, 'Add', wait_for_view=0)
+        view = navigate_to(self, 'Add')
         view.fill_with({'description': self.description,
                         'currency': self.currency,
                         'fields': self.fields},
@@ -200,7 +200,7 @@ class ComputeRate(Updateable, Pretty, Navigatable):
 
     def copy(self, *args, **kwargs):
         new_rate = ComputeRate(*args, **kwargs)
-        add_view = navigate_to(self, 'Copy', wait_for_view=0)
+        add_view = navigate_to(self, 'Copy')
         add_view.fill_with({'description': new_rate.description,
                             'currency': new_rate.currency,
                             'fields': new_rate.fields},
