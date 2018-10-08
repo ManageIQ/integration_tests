@@ -133,7 +133,7 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
             logger.error('The EVM has no name, setting it to EVM')
             if (self.appliance.version == LATEST or
                     self.appliance.is_pod or
-                    BZ(1635178, forced_streams=['5.9']).blocks):
+                    BZ(1635178, forced_streams=['5.9', '5.10']).blocks):
                 name = 'EVM'
             else:
                 name = server.name
