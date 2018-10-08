@@ -265,7 +265,13 @@ class InfraVmDetailsView(InfraVmView):
 
     @property
     def is_displayed(self):
-        expected_name = self.context['object'].name
+        if isinstance(self.context['object'], InfraVm):
+            expected_title = 'VM and Instance "{}"'.format(self.context["object"].name)
+        elif isinstance(self.context['object'], InfraTemplate):
+            expected_title = 'VM Template and Image "{}"'.format(self.context["object"].name)
+        else:
+            return False
+
         expected_provider = self.context['object'].provider.name
         try:
             relationships = self.entities.summary('Relationships')
@@ -275,13 +281,13 @@ class InfraVmDetailsView(InfraVmView):
             if currently_selected in ['<Archived>', '<Orphaned>']:
                 return (
                     self.in_infra_vms and
-                    self.entities.title.text == 'VM and Instance "{}"'.format(expected_name))
+                    self.entities.title.text == expected_title)
             self.logger.warning('No "Infrastructure Provider" Relationship, VM details view not'
                                 ' displayed')
             return False
         return (
             self.in_infra_vms and
-            self.entities.title.text == 'VM and Instance "{}"'.format(expected_name) and
+            self.entities.title.text == expected_title and
             relationship_provider_name == expected_provider)
 
 
