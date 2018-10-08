@@ -4,7 +4,7 @@ import random
 import socket
 
 from cfme.base.credential import Credential
-from cfme.common.host_views import HostsEditView, HostsView
+from cfme.common.host_views import HostsEditView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -20,6 +20,8 @@ pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([InfraProvider], required_fields=['hosts'], scope='module'),
 ]
+
+VIEWS = ('Grid View', 'Tile View', 'List View')
 
 
 @pytest.fixture(scope='module')
@@ -182,7 +184,8 @@ def test_tag_host_after_provider_delete(provider, appliance, setup_provider, req
     request.addfinalizer(lambda: host.remove_tag(tag))
 
 
-def test_250_vmware_hosts_loading(appliance, create_250_hosts):
+@pytest.mark.parametrize('view_type', VIEWS)
+def test_250_vmware_hosts_loading(appliance, create_250_hosts, view_type):
     """
     Test to automate BZ1580569
     """
@@ -194,8 +197,8 @@ def test_250_vmware_hosts_loading(appliance, create_250_hosts):
     )
     assert rails_console.success
 
-    # Check it loads in the UI fast
-    host_collection = appliance.collections.hosts
-    view = host_collection.appliance.browser.create_view(HostsView)
-    load_view = wait_for(lambda: view.entities.paginator.set_items_per_page(1000))
-    assert load_view.duration < 60
+    # Check it loads fast in the UI
+    view = navigate_to(appliance.collections.hosts, 'All')
+    view.entities.paginator.set_items_per_page(1000)
+    view.toolbar.view_selector.select(view_type)
+    wait_for(view.entities.get_first_entity, timeout=60, message='Wait for the view')
