@@ -264,7 +264,7 @@ class CloudNetworkAddView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class CloudNetworkEditView(BaseLoggedInPage):
@@ -278,7 +278,7 @@ class CloudNetworkEditView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class NetworkPortToolBar(View):
@@ -435,7 +435,7 @@ class NetworkRouterAddView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class NetworkRouterEditView(BaseLoggedInPage):
@@ -448,7 +448,7 @@ class NetworkRouterEditView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class NetworkRouterAddInterfaceView(BaseLoggedInPage):
@@ -458,7 +458,7 @@ class NetworkRouterAddInterfaceView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class SecurityGroupToolBar(View):
@@ -575,7 +575,7 @@ class SubnetAddView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class SubnetEditView(BaseLoggedInPage):
@@ -587,7 +587,7 @@ class SubnetEditView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class SubnetSideBar(View):

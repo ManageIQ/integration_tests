@@ -252,7 +252,7 @@ class HostEditView(HostFormView):
 
     @property
     def is_displayed(self):
-        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class HostsEditView(HostEditView):

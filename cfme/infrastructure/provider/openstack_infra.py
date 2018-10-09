@@ -173,7 +173,7 @@ class ProviderRegisterNodesView(View):
 
     @property
     def is_displayed(self):
-        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class ProviderScaleDownView(View):
@@ -187,7 +187,7 @@ class ProviderScaleDownView(View):
 
     @property
     def is_displayed(self):
-        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class ProviderScaleOutView(View):
@@ -201,7 +201,7 @@ class ProviderScaleOutView(View):
 
     @property
     def is_displayed(self):
-        raise NotImplementedError("This view doesn't unique markers to check in is_displayed")
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 @navigator.register(OpenstackInfraProvider, 'RegisterNodes')
