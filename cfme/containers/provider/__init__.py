@@ -472,7 +472,7 @@ class AdHocMetricsView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
     def wait_for_filter_option_to_load(self):
         wait_for(lambda: bool(self.filter_dropdown.items), delay=5, num_sec=60)
@@ -514,7 +514,7 @@ class ContainerProvidersUtilizationView(View):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 @navigator.register(ContainersProvider, 'Utilization')

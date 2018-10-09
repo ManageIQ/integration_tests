@@ -29,7 +29,7 @@ class ManagePoliciesView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class PolicyProfileAssignable(object):

@@ -162,7 +162,7 @@ class AddAnsibleCatalogItemView(AnsibleCatalogItemForm):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class EditAnsibleCatalogItemView(AnsibleCatalogItemForm):
@@ -171,7 +171,7 @@ class EditAnsibleCatalogItemView(AnsibleCatalogItemForm):
 
     @property
     def is_displayed(self):
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class DetailsEntitiesAnsibleCatalogItemView(View):
