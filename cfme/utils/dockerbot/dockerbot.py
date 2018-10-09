@@ -69,31 +69,10 @@ class DockerInstance(object):
             print("Killing container")
 
 
-class SeleniumDocker(DockerInstance):
-    def __init__(self, bindings, image, dry_run=False):
-        self.dry_run = dry_run
-        sel_name = fauxfactory.gen_alphanumeric(8)
-        if not self.dry_run:
-            sel_create_info = dc.create_container(image, tty=True, name=sel_name)
-            self.container_id = _dgci(sel_create_info, 'id')
-            sel_container_info = dc.inspect_container(self.container_id)
-            self.sel_name = _name(sel_container_info)
-        else:
-            self.sel_name = "SEL_FF_CHROME_TEST"
-        self.process_bindings(bindings)
-
-    def run(self):
-        if not self.dry_run:
-            dc.start(self.container_id, privileged=True, port_bindings=self.port_bindings)
-        else:
-            print("Dry run running sel_ff_chrome")
-
-
 class PytestDocker(DockerInstance):
-    def __init__(self, name, bindings, env, log_path, links, pytest_con, artifactor_dir,
+    def __init__(self, name, bindings, env, log_path, pytest_con, artifactor_dir,
                  dry_run=False):
         self.dry_run = dry_run
-        self.links = links
         self.log_path = log_path
         self.artifactor_dir = artifactor_dir
         self.process_bindings(bindings)
@@ -120,7 +99,6 @@ class PytestDocker(DockerInstance):
 
 class DockerBot(object):
     def __init__(self, **args):
-        links = []
         self.args = args
         self.base_branch = 'master'
         self.validate_args()
@@ -128,13 +106,6 @@ class DockerBot(object):
         self.process_appliance()
         self.cache_files()
         self.create_pytest_command()
-        if not self.args['use_wharf']:
-            self.sel_vnc_port = random_port()
-            sel = SeleniumDocker(bindings={'VNC_PORT': (5999, self.sel_vnc_port)},
-                                 image=self.args['selff'], dry_run=self.args['dry_run'])
-            sel.run()
-            sel_container_name = sel.sel_name
-            links = [(sel_container_name, 'selff')]
         self.pytest_name = self.args['test_id']
         self.create_pytest_envvars()
         self.handle_pr()
@@ -148,7 +119,6 @@ class DockerBot(object):
 
         pytest = PytestDocker(name=self.pytest_name, bindings=self.pytest_bindings,
                               env=self.env_details, log_path=self.log_path,
-                              links=links,
                               pytest_con=self.args['pytest_con'],
                               artifactor_dir=self.args['artifactor_dir'],
                               dry_run=self.args['dry_run'])
@@ -167,9 +137,6 @@ class DockerBot(object):
                 pass
             pytest.kill()
             pytest.remove()
-            if not self.args['use_wharf']:
-                sel.kill()
-                sel.remove()
             self.handle_output()
 
     def cache_files(self):
@@ -310,7 +277,6 @@ class DockerBot(object):
             print("You must supply a CFME Credentials REPO")
             ec += 1
 
-        self.check_arg('selff', 'cfme/sel_ff_chrome')
 
         self.check_arg('gh_token', None)
         self.check_arg('gh_owner', None)
@@ -448,7 +414,7 @@ class DockerBot(object):
             self.env_details.update(USE_SPROUT="no")
 
         print("  SERVER IP: {}".format(self.args['server_ip']))
-        if self.args['use_wharf']:
+        if self.args['wharf']:
             self.env_details['WHARF'] = self.args['wharf']
             print("  WHARF: {}".format(self.args['wharf']))
         if self.args['prtester']:
@@ -600,17 +566,11 @@ if __name__ == "__main__":
                     default=None)
 
     dkr = parser.add_argument_group('Docker Container Options')
-    dkr.add_argument('--selff',
-                     help="The selenium base docker image",
-                     default=None)
     dkr.add_argument('--pytest_con',
                      help="The pytest container image",
                      default=None)
     dkr.add_argument('--wharf',
-                     help="Choose to use WebDriver Wharf instead of local sel_ff_chrome container",
-                     default=None)
-    dkr.add_argument('--use-wharf', action="store_true",
-                     help="Use Wharf or no?",
+                     help="Choose to use WebDriver Wharf",
                      default=None)
 
     pytest = parser.add_argument_group('PyTest Options')

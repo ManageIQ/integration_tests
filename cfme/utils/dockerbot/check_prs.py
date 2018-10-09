@@ -185,7 +185,6 @@ def run_tasks():
                 # Create a dockerbot instance and run the PR test
                 dockerbot.DockerBot(dry_run=DEBUG,
                                     auto_gen_test=True,
-                                    use_wharf=True,
                                     prtester=True,
                                     test_id=task['tid'],
                                     nowait=True,
