@@ -716,10 +716,6 @@ class PXESystemImageDeatilsView(PXEMainView):
 
 class PXESystemImageEditView(PXEMainView):
 
-    @property
-    def is_displayed(self):
-        return False
-
     image_type = BootstrapSelect(id='image_typ')
     save = Button('Save')
     reset = Button('Reset')
