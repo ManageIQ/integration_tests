@@ -31,10 +31,6 @@ on_exit () {
         run_n_log "/post_result.py $POST_TASK $OUT_RESULT"
         log $?
     fi
-    if [ -n "$PROVIDER" ]; then
-        log "Destroying appliance..."
-        run_n_log "scripts/clone_template.py --provider $PROVIDER --vm_name $VM_NAME --destroy"
-    fi
 }
 
 # Tries to run the given command n times - exits if not successful
@@ -177,15 +173,6 @@ log "Pip Update #~"
 run_pip_update
 log "#*"
 
-# If asked, provision the appliance, and update the APPLIANCE variable
-if [ -n "$PROVIDER" ]; then
-    log "Provisioning appliance... #~"
-    run_n_log "scripts/clone_template.py --outfile /appliance_ip --provider $PROVIDER --template $TEMPLATE --vm_name $VM_NAME --configure"
-    run_n_log "cat /appliance_ip"
-    IP_ADDRESS=$(cat /appliance_ip | cut -d= -f2)
-    APPLIANCE=https://$IP_ADDRESS
-    log "#*"
-fi
 export APPLIANCE=${APPLIANCE-"None"}
 log "appliance: $APPLIANCE"
 export IP_ADDRESS=$IP_ADDRESS

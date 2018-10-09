@@ -8,7 +8,6 @@ import os
 import os.path
 import docker
 import re
-import subprocess
 import sys
 import yaml
 from six.moves.urllib.parse import urlsplit
@@ -125,7 +124,6 @@ class DockerBot(object):
         pytest.run()
 
         if not self.args['nowait']:
-            self.handle_watch()
             if self.args['dry_run']:
                 with open(os.path.join(self.log_path, 'setup.txt'), "w") as f:
                     f.write("finshed")
@@ -222,6 +220,10 @@ class DockerBot(object):
     def validate_args(self):
         ec = 0
 
+
+        self.check_arg('appliance_name', None)
+        self.check_arg('appliance', None)
+
         appliance = self.args.get('appliance', None)
         if self.args.get('appliance_name', None) and not appliance:
             self.args['appliance'] = docker_conf['appliances'][self.args['appliance_name']]
@@ -229,7 +231,6 @@ class DockerBot(object):
         self.check_arg('nowait', False)
 
         self.check_arg('banner', False)
-        self.check_arg('watch', False)
         self.check_arg('output', True)
         self.check_arg('dry_run', False)
         self.check_arg('server_ip', None)
@@ -239,20 +240,11 @@ class DockerBot(object):
 
         self.check_arg('sprout', False)
 
-        self.check_arg('provision_appliance', False)
-        if self.args['provision_appliance']:
-            if not self.args['provision_template'] or not self.args['provision_provider'] or \
-               not self.args['provision_vm_name']:
-                print("You don't have all the required options to provision an appliance")
-                ec += 1
-
         self.check_arg('sprout_stream', None)
         if self.args['sprout'] and not self.args['sprout_stream']:
             print("You need to supply a stream for sprout")
             ec += 1
 
-        self.check_arg('appliance_name', None)
-        self.check_arg('appliance', None)
 
         if not self.args['appliance_name'] != self.args['appliance'] and \
            not self.args['provision_appliance'] and not self.args['sprout']:
@@ -432,13 +424,7 @@ class DockerBot(object):
             self.env_details['WHEEL_HOST'] = urlsplit(self.args['wheel_host_url']).netloc
             print("  TRUSTED HOST: {}".format(self.env_details['WHEEL_HOST']))
             print("  WHEEL URL: {}".format(self.env_details['WHEEL_HOST_URL']))
-        if self.args['provision_appliance']:
-            print("  APPLIANCE WILL BE PROVISIONED")
-            self.env_details['PROVIDER'] = self.args['provision_provider']
-            self.env_details['TEMPLATE'] = self.args['provision_template']
-            self.env_details['VM_NAME'] = self.args['provision_vm_name']
-        else:
-            self.env_details['APPLIANCE'] = self.appliance
+        self.env_details['APPLIANCE'] = self.appliance
         if self.args['sprout_username']:
             self.env_details['SPROUT_USER'] = self.args['sprout_username']
         if self.args['sprout_password']:
@@ -472,16 +458,6 @@ class DockerBot(object):
         return bindings
 
     def handle_watch(self):
-        if self.args['watch'] and not self.args['dry_run']:
-            print
-            print("  Waiting for container for 10 seconds...")
-            import time
-            time.sleep(10)
-            print("  Initiating VNC watching...")
-            ipport = "vnc://127.0.0.1:" + str(self.sel_vnc_port)
-            cmd = ['xdg-open', ipport]
-            subprocess.Popen(cmd)
-        print
         print("  Press Ctrl+C to kill tests + containers")
 
     def handle_output(self):
@@ -499,9 +475,6 @@ if __name__ == "__main__":
     interaction = parser.add_argument_group('Interaction')
     interaction.add_argument('--banner', action='store_true',
                              help='Chooses upstream',
-                             default=None)
-    interaction.add_argument('--watch', action='store_true',
-                             help='Watch it via VNC',
                              default=None)
     interaction.add_argument('--output', action='store_true',
                              help="Output the console?",
