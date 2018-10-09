@@ -196,3 +196,4 @@ def test_button_avp_displayed(appliance, dialog, request):
     for n in range(1, 6):
         assert view.advanced.attribute(n).key.is_displayed
         assert view.advanced.attribute(n).value.is_displayed
+    view.cancel_button.click()
