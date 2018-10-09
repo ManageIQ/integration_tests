@@ -21,7 +21,7 @@ class AutomateCustomizationView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.in_customization and self.configuration.is_displayed
+        return self.in_customization
 
     @View.nested
     class provisioning_dialogs(Accordion):  # noqa
