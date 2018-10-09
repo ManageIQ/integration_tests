@@ -727,9 +727,7 @@ class ParametrizedStatusBox(ParametrizedView):
 class Accordion(PFAccordion):
     @property
     def is_dimmed(self):
-        return bool(
-            self.browser.elements('.//div[contains(@id, "tree") and contains(@class, "dimmed")]')
-        )
+        return bool(self.root_browser.elements(".//div[contains(@class, 'sidebar-disabled')]"))
 
 
 class Calendar(TextInput):
