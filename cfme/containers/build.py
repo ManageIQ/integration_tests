@@ -28,7 +28,7 @@ class BuildView(BaseLoggedInPage):
 
 
 class BuildDefaultView(BuildView):
-    title = Text("#explorer_title_text")
+    title = Text(".//div[@id='main-content']//h1")
 
     @property
     def is_displayed(self):
