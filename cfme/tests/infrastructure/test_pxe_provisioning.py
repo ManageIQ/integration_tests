@@ -11,7 +11,7 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import testgen
-from cfme.utils.blockers import BZ
+from cfme.utils.blockers import BZ, GH
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -96,7 +96,8 @@ def vm_name():
 
 @pytest.mark.rhv1
 @pytest.mark.meta(blockers=[BZ(1633516, forced_streams=['5.10'],
-                            unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+                            unblock=lambda provider: not provider.one_of(RHEVMProvider)),
+                            GH('ManageIQ/integration_tests:7965')])
 def test_pxe_provision_from_template(appliance, provider, vm_name, smtp_test, setup_provider,
                                      request, setup_pxe_servers_vm_prov):
     """Tests provisioning via PXE
