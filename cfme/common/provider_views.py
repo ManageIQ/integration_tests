@@ -512,7 +512,7 @@ class PhysicalProviderAddView(ProviderAddView):
         return (super(PhysicalProviderAddView, self).is_displayed and
                 self.navigation.currently_selected == [
                     'Compute', 'Physical Infrastructure', 'Providers'] and
-                self.title.text == 'Add New Ems Physical Infra')
+                self.title.text == 'Add New Physical Infrastructure Provider')
 
 
 class ProviderEditView(ProviderAddView):
