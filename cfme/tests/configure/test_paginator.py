@@ -89,8 +89,6 @@ def schedule(appliance):
     schedule.delete()
 
 
-@pytest.mark.meta(blockers=[BZ(1623091, forced_streams=['5.10'],
-                  unblock=lambda place_info: 'Database' not in place_info[2])])
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])
