@@ -5,7 +5,7 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.tests.automate.custom_button import check_log_requests_count, log_request_check
+from cfme.tests.automate.custom_button import log_request_check
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError, wait_for
@@ -168,13 +168,19 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
             except AttributeError:
                 paginator = view.entities.paginator
 
-            entity_count = paginator.items_amount
+            if paginator.items_amount > paginator.items_per_page:
+                entity_count = paginator.items_per_page
+            else:
+                entity_count = paginator.items_amount
             paginator.check_all()
         else:
             entity_count = 1
 
-        # First collect number of request already available in automation log
-        initial_request_count = check_log_requests_count(appliance)
+        # Clear the automation log
+        clean = appliance.ssh_client.run_command('echo -n "" > '
+                                                 '/var/www/miq/vmdb/log/automation.log')
+        assert clean.success
+
         custom_button_group.item_select(button.text)
         view.flash.assert_message('"{}" was executed'.format(button.text))
 
@@ -184,10 +190,10 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
         try:
             wait_for(
                 log_request_check,
-                [appliance, initial_request_count, expected_count],
-                timeout=120,
+                [appliance, expected_count],
+                timeout=600,
                 message="Check for expected request count",
-                delay=10,
+                delay=20,
             )
         except TimedOutError:
             assert False, "Expected {} requests not found in automation log".format(

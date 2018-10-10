@@ -19,13 +19,11 @@ def check_log_requests_count(appliance, parse_str=None):
     return int(count.output)
 
 
-def log_request_check(appliance, initial_count, expected_count):
+def log_request_check(appliance, expected_count):
     """ Method for checking expected request count in automation log
 
     Args:
         appliance: an appliance for ssh
-        initial_count: initial request count available in automation log
         expected_count: expected request count in automation log
     """
-    diff = check_log_requests_count(appliance=appliance) - initial_count
-    return diff == expected_count
+    return check_log_requests_count(appliance=appliance) == expected_count
