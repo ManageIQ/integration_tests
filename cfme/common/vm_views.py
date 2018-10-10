@@ -422,7 +422,7 @@ class RetirementView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         # TODO match quadicon and title
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class RetirementViewWithOffset(RetirementView):
@@ -476,7 +476,7 @@ class EditView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         # Only name is displayed
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class SetOwnershipView(BaseLoggedInPage):
@@ -496,7 +496,7 @@ class SetOwnershipView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         # TODO match quadicon using entities, no provider match through icon asset yet
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class ManagementEngineView(BaseLoggedInPage):
@@ -515,7 +515,7 @@ class ManagementEngineView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         # Only the name is displayed
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class PolicySimulationView(BaseLoggedInPage):
@@ -545,7 +545,7 @@ class RightSizeView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         # Only name is displayed
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class DriftHistory(BaseLoggedInPage):
