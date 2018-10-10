@@ -475,8 +475,7 @@ class EditView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        # Only name is displayed
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class SetOwnershipView(BaseLoggedInPage):
