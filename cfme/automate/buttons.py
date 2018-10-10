@@ -133,8 +133,7 @@ class EditButtonView(ButtonFormCommon):
     def is_displayed(self):
         return (
             self.in_customization and
-            # TODO: vvv BUG
-            self.title.text.startswith('Adding a new Button') and
+            self.title.text.startswith('Editing Button') and
             self.buttons.is_dimmed and
             self.buttons.is_opened and
             self.buttons.tree.currently_selected == [
@@ -311,7 +310,7 @@ class ButtonCollection(BaseCollection):
             image = 'Button Image 1'
         else:
             image = 'fa-user'
-        view = navigate_to(self, 'Add', wait_for_view=0)
+        view = navigate_to(self, 'Add')
         view.options.fill({'type': type})
         view.fill({
             'options': {
@@ -437,9 +436,14 @@ class NewButtonGroupView(ButtonGroupFormCommon):
 
     @property
     def is_displayed(self):
+        if self.browser.appliance.version < "5.10":
+            expected_title = "Adding a new Buttons Group"
+        else:
+            expected_title = "Adding a new Button Group"
+
         return (
             self.in_customization and
-            self.title.text == 'Adding a new Button Group' and
+            self.title.text == expected_title and
             self.buttons.is_dimmed and
             self.buttons.is_opened and
             self.buttons.tree.currently_selected == ['Object Types', self.context['object'].type])
@@ -453,13 +457,18 @@ class EditButtonGroupView(ButtonGroupFormCommon):
 
     @property
     def is_displayed(self):
+        if self.browser.appliance.version < "5.10":
+            expected_title = "Editing Buttons Group"
+        else:
+            expected_title = "Editing Button Group"
         return (
-            self.in_customization and
-            self.title.text.startswith('Editing Buttons Group') and
-            self.buttons.is_dimmed and
-            self.buttons.is_opened and
-            self.buttons.tree.currently_selected == [
-                'Object Types', self.context['object'].type, self.context['object'].text])
+            self.in_customization
+            and self.title.text.startswith(expected_title)
+            and self.buttons.is_dimmed
+            and self.buttons.is_opened
+            and self.buttons.tree.currently_selected
+            == ["Object Types", self.context["object"].type, self.context["object"].text]
+        )
 
 
 @attr.s
@@ -573,6 +582,7 @@ class ButtonGroupCollection(BaseCollection):
     VM_INSTANCE = "VM and Instance"
 
     def instantiate(self, text, hover, type, image=None, display=None, icon_color=None):
+        self.type = type
         if image:
             pass
         elif self.appliance.version < '5.9':
@@ -592,7 +602,7 @@ class ButtonGroupCollection(BaseCollection):
         else:
             image = 'fa-user'
 
-        view = navigate_to(self, 'Add', wait_for_view=0)
+        view = navigate_to(self, 'Add')
         view.fill({
             'text': text,
             'hover': hover,
