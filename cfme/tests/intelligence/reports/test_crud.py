@@ -289,7 +289,7 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
     assert not schedule.exists
 
 
-def test_create_custom_report_schedule(
+def test_crud_custom_report_schedule(
     appliance, request, custom_report_values, schedule_data
 ):
     """This test case creates a schedule for custom reports and tests if it was created
@@ -303,5 +303,5 @@ def test_create_custom_report_schedule(
     )
     custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
     assert custom_report_schedule.exists
-
+    custom_report_schedule.delete(cancel=False)
     request.addfinalizer(custom_report.delete)

@@ -201,13 +201,16 @@ class ScheduleCollection(BaseCollection):
         schedule = self.instantiate(name, description, filter, active=active, timer=timer,
             emails=emails, email_options=email_options)
         view = navigate_to(self, "Add")
+        # Temporary workaround for NoSuchElementException
+        view.fill({
+            "filter1": filter[0],
+            "filter2": filter[1],
+            "filter3": filter[2],
+        })
         view.fill({
             "name": name,
             "description": description,
             "active": active,
-            "filter1": filter[0],
-            "filter2": filter[1],
-            "filter3": filter[2],
             "run": timer.get("run"),
             "time_zone": timer.get("time_zone"),
             "starting_date": timer.get("starting_date"),
