@@ -21,7 +21,7 @@ class AutomateExplorerView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.in_explorer and self.configuration.is_displayed and not self.datastore.is_dimmed
+        return self.in_explorer and not self.datastore.is_dimmed
 
     @View.nested
     class datastore(Accordion):  # noqa
