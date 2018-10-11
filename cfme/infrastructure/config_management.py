@@ -196,8 +196,7 @@ class ConfigManagementAddView(ConfigManagementView):
 
     @property
     def is_displayed(self):
-        """Is this view being displayed?"""
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class ConfigManagementEditView(ConfigManagementView):
@@ -207,8 +206,7 @@ class ConfigManagementEditView(ConfigManagementView):
 
     @property
     def is_displayed(self):
-        """Is this view being displayed?"""
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class ConfigManager(Updateable, Pretty, Navigatable):

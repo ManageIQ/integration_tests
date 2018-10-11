@@ -99,7 +99,7 @@ class AddFloatingIPView(CloudInstanceView):
     @property
     def is_displayed(self):
         # Only the instance name is displayed, cannot confirm provider
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class RemoveFloatingIPView(CloudInstanceView):
@@ -112,7 +112,7 @@ class RemoveFloatingIPView(CloudInstanceView):
     @property
     def is_displayed(self):
         # Only the instance name is displayed, cannot confirm provider
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class AttachVolumeView(CloudInstanceView):
@@ -139,7 +139,7 @@ class DetachVolumeView(CloudInstanceView):
     @property
     def is_displayed(self):
         # Only the instance name is displayed, cannot confirm provider
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class EvacuateView(CloudInstanceView):
@@ -153,7 +153,7 @@ class EvacuateView(CloudInstanceView):
     @property
     def is_displayed(self):
         # Only the instance name is displayed, cannot confirm provider
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class MigrateView(CloudInstanceView):
@@ -168,7 +168,7 @@ class MigrateView(CloudInstanceView):
     @property
     def is_displayed(self):
         # Only the instance name is displayed, cannot confirm provider
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class ReconfigureView(CloudInstanceView):
@@ -181,7 +181,7 @@ class ReconfigureView(CloudInstanceView):
     @property
     def is_displayed(self):
         # Only the instance name is displayed, cannot confirm provider
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 @navigator.register(OpenStackInstance, 'AddFloatingIP')

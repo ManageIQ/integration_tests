@@ -365,8 +365,7 @@ class InfraVmSnapshotAddView(InfraVmView):
 
     @property
     def is_displayed(self):
-        """Is this view being displayed"""
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 class InfraVmGenealogyToolbar(View):

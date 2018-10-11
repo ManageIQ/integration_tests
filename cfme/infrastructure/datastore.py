@@ -154,8 +154,7 @@ class RegisteredHostsView(HostsView):
     """
     @property
     def is_displayed(self):
-        # todo: to define correct check
-        return False
+        raise NotImplementedError("This view has no unique markers for is_displayed check")
 
 
 @attr.s
