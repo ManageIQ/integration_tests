@@ -33,8 +33,7 @@ def test_remote_server_advanced_config(temp_appliance_preconfig, request,
     # change one setting
     initial_conf = remote_server.advanced_settings['server']['startup_timeout']
     request.addfinalizer(lambda: appliance.update_advanced_settings(
-        {'server': {'startup_timeout': initial_conf}})
-                         )
+        {'server': {'startup_timeout': initial_conf}}))
     remote_server.update_advanced_settings({'server': {'startup_timeout': initial_conf * 2}})
     new_conf = remote_server.advanced_settings['server']['startup_timeout']
     assert new_conf == initial_conf * 2
