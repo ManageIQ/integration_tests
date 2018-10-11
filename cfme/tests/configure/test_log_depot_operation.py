@@ -14,7 +14,6 @@ import re
 from cfme import test_requirements
 from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.ftp import FTPClient
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
@@ -272,9 +271,6 @@ def service_request(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
-@pytest.mark.meta(blockers=[BZ(1627273, unblock=lambda log_depot: log_depot.protocol != "ftp",
-                            forced_streams=["5.10", "upstream"])]
-                  )
 def test_collect_log_depot(log_depot, appliance, service_request, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
 
@@ -301,7 +297,6 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
               server_zone_id=appliance.server.zone.id, check_ansible_logs=True)
 
 
-@pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
 @pytest.mark.tier(3)
 def test_collect_unconfigured(appliance):
     """ Test checking is collect button enable and disable after log depot was configured
@@ -375,7 +370,6 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
         check_ftp(log_depot.ftp, appliance.server.name, appliance.server.zone.id)
 
 
-@pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
 @pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
 @pytest.mark.parametrize('collect_type', ['all', 'current'], ids=['collect_all', 'collect_current'])
 @pytest.mark.tier(3)
