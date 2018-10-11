@@ -15,7 +15,7 @@ class EditBoxView(BoxForm):
     @property
     def is_displayed(self):
         return (
-            self.in_customization and self.service_dialogs.is_opened and
+            self.in_customization and
             self.title.text == "Editing Dialog {} [Box Information]".format(self.box_label)
         )
 
