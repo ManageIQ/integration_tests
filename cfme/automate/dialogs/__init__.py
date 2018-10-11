@@ -41,10 +41,7 @@ class AddDialogView(DialogForm):
 
     @property
     def is_displayed(self):
-        return (
-            self.in_customization and self.service_dialogs.is_opened and
-            self.create_tab.is_displayed
-        )
+        return self.in_customization and self.create_tab.is_displayed
 
 
 class EditDialogView(DialogForm):
