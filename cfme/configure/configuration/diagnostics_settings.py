@@ -34,7 +34,8 @@ class DiagnosticServerWorkersView(ServerDiagnosticsView):
             self.workers.is_displayed and
             self.workers.is_active and
             self.title.text == 'Diagnostics Server "{} [{}]" (current)'.format(
-                self.context['object'].name, self.context['object'].sid)
+                self.context['object'].appliance.server.name,
+                self.context['object'].appliance.server.sid)
         )
 
 
