@@ -19,6 +19,7 @@ from cfme.networks.views import (
     NetworkProviderAddView,
     OneProviderBalancerView,
     OneProviderCloudNetworkView,
+    OneProviderFloatingIpView,
     OneProviderNetworkPortView,
     OneProviderNetworkRouterView,
     OneProviderSecurityGroupView,
@@ -424,6 +425,7 @@ class OpenSecurityGroups(CFMENavigateStep):
 @navigator.register(NetworkProvider, 'FloatingIPs')
 class OpenFloatingIPs(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
+    VIEW = OneProviderFloatingIpView
 
     def step(self):
         item = 'Floating IPs'

@@ -419,7 +419,7 @@ class NetworkRouterDetailsView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return (super(BaseLoggedInPage, self).is_displayed and
-                self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.navigation.currently_selected == ['Networks', 'Network Routers'] and
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
 
 
@@ -543,7 +543,7 @@ class SecurityGroupDetailsView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return (super(BaseLoggedInPage, self).is_displayed and
-                self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.navigation.currently_selected == ['Networks', 'Security Groups'] and
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
 
 
@@ -665,7 +665,7 @@ class OneProviderSubnetView(BaseLoggedInPage):
         title = '{name} (All Cloud Subnets)'.format(name=self.context['object'].name)
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
-                self.title.text == title)
+                self.entities.title.text == title)
 
 
 class OneProviderBalancerView(BaseLoggedInPage):
@@ -679,7 +679,7 @@ class OneProviderBalancerView(BaseLoggedInPage):
         title = '{name} (All Balancers)'.format(name=self.context['object'].name)
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
-                self.title.text == title)
+                self.entities.title.text == title)
 
 
 class OneProviderNetworkPortView(BaseLoggedInPage):
@@ -693,7 +693,7 @@ class OneProviderNetworkPortView(BaseLoggedInPage):
         title = '{name} (All Network Ports)'.format(name=self.context['object'].name)
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
-                self.title.text == title)
+                self.entities.title.text == title)
 
 
 class OneProviderCloudNetworkView(BaseLoggedInPage):
@@ -707,7 +707,7 @@ class OneProviderCloudNetworkView(BaseLoggedInPage):
         title = '{name} (All Cloud Networks)'.format(name=self.context['object'].name)
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
-                self.title.text == title)
+                self.entities.title.text == title)
 
 
 class OneProviderNetworkRouterView(BaseLoggedInPage):
@@ -721,11 +721,12 @@ class OneProviderNetworkRouterView(BaseLoggedInPage):
         title = '{name} (All Network Routers)'.format(name=self.context['object'].name)
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
-                self.title.text == title)
+                self.entities.title.text == title)
 
 
 class OneProviderSecurityGroupView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
+    title = Text('//div[@id="main-content"]//h1')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(SecurityGroupSideBar)
     including_entities = View.include(SecurityGroupEntities, use_parent=True)
@@ -735,7 +736,7 @@ class OneProviderSecurityGroupView(BaseLoggedInPage):
         title = '{name} (All Security Groups)'.format(name=self.context['object'].name)
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
-                self.title.text == title)
+                self.entities.title.text == title)
 
 
 class FloatingIpToolBar(View):
@@ -783,6 +784,7 @@ class FloatingIpView(BaseLoggedInPage):
 
 class FloatingIpDetailsView(BaseLoggedInPage):
     """ Represents detail view of floating ip """
+    title = Text('//div[@id="main-content"]//h1')
     toolbar = View.nested(FloatingIpDetailsToolBar)
     sidebar = View.nested(FloatingIpDetailsSideBar)
     search = View.nested(Search)
@@ -798,3 +800,16 @@ class FloatingIpDetailsView(BaseLoggedInPage):
     def is_displayed(self):
         return (self.navigation.currently_selected == ['Networks', 'Floating IPs'] and
                 self.title.text == '{} (Summary)'.format(self.context['object'].address))
+
+
+class OneProviderFloatingIpView(BaseLoggedInPage):
+    """ Represents Floating Ip all for specific Network provider """
+    toolbar = View.nested(OneProviderComponentsToolbar)
+    including_entities = View.include(FloatingIpEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Floating IPs)'.format(name=self.context['object'].name)
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.entities.title.text == title)
