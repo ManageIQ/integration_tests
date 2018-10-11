@@ -13,7 +13,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     test_requirements.drift,
     pytest.mark.tier(3),
-    pytest.mark.meta(blockers=[BZ(1636120, forced_streams=['5.10'])]),
+    pytest.mark.meta(blockers=[BZ(1635126, forced_streams=['5.10'])]),
 ]
 
 
