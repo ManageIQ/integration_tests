@@ -483,6 +483,23 @@ class SetOwnershipView(BaseLoggedInPage):
     is_displayed = displayed_not_implemented
 
 
+class RenameVmView(BaseLoggedInPage):
+    """Rename VM page for VMs"""
+
+    title = Text('#explorer_title_text')
+
+    @View.nested
+    class form(View):  # noqa
+        vm_name = Input("name")
+        save_button = Button('Save')
+        reset_button = Button('Reset')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return self.title.read() == 'Renaming VM "{}"'.format(self.context['object'].name)
+
+
 class ManagementEngineView(BaseLoggedInPage):
     """
     Edit management engine relationship page

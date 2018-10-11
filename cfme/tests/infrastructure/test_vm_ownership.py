@@ -1,10 +1,16 @@
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import assert_response
+
 
 pytestmark = [
     test_requirements.ownership,
@@ -85,3 +91,33 @@ class TestVmOwnershipRESTAPI(object):
         rest_vm.reload()
         assert hasattr(rest_vm, "evm_owner_id")
         assert rest_vm.evm_owner.userid == "admin"
+
+
+@pytest.fixture(scope='module')
+def small_vm(provider, small_template_modscope):
+    vm = provider.appliance.collections.infra_vms.instantiate(random_vm_name(context='rename'),
+                                                              provider,
+                                                              small_template_modscope.name)
+    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    vm.refresh_relationships()
+    yield vm
+    vm.cleanup_on_provider()
+
+
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.10')
+@pytest.mark.provider([VMwareProvider], override=True, scope="module", selector=ONE_PER_TYPE)
+def test_rename_vm(appliance, setup_provider, small_vm):
+
+    """Test for rename the VM.
+       This feature is included in 5.10z.
+    Steps:
+    1. Add VMware provider
+    2. Provision VM
+    3. Navigate to details page of VM
+    4. Click on Configuration > Rename this VM > Enter new name
+    5. Click on submit
+    6. Check whether VM is renamed or not
+    """
+    navigate_to(small_vm, 'Details')
+    assert small_vm.rename_vm(new_vm_name="test-{}".format(fauxfactory.gen_alphanumeric()),
+                              old_vm_name=small_vm.name)

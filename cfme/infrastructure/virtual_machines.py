@@ -34,7 +34,8 @@ from cfme.common.vm_views import (
     VMDetailsEntities,
     VMToolbar,
     VMEntities,
-    SetOwnershipView
+    SetOwnershipView,
+    RenameVmView
 )
 from cfme.exceptions import (
     DestinationNotFound,
@@ -1478,6 +1479,15 @@ class SetOwnership(CFMENavigateStep):
     # No am_i_here because the page only indicates name and not provider
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Set Ownership')
+
+
+@navigator.register(InfraVm, 'RenameVM')
+class RenameVM(CFMENavigateStep):
+    VIEW = RenameVmView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Rename this VM')
 
 
 @navigator.register(InfraVm, 'candu')
