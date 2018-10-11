@@ -201,7 +201,7 @@ oslo.utils==3.36.2
 ovirt-engine-sdk-python==4.2.6
 packaging==17.1
 pandocfilters==1.4.2
-paramiko==2.4.1
+paramiko==2.4.2
 parsedatetime==2.4
 pathlib2==2.3.2
 pbr==4.0.3
@@ -305,7 +305,7 @@ wcwidth==0.1.7
 webencodings==0.5.1
 websocket-client==0.40.0
 Werkzeug==0.14.1
-widgetastic.core==0.22.0
+widgetastic.core==0.30.0
 widgetastic.patternfly==0.0.38
 widgetsnbextension==3.2.1
 wrapanapi==3.0.28

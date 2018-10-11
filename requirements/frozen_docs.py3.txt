@@ -84,7 +84,7 @@ os-service-types==1.2.0
 oslo.i18n==3.20.0
 oslo.utils==3.36.2
 pandocfilters==1.4.2
-paramiko==2.4.1
+paramiko==2.4.2
 parsedatetime==2.4
 parso==0.2.1
 pbr==4.0.3
@@ -161,7 +161,7 @@ wcwidth==0.1.7
 webencodings==0.5.1
 websocket-client==0.40.0
 Werkzeug==0.14.1
-widgetastic.core==0.22.0
+widgetastic.core==0.30.0
 widgetastic.patternfly==0.0.38
 widgetsnbextension==3.2.1
 wrapt==1.10.11
