@@ -14,6 +14,7 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.timeutil import parsetime
+from cfme.utils.version import VersionPicker, LOWEST
 from cfme.utils.wait import wait_for
 from cfme.markers.env_markers.provider import providers
 
@@ -86,7 +87,10 @@ def verify_retirement_state(retire_vm):
         message="Wait for VM '{}' to enter retired state".format(retire_vm.name)
     )
 
-    retirement_states = ['off', 'suspended', 'unknown', 'terminated']
+    retirement_states = VersionPicker({
+        LOWEST: ['off', 'suspended', 'unknown', 'terminated'],
+        '5.10': ['retired']
+    }).pick()
     view = retire_vm.load_details()
     assert view.entities.summary('Power Management').get_text_of('Power State') in retirement_states
 
