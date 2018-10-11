@@ -495,8 +495,11 @@ class ServerView(ConfigurationView):
             self.context['object'].zone.region.settings_string,
             "Zones",
             "Zone: {} (current)".format(self.context['object'].zone.description),
-            "Server: {} [{}] (current)".format(self.context['object'].name,
-                                               self.context['object'].sid)]
+            "Server: {} [{}]{}".format(
+                self.context['object'].name,
+                self.context['object'].sid,
+                '' if self.context['object'] in self.context['object'].slave_servers
+                else ' (current)')]
         return (
             self.in_configuration and
             self.accordions.settings.is_displayed and
@@ -513,8 +516,10 @@ class Details(CFMENavigateStep):
             self.obj.zone.region.settings_string,
             "Zones",
             "Zone: {} (current)".format(self.obj.appliance.server.zone.description),
-            "Server: {} [{}] (current)".format(self.obj.appliance.server.name,
-                self.obj.sid))
+            "Server: {} [{}]{}".format(
+                self.obj.appliance.server.name,
+                self.obj.sid,
+                '' if self.obj in self.obj.slave_servers else ' (current)'))
 
 
 @navigator.register(Server, 'Server')
@@ -764,8 +769,11 @@ class ServerDiagnosticsView(ConfigurationView):
         return self.accordions.diagnostics.tree.currently_selected == [
             self.context['object'].zone.region.settings_string,
             "Zone: {} (current)".format(self.context['object'].zone.description),
-            "Server: {} [{}] (current)".format(
-                self.context['object'].name, self.context['object'].sid)]
+            "Server: {} [{}]{}".format(
+                self.context['object'].name,
+                self.context['object'].sid,
+                '' if self.context['object'] in self.context['object'].slave_servers
+                else ' (current)')]
 
 
 class ServerDiagnosticsCollectLogsView(ServerDiagnosticsView):
@@ -783,8 +791,10 @@ class Diagnostics(CFMENavigateStep):
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.obj.zone.region.settings_string,
             "Zone: {} (current)".format(self.obj.zone.description),
-            "Server: {} [{}] (current)".format(
-                self.obj.name, self.obj.sid))
+            "Server: {} [{}]{}".format(
+                self.obj.appliance.server.name,
+                self.obj.sid,
+                '' if self.obj in self.obj.slave_servers else ' (current)'))
 
 
 @navigator.register(Server)
