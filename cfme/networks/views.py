@@ -726,7 +726,6 @@ class OneProviderNetworkRouterView(BaseLoggedInPage):
 
 class OneProviderSecurityGroupView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
-    title = Text('//div[@id="main-content"]//h1')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(SecurityGroupSideBar)
     including_entities = View.include(SecurityGroupEntities, use_parent=True)
@@ -784,7 +783,6 @@ class FloatingIpView(BaseLoggedInPage):
 
 class FloatingIpDetailsView(BaseLoggedInPage):
     """ Represents detail view of floating ip """
-    title = Text('//div[@id="main-content"]//h1')
     toolbar = View.nested(FloatingIpDetailsToolBar)
     sidebar = View.nested(FloatingIpDetailsSideBar)
     search = View.nested(Search)
@@ -792,6 +790,7 @@ class FloatingIpDetailsView(BaseLoggedInPage):
     @View.nested
     class entities(View):  # noqa
         """ Represents details page when it's switched to Summary/Table view """
+        title = Text('//div[@id="main-content"]//h1')
         properties = SummaryTable(title="Properties")
         relationships = SummaryTable(title="Relationships")
         smart_management = SummaryTable(title="Smart Management")
@@ -799,17 +798,20 @@ class FloatingIpDetailsView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return (self.navigation.currently_selected == ['Networks', 'Floating IPs'] and
-                self.title.text == '{} (Summary)'.format(self.context['object'].address))
+                self.entities.title.text == '{} (Summary)'.format(self.context['object'].address))
 
 
 class OneProviderFloatingIpView(BaseLoggedInPage):
     """ Represents Floating Ip all for specific Network provider """
+
     toolbar = View.nested(OneProviderComponentsToolbar)
     including_entities = View.include(FloatingIpEntities, use_parent=True)
 
     @property
     def is_displayed(self):
-        title = '{name} (All Floating IPs)'.format(name=self.context['object'].name)
-        return (super(BaseLoggedInPage, self).is_displayed and
-                self.navigation.currently_selected == ['Networks', 'Providers'] and
-                self.entities.title.text == title)
+        title = "{name} (All Floating IPs)".format(name=self.context["object"].name)
+        return (
+            self.logged_in_as_current_user
+            and self.navigation.currently_selected == ["Networks", "Providers"]
+            and self.entities.title.text == title
+        )
