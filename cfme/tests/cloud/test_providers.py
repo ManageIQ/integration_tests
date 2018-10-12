@@ -453,6 +453,16 @@ def test_openstack_provider_has_api_version(appliance):
     assert view.api_version.is_displayed, "API version select is not visible"
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.10')
+def test_openstack_provider_has_dashboard(appliance, openstack_provider):
+    """Check whether dashboard view is available for Openstack provider
+    https://bugzilla.redhat.com/show_bug.cgi?id=1487142
+    """
+    view = navigate_to(openstack_provider, 'Details', use_resetter=False)
+    view.toolbar.view_selector.select('Dashboard View')
+    assert view.is_displayed
+
+
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider))
 def test_select_key_pair_none_while_provisioning(appliance, request, has_no_cloud_providers,
