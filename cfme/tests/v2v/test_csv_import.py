@@ -60,8 +60,8 @@ def import_and_check(appliance, infra_map, error_text, filetype='csv', content=F
     except UnexpectedAlertPresentException:
         pass
     if table_hover:
-        wait_for(lambda: plan_view.vms.table.is_displayed,
-                 timeout=60, message='Wait for VMs view', delay=2)
+        wait_for(lambda: plan_view.vms.is_displayed,
+                 timeout=60, message='Wait for VMs view', delay=5)
         if table_hover is 'duplicate':
             plan_view.vms.table[2][1].widget.click()
         else:
@@ -82,6 +82,8 @@ def valid_vm(appliance, infra_map):
     """Fixture to get valid vm name from discovery"""
     plan_view = migration_plan(appliance, infra_map, csv=True)
     plan_view.next_btn.click()
+    wait_for(lambda: plan_view.vms.is_displayed,
+             timeout=60, delay=5, message='Wait for VMs view')
     vm_name = [row.vm_name.text for row in plan_view.vms.table.rows()][0]
     plan_view.cancel_btn.click()
     return vm_name
