@@ -8,7 +8,7 @@ from widgetastic.utils import ParametrizedLocator, ParametrizedString
 from widgetastic.widget import Text, ParametrizedView, View
 from widgetastic_patternfly import Button, Input, Dropdown
 
-from cfme.exceptions import ChargebackRateNotFound
+from cfme.exceptions import ChargebackRateNotFound, displayed_not_implemented
 from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
@@ -104,9 +104,7 @@ class AddComputeChargebackView(RatesView):
     add_button = Button(title='Add')
     cancel_button = Button(title='Cancel')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class EditComputeChargebackView(AddComputeChargebackView):

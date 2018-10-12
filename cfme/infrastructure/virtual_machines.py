@@ -24,9 +24,24 @@ from widgetastic_patternfly import (
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template, VMCollection, TemplateCollection
 from cfme.common.vm_views import (
-    ManagementEngineView, CloneVmView, MigrateVmView, ProvisionView, EditView, PublishVmView,
-    RetirementViewWithOffset, VMDetailsEntities, VMToolbar, VMEntities, SetOwnershipView)
-from cfme.exceptions import DestinationNotFound, ItemNotFound, VmOrInstanceNotFound
+    ManagementEngineView,
+    CloneVmView,
+    MigrateVmView,
+    ProvisionView,
+    EditView,
+    PublishVmView,
+    RetirementViewWithOffset,
+    VMDetailsEntities,
+    VMToolbar,
+    VMEntities,
+    SetOwnershipView
+)
+from cfme.exceptions import (
+    DestinationNotFound,
+    ItemNotFound,
+    VmOrInstanceNotFound,
+    displayed_not_implemented
+)
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.conf import cfme_data
@@ -35,8 +50,16 @@ from cfme.utils.providers import get_crud_by_name
 from cfme.utils.version import UPSTREAM, VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
-    Accordion, ConditionalSwitchableView, ManageIQTree, PaginationPane,
-    SummaryTable, Table, TimelinesView, CompareToolBarActionsView, Search)
+    Accordion,
+    ConditionalSwitchableView,
+    ManageIQTree,
+    PaginationPane,
+    SummaryTable,
+    Table,
+    TimelinesView,
+    CompareToolBarActionsView,
+    Search
+)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
@@ -363,9 +386,7 @@ class InfraVmSnapshotAddView(InfraVmView):
     create = Button('Create')
     cancel = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class InfraVmGenealogyToolbar(View):

@@ -8,6 +8,7 @@ from wrapanapi.systems import OpenstackInfraSystem
 
 from cfme.common.provider import EventsEndpoint, SSHEndpoint, DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin, ProviderNodesView
+from cfme.exceptions import displayed_not_implemented
 from cfme.infrastructure.openstack_node import OpenstackNodeCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
@@ -171,9 +172,7 @@ class ProviderRegisterNodesView(View):
     register = Button(value='Register')
     cancel = Button(value='Cancel')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class ProviderScaleDownView(View):
@@ -185,9 +184,7 @@ class ProviderScaleDownView(View):
     scale_down = Button('Scale Down')
     cancel = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class ProviderScaleOutView(View):
@@ -199,9 +196,7 @@ class ProviderScaleOutView(View):
     scale = Button('Scale')
     cancel = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 @navigator.register(OpenstackInfraProvider, 'RegisterNodes')

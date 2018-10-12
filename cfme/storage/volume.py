@@ -10,7 +10,7 @@ from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, Taggable, TaggableCollection
-from cfme.exceptions import VolumeNotFoundError, ItemNotFound
+from cfme.exceptions import VolumeNotFoundError, ItemNotFound, displayed_not_implemented
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
@@ -123,9 +123,7 @@ class VolumeAddView(VolumeView):
 
 
 class VolumeEditView(VolumeView):
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
     volume_name = TextInput(name='name')
     save = Button('Save')
@@ -157,9 +155,7 @@ class VolumeBackupView(VolumeView):
 
 
 class VolumeSnapshotView(VolumeView):
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
     snapshot_name = TextInput(name='snapshot_name')
 

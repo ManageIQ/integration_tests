@@ -19,7 +19,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common.candu_views import DatastoreInfraUtilizationView
 from cfme.common.host_views import HostsView
-from cfme.exceptions import ItemNotFound, MenuItemNotFound
+from cfme.exceptions import ItemNotFound, MenuItemNotFound, displayed_not_implemented
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
@@ -152,9 +152,7 @@ class RegisteredHostsView(HostsView):
     """
     represents Hosts related to some datastore
     """
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 @attr.s

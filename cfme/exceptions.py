@@ -402,3 +402,8 @@ class CollectionFilteringError(CFMEException):
 
 class NeedleNotFoundInLog(CFMEException):
     """Raised when log doesnt't contain needle"""
+
+
+@property
+def displayed_not_implemented(cls):
+    raise NotImplementedError("This view has no unique markers for is_displayed check")

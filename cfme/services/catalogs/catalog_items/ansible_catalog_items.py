@@ -13,6 +13,7 @@ from widgetastic_patternfly import (
 )
 
 from cfme.services.catalogs import ServicesCatalogView
+from cfme.exceptions import displayed_not_implemented
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from . import BaseCatalogItem
 
@@ -160,18 +161,14 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
 class AddAnsibleCatalogItemView(AnsibleCatalogItemForm):
     add = Button("Add")
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class EditAnsibleCatalogItemView(AnsibleCatalogItemForm):
     save = Button("Save")
     reset = Button("Reset")
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class DetailsEntitiesAnsibleCatalogItemView(View):
