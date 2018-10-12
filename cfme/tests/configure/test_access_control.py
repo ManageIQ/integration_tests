@@ -1057,10 +1057,10 @@ def tenant_unique_tenant_project_name_on_parent_level(request, appliance, object
         name=name_of_tenant,
         description=tenant_description,
         parent=object_type.get_root_tenant())
-    if appliance.version < '5.9':
-        msg = 'Error when adding a new tenant: Validation failed: Name should be unique per parent'
-    else:
+    if appliance.version.is_in_series('5.9'):
         msg = 'Failed to add a new tenant resource - Name should be unique per parent'
+    else:
+        msg = 'Failed to add a new tenant resource - Tenant: Name should be unique per parent'
     with pytest.raises(Exception, match=msg):
         tenant2 = object_type.create(
             name=name_of_tenant,
