@@ -6,6 +6,7 @@ from widgetastic_patternfly import (
     BreadCrumb, BootstrapNav, BootstrapSelect, CheckableBootstrapTreeview, Dropdown, Tab)
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.exceptions import displayed_not_implemented
 from widgetastic_manageiq import (
     Accordion, BaseEntitiesView, Button,
     Checkbox, DriftComparison, Input, ItemsToolBarViewSelector, JSBaseEntity, ManageIQTree,
@@ -250,9 +251,7 @@ class HostEditView(HostFormView):
     save_button = Button("Save")
     reset_button = Button("Reset")
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class HostsEditView(HostEditView):

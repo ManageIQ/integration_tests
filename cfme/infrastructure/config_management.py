@@ -10,6 +10,7 @@ from widgetastic_patternfly import BootstrapSelect, Dropdown, Tab
 from cfme.base.credential import Credential as BaseCredential
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable, TagPageView
+from cfme.exceptions import displayed_not_implemented
 from cfme.utils import conf, ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -193,20 +194,16 @@ class ConfigManagementAddView(ConfigManagementView):
     """The add page"""
     sidebar = View.nested(ConfigManagementSideBar)
     entities = View.nested(ConfigManagementAddEntities)
-
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class ConfigManagementEditView(ConfigManagementView):
     """The edit page"""
     sidebar = View.nested(ConfigManagementSideBar)
     entities = View.nested(ConfigManagementEditEntities)
+    is_displayed = displayed_not_implemented
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class ConfigManager(Updateable, Pretty, Navigatable):

@@ -6,7 +6,7 @@ from widgetastic_patternfly import Button, BootstrapSelect
 from widgetastic_manageiq import CheckboxSelect, Select, Input
 from widgetastic.utils import partial_match
 
-from cfme.exceptions import OptionNotAvailable, DestinationNotFound
+from cfme.exceptions import DestinationNotFound, displayed_not_implemented
 from cfme.common.vm_views import RightSizeView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from . import Instance, InstanceCollection, CloudInstanceView
@@ -96,10 +96,8 @@ class AddFloatingIPView(CloudInstanceView):
         submit_button = Button('Submit')
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    # Only the instance name is displayed, cannot confirm provider
+    is_displayed = displayed_not_implemented
 
 
 class RemoveFloatingIPView(CloudInstanceView):
@@ -109,10 +107,8 @@ class RemoveFloatingIPView(CloudInstanceView):
         submit_button = Button('Submit')
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    # Only the instance name is displayed, cannot confirm provider
+    is_displayed = displayed_not_implemented
 
 
 class AttachVolumeView(CloudInstanceView):
@@ -136,10 +132,8 @@ class DetachVolumeView(CloudInstanceView):
         submit_button = Button('Submit')
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    # Only the instance name is displayed, cannot confirm provider
+    is_displayed = displayed_not_implemented
 
 
 class EvacuateView(CloudInstanceView):
@@ -150,10 +144,8 @@ class EvacuateView(CloudInstanceView):
         submit_button = Button('Submit')
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    # Only the instance name is displayed, cannot confirm provider
+    is_displayed = displayed_not_implemented
 
 
 class MigrateView(CloudInstanceView):
@@ -165,10 +157,8 @@ class MigrateView(CloudInstanceView):
         submit_button = Button('Submit')
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    # Only the instance name is displayed, cannot confirm provider
+    is_displayed = displayed_not_implemented
 
 
 class ReconfigureView(CloudInstanceView):
@@ -178,10 +168,8 @@ class ReconfigureView(CloudInstanceView):
         submit_button = Button('Submit')
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    # Only the instance name is displayed, cannot confirm provider
+    is_displayed = displayed_not_implemented
 
 
 @navigator.register(OpenStackInstance, 'AddFloatingIP')

@@ -9,7 +9,7 @@ from widgetastic_patternfly import (
 from widgetastic.widget import Table, Text, View
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.exceptions import DestinationNotFound, ItemNotFound
+from cfme.exceptions import DestinationNotFound, ItemNotFound, displayed_not_implemented
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.wait import wait_for, TimedOutError
@@ -27,9 +27,7 @@ class ManagePoliciesView(BaseLoggedInPage):
     reset = Button('Reset')
     cancel = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class PolicyProfileAssignable(object):

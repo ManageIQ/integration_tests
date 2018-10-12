@@ -10,6 +10,7 @@ from widgetastic_patternfly import Dropdown, Accordion, BootstrapSelect, Button
 
 from cfme.base import BaseEntity, BaseCollection
 from cfme.base.login import BaseLoggedInPage
+from cfme.exceptions import displayed_not_implemented
 from cfme.utils import conf, ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -96,9 +97,7 @@ class PXEServerDetailsView(PXEMainView):
         basic_information = SummaryTable(title="Basic Information")
         pxe_image_menus = SummaryTable(title='PXE Image Menus')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class PXEServerForm(View):
@@ -120,9 +119,7 @@ class PXEServerForm(View):
     confirm_password = Input(id='log_verify')
     validate = Button('Validate the credentials by logging into the Server')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class PXEServerAddView(PXEServerForm):
@@ -154,9 +151,7 @@ class PXEImageEditView(View):
     reset = Button('Reset')
     cancel = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class PXEServer(Updateable, Pretty, Navigatable):
@@ -422,9 +417,7 @@ class PXECustomizationTemplateForm(View):
     type = BootstrapSelect(id='typ')
     script = ScriptBox(locator='//textarea[contains(@id, "script_data")]')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class PXECustomizationTemplateAddView(PXECustomizationTemplateForm):
@@ -648,9 +641,7 @@ class PXESystemImageTypeDetailsView(PXEMainView):
     class entities(View):  # noqa
         basic_information = SummaryTable(title="Basic Information")
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class PXESystemImageTypeForm(View):
@@ -658,9 +649,7 @@ class PXESystemImageTypeForm(View):
     name = Input(id='name')
     type = BootstrapSelect(id='provision_type')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class PXESystemImageTypeAddView(PXESystemImageTypeForm):
@@ -716,9 +705,7 @@ class PXESystemImageDeatilsView(PXEMainView):
 
 class PXESystemImageEditView(PXEMainView):
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
     image_type = BootstrapSelect(id='image_typ')
     save = Button('Save')
@@ -903,18 +890,14 @@ class PXEDatastoreDetailsView(PXEMainView):
     class entities(View):  # noqa
         basic_information = SummaryTable(title="Basic Information")
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class PXEDatastoreForm(View):
     title = Text('//div[@id="main-content"]//h1')
     provider = BootstrapSelect(id='ems_id')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class PXEDatastoreAddView(PXEDatastoreForm):

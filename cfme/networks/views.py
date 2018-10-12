@@ -1,12 +1,25 @@
 from widgetastic.widget import View, Text, Select
-from widgetastic_patternfly import (Dropdown, Accordion, Button, TextInput,
-                                    BootstrapSwitch, BootstrapSelect)
+from widgetastic_patternfly import (
+    Dropdown,
+    Accordion,
+    Button,
+    TextInput,
+    BootstrapSwitch,
+    BootstrapSelect
+)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.provider_views import ProviderAddView, ProviderEditView
-from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
-                                  BaseEntitiesView, ParametrizedSummaryTable, Search,
-                                  Table)
+from cfme.exceptions import displayed_not_implemented
+from widgetastic_manageiq import (
+    ManageIQTree,
+    SummaryTable,
+    ItemsToolBarViewSelector,
+    BaseEntitiesView,
+    ParametrizedSummaryTable,
+    Search,
+    Table
+)
 
 
 class NetworkProviderToolBar(View):
@@ -262,9 +275,7 @@ class CloudNetworkAddView(BaseLoggedInPage):
     shared = BootstrapSwitch(id='cloud_network_shared')
     add = Button('Add')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class CloudNetworkEditView(BaseLoggedInPage):
@@ -276,9 +287,7 @@ class CloudNetworkEditView(BaseLoggedInPage):
     shared = BootstrapSwitch(id='cloud_network_shared')
     save = Button('Save')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class NetworkPortToolBar(View):
@@ -433,9 +442,7 @@ class NetworkRouterAddView(BaseLoggedInPage):
     cloud_tenant = Select(name='cloud_tenant_id')
     add = Button('Add')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class NetworkRouterEditView(BaseLoggedInPage):
@@ -446,9 +453,7 @@ class NetworkRouterEditView(BaseLoggedInPage):
     subnet_name = Select(name='cloud_subnet_id')
     save = Button('Save')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class NetworkRouterAddInterfaceView(BaseLoggedInPage):
@@ -456,9 +461,7 @@ class NetworkRouterAddInterfaceView(BaseLoggedInPage):
     subnet_name = Select(id='cloud_subnet_id')
     add = Button('Add')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class SecurityGroupToolBar(View):
@@ -573,9 +576,7 @@ class SubnetAddView(BaseLoggedInPage):
     gateway = TextInput(name='gateway_ip')
     add = Button('Add')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class SubnetEditView(BaseLoggedInPage):
@@ -585,9 +586,7 @@ class SubnetEditView(BaseLoggedInPage):
     gateway = TextInput(name='gateway_ip')
     save = Button('Save')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class SubnetSideBar(View):

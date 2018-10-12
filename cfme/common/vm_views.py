@@ -9,7 +9,7 @@ from widgetastic_patternfly import (
     BreadCrumb, Dropdown, BootstrapSelect, Tab, Input, CheckableBootstrapTreeview)
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.exceptions import TemplateNotFound
+from cfme.exceptions import TemplateNotFound, displayed_not_implemented
 from cfme.utils.log import logger
 from widgetastic_manageiq import (
     Calendar, Checkbox, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, RadioGroup,
@@ -359,9 +359,7 @@ class ProvisionView(BaseLoggedInPage):
             sleep(3)
             self.flush_widget_cache()
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class CloneVmView(BaseLoggedInPage):
@@ -372,9 +370,7 @@ class CloneVmView(BaseLoggedInPage):
         submit_button = Button('Submit')
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class MigrateVmView(BaseLoggedInPage):
@@ -385,9 +381,7 @@ class MigrateVmView(BaseLoggedInPage):
         submit = Button('Submit')
         cancel = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class PublishVmView(BaseLoggedInPage):
@@ -398,9 +392,7 @@ class PublishVmView(BaseLoggedInPage):
         submit_button = Button('Submit')
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 class RetirementView(BaseLoggedInPage):
@@ -419,10 +411,8 @@ class RetirementView(BaseLoggedInPage):
         save = Button('Save')
         cancel = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        # TODO match quadicon and title
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    # TODO match quadicon and title
+    is_displayed = displayed_not_implemented
 
 
 class RetirementViewWithOffset(RetirementView):
@@ -473,10 +463,8 @@ class EditView(BaseLoggedInPage):
         reset_button = Button('Reset')
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        # Only name is displayed
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    # Only name is displayed
+    is_displayed = displayed_not_implemented
 
 
 class SetOwnershipView(BaseLoggedInPage):
@@ -493,10 +481,8 @@ class SetOwnershipView(BaseLoggedInPage):
         reset_button = Button('Reset')
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        # TODO match quadicon using entities, no provider match through icon asset yet
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    # TODO match quadicon using entities, no provider match through icon asset yet
+    is_displayed = displayed_not_implemented
 
 
 class ManagementEngineView(BaseLoggedInPage):
@@ -512,10 +498,8 @@ class ManagementEngineView(BaseLoggedInPage):
         reset_button = Button('Reset')
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        # Only the name is displayed
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    # Only name is displayed
+    is_displayed = displayed_not_implemented
 
 
 class PolicySimulationView(BaseLoggedInPage):
@@ -529,10 +513,8 @@ class PolicySimulationView(BaseLoggedInPage):
         entities = View.nested(BaseNonInteractiveEntitiesView)
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        # TODO match quadicon
-        return False
+    # TODO match quadicon
+    is_displayed = displayed_not_implemented
 
 
 class RightSizeView(BaseLoggedInPage):
@@ -542,10 +524,8 @@ class RightSizeView(BaseLoggedInPage):
     # TODO new table widget for right-size tables
     # They're H3 headers with the table as following-sibling
 
-    @property
-    def is_displayed(self):
-        # Only name is displayed
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    # Only name is displayed
+    is_displayed = displayed_not_implemented
 
 
 class DriftHistory(BaseLoggedInPage):

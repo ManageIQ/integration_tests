@@ -12,7 +12,6 @@ from widgetastic_patternfly import (
     BreadCrumb, SelectorDropdown, Dropdown, BootstrapSelect, Input, Button, Tab)
 from widgetastic.widget import Text, View, TextInput
 
-from cfme import exceptions
 from cfme.base.credential import TokenCredential
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView, PolicyProfileAssignable
@@ -22,6 +21,7 @@ from cfme.common.provider_views import (
     BeforeFillMixin, ContainerProvidersView, ContainerProviderEditViewUpdated, ProvidersView,
     ContainerProviderAddViewUpdated, ProviderSideBar, ProviderDetailsToolBar, ProviderDetailsView,
     ProviderToolBar)
+from cfme.exceptions import LabelNotFoundException, displayed_not_implemented
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.browser import browser
@@ -470,9 +470,7 @@ class AdHocMetricsView(BaseLoggedInPage):
 
     selected_filter = None
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
     def wait_for_filter_option_to_load(self):
         wait_for(lambda: bool(self.filter_dropdown.items), delay=5, num_sec=60)
@@ -512,9 +510,7 @@ class ContainerProvidersUtilizationView(View):
     memory = LineChart(id='miq_chart_parent_candu_1')
     network = LineChart(id='miq_chart_parent_candu_2')
 
-    @property
-    def is_displayed(self):
-        raise NotImplementedError("This view has no unique markers for is_displayed check")
+    is_displayed = displayed_not_implemented
 
 
 @navigator.register(ContainersProvider, 'Utilization')
@@ -691,7 +687,7 @@ class Labelable(object):
             if silent_failure:
                 logger.warning(failure_signature)
                 return False
-            raise exceptions.LabelNotFoundException(failure_signature)
+            raise LabelNotFoundException(failure_signature)
 
 
 def navigate_and_get_rows(provider, obj, count, silent_failure=False):
