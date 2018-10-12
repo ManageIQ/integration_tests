@@ -60,7 +60,7 @@ class DetailsServiceCatalogView(ServicesCatalogsView):
     @property
     def is_displayed(self):
         return (
-            self.in_explorer and self.service_catalogs.is_opened and
+            self.in_service_catalogs and self.service_catalogs.is_opened and
             self.title.text == 'Service "{}"'.format(self.context['object'].name)
         )
 
