@@ -28,10 +28,7 @@ class PoliciesAllView(ControlExplorerView):
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == "All {} {} Policies".format(
-                self.context["object"].PRETTY,
-                self.context["object"].TYPE
-            )
+            self.title.text == "All Policies"
         )
 
 
@@ -102,13 +99,18 @@ class NewPolicyView(PolicyFormCommon):
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            'All Policies',
+            '{} Policies'.format(self.context["object"].TYPE),
+            '{} {} Policies'.format(self.context['object'].TREE_NODE, self.context["object"].TYPE)
+        ]
+        expected_title = "Adding a new {} {} Policy".format(self.context["object"].PRETTY,
+                                                            self.context["object"].TYPE)
         return (
             self.in_control_explorer and
-            self.title.text == "Adding a new {} {} Policy".format(
-                self.context["object"].PRETTY, self.context["object"].TYPE) and
+            self.title.text == expected_title and
             self.policies.is_opened and
-            self.policies.tree.currently_selected == ["All {} {} Policies".format(
-                self.context["object"].PRETTY, self.context["object"].TYPE)]
+            self.policies.tree.currently_selected == expected_tree
         )
 
 
@@ -146,10 +148,14 @@ class PolicyDetailsView(ControlExplorerView):
 
     @property
     def is_displayed(self):
+        expected_title = '{} {} Policy "{}"'.format(
+            self.context["object"].PRETTY,
+            self.context["object"].TYPE,
+            self.context["object"].description
+        )
         return (
             self.in_control_explorer and
-            self.title.text == '{} {} Policy "{}"'.format(self.context["object"].PRETTY,
-                self.context["object"].TYPE, self.context["object"].description) and
+            self.title.text == expected_title and
             self.policies.is_opened and
             self.policies.tree.currently_selected == [
                 "All Policies",
@@ -298,15 +304,14 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
             cancel: Whether to cancel the deletion (default False).
         """
         view = navigate_to(self, "Details")
-        view.configuration.item_select("Delete this {} Policy".format(self.PRETTY),
-            handle_alert=not cancel)
+        view.configuration.item_select(
+            "Delete this {} Policy".format(self.PRETTY),
+            handle_alert=not cancel
+        )
         if cancel:
+            # no redirection
             assert view.is_displayed
-            view.flash.assert_no_error()
-        else:
-            view = self.create_view(PoliciesAllView)
-            assert view.is_displayed
-            view.flash.assert_no_error()
+        view.flash.assert_no_error()
 
     def copy(self, cancel=False):
         """Copy this Policy in UI.
@@ -579,6 +584,7 @@ class PolicyCollection(BaseCollection):
     CONTAINERIMAGE_CONTROL_POLICY = ContainerImageControlPolicy
     PROVIDER_CONTROL_POLICY = ProviderControlPolicy
     PHYSICAL_INFRASTRUCTURE_CONTROL_POLICY = PhysicalInfrastructureControlPolicy
+    PRETTY = None
 
     # A rare collection override of instantiate
     def instantiate(self, policy_class, description, active=True, scope=None, notes=None):
@@ -596,7 +602,8 @@ class PolicyCollection(BaseCollection):
             "notes": policy.notes
         })
         view.add_button.click()
-        view = policy.create_view(PolicyDetailsView)
+
+        view = policy.create_view(PolicyDetailsView, o=policy)
         view.wait_displayed()
         view.flash.assert_success_message('Policy "{}" was added'.format(policy.description))
         return policy

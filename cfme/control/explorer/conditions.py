@@ -67,10 +67,9 @@ class ConditionsAllView(ControlExplorerView):
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == "All {} Conditions".format(self.context["object"].FIELD_VALUE) and
+            self.title.text == "All Conditions" and
             self.conditions.is_opened and
-            self.conditions.tree.currently_selected == ["All Conditions",
-                "{} Conditions".format(self.context["object"].TREE_NODE)]
+            self.conditions.tree.currently_selected == ["All Conditions"]
         )
 
 
@@ -90,12 +89,15 @@ class NewConditionView(ConditionFormCommon):
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            "All Conditions",
+            "{} Conditions".format(self.context["object"].TREE_NODE)
+        ]
         return (
             self.in_control_explorer and
             self.title.text == "Adding a new Condition" and
             self.conditions.is_opened and
-            self.conditions.tree.currently_selected == ["All Conditions",
-                "{} Condition".format(self.context["object"].TREE_NODE)]
+            self.conditions.tree.currently_selected == expected_tree
         )
 
 
