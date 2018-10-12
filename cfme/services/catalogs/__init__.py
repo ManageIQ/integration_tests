@@ -1,15 +1,15 @@
 from navmazing import NavigateToSibling
-from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
+from widgetastic.widget import View, Text
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
-from widgetastic_manageiq import Accordion, ManageIQTree
-from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import Accordion, ItemsToolBarViewSelector, ManageIQTree
 
 
 class ServicesCatalogView(BaseLoggedInPage):
+    title = Text('#explorer_title_text')
 
     @property
     def in_explorer(self):
@@ -19,8 +19,7 @@ class ServicesCatalogView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return (self.in_explorer and self.toolbar.configuration.is_displayed and
-                not self.catalogs.is_dimmed)
+        return self.in_explorer
 
     @View.nested
     class service_catalogs(Accordion):  # noqa
