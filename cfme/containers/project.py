@@ -24,7 +24,12 @@ class ProjectDetailsView(ContainerObjectDetailsBaseView):
 
 
 class ProjectDashboardView(ContainerObjectDetailsBaseView):
-    pass
+
+    @property
+    def is_displayed(self):
+        return(
+            self.breadcrumb.is_displayed and
+            '{} (Dashboard)'.format(self.context['object'].name) in self.breadcrumb.active_location)
 
 
 @attr.s
@@ -105,6 +110,7 @@ class Details(CFMENavigateStep):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    surf_pages=not search_visible,
                                                    use_search=search_visible).click()
+        self.view.toolbar.view_selector.select("Summary View")
 
     def resetter(self):
         if self.appliance.version.is_in_series('5.9'):
