@@ -684,6 +684,7 @@ class OneProviderBalancerView(BaseLoggedInPage):
 
 class OneProviderNetworkPortView(BaseLoggedInPage):
     """ Represents whole All Subnets page """
+    title = Text('//div[@id="main-content"]//h1')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(NetworkPortSideBar)
     including_entities = View.include(NetworkPortEntities, use_parent=True)

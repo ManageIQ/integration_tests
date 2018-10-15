@@ -101,3 +101,12 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
+
+
+@navigator.register(NetworkPort, 'DetailsThroughProvider')
+class NetworkPortThroughProvider(CFMENavigateStep):
+    VIEW = NetworkPortDetailsView
+    prerequisite = NavigateToAttribute('provider_obj', 'NetworkPorts')
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()

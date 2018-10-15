@@ -42,6 +42,32 @@ def test_subnet_details_stats(provider, with_nuage_sandbox):
     subnet.validate_stats(subnet_stats)
 
 
+def test_network_port_details_stats(provider, with_nuage_sandbox):
+    """
+    This test creates Nuage enterprise and its entities, including network port.
+    Then it validates inventory of created network port.
+
+    Steps:
+        * Deploy some entities outside of MIQ (directly in the provider)
+        * Create dictionary with stats that will be validated
+        * Find created network port in database and validate its stats
+    """
+    sandbox = with_nuage_sandbox
+    floating_ip = provider.mgmt.api.floating_ips.get(
+        filter='ID == "{ems_ref}"'.format(ems_ref=sandbox['vm_vport'].associated_floating_ip_id))
+    port_stats = {
+        'name_value': sandbox['vm_vport'].name,
+        'type_value': 'ManageIQ/Providers/Nuage/Network Manager/Network Port/Vm',
+        'floating_ip_addresses_value': floating_ip[0].address,
+        'cloud_subnets_num': 1,
+        'floating_ips_num': len(floating_ip),
+        'security_groups_num': len(sandbox['vm_vport'].policy_groups),
+    }
+    provider.refresh_provider_relationships()
+    port = object_in_vmdb_with_timeout('nuage_network_ports', provider, sandbox['vm_vport'].id)
+    port.validate_stats(port_stats)
+
+
 def object_in_vmdb_with_timeout(table, provider, ems_ref):
 
     def object_from_vmdb():
