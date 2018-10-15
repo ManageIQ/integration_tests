@@ -17,9 +17,9 @@ def set_and_get_tenant_quota(appliance):
         "cpu_cb": True,
         "cpu": "10",
         "memory_cb": True,
-        "memory": "50",
+        "memory": "50.0",
         "storage_cb": True,
-        "storage": "150",
+        "storage": "150.0",
         "template_cb": True,
         "template": "5",
         "vm_cb": True,
@@ -29,13 +29,9 @@ def set_and_get_tenant_quota(appliance):
     root_tenant.set_quota(**tenant_quota_data)
 
     data = dict()
-    for key in property_mapping:
-        if "GB" in property_mapping[key]:
-            suffix = " GB"
-            tenant_quota_data[key] = str(float(tenant_quota_data[key]))
-        else:
-            suffix = " Count"
-        data[property_mapping[key]] = tenant_quota_data[key] + suffix
+    for key, value in property_mapping.items():
+        suffix = "GB" if "GB" in value else "Count"
+        data[value] = '{0} {1}'.format(tenant_quota_data[key], suffix)
 
     yield data
 
