@@ -49,6 +49,13 @@ def schedule_data(request):
         return yaml.load(rep_yaml)
 
 
+@pytest.fixture(scope="function")
+def get_custom_report(appliance, custom_report_values):
+    custom_report = appliance.collections.reports.create(**custom_report_values)
+    yield custom_report
+    custom_report.delete()
+
+
 @pytest.mark.rhel_testing
 @pytest.mark.sauce
 @pytest.mark.tier(3)
@@ -290,18 +297,16 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
 
 
 def test_crud_custom_report_schedule(
-    appliance, request, custom_report_values, schedule_data
+    appliance, request, get_custom_report, schedule_data
 ):
     """This test case creates a schedule for custom reports and tests if it was created
     successfully.
     """
-    custom_report = appliance.collections.reports.create(**custom_report_values)
     schedule_data["filter"] = (
         "My Company (All Groups)",
         "Custom",
-        custom_report.menu_name,
+        get_custom_report.menu_name,
     )
     custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
     assert custom_report_schedule.exists
     custom_report_schedule.delete(cancel=False)
-    request.addfinalizer(custom_report.delete)
