@@ -6,6 +6,7 @@ from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, Can
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView
 from cfme.common.vm_views import VMDetailsEntities
+from cfme.exceptions import displayed_not_implemented
 from cfme.services.myservice import MyService
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance import MiqImplementationContext
@@ -143,12 +144,7 @@ class SetOwnershipView(SetOwnershipForm):
 
     save_button = Button('Save')
 
-    @property
-    def is_displayed(self):
-        return (
-            self.in_myservices and
-            self.myservice.is_opened and
-            self.title.text == 'Set Ownership of Service "{}"'.format(self.context['object'].name))
+    is_displayed = displayed_not_implemented
 
 
 @MiqImplementationContext.external_for(MyService.get_ownership, ViaUI)
@@ -191,7 +187,9 @@ class ServiceVMDetailsView(VMDetailsEntities):
     @property
     def is_displayed(self):
         return (
-            self.in_myservices and self.myservice.is_opened and
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Services', 'MyServices'] and
+            self.myservice.is_opened and
             self.title.text == 'VM and Instance "{}"'.format(self.context['object'].name)
         )
 
