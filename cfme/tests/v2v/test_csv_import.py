@@ -28,7 +28,7 @@ pytestmark = [
 @pytest.fixture(scope="function")
 def infra_map(appliance, v2v_providers):
     """Fixture to create infrastructure mapping"""
-    form_data = _form_data(v2v_providers[0], v2v_providers[1])
+    form_data = _form_data(v2v_providers.vmware_provider, v2v_providers.rhv_provider)
     return appliance.collections.v2v_mappings.create(form_data)
 
 
@@ -63,7 +63,11 @@ def import_and_check(appliance, infra_map, error_text, filetype='csv', content=F
         wait_for(lambda: plan_view.vms.is_displayed,
                  timeout=60, message='Wait for VMs view', delay=5)
         if table_hover is 'duplicate':
-            plan_view.vms.table[2][1].widget.click()
+            if appliance.version >= '5.10.0.19':
+                # Version check due to change in order of valid vms
+                plan_view.vms.table[0][1].widget.click()
+            else:
+                plan_view.vms.table[2][1].widget.click()
         else:
             plan_view.vms.table[0][1].widget.click()
         error_msg = plan_view.vms.popover_text.read()
