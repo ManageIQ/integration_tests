@@ -7,6 +7,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.tests.candu import compare_data
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -17,7 +18,7 @@ pytestmark = [
     pytest.mark.tier(3),
     test_requirements.c_and_u,
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([VMwareProvider, RHEVMProvider, EC2Provider, AzureProvider],
+    pytest.mark.provider([VMwareProvider, RHEVMProvider, EC2Provider, AzureProvider], selector=ONE,
                         required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
 ]
 
