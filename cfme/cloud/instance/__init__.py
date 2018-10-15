@@ -128,7 +128,7 @@ class InstanceDetailsView(CloudInstanceView):
             relationship_provider_name = relationships.get_text_of('Cloud Provider')
         except (NameError, NoSuchElementException):
             logger.warning('No "Cloud Provider" Relationship, assume instance view not displayed')
-            return False
+            raise NotImplementedError("This view has no unique markers for is_displayed check")
         return (
             self.in_cloud_instance and
             self.entities.title.text == 'Instance "{}"'.format(expected_name) and
