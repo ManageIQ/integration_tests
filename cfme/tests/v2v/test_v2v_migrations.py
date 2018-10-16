@@ -50,10 +50,6 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
         infrastructure_mapping_collection.delete(mapping)
     # vm_obj is a list, with only 1 VM object, hence [0]
     src_vm_obj = form_data_vm_obj_single_datastore.vm_list[0]
-    wait_for(lambda: src_vm_obj.ip_address is not None,
-        message="Waiting for VM to display IP in CFME",
-        fail_func=src_vm_obj.refresh_relationships,
-        delay=5, timeout=300)
 
     migration_plan_collection = appliance.collections.v2v_plans
     migration_plan = migration_plan_collection.create(
@@ -506,3 +502,53 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
     for vm in vms:
         soft_assert(request_details_list.is_successful(vm) and
          not request_details_list.is_errored(vm))
+
+
+@pytest.mark.parametrize('form_data_vm_obj_single_datastore', [['nfs', 'nfs', rhel7_minimal]],
+                        indirect=True)
+def test_migration_special_char_name(request, appliance, v2v_providers, host_creds, conversion_tags,
+                                    form_data_vm_obj_single_datastore):
+    """Tests migration where name of migration plan is comprised of special non-alphanumeric
+       characters, such as '@#$(&#@('."""
+    infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+
+    src_vm_obj = form_data_vm_obj_single_datastore.vm_obj[0]
+    wait_for(lambda: src_vm_obj.ip_address is not None,
+        message="Waiting for VM to display IP in CFME",
+        fail_func=src_vm_obj.refresh_relationships,
+        delay=5, timeout=300)
+
+    migration_plan_collection = appliance.collections.v2v_plans
+    # fauxfactory.gen_special() used here to create special character string e.g. #$@#@
+    migration_plan = migration_plan_collection.create(
+        name="{}".format(fauxfactory.gen_special()), description="desc_{}"
+        .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
+        vm_list=form_data_vm_obj_single_datastore.vm_obj, start_migration=True)
+
+    # explicit wait for spinner of in-progress status card
+    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
+        message="migration plan is starting, be patient please", delay=5, num_sec=150,
+        handle_exception=True)
+
+    # wait until plan is in progress
+    wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
+        message="migration plan is in progress, be patient please",
+        delay=5, num_sec=1800)
+
+    view.migr_dropdown.item_select("Completed Plans")
+    view.wait_displayed()
+    logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
+        migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
+            migration_plan.name), view.migration_plans_completed_list.get_clock(
+            migration_plan.name))
+    # validate MAC address matches between source and target VMs
+    assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
+    src_vm = form_data_vm_obj_single_datastore.vm_obj[0]
+    migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
+    assert src_vm.mac_address == migrated_vm.mac_address

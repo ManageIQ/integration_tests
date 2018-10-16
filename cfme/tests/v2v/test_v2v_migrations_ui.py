@@ -92,9 +92,9 @@ def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_
         ['mappings'][0]['target'])
 
     # Test Datacenter name in source and destination mapping select list:
-    soft_assert(v2v_providers[0].data['datacenters'][0]
+    soft_assert(v2v_providers.vmware_provider.data['datacenters'][0]
                 in view.form.cluster.source_clusters.all_items[0])
-    soft_assert(v2v_providers[1].data['datacenters'][0]
+    soft_assert(v2v_providers.rhv_provider.data['datacenters'][0]
                 in view.form.cluster.target_clusters.all_items[0])
 
     # Assert Add Mapping button is enabled before selecting source and target clusters
@@ -145,8 +145,8 @@ def test_v2v_ui_no_providers(appliance, v2v_providers, soft_assert):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     view = navigate_to(infrastructure_mapping_collection, 'All')
     soft_assert(view.create_infrastructure_mapping.is_displayed)
-    is_provider_1_deleted = v2v_providers[0].delete_if_exists(cancel=False)
-    is_provider_2_deleted = v2v_providers[1].delete_if_exists(cancel=False)
+    is_provider_1_deleted = v2v_providers.vmware_provider.delete_if_exists(cancel=False)
+    is_provider_2_deleted = v2v_providers.rhv_provider.delete_if_exists(cancel=False)
     # Test after removing Providers, users cannot Create Infrastructure Mapping
     view = navigate_to(infrastructure_mapping_collection, 'All')
     soft_assert(view.configure_providers.is_displayed)
@@ -155,9 +155,9 @@ def test_v2v_ui_no_providers(appliance, v2v_providers, soft_assert):
     # soft_assert(not view.create_migration_plan.is_displayed)
     # Following leaves to appliance in the state it was before this test deleted provider_setup
     if is_provider_1_deleted:
-        v2v_providers[0].create(validate_inventory=True)
+        v2v_providers.vmware_provider.create(validate_inventory=True)
     if is_provider_2_deleted:
-        v2v_providers[1].create(validate_inventory=True)
+        v2v_providers.rhv_provider.create(validate_inventory=True)
 
 
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
