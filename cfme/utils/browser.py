@@ -39,7 +39,7 @@ WHARF_OUTER_RETRIES = 2
 
 def _load_firefox_profile():
     # create a firefox profile using the template in data/firefox_profile.js.template
-
+    global firefox_profile_tmpdir
     # Make a new firefox profile dir if it's unset or doesn't exist for some reason
     firefox_profile_tmpdir = mkdtemp(prefix='firefox_profile_')
     log.debug("created firefox profile")
