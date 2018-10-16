@@ -9,7 +9,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
-from cfme.utils.blockers import BZ
+from cfme.utils.blockers import BZ, GH
 from cfme.utils.conf import cfme_data
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -117,8 +117,7 @@ def catalog_item(appliance, provider, dialog, catalog, provisioning,
 
 
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[BZ(1633540, forced_streams=['5.10'],
-                            unblock=lambda provider: not provider.one_of(RHEVMProvider)),
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7965'),
                             BZ(1633516, forced_streams=['5.10'],
                             unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
