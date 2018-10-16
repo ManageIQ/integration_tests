@@ -951,6 +951,22 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
 
         return details
 
+    def get_all_provider_details(self):
+        """
+        Returns a dictionary mapping id of all the providers present in the appliance,
+        to their name and type.
+        """
+        logger.debug(
+            "Retrieving all the provider details for appliance: {}".format(
+                self.appliance.hostname
+            )
+        )
+
+        details = {}
+        for provider in self.appliance.rest_api.collections.providers.all:
+            details[provider.id] = {"name": provider.name, "type": provider.type}
+        return details
+
     def get_vm_details(self, vm_id):
         """
         Returns the name, type, vendor, host_id, and power_state associated with
