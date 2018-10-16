@@ -10,7 +10,8 @@ from widgetastic.widget import View, Table, Text, Image, FileInput
 from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView,
                                   ParametrizedSummaryTable, SummaryFormItem)
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown, DatePicker,
-                                    FlashMessages, BootstrapSelect, Tab)
+                                    FlashMessages, BootstrapSelect, Tab,
+                                    CheckableBootstrapTreeview)
 
 from cfme.base.credential import Credential
 from cfme.base.login import BaseLoggedInPage
@@ -1278,6 +1279,9 @@ class ZoneDetailsView(ZoneView):
 
 
 class ZoneSmartProxyAffinityView(ZoneView):
+    smartproxy_affinity = CheckableBootstrapTreeview(tree_id='smartproxy_affinitybox')
+    save = Button(title='Save Changes')
+
     @property
     def is_displayed(self):
         return self.smart_proxy_affinity.is_active()

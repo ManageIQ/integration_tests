@@ -207,6 +207,20 @@ def local_setup_provider(request, setup_provider_modscope, provider, appliance):
 
 
 @pytest.fixture(scope="module")
+def enable_smartproxy_affinity(request, appliance, provider):
+    if provider.data.get('smartproxy_affinity', False):
+        view = navigate_to(appliance.server.zone, 'SmartProxyAffinity')
+        view.smartproxy_affinity.check_node(view.smartproxy_affinity.root_item.text)
+        view.save.click()
+
+        @request.addfinalizer
+        def _disable_smartproxy_affinty():
+            view = navigate_to(appliance.server.zone, 'SmartProxyAffinity')
+            view.smartproxy_affinity.uncheck_node(view.smartproxy_affinity.root_item.text)
+            view.save.click()
+
+
+@pytest.fixture(scope="module")
 def ssa_compliance_policy(appliance):
     policy = appliance.collections.policies.create(
         VMControlPolicy,
@@ -231,8 +245,8 @@ def ssa_compliance_profile(appliance, provider, ssa_compliance_policy):
 
 
 @pytest.fixture(scope="module")
-def ssa_single_vm(request, local_setup_provider, provider, vm_analysis_provisioning_data,
-           appliance, analysis_type):
+def ssa_single_vm(request, local_setup_provider, enable_smartproxy_affinity, provider,
+                  vm_analysis_provisioning_data, appliance, analysis_type):
     """ Fixture to provision instance on the provider """
     def _ssa_single_vm():
         template_name = vm_analysis_provisioning_data['image']
