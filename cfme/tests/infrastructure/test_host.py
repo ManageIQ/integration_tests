@@ -21,6 +21,8 @@ pytestmark = [
     pytest.mark.provider([InfraProvider], required_fields=['hosts'], scope='module'),
 ]
 
+VIEWS = ('Grid View', 'Tile View', 'List View')
+
 
 @pytest.fixture(scope='module')
 def host_ips(provider):
@@ -44,6 +46,24 @@ def host_ips(provider):
 
     ipaddresses.sort()
     return tuple(ipaddresses)
+
+
+@pytest.fixture(scope='module')
+def create_250_hosts(appliance):
+    script_downloaded = appliance.ssh_client.run_command(
+        "wget -P /var/www/miq/vmdb/ "
+        "https://gist.githubusercontent.com/NickLaMuro/225833358423723ed17ff294415fa6b4/raw/"
+        "f717ccb83f530f653aabe67fe9389164513ef90d/bz_1580569_db_replication_script.rb")
+    assert script_downloaded.success, script_downloaded.output
+
+    create_250_hosts = appliance.ssh_client.run_command(
+        "cd /var/www/miq/vmdb && bin/rails r bz_1580569_db_replication_script.rb")
+    assert create_250_hosts.success
+    yield
+
+    appliance.ssh_client.run_command("rm -f /var/www/miq/vmdb/bz_1580569_db_replication_script.rb")
+    appliance.ssh_client.run_rails_console("[Host].each(&:delete_all)")
+    appliance.delete_all_providers()
 
 
 def navigate_and_select_quads(provider):
@@ -162,3 +182,23 @@ def test_tag_host_after_provider_delete(provider, appliance, setup_provider, req
     provider.wait_for_delete()
     tag = host.add_tag()
     request.addfinalizer(lambda: host.remove_tag(tag))
+
+
+@pytest.mark.parametrize('view_type', VIEWS)
+def test_250_vmware_hosts_loading(appliance, create_250_hosts, view_type):
+    """
+    Test to automate BZ1580569
+    """
+    # Without the patch, this will cause the process to consume roughly 10+ Gigs of RAM
+    # due to a poorly optimized database query
+    rails_console = appliance.ssh_client.run_rails_console(
+        "MiqReport.load_from_view_options(Host, User.where(:userid => 'admin').first)"
+        ".paged_view_search", timeout=60
+    )
+    assert rails_console.success
+
+    # Check it loads fast in the UI
+    view = navigate_to(appliance.collections.hosts, 'All')
+    view.entities.paginator.set_items_per_page(1000)
+    view.toolbar.view_selector.select(view_type)
+    wait_for(view.entities.get_first_entity, timeout=60, message='Wait for the view')
