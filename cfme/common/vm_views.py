@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
-from time import sleep
 
 from lxml.html import document_fromstring
+from wait_for import wait_for
 from widgetastic.widget import (
     View, TableRow, Text, TextInput, ParametrizedView, Image, ConditionalSwitchableView)
 from widgetastic_patternfly import (
@@ -355,9 +355,7 @@ class ProvisionView(BaseLoggedInPage):
                 self.parent.sidebar.decrease_button.click()
                 self._select_template(template_name, provider_name)
             self.continue_button.click()
-            # TODO timing, wait_displayed is timing out and can't get it to stop in is_displayed
-            sleep(3)
-            self.flush_widget_cache()
+            wait_for(self.browser.plugin.ensure_page_safe, delay=.1, num_sec=10)
 
     is_displayed = displayed_not_implemented
 
