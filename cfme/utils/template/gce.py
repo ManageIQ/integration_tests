@@ -66,10 +66,17 @@ class GoogleCloudTemplateUpload(ProviderTemplateUpload):
         return True
 
     def run(self):
-        self.download_image()
-        self.create_bucket()
-        self.upload_image()
-        self.create_template()
+        if not self.download_image():
+            return False
+
+        if not self.create_bucket():
+            return False
+
+        if not self.upload_image():
+            return False
+
+        if not self.create_template():
+            return False
 
     @log_wrap("cleanup")
     def teardown(self):

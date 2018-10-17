@@ -1,13 +1,18 @@
+import os
+import tarfile
+
+
 from contextlib import closing
 from os import path
 from threading import Lock
-
+from zipfile import ZipFile
 from cached_property import cached_property
 from fauxfactory import gen_alphanumeric
 from glanceclient import Client
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import URLError
 from six.moves.urllib import request
+
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.gce import GCEProvider
@@ -87,6 +92,7 @@ class ProviderTemplateUpload(object):
         self.template_name = template_name
         self.glance_key = kwargs.get('glance_key')  # available for multiple provider type
         self.image_url = image_url  # TODO default
+        self._unzipped_file = None
 
     @property
     def stream_url(self):
@@ -132,11 +138,11 @@ class ProviderTemplateUpload(object):
 
     @property
     def image_name(self):
-        """ Returns filename of an image.
+        """ Returns filename of an downloaded or unzipped image.
 
         Example output: cfme-type-version-x86_64-vhd
         """
-        return self.raw_image_url.split("/")[-1]
+        return self._unzipped_file or self.raw_image_url.split("/")[-1]
 
     @property
     def local_file_path(self):
@@ -247,6 +253,34 @@ class ProviderTemplateUpload(object):
             return False
         else:
             return True
+
+    @log_wrap('unzip image')
+    def unzip_image(self, archive_type='zip'):
+        """
+        Unzips image and then changes image name to extracted one.
+
+        For EC2 and SCVMM images is zip used and for GCE is tar.gz used.
+        """
+        zip_path = self.image_name
+        try:
+            if archive_type == 'zip':
+                archive = ZipFile(zip_path)
+                zipinfo = archive.infolist()
+                self._unzipped_file = zipinfo[0].filename
+            elif archive_type == 'tar.gz':
+                archive = tarfile.open(zip_path, "r:gz")
+                self._unzipped_file = archive.firstmember.name
+            else:
+                logger.exception("Archive type {} is not implemented yet.".format(archive_type))
+                return False
+            archive.extractall()
+            archive.close()
+            # remove the archive
+            os.remove(zip_path)
+            return True
+        except Exception:
+            logger.exception("{} archive unzip failed.".format(archive_type))
+            return False
 
     @log_wrap('add template to glance')
     def glance_upload(self):
