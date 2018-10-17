@@ -28,6 +28,17 @@ def value(request):
     return request.param
 
 
+@pytest.fixture(scope="module")
+def get_report(appliance):
+    saved_report = appliance.collections.reports.instantiate(
+        type="Configuration Management",
+        subtype="Virtual Machines",
+        menu_name="VMs Snapshot Summary",
+    ).queue(wait_for_finish=True)
+    yield saved_report
+    saved_report.delete(cancel=False)
+
+
 LANDING_PAGES = [
     # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
     # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331399
@@ -187,7 +198,7 @@ def test_infra_list_page_per_item(appliance, request, page, value, set_list):
 
 
 @pytest.mark.uncollectif(lambda appliance: appliance.version < "5.10.0.20")
-def test_infra_report_page_per_item(appliance, value, set_report):
+def test_infra_report_page_per_item(appliance, value, set_report, get_report):
     """ Tests report items per page
 
     Metadata:
@@ -195,20 +206,17 @@ def test_infra_report_page_per_item(appliance, value, set_report):
     """
     appliance.user.my_settings.visual.report_view_limit = value
     limit = appliance.user.my_settings.visual.report_view_limit
-    report = appliance.collections.reports.instantiate(
-        type='Configuration Management',
-        subtype='Virtual Machines',
-        menu_name='VMs Snapshot Summary'
-    )
-    view = navigate_to(report, 'Details')
-    # FIXME no paginator displayed on Report Info screen
-    # either nav to saved reports via tab, or instantiate a saved report
-    if not view.paginator.is_displayed:
-        pytest.fail('Paginator is not displayed on report details page')
-    max_item = view.paginator.max_item
-    item_amt = view.paginator.items_amount
+    # Navigate to report's detail page.
+    view = navigate_to(get_report.report, "Details")
+    # Access the paginator on the `Saved Reports` tab of report's Details page.
+    max_item = view.saved_reports.paginator.max_item
+    item_amt = view.saved_reports.paginator.items_amount
+    items_per_page = view.saved_reports.paginator.items_per_page
+
+    assert int(items_per_page) == int(limit)
     if int(item_amt) >= int(limit):
-        assert int(max_item) == int(limit), 'Reportview Failed!'
+        assert int(max_item) == int(limit), "Reportview Failed!"
+
     assert int(max_item) <= int(item_amt)
 
 
