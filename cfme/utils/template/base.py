@@ -1,5 +1,5 @@
 from contextlib import closing
-from subprocess import check_call, CalledProcessError
+from os import path
 from threading import Lock
 
 from cached_property import cached_property
@@ -7,6 +7,7 @@ from fauxfactory import gen_alphanumeric
 from glanceclient import Client
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import URLError
+from six.moves.urllib import request
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.gce import GCEProvider
@@ -234,22 +235,15 @@ class ProviderTemplateUpload(object):
     @log_wrap("download image locally")
     def download_image(self):
         # Check if file exists already:
-        try:
-            check_call(['ls', self.local_file_path])
-        except CalledProcessError:
-            pass
-        else:
+        if path.isfile(self.local_file_path):
             logger.info('Local image found, skipping download: %s', self.local_file_path)
             return True
 
         # Download file to cli-tool-client
         try:
-            check_call(['curl',
-                        '--output',
-                        self.local_file_path,
-                        self.raw_image_url])
-        except CalledProcessError:
-            logger.exception('Failed download of image using curl')
+            request.urlretrieve(self.raw_image_url, self.local_file_path)
+        except URLError:
+            logger.exception('Failed download of image using urllib')
             return False
         else:
             return True

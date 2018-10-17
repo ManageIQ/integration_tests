@@ -4,6 +4,7 @@ import re
 from cfme.utils.log import logger
 from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
 from cfme.utils.wait import wait_for
+from wrapanapi.systems.ec2 import EC2Image
 
 
 class EC2TemplateUpload(ProviderTemplateUpload):
@@ -40,7 +41,7 @@ class EC2TemplateUpload(ProviderTemplateUpload):
                                                file_path=self.file_path,
                                                file_name=self.template_name)
             return True
-        except:
+        except Exception:
             return False
 
     @log_wrap("import image from bucket")
@@ -58,10 +59,8 @@ class EC2TemplateUpload(ProviderTemplateUpload):
                      message='Importing image to EC2')
 
             ami_id = self.mgmt.get_image_id_if_import_completed(import_task_id)
-            self.mgmt.copy_image(source_region=self.mgmt.api.region.name,
-                                 source_image=ami_id,
-                                 image_id=self.template_name)
-            self.mgmt.get_template(ami_id).cleanup()
+            ami = EC2Image(uuid=ami_id, system=self.mgmt)
+            ami.set_tag("Name", self.template_name)
             return True
 
         except Exception:
