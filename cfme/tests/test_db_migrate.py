@@ -35,7 +35,7 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
     app = temp_appliance_preconfig
     app.evmserverd.stop()
     app.db.extend_partition()
-    app.app.evmserverd.start()
+    app.evmserverd.start()
     return app
 
 
@@ -45,7 +45,7 @@ def temp_appliance_remote(temp_appliance_preconfig_funcscope):
     app = temp_appliance_preconfig_funcscope
     app.evmserverd.stop()
     app.db.extend_partition()
-    app.app.evmserverd.start()
+    app.evmserverd.start()
     return app
 
 
