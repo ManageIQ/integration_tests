@@ -7,6 +7,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import log_request_check
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError, wait_for
 
@@ -112,6 +113,11 @@ def test_custom_button_display(request, display, setup_obj, button_group):
 
 @pytest.mark.parametrize(
     "submit", SUBMIT, ids=["_".join(item.split()) for item in SUBMIT]
+)
+@pytest.mark.meta(
+    blockers=[
+        BZ(1628224, forced_streams=["5.10"], unblock=lambda submit: submit != "Submit all")
+    ]
 )
 def test_custom_button_automate(appliance, request, submit, setup_obj, button_group):
     """ Test custom button for automate and requests count as per submit
