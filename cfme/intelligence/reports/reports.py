@@ -11,7 +11,7 @@ from widgetastic_manageiq import (PaginationPane, Table, ReportToolBarViewSelect
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, CandidateNotFound
 
-from cfme.intelligence.reports.schedules import NewScheduleView
+from cfme.intelligence.reports.schedules import SchedulesFormCommon
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -225,6 +225,24 @@ class AllCustomReportsView(CloudIntelReportsView):
             self.title.text == "Custom Reports"
         )
 
+
+class ReportScheduleView(SchedulesFormCommon):
+    add_button = Button("Add")
+
+    @property
+    def is_displayed(self):
+        report_obj = self.context["object"]
+        return (
+            self.in_intel_reports
+            and self.title.text == "Adding a new Schedule"
+            and self.reports.tree.currently_selected
+            == [
+                "All Reports",
+                report_obj.type,
+                report_obj.subtype,
+                report_obj.menu_name,
+            ]
+        )
 
 @attr.s
 class Report(BaseEntity, Updateable):
@@ -595,7 +613,7 @@ class ReportDetails(CFMENavigateStep):
 
 @navigator.register(Report, "ScheduleReport")
 class ReportSchedule(CFMENavigateStep):
-    VIEW = NewScheduleView
+    VIEW = ReportScheduleView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
     def step(self):
