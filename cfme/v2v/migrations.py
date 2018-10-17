@@ -19,6 +19,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.version import Version, VersionPicker
 from cfme.utils.wait import wait_for
 
 from selenium.common.exceptions import StaleElementReferenceException
@@ -365,7 +366,12 @@ class AddInfrastructureMappingView(View):
 
     @property
     def is_displayed(self):
-        return self.form.title.text == 'Infrastructure Mapping Wizard'
+        form_title_text = VersionPicker({
+            Version.lowest(): 'Infrastructure Mapping Wizard',
+            '5.10': 'Create Infrastructure Mapping'
+        })
+
+        return (self.form.title.text == form_title_text.pick())
 
 
 class AddMigrationPlanView(View):
@@ -457,7 +463,12 @@ class AddMigrationPlanView(View):
 
     @property
     def is_displayed(self):
-        return self.title.text == 'Migration Plan Wizard'
+        form_title_text = VersionPicker({
+            Version.lowest(): 'Migration Plan Wizard',
+            '5.10': 'Create Migration Plan'
+        })
+
+        return self.title.text == form_title_text.pick()
 
 
 class MigrationPlanRequestDetailsView(View):

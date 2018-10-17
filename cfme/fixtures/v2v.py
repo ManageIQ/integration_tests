@@ -49,7 +49,6 @@ def host_creds(request, v2v_providers):
     try:
         vmware_provider = v2v_providers.vmware_provider
         rhv_provider = v2v_providers.rhv_provider
-
         vmware_hosts = vmware_provider.hosts.all()
         for host in vmware_hosts:
             host_data, = [data for data in vmware_provider.data['hosts']
