@@ -186,6 +186,7 @@ def test_infra_list_page_per_item(appliance, request, page, value, set_list):
     assert int(max_item) <= int(item_amt)
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.version < "5.10.0.20")
 def test_infra_report_page_per_item(appliance, value, set_report):
     """ Tests report items per page
 
