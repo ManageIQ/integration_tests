@@ -15,7 +15,5 @@ def report(appliance):
 
 @pytest.mark.parametrize("filetype", ["txt", "csv", "pdf"])
 def test_download_report(infra_provider, report, filetype):
-    """
-    Download the report as a file .
-    """
+    """Download the report as a file."""
     report.download(filetype)
