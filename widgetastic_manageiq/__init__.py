@@ -3660,7 +3660,31 @@ class FonticonPicker(Widget):
         return True
 
 
-class PotentiallyInvisibleTab(Tab):
+class WaitTab(Tab):
+    def child_widget_accessed(self, widget):
+        _to_try = 2
+        _tries = 0
+        while _tries < _to_try:
+            _tries += 1
+            self.select()
+            try:
+                wait_for(self.is_active, delay=.1, num_sec=2)
+            except TimedOutError:
+                self.logger.exception(
+                    "Tab was not active in 3s{}".format(", retrying" if _tries < _to_try else "")
+                )
+                if _tries >= _to_try:  # raise the TimedOutError if we've tried enough times
+                    raise
+            else:
+                break  # no retry
+        try:
+            widget.wait_displayed(timeout=2)
+        except TimedOutError:
+            self.logger.exception("Tab widget not displayed, continuing...")
+            pass
+
+
+class PotentiallyInvisibleTab(WaitTab):
     """Tab, that can be potentially invisible."""
 
     def select(self):

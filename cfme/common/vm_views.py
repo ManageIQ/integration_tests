@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 import os
-from time import sleep
 
 from lxml.html import document_fromstring
 from widgetastic.widget import (
     View, TableRow, Text, TextInput, ParametrizedView, Image, ConditionalSwitchableView)
 from widgetastic_patternfly import (
-    BreadCrumb, Dropdown, BootstrapSelect, Tab, Input, CheckableBootstrapTreeview)
+    BreadCrumb, Dropdown, BootstrapSelect, Input, CheckableBootstrapTreeview)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import TemplateNotFound, displayed_not_implemented
 from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Calendar, Checkbox, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, RadioGroup,
     BaseEntitiesView, JSBaseEntity, BaseNonInteractiveEntitiesView, PaginationPane, DriftComparison,
-    ParametrizedSummaryTable
+    ParametrizedSummaryTable, WaitTab
 )
 
 
@@ -191,7 +191,7 @@ class VMPropertyDetailView(View):
 
 class BasicProvisionFormView(View):
     @View.nested
-    class request(Tab):  # noqa
+    class request(WaitTab):  # noqa
         TAB_NAME = 'Request'
         email = Input(name='requester__owner_email')
         first_name = Input(name='requester__owner_first_name')
@@ -200,12 +200,12 @@ class BasicProvisionFormView(View):
         manager_name = Input(name='requester__owner_manager')
 
     @View.nested
-    class purpose(Tab):  # noqa
+    class purpose(WaitTab):  # noqa
         TAB_NAME = 'Purpose'
         apply_tags = CheckableBootstrapTreeview('all_tags_treebox')
 
     @View.nested
-    class catalog(Tab):  # noqa
+    class catalog(WaitTab):  # noqa
         TAB_NAME = 'Catalog'
 
         # Filling catalog template first so that environment tab gets enough time to load
@@ -221,7 +221,7 @@ class BasicProvisionFormView(View):
         iso_file = SelectTable('//div[@id="prov_iso_img_div"]/table')
 
     @View.nested
-    class environment(Tab):  # noqa
+    class environment(WaitTab):  # noqa
         TAB_NAME = 'Environment'
         automatic_placement = Checkbox(id='environment__placement_auto')
         # Cloud
@@ -245,7 +245,7 @@ class BasicProvisionFormView(View):
         datastore_name = SelectTable('//div[@id="prov_ds_div"]/table')
 
     @View.nested
-    class hardware(Tab):  # noqa
+    class hardware(WaitTab):  # noqa
         TAB_NAME = 'Hardware'
         num_sockets = BootstrapSelect('hardware__number_of_sockets')
         cores_per_socket = BootstrapSelect('hardware__cores_per_socket')
@@ -259,12 +259,12 @@ class BasicProvisionFormView(View):
         vm_reserve_memory = Input(name='hardware__memory_reserve')
 
     @View.nested
-    class network(Tab):  # noqa
+    class network(WaitTab):  # noqa
         TAB_NAME = 'Network'
         vlan = BootstrapSelect('network__vlan')
 
     @View.nested
-    class properties(Tab):  # noqa
+    class properties(WaitTab):  # noqa
         TAB_NAME = 'Properties'
         instance_type = BootstrapSelect('hardware__instance_type')
         guest_keypair = BootstrapSelect('hardware__guest_access_key_pair')
@@ -274,7 +274,7 @@ class BasicProvisionFormView(View):
         is_preemptible = Checkbox(name='hardware__is_preemptible')
 
     @View.nested
-    class customize(Tab):  # noqa
+    class customize(WaitTab):  # noqa
         TAB_NAME = 'Customize'
         # Common
         customize_type = BootstrapSelect('customize__sysprep_enabled')
@@ -294,7 +294,7 @@ class BasicProvisionFormView(View):
         custom_template = SelectTable('//div[@id="prov_template_div"]/table')
 
     @View.nested
-    class schedule(Tab):  # noqa
+    class schedule(WaitTab):  # noqa
         TAB_NAME = 'Schedule'
         # Common
         schedule_type = RadioGroup(locator=('//div[@id="schedule"]'
@@ -355,9 +355,7 @@ class ProvisionView(BaseLoggedInPage):
                 self.parent.sidebar.decrease_button.click()
                 self._select_template(template_name, provider_name)
             self.continue_button.click()
-            # TODO timing, wait_displayed is timing out and can't get it to stop in is_displayed
-            sleep(3)
-            self.flush_widget_cache()
+            wait_for(self.browser.plugin.ensure_page_safe, delay=.1, num_sec=10)
 
     is_displayed = displayed_not_implemented
 

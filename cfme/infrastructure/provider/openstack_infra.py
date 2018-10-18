@@ -2,8 +2,8 @@ import attr
 
 from navmazing import NavigateToSibling
 from widgetastic.widget import View, Text
-from widgetastic_patternfly import Tab, Input, BootstrapSelect, Button
-from widgetastic_manageiq import Checkbox, RadioGroup, FileInput, Table
+from widgetastic_patternfly import Input, BootstrapSelect, Button
+from widgetastic_manageiq import Checkbox, RadioGroup, FileInput, Table, WaitTab
 from wrapanapi.systems import OpenstackInfraSystem
 
 from cfme.common.provider import EventsEndpoint, SSHEndpoint, DefaultEndpoint, DefaultEndpointForm
@@ -25,13 +25,13 @@ class RHOSEndpoint(DefaultEndpoint):
 
 class OpenStackInfraEndpointForm(View):
     @View.nested
-    class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
+    class default(WaitTab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Default'
         security_protocol = BootstrapSelect('default_security_protocol')
         api_port = Input('default_api_port')
 
     @View.nested
-    class events(Tab, BeforeFillMixin):  # NOQA
+    class events(WaitTab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Events'
         event_stream = RadioGroup(locator='//div[@id="amqp"]')
         # below controls which appear only if amqp is chosen
@@ -47,7 +47,7 @@ class OpenStackInfraEndpointForm(View):
         validate = Button('Validate')
 
     @View.nested
-    class rsa_keypair(Tab, BeforeFillMixin):  # NOQA
+    class rsa_keypair(WaitTab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'RSA key pair'
 
         username = Input('ssh_keypair_userid')

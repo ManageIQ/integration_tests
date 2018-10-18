@@ -4,10 +4,10 @@ import six
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import Checkbox, View, Text, ConditionalSwitchableView
 from widgetastic_patternfly import (
-    BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview as CbTree,
+    BootstrapSelect, Button, Input, CheckableBootstrapTreeview as CbTree,
     BootstrapSwitch, CandidateNotFound, Dropdown)
 from widgetastic_manageiq import (
-    UpDownSelect, PaginationPane, SummaryFormItem, Table, SummaryForm)
+    UpDownSelect, PaginationPane, SummaryFormItem, Table, SummaryForm, WaitTab)
 from widgetastic_manageiq.expression_editor import GroupTagExpressionEditor
 
 from cfme.base.credential import Credential
@@ -448,7 +448,7 @@ class MyCompanyTagsExpressionView(View):
     tag_expression = GroupTagExpressionEditor()
 
 
-class MyCompanyTagsWithExpression(Tab):
+class MyCompanyTagsWithExpression(WaitTab):
     """ Represents 'My company tags' tab in Group Form """
     TAB_NAME = "My Company Tags"
     tag_mode = BootstrapSelect(id='use_filter_expression')
@@ -458,13 +458,13 @@ class MyCompanyTagsWithExpression(Tab):
     tag_settings.register('Tags Based On Expression', widget=MyCompanyTagsExpressionView)
 
 
-class Hosts_And_Clusters(Tab):  # noqa
+class Hosts_And_Clusters(WaitTab):  # noqa
     """ Represents 'Hosts and Clusters' tab in Group Form """
     TAB_NAME = "Hosts & Clusters"
     tree = CbTree('hac_treebox')
 
 
-class Vms_And_Templates(Tab):  # noqa
+class Vms_And_Templates(WaitTab):  # noqa
     """ Represents 'VM's and Templates' tab in Group Form """
     TAB_NAME = "VMs & Templates"
     tree = CbTree('vat_treebox')

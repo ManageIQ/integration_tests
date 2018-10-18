@@ -4,9 +4,9 @@ from copy import deepcopy
 
 from navmazing import NavigateToSibling, NavigateToAttribute, NavigationDestinationNotFound
 from widgetastic.widget import View, Text, ConditionalSwitchableView
-from widgetastic_patternfly import Dropdown, Button, CandidateNotFound, TextInput, Tab
+from widgetastic_patternfly import Dropdown, Button, CandidateNotFound, TextInput
 from widgetastic_manageiq import (
-    Table, PaginationPane, SummaryFormItem, Checkbox, CheckboxSelect, DynamicTable)
+    Table, PaginationPane, SummaryFormItem, Checkbox, CheckboxSelect, DynamicTable, WaitTab)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import ConfigurationView
@@ -79,7 +79,7 @@ class AnalysisProfileBaseAddForm(View):
     description = TextInput(id='description')
 
     @View.nested
-    class files(Tab):  # noqa
+    class files(WaitTab):  # noqa
         TAB_NAME = 'File'
         tab_form = DynamicTable(
             locator='.//h3[normalize-space(.)="File Entry"]/following-sibling::table',
@@ -90,7 +90,7 @@ class AnalysisProfileBaseAddForm(View):
             assoc_column='Name', rows_ignore_top=1, action_row=0)
 
     @View.nested
-    class events(Tab):  # noqa
+    class events(WaitTab):  # noqa
         TAB_NAME = 'Event Log'
         tab_form = DynamicTable(
             locator='.//h3[normalize-space(.)="Event Log Entry"]/following-sibling::table',
@@ -132,12 +132,12 @@ class AnalysisProfileAddView(BaseLoggedInPage):
     class AnalysisProfileAddVm(AnalysisProfileBaseAddForm):
         """View for the vm profile add form"""
         @View.nested
-        class categories(Tab):  # noqa
+        class categories(WaitTab):  # noqa
             TAB_NAME = 'Category'
             tab_form = CheckboxSelect(search_root='form_div')
 
         @View.nested
-        class registry(Tab):  # noqa
+        class registry(WaitTab):  # noqa
             TAB_NAME = 'Registry'
             tab_form = DynamicTable(
                 locator='.//h3[normalize-space(.)="Registry Entry"]/following-sibling::table',

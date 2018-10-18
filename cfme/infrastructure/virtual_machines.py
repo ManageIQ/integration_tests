@@ -45,6 +45,7 @@ from cfme.exceptions import (
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.version import UPSTREAM, VersionPicker
@@ -305,8 +306,9 @@ class InfraVmDetailsView(InfraVmView):
                 return (
                     self.in_infra_vms and
                     self.entities.title.text == expected_title)
-            self.logger.warning('No "Infrastructure Provider" Relationship, VM details view not'
-                                ' displayed')
+            self.logger.warning(
+                'No "Infrastructure Provider" Relationship, VM details view not displayed'
+            )
             return False
         return (
             self.in_infra_vms and
@@ -975,7 +977,11 @@ class InfraVm(VM):
     @property
     def host(self):
         vm_api = self.appliance.rest_api.collections.vms.get(name=self.name)
-        vm_host = vm_api.host
+        try:
+            vm_host = vm_api.host
+        except AttributeError:
+            logger.exception('No host attribute on rest_api vm entity')
+            return None
         vm_host.reload(attributes='name')
         host = self.appliance.collections.hosts.instantiate(name=vm_host.name,
                                                             provider=self.provider)

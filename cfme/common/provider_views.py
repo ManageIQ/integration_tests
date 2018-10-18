@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
 
-from widgetastic_patternfly import BreadCrumb, Dropdown, BootstrapSelect, Tab
+from widgetastic_patternfly import BreadCrumb, Dropdown, BootstrapSelect
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text, ConditionalSwitchableView
 
@@ -19,7 +19,8 @@ from widgetastic_manageiq import (
     PaginationPane,
     JSBaseEntity,
     Search,
-    ParametrizedStatusBox
+    ParametrizedStatusBox,
+    WaitTab
 )
 
 
@@ -453,13 +454,13 @@ class ContainerProviderSettingView(ProvidersView):
       """
 
     @View.nested
-    class proxy(Tab, BeforeFillMixin):  # NOQA
+    class proxy(WaitTab, BeforeFillMixin):  # NOQA
 
         TAB_NAME = 'Proxy'
         http_proxy = Input('provider_options_proxy_settings_http_proxy')
 
     @View.nested
-    class advanced(Tab, BeforeFillMixin):  # NOQA
+    class advanced(WaitTab, BeforeFillMixin):  # NOQA
 
         TAB_NAME = 'Advanced'
         adv_http = Input('provider_options_image_inspector_options_http_proxy')

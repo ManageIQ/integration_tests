@@ -3,13 +3,12 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Parameter, ParametrizedLocator, ParametrizedString
 from widgetastic.widget import Checkbox, Table, Text, View
-from widgetastic_manageiq import FileInput, SummaryForm, SummaryTable
+from widgetastic_manageiq import FileInput, SummaryForm, SummaryTable, WaitTab
 from widgetastic_patternfly import (
     BootstrapSelect as VanillaBootstrapSelect,
     BootstrapSwitch,
     Button,
-    Input,
-    Tab
+    Input
 )
 
 from cfme.services.catalogs import ServicesCatalogView
@@ -117,7 +116,7 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
     catalog = BootstrapSelect("catalog_id")
 
     @View.nested
-    class provisioning(Tab):  # noqa
+    class provisioning(WaitTab):  # noqa
         repository = BootstrapSelect("provisioning_repository_id")
         playbook = BootstrapSelect("provisioning_playbook_id")
         machine_credential = BootstrapSelect("provisioning_machine_credential_id")
@@ -137,7 +136,7 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         extra_vars = AnsibleExtraVariables(tab="provisioning")
 
     @View.nested
-    class retirement(Tab):  # noqa
+    class retirement(WaitTab):  # noqa
         # TODO Somehow need to handle a modal window
         copy_from_provisioning = Button("Copy from provisioning")
         repository = BootstrapSelect("retirement_repository_id")
@@ -179,12 +178,12 @@ class DetailsEntitiesAnsibleCatalogItemView(View):
     smart_management = SummaryTable("Smart Management")
 
     @View.nested
-    class provisioning(Tab):  # noqa
+    class provisioning(WaitTab):  # noqa
         info = SummaryForm("Provisioning Info")
         variables_and_default_values = Table(".//div[@id='provisioning']//table")
 
     @View.nested
-    class retirement(Tab):  # noqa
+    class retirement(WaitTab):  # noqa
         info = SummaryForm("Retirement Info")
         variables_and_default_values = Table(".//div[@id='retirement']//table")
 

@@ -7,9 +7,11 @@ import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from six import string_types
 from widgetastic_manageiq import (
-    ContainerSummaryTable, StatusBox, Accordion, ManageIQTree, LineChart, ParametrizedSummaryTable)
+    ContainerSummaryTable, StatusBox, Accordion, ManageIQTree, LineChart, ParametrizedSummaryTable,
+    WaitTab
+)
 from widgetastic_patternfly import (
-    BreadCrumb, SelectorDropdown, Dropdown, BootstrapSelect, Input, Button, Tab)
+    BreadCrumb, SelectorDropdown, Dropdown, BootstrapSelect, Input, Button)
 from widgetastic.widget import Text, View, TextInput
 
 from cfme.base.credential import TokenCredential
@@ -59,20 +61,20 @@ class ContainersProviderEndpointsForm(View):
      represents default Containers Provider endpoint form in UI (Add/Edit dialogs)
     """
     @View.nested
-    class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
+    class default(WaitTab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Default'
         sec_protocol = BootstrapSelect('default_security_protocol')
         trusted_ca_certificates = TextInput('default_tls_ca_certs')
         api_port = Input('default_api_port')
 
     @View.nested
-    class virtualization(Tab, BeforeFillMixin):  # NOQA
+    class virtualization(WaitTab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Virtualization'
         kubevirt_token = Input('kubevirt_password')
         validate = Button('Validate')
 
     @View.nested
-    class metrics(Tab, BeforeFillMixin):  # NOQA
+    class metrics(WaitTab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Metrics'
         sec_protocol = BootstrapSelect(id='metrics_security_protocol')
         trusted_ca_certificates = TextInput('metrics_tls_ca_certs')
@@ -81,7 +83,7 @@ class ContainersProviderEndpointsForm(View):
         validate = Button('Validate')
 
     @View.nested
-    class alerts(Tab, BeforeFillMixin):  # NOQA
+    class alerts(WaitTab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Alerts'
 
         sec_protocol = BootstrapSelect(id='prometheus_alerts_security_protocol')

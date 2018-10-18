@@ -1,6 +1,6 @@
 import attr
 from widgetastic.widget import View
-from widgetastic_patternfly import Tab, Input
+from widgetastic_patternfly import Input
 from wrapanapi.systems import VmwareCloudSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm, Credential
@@ -8,6 +8,7 @@ from cfme.common.provider_views import BeforeFillMixin
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.varmeth import variable
+from widgetastic_manageiq import WaitTab
 from . import CloudProvider
 
 
@@ -36,7 +37,7 @@ class VmwareCloudEndpoint(DefaultEndpoint):
 
 class VmwareCloudEndpointForm(View):
     @View.nested
-    class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
+    class default(WaitTab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Default'
         api_port = Input('default_api_port')
 

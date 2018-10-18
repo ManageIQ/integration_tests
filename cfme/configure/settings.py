@@ -4,7 +4,7 @@ import re
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
 from widgetastic_patternfly import (
-    BreadCrumb, BootstrapSwitch, Button, CheckableBootstrapTreeview, Dropdown, Input, Tab)
+    BreadCrumb, BootstrapSwitch, Button, CheckableBootstrapTreeview, Dropdown, Input)
 
 from cfme.base import BaseEntity, BaseCollection
 from cfme.base.login import BaseLoggedInPage
@@ -13,7 +13,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from widgetastic_manageiq import Table, BootstrapSelect, Text, ViewButtonGroup
+from widgetastic_manageiq import Table, BootstrapSelect, Text, ViewButtonGroup, WaitTab
 
 
 class TimeProfileForm(View):
@@ -585,22 +585,22 @@ class MySettingsView(BaseLoggedInPage):
         """The tabs on the page"""
 
         @View.nested
-        class visual(Tab):  # noqa
+        class visual(WaitTab):  # noqa
             TAB_NAME = 'Visual'
             including_entities = View.include(VisualForm, use_parent=True)
 
         @View.nested
-        class default_views(Tab):  # noqa
+        class default_views(WaitTab):  # noqa
             TAB_NAME = 'Default Views'
             including_entities = View.include(DefaultViewsForm, use_parent=True)
 
         @View.nested
-        class default_filters(Tab):  # noqa
+        class default_filters(WaitTab):  # noqa
             TAB_NAME = 'Default Filters'
             including_entities = View.include(DefaultFiltersForm, use_parent=True)
 
         @View.nested
-        class time_profiles(Tab):  # noqa
+        class time_profiles(WaitTab):  # noqa
             TAB_NAME = 'Time Profiles'
             including_entities = View.include(TimeProfilesView, use_parent=True)
 

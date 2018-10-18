@@ -8,8 +8,8 @@ from copy import copy
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import ParametrizedLocator, ParametrizedString
 from widgetastic.widget import Checkbox, Text, ParametrizedView
-from widgetastic_manageiq import Table
-from widgetastic_patternfly import BootstrapSelect, CandidateNotFound, Input, Button, Tab
+from widgetastic_manageiq import Table, WaitTab
+from widgetastic_patternfly import BootstrapSelect, CandidateNotFound, Input, Button
 
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance import Navigatable
@@ -38,18 +38,18 @@ class ClassCopyView(AutomateExplorerView, CopyViewBase):
 class ClassDetailsView(AutomateExplorerView):
     title = Text('#explorer_title_text')
 
-    class instances(Tab):  # noqa
+    class instances(WaitTab):  # noqa
         table = Table('#class_instances_grid')
 
-    class methods(Tab):  # noqa
+    class methods(WaitTab):  # noqa
         table = Table('#class_methods_grid')
 
-    class properties(Tab):  # noqa
+    class properties(WaitTab):  # noqa
         table = Table('//table[./preceding-sibling::h3[normalize-space(.)="Properties"]][1]')
         overrides = Table(
             '//table[./preceding-sibling::h3[normalize-space(.)="Domain Overrides (by priority)"]]')
 
-    class schema(Tab):  # noqa
+    class schema(WaitTab):  # noqa
         schema_title = Text('//div[@id="class_fields_div"]/h3')
         table = Table('//div[@id="class_fields_div"]/table')
 
@@ -340,7 +340,7 @@ class Copy(CFMENavigateStep):
 
 # schema
 class ClassSchemaEditView(ClassDetailsView):
-    class schema(Tab):  # noqa
+    class schema(WaitTab):  # noqa
         schema_title = Text('//div[@id="form_div"]/h3')
 
         @ParametrizedView.nested
