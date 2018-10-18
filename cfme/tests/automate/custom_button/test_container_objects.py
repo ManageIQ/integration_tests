@@ -6,7 +6,6 @@ from widgetastic_patternfly import Dropdown
 from cfme.containers.provider import ContainersProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.log import logger
 
 
 pytestmark = [
@@ -16,13 +15,16 @@ pytestmark = [
 ]
 
 CONTAINER_OBJECTS = [
-    "CONTAINER_IMAGE",
-    "CONTAINER_NODE",
-    "CONTAINER_POD",
-    "CONTAINER_PROJECT",
-    "CONTAINER_TEMPLATE",
-    "CONTAINER_VOLUME",
+    "PROVIDER",
+    "CONTAINER_IMAGES",
+    "CONTAINER_NODES",
+    "CONTAINER_PODS",
+    "CONTAINER_PROJECTS",
+    "CONTAINER_TEMPLATES",
+    "CONTAINER_VOLUMES",
 ]
+
+OBJ_TYPE_59 = ["PROVIDER", "CONTAINER_NODES", "CONTAINER_PROJECTS"]
 
 DISPLAY_NAV = {
     "Single entity": ["Details"],
@@ -46,35 +48,31 @@ def button_group(appliance, request):
 
 
 @pytest.fixture()
-def setup_obj(appliance, button_group):
+def setup_obj(appliance, provider, button_group):
     """ Setup object for specific custom button object type."""
     obj_type = button_group[1]
 
     try:
-        if obj_type == "CONTAINER_IMAGE":
-            obj = appliance.collections.container_images.all()[0]
-        elif obj_type == "CONTAINER_NODE":
-            obj = appliance.collections.container_nodes.all()[0]
-        elif obj_type == "CONTAINER_POD":
-            obj = appliance.collections.container_pods.all()[0]
-        elif obj_type == "CONTAINER_PROJECT":
-            obj = appliance.collections.container_projects.all()[0]
-        elif obj_type == "CONTAINER_TEMPLATE":
-            obj = appliance.collections.container_templates.all()[0]
-        elif obj_type == "CONTAINER_VOLUME":
-            obj = appliance.collections.container_volumes.all()[0]
+        if obj_type == "PROVIDER":
+            obj = provider
         else:
-            logger.error("No object collected for custom button object type '{}'".format(obj_type))
+            obj = getattr(appliance.collections, obj_type.lower()).all()[0]
     except IndexError:
-        pytest.skip("Object not found for {}".format(obj_type))
+        pytest.skip("Object not found for {obj} type".format(obj=obj_type))
+
+    if not obj.exists:
+        pytest.skip("{obj} object not exist".format(obj=obj_type))
     return obj
 
 
-@pytest.mark.ignore_stream('5.9')
+@pytest.mark.uncollectif(
+    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
+    and appliance.version < "5.10"
+)
 @pytest.mark.parametrize(
     "display", DISPLAY_NAV.keys(), ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
 )
-def test_custom_button_display(request, display, setup_obj, button_group, provider):
+def test_custom_button_display(request, display, setup_obj, button_group):
     """ Test custom button display on a targeted page
 
     prerequisites:
