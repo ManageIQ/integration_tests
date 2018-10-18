@@ -414,7 +414,8 @@ class AddMigrationPlanView(View):
 
         @property
         def is_displayed(self):
-            return self.filter_by_dropdown.is_displayed
+            return (self.filter_by_dropdown.is_displayed and
+                 (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0))
 
         def filter_by_name(self, vm_name):
             try:
@@ -652,9 +653,8 @@ class MigrationPlanCollection(BaseCollection):
             view.vms.hidden_field.fill(temp_file.name)
         else:
             view.next_btn.click()
+        view.vms.wait_displayed()
 
-        wait_for(lambda: view.vms.table.is_displayed, timeout=60, message='Wait for VMs view',
-                 delay=2)
         for vm in vm_list:
             view.vms.filter_by_name(vm.name)
             for row in view.vms.table.rows():
