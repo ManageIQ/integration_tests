@@ -18,7 +18,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
-from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for, TimedOutError
 from . import CloudIntelReportsView, ReportsMultiBoxSelect
 
 
@@ -136,17 +136,19 @@ class ReportDetailsView(CloudIntelReportsView):
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            "All Reports",
+            self.context["object"].type or self.context["object"].company_name,
+            self.context["object"].subtype or "Custom",
+            self.context["object"].menu_name
+        ]
+        expected_title = 'Report "{}"'.format(self.context["object"].menu_name)
         return (
             self.in_intel_reports and
             self.reports.is_opened and
             self.report_info.is_active() and
-            self.reports.tree.currently_selected == [
-                "All Reports",
-                self.context["object"].type or self.context["object"].company_name,
-                self.context["object"].subtype or "Custom",
-                self.context["object"].menu_name
-            ] and
-            self.title.text == 'Report "{}"'.format(self.context["object"].menu_name)
+            self.reports.tree.currently_selected == expected_tree and
+            self.title.text == expected_title
         )
 
 
@@ -176,20 +178,22 @@ class SavedReportDetailsView(CloudIntelReportsView):
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            "All Reports",
+            self.context["object"].report.type or self.context["object"].report.company_name,
+            self.context["object"].report.subtype or "Custom",
+            self.context["object"].report.menu_name,
+            self.context["object"].datetime_in_tree
+        ]
+        expected_title = 'Saved Report "{} - {}"'.format(
+            self.context["object"].report.title or self.context['object'].report.menu_name,
+            self.context["object"].queued_datetime_in_title
+        )
         return (
             self.in_intel_reports and
             self.reports.is_opened and
-            self.reports.tree.currently_selected == [
-                "All Reports",
-                self.context["object"].report.type or self.context["object"].report.company_name,
-                self.context["object"].report.subtype or "Custom",
-                self.context["object"].report.menu_name,
-                self.context["object"].datetime_in_tree
-            ] and
-            self.title.text == 'Saved Report "{} - {}"'.format(
-                self.context["object"].report.title or self.context['object'].report.menu_name,
-                self.context["object"].queued_datetime_in_title
-            )
+            self.reports.tree.currently_selected == expected_tree and
+            self.title.text == expected_title
         )
 
 
@@ -347,7 +351,7 @@ class Report(BaseEntity, Updateable):
         try:
             navigate_to(self, "Details")
             return True
-        except CandidateNotFound:
+        except (CandidateNotFound, TimedOutError):
             return False
 
 
@@ -448,8 +452,9 @@ class SavedReport(Updateable, BaseEntity):
     @property
     def exists(self):
         try:
-            return bool(navigate_to(self, "Details"))
-        except CandidateNotFound:
+            navigate_to(self, "Details")
+            return True
+        except (CandidateNotFound, TimedOutError):
             return False
 
 
@@ -544,7 +549,7 @@ class ReportEdit(CFMENavigateStep):
 @navigator.register(Report, "Details")
 class ReportDetails(CFMENavigateStep):
     VIEW = ReportDetailsView
-    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.reports.tree.click_path(
@@ -559,7 +564,7 @@ class ReportDetails(CFMENavigateStep):
 @navigator.register(SavedReport, "Details")
 class SavedReportDetails(CFMENavigateStep):
     VIEW = SavedReportDetailsView
-    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+    prerequisite = NavigateToAttribute("report", "Details")
 
     def step(self):
         self.prerequisite_view.reports.tree.click_path(
