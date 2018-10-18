@@ -75,7 +75,7 @@ class AlertProfilesAllView(ControlExplorerView):
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == "All {} Alert Profiles".format(self.context["object"].TYPE)
+            self.title.text == "All Alert Profiles"
         )
 
 
@@ -97,7 +97,7 @@ class AlertProfilesEditAssignmentsView(ControlExplorerView):
             self.in_control_explorer and
             self.title.text == 'Alert Profile "{}"'.format(self.context["object"].description) and
             self.header.text == "Assignments" and
-            self.based_on == self.context["object"].TYPE
+            self.based_on.text == self.context["object"].TYPE
         )
 
 
@@ -149,12 +149,7 @@ class BaseAlertProfile(BaseEntity, Updateable, Pretty):
         view.configuration.item_select("Delete this Alert Profile", handle_alert=not cancel)
         if cancel:
             assert view.is_displayed
-            view.flash.assert_no_error()
-        else:
-            view = self.create_view(AlertProfilesAllView)
-            assert view.is_displayed
-            view.flash.assert_success_message(
-                'Alert Profile "{}": Delete successful'.format(self.description))
+        view.flash.assert_no_error()
 
     @property
     def exists(self):
