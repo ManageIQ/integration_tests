@@ -19,7 +19,8 @@ from cfme.common.host_views import (
     HostDriftHistory,
     HostEditView,
     HostsView,
-    HostTimelinesView
+    HostTimelinesView,
+    ProviderAllHostsView
 )
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.datastore import HostAllDatastoresView
@@ -634,7 +635,14 @@ class HostsCollection(BaseCollection):
 
 @navigator.register(HostsCollection)
 class All(CFMENavigateStep):
-    VIEW = HostsView
+
+    @property
+    def VIEW(self):     # noqa
+        parent = self.obj.filters.get('parent') or self.obj.filters.get('provider')
+        if parent:
+            return ProviderAllHostsView
+        else:
+            return HostsView
 
     def prerequisite(self):
         parent = self.obj.filters.get('parent') or self.obj.filters.get('provider')

@@ -276,5 +276,6 @@ class ProviderAllHostsView(HostsView):
     def is_displayed(self):
         return (
             self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
-            self.title.text == "{} (All Managed Hosts)".format(self.context["object"].name)
+            self.title.text == "{} (All Managed Hosts)".format(
+                self.context["object"].filters['parent'].name)
         )
