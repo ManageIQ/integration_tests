@@ -72,12 +72,14 @@ class ScheduleAllView(ConfigurationView):
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            self.context['object'].appliance.server.zone.region.settings_string,
+            'Schedules'
+        ]
         return (
             self.in_configuration and
-            self.accordions.settings.tree.currently_selected == [
-                self.context['object'].zone.region.settings_string,
-                'Schedules'] and
-            self.title == 'Settings Schedules'
+            self.accordions.settings.tree.currently_selected == expected_tree and
+            self.title.text == 'Settings Schedules'
         )
 
 
@@ -97,13 +99,14 @@ class ScheduleDetailsView(ConfigurationView):
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            self.context['object'].appliance.server.zone.region.settings_string,
+            'Schedules',
+            self.context['object'].name
+        ]
         return (
-            self.in_configuration and
-            self.accordions.settings.tree.currently_selected == [
-                self.context['object'].zone.region.settings_string,
-                'Schedules',
-                self.context['object'].name] and
-            self.title == 'Settings Schedule "{}"'.format(self.context['object'].name)
+            self.accordions.settings.tree.currently_selected == expected_tree and
+            self.title.text == 'Settings Schedule "{}"'.format(self.context['object'].name)
         )
 
 
@@ -113,12 +116,13 @@ class ScheduleAddView(ScheduleAddEditEntities):
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            self.context['object'].appliance.server.zone.region.settings_string,
+            'Schedules'
+        ]
         return (
-            self.in_configuration and
-            self.accordions.settings.tree.currently_selected == [
-                self.context['object'].zone.region.settings_string,
-                'Schedules'] and
-            self.title == 'Adding a new Schedule'
+            self.accordions.settings.tree.currently_selected == expected_tree and
+            self.title.text == 'Adding a new Schedule'
         )
 
 
@@ -129,13 +133,15 @@ class ScheduleEditView(ScheduleAddEditEntities):
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            self.context['object'].appliance.server.zone.region.settings_string,
+            'Schedules',
+            self.context['object'].name
+        ]
         return (
             self.in_configuration and
-            self.accordions.settings.tree.currently_selected == [
-                self.context['object'].zone.region.settings_string,
-                'Schedules',
-                self.context['object'].name] and
-            self.title == 'Edit Schedule "{}"'.format(self.context['object'].name)
+            self.accordions.settings.tree.currently_selected == expected_tree and
+            self.title.text == 'Edit Schedule "{}"'.format(self.context['object'].name)
         )
 
 
