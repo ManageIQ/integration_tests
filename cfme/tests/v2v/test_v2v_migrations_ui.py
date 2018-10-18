@@ -71,6 +71,9 @@ def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_
 
     # Assert only 24 characters can be entered in name field
     soft_assert(len(view.form.general.name.read()) == 24)
+
+    mapping_name = fauxfactory.gen_string("alphanumeric", length=10)
+    view.form.general.name.fill(mapping_name)
     view.form.general.description.fill(fauxfactory.gen_string("alphanumeric", length=150))
 
     # Assert only 128 characters can be entered in description field
@@ -138,7 +141,7 @@ def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_
     view = navigate_to(infrastructure_mapping_collection, 'Add')
     view.form.general.name.fill(mapping_name)
     view.form.general.description.fill('some description')
-    soft_assert(view.form.general.name_help_text.read() == 'Please enter a unique name')
+    soft_assert('a unique name' in view.form.general.name_help_text.read())
 
 
 def test_v2v_ui_no_providers(appliance, v2v_providers, soft_assert):
@@ -223,7 +226,7 @@ def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_
     view.general.name.fill(plan_name)
     view.general.description.fill(fauxfactory.gen_string("alphanumeric", length=150))
     # following assertion will fail in 5.9.4 as they have not backported this change to 5.9.4
-    soft_assert(view.general.name_help_text.read() == 'Please enter a unique name')
+    soft_assert('a unique name' in view.general.name_help_text.read())
 
     view = navigate_to(migration_plan_collection, 'All')
     soft_assert(plan_name in view.migration_plans_not_started_list.read())
@@ -244,10 +247,10 @@ def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_
     view.migration_plans_not_started_list.migrate_plan(plan_name)
 
 
-def test_migration_rbac(appliance, new_credential, conversion_tags, host_creds, v2v_providers):
+def test_migration_rbac(appliance, new_credential, v2v_providers):
     """Test migration with role-based access control"""
     role = new_role(appliance=appliance,
-                    product_features=[(['Everything'], False), (['Everything'], True)])
+                    product_features=[(['Everything'], True)])
     group = new_group(appliance=appliance, role=role.name)
     user = new_user(appliance=appliance, group=group, credential=new_credential)
 
@@ -260,7 +263,7 @@ def test_migration_rbac(appliance, new_credential, conversion_tags, host_creds, 
         assert 'Migration' not in nav_tree['Compute'], ('Migration found in nav tree, '
                                                         'rbac should not allow this')
 
-    product_features = [(['Everything'], False), (['Everything'], True)]
+    product_features = [(['Everything'], True)]
     role.update({'product_features': product_features})
     with user:
         view = navigate_to(appliance.server, 'Dashboard', wait_for_view=True)
