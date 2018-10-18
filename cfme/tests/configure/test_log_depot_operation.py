@@ -237,8 +237,7 @@ def ansible_catalog_item(appliance, ansible_repository):
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
             "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
-            "extra_vars": [("some_var", "some_value")]
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric()
         }
     )
     yield cat_item

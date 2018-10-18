@@ -344,7 +344,8 @@ class ServerCollectLogsView(ServerDiagnosticsView):
         return (
             self.in_server_collect_logs and
             self.title.text == 'Diagnostics Server "{} [{}]" (current)'.format(
-                self.context['object'].name, self.context['object'].sid)
+                self.context['object'].appliance.server.name,
+                self.context['object'].appliance.server.sid)
         )
 
     @property

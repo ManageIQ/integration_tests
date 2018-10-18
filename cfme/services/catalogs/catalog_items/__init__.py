@@ -107,6 +107,7 @@ class DetailsCatalogItemView(ServicesCatalogView):
 class ChooseCatalogItemTypeView(ServicesCatalogView):
     """Intermediate view where an actual catalog item type is selected."""
     select_item_type = BootstrapSelect('st_prov_type', can_hide_on_select=True)
+    title = Text('#explorer_title_text')
 
     @property
     def is_displayed(self):
@@ -483,7 +484,7 @@ class CatalogItemsCollection(BaseCollection):
             An instance of catalog_item_class
         """
         cat_item = self.instantiate(catalog_item_class, *args, **kwargs)
-        view = navigate_to(cat_item, 'Add', wait_for_view=0)
+        view = navigate_to(cat_item, 'Add', wait_for_view=10)
         view.fill(cat_item.fill_dict)
         view.add.click()
         view = self.create_view(AllCatalogItemView)
