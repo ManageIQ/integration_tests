@@ -60,8 +60,6 @@ class ScheduleAddEditEntities(View):
     start_date = Calendar("start_date")
     start_hour = BootstrapSelect("start_hour")
     start_minute = BootstrapSelect("start_min")
-    # Buttons
-    cancel_button = Button("Cancel")
 
 
 class ScheduleAllView(ConfigurationView):
@@ -110,9 +108,11 @@ class ScheduleDetailsView(ConfigurationView):
         )
 
 
-class ScheduleAddView(ScheduleAddEditEntities):
+class ScheduleAddView(ConfigurationView):
     """ Schedule Add item view """
+    form = View.nested(ScheduleAddEditEntities)
     add_button = Button('Add')
+    cancel_button = Button("Cancel")
 
     @property
     def is_displayed(self):
@@ -121,15 +121,18 @@ class ScheduleAddView(ScheduleAddEditEntities):
             'Schedules'
         ]
         return (
+            self.in_configuration and
             self.accordions.settings.tree.currently_selected == expected_tree and
             self.title.text == 'Adding a new Schedule'
         )
 
 
-class ScheduleEditView(ScheduleAddEditEntities):
+class ScheduleEditView(ConfigurationView):
     """ Schedule edit item view """
+    form = View.nested(ScheduleAddEditEntities)
     save_button = Button('Save')
     reset_button = Button('Reset')
+    cancel_button = Button("Cancel")
 
     @property
     def is_displayed(self):
@@ -231,7 +234,7 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
             }
         }
         view = navigate_to(self, 'Edit')
-        updated = view.fill(form_mapping)
+        updated = view.form.fill(form_mapping)
         if reset:
             view.reset_button.click()
         if cancel:
@@ -344,7 +347,7 @@ class SystemSchedulesCollection(BaseCollection):
                 }
             })
         view = navigate_to(self, 'Add')
-        updated = view.fill(details)
+        updated = view.form.fill(details)
         if cancel:
             view.cancel_button.click()
         elif updated:
