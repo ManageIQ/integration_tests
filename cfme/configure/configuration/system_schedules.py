@@ -60,8 +60,6 @@ class ScheduleAddEditEntities(View):
     start_date = Calendar("start_date")
     start_hour = BootstrapSelect("start_hour")
     start_minute = BootstrapSelect("start_min")
-    # Buttons
-    cancel_button = Button("Cancel")
 
 
 class ScheduleAllView(ConfigurationView):
@@ -72,12 +70,14 @@ class ScheduleAllView(ConfigurationView):
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            self.context['object'].appliance.server.zone.region.settings_string,
+            'Schedules'
+        ]
         return (
             self.in_configuration and
-            self.accordions.settings.tree.currently_selected == [
-                self.context['object'].zone.region.settings_string,
-                'Schedules'] and
-            self.title == 'Settings Schedules'
+            self.accordions.settings.tree.currently_selected == expected_tree and
+            self.title.text == 'Settings Schedules'
         )
 
 
@@ -97,45 +97,54 @@ class ScheduleDetailsView(ConfigurationView):
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            self.context['object'].appliance.server.zone.region.settings_string,
+            'Schedules',
+            self.context['object'].name
+        ]
         return (
-            self.in_configuration and
-            self.accordions.settings.tree.currently_selected == [
-                self.context['object'].zone.region.settings_string,
-                'Schedules',
-                self.context['object'].name] and
-            self.title == 'Settings Schedule "{}"'.format(self.context['object'].name)
+            self.accordions.settings.tree.currently_selected == expected_tree and
+            self.title.text == 'Settings Schedule "{}"'.format(self.context['object'].name)
         )
 
 
-class ScheduleAddView(ScheduleAddEditEntities):
+class ScheduleAddView(ConfigurationView):
     """ Schedule Add item view """
+    form = View.nested(ScheduleAddEditEntities)
     add_button = Button('Add')
+    cancel_button = Button("Cancel")
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            self.context['object'].appliance.server.zone.region.settings_string,
+            'Schedules'
+        ]
         return (
             self.in_configuration and
-            self.accordions.settings.tree.currently_selected == [
-                self.context['object'].zone.region.settings_string,
-                'Schedules'] and
-            self.title == 'Adding a new Schedule'
+            self.accordions.settings.tree.currently_selected == expected_tree and
+            self.title.text == 'Adding a new Schedule'
         )
 
 
-class ScheduleEditView(ScheduleAddEditEntities):
+class ScheduleEditView(ConfigurationView):
     """ Schedule edit item view """
+    form = View.nested(ScheduleAddEditEntities)
     save_button = Button('Save')
     reset_button = Button('Reset')
+    cancel_button = Button("Cancel")
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            self.context['object'].appliance.server.zone.region.settings_string,
+            'Schedules',
+            self.context['object'].name
+        ]
         return (
             self.in_configuration and
-            self.accordions.settings.tree.currently_selected == [
-                self.context['object'].zone.region.settings_string,
-                'Schedules',
-                self.context['object'].name] and
-            self.title == 'Edit Schedule "{}"'.format(self.context['object'].name)
+            self.accordions.settings.tree.currently_selected == expected_tree and
+            self.title.text == 'Edit Schedule "{}"'.format(self.context['object'].name)
         )
 
 
@@ -225,7 +234,7 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
             }
         }
         view = navigate_to(self, 'Edit')
-        updated = view.fill(form_mapping)
+        updated = view.form.fill(form_mapping)
         if reset:
             view.reset_button.click()
         if cancel:
@@ -338,7 +347,7 @@ class SystemSchedulesCollection(BaseCollection):
                 }
             })
         view = navigate_to(self, 'Add')
-        updated = view.fill(details)
+        updated = view.form.fill(details)
         if cancel:
             view.cancel_button.click()
         elif updated:

@@ -119,6 +119,8 @@ def db_depot_machine_ip(request, appliance):
                          depot_machine_name,
                          template_name=depot_template_name)
 
+    if vm.ip is None:
+        pytest.skip('Depot VM does not have IP address')
     yield vm.ip
     vm.cleanup()
 
@@ -137,7 +139,7 @@ def get_schedulable_datetime():
 def get_ssh_client(hostname, credentials):
     """ Returns fresh ssh client connected to given server using given credentials
     """
-    hostname = urlparse('scheme://' + hostname).netloc
+    hostname = urlparse('scheme://{}'.format(hostname)).netloc
     connect_kwargs = {
         'username': credentials['username'],
         'password': credentials['password'],
@@ -151,7 +153,7 @@ def get_full_path_to_file(path_on_host, schedule_name):
     """
     if not path_on_host.endswith('/'):
         path_on_host += '/'
-    full_path = path_on_host + "db_backup/region_*/{}".format(schedule_name)
+    full_path = '{}db_backup/region_*/{}'.format(path_on_host, schedule_name)
     return full_path
 
 
@@ -165,7 +167,7 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip, applia
     # the dash is there to make strftime not use a leading zero
     hour = dt.strftime('%-H')
     minute = dt.strftime('%-M')
-    db_depot_uri = db_depot_machine_ip + db_backup_data.sub_folder
+    db_depot_uri = '{}{}'.format(db_depot_machine_ip, db_backup_data.sub_folder)
     sched_args = {
         'name': db_backup_data.schedule_name,
         'description': db_backup_data.schedule_description,
@@ -193,7 +195,7 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip, applia
         })
 
     if db_backup_data.protocol_type == 'nfs':
-        path_on_host = urlparse('nfs://' + db_depot_uri).path
+        path_on_host = urlparse('nfs://{}'.format(db_depot_uri)).path
     else:
         path_on_host = db_backup_data.path_on_host
     full_path = get_full_path_to_file(path_on_host, db_backup_data.schedule_name)
