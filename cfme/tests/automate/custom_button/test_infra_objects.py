@@ -174,18 +174,13 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
             except AttributeError:
                 paginator = view.entities.paginator
 
-            if paginator.items_amount > paginator.items_per_page:
-                entity_count = paginator.items_per_page
-            else:
-                entity_count = paginator.items_amount
+            entity_count = min(paginator.items_amount, paginator.items_per_page)
             paginator.check_all()
         else:
             entity_count = 1
 
         # Clear the automation log
-        clean = appliance.ssh_client.run_command('echo -n "" > '
-                                                 '/var/www/miq/vmdb/log/automation.log')
-        assert clean.success
+        assert appliance.ssh_client.run_command('echo -n "" > /var/www/miq/vmdb/log/automation.log')
 
         custom_button_group.item_select(button.text)
         view.flash.assert_message('"{}" was executed'.format(button.text))
