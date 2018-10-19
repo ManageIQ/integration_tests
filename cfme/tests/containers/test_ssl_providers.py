@@ -117,9 +117,12 @@ def test_add_mertics_provider_ssl(provider, appliance, test_item,
             Hawkular Endpoint = SSL trusting custom CA/SSL without validation/SSL
         * Assert that provider was added successfully
         """
+    if not provider.endpoints.get('metrics', False):
+        pytest.skip("This test requires the metrics endpoint to be configured")
     new_provider = copy(provider)
     new_provider.endpoints['default'].sec_protocol = test_item.default_sec_protocol
     new_provider.endpoints['metrics'].sec_protocol = test_item.metrics_sec_protocol
+
     try:
         new_provider.setup()
         view = appliance.browser.create_view(ContainerProvidersView)
