@@ -13,6 +13,7 @@ from cfme.exceptions import ItemNotFound
 from cfme.utils import clear_property_cache
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.wait import TimedOutError
 
 from . import AutomateExplorerView
 
@@ -269,7 +270,7 @@ class Domain(BaseEntity, Fillable):
         try:
             navigate_to(self, 'Details')
             return True
-        except (CandidateNotFound, ItemNotFound):
+        except (CandidateNotFound, ItemNotFound, TimedOutError):
             return False
 
     def delete_if_exists(self):

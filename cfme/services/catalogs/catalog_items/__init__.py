@@ -141,7 +141,6 @@ class TabbedAddCatalogItemView(ServicesCatalogView):
         TAB_NAME = 'Basic Info'
         included_form = View.include(BasicInfoForm)
 
-
     class request_info(Tab):  # noqa
         TAB_NAME = 'Request Info'
         provisioning = View.nested(BasicProvisionFormView)
@@ -525,11 +524,6 @@ class CatalogItemAddStep(CFMENavigateStep):
             return TabbedAddCatalogItemView
         else:
             return AddCatalogItemView
-
-    def am_i_here(self):
-        # Going to an Add page should always be done from first principles incase a previous Add
-        # failed
-        return False
 
     def step(self):
         self.prerequisite_view.select_item_type.select_by_visible_text(self.obj.item_type)
