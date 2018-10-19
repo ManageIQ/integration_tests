@@ -237,9 +237,6 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Services', 'Catalogs')
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates")
 
-    def am_i_here(self, *args, **kwargs):
-        return self.view.is_displayed
-
 
 @navigator.register(OrchestrationTemplate)
 class Details(CFMENavigateStep):
@@ -251,9 +248,6 @@ class Details(CFMENavigateStep):
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates",
                                                           self.obj.template_group,
                                                           self.obj.template_name)
-
-    def am_i_here(self, *args, **kwargs):
-        return self.view.is_displayed
 
 
 @navigator.register(OrchestrationTemplatesCollection)

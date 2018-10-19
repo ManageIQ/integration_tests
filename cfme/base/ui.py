@@ -17,7 +17,9 @@ from cfme.base.credential import Credential
 from cfme.base.login import BaseLoggedInPage
 from cfme.configure.about import AboutView
 from cfme.configure.configuration.server_settings import (
-    ServerInformationView, ServerAuthenticationView)
+    ServerInformationView,
+    ServerAuthenticationView
+)
 from cfme.configure.documentation import DocView
 from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView

@@ -260,9 +260,6 @@ class Add(CFMENavigateStep):
     VIEW = AddAnsibleCatalogItemView
     prerequisite = NavigateToAttribute("parent", "Choose Type")
 
-    def am_i_here(self):
-        return False
-
     def step(self):
         self.prerequisite_view.select_item_type.select_by_visible_text(self.obj.item_type)
 
