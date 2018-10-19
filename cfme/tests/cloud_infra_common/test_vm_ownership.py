@@ -180,7 +180,7 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
     """
 
     # user is only a member of a single group so it will always be the current group
-    vm_crud.set_ownership(group=user2.group)
+    vm_crud.set_ownership(group=user2.groups[0])
     with user2:
         assert not check_vm_exists(vm_crud), "vm exists! but shouldn't exist"
     vm_crud.set_ownership(user=user2)
@@ -197,7 +197,7 @@ def test_group_ownership_on_user_or_group_role(
         test_flag: rbac
     """
     # user is only a member of a single group so it will always be the current group
-    vm_crud.set_ownership(group=user3.group)
+    vm_crud.set_ownership(group=user3.groups[0])
     with user3:
         assert vm_crud.exists, "vm not found"
     vm_crud.unset_ownership()
