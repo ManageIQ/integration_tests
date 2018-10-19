@@ -16,7 +16,6 @@ from cfme.containers.container import Container, ContainerCollection
 from cfme.utils.log import create_sublogger
 from cfme.utils.wait import wait_for
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -69,10 +68,8 @@ def wait_for_tag(obj_inst):
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
                          ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
-@pytest.mark.meta(blockers=[
-    BZ(1609541, forced_streams=["5.9"]),
-    BZ(1601915, forced_streams=["5.10"])
-])
+# TODO: BZ 1609541 is being investigated but should not block this test.
+# Keeping BZ for documentation
 def test_smart_management_add_tag(provider, appliance, test_item):
     logger.debug("Setting smart mgmt tag to {obj_type}".format(obj_type=test_item.obj.__name__))
     # validate no tag set to project
