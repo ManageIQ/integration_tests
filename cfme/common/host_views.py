@@ -3,14 +3,14 @@ from lxml.html import document_fromstring
 from widgetastic.utils import Parameter
 from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_patternfly import (
-    BreadCrumb, BootstrapNav, BootstrapSelect, CheckableBootstrapTreeview, Dropdown, Tab)
+    BreadCrumb, BootstrapNav, BootstrapSelect, CheckableBootstrapTreeview, Dropdown)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import displayed_not_implemented
 from widgetastic_manageiq import (
     Accordion, BaseEntitiesView, Button,
     Checkbox, DriftComparison, Input, ItemsToolBarViewSelector, JSBaseEntity, ManageIQTree,
-    PaginationPane, ParametrizedSummaryTable, Table, TimelinesView, Search)
+    PaginationPane, ParametrizedSummaryTable, Table, TimelinesView, Search, WaitTab)
 
 
 class ComputeInfrastructureHostsView(BaseLoggedInPage):
@@ -198,7 +198,7 @@ class HostFormView(ComputeInfrastructureHostsView):
     @View.nested
     class endpoints(View):  # noqa
         @View.nested
-        class default(Tab):  # noqa
+        class default(WaitTab):  # noqa
             change_stored_password = Text(".//a[contains(@ng-hide, 'bChangeStoredPassword')]")
             username = Input(name="default_userid")
             password = Input(name="default_password")
@@ -206,7 +206,7 @@ class HostFormView(ComputeInfrastructureHostsView):
             validate_button = Button("Validate")
 
         @View.nested
-        class remote_login(Tab):  # noqa
+        class remote_login(WaitTab):  # noqa
             TAB_NAME = "Remote Login"
             change_stored_password = Text(".//a[contains(@ng-hide, 'bChangeStoredPassword')]")
             username = Input(name="remote_userid")
@@ -215,7 +215,7 @@ class HostFormView(ComputeInfrastructureHostsView):
             validate_button = Button("Validate")
 
         @View.nested
-        class web_services(Tab):  # noqa
+        class web_services(WaitTab):  # noqa
             TAB_NAME = "Web Services"
             change_stored_password = Text(".//a[contains(@ng-hide, 'bChangeStoredPassword')]")
             username = Input(name="ws_userid")
@@ -224,7 +224,7 @@ class HostFormView(ComputeInfrastructureHostsView):
             validate_button = Button("Validate")
 
         @View.nested
-        class ipmi(Tab):  # noqa
+        class ipmi(WaitTab):  # noqa
             TAB_NAME = "IPMI"
             change_stored_password = Text(".//a[contains(@ng-hide, 'bChangeStoredPassword')]")
             username = Input(name="ipmi_userid")

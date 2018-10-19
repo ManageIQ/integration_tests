@@ -2,25 +2,26 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, View
-from widgetastic_patternfly import Button, BootstrapSelect, Tab
+from widgetastic_patternfly import Button, BootstrapSelect
 
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from . import (AllCatalogItemView, BasicInfoForm, DetailsCatalogItemView, NonCloudInfraCatalogItem,
     ServicesCatalogView)
 from cfme.utils.version import LOWEST, VersionPicker
+from widgetastic_manageiq import WaitTab
 
 
 class CatalogBundleFormView(ServicesCatalogView):
     title = Text('#explorer_title_text')
 
     @View.nested
-    class basic_info(Tab):  # noqa
+    class basic_info(WaitTab):  # noqa
         TAB_NAME = 'Basic Info'
         included_form = View.include(BasicInfoForm)
 
     @View.nested
-    class resources(Tab):  # noqa
+    class resources(WaitTab):  # noqa
         select_resource = BootstrapSelect('resource_id')
 
 

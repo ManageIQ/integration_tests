@@ -7,9 +7,9 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Text, Checkbox, View, ParametrizedView, Table as VanillaTable
-from widgetastic_manageiq import (PaginationPane, Table, ReportToolBarViewSelector)
+from widgetastic_manageiq import (PaginationPane, Table, ReportToolBarViewSelector, WaitTab)
 from widgetastic_manageiq.expression_editor import ExpressionEditor
-from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, CandidateNotFound
+from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound
 
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
@@ -37,21 +37,21 @@ class CustomReportFormCommon(CloudIntelReportsView):
     cancel_after = BootstrapSelect("chosen_queue_timeout")
 
     @View.nested
-    class consolidation(Tab):  # noqa
+    class consolidation(WaitTab):  # noqa
         column1 = BootstrapSelect("chosen_pivot1")
         column2 = BootstrapSelect("chosen_pivot2")
         column3 = BootstrapSelect("chosen_pivot3")
 
     @View.nested
-    class formatting(Tab):  # noqa
+    class formatting(WaitTab):  # noqa
         page_size = BootstrapSelect("pdf_page_size")
 
     @View.nested
-    class styling(Tab):  # noqa
+    class styling(WaitTab):  # noqa
         pass
 
     @View.nested
-    class filter(Tab):  # noqa
+    class filter(WaitTab):  # noqa
         filter_show_costs = BootstrapSelect("cb_show_typ")
         filter_owner = BootstrapSelect("cb_owner_id")
         filter_provider = BootstrapSelect("cb_provider_id")
@@ -65,7 +65,7 @@ class CustomReportFormCommon(CloudIntelReportsView):
         secondary_filter = ExpressionEditor()
 
     @View.nested
-    class summary(Tab):  # noqa
+    class summary(WaitTab):  # noqa
         sort_by = BootstrapSelect("chosen_sort1")
         sort_order = BootstrapSelect("sort_order")
         show_breaks = BootstrapSelect("sort_group")
@@ -73,14 +73,14 @@ class CustomReportFormCommon(CloudIntelReportsView):
         row_limit = BootstrapSelect("row_limit")
 
     @View.nested
-    class charts(Tab):  # noqa
+    class charts(WaitTab):  # noqa
         chart_type = BootstrapSelect("chosen_graph")
         chart_mode = BootstrapSelect("chart_mode")
         values_to_show = BootstrapSelect("chosen_count")
         sum_other_values = Checkbox("chosen_other")
 
     @View.nested
-    class timeline(Tab):  # noqa
+    class timeline(WaitTab):  # noqa
         based_on = BootstrapSelect("chosen_tl")
         position = BootstrapSelect("chosen_position")
 
@@ -124,12 +124,12 @@ class ReportDetailsView(CloudIntelReportsView):
     paginator = PaginationPane()
 
     @View.nested
-    class report_info(Tab):  # noqa
+    class report_info(WaitTab):  # noqa
         TAB_NAME = "Report Info"
         queue_button = Button("Queue")
 
     @View.nested
-    class saved_reports(Tab):  # noqa
+    class saved_reports(WaitTab):  # noqa
         TAB_NAME = "Saved Reports"
         table = Table(".//div[@id='records_div' or @class='miq-data-table']/table")
         paginator = PaginationPane()

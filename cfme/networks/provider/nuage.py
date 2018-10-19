@@ -1,7 +1,7 @@
 import attr
 import copy
 from widgetastic.widget import View
-from widgetastic_patternfly import Tab, BootstrapSelect, Input, Button
+from widgetastic_patternfly import BootstrapSelect, Input, Button
 from wrapanapi.systems import NuageSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm, EventsEndpoint
@@ -10,7 +10,7 @@ from cfme.networks.security_group import SecurityGroupCollection
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.varmeth import variable
-from widgetastic_manageiq import RadioGroup
+from widgetastic_manageiq import RadioGroup, WaitTab
 from . import NetworkProvider
 
 
@@ -25,13 +25,13 @@ class NuageEndpoint(DefaultEndpoint):
 
 class NuageEndpointForm(View):
     @View.nested
-    class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
+    class default(WaitTab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Default'
         security_protocol = BootstrapSelect('default_security_protocol')
         api_port = Input('default_api_port')
 
     @View.nested
-    class events(Tab, BeforeFillMixin):
+    class events(WaitTab, BeforeFillMixin):
         TAB_NAME = 'Events'
         event_stream = RadioGroup(locator='//div[@id="amqp"]')
         # below controls which appear only if amqp is chosen

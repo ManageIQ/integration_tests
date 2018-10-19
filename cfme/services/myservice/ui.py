@@ -1,7 +1,7 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Parameter
 from widgetastic.widget import ParametrizedView, Table, Text, View
-from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
+from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView
@@ -14,7 +14,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
                                   BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector,
-                                  BaseEntitiesView, Search)
+                                  BaseEntitiesView, Search, WaitTab)
 
 
 class MyServiceToolbar(View):
@@ -89,7 +89,7 @@ class MyServiceDetailView(MyServicesView):
     entities = View.nested(BaseNonInteractiveEntitiesView)
 
     @View.nested
-    class details(Tab):  # noqa
+    class details(WaitTab):  # noqa
         properties = SummaryTable(title='Properties')
         lifecycle = SummaryTable(title='Lifecycle')
         relationships = SummaryTable(title='Relationships')
@@ -98,7 +98,7 @@ class MyServiceDetailView(MyServicesView):
         generic_objects = SummaryTable(title='Generic Objects')
 
     @View.nested
-    class provisioning(Tab):  # noqa
+    class provisioning(WaitTab):  # noqa
         results = SummaryTable(title='Results')
         plays = Table('.//table[./thead/tr/th[contains(@align, "left") and '
                       'normalize-space(.)="Plays"]]')
@@ -107,7 +107,7 @@ class MyServiceDetailView(MyServicesView):
         standart_output = Text('.//div[@id="provisioning"]//pre')
 
     @View.nested
-    class retirement(Tab):  # noqa
+    class retirement(WaitTab):  # noqa
         results = SummaryTable(title='Results')
         plays = Table('.//table[./thead/tr/th[contains(@align, "left") and '
                       'normalize-space(.)="Plays"]]')

@@ -1,6 +1,6 @@
 import attr
 from widgetastic.widget import View, Text
-from widgetastic_patternfly import Tab, Input, Button
+from widgetastic_patternfly import Input, Button
 from wrapanapi.systems import EC2System
 
 from cfme.cloud.instance.ec2 import EC2Instance
@@ -8,7 +8,7 @@ from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.services.catalogs.catalog_items import AmazonCatalogItem
-from widgetastic_manageiq import LineChart
+from widgetastic_manageiq import LineChart, WaitTab
 from . import CloudProvider
 
 
@@ -26,11 +26,11 @@ class EC2EndpointForm(View):
      represents default Amazon endpoint form in UI (Add/Edit dialogs)
     """
     @View.nested
-    class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
+    class default(WaitTab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Default'
 
     @View.nested
-    class smart_state_docker(Tab, BeforeFillMixin):  # NOQA
+    class smart_state_docker(WaitTab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'SmartState Docker'
 
         username = Input(id='smartstate_docker_userid')

@@ -3,8 +3,8 @@ import attr
 
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text, Checkbox, Table, View
-from widgetastic_patternfly import Tab, BootstrapSelect
-from widgetastic_manageiq import TimelinesChart
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_manageiq import TimelinesChart, WaitTab
 
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -27,7 +27,7 @@ class BottlenecksTabsView(BottlenecksView):
         )
 
     @View.nested
-    class summary(Tab):    # noqa
+    class summary(WaitTab):    # noqa
         TAB_NAME = 'Summary'
         event_groups = BootstrapSelect('tl_summ_fl_grp1')
         show_host_events = Checkbox(locator='//input[@name="tl_summ_hosts"]')
@@ -35,7 +35,7 @@ class BottlenecksTabsView(BottlenecksView):
         chart = TimelinesChart(locator='//div/*[@class="timeline-pf-chart"]')
 
     @View.nested
-    class report(Tab):     # noqa
+    class report(WaitTab):     # noqa
         TAB_NAME = 'Report'
         event_details = Table("//div[@id='bottlenecks_report_div']/table")
         event_groups = BootstrapSelect('tl_report_fl_grp1')

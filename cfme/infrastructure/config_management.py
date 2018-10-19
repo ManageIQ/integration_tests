@@ -4,8 +4,8 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, TextInput, Text, View
 from widgetastic_manageiq import (
     Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
-    Table, Search)
-from widgetastic_patternfly import BootstrapSelect, Dropdown, Tab
+    Table, Search, WaitTab)
+from widgetastic_patternfly import BootstrapSelect, Dropdown
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.base.login import BaseLoggedInPage
@@ -66,7 +66,7 @@ class ConfigManagementEntities(BaseEntitiesView):
 class ConfigManagementProfileEntities(BaseEntitiesView):
     """Entities view for the detail page"""
     @View.nested
-    class summary(Tab):                     # noqa
+    class summary(WaitTab):                     # noqa
         TAB_NAME = 'Summary'
 
         properties = SummaryTable(title='Properties')
@@ -76,7 +76,7 @@ class ConfigManagementProfileEntities(BaseEntitiesView):
         smart_management = SummaryTable(title='Smart Management')
 
     @View.nested
-    class configured_systems(Tab):          # noqa
+    class configured_systems(WaitTab):          # noqa
         TAB_NAME = 'Configured Systems'
         elements = Table('//div[@id="main_div"]//div[@id="list_grid" or @id="gtl_div"]//table')
 

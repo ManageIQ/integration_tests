@@ -5,8 +5,8 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Table, Checkbox, View
-from widgetastic_manageiq import SummaryForm, SummaryFormItem, PaginationPane, Button
-from widgetastic_patternfly import BreadCrumb, Input, Tab, BootstrapTreeview
+from widgetastic_manageiq import SummaryForm, SummaryFormItem, PaginationPane, Button, WaitTab
+from widgetastic_patternfly import BreadCrumb, Input, BootstrapTreeview
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm_views import ProvisionView, BasicProvisionFormView
@@ -313,7 +313,7 @@ class RequestDetailsView(RequestsView):
         request_details = SummaryForm('Request Details')
 
     @View.nested
-    class request(Tab):  # noqa
+    class request(WaitTab):  # noqa
         TAB_NAME = 'Request'
         email = SummaryFormItem('Request Information', 'E-Mail')
         first_name = SummaryFormItem('Request Information', 'First Name')
@@ -322,12 +322,12 @@ class RequestDetailsView(RequestsView):
         manager_name = SummaryFormItem('Manager', 'Name')
 
     @View.nested
-    class purpose(Tab):  # noqa
+    class purpose(WaitTab):  # noqa
         TAB_NAME = 'Purpose'
         apply_tags = BootstrapTreeview('all_tags_treebox')
 
     @View.nested
-    class catalog(Tab):  # noqa
+    class catalog(WaitTab):  # noqa
         TAB_NAME = 'Catalog'
         filter_template = SummaryFormItem('Select', 'Filter')
         name = SummaryFormItem('Select', 'Name')
@@ -340,7 +340,7 @@ class RequestDetailsView(RequestsView):
         vm_description = SummaryFormItem('Naming', 'VM Description')
 
     @View.nested
-    class environment(Tab):  # noqa
+    class environment(WaitTab):  # noqa
         TAB_NAME = 'Environment'
 
         automatic_placement = Checkbox(name='environment__placement_auto')
@@ -365,7 +365,7 @@ class RequestDetailsView(RequestsView):
         datastore_name = SummaryFormItem('Datastore', 'Name')
 
     @View.nested
-    class hardware(Tab):  # noqa
+    class hardware(WaitTab):  # noqa
         num_cpus = SummaryFormItem('Hardware', 'Number of CPUS')
         memory = SummaryFormItem('Hardware', 'Startup Memory (MB)')
         dynamic_memory = SummaryFormItem('Hardware', 'Dynamic Memory')
@@ -373,17 +373,17 @@ class RequestDetailsView(RequestsView):
         vm_reserve_cpu = SummaryFormItem('VM Reservations', 'CPU (%)')
 
     @View.nested
-    class network(Tab):  # noqa
+    class network(WaitTab):  # noqa
         vlan = SummaryFormItem('Network Adapter Information', 'vLan')
 
     @View.nested
-    class properties(Tab):  # noqa
+    class properties(WaitTab):  # noqa
         instance_type = SummaryFormItem('Properties', 'Instance Type')
         boot_disk_size = SummaryFormItem('Properties', 'Boot Disk Size ')
         is_preemptible = Checkbox(name='hardware__is_preemptible')
 
     @View.nested
-    class customize(Tab):  # noqa
+    class customize(WaitTab):  # noqa
         username = SummaryFormItem('Credentials', 'Username')
         ip_mode = SummaryFormItem('IP Address Information', 'Address Mode')
         hostname = SummaryFormItem('IP Address Information', 'Address Mode')
@@ -395,7 +395,7 @@ class RequestDetailsView(RequestsView):
         customize_template = SummaryFormItem('Customize Template', 'Script Name')
 
     @View.nested
-    class schedule(Tab):  # noqa
+    class schedule(WaitTab):  # noqa
         when_provision = SummaryFormItem('Schedule Info', 'When to Provision')
         stateless = Checkbox(name='shedule__stateless')
         power_on = SummaryFormItem('Lifespan', 'Power on virtual machines after creation')

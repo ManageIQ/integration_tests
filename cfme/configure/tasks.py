@@ -8,8 +8,8 @@ import re
 from navmazing import NavigateToAttribute
 from widgetastic.exceptions import RowNotFound
 from widgetastic.widget import View
-from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table
-from widgetastic_patternfly import Dropdown, Tab
+from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table, WaitTab
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -46,22 +46,22 @@ class TasksView(BaseLoggedInPage):
         state = BootstrapSelect(id='state_choice')
 
         @View.nested
-        class mytasks(Tab):  # noqa
+        class mytasks(WaitTab):  # noqa
             TAB_NAME = 'My Tasks'
             table = Table('//div[@id="gtl_div"]//table')
 
         @View.nested
-        class myothertasks(Tab):  # noqa
+        class myothertasks(WaitTab):  # noqa
             TAB_NAME = 'My Tasks'
             table = Table('//div[@id="gtl_div"]//table')
 
         @View.nested
-        class alltasks(Tab):  # noqa
+        class alltasks(WaitTab):  # noqa
             TAB_NAME = 'All Tasks'
             table = Table('//div[@id="gtl_div"]//table')
 
         @View.nested
-        class allothertasks(Tab):  # noqa
+        class allothertasks(WaitTab):  # noqa
             TAB_NAME = "All Other Tasks"
             table = Table('//div[@id="gtl_div"]//table')
 

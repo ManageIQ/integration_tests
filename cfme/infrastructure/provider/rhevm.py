@@ -1,7 +1,7 @@
 import attr
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text
-from widgetastic_patternfly import Tab, Input, BootstrapSwitch, Button
+from widgetastic_patternfly import Input, BootstrapSwitch, Button
 from wrapanapi.systems import RHEVMSystem
 
 from cfme.common.candu_views import VMUtilizationView
@@ -9,7 +9,7 @@ from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpoint
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.exceptions import ItemNotFound
 from cfme.services.catalogs.catalog_items import RHVCatalogItem
-from widgetastic_manageiq import LineChart
+from widgetastic_manageiq import LineChart, WaitTab
 from . import InfraProvider
 
 
@@ -25,14 +25,14 @@ class RHEVMEndpoint(DefaultEndpoint):
 
 class RHEVMEndpointForm(View):
     @View.nested
-    class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
+    class default(WaitTab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Default'
         api_port = Input('default_api_port')
         verify_tls = BootstrapSwitch(id='default_tls_verify')
         ca_certs = Input('default_tls_ca_certs')
 
     @View.nested
-    class candu(Tab, BeforeFillMixin):  # NOQA
+    class candu(WaitTab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'C & U Database'
         hostname = Input('metrics_hostname')
         api_port = Input('metrics_api_port')

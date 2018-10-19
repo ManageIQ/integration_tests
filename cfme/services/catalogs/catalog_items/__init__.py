@@ -4,8 +4,8 @@ from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox, View
-from widgetastic_manageiq import FonticonPicker, ManageIQTree
-from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound, Tab
+from widgetastic_manageiq import FonticonPicker, ManageIQTree, WaitTab
+from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound
 
 from cfme.common import Taggable, TagPageView
 from cfme.common.vm_views import BasicProvisionFormView
@@ -63,7 +63,7 @@ class ButtonForm(ServicesCatalogView):
     request = Input(name='object_request')
 
     @View.nested
-    class options(Tab):    # noqa
+    class options(WaitTab):    # noqa
         TAB_NAME = 'Options'
 
         btn_text = Input(name='name')
@@ -72,7 +72,7 @@ class ButtonForm(ServicesCatalogView):
         btn_image = FonticonPicker('button_icon')
 
     @View.nested
-    class advanced(Tab):   # noqa
+    class advanced(WaitTab):   # noqa
         TAB_NAME = 'Advanced'
 
         system_process = BootstrapSelect('instance_name')
@@ -137,11 +137,11 @@ class TabbedAddCatalogItemView(ServicesCatalogView):
     cancel = Button('Cancel')
 
     @View.nested
-    class basic_info(Tab):  # noqa
+    class basic_info(WaitTab):  # noqa
         TAB_NAME = 'Basic Info'
         included_form = View.include(BasicInfoForm)
 
-    class request_info(Tab):  # noqa
+    class request_info(WaitTab):  # noqa
         TAB_NAME = 'Request Info'
         provisioning = View.nested(BasicProvisionFormView)
 
@@ -180,12 +180,12 @@ class TabbedEditCatalogItemView(ServicesCatalogView):
     cancel = Button('Cancel')
 
     @View.nested
-    class basic_info(Tab):  # noqa
+    class basic_info(WaitTab):  # noqa
         TAB_NAME = 'Basic Info'
         included_form = View.include(BasicInfoForm)
 
 
-    class request_info(Tab):  # noqa
+    class request_info(WaitTab):  # noqa
         TAB_NAME = 'Request Info'
         provisioning = View.nested(BasicProvisionFormView)
 

@@ -13,8 +13,8 @@ from cfme.utils.wait import wait_for
 from widgetastic.utils import ParametrizedLocator, ParametrizedString, Parameter
 from widgetastic.widget import ParametrizedView, Text, View, Widget, ConditionalSwitchableView
 from widgetastic.xpath import quote
-from widgetastic_patternfly import Button, Dropdown, Tab
-from widgetastic_manageiq import Table
+from widgetastic_patternfly import Button, Dropdown
+from widgetastic_manageiq import Table, WaitTab
 
 from .base.login import BaseLoggedInPage
 
@@ -108,7 +108,7 @@ class DashboardView(BaseLoggedInPage):
             self.zoomed.close.click()
 
     @ParametrizedView.nested
-    class dashboards(Tab, ParametrizedView):    # noqa
+    class dashboards(WaitTab, ParametrizedView):    # noqa
         PARAMETERS = ('title', )
         ALL_LOCATOR = './/ul[contains(@class, "nav-tabs-pf")]/li/a'
         COLUMN_LOCATOR = '//div[@id="col{}"]//h2'

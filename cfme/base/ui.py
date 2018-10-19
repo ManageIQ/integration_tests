@@ -8,10 +8,9 @@ from selenium.webdriver.common.keys import Keys
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, Table, Text, Image, FileInput
 from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView,
-                                  ParametrizedSummaryTable, SummaryFormItem)
+                                  ParametrizedSummaryTable, SummaryFormItem, WaitTab)
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown, DatePicker,
-                                    FlashMessages, BootstrapSelect, Tab,
-                                    CheckableBootstrapTreeview)
+                                    FlashMessages, BootstrapSelect, CheckableBootstrapTreeview)
 
 from cfme.base.credential import Credential
 from cfme.base.login import BaseLoggedInPage
@@ -446,17 +445,17 @@ class Chargeback(CFMENavigateStep):
 
 class ServerView(ConfigurationView):
     @View.nested
-    class server(Tab):  # noqa
+    class server(WaitTab):  # noqa
         TAB_NAME = "Server"
         including_view = View.include(ServerInformationView, use_parent=True)
 
     @View.nested
-    class authentication(Tab):  # noqa
+    class authentication(WaitTab):  # noqa
         TAB_NAME = "Authentication"
         including_view = View.include(ServerAuthenticationView, use_parent=True)
 
     @View.nested
-    class workers(Tab):  # noqa
+    class workers(WaitTab):  # noqa
         TAB_NAME = "Workers"
         # TODO move workers tab view into server_settings as ServerWorkersView
         generic_worker_count = BootstrapSelect("generic_worker_count")
@@ -485,11 +484,11 @@ class ServerView(ConfigurationView):
         reset = Button('Reset')
 
     @View.nested
-    class customlogos(Tab):  # noqa
+    class customlogos(WaitTab):  # noqa
         TAB_NAME = "Custom Logos"
 
     @View.nested
-    class advanced(Tab):  # noqa
+    class advanced(WaitTab):  # noqa
         TAB_NAME = "Advanced"
 
     @property
@@ -588,27 +587,27 @@ class Advanced(CFMENavigateStep):
 
 class ServerDatabaseView(ConfigurationView):
     @View.nested
-    class summary(Tab):  # noqa
+    class summary(WaitTab):  # noqa
         TAB_NAME = "Summary"
 
     @View.nested
-    class tables(Tab):  # noqa
+    class tables(WaitTab):  # noqa
         TAB_NAME = "Tables"
 
     @View.nested
-    class indexes(Tab):  # noqa
+    class indexes(WaitTab):  # noqa
         TAB_NAME = "Indexes"
 
     @View.nested
-    class settings(Tab):  # noqa
+    class settings(WaitTab):  # noqa
         TAB_NAME = "Settings"
 
     @View.nested
-    class client_connections(Tab):  # noqa
+    class client_connections(WaitTab):  # noqa
         TAB_NAME = "Client Connections"
 
     @View.nested
-    class utilization(Tab):  # noqa
+    class utilization(WaitTab):  # noqa
         TAB_NAME = "Utilization"
 
     @property
@@ -728,36 +727,36 @@ class DatabaseUtilization(CFMENavigateStep):
 
 class ServerDiagnosticsView(ConfigurationView):
     @View.nested
-    class summary(Tab):  # noqa
+    class summary(WaitTab):  # noqa
         TAB_NAME = "Summary"
         started_on = SummaryFormItem('EVM', 'Started On')
 
     @View.nested
-    class workers(Tab):  # noqa
+    class workers(WaitTab):  # noqa
         TAB_NAME = "Workers"
 
     @View.nested
-    class collectlogs(Tab):  # noqa
+    class collectlogs(WaitTab):  # noqa
         TAB_NAME = "Collect Logs"
 
     @View.nested
-    class cfmelog(Tab):  # noqa
+    class cfmelog(WaitTab):  # noqa
         TAB_NAME = "CFME Log"
 
     @View.nested
-    class auditlog(Tab):  # noqa
+    class auditlog(WaitTab):  # noqa
         TAB_NAME = "Audit Log"
 
     @View.nested
-    class productionlog(Tab):  # noqa
+    class productionlog(WaitTab):  # noqa
         TAB_NAME = "Production Log"
 
     @View.nested
-    class utilization(Tab):  # noqa
+    class utilization(WaitTab):  # noqa
         TAB_NAME = "Utilization"
 
     @View.nested
-    class timelines(Tab, TimelinesView):  # noqa
+    class timelines(WaitTab, TimelinesView):  # noqa
         TAB_NAME = "Timelines"
 
     configuration = Dropdown('Configuration')
@@ -903,27 +902,27 @@ class Timelines(CFMENavigateStep):
 
 
 # ######################## REGION NAVS ################################
-class CompanyCategories(Tab):
+class CompanyCategories(WaitTab):
     TAB_NAME = "My Company Categories"
 
 
-class CompanyTags(Tab):
+class CompanyTags(WaitTab):
     TAB_NAME = "My Company Tags"
 
 
-class ImportTags(Tab):
+class ImportTags(WaitTab):
     TAB_NAME = "Import Tags"
 
 
-class MapTags(Tab):
+class MapTags(WaitTab):
     TAB_NAME = "Map Tags"
 
 
-class ImportVariable(Tab):
+class ImportVariable(WaitTab):
     TAB_NAME = "Import Variables"
 
 
-class TagsView(Tab):
+class TagsView(WaitTab):
     TAB_NAME = "Tags"
 
     company_categories = View.nested(CompanyCategories)
@@ -935,28 +934,28 @@ class TagsView(Tab):
 
 class RegionView(ConfigurationView):
     @View.nested
-    class details(Tab):  # noqa
+    class details(WaitTab):  # noqa
         TAB_NAME = "Details"
         table = Table(locator='.//table[./tbody/tr/td[@title="Edit this Region"]]')
 
     @View.nested
-    class candu_collection(Tab):  # noqa
+    class candu_collection(WaitTab):  # noqa
         TAB_NAME = "C & U Collection"
 
     @View.nested
-    class redhat_updates(Tab):  # noqa
+    class redhat_updates(WaitTab):  # noqa
         TAB_NAME = "Red Hat Updates"
 
     @View.nested
-    class imports(Tab):  # noqa
+    class imports(WaitTab):  # noqa
         TAB_NAME = "Import Variables"
 
     @View.nested
-    class replication(Tab):  # noqa
+    class replication(WaitTab):  # noqa
         TAB_NAME = "Replication"
 
     @View.nested
-    class help_menu(Tab):   # noqa
+    class help_menu(WaitTab):   # noqa
         TAB_NAME = "Help Menu"
 
     company_categories = View.nested(CompanyCategories)
@@ -1099,31 +1098,31 @@ class RegionZones(CFMENavigateStep):
 
 class RegionDiagnosticsView(ConfigurationView):
     @View.nested
-    class zones(Tab):  # noqa
+    class zones(WaitTab):  # noqa
         TAB_NAME = "Zones"
 
     @View.nested
-    class rolesbyservers(Tab):  # noqa
+    class rolesbyservers(WaitTab):  # noqa
         TAB_NAME = "Roles by Servers"
 
     @View.nested
-    class replication(Tab):  # noqa
+    class replication(WaitTab):  # noqa
         TAB_NAME = "Replication"
 
     @View.nested
-    class serversbyroles(Tab):  # noqa
+    class serversbyroles(WaitTab):  # noqa
         TAB_NAME = "Servers by Roles"
 
     @View.nested
-    class servers(Tab):  # noqa
+    class servers(WaitTab):  # noqa
         TAB_NAME = "Servers"
 
     @View.nested
-    class database(Tab):  # noqa
+    class database(WaitTab):  # noqa
         TAB_NAME = "Database"
 
     @View.nested
-    class orphaneddata(Tab):  # noqa
+    class orphaneddata(WaitTab):  # noqa
         TAB_NAME = "Orphaned Data"
 
     @property
@@ -1262,11 +1261,11 @@ class ZoneForm(ConfigurationView):
 class ZoneView(ConfigurationView):
 
     @View.nested
-    class zone(Tab):  # noqa
+    class zone(WaitTab):  # noqa
         TAB_NAME = "Zone"
 
     @View.nested
-    class smart_proxy_affinity(Tab):  # noqa
+    class smart_proxy_affinity(WaitTab):  # noqa
         TAB_NAME = "SmartProxy Affinity"
 
 
@@ -1364,23 +1363,23 @@ class ZoneEdit(CFMENavigateStep):
 # Zone Diags #
 class ZoneDiagnosticsView(ConfigurationView):
     @View.nested
-    class rolesbyservers(Tab):  # noqa
+    class rolesbyservers(WaitTab):  # noqa
         TAB_NAME = "Roles by Servers"
 
     @View.nested
-    class serversbyroles(Tab):  # noqa
+    class serversbyroles(WaitTab):  # noqa
         TAB_NAME = "Servers by Roles"
 
     @View.nested
-    class servers(Tab):  # noqa
+    class servers(WaitTab):  # noqa
         TAB_NAME = "Servers"
 
     @View.nested
-    class collectlogs(Tab):  # noqa
+    class collectlogs(WaitTab):  # noqa
         TAB_NAME = "Collect Logs"
 
     @View.nested
-    class candugapcollection(Tab):  # noqa
+    class candugapcollection(WaitTab):  # noqa
         TAB_NAME = "C & U Gap Collection"
         end_date = DatePicker(id='miq_date_2')
         start_date = DatePicker(id='miq_date_1')

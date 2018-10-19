@@ -2,12 +2,12 @@ import attr
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text, View, Select
 from widgetastic.xpath import quote
-from widgetastic_patternfly import Button, Input, Tab, BootstrapSwitch
+from widgetastic_patternfly import Button, Input, BootstrapSwitch
 
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from widgetastic_manageiq import (ManageIQTree, DialogButton, DragandDrop,
-                                  DialogBootstrapSwitch, DialogElement)
+                                  DialogBootstrapSwitch, DialogElement, WaitTab)
 from . import AutomateCustomizationView, AddBoxView
 
 
@@ -19,7 +19,7 @@ class ElementForm(AddBoxView):
     cancel_button = Button('Cancel')
 
     @View.nested
-    class element_information(Tab):  # noqa
+    class element_information(WaitTab):  # noqa
         TAB_NAME = 'Field Information'
         element_tree = ManageIQTree('dialog_edit_treebox')
         dynamic_tree = ManageIQTree('automate_treebox')
@@ -31,7 +31,7 @@ class ElementForm(AddBoxView):
         dynamic_chkbox = BootstrapSwitch(label='Dynamic')
 
     @View.nested
-    class options(Tab):  # noqa
+    class options(WaitTab):  # noqa
         default_text_box = Input(name='default_value')
         field_required = DialogBootstrapSwitch(label='Required')
         default_value = DialogBootstrapSwitch(label='Default value')
@@ -44,7 +44,7 @@ class ElementForm(AddBoxView):
         visible = DialogBootstrapSwitch(label='Visible')
 
     @View.nested
-    class advanced(Tab):  # noqa
+    class advanced(WaitTab):  # noqa
         reconfigurable = BootstrapSwitch(label='Reconfigurable')
 
 
