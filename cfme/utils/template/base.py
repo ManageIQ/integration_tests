@@ -279,7 +279,10 @@ class ProviderTemplateUpload(object):
             # add location for image on standalone glance
             client.images.add_location(glance_image.id, self.raw_image_url, {})
         else:
-            client.images.upload(glance_image.id, self.raw_image_url)
+            if self.download_image():
+                client.images.upload(glance_image.id, open(self.local_file_path, 'rb'))
+            else:
+                return False
         return True
 
     @log_wrap("template upload script")
