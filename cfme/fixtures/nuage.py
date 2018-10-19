@@ -1,4 +1,5 @@
 import pytest
+import random
 
 from wrapanapi.utils.random import random_name
 
@@ -14,12 +15,23 @@ def with_nuage_sandbox(networks_provider):
     enterprise = box['enterprise'] = nuage.create_enterprise()
     logger.info('Created sandbox enterprise {} ({})'.format(enterprise.name, enterprise.id))
 
+    # Create shared network resource
+    box['shared_network'] = nuage.api.create_child(nuage.vspk.NUSharedNetworkResource(
+        name=random_name(),
+        address='11.12.13.{address}'.format(address=random.randint(0, 63) * 4),
+        netmask='255.255.255.252',
+        type='FLOATING'
+    ))[0]
+
     # Fill the sandbox with some entities.
     # Method `create_child` returns a tuple (object, connection) and we only need object.
     box['template'] = enterprise.create_child(
         nuage.vspk.NUDomainTemplate(name=random_name()))[0]
     box['domain'] = enterprise.create_child(
         nuage.vspk.NUDomain(name=random_name(), template_id=box['template'].id))[0]
+    box['floating_ip'] = box['domain'].create_child(nuage.vspk.NUFloatingIp(
+        associated_shared_network_resource_id=box['shared_network'].id
+    ))[0]
     box['zone'] = box['domain'].create_child(
         nuage.vspk.NUZone(name=random_name()))[0]
     box['subnet'] = box['zone'].create_child(
@@ -31,7 +43,11 @@ def with_nuage_sandbox(networks_provider):
     box['cont_vport'] = box['subnet'].create_child(
         nuage.vspk.NUVPort(name=random_name(), type='CONTAINER'))[0]
     box['vm_vport'] = box['subnet'].create_child(
-        nuage.vspk.NUVPort(name=random_name(), type='VM'))[0]
+        nuage.vspk.NUVPort(
+            name=random_name(),
+            type='VM',
+            associated_floating_ip_id=box['floating_ip'].id
+        ))[0]
     box['l2_template'] = enterprise.create_child(
         nuage.vspk.NUL2DomainTemplate(name=random_name()))[0]
     box['l2_domain'] = enterprise.create_child(
@@ -50,4 +66,5 @@ def with_nuage_sandbox(networks_provider):
 
     # Destroy the sandbox.
     nuage.delete_enterprise(enterprise)
+    box['shared_network'].delete()
     logger.info('Destroyed sandbox enterprise {} ({})'.format(enterprise.name, enterprise.id))
