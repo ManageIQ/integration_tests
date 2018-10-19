@@ -81,7 +81,7 @@ class Task(BaseEntity):
         name: Name of the task.
         user: User who initiated the task.
         server: Cfme server.
-        tab: WaitTab where current task located.
+        tab: Tab where current task located.
 
     """
     OK = 'ok'

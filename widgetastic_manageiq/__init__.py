@@ -3661,6 +3661,25 @@ class FonticonPicker(Widget):
 
 
 class WaitTab(Tab):
+    """Tab widget to patch wt.patternfly tab for MIQ
+
+    Includes:
+       1. wait against is_active after selection
+       2. single retry of select() + is_active wait
+       3. wait around passed widget being displayed, non-strict check allows for TimedOutError
+
+    These enhancements (1, 3) and bandaids (2) are due to tab behavior on some forms,
+    and how some views have been implemented with more widgets than are always available
+
+    Raises:
+         TimedOutError: when the tab is not active after selection (one retry)
+
+    TODO:
+        Move some of this behavior into wt.patternfly.Tab
+        (is_active check and wait for widget displayed)
+        Look for elements in tab to determine without a specific widget if the tab has finished load
+    """
+
     def child_widget_accessed(self, widget):
         _to_try = 2
         _tries = 0
@@ -3669,19 +3688,17 @@ class WaitTab(Tab):
             self.select()
             try:
                 wait_for(self.is_active, delay=.1, num_sec=2)
+                break  # no retry, wait passed
             except TimedOutError:
                 self.logger.exception(
-                    "Tab was not active in 3s{}".format(", retrying" if _tries < _to_try else "")
+                    "Tab was not active in 2s{}".format(", retrying" if _tries < _to_try else "")
                 )
                 if _tries >= _to_try:  # raise the TimedOutError if we've tried enough times
                     raise
-            else:
-                break  # no retry
         try:
             widget.wait_displayed(timeout=2)
         except TimedOutError:
             self.logger.exception("Tab widget not displayed, continuing...")
-            pass
 
 
 class PotentiallyInvisibleTab(WaitTab):
