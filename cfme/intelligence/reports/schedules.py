@@ -27,6 +27,18 @@ class SchedulesAllView(CloudIntelReportsView):
         return self.in_intel_reports and self.title.text == "All Schedules"
 
 
+# TODO debug the closing widget behavior
+class BootstrapSelectRetry(BootstrapSelect):
+    """Workaround for schedule filter widget that is closing itself
+
+    Retrys the open action
+    """
+    def open(self):
+        super(BootstrapSelectRetry, self).open()
+        if not self.is_open:
+            super(BootstrapSelectRetry, self).open()
+
+
 class SchedulesFormCommon(CloudIntelReportsView):
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")] | '
@@ -37,9 +49,9 @@ class SchedulesFormCommon(CloudIntelReportsView):
     description = TextInput(name="description")
     active = Checkbox("enabled")
     # Report Selection
-    filter1 = BootstrapSelect("filter_typ")
-    filter2 = BootstrapSelect("subfilter_typ")
-    filter3 = BootstrapSelect("repfilter_typ")
+    filter1 = BootstrapSelectRetry("filter_typ")
+    filter2 = BootstrapSelectRetry("subfilter_typ")
+    filter3 = BootstrapSelectRetry("repfilter_typ")
     # Timer
     run = BootstrapSelect("timer_typ")
     time_zone = BootstrapSelect("time_zone")
