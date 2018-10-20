@@ -13,6 +13,6 @@ emails:
     - test2@example.test
 email_options:
   send_if_empty: True
-  txt: True
-  csv: True
-  pdf: True
+  send_txt: True
+  send_csv: True
+  send_pdf: True
