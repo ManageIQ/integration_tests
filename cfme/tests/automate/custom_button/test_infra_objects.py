@@ -251,6 +251,13 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
     dialog_view = view.browser.create_view(TextInputDialogView)
     dialog_view.wait_displayed()
     assert dialog_view.service_name.fill("Custom Button Execute")
+
+    # Clear the automation log
+    assert appliance.ssh_client.run_command(
+        'echo -n "" > /var/www/miq/vmdb/log/automation.log'
+    )
+
+    # Submit order
     dialog_view.submit.click()
 
     if not (
@@ -258,3 +265,15 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
     ):
         view.wait_displayed("60s")
     view.flash.assert_message("Order Request was Submitted")
+
+    # Check for request in automation log
+    try:
+        wait_for(
+            log_request_check,
+            [appliance, 1],
+            timeout=300,
+            message="Check for expected request count",
+            delay=20,
+        )
+    except TimedOutError:
+        assert False, "Expected 1 requests not found in automation log"
