@@ -24,6 +24,7 @@ def roles(appliance, provider):
     yield roles if roles else pytest.skip("No Roles Available")
 
 
+@pytest.mark.regression
 def test_host_role_association(appliance, provider, soft_assert):
     host_collection = appliance.collections.hosts
     hosts = host_collection.all()
@@ -46,12 +47,14 @@ def test_host_role_association(appliance, provider, soft_assert):
         soft_assert(role_name in role_assoc, 'Deployment roles misconfigured')
 
 
+@pytest.mark.regression
 def test_roles_name(roles):
     for role in roles:
         role_name = role.name.split('-')[1]
         assert role_name in ROLES
 
 
+@pytest.mark.regression
 def test_roles_summary(roles, soft_assert):
     err_ptrn = '{} are shown incorrectly'
 
@@ -76,6 +79,7 @@ def test_roles_summary(roles, soft_assert):
             soft_assert(res, err_ptrn.format(v))
 
 
+@pytest.mark.regression
 def test_role_delete(roles):
     role = choice(roles)
     role.delete()

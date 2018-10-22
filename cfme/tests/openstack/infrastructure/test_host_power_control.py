@@ -42,6 +42,7 @@ def host_off(host_collection, provider):
     return my_host_off
 
 
+@pytest.mark.regression
 def test_host_power_off(host_on):
     host_on.power_off()
     host_on.refresh()
@@ -49,6 +50,7 @@ def test_host_power_off(host_on):
     assert result
 
 
+@pytest.mark.regression
 def test_host_power_on(host_off):
     host_off.power_on()
     host_off.refresh()

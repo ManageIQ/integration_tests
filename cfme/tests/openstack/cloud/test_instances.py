@@ -75,6 +75,7 @@ def volume(appliance, provider):
         volume.delete(wait=False)
 
 
+@pytest.mark.regression
 def test_create_instance(new_instance, soft_assert):
     """Creates an instance and verifies it appears on UI"""
     view = navigate_to(new_instance, 'Details')
@@ -98,6 +99,7 @@ def test_create_instance(new_instance, soft_assert):
         soft_assert(v == prov_data[p[1]])
 
 
+@pytest.mark.regression
 def test_stop_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.STOP)
@@ -107,6 +109,7 @@ def test_stop_instance(new_instance):
     assert state == OpenStackInstance.STATE_OFF
 
 
+@pytest.mark.regression
 def test_suspend_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SUSPEND)
@@ -116,6 +119,7 @@ def test_suspend_instance(new_instance):
     assert state == OpenStackInstance.STATE_SUSPENDED
 
 
+@pytest.mark.regression
 def test_pause_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.PAUSE)
@@ -125,6 +129,7 @@ def test_pause_instance(new_instance):
     assert state == OpenStackInstance.STATE_PAUSED
 
 
+@pytest.mark.regression
 def test_shelve_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SHELVE)
@@ -138,6 +143,7 @@ def test_shelve_instance(new_instance):
                      OpenStackInstance.STATE_SHELVED)
 
 
+@pytest.mark.regression
 def test_shelve_offload_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SHELVE)
@@ -154,6 +160,7 @@ def test_shelve_offload_instance(new_instance):
     assert state == OpenStackInstance.STATE_SHELVED_OFFLOAD
 
 
+@pytest.mark.regression
 def test_start_instance(new_instance):
     new_instance.mgmt.ensure_state(VmState.STOPPED)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_OFF)
@@ -165,6 +172,7 @@ def test_start_instance(new_instance):
     assert state == OpenStackInstance.STATE_ON
 
 
+@pytest.mark.regression
 def test_soft_reboot_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SOFT_REBOOT)
@@ -176,6 +184,7 @@ def test_soft_reboot_instance(new_instance):
                      OpenStackInstance.STATE_REBOOTING)
 
 
+@pytest.mark.regression
 def test_hard_reboot_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.HARD_REBOOT)
@@ -187,6 +196,7 @@ def test_hard_reboot_instance(new_instance):
                      OpenStackInstance.STATE_REBOOTING)
 
 
+@pytest.mark.regression
 def test_delete_instance(new_instance, provider):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.TERMINATE)
@@ -203,6 +213,7 @@ def test_delete_instance(new_instance, provider):
         pass
 
 
+@pytest.mark.regression
 @pytest.mark.provider([OpenStackProvider],
                       required_fields=[['provisioning', 'image', 'os_distro']],
                       override=True, scope='module')
@@ -213,6 +224,7 @@ def test_instance_operating_system_linux(new_instance):
     assert os == prov_data_os, 'OS type mismatch: expected {} and got {}'.format(prov_data_os, os)
 
 
+@pytest.mark.regression
 def test_instance_attach_volume(new_instance, volume, appliance):
     initial_volume_count = new_instance.volume_count
     new_instance.attach_volume(volume.name)
