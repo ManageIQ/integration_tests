@@ -27,7 +27,7 @@ from selenium.common.exceptions import StaleElementReferenceException
 
 # Widgets
 
-class MigrationPlanRequestDetailsPaginator(Paginator):
+class v2vPaginator(Paginator):
     """ Represents Paginator control for V2V."""
 
     PAGINATOR_CTL = './/div[contains(@class,"form-group")][./ul]'
@@ -51,7 +51,7 @@ class MigrationPlanRequestDetailsPaginator(Paginator):
         return self.browser.text(self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator))
 
 
-class MigrationPlanRequestDetailsPaginationDropup(SelectorDropdown):
+class v2vPaginationDropup(SelectorDropdown):
     ROOT = ParametrizedLocator(
         './/div[contains(@class, "dropup") and ./button[@{@b_attr}={@b_attr_value|quote}]]')
 
@@ -61,10 +61,17 @@ class MigrationPlanRequestDetailsPaginationPane(View):
 
     ROOT = './/form[contains(@class,"content-view-pf-pagination")]'
 
-    items_on_page = MigrationPlanRequestDetailsPaginationDropup('id', 'pagination-row-dropdown')
-    paginator = MigrationPlanRequestDetailsPaginator()
+    items_on_page = v2vPaginationDropup('id', 'pagination-row-dropdown')
+    paginator = v2vPaginator()
 
 
+class InfrastructureMappingsPaginatorPane(View):
+    """ Represents Paginator Pane for V2V."""
+
+    ROOT = './/form[contains(@class,"content-view-pf-pagination")]'
+
+    items_on_page = v2vPaginationDropup('id', 'pagination-row-dropdown')
+    paginator = v2vPaginator()
 # Views
 
 
@@ -309,14 +316,13 @@ class MigrationDropdown(Dropdown):
 
 
 class MigrationDashboardView(BaseLoggedInPage):
-    create_infrastructure_mapping = Text(locator='(//a|//button)'
+    create_infrastructure_mapping = Text(locator='//button'
                                                  '[text()="Create Infrastructure Mapping"]')
     create_migration_plan = Text(locator='(//a|//button)[text()="Create Migration Plan"]')
     configure_providers = Text(locator='//a[text()="Configure Providers"]')
     migration_plans_not_started_list = MigrationPlansList("plans-not-started-list")
     migration_plans_completed_list = MigrationPlansList("plans-complete-list")
     migration_plans_archived_list = MigrationPlansList("plans-complete-list")
-    infra_mapping_list = InfraMappingList("infra-mappings-list-view")
     migr_dropdown = MigrationDropdown(text="Not Started Plans")
     sort_type_dropdown = Dropdown(text="Name")
     sort_direction = Text(locator=".//span[contains(@class,'sort-direction')]")
@@ -325,6 +331,8 @@ class MigrationDashboardView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
+        # TODO Uncomment next line, remove line after that
+        #self.navigation.currently_selected == ['Compute', 'Migration', 'Overview']
         return (self.navigation.currently_selected == ['Compute', 'Migration'] and
             (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
             (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0) and
@@ -364,17 +372,51 @@ class MigrationDashboardView(BaseLoggedInPage):
             return False
 
 
-class AddInfrastructureMappingView(View):
-    form = InfraMappingWizard()
+class MigrationDashboardView59z(MigrationDashboardView):
+    infra_mapping_list = InfraMappingList("infra-mappings-list-view")
 
     @property
     def is_displayed(self):
-        form_title_text = VersionPicker({
-            Version.lowest(): 'Infrastructure Mapping Wizard',
-            '5.10': 'Create Infrastructure Mapping'
-        })
+        return (self.navigation.currently_selected == ['Compute', 'Migration'] and
+            (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
+            (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0))
 
-        return (self.form.title.text == form_title_text.pick())
+
+class InfrastructureMappingView(BaseLoggedInPage):
+    infra_mapping_list = InfraMappingList("infra-mappings-list-view")
+    create_infrastructure_mapping = Text(locator='(//a|//button)'
+                                                 '[text()="Create Infrastructure Mapping"]')
+    paginator_view = View.include(InfrastructureMappingsPaginatorPane, use_parent=True)
+    search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
+    clear_filters = Text(".//a[text()='Clear All Filters']")
+    # Used for Ascending/Descending sort
+    sort_order = Text(".//button[./span[contains(@class,'sort-direction')]]")
+    # Used to select filter_by 'Name' or 'Description'
+    filter_by_dropdown = SelectorDropdown('id', 'filterFieldTypeMenu')
+    # USed to select sort by options like 'Name', 'Number of Associated Plans'
+    sort_by_dropdown = SelectorDropdown('id', 'sortTypeMenu')
+
+    @property
+    def is_displayed(self):
+        return (self.navigation.currently_selected ==
+            # TODO: Remove nxt line & uncomment line below that, once /manageiq-v2v/issues/726 fixed
+            ['Compute', 'Migration'] and
+            # ['Compute', 'Migration', 'Infrastructure Mappings'] and
+            len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0 and
+            (self.create_infrastructure_mapping.is_displayed or
+                self.infra_mapping_list.is_displayed))
+
+
+class AddInfrastructureMappingView(View):
+    form = InfraMappingWizard()
+    form_title_text = VersionPicker({
+        Version.lowest(): 'Infrastructure Mapping Wizard',
+        '5.10': 'Create Infrastructure Mapping'
+    })
+
+    @property
+    def is_displayed(self):
+        return (self.form.title.text == self.form_title_text)
 
 
 class AddMigrationPlanView(View):
@@ -386,6 +428,10 @@ class AddMigrationPlanView(View):
     # because want to keep it consistent
     next_btn = Button('Next')
     cancel_btn = Button('Cancel')
+    form_title_text = VersionPicker({
+        Version.lowest(): 'Migration Plan Wizard',
+        '5.10': 'Create Migration Plan'
+    })
 
     @View.nested
     class general(View):  # noqa
@@ -471,12 +517,7 @@ class AddMigrationPlanView(View):
 
     @property
     def is_displayed(self):
-        form_title_text = VersionPicker({
-            Version.lowest(): 'Migration Plan Wizard',
-            '5.10': 'Create Migration Plan'
-        })
-
-        return self.title.text == form_title_text.pick()
+        return self.title.text == self.form_title_text
 
 
 class MigrationPlanRequestDetailsView(View):
@@ -688,8 +729,14 @@ class MigrationPlanCollection(BaseCollection):
 
 @navigator.register(InfrastructureMappingCollection, 'All')
 class AllMappings(CFMENavigateStep):
-    VIEW = MigrationDashboardView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    @property
+    def VIEW(self):  # noqa
+        if self.obj.appliance.version < '5.10':
+            return MigrationDashboardView59z
+        else:
+            return InfrastructureMappingView
 
     def step(self):
         if self.obj.appliance.version < '5.10':
@@ -697,18 +744,6 @@ class AllMappings(CFMENavigateStep):
         else:
             self.prerequisite_view.navigation.select(
                 'Compute', 'Migration', 'Infrastructure Mappings')
-
-
-@navigator.register(MigrationPlanCollection, 'All')
-class All(CFMENavigateStep):
-    VIEW = MigrationDashboardView
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self):
-        if self.obj.appliance.version < '5.10':
-            self.prerequisite_view.navigation.select('Compute', 'Migration')
-        else:
-            self.prerequisite_view.navigation.select('Compute', 'Migration', 'Overview')
 
 
 @navigator.register(InfrastructureMappingCollection, 'Add')
@@ -719,6 +754,24 @@ class AddInfrastructureMapping(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.wait_displayed()
         self.prerequisite_view.create_infrastructure_mapping.click()
+
+
+@navigator.register(MigrationPlanCollection, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    @property
+    def VIEW(self):  # noqa
+        if self.obj.appliance.version < '5.10':
+            return MigrationDashboardView59z
+        else:
+            return MigrationDashboardView
+
+    def step(self):
+        if self.obj.appliance.version < '5.10':
+            self.prerequisite_view.navigation.select('Compute', 'Migration')
+        else:
+            self.prerequisite_view.navigation.select('Compute', 'Migration', 'Overview')
 
 
 @navigator.register(MigrationPlanCollection, 'Add')
