@@ -5,7 +5,9 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 
@@ -144,3 +146,73 @@ def test_custom_button_display(appliance, request, display, setup_objs, button_g
             custom_button_group = Dropdown(view, group.hover)
             assert custom_button_group.is_displayed
             assert custom_button_group.has_item(button.text)
+
+
+@pytest.mark.uncollectif(
+    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
+    and appliance.version < "5.10"
+)
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1635797,
+            forced_streams=["5.9", "5.10"],
+            unblock=lambda button_group: bool(
+                [
+                    obj
+                    for obj in ["PROVIDER", "VM_INSTANCE", "CLOUD_NETWORK"]
+                    if obj in button_group
+                ]
+            ),
+        )
+    ]
+)
+def test_custom_button_dialog(appliance, dialog, request, setup_objs, button_group):
+    """ Test custom button with dialog and InspectMe method
+
+    Prerequisites:
+        * Appliance with Infra provider
+        * Simple TextInput service dialog
+
+    Steps:
+        * Create custom button group with the Object type
+        * Create a custom button with service dialog
+        * Navigate to object Details page
+        * Check for button group and button
+        * Select/execute button from group dropdown for selected entities
+        * Fill dialog and submit
+        * Check for the proper flash message related to button execution
+
+    Bugzillas:
+        * 1635797, 1555331, 1574403
+    """
+
+    group, obj_type = button_group
+
+    # Note: No need to set display_for dialog only work with Single entity
+    button = group.buttons.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        dialog=dialog,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    for setup_obj in setup_objs:
+        view = navigate_to(setup_obj, "Details")
+        custom_button_group = Dropdown(view, group.hover)
+        assert custom_button_group.has_item(button.text)
+        custom_button_group.item_select(button.text)
+
+        dialog_view = view.browser.create_view(TextInputDialogView)
+        dialog_view.wait_displayed()
+        dialog_view.service_name.fill("Custom Button Execute")
+        dialog_view.submit.click()
+
+        if not (
+            BZ(bug_id=1640592, forced_streams=["5.9", "5.10"]).blocks
+            and obj_type == "TEMPLATE_IMAGE"
+        ):
+            view.wait_displayed("60s")
+        view.flash.assert_message("Order Request was Submitted")
