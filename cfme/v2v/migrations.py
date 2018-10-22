@@ -687,13 +687,28 @@ class MigrationPlanCollection(BaseCollection):
 
 
 @navigator.register(InfrastructureMappingCollection, 'All')
+class AllMappings(CFMENavigateStep):
+    VIEW = MigrationDashboardView
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        if self.obj.appliance.version < '5.10':
+            self.prerequisite_view.navigation.select('Compute', 'Migration')
+        else:
+            self.prerequisite_view.navigation.select(
+                'Compute', 'Migration', 'Infrastructure Mappings')
+
+
 @navigator.register(MigrationPlanCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = MigrationDashboardView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Compute', 'Migration')
+        if self.obj.appliance.version < '5.10':
+            self.prerequisite_view.navigation.select('Compute', 'Migration')
+        else:
+            self.prerequisite_view.navigation.select('Compute', 'Migration', 'Overview')
 
 
 @navigator.register(InfrastructureMappingCollection, 'Add')

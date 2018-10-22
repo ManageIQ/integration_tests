@@ -517,18 +517,12 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
-    src_vm_obj = form_data_vm_obj_single_datastore.vm_obj[0]
-    wait_for(lambda: src_vm_obj.ip_address is not None,
-        message="Waiting for VM to display IP in CFME",
-        fail_func=src_vm_obj.refresh_relationships,
-        delay=5, timeout=300)
-
     migration_plan_collection = appliance.collections.v2v_plans
     # fauxfactory.gen_special() used here to create special character string e.g. #$@#@
     migration_plan = migration_plan_collection.create(
         name="{}".format(fauxfactory.gen_special()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore.vm_obj, start_migration=True)
+        vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
@@ -549,6 +543,6 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
             migration_plan.name))
     # validate MAC address matches between source and target VMs
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
-    src_vm = form_data_vm_obj_single_datastore.vm_obj[0]
+    src_vm = form_data_vm_obj_single_datastore.vm_list[0]
     migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
     assert src_vm.mac_address == migrated_vm.mac_address
