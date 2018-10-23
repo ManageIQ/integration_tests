@@ -18,7 +18,7 @@ def configured_external_appliance(temp_appliance_preconfig, app_creds_modscope,
     return temp_appliance_unconfig
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.10')
+@pytest.mark.ignore_stream('5.9')
 def test_remote_server_advanced_config(temp_appliance_preconfig, request,
                                        configured_external_appliance):
     """
