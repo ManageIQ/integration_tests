@@ -31,7 +31,8 @@ def set_and_get_tenant_quota(appliance):
     data = dict()
     for key, value in property_mapping.items():
         suffix = "GB" if "GB" in value else "Count"
-        data[value] = '{0} {1}'.format(tenant_quota_data[key], suffix)
+        data[value] = '{data_value} {suffix}'.format(
+            data_value=tenant_quota_data[key], suffix=suffix)
 
     yield data
 
@@ -46,8 +47,7 @@ def set_and_get_tenant_quota(appliance):
 
 
 def test_queue_tenant_quota_reports(appliance, request, set_and_get_tenant_quota):
-    """
-        This test case sets the tenant quota, generates a 'Tenant Quota' report
+    """This test case sets the tenant quota, generates a 'Tenant Quota' report
         and compares both the data.
     """
     tenant_report = appliance.collections.reports.instantiate(
