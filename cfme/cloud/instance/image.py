@@ -85,7 +85,7 @@ class ImageDetailsView(CloudInstanceView):
     @property
     def is_displayed(self):
         accordion = self.sidebar.images_by_provider
-        relationships = self.entities.relationships
+        relationships = self.entities.summary('Relationships')
         return (
             self.in_cloud_instance and
             accordion.is_opened and
