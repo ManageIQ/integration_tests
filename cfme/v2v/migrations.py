@@ -316,7 +316,7 @@ class MigrationDropdown(Dropdown):
 
 
 class MigrationDashboardView(BaseLoggedInPage):
-    create_infrastructure_mapping = Text(locator='//button'
+    create_infrastructure_mapping = Text(locator='(//a|//button)'
                                                  '[text()="Create Infrastructure Mapping"]')
     create_migration_plan = Text(locator='(//a|//button)[text()="Create Migration Plan"]')
     configure_providers = Text(locator='//a[text()="Configure Providers"]')
@@ -331,9 +331,10 @@ class MigrationDashboardView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        # TODO Uncomment next line, remove line after that
-        #self.navigation.currently_selected == ['Compute', 'Migration', 'Overview']
-        return (self.navigation.currently_selected == ['Compute', 'Migration'] and
+        # TODO: Remove next line, after fix for https://github.com/ManageIQ/manageiq-v2v/issues/726
+        # has been backported to downstream 510z
+        return ((self.navigation.currently_selected == ['Compute', 'Migration'] or
+            self.navigation.currently_selected == ['Compute', 'Migration', 'Overview']) and
             (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
             (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0) and
             len(self.browser.elements(".//div[contains(@class,'pficon-warning-triangle-o')]")) < 1)
@@ -386,6 +387,7 @@ class InfrastructureMappingView(BaseLoggedInPage):
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
     create_infrastructure_mapping = Text(locator='(//a|//button)'
                                                  '[text()="Create Infrastructure Mapping"]')
+    configure_providers = Text(locator='//a[text()="Configure Providers"]')
     paginator_view = View.include(InfrastructureMappingsPaginatorPane, use_parent=True)
     search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
     clear_filters = Text(".//a[text()='Clear All Filters']")
@@ -398,13 +400,13 @@ class InfrastructureMappingView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return (self.navigation.currently_selected ==
-            # TODO: Remove nxt line & uncomment line below that, once /manageiq-v2v/issues/726 fixed
-            ['Compute', 'Migration'] and
-            # ['Compute', 'Migration', 'Infrastructure Mappings'] and
+        # TODO: Remove 1st condition, once /manageiq-v2v/issues/726 fix is backported to 510z
+        return ((self.navigation.currently_selected ==
+            ['Compute', 'Migration'] or self.navigation.currently_selected ==
+            ['Compute', 'Migration', 'Infrastructure Mappings']) and
             len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0 and
             (self.create_infrastructure_mapping.is_displayed or
-                self.infra_mapping_list.is_displayed))
+                self.infra_mapping_list.is_displayed or self.configure_providers.is_displayed))
 
 
 class AddInfrastructureMappingView(View):
@@ -652,7 +654,9 @@ class InfrastructureMappingCollection(BaseCollection):
         return infra_map
 
     def delete(self, mapping):
-        view = navigate_to(self, 'All')
+        view = navigate_to(self, 'All', wait_for_view=True)
+        if not self.appliance.version < '5.10':  # means 5.10+ or upstream
+            view.search_box.fill("{}\n\n".format(mapping.name))
         mapping_list = view.infra_mapping_list
         mapping_list.delete_mapping(mapping.name)
 
@@ -730,13 +734,10 @@ class MigrationPlanCollection(BaseCollection):
 @navigator.register(InfrastructureMappingCollection, 'All')
 class AllMappings(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    @property
-    def VIEW(self):  # noqa
-        if self.obj.appliance.version < '5.10':
-            return MigrationDashboardView59z
-        else:
-            return InfrastructureMappingView
+    VIEW = VersionPicker({
+        Version.lowest(): MigrationDashboardView59z,
+        '5.10': InfrastructureMappingView
+    })
 
     def step(self):
         if self.obj.appliance.version < '5.10':
@@ -759,13 +760,10 @@ class AddInfrastructureMapping(CFMENavigateStep):
 @navigator.register(MigrationPlanCollection, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    @property
-    def VIEW(self):  # noqa
-        if self.obj.appliance.version < '5.10':
-            return MigrationDashboardView59z
-        else:
-            return MigrationDashboardView
+    VIEW = VersionPicker({
+        Version.lowest(): MigrationDashboardView59z,
+        '5.10': MigrationDashboardView
+    })
 
     def step(self):
         if self.obj.appliance.version < '5.10':
