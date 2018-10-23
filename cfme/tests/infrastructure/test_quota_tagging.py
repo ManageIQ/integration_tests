@@ -198,3 +198,84 @@ def test_quota_tagging_infra_via_services(request, appliance, provider, setup_pr
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
     assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+@pytest.fixture(scope="module")
+def small_vm(provider, small_template_modscope):
+    vm = provider.appliance.collections.infra_vms.instantiate(
+        random_vm_name(context="reconfig"), provider, small_template_modscope.name
+    )
+    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    vm.refresh_relationships()
+    yield vm
+    vm.cleanup_on_provider()
+
+
+@pytest.fixture
+def custom_prov_data(request, prov_data, vm_name, template_name):
+    prov_data.update(request.param)
+    prov_data['catalog']['vm_name'] = vm_name
+    prov_data['catalog']['catalog_name'] = {'name': template_name}
+
+
+@pytest.mark.long_running
+@pytest.mark.parametrize(
+    [
+        "custom_prov_data",
+        "processor_sockets",
+        "processor_cores_per_socket",
+        "total_processors",
+        "approve",
+    ],
+    [
+        [{"change": "cores_per_socket", "value": "4"}, "1", "4", "4", False],
+        [{"change": "sockets", "value": "4"}, "4", "1", "4", False],
+        [{"change": "mem_size", "value": "102400"}, "", "", "", True],
+    ],
+    indirect=["custom_prov_data"],
+    ids=["max_cores", "max_sockets", "max_memory"],
+)
+def test_quota_vm_reconfigure(
+    request,
+    appliance,
+    admin_email,
+    entities,
+    setup_provider,
+    small_vm,
+    custom_prov_data,
+    prov_data,
+    processor_sockets,
+    processor_cores_per_socket,
+    total_processors,
+    approve,
+):
+    """Tests quota with vm reconfigure
+
+    Steps:
+        1. Assign Quota to group and user individually
+        2. Reconfigure the VM above the assigned Quota
+        3. Check whether VM  reconfiguration 'Denied' with Exceeded Quota or not
+    """
+    original_config = small_vm.configuration.copy()
+    new_config = small_vm.configuration.copy()
+    setattr(new_config.hw, prov_data["change"], prov_data["value"])
+    small_vm.reconfigure(new_config)
+    if approve:
+        request_description = "VM Reconfigure for: {vm_name} - Memory: 102400 MB".format(
+            vm_name=small_vm.name
+        )
+    else:
+        request_description = (
+            "VM Reconfigure for: {vm_name} - Processor Sockets: {sockets}, "
+            "Processor Cores Per Socket: {cores_per_socket}, Total Processors: "
+            "{Processors}".format(
+                vm_name=small_vm.name,
+                sockets=processor_sockets,
+                cores_per_socket=processor_cores_per_socket,
+                Processors=total_processors,
+            )
+        )
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method="ui")
+    assert small_vm.configuration != original_config
+    assert provision_request.row.reason.text == "Quota Exceeded"
