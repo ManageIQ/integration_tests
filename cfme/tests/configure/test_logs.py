@@ -93,7 +93,11 @@ def test_provider_log_updated(appliance, provider, log_exists):
 
 @pytest.mark.meta(blockers=[BZ(1633656,
                                unblock=lambda provider: provider.one_of(AzureProvider, EC2Provider),
-                               forced_streams=["5.10", "upstream"])]
+                               forced_streams=["5.9", "5.10", "upstream"]),
+                            BZ(1640718,
+                               unblock=lambda provider: not provider.one_of(AzureProvider),
+                               forced_streams=["5.9"])
+                            ]
                   )
 def test_provider_log_level(appliance, provider, log_exists):
     """
@@ -111,8 +115,8 @@ def test_provider_log_level(appliance, provider, log_exists):
     assert log_exists, "Log file {}.log doesn't exist".format(provider.log_name)
     log_level = appliance.server.advanced_settings['log']['level_{}'.format(provider.log_name)]
     # set log level to debug
-    appliance.server.update_advanced_settings(
-        {'log': {'level_{}'.format(provider.log_name): 'debug'}})
+    wait_for(lambda: appliance.server.update_advanced_settings(
+        {'log': {'level_{}'.format(provider.log_name): 'debug'}}), timeout=300)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     debug_in_logs = appliance.ssh_client.run_command(
         "cat /var/www/miq/vmdb/log/{}.log | grep DEBUG".format(provider.log_name))
