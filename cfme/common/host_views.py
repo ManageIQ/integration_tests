@@ -274,8 +274,12 @@ class ProviderAllHostsView(HostsView):
 
     @property
     def is_displayed(self):
-        return (
-            self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
-            self.title.text == "{} (All Managed Hosts)".format(
-                self.context["object"].filters['parent'].name)
-        )
+        if self.navigation.currently_selected != ["Compute", "Infrastructure", "Providers"]:
+            return False
+
+        title = "{} (All Managed Hosts)"
+        if hasattr(self.context["object"], "name"):
+            return self.title.text == title.format(self.context["object"].name)
+        elif hasattr(self.context["object"], "filters"):
+            return self.title.text == title.format(self.context["object"].filters["parent"].name)
+        return False
