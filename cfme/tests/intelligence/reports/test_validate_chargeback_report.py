@@ -121,50 +121,52 @@ def enable_candu(provider, appliance):
 @pytest.fixture(scope="module")
 def assign_default_rate(provider):
     # Assign default Compute rate to the Enterprise and then queue the Chargeback report.
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
-            'Enterprise': {'Rate': 'Default'}
-        })
-    enterprise.computeassign()
-    enterprise.storageassign()
+    # TODO Move this to a global fixture
+    for klass in (cb.ComputeAssign, cb.StorageAssign):
+        enterprise = klass(
+            assign_to="The Enterprise",
+            selections={
+                'Enterprise': {'Rate': 'Default'}
+            })
+        enterprise.assign()
     logger.info('Assigning DEFAULT Compute rate')
 
     yield
 
     # Resetting the Chargeback rate assignment
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
-            'Enterprise': {'Rate': '<Nothing>'}
-        })
-    enterprise.computeassign()
-    enterprise.storageassign()
+    for klass in (cb.ComputeAssign, cb.StorageAssign):
+        enterprise = klass(
+            assign_to="The Enterprise",
+            selections={
+                'Enterprise': {'Rate': '<Nothing>'}
+            })
+        enterprise.assign()
 
 
 @pytest.fixture(scope="module")
 def assign_custom_rate(new_compute_rate, provider):
     # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
+    # TODO Move this to a global fixture
     description = new_compute_rate
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
-            'Enterprise': {'Rate': description}
-        })
-    enterprise.computeassign()
-    enterprise.storageassign()
+    for klass in (cb.ComputeAssign, cb.StorageAssign):
+        enterprise = klass(
+            assign_to="The Enterprise",
+            selections={
+                'Enterprise': {'Rate': description}
+            })
+        enterprise.assign()
     logger.info('Assigning CUSTOM Compute rate')
 
     yield
 
     # Resetting the Chargeback rate assignment
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
-            'Enterprise': {'Rate': '<Nothing>'}
-        })
-    enterprise.computeassign()
-    enterprise.storageassign()
+    for klass in (cb.ComputeAssign, cb.StorageAssign):
+        enterprise = klass(
+            assign_to="The Enterprise",
+            selections={
+                'Enterprise': {'Rate': '<Nothing>'}
+            })
+        enterprise.assign()
 
 
 def verify_records_rollups_table(appliance, provider):

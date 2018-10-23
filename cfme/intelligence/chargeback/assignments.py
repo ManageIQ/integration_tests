@@ -34,12 +34,12 @@ class AssignmentsView(ChargebackView):
     def is_displayed(self):
         return (
             self.in_chargeback and
-            self.title.text == '"{}" Rate Assignments'.format(
-                self.context["object"].description) and
+            self.title.text == '{} Rate Assignments'.format(
+                self.context["object"].TYPE) and
             self.assignments.is_opened and
-            self.rates.tree.currently_selected == [
-                "{} Rate Assignments",
-                self.context["object"].description
+            self.assignments.tree.currently_selected == [
+                "Assignments",
+                self.context["object"].TYPE
             ]
         )
 
@@ -49,9 +49,11 @@ class AssignmentsView(ChargebackView):
     _table_locator = '//h3[contains(text(),"Selections")]/following-sibling::table'
     _table_widget_locator = './/div[contains(@class, "bootstrap-select")]'
 
-    selections = Table(locator=_table_locator,
-            column_widgets={'Rate': BootstrapSelectByLocator(locator=_table_widget_locator)},
-            assoc_column=0)
+    selections = Table(
+        locator=_table_locator,
+        column_widgets={'Rate': BootstrapSelectByLocator(locator=_table_widget_locator)},
+        assoc_column=0,
+    )
 
 
 class Assign(Updateable, Pretty, Navigatable):
@@ -67,12 +69,12 @@ class Assign(Updateable, Pretty, Navigatable):
             providers the rate is to be assigned.
 
     Usage:
-        enterprise = Assign(
+        enterprise = ComputeAssign(
         assign_to="The Enterprise",
         selections={
             'Enterprise': {'Rate': 'Default'}
         })
-    enterprise.computeassign()
+    enterprise.assign()
 
     """
     def __init__(self, assign_to=None,
@@ -86,16 +88,8 @@ class Assign(Updateable, Pretty, Navigatable):
         self.docker_labels = docker_labels
         self.selections = selections
 
-    def storageassign(self):
-        view = navigate_to(self, 'Storage')
-        was_change = self._fill(view)
-        if was_change:
-            view.save_button.click()
-            view.flash.assert_no_error()
-            view.flash.assert_message('Rate Assignments saved')
-
-    def computeassign(self):
-        view = navigate_to(self, 'Compute')
+    def assign(self):
+        view = navigate_to(self, 'Details')
         was_change = self._fill(view)
         if was_change:
             view.save_button.click()
@@ -113,32 +107,27 @@ class Assign(Updateable, Pretty, Navigatable):
         return view.fill(fill_details)
 
 
+class ComputeAssign(Assign):
+    TYPE = "Compute"
+
+
+class StorageAssign(Assign):
+    TYPE = "Storage"
+
+
 @navigator.register(Assign, 'All')
 class AssignAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'IntelChargeback')
     VIEW = AssignmentsAllView
 
     def step(self):
-        self.view.assignments.tree.click_path(
-            "Assignments"
-        )
+        self.view.assignments.tree.click_path("Assignments")
 
 
-@navigator.register(Assign, 'Storage')
+@navigator.register(Assign, 'Details')
 class AssignStorage(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
     VIEW = AssignmentsView
 
     def step(self):
-        self.view.assignments.tree.click_path(
-            "Assignments", "Storage")
-
-
-@navigator.register(Assign, 'Compute')
-class AssignCompute(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-    VIEW = AssignmentsView
-
-    def step(self):
-        self.view.assignments.tree.click_path(
-            "Assignments", "Compute")
+        self.view.assignments.tree.click_path("Assignments", self.obj.TYPE)

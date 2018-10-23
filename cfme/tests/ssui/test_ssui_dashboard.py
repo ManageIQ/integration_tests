@@ -54,23 +54,24 @@ def new_compute_rate(enable_candu):
 @pytest.fixture(scope="module")
 def assign_chargeback_rate(new_compute_rate):
     """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
-            'Enterprise': {'Rate': new_compute_rate}
-        })
-    enterprise.computeassign()
-    enterprise.storageassign()
+    # TODO Move this to a global fixture
+    for klass in (cb.ComputeAssign, cb.StorageAssign):
+        enterprise = klass(
+            assign_to="The Enterprise",
+            selections={
+                'Enterprise': {'Rate': new_compute_rate}
+            })
+        enterprise.assign()
     logger.info('Assigning CUSTOM Compute and Storage rates')
     yield
     # Resetting the Chargeback rate assignment
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
-            'Enterprise': {'Rate': '<Nothing>'}
-        })
-    enterprise.computeassign()
-    enterprise.storageassign()
+    for klass in (cb.ComputeAssign, cb.StorageAssign):
+        enterprise = klass(
+            assign_to="The Enterprise",
+            selections={
+                'Enterprise': {'Rate': '<Nothing>'}
+            })
+        enterprise.assign()
 
 
 def verify_vm_uptime(appliance, provider, vmname):

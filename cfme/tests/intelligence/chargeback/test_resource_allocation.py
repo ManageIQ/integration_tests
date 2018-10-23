@@ -118,24 +118,25 @@ def enable_candu(provider, appliance):
 def assign_custom_rate(new_chargeback_rate, provider):
     """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
     description = new_chargeback_rate
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
-            'Enterprise': {'Rate': description}
-        })
-    enterprise.computeassign()
-    enterprise.storageassign()
+    # TODO Move this to a global fixture
+    for klass in (cb.ComputeAssign, cb.StorageAssign):
+        enterprise = klass(
+            assign_to="The Enterprise",
+            selections={
+                'Enterprise': {'Rate': description}
+            })
+        enterprise.assign()
     logger.info('Assigning CUSTOM Compute rate')
     yield
 
     # Resetting the Chargeback rate assignment
-    enterprise = cb.Assign(
-        assign_to="The Enterprise",
-        selections={
-            'Enterprise': {'Rate': '<Nothing>'}
-        })
-    enterprise.computeassign()
-    enterprise.storageassign()
+    for klass in (cb.ComputeAssign, cb.StorageAssign):
+        enterprise = klass(
+            assign_to="The Enterprise",
+            selections={
+                'Enterprise': {'Rate': '<Nothing>'}
+            })
+        enterprise.assign()
 
 
 def verify_vm_uptime(appliance, provider):
