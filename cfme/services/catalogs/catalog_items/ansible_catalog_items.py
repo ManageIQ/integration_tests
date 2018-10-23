@@ -162,14 +162,6 @@ class AddAnsibleCatalogItemView(AnsibleCatalogItemForm):
 
     @property
     def is_displayed(self):
-        for i in range(0, 50):
-            while True:
-                try:
-                    self.provisioning.repository
-                except NoSuchElementException:
-                    continue
-                break
-
         return (
             self.in_explorer and
             self.title.text == 'Adding a new Service Catalog Item' and
