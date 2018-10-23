@@ -28,9 +28,9 @@ class BasicInfoForm(ServicesCatalogView):
     name = Input(name='name')
     description = Input(name='description')
     display = Checkbox(name='display')
-    select_provider = BootstrapSelect('manager_id')
     select_orch_template = BootstrapSelect('template_id')
     select_config_template = BootstrapSelect('template_id')
+    select_provider = BootstrapSelect('manager_id')
     subtype = BootstrapSelect('generic_subtype')
     field_entry_point = Input(name='fqname')
     retirement_entry_point = Input(name='retire_fqname')
@@ -355,7 +355,7 @@ class NonCloudInfraCatalogItem(BaseCatalogItem):
             'description': self.description,
             'display': self.display_in,
             'select_catalog': self.catalog_name,
-            'select_dialog': self.dialog,
+            'select_dialog': self.dialog
         }
 
 
