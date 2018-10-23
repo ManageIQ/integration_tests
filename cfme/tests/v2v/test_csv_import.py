@@ -9,6 +9,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
 
@@ -132,6 +133,7 @@ def test_inconsistent_columns(appliance, infra_map):
     assert import_and_check(appliance, infra_map, error_msg, content=content)
 
 
+@pytest.mark.meta(blockers=[BZ(1639239, forced_streams=["5.10"])])
 def test_csv_empty_vm(appliance, infra_map):
     """Test csv with empty column value"""
     content = "Name\n\n"
@@ -139,6 +141,7 @@ def test_csv_empty_vm(appliance, infra_map):
     assert import_and_check(appliance, infra_map, error_msg, content=content, table_hover=True)
 
 
+@pytest.mark.meta(blockers=[BZ(1639239, forced_streams=["5.10"])])
 def test_csv_invalid_vm(appliance, infra_map):
     """Test csv with invalid vm name"""
     content = "Name\n{}".format(fauxfactory.gen_alpha(10))
@@ -161,6 +164,7 @@ def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
                             table_hover='duplicate')
 
 
+@pytest.mark.meta(blockers=[BZ(1639239, forced_streams=["5.10"])])
 def test_csv_archived_vm(appliance, infra_map, archived_vm):
     """Test csv with archived vm name"""
     content = "Name\n{}".format(archived_vm)
