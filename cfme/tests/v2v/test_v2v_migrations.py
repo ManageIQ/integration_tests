@@ -58,7 +58,8 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
         vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -100,7 +101,8 @@ def test_single_network_single_vm_migration(request, appliance, v2v_providers, h
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
         vm_list=form_data_vm_obj_single_network.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -147,7 +149,8 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
         vm_list=form_data_dual_vm_obj_dual_datastore.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -193,7 +196,8 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
         vm_list=form_data_vm_obj_dual_nics.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -233,7 +237,8 @@ def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, c
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
         vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -278,7 +283,8 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
         vm_list=form_data_multiple_vm_obj_single_datastore.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -353,7 +359,8 @@ def test_single_vm_migration_with_ssh(request, appliance, v2v_providers, host_cr
         vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -410,7 +417,8 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
         vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -462,7 +470,8 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
         vm_list=form_data_multiple_vm_obj_single_datastore.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -525,7 +534,8 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
         vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)

@@ -247,6 +247,8 @@ def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_
 
     view = appliance.browser.create_view(MigrationDashboardView)
     soft_assert(plan_name in view.migration_plans_not_started_list.read())
+    view = navigate_to(infrastructure_mapping_collection, 'All')
+    soft_assert(view.infra_mapping_list.get_associated_plans(mapping.name) == plan_name)
     soft_assert(view.migration_plans_not_started_list.get_plan_description(plan_name) ==
      plan_description)
     # Test Associated Plans count  correctly Displayed in Map List view
