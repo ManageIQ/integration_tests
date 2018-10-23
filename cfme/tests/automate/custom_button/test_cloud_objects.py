@@ -264,7 +264,7 @@ def test_custom_button_automate(appliance, request, submit, setup_objs, button_g
         * One by one: separate requests for all entities execution
 
     Bugzillas:
-        * 1628224
+        * 1628224, 1642147
     """
 
     group, obj_type = button_group
@@ -287,12 +287,21 @@ def test_custom_button_automate(appliance, request, submit, setup_objs, button_g
 
             # Entity count depends on the destination for `All` available entities and
             # `Details` means a single entity.
+            # To-Do: remove Manager check as BZ-1642147 fix
             if destination == "All":
                 try:
                     paginator = view.paginator
                 except AttributeError:
                     paginator = view.entities.paginator
                 entity_count = min(paginator.items_amount, paginator.items_per_page)
+
+                # Work around for  BZ-1642147
+                try:
+                    if "Manager" in setup_obj.name:
+                        entity_count = 1
+                except AttributeError:
+                    pass
+
                 paginator.check_all()
             else:
                 entity_count = 1
