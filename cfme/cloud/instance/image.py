@@ -167,6 +167,9 @@ class ImageAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
         self.view.sidebar.images.tree.click_path('All Images')
 
+    def resetter(self):
+        self.view.entities.search.remove_search_filters()
+
 
 @navigator.register(ImageCollection, 'AllForProvider')
 @navigator.register(Image, 'AllForProvider')
