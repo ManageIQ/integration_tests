@@ -1,7 +1,11 @@
 import json
 import logging
+import os
+import re
 import socket
+import tempfile
 import traceback
+import warnings
 from copy import copy
 from datetime import datetime
 from tempfile import NamedTemporaryFile
@@ -10,12 +14,10 @@ from time import sleep, time
 import attr
 import dateutil.parser
 import fauxfactory
-import os
-import re
+import lxml.etree
 import requests
 import sentaku
 import six
-import warnings
 import yaml
 from cached_property import cached_property
 from debtcollector import removals
@@ -30,6 +32,7 @@ from cfme.fixtures.pytest_store import store
 from cfme.utils import clear_property_cache
 from cfme.utils import conf, ssh, ports
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import hidden
 from cfme.utils.datafile import load_data_file
 from cfme.utils.log import logger, create_sublogger, logger_wrap
 from cfme.utils.net import net_check
@@ -130,6 +133,56 @@ class ApplianceConsole(object):
             except socket.timeout:
                 pass
             logger.debug(result)
+
+    def scap_harden_appliance(self):
+        """Commands:
+        1. 'ap' launches appliance_console,
+        2. '' clears info screen,
+        3. '14' Hardens appliance using SCAP configuration,
+        4. '' complete."""
+        command_set = ('ap', '', '13', '')
+        self.appliance.appliance_console.run_commands(command_set)
+
+    def scap_check_rules(self):
+        """Check that rules have been applied correctly."""
+        rules_failures = []
+        with tempfile.NamedTemporaryFile('w') as f:
+            f.write(hidden['scap.rb'])
+            f.flush()
+            os.fsync(f.fileno())
+            self.appliance.ssh_client.put_file(
+                f.name, '/tmp/scap.rb')
+        if self.appliance.version >= "5.8":
+            rules = '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml'
+        else:
+            rules = '/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml'
+        self.appliance.ssh_client.run_command(
+            'cd /tmp/ && ruby scap.rb --rulesfile={rules}'.format(rules=rules))
+        self.appliance.ssh_client.get_file(
+            '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
+        self.appliance.ssh_client.get_file(
+            '{rules}'.format(rules=rules), '/tmp/scap_rules.yml')  # Get the scap rules
+
+        with open('/tmp/scap_rules.yml') as f:
+            yml = yaml.load(f.read())
+            rules = yml['rules']
+
+        tree = lxml.etree.parse('/tmp/scap-results.xccdf.xml')
+        root = tree.getroot()
+        for rule in rules:
+            elements = root.findall(
+                './/{{http://checklists.nist.gov/xccdf/1.1}}rule-result[@idref="{}"]'.format(rule))
+            if elements:
+                result = elements[0].findall('./{http://checklists.nist.gov/xccdf/1.1}result')
+                if result:
+                    if result[0].text != 'pass':
+                        rules_failures.append(rule)
+                    logger.info("{}: {}".format(rule, result[0].text))
+                else:
+                    logger.info("{}: no result".format(rule))
+            else:
+                logger.info("{}: rule not found".format(rule))
+        return rules_failures
 
 
 class ApplianceConsoleCli(object):
