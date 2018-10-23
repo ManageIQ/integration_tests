@@ -5,7 +5,7 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.tests.automate.custom_button import log_request_check
+from cfme.tests.automate.custom_button import log_request_check, TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -111,13 +111,9 @@ def test_custom_button_display(request, display, setup_obj, button_group):
         assert custom_button_group.has_item(button.text)
 
 
-@pytest.mark.parametrize(
-    "submit", SUBMIT, ids=["_".join(item.split()) for item in SUBMIT]
-)
+@pytest.mark.parametrize("submit", SUBMIT, ids=["_".join(item.split()) for item in SUBMIT])
 @pytest.mark.meta(
-    blockers=[
-        BZ(1628224, forced_streams=["5.10"], unblock=lambda submit: submit != "Submit all")
-    ]
+    blockers=[BZ(1628224, forced_streams=["5.10"], unblock=lambda submit: submit != "Submit all")]
 )
 def test_custom_button_automate(appliance, request, submit, setup_obj, button_group):
     """ Test custom button for automate and requests count as per submit
@@ -180,7 +176,9 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
             entity_count = 1
 
         # Clear the automation log
-        assert appliance.ssh_client.run_command('echo -n "" > /var/www/miq/vmdb/log/automation.log')
+        assert appliance.ssh_client.run_command(
+            'echo -n "" > /var/www/miq/vmdb/log/automation.log'
+        )
 
         custom_button_group.item_select(button.text)
         view.flash.assert_message('"{}" was executed'.format(button.text))
@@ -200,3 +198,82 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
             assert False, "Expected {} requests not found in automation log".format(
                 str(expected_count)
             )
+
+
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1635797,
+            forced_streams=["5.9", "5.10"],
+            unblock=lambda button_group: bool(
+                [obj for obj in ["HOST", "VM_INSTANCE", "TEMPLATE_IMAGE"] if obj in button_group]
+            ),
+        )
+    ]
+)
+def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_group):
+    """ Test custom button with dialog and InspectMe method
+
+    Prerequisites:
+        * Appliance with Infra provider
+        * Simple TextInput service dialog
+
+    Steps:
+        * Create custom button group with the Object type
+        * Create a custom button with service dialog
+        * Navigate to object Details page
+        * Check for button group and button
+        * Select/execute button from group dropdown for selected entities
+        * Fill dialog and submit
+        * Check for the proper flash message related to button execution
+
+    Bugzillas:
+        * 1635797, 1555331, 1574403, 1640592
+    """
+
+    group, obj_type = button_group
+
+    # Note: No need to set display_for dialog only work with Single entity
+    button = group.buttons.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        dialog=dialog,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    view = navigate_to(setup_obj, "Details")
+    custom_button_group = Dropdown(view, group.hover)
+    assert custom_button_group.has_item(button.text)
+    custom_button_group.item_select(button.text)
+
+    dialog_view = view.browser.create_view(TextInputDialogView)
+    dialog_view.wait_displayed()
+    assert dialog_view.service_name.fill("Custom Button Execute")
+
+    # Clear the automation log
+    assert appliance.ssh_client.run_command(
+        'echo -n "" > /var/www/miq/vmdb/log/automation.log'
+    )
+
+    # Submit order
+    dialog_view.submit.click()
+
+    if not (
+        BZ(bug_id=1640592, forced_streams=["5.9", "5.10"]).blocks and obj_type == "TEMPLATE_IMAGE"
+    ):
+        view.wait_displayed("60s")
+    view.flash.assert_message("Order Request was Submitted")
+
+    # Check for request in automation log
+    try:
+        wait_for(
+            log_request_check,
+            [appliance, 1],
+            timeout=300,
+            message="Check for expected request count",
+            delay=20,
+        )
+    except TimedOutError:
+        assert False, "Expected 1 requests not found in automation log"
