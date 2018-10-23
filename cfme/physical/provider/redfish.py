@@ -5,6 +5,9 @@ from widgetastic_patternfly import BootstrapSelect, Input
 from wrapanapi.systems import RedfishSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from cfme.physical.physical_server import (
+    PhysicalServer,
+    PhysicalServerCollection)
 from . import PhysicalProvider
 
 
@@ -64,3 +67,15 @@ class RedfishProvider(PhysicalProvider):
             'name': self.name,
             'prov_type': 'Redfish'
         }
+
+
+@attr.s
+class RedfishPhysicalServer(PhysicalServer):
+
+    INVENTORY_TO_MATCH = ['power_state']
+    STATS_TO_MATCH = ['cores_capacity', 'memory_capacity']
+
+
+@attr.s
+class RedfishPhysicalServerCollection(PhysicalServerCollection):
+    ENTITY = RedfishPhysicalServer
