@@ -1,4 +1,5 @@
 import os
+import re
 import tarfile
 
 
@@ -240,46 +241,45 @@ class ProviderTemplateUpload(object):
 
     @log_wrap("download image locally")
     def download_image(self):
+        suffix = re.compile(
+            r'^.*?[.](?P<ext>tar\.gz|tar\.bz2|\w+)$').match(self.image_name).group('ext')
         # Check if file exists already:
         if path.isfile(self.local_file_path):
             logger.info('Local image found, skipping download: %s', self.local_file_path)
-            return True
-
-        # Download file to cli-tool-client
-        try:
-            request.urlretrieve(self.raw_image_url, self.local_file_path)
-        except URLError:
-            logger.exception('Failed download of image using urllib')
-            return False
+            if suffix not in ['zip', 'tar.gz']:
+                return True
         else:
-            return True
+            # Download file to cli-tool-client
+            try:
+                request.urlretrieve(self.raw_image_url, self.local_file_path)
+            except URLError:
+                logger.exception('Failed download of image using urllib')
+                return False
 
-    @log_wrap('unzip image')
-    def unzip_image(self, archive_type='zip'):
-        """
-        Unzips image and then changes image name to extracted one.
+        # Unzips image  when suffix is zip or tar.gz and then changes image name to extracted one.
+        # For EC2 and SCVMM images is zip used and for GCE is tar.gz used.
 
-        For EC2 and SCVMM images is zip used and for GCE is tar.gz used.
-        """
-        zip_path = self.image_name
+        archive_path = self.image_name
         try:
-            if archive_type == 'zip':
-                archive = ZipFile(zip_path)
+            if suffix == 'zip':
+                archive = ZipFile(archive_path)
                 zipinfo = archive.infolist()
                 self._unzipped_file = zipinfo[0].filename
-            elif archive_type == 'tar.gz':
-                archive = tarfile.open(zip_path, "r:gz")
+            elif suffix == 'tar.gz':
+                archive = tarfile.open(archive_path, "r:gz")
                 self._unzipped_file = archive.firstmember.name
             else:
-                logger.exception("Archive type {} is not implemented yet.".format(archive_type))
-                return False
+                return True
+            if path.isfile(self.image_name):
+                os.remove(self.image_name)
+            logger.info('Image archived - unzipping as : %s', self._unzipped_file)
             archive.extractall()
             archive.close()
             # remove the archive
-            os.remove(zip_path)
+            os.remove(archive_path)
             return True
         except Exception:
-            logger.exception("{} archive unzip failed.".format(archive_type))
+            logger.exception("{} archive unzip failed.".format(suffix))
             return False
 
     @log_wrap('add template to glance')
