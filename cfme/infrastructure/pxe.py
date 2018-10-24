@@ -402,9 +402,9 @@ class PXECustomizationTemplateDetailsView(PXEMainView):
     @property
     def is_displayed(self):
         if getattr(self.context['object'], 'name'):
-            title = 'Customization Template "{name}"'.format(self.context['object'].name)
+            title = 'Customization Template "{name}"'.format(name=self.context['object'].name)
             return (super(PXECustomizationTemplateDetailsView, self).is_displayed and
-                    self.entities.title.text == title)
+                    self.title.text == title)
         else:
             return False
 
