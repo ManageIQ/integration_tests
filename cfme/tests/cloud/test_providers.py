@@ -453,6 +453,14 @@ def test_openstack_provider_has_api_version(appliance):
     assert view.api_version.is_displayed, "API version select is not visible"
 
 
+@pytest.mark.ignore_stream('5.9')
+def test_openstack_provider_has_dashboard(appliance, openstack_provider):
+    """Check whether dashboard view is available for Openstack provider"""
+    view = navigate_to(openstack_provider, 'Details', use_resetter=False)
+    view.toolbar.view_selector.select('Dashboard View')
+    assert view.is_displayed
+
+
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider))
 def test_select_key_pair_none_while_provisioning(appliance, request, has_no_cloud_providers,
