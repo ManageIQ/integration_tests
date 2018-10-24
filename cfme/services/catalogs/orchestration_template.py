@@ -132,7 +132,7 @@ class AddDialogView(DialogForm):
         return (
             self.orchestration_templates.is_opened and
             self.title.text == 'Adding a new Service Dialog from Orchestration Template "{}"'
-                               .format(self.context['object'].name)
+                               .format(self.context['object'].template_name)
         )
 
 
@@ -177,8 +177,8 @@ class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
                    'description': description
                    })
         view.add_button.click()
-        view.flash.assert_success_message('Orchestration Template "{}" was saved'.format(
-            template_name))
+        view.flash.assert_no_error()
+        #TODO - Move assertions to tests
         return self.parent.instantiate(template_group=self.template_group,
                                        description=description,
                                        template_name=template_name,
@@ -189,8 +189,7 @@ class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
         view = navigate_to(self, 'AddDialog')
         view.fill({'name': dialog_name})
         view.add_button.click()
-        view.flash.assert_success_message('Service Dialog "{}" was successfully created'.format(
-            dialog_name))
+        view.flash.assert_no_error()
         service_dialog = self.parent.parent.collections.service_dialogs.instantiate(
             label=dialog_name)
         return service_dialog
@@ -222,8 +221,7 @@ class OrchestrationTemplatesCollection(BaseCollection):
         template = self.instantiate(template_group=template_group, description=description,
                                     template_name=template_name, content=content, draft=draft)
         view = self.create_view(DetailsTemplateView)
-        view.flash.assert_success_message('Orchestration Template '
-                                          '"{}" was saved'.format(template_name))
+        view.flash.assert_no_error()
         return template
 
 
