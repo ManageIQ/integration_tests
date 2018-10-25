@@ -9,7 +9,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import testgen
-from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
 from cfme.utils.conf import cfme_data
 
 pytestmark = [
@@ -81,8 +81,7 @@ def vm_name():
 
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1613326, forced_streams=['5.8', '5.9', '5.10'],
-                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+# @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8033')])
 def test_iso_provision_from_template(appliance, provider, vm_name, datastore_init,
                                      request, smtp_test):
     """Tests ISO provisioning
@@ -93,9 +92,9 @@ def test_iso_provision_from_template(appliance, provider, vm_name, datastore_ini
     """
     # generate_tests makes sure these have values
     iso_template, host, datastore, iso_file, iso_kickstart,\
-        iso_root_password, iso_image_type, vlan = map(provider.data['provisioning'].get,
+        iso_root_password, iso_image_type, vlan, addr_mode = map(provider.data['provisioning'].get,
             ('pxe_template', 'host', 'datastore', 'iso_file', 'iso_kickstart',
-             'iso_root_password', 'iso_image_type', 'vlan'))
+             'iso_root_password', 'iso_image_type', 'vlan', 'iso_address_mode'))
 
     request.addfinalizer(lambda:
                          appliance.collections.infra_vms.instantiate(vm_name, provider)
@@ -111,8 +110,11 @@ def test_iso_provision_from_template(appliance, provider, vm_name, datastore_ini
             'datastore_name': {'name': datastore}},
         'customize': {
             'custom_template': {'name': iso_kickstart},
-            'root_password': iso_root_password},
+            'root_password': iso_root_password,
+            'address_mode': addr_mode},
         'network': {
-            'vlan': partial_match(vlan)}}
+            'vlan': partial_match(vlan)},
+        'schedule': {
+            'power_on': False}}
     do_vm_provisioning(appliance, iso_template, provider, vm_name, provisioning_data, request,
-                       smtp_test, num_sec=1500)
+                       smtp_test, num_sec=1800)

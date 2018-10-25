@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -36,8 +37,7 @@ def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
     logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider.key)
     wait_for(provider.mgmt.does_vm_exist, func_args=[vm_name], handle_exception=True, num_sec=600)
-
-    if smtp_test:
+    if smtp_test and not BZ(1642924, forced_streams=['5.9', '5.10']).blocks:
         # Wait for e-mails to appear
         def verify():
             approval = dict(subject_like="%%Your Virtual Machine configuration was Approved%%")
@@ -46,5 +46,4 @@ def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning
                 len(smtp_test.get_emails(**approval)) > 0 and
                 len(smtp_test.get_emails(subject_like=expected_text)) > 0
             )
-
         wait_for(verify, message="email receive check", delay=30)
