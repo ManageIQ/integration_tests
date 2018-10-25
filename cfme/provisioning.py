@@ -46,4 +46,5 @@ def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning
                 len(smtp_test.get_emails(**approval)) > 0 and
                 len(smtp_test.get_emails(subject_like=expected_text)) > 0
             )
+
         wait_for(verify, message="email receive check", delay=30)
