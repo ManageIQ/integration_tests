@@ -64,11 +64,11 @@ def import_and_check(appliance, infra_map, error_text, filetype='csv', content=F
         wait_for(lambda: plan_view.vms.is_displayed,
                  timeout=60, message='Wait for VMs view', delay=5)
         if table_hover is 'duplicate':
-            if appliance.version >= '5.10.0.19':
+            if appliance.version >= '5.10':
                 # Version check due to change in order of valid vms
-                plan_view.vms.table[0][1].widget.click()
+                plan_view.vms.table[0][1].widget.click()  # widget stands for tooltip widget
             else:
-                plan_view.vms.table[2][1].widget.click()
+                plan_view.vms.table[2][1].widget.click()  # widget stands for tooltip widget
         else:
             plan_view.vms.table[0][1].widget.click()
         error_msg = plan_view.vms.popover_text.read()
