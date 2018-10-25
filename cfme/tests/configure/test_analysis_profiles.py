@@ -197,11 +197,8 @@ def test_delete_default_analysis_profile(default_host_profile, appliance):
     row[0].check()
     view.toolbar.configuration.item_select('Delete the selected Analysis Profiles',
                                            handle_alert=True)
-    host_flash = (
-        default_host_profile.name if appliance.version < '5.10'
-        else default_host_profile.description
-    )
-    view.flash.assert_message('Default Analysis Profile "{}" can not be deleted'.format(host_flash))
+    view.flash.assert_message('Default Analysis Profile "{}" can not be deleted'.
+                              format(default_host_profile.name))
 
 
 def test_edit_default_analysis_profile(default_host_profile, appliance):
@@ -217,11 +214,8 @@ def test_edit_default_analysis_profile(default_host_profile, appliance):
     )
     row[0].check()
     view.toolbar.configuration.item_select('Edit the selected Analysis Profiles')
-    host_flash = (
-        default_host_profile.name if appliance.version < '5.10'
-        else default_host_profile.description
-    )
-    view.flash.assert_message('Sample Analysis Profile "{}" can not be edited'.format(host_flash))
+    view.flash.assert_message('Sample Analysis Profile "{}" can not be edited'.
+                              format(default_host_profile.name))
 
 
 def test_analysis_profile_item_validation(analysis_profile_collection):
