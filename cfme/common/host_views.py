@@ -277,5 +277,5 @@ class ProviderAllHostsView(HostsView):
         return (
             self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
             self.title.text == "{} (All Managed Hosts)".format(
-                self.context["object"].filters['parent'].name)
+                self.context["object"].name)
         )
