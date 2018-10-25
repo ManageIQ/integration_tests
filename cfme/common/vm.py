@@ -183,7 +183,11 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
         """Fetches MAC Address of VM"""
         # TODO: We should update this with wrapanapi method when it becomes available.
         view = navigate_to(self, "Details", use_resetter=False)
-        return view.entities.summary('Properties').get_text_of('MAC Address')
+        mac_addr_field = VersionPicker({
+            LOWEST: 'MAC Address',
+                    '5.10': 'MAC Addresses'
+        })
+        return view.entities.summary('Properties').get_text_of(mac_addr_field)
 
     @property
     def is_retired(self):
