@@ -3,8 +3,9 @@ import fauxfactory
 
 from widgetastic_patternfly import Dropdown
 
-from cfme.tests.automate.custom_button import check_log_requests_count, log_request_check
+from cfme.tests.automate.custom_button import log_request_check, TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError, wait_for
 
@@ -51,7 +52,7 @@ def setup_obj(appliance, button_group):
     return obj
 
 
-@pytest.mark.ignore_stream('5.9')
+@pytest.mark.ignore_stream("5.9")
 @pytest.mark.parametrize(
     "display", DISPLAY_NAV.keys(), ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
 )
@@ -89,7 +90,16 @@ def test_custom_button_display(request, display, setup_obj, button_group):
         assert custom_button_group.has_item(button.text)
 
 
-@pytest.mark.ignore_stream('5.9')
+@pytest.mark.ignore_stream("5.9")
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1642939,
+            forced_streams=["5.10"],
+            unblock=lambda button_group: "GROUP" not in button_group,
+        )
+    ]
+)
 @pytest.mark.parametrize("submit", SUBMIT, ids=["_".join(item.split()) for item in SUBMIT])
 def test_custom_button_automate(appliance, request, submit, setup_obj, button_group):
     """ Test custom button for automate and requests count as per submit
@@ -109,7 +119,7 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
         * One by one: separate requests for all entities execution
 
     Bugzillas:
-        * 1628224
+        * 1628224, 1642939
     """
 
     group, obj_type = button_group
@@ -137,8 +147,11 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
         else:
             entity_count = 1
 
-        # First collect number of request already available in automation log
-        initial_request_count = check_log_requests_count(appliance)
+        # Clear the automation log
+        assert appliance.ssh_client.run_command(
+            'echo -n "" > /var/www/miq/vmdb/log/automation.log'
+        )
+
         custom_button_group.item_select(button.text)
         view.flash.assert_message('"{}" was executed'.format(button.text))
 
@@ -148,7 +161,7 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
         try:
             wait_for(
                 log_request_check,
-                [appliance, initial_request_count, expected_count],
+                [appliance, expected_count],
                 timeout=120,
                 message="Check for expected request count",
                 delay=10,
@@ -157,3 +170,65 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
             assert False, "Expected {} requests not found in automation log".format(
                 str(expected_count)
             )
+
+
+@pytest.mark.ignore_stream("5.9")
+def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_group):
+    """ Test custom button with dialog and InspectMe method
+
+    Prerequisites:
+        * Appliance
+        * Simple TextInput service dialog
+
+    Steps:
+        * Create custom button group with the Object type
+        * Create a custom button with service dialog
+        * Navigate to object Details page
+        * Check for button group and button
+        * Select/execute button from group dropdown for selected entities
+        * Fill dialog and submit
+        * Check for the proper flash message related to button execution
+        * Check request in automation log
+    """
+
+    group, obj_type = button_group
+
+    # Note: No need to set display_for dialog only work with Single entity
+    button = group.buttons.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        dialog=dialog,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    view = navigate_to(setup_obj, "Details")
+    custom_button_group = Dropdown(view, group.hover)
+    assert custom_button_group.has_item(button.text)
+    custom_button_group.item_select(button.text)
+
+    dialog_view = view.browser.create_view(TextInputDialogView)
+    dialog_view.wait_displayed()
+    assert dialog_view.service_name.fill("Custom Button Execute")
+
+    # Clear the automation log
+    assert appliance.ssh_client.run_command('echo -n "" > /var/www/miq/vmdb/log/automation.log')
+
+    # Submit order
+    dialog_view.submit.click()
+
+    view.wait_displayed("60s")
+    view.flash.assert_message("Order Request was Submitted")
+
+    # Check for request in automation log
+    try:
+        wait_for(
+            log_request_check,
+            [appliance, 1],
+            timeout=300,
+            message="Check for expected request count",
+            delay=20,
+        )
+    except TimedOutError:
+        assert False, "Expected 1 requests not found in automation log"
