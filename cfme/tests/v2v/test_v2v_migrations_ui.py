@@ -11,9 +11,8 @@ from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.tests.services.test_service_rbac import new_user, new_group, new_role
 from cfme.utils.wait import wait_for
-from cfme.v2v.migrations import (
-    MigrationPlanRequestDetailsView, MigrationDashboardView, AddMigrationPlanView
-)
+from cfme.v2v.migrations import MigrationPlanRequestDetailsView
+
 
 pytestmark = [
     pytest.mark.provider(
@@ -196,7 +195,7 @@ def test_v2v_mapping_with_special_chars(appliance, v2v_providers, form_data_sing
 
 
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
-def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_assert):
+def test_v2v_ui_set2(request, appliance, v2v_providers, form_data_single_datastore, soft_assert):
     # Test migration plan name 24 chars and description 128 chars max length
     # Test earlier infra mapping can be viewed in migration plan wizard
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
@@ -233,11 +232,29 @@ def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_
     # Test Create migration plan -Create and Read
     view.options.create.click()
     view.results.close.click()
-    # Test plan has unique name
-    view = appliance.browser.create_view(MigrationDashboardView)
+
+    @request.addfinalizer
+    def _cleanup():
+        view = navigate_to(migration_plan_collection, 'All')
+        view.migration_plans_not_started_list.migrate_plan(plan_name)
+
+    view = navigate_to(migration_plan_collection, 'All')
     view.wait_displayed()
+    soft_assert(plan_name in view.migration_plans_not_started_list.read())
+    soft_assert(view.migration_plans_not_started_list.get_plan_description(plan_name) ==
+     plan_description)
+    # Test Associated Plans count  correctly Displayed in Map List view
+    soft_assert(str(len(vm_selected)) in view.migration_plans_not_started_list.
+        get_vm_count_in_plan(plan_name))
+    view.migration_plans_not_started_list.select_plan(plan_name)
+    view = appliance.browser.create_view(MigrationPlanRequestDetailsView)
+    view.wait_displayed()
+    view.items_on_page.item_select('15')
+    soft_assert(set(view.migration_request_details_list.read()) == set(vm_selected))
+    # Test plan has unique name
+    view = navigate_to(migration_plan_collection, 'All')
     view.create_migration_plan.click()
-    view = appliance.browser.create_view(AddMigrationPlanView)
+    view = navigate_to(migration_plan_collection, 'Add')
     view.general.wait_displayed()
     view.general.infra_map.select_by_visible_text(mapping.name)
     view.general.name.fill(plan_name)
@@ -245,28 +262,12 @@ def test_v2v_ui_set2(appliance, v2v_providers, form_data_single_datastore, soft_
     soft_assert('a unique name' in view.general.name_help_text.read())
     view.cancel_btn.click()
 
-    view = appliance.browser.create_view(MigrationDashboardView)
-    soft_assert(plan_name in view.migration_plans_not_started_list.read())
     view = navigate_to(infrastructure_mapping_collection, 'All')
     soft_assert(view.infra_mapping_list.get_associated_plans(mapping.name) == plan_name)
-    soft_assert(view.migration_plans_not_started_list.get_plan_description(plan_name) ==
-     plan_description)
-    # Test Associated Plans count  correctly Displayed in Map List view
-    soft_assert(str(len(vm_selected)) in view.migration_plans_not_started_list.
-        get_vm_count_in_plan(plan_name))
-    view.browser.refresh()
     view.wait_displayed()
     soft_assert(view.infra_mapping_list.get_associated_plans_count(mapping.name) ==
      '1 Associated Plan')
     soft_assert(view.infra_mapping_list.get_associated_plans(mapping.name) == plan_name)
-    view.migration_plans_not_started_list.select_plan(plan_name)
-    view = appliance.browser.create_view(MigrationPlanRequestDetailsView)
-    view.wait_displayed()
-    view.items_on_page.item_select('15')
-    soft_assert(set(view.migration_request_details_list.read()) == set(vm_selected))
-
-    view = navigate_to(infrastructure_mapping_collection, 'All')
-    view.migration_plans_not_started_list.migrate_plan(plan_name)
 
 
 @pytest.mark.parametrize('form_data_multiple_vm_obj_single_datastore', [['nfs', 'nfs',
@@ -356,7 +357,7 @@ def test_migration_rbac(appliance, new_credential, v2v_providers):
     product_features = [(['Everything'], True)]
     role.update({'product_features': product_features})
     with user:
-        view = navigate_to(appliance.server, 'Dashboard', wait_for_view=True)
+        view = navigate_to(appliance.server, 'Dashboard', wait_for_view=15)
         nav_tree = view.navigation.nav_item_tree()
         # Checks migration option is enabled in navigation
         assert 'Migration' in nav_tree['Compute'], ('Migration not found in nav tree, '

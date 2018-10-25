@@ -374,6 +374,8 @@ class MigrationDashboardView(BaseLoggedInPage):
 
 
 class MigrationDashboardView59z(MigrationDashboardView):
+    """Dashboard for 59z has infra_mapping_list while 510z moves it to a separate page.
+    Hence, Inheritance."""
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
 
     @property
@@ -384,6 +386,10 @@ class MigrationDashboardView59z(MigrationDashboardView):
 
 
 class InfrastructureMappingView(BaseLoggedInPage):
+    """This is an entire separate page, with many elements similar to what we had in
+    MigrationPlanRequestDetailsView , so re-using some of those Paginator things
+    by renaming those from MigrationPlanRequestDetailsPaginator to v2vPaginator, etc."""
+
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
     create_infrastructure_mapping = Text(locator='(//a|//button)'
                                                  '[text()="Create Infrastructure Mapping"]')
@@ -654,7 +660,7 @@ class InfrastructureMappingCollection(BaseCollection):
         return infra_map
 
     def delete(self, mapping):
-        view = navigate_to(self, 'All', wait_for_view=True)
+        view = navigate_to(self, 'All', wait_for_view=20)
         if not self.appliance.version < '5.10':  # means 5.10+ or upstream
             view.search_box.fill("{}\n\n".format(mapping.name))
         mapping_list = view.infra_mapping_list
