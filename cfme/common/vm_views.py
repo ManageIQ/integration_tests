@@ -356,7 +356,6 @@ class ProvisionView(BaseLoggedInPage):
                 self._select_template(template_name, provider_name)
             self.continue_button.click()
             wait_for(self.browser.plugin.ensure_page_safe, delay=.1, num_sec=10)
-            return True
 
     is_displayed = displayed_not_implemented
 
