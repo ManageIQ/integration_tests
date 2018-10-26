@@ -814,3 +814,13 @@ class OneProviderFloatingIpView(BaseLoggedInPage):
             and self.navigation.currently_selected == ["Networks", "Providers"]
             and self.entities.title.text == title
         )
+
+
+class OneHostSubnetView(SubnetView):
+    @property
+    def is_displayed(self):
+        expected_title = '{name} (All Cloud Subnets)'.format(name=self.context['object'].name)
+        return (self.logged_in_as_current_user and
+                self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Nodes'] and
+                self.entities.title.text == expected_title
+                )

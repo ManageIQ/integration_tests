@@ -1,7 +1,7 @@
 import pytest
 
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to
 
 
 pytestmark = [
@@ -136,3 +136,29 @@ def test_hypervisor_hostname_views(host_collection, provider, view_type, soft_as
         hv_name = item.data['hypervisor_hostname']
         soft_assert(hv_name in hvisors,
                     "Hypervisor hostname {} is not in Hypervisor list".format(hv_name))
+
+
+def test_host_networks(provider, host_collection, soft_assert):
+    hosts = host_collection.all()
+    nodes = provider.mgmt.nodes
+    networks = {node.name: provider.mgmt.api.servers.ips(server=node) for node in nodes}
+
+    for host in hosts:
+        view = navigate_to(host, 'Details')
+        cloud_net = view.entities.summary('Relationships').get_text_of('Cloud Networks')
+        host_name = view.entities.summary('Properties').get_text_of('Hypervisor Hostname')
+
+        soft_assert(int(cloud_net) == len(networks[host_name]),
+                    "Networks associated to host does not match between UI and OSP")
+
+
+def test_host_subnets(provider, appliance, host_collection, soft_assert):
+    hosts = host_collection.all()
+    net_collection = appliance.collections.cloud_networks
+
+    for host in hosts:
+        view = navigate_to(host, 'Details')
+        cloud_subnet = view.entities.summary('Relationships').get_text_of('Cloud Subnets')
+        view = navigate_to(host, 'Subnets')
+        soft_assert(int(cloud_subnet) == view.entities.paginator.items_amount,
+                    "Subnets associated to host does not match")

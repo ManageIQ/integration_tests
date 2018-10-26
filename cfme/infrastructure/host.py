@@ -25,6 +25,7 @@ from cfme.common.host_views import (
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.modeling.base import BaseEntity, BaseCollection
+from cfme.networks.views import OneHostSubnetView
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.ipmi import IPMI
@@ -722,3 +723,12 @@ class Utilization(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
+
+
+@navigator.register(Host, 'Subnets')
+class HostSubnet(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = OneHostSubnetView
+
+    def step(self):
+        self.prerequisite_view.entities.summary('Relationships').click_at('Cloud Subnets')
