@@ -10,10 +10,11 @@ from widgetastic.widget import Checkbox, View
 from widgetastic.utils import ParametrizedLocator
 from widgetastic_manageiq import (
     InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList, Paginator,
-    Table, MigrationPlanRequestDetailsList, RadioGroup, HiddenFileInput, MigrationProgressBar
+    Table, MigrationPlanRequestDetailsList, RadioGroup, HiddenFileInput, MigrationProgressBar,
+    MigrationDashboardStatusCard
 )
 from widgetastic_patternfly import (Text, TextInput, Button, BootstrapSelect, SelectorDropdown,
-                                    Dropdown)
+                                    Dropdown, AggregateStatusCard)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
@@ -323,11 +324,14 @@ class MigrationDashboardView(BaseLoggedInPage):
     migration_plans_not_started_list = MigrationPlansList("plans-not-started-list")
     migration_plans_completed_list = MigrationPlansList("plans-complete-list")
     migration_plans_archived_list = MigrationPlansList("plans-complete-list")
-    migr_dropdown = MigrationDropdown(text="Not Started Plans")
     sort_type_dropdown = Dropdown(text="Name")
     sort_direction = Text(locator=".//span[contains(@class,'sort-direction')]")
     # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
     progress_card = MigrationProgressBar(locator='.//div[3]/div/div[3]/div[3]/div/div')
+    not_started_plans = MigrationDashboardStatusCard(name="Not Started")
+    in_progress_plans = MigrationDashboardStatusCard(name="In Progress")
+    completed_plans = MigrationDashboardStatusCard(name="Complete")
+    archived_plans = MigrationDashboardStatusCard(name="Archived")
 
     @property
     def is_displayed(self):
@@ -338,6 +342,16 @@ class MigrationDashboardView(BaseLoggedInPage):
             (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
             (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0) and
             len(self.browser.elements(".//div[contains(@class,'pficon-warning-triangle-o')]")) < 1)
+
+    def switch_to(self, section):
+        """Switches to Not Started, In Progress, Complete or Archived Plans section."""
+        sections = {
+            'Not Started Plans': self.not_started_plans,
+            'In Progress Plans': self.in_progress_plans,
+            'Completed Plans': self.completed_plans,
+            'Archived Plans': self.archived_plans
+        }
+        sections[section].click()
 
     def plan_in_progress(self, plan_name):
         """MIQ V2V UI is going through redesign as OSP will be integrated.
@@ -377,12 +391,17 @@ class MigrationDashboardView59z(MigrationDashboardView):
     """Dashboard for 59z has infra_mapping_list while 510z moves it to a separate page.
     Hence, Inheritance."""
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
+    migr_dropdown = MigrationDropdown(text="Not Started Plans")
 
     @property
     def is_displayed(self):
         return (self.navigation.currently_selected == ['Compute', 'Migration'] and
             (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
             (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0))
+
+    def switch_to(self, section):
+        """Switches to Not Started, In Progress, Complete or Archived Plans section."""
+        self.migr_dropdown.item_select(section)
 
 
 class InfrastructureMappingView(BaseLoggedInPage):
