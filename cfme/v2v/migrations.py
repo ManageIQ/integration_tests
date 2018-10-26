@@ -14,7 +14,7 @@ from widgetastic_manageiq import (
     MigrationDashboardStatusCard
 )
 from widgetastic_patternfly import (Text, TextInput, Button, BootstrapSelect, SelectorDropdown,
-                                    Dropdown, AggregateStatusCard)
+                                    Dropdown)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
@@ -351,6 +351,7 @@ class MigrationDashboardView(BaseLoggedInPage):
             'Completed Plans': self.completed_plans,
             'Archived Plans': self.archived_plans
         }
+        self.logger.info("Switching to Migration Dashboard section: %s", section)
         sections[section].click()
 
     def plan_in_progress(self, plan_name):
@@ -383,7 +384,7 @@ class MigrationDashboardView(BaseLoggedInPage):
             return not is_plan_visible
         except StaleElementReferenceException:
             self.browser.refresh()
-            self.migr_dropdown.item_select("In Progress Plans")
+            self.switch_to("In Progress Plans")
             return False
 
 
@@ -401,6 +402,7 @@ class MigrationDashboardView59z(MigrationDashboardView):
 
     def switch_to(self, section):
         """Switches to Not Started, In Progress, Complete or Archived Plans section."""
+        self.logger.info("Switching to Migration Dashboard section: %s", section)
         self.migr_dropdown.item_select(section)
 
 
@@ -425,9 +427,9 @@ class InfrastructureMappingView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        # TODO: Remove 1st condition, once /manageiq-v2v/issues/726 fix is backported to 510z
+        # TODO: Resmove 1st condition, once /manageiq-v2v/issues/768 fix is backported to 510z
         return ((self.navigation.currently_selected ==
-            ['Compute', 'Migration'] or self.navigation.currently_selected ==
+            ['Compute', 'Migration', 'Overview'] or self.navigation.currently_selected ==
             ['Compute', 'Migration', 'Infrastructure Mappings']) and
             len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0 and
             (self.create_infrastructure_mapping.is_displayed or

@@ -185,7 +185,7 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
         view = navigate_to(self, "Details", use_resetter=False)
         mac_addr_field = VersionPicker({
             LOWEST: 'MAC Address',
-                    '5.10': 'MAC Addresses'
+            '5.10': 'MAC Addresses'
         })
         return view.entities.summary('Properties').get_text_of(mac_addr_field)
 
