@@ -6,14 +6,14 @@ import time
 from navmazing import NavigateToAttribute, NavigateToSibling
 from selenium.webdriver.common.keys import Keys
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import Checkbox, View
+from widgetastic.widget import Checkbox, View, ConditionalSwitchableView
 from widgetastic.utils import ParametrizedLocator
 from widgetastic_manageiq import (
     InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList, Paginator,
     Table, MigrationPlanRequestDetailsList, RadioGroup, HiddenFileInput, MigrationProgressBar
 )
 from widgetastic_patternfly import (Text, TextInput, Button, BootstrapSelect, SelectorDropdown,
-                                    Dropdown)
+                                    Dropdown, AggregateStatusCard)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
@@ -295,6 +295,26 @@ class InfraMappingWizard(View):
             self.result.close.click()
 
 
+class DashboardCard(AggregateStatusCard):
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class, "card-pf-aggregate-status"'
+        ' and not(contains(@class, "card-pf-aggregate-status-mini")) and'
+        ' h2[contains(@class,"card-pf-title") and contains(normalize-space(.), {@name|quote})]]'
+    )
+    TITLE_ANCHOR = './h2'
+
+    def is_active(self):
+        return 'active' in self.browser.classes(self.__locator__)
+
+
+class DashboardCards(View):
+    not_started = DashboardCard('Not Started')
+    complete = DashboardCard('Complete')
+
+    def read(self):
+        return [c.read().get('name') for c in self.sub_widgets if c.is_active].pop()
+
+
 # Widget for migration selection dropdown
 class MigrationDropdown(Dropdown):
     """Represents the migration plan dropdown of v2v.
@@ -312,7 +332,25 @@ class MigrationDashboardView(BaseLoggedInPage):
     create_infrastructure_mapping = Text(locator='(//a|//button)'
                                                  '[text()="Create Infrastructure Mapping"]')
     create_migration_plan = Text(locator='(//a|//button)[text()="Create Migration Plan"]')
+    title = Text('.//div[contains(@class, "pull-left")]//h3')
     configure_providers = Text(locator='//a[text()="Configure Providers"]')
+
+    cards = View.nested(DashboardCards)
+
+    plans_list =ConditionalSwitchableView(reference='cards')
+
+    @plans_list.register(
+        lambda cards, title: (
+            'Not Started' in cards and
+            'Not started' in title),
+        default=True)
+    class plans_not_started(View):
+        entities = MigrationPlansList('plans-not-started-list')
+
+    @plans_list.register(lambda cards: 'Complete' in cards)
+    class plans_complete(View):
+        entities = MigrationPlansList('plans-complete-list')
+
     migration_plans_not_started_list = MigrationPlansList("plans-not-started-list")
     migration_plans_completed_list = MigrationPlansList("plans-complete-list")
     migration_plans_archived_list = MigrationPlansList("plans-complete-list")
@@ -324,7 +362,7 @@ class MigrationDashboardView(BaseLoggedInPage):
     progress_card = MigrationProgressBar(locator='.//div[3]/div/div[3]/div[3]/div/div')
 
     @property
-    def is_displayed(self):
+    def in_dashboard(self):
         return (self.navigation.currently_selected == ['Compute', 'Migration'] and
             (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
             (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0))
