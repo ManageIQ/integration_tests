@@ -9,6 +9,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
 
@@ -28,7 +29,7 @@ pytestmark = [
 @pytest.fixture(scope="function")
 def infra_map(appliance, v2v_providers):
     """Fixture to create infrastructure mapping"""
-    form_data = _form_data(v2v_providers[0], v2v_providers[1])
+    form_data = _form_data(v2v_providers.vmware_provider, v2v_providers.rhv_provider)
     return appliance.collections.v2v_mappings.create(form_data)
 
 
@@ -60,10 +61,14 @@ def import_and_check(appliance, infra_map, error_text, filetype='csv', content=F
     except UnexpectedAlertPresentException:
         pass
     if table_hover:
-        wait_for(lambda: plan_view.vms.table.is_displayed,
-                 timeout=60, message='Wait for VMs view', delay=2)
+        wait_for(lambda: plan_view.vms.is_displayed,
+                 timeout=60, message='Wait for VMs view', delay=5)
         if table_hover is 'duplicate':
-            plan_view.vms.table[2][1].widget.click()
+            if appliance.version >= '5.10':
+                # Version check due to change in order of valid vms
+                plan_view.vms.table[0][1].widget.click()  # widget stands for tooltip widget
+            else:
+                plan_view.vms.table[2][1].widget.click()  # widget stands for tooltip widget
         else:
             plan_view.vms.table[0][1].widget.click()
         error_msg = plan_view.vms.popover_text.read()
@@ -82,6 +87,8 @@ def valid_vm(appliance, infra_map):
     """Fixture to get valid vm name from discovery"""
     plan_view = migration_plan(appliance, infra_map, csv=True)
     plan_view.next_btn.click()
+    wait_for(lambda: plan_view.vms.is_displayed,
+             timeout=60, delay=5, message='Wait for VMs view')
     vm_name = [row.vm_name.text for row in plan_view.vms.table.rows()][0]
     plan_view.cancel_btn.click()
     return vm_name
@@ -126,6 +133,7 @@ def test_inconsistent_columns(appliance, infra_map):
     assert import_and_check(appliance, infra_map, error_msg, content=content)
 
 
+@pytest.mark.meta(blockers=[BZ(1639239, forced_streams=["5.10"])])
 def test_csv_empty_vm(appliance, infra_map):
     """Test csv with empty column value"""
     content = "Name\n\n"
@@ -133,6 +141,7 @@ def test_csv_empty_vm(appliance, infra_map):
     assert import_and_check(appliance, infra_map, error_msg, content=content, table_hover=True)
 
 
+@pytest.mark.meta(blockers=[BZ(1639239, forced_streams=["5.10"])])
 def test_csv_invalid_vm(appliance, infra_map):
     """Test csv with invalid vm name"""
     content = "Name\n{}".format(fauxfactory.gen_alpha(10))
@@ -155,6 +164,7 @@ def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
                             table_hover='duplicate')
 
 
+@pytest.mark.meta(blockers=[BZ(1639239, forced_streams=["5.10"])])
 def test_csv_archived_vm(appliance, infra_map, archived_vm):
     """Test csv with archived vm name"""
     content = "Name\n{}".format(archived_vm)
