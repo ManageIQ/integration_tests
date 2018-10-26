@@ -311,17 +311,17 @@ def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, con
     view.migration_plans_not_started_list.schedule_migration(plan2.name)
 
     for plan in (plan1, plan2):
-        view.migr_dropdown.item_select("Not Started Plans")
+        view.switch_to("Not Started Plans")
         view.wait_displayed()
         view.migration_plans_not_started_list.migrate_plan(plan.name)
-        view.migr_dropdown.item_select("In Progress Plans")
+        view.switch_to("In Progress Plans")
         wait_for(func=view.progress_card.is_plan_started, func_args=[plan.name],
             message="migration plan is starting, be patient please", delay=5, num_sec=150,
             handle_exception=True)
         wait_for(func=view.plan_in_progress, func_args=[plan.name], delay=5, num_sec=600,
             handle_exception=True)
 
-    view.migr_dropdown.item_select("Completed Plans")
+    view.switch_to("Completed Plans")
     view.wait_displayed()
     plans_list_before_sort = view.migration_plans_completed_list.read()
     view.sort_direction.click()
@@ -330,10 +330,10 @@ def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, con
     # Test Archive completed migration  plan
     view.browser.refresh()
     view.wait_displayed()
-    view.migr_dropdown.item_select("Completed Plans")
+    view.switch_to("Completed Plans")
     view.wait_displayed()
     view.migration_plans_completed_list.archive_plan(plan1.name)
-    view.migr_dropdown.item_select("Archived Plans")
+    view.switch_to("Archived Plans")
     view.wait_displayed()
     soft_assert(plan1.name in view.migration_plans_archived_list.read())
 
