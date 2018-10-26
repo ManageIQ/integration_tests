@@ -13,6 +13,7 @@ import pytest
 import re
 
 from cfme import test_requirements
+from cfme.configure.configuration.diagnostics_settings import CollectLogsBase
 from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.ftp import FTPClient
@@ -109,7 +110,8 @@ def depot_machine_ip(appliance):
     depot_template_name = data["log_db_depot_template"]["template_name"]
     vm = deploy_template(depot_provider_key,
                          depot_machine_name,
-                         template_name=depot_template_name)
+                         template_name=depot_template_name,
+                         timeout=1200)
     yield vm.ip
     vm.cleanup()
 
@@ -302,9 +304,12 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
         check_ftp(ftp=log_depot.ftp, server_name=appliance.server.name,
                   server_zone_id=appliance.server.zone.id, check_ansible_logs=True)
     elif appliance.is_downstream:  # check for logs on dropbox, not applicable for upstream
-        username = conf.credentials['rh_dropbox']['username']
-        password = conf.credentials['rh_dropbox']['password']
-        host = conf.cfme_data['rh_dropbox']['download_host']
+        try:
+            username = conf.credentials['rh_dropbox']['username']
+            password = conf.credentials['rh_dropbox']['password']
+            host = conf.cfme_data['rh_dropbox']['download_host']
+        except KeyError:
+            pytest.skip('There are no Red Hat Dropbox credentials!')
 
         dropbox = FTP(host=host, user=username, passwd=password)
         contents = dropbox.nlst()
@@ -312,7 +317,8 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
         server_string = '{}_{}'.format(appliance.server.name, appliance.server.zone.id)
         date_group = '(_.*?){4}'
         pattern = re.compile(
-            r"(^test_cfme_can_be_deleted)(.*?){}{}[.]zip$".format(server_string, date_group))
+            r"(^{})(.*?){}{}[.]zip$".format(CollectLogsBase.ALERT_PROMPT,
+                                            server_string, date_group))
         zip_files = filter(pattern.match, contents)
         assert zip_files, "No logs found!"
         # Check the time of the last file

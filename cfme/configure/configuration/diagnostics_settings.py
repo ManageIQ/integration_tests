@@ -139,6 +139,8 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             zone_collect: Set True to collect logs for zone
 
     """
+    # we need to use some name that indicates it is test data
+    ALERT_PROMPT = 'test_cfme_can_be_deleted'
 
     _depot_types = dict(
         anon_ftp="Anonymous FTP",
@@ -178,7 +180,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             view = navigate_to(self, 'DiagnosticsCollectLogsEditSlave')
         else:
             view = navigate_to(self, 'DiagnosticsCollectLogsEdit')
-        view.fill({'depot_type': depot_type})
+        updated = view.fill({'depot_type': depot_type})
         fill_dict = {}
         if depot_type != 'Red Hat Dropbox':
             fill_dict.update({'depot_info': {
@@ -275,7 +277,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         # Initiate the collection
         view.toolbar.collect.item_select(selection, handle_alert=None)
         if self.browser.alert_present:
-            self.browser.handle_alert(prompt='test_cfme_can_be_deleted')
+            self.browser.handle_alert(prompt=self.ALERT_PROMPT)
         slave_servers = self.appliance.server.slave_servers
         first_slave_server = slave_servers[0] if slave_servers else None
 

@@ -165,7 +165,7 @@ class AddAnsibleCatalogItemView(AnsibleCatalogItemForm):
         return (
             self.in_explorer and
             self.title.text == 'Adding a new Service Catalog Item' and
-            self.provisioning.repository  # this field should be visible
+            self.provisioning.repository.is_displayed  # this field should be visible
         )
 
 
