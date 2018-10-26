@@ -4,7 +4,6 @@ from widgetastic.exceptions import NoSuchElementException
 
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 
 general_list_pages = [
     ('servers', None, 'Details', False),
@@ -12,7 +11,6 @@ general_list_pages = [
     ('servers', None, 'Workers', False),
     ('servers', None, 'CustomLogos', False),
     ('servers', None, 'Advanced', False),
-    ('servers', None, 'DatabaseSummary', False),
     ('servers', None, 'DiagnosticsDetails', False),
     ('servers', None, 'DiagnosticsWorkers', False),
     ('servers', None, 'CFMELog', False),
@@ -21,6 +19,7 @@ general_list_pages = [
     ('servers', None, 'Utilization', False),
     ('servers', None, 'Timelines', False),
     ('servers', None, 'ServerDiagnosticsCollectLogs', False),
+    ('servers', None, 'DatabaseSummary', False),
     ('servers', None, 'DatabaseTables', True),
     ('servers', None, 'DatabaseIndexes', True),
     ('servers', None, 'DatabaseSettings', True),
@@ -31,6 +30,7 @@ general_list_pages = [
     ('regions', None, 'ImportTags', False),
     ('regions', None, 'Import', False),
     ('regions', None, 'HelpMenu', False),
+    ('regions', None, 'Advanced', False),
     ('regions', None, 'Diagnostics', False),
     ('regions', None, 'DiagnosticsZones', False),
     ('regions', None, 'OrphanedData', False),
@@ -39,6 +39,7 @@ general_list_pages = [
     ('regions', None, 'RolesByServers', False),
     ('zones', None, 'Details', False),
     ('zones', None, 'SmartProxyAffinity', False),
+    ('zones', None, 'Advanced', False),
     ('zones', None, 'Diagnostics', False),
     ('zones', None, 'ServersByRoles', False),
     ('zones', None, 'Servers', False),
@@ -89,6 +90,13 @@ def schedule(appliance):
     schedule.delete()
 
 
+@pytest.mark.uncollectif(
+    lambda appliance, place_info: (
+            appliance.version < '5.10' and
+            (('regions' in place_info[0] and 'Advanced' in place_info[2]) or
+             ('zones' in place_info[0] and 'Advanced' in place_info[2]))),
+    reason="Advanced tab for Region and Zone records doesn't exist < 5.10"
+)
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])

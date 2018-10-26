@@ -8,7 +8,7 @@ from selenium.webdriver.common.keys import Keys
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, Table, Text, Image, FileInput
 from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView,
-                                  ParametrizedSummaryTable, SummaryFormItem, WaitTab)
+                                  SummaryFormItem, WaitTab)
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown, DatePicker,
                                     FlashMessages, BootstrapSelect, CheckableBootstrapTreeview)
 
@@ -620,12 +620,11 @@ class ServerDatabaseView(ConfigurationView):
         return (
             self.in_configuration and
             self.summary.is_displayed and
-            self.title.text == 'VMDB Summary'
+            self.accordions.database.is_opened
         )
 
 
 class DatabaseSummaryView(ServerDatabaseView):
-    summary = ParametrizedSummaryTable()
 
     @property
     def is_displayed(self):
@@ -834,11 +833,11 @@ class ServerDiagnosticsCollectLogs(CFMENavigateStep):
 
     def am_i_here(self):
         return (
-            self.view.is_displayed and self.view.cfmelog.is_displayed and
-            self.view.cfmelog.is_active)
+            self.view.is_displayed and self.view.collectlogs.is_displayed and
+            self.view.collectlogs.is_active)
 
     def step(self):
-        self.prerequisite_view.cfmelog.select()
+        self.prerequisite_view.collectlogs.select()
 
 
 @navigator.register(Server)
@@ -968,6 +967,10 @@ class RegionView(ConfigurationView):
     class help_menu(WaitTab):   # noqa
         TAB_NAME = "Help Menu"
 
+    @View.nested
+    class advanced(WaitTab):   # noqa
+        TAB_NAME = "Advanced"
+
     company_categories = View.nested(CompanyCategories)
     company_tags = View.nested(CompanyTags)
     import_tags = View.nested(ImportTags)
@@ -1075,6 +1078,20 @@ class HelpMenu(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.help_menu.select()
+
+
+@navigator.register(Region)
+class Advanced(CFMENavigateStep):
+    VIEW = RegionView
+    prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.advanced.is_displayed and
+            self.view.advanced.is_active)
+
+    def step(self):
+        self.prerequisite_view.advanced.select()
 
 
 class ZoneListView(ConfigurationView):
@@ -1278,6 +1295,10 @@ class ZoneView(ConfigurationView):
     class smart_proxy_affinity(WaitTab):  # noqa
         TAB_NAME = "SmartProxy Affinity"
 
+    @View.nested
+    class advanced(WaitTab):  # noqa
+        TAB_NAME = "Advanced"
+
 
 # Zone Details #
 class ZoneDetailsView(ZoneView):
@@ -1328,6 +1349,23 @@ class SmartProxyAffinity(CFMENavigateStep):
         for row in rows:
             row.click()
             self.view.smart_proxy_affinity.select()
+            break
+        else:
+            raise ZoneNotFound(
+                "No unique Zones with the description '{}'".format(self.obj.description))
+
+
+@navigator.register(Zone, 'Advanced')
+class Advanced(CFMENavigateStep):
+    VIEW = ZoneDetailsView
+    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Zones')
+
+    def step(self):
+        rows = self.prerequisite_view.table.rows((1, re.compile(r'Zone\s?\:\s?{}'.format(
+            self.obj.description))))
+        for row in rows:
+            row.click()
+            self.view.advanced.select()
             break
         else:
             raise ZoneNotFound(
