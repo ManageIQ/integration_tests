@@ -14,7 +14,7 @@ property_mapping = {
 @pytest.fixture(scope="module")
 def set_and_get_tenant_quota(appliance):
     root_tenant = appliance.collections.tenants.get_root_tenant()
-    
+
     view = navigate_to(root_tenant, "ManageQuotas")
     reset_data = view.form.read()
 
