@@ -1,4 +1,5 @@
 import pytest
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 property_mapping = {
@@ -13,6 +14,10 @@ property_mapping = {
 @pytest.fixture(scope="module")
 def set_and_get_tenant_quota(appliance):
     root_tenant = appliance.collections.tenants.get_root_tenant()
+    
+    view = navigate_to(root_tenant, "ManageQuotas")
+    reset_data = view.form.read()
+
     tenant_quota_data = {
         "cpu_cb": True,
         "cpu": "10",
@@ -36,13 +41,6 @@ def set_and_get_tenant_quota(appliance):
 
     yield data
 
-    reset_data = {
-        "cpu_cb": False,
-        "memory_cb": False,
-        "storage_cb": False,
-        "template_cb": False,
-        "vm_cb": False,
-    }
     root_tenant.set_quota(**reset_data)
 
 
