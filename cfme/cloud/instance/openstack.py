@@ -119,10 +119,8 @@ class AttachVolumeView(CloudInstanceView):
         submit_button = Button('Submit')
         cancel_button = Button('Cancel')
 
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        return False
+    # Only the instance name is displayed, cannot confirm provider
+    is_displayed = displayed_not_implemented
 
 
 class DetachVolumeView(CloudInstanceView):
