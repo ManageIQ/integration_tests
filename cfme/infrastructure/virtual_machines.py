@@ -1481,8 +1481,8 @@ class SetOwnership(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Set Ownership')
 
 
-@navigator.register(InfraVm, 'RenameVM')
-class RenameVM(CFMENavigateStep):
+@navigator.register(InfraVm, 'Rename')
+class Rename(CFMENavigateStep):
     VIEW = RenameVmView
     prerequisite = NavigateToSibling('Details')
 

@@ -497,7 +497,7 @@ class RenameVmView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.title.read() == 'Renaming VM "{}"'.format(self.context['object'].name)
+        return self.title.text == 'Renaming VM "{}"'.format(self.context['object'].name)
 
 
 class ManagementEngineView(BaseLoggedInPage):

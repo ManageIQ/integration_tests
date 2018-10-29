@@ -4,8 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
@@ -104,7 +103,7 @@ def small_vm(provider, small_template_modscope):
     vm.cleanup_on_provider()
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.10')
+@pytest.mark.ignore_stream('5.9')
 @pytest.mark.provider([VMwareProvider], override=True, scope="module", selector=ONE_PER_TYPE)
 def test_rename_vm(appliance, setup_provider, small_vm):
 
@@ -118,6 +117,8 @@ def test_rename_vm(appliance, setup_provider, small_vm):
     5. Click on submit
     6. Check whether VM is renamed or not
     """
-    navigate_to(small_vm, 'Details')
-    assert small_vm.rename_vm(new_vm_name="test-{}".format(fauxfactory.gen_alphanumeric()),
-                              old_vm_name=small_vm.name)
+    view = navigate_to(small_vm, 'Details')
+    small_vm.rename_vm(new_vm_name="test-{}".format(fauxfactory.gen_alphanumeric()))
+    view.flash.wait_displayed("20s")
+    msg = 'Rename of Virtual Machine "{vm_name}" has been initiated'.format(vm_name=small_vm.name)
+    view.flash.assert_success_message(msg)
