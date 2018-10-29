@@ -9,6 +9,7 @@ from widgetastic_patternfly import (
 from widgetastic_manageiq import (
     UpDownSelect, PaginationPane, SummaryFormItem, Table, SummaryForm, WaitTab)
 from widgetastic_manageiq.expression_editor import GroupTagExpressionEditor
+from widgetastic.utils import Version, VersionPick
 
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
@@ -1307,7 +1308,9 @@ class DetailsTenantView(ConfigurationView):
     name = Text('Name')
     description = Text('Description')
     parent = Text('Parent')
-    table = Table('//*[self::fieldset or @id="fieldset"]/table')
+    table = VersionPick({
+        Version.lowest(): Table('//*[self::fieldset or @id="fieldset"]/table'),
+        '5.10': Table('//div[contains(@id,"react-")]/table')})
 
     @property
     def is_displayed(self):
