@@ -29,12 +29,8 @@ def test_show_quota_used_on_tenant_screen(request, appliance, v2v_providers):
         4. Go to tenant quota table.
         5. Check whether number of VMs are equal to number of VMs in 'in use' column.
     """
-    view = navigate_to(v2v_providers.vmware_provider, "Details")
-    v2v_providers.vmware_provider.refresh_provider_relationships_ui
-    view.browser.refresh
-    view = navigate_to(v2v_providers.rhv_provider, "Details")
-    v2v_providers.rhv_provider.refresh_provider_relationships_ui
-    view.browser.refresh
+    v2v_providers.vmware_provider.refresh_provider_relationships
+    v2v_providers.rhv_provider.refresh_provider_relationships
     vm_count = v2v_providers.rhv_provider.num_vm() + v2v_providers.vmware_provider.num_vm()
     root_tenant = appliance.collections.tenants.get_root_tenant()
     view = navigate_to(root_tenant, "Details")
