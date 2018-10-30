@@ -535,7 +535,7 @@ class IPAppliance(object):
                 dst = os.path.join('/etc/systemd/system', filename)
                 copy_cmd = 'cp {} {}'.format(src, dst)
                 assert ssh.run_command(copy_cmd).success
-                exec_pre = """
+                exec_pre = r"""
 [Service]
 ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line; \
                                do ipcrm sem $line; done"
@@ -2533,7 +2533,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                     # regex finds lines for loopback addrs where resolvable hostname set
                     # sed replaces with the ljust (space padded) loopback addr
                     ssh_client.run_command(
-                        "sed -i -r -e 's|({}\s..*){}|{}|' /etc/hosts".format(addr,
+                        r"sed -i -r -e 's|({}\s..*){}|{}|' /etc/hosts".format(addr,
                                                                              resolve_esc,
                                                                              fill),
                         ensure_host=True)

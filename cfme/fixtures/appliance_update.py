@@ -5,7 +5,7 @@ It has two uses:
 1) If only ``--update-appliance`` is specified, it will use the YAML url.
 2) If you also specify one or more ``--update-url``, it will use them instead.
 """
-import pytest
+from cfme.fixtures.pytest_store import store
 
 
 def pytest_addoption(parser):
@@ -21,13 +21,13 @@ def pytest_addoption(parser):
 
 
 def pytest_sessionstart(session):
-    if pytest.store.parallelizer_role == 'master':
+    if store.parallelizer_role == 'master':
         return
     if not session.config.getoption("update_appliance"):
         return
-    pytest.store.write_line("Initiating appliance update ...")
+    store.write_line("Initiating appliance update ...")
     urls = session.config.getoption("update_urls")
-    pytest.store.current_appliance.update_rhel(*urls, reboot=True)
-    pytest.store.write_line("Appliance update finished, waiting for UI ...")
-    pytest.store.current_appliance.wait_for_web_ui()
-    pytest.store.write_line("Appliance update finished ...")
+    store.current_appliance.update_rhel(*urls, reboot=True)
+    store.write_line("Appliance update finished, waiting for UI ...")
+    store.current_appliance.wait_for_web_ui()
+    store.write_line("Appliance update finished ...")

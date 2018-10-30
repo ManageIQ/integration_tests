@@ -87,7 +87,7 @@ def vporizer(appliance):
                 )
             # now, collecting the values from the table
             resource_vpor_data = get_resource_vpor_data()
-            vpor_values_match = re.search(vpor_values_pattern.replace('{}', '([\d\.\-e]+)'),
+            vpor_values_match = re.search(vpor_values_pattern.replace('{}', r'([\d\.\-e]+)'),
                                           resource_vpor_data['values'])
             if not vpor_values_match:
                 raise Exception('Could not parse VPOR values from row: values={}'

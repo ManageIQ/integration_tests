@@ -148,11 +148,6 @@ class Store(object):
 store = Store()
 
 
-def pytest_namespace():
-    # Expose the pytest store as pytest.store
-    return {'store': store}
-
-
 def pytest_plugin_registered(manager):
     # config will be set at the second call to this hook
     if store.config is None:

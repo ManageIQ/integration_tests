@@ -282,7 +282,7 @@ class Visual(Updateable, NavigatableMixin):
     @property
     def grid_view_limit(self):
         view = navigate_to(self.my_settings, 'Visual')
-        value = re.findall('\d+', view.tabs.visual.default_items_per_page.grid_view.read())
+        value = re.findall(r'\d+', view.tabs.visual.default_items_per_page.grid_view.read())
         return int(value[0])
 
     @grid_view_limit.setter
@@ -295,7 +295,7 @@ class Visual(Updateable, NavigatableMixin):
     @property
     def tile_view_limit(self):
         view = navigate_to(self.my_settings, 'Visual')
-        value = re.findall('\d+', view.tabs.visual.default_items_per_page.tile_view.read())
+        value = re.findall(r'\d+', view.tabs.visual.default_items_per_page.tile_view.read())
         return int(value[0])
 
     @tile_view_limit.setter
@@ -308,7 +308,7 @@ class Visual(Updateable, NavigatableMixin):
     @property
     def list_view_limit(self):
         view = navigate_to(self.my_settings, 'Visual')
-        value = re.findall('\d+', view.tabs.visual.default_items_per_page.list_view.read())
+        value = re.findall(r'\d+', view.tabs.visual.default_items_per_page.list_view.read())
         return int(value[0])
 
     @list_view_limit.setter
@@ -321,7 +321,7 @@ class Visual(Updateable, NavigatableMixin):
     @property
     def report_view_limit(self):
         view = navigate_to(self.my_settings, 'Visual')
-        value = re.findall('\d+', view.tabs.visual.default_items_per_page.reports.read())
+        value = re.findall(r'\d+', view.tabs.visual.default_items_per_page.reports.read())
         return int(value[0])
 
     @report_view_limit.setter

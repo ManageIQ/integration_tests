@@ -216,7 +216,7 @@ def check_fixed_in(fixed_in, version_series):
 class BugWrapper(object):
     _copy_matchers = map(re.compile, [
         r'^[+]{3}\s*This bug is a CFME zstream clone. The original bug is:\s*[+]{3}\n[+]{3}\s*'
-        'https://bugzilla.redhat.com/show_bug.cgi\?id=(\d+)\.\s*[+]{3}',
+        r'https://bugzilla.redhat.com/show_bug.cgi\?id=(\d+)\.\s*[+]{3}',
         r"^\+\+\+ This bug was initially created as a clone of Bug #([0-9]+) \+\+\+"
     ])
 

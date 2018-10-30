@@ -3,6 +3,7 @@ from cfme.utils.pytest_shortcuts import fixture_filter
 
 
 class FakeMetaFunc(object):
+    definition = None
     fixturenames = ['a']
 
 

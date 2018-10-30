@@ -37,7 +37,7 @@ def fixture_filter(metafunc, argnames, argvalues):
         if isinstance(l, (list, tuple)) and not isinstance(l, ParameterSet):
             return trim_items(l, keep_index)
         else:
-            parameterset = ParameterSet.extract_from(l)
+            parameterset = ParameterSet.extract_from(l, belonging_definition=metafunc.definition)
             return parameterset._replace(values=trim_items(parameterset.values, keep_index))
 
     # Generate the new values

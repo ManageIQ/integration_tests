@@ -25,14 +25,14 @@ def collect_log(ssh_client, log_prefix, local_file_name, strip_whitespace=False)
             ssh_client.run_command('cp {} {}-2.gz'.format(lfile, lfile))
             ssh_client.run_command('gunzip {}-2.gz'.format(lfile))
             if strip_whitespace:
-                ssh_client.run_command('sed -i  \'s/^ *//; s/ *$//; /^$/d; /^\s*$/d\' '
+                ssh_client.run_command(r'sed -i  \'s/^ *//; s/ *$//; /^$/d; /^\s*$/d\' '
                     '{}-2'.format(lfile))
             ssh_client.run_command('cat {}-2 >> {}'.format(lfile, dest_file))
             ssh_client.run_command('rm {}-2'.format(lfile))
 
     ssh_client.run_command('cp {} {}-2'.format(log_file, log_file))
     if strip_whitespace:
-        ssh_client.run_command('sed -i  \'s/^ *//; s/ *$//; /^$/d; /^\s*$/d\' '
+        ssh_client.run_command(r'sed -i  \'s/^ *//; s/ *$//; /^$/d; /^\s*$/d\' '
             '{}-2'.format(log_file))
     ssh_client.run_command('cat {}-2 >> {}'.format(log_file, dest_file))
     ssh_client.run_command('rm {}-2'.format(log_file))

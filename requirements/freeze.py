@@ -67,7 +67,7 @@ def main(args):
             quickstart.venv_call(venv, "pip", "install", "-r", args.template)
         elif args.out and args.upgrade_only:
             quickstart.venv_call(venv, "pip", "install", "-r", args.template, "-c", args.out)
-            quickstart.venv_call(venv, "pip", "install", "-U", "--no-deps", args.upgrade_only)
+            quickstart.venv_call(venv, "pip", "install", "-U", args.upgrade_only)
         else:
             raise ValueError("can't use stdout as constraint")
         if args.out is None:
