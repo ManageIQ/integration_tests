@@ -1,0 +1,579 @@
+v5.9:
+  '0':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: Cluster / Deployment Role
+    Description: Cluster DRS not enabled
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '1':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: Cluster / Deployment Role
+    Description: Cluster HA not enabled
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '10':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM CD Drive or Floppy Connected
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '11':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM CPU count was decreased
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Hardware Reconfigured
+  '12':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM CPU count was increased
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Hardware Reconfigured
+  '13':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Environment Tag <> Datastore Environment Tag
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '14':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Environment Tag <> Host Environment Tag
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '15':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: 'VM Guest C: Drive < 10% Free'
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '16':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Guest Windows Event Log Error - NtpClient
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Event Log Threshold
+  '17':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Memory Balloon > 250 in last 10 min
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Real Time Performance
+  '18':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Memory was decreased
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Hardware Reconfigured
+  '19':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Memory was increased
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Hardware Reconfigured
+  '2':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: CPU Ready > 4000 ms for more than 10 min
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Real Time Performance
+  '20':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Migration > 1 in last 30 min
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Event Threshold
+  '21':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Power On > 2 in last 15 min
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Event Threshold
+  '22':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Silver and CPU > 1
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '23':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Silver and RAM > 2 GB
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '24':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: Datastore
+    Description: VMs on local storage
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '25':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Unregistered
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '26':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM VMotion > 1 in last 30 min
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Event Threshold
+  '3':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: Datastore
+    Description: Datacenter VMs > 10
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '4':
+    0: ''
+    1: ''
+    Active: 'True'
+    Based On: Container Node
+    Description: External Prometheus - Nodes
+    Email: 'False'
+    Event on Timeline: 'True'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: External Prometheus Alerts
+  '5':
+    0: ''
+    1: ''
+    Active: 'True'
+    Based On: Provider
+    Description: External Prometheus - Providers
+    Email: 'False'
+    Event on Timeline: 'True'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: External Prometheus Alerts
+  '6':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: Host / Node
+    Description: Host Datastore < 5% of Free Space
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '7':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: Host / Node
+    Description: Host Event Log Error - Failed to validate VM IP address
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Hostd Log Threshold
+  '8':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: Host / Node
+    Description: Host Event Log Error - Memory Exceed Soft Limit
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Hostd Log Threshold
+  '9':
+    0: ''
+    1: ''
+    Active: ''
+    Based On: Host / Node
+    Description: Host VMs >10
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+v5.10:
+  '0':
+    0: ''
+    Active: ''
+    Based On: Cluster / Deployment Role
+    Description: Cluster DRS not enabled
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '1':
+    0: ''
+    Active: ''
+    Based On: Cluster / Deployment Role
+    Description: Cluster HA not enabled
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '10':
+    0: ''
+    Active: ''
+    Based On: Physical Server
+    Description: Physical server has critical health state
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '11':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM CD Drive or Floppy Connected
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '12':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM CPU count was decreased
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Hardware Reconfigured
+  '13':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM CPU count was increased
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Hardware Reconfigured
+  '14':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Environment Tag <> Datastore Environment Tag
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '15':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Environment Tag <> Host Environment Tag
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '16':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: 'VM Guest C: Drive < 10% Free'
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '17':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Guest Windows Event Log Error - NtpClient
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Event Log Threshold
+  '18':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Memory Balloon > 250 in last 10 min
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Real Time Performance
+  '19':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Memory was decreased
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Hardware Reconfigured
+  '2':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: CPU Ready > 4000 ms for more than 10 min
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Real Time Performance
+  '20':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Memory was increased
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Hardware Reconfigured
+  '21':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Migration > 1 in last 30 min
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Event Threshold
+  '22':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Power On > 2 in last 15 min
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Event Threshold
+  '23':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Silver and CPU > 1
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '24':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Silver and RAM > 2 GB
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '25':
+    0: ''
+    Active: ''
+    Based On: Datastore
+    Description: VMs on local storage
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '26':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM Unregistered
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '27':
+    0: ''
+    Active: ''
+    Based On: VM and Instance
+    Description: VM VMotion > 1 in last 30 min
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Event Threshold
+  '3':
+    0: ''
+    Active: ''
+    Based On: Datastore
+    Description: Datacenter VMs > 10
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '4':
+    0: ''
+    Active: 'True'
+    Based On: Container Node
+    Description: External Prometheus - Nodes
+    Email: 'False'
+    Event on Timeline: 'True'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: External Prometheus Alerts
+  '5':
+    0: ''
+    Active: 'True'
+    Based On: Provider
+    Description: External Prometheus - Providers
+    Email: 'False'
+    Event on Timeline: 'True'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: External Prometheus Alerts
+  '6':
+    0: ''
+    Active: ''
+    Based On: Host / Node
+    Description: Host Datastore < 5% of Free Space
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)
+  '7':
+    0: ''
+    Active: ''
+    Based On: Host / Node
+    Description: Host Event Log Error - Failed to validate VM IP address
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Hostd Log Threshold
+  '8':
+    0: ''
+    Active: ''
+    Based On: Host / Node
+    Description: Host Event Log Error - Memory Exceed Soft Limit
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Hostd Log Threshold
+  '9':
+    0: ''
+    Active: ''
+    Based On: Host / Node
+    Description: Host VMs >10
+    Email: 'True'
+    Event on Timeline: 'False'
+    Management Event Raised: 'False'
+    SNMP: 'False'
+    What is evaluated: Expression (Custom)

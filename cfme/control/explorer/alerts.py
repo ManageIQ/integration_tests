@@ -6,20 +6,22 @@ import six
 from copy import copy
 from navmazing import NavigateToAttribute, NavigateToSibling
 
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, Text, View
-from widgetastic.utils import partial_match
-from widgetastic_manageiq import AlertEmail, SNMPForm, SummaryForm
+from widgetastic_manageiq import AlertEmail, SNMPForm, SummaryForm, Table
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 
 
 class AlertsAllView(ControlExplorerView):
     title = Text("#explorer_title_text")
+    table = Table(".//div[@id='alert_list_div' or @class='miq-data-table']/table")
 
     @property
     def is_displayed(self):
@@ -321,6 +323,28 @@ class AlertCollection(BaseCollection):
         view.wait_displayed()
         view.flash.assert_success_message('Alert "{}" was added'.format(alert.description))
         return alert
+
+    def all(self):
+        # get alerts via reading 'All Alerts table'
+        view  = navigate_to(self.appliance.collections.alerts,'All')
+        try:
+            alerts = [
+                self.instantiate(
+                      description=alert.get('Description'),
+                      active=alert.get('Active'),
+                      based_on=alert.get('Based On'),
+                      evaluate=alert.get('What is evaluated'),
+                      emails=alert.get('Email'),
+                      snmp_trap=alert.get('SNMP'),
+                      timeline_event=alert.get('Event on Timeline'),
+                      mgmt_event=alert.get('Management Event Raised')
+                )
+                for alert in view.table.read()
+            ]
+        except NoSuchElementException:
+            logger.exception('AlertCollection: Table not found in Alerts All view')
+            return None
+        return alerts
 
 
 @navigator.register(AlertCollection, "All")
