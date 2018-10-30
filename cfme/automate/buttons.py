@@ -27,6 +27,7 @@ from widgetastic_manageiq import (
     RadioGroup,
     SummaryFormItem,
 )
+from widgetastic_manageiq.expression_editor import ExpressionEditor
 
 from . import AutomateCustomizationView
 
@@ -86,7 +87,19 @@ class ButtonFormCommon(AutomateCustomizationView):
         submit = Select(id="submit_how")
 
     class advanced(PotentiallyInvisibleTab):  # noqa
-        # TODO: Enablement & Visibility
+        @View.nested
+        class enablement(View):  # noqa
+            title = Text('//*[@id="ab_form"]/div[1]/h3')
+            define_exp = Text(locator='//*[@id="form_enablement_expression_div"]//a/button')
+            expression = ExpressionEditor()
+            disabled_text = Input(id="disabled_text")
+
+        @View.nested
+        class visibility(View):  # noqa
+            title = Text('//*[@id="ab_form"]/h3[2]')
+            define_exp = Text(locator='//*[@id="form_visibility_expression_div"]//a/button')
+            expression = ExpressionEditor()
+
         system = BootstrapSelect('instance_name')
         message = Input(name='object_message')
         request = Input(name='object_request')
@@ -204,19 +217,13 @@ class BaseButton(BaseEntity, Updateable):
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
-            if self.appliance.version < '5.9':
-                view.flash.assert_message(
-                    'Button "{}" was saved'.format(updates.get('hover', self.hover)))
-            else:
-                view.flash.assert_message(
-                    'Custom Button "{}" was saved'.format(updates.get('hover', self.hover)))
+            view.flash.assert_message(
+                'Custom Button "{}" was saved'.format(updates.get("hover", self.hover))
+            )
         else:
-            if self.appliance.version < '5.9':
-                view.flash.assert_message(
-                    'Edit of Button "{}" was cancelled by the user'.format(self.text))
-            else:
-                view.flash.assert_message(
-                    'Edit of Custom Button "{}" was cancelled by the user'.format(self.text))
+            view.flash.assert_message(
+                'Edit of Custom Button "{}" was cancelled by the user'.format(self.text)
+            )
 
     def delete(self, cancel=False):
         view = navigate_to(self, 'Details')
@@ -255,6 +262,8 @@ class DefaultButton(BaseButton):
     request = attr.ib(default=None)
     open_url = attr.ib(default=None)
     attributes = attr.ib(default=None)
+    visibility = attr.ib(default=None)
+    enablement = attr.ib(default=None)
 
 
 @attr.s
@@ -270,6 +279,8 @@ class AnsiblePlaybookButton(BaseButton):
     request = attr.ib(default=None)
     open_url = attr.ib(default=None)
     attributes = attr.ib(default=None)
+    visibility = attr.ib(default=None)
+    enablement = attr.ib(default=None)
 
 
 @attr.s
@@ -278,73 +289,149 @@ class ButtonCollection(BaseCollection):
     ENTITY = BaseButton
 
     def instantiate(
-        self, group, text, hover, type="Default", dialog=None, display_for=None, submit=None,
-        playbook_cat_item=None, inventory=None, hosts=None, image=None, open_url=None, system=None,
-        request=None, attributes=None,
+        self,
+        group,
+        text,
+        hover,
+        type="Default",
+        dialog=None,
+        display_for=None,
+        submit=None,
+        playbook_cat_item=None,
+        inventory=None,
+        hosts=None,
+        image="fa-user",
+        open_url=None,
+        system=None,
+        request=None,
+        attributes=None,
+        visibility=None,
+        enablement=None,
     ):
-        if image:
-            pass
-        elif self.appliance.version < '5.9':
-            image = 'Button Image 1'
-        else:
-            image = 'fa-user'
-        kwargs = {'open_url': open_url, 'system': system, 'request': request,
-                  'attributes': attributes}
-        if type == 'Default':
+        kwargs = {
+            "open_url": open_url,
+            "system": system,
+            "request": request,
+            "attributes": attributes,
+            "visibility": visibility,
+            "enablement": enablement,
+        }
+        if type == "Default":
             button_class = DefaultButton
             args = [group, text, hover, image, dialog]
-        elif type == 'Ansible Playbook':
+        elif type == "Ansible Playbook":
             button_class = AnsiblePlaybookButton
             args = [group, text, hover, image, playbook_cat_item, inventory, hosts]
         return button_class.from_collection(self, *args, **kwargs)
 
     def create(
-        self, text, hover, type="Default", group=None, dialog=None, display_for=None, submit=None,
-        playbook_cat_item=None, inventory=None, hosts=None, image=None, open_url=None, system=None,
-        request=None, attributes=None
+        self,
+        text,
+        hover,
+        type="Default",
+        image="fa-user",
+        group=None,
+        dialog=None,
+        display_for=None,
+        submit=None,
+        playbook_cat_item=None,
+        inventory=None,
+        hosts=None,
+        open_url=None,
+        system=None,
+        request=None,
+        attributes=None,
+        visibility=None,
+        enablement=None,
     ):
         self.group = group or self.parent
-        if image:
-            pass
-        elif self.appliance.version < '5.9':
-            image = 'Button Image 1'
-        else:
-            image = 'fa-user'
-        view = navigate_to(self, 'Add')
-        view.options.fill({'type': type})
-        view.fill({
-            'options': {
-                'text': text,
-                'hover': hover,
-                'image': image,
-                'open_url': open_url,
-                'display_for': display_for,
-                'submit': submit,
-                'form': {
-                    'dialog': dialog,
-                    'playbook_cat_item': playbook_cat_item,
-                    'inventory': inventory,
-                    'hosts': hosts
+
+        view = navigate_to(self, "Add")
+        view.options.fill({"type": type})
+        view.fill(
+            {
+                "options": {
+                    "text": text,
+                    "hover": hover,
+                    "image": image,
+                    "open_url": open_url,
+                    "display_for": display_for,
+                    "submit": submit,
+                    "form": {
+                        "dialog": dialog,
+                        "playbook_cat_item": playbook_cat_item,
+                        "inventory": inventory,
+                        "hosts": hosts,
+                    },
                 }
-            },
-            'advanced': {'system': system, 'request': request}
-        })
+            }
+        )
+
+        if visibility:
+            # To-Do: extend visibility expression variations if needed.
+            if self.group.type in ["Group", "User"]:
+                tag = "EVM {obj_type}.{tag}".format(
+                    obj_type=self.group.type, tag=visibility["tag"]
+                )
+            elif self.group.type == "Tenant":
+                tag = "{obj_type}.Build.{tag}".format(
+                    obj_type=self.group.type, tag=visibility["tag"]
+                )
+            else:
+                tag = "{obj_type}.{tag}".format(obj_type=self.group.type, tag=visibility["tag"])
+
+            if view.advanced.visibility.define_exp.is_displayed:
+                view.advanced.visibility.define_exp.click()
+            view.advanced.visibility.expression.fill_tag(tag=tag, value=visibility["value"])
+
+        if enablement:
+            # To-Do: extend enablement expression variations if needed.
+            if self.group.type in ["Group", "User"]:
+                tag = "EVM {obj_type}.{tag}".format(
+                    obj_type=self.group.type, tag=visibility["tag"]
+                )
+            elif self.group.type == "Tenant":
+                tag = "{obj_type}.Build.{tag}".format(
+                    obj_type=self.group.type, tag=visibility["tag"]
+                )
+            else:
+                tag = "{obj_type}.{tag}".format(obj_type=self.group.type, tag=visibility["tag"])
+
+            if view.advanced.enablement.define_exp.is_displayed:
+                view.advanced.enablement.define_exp.click()
+
+            view.advanced.enablement.expression.fill_tag(tag=tag, value=enablement["value"])
+
+        view.fill({"advanced": {"system": system, "request": request}})
+
         if attributes is not None:
             for i, dict_ in enumerate(attributes, 1):
                 view.advanced.attribute(i).fill(dict_)
+
         view.add_button.click()
         view = self.create_view(ButtonGroupDetailView, self.group)
         wait_for(lambda: view.is_displayed, timeout=10)
         view.flash.assert_no_error()
-        if self.appliance.version < '5.9':
-            view.flash.assert_message('Button "{}" was added'.format(hover))
-        else:
-            view.flash.assert_message('Custom Button "{}" was added'.format(hover))
+        view.flash.assert_message('Custom Button "{}" was added'.format(hover))
 
         return self.instantiate(
-            self.group, text, hover, type, dialog=dialog, display_for=display_for, submit=submit,
-            playbook_cat_item=playbook_cat_item, inventory=inventory, hosts=hosts, image=image,
-            open_url=open_url, system=system, request=request, attributes=attributes,
+            self.group,
+            text,
+            hover,
+            type,
+            dialog=dialog,
+            display_for=display_for,
+            submit=submit,
+            playbook_cat_item=playbook_cat_item,
+            inventory=inventory,
+            hosts=hosts,
+            image=image,
+            open_url=open_url,
+            system=system,
+            request=request,
+            attributes=attributes,
+            visibility=visibility,
+            enablement=enablement,
         )
 
 
@@ -436,10 +523,7 @@ class NewButtonGroupView(ButtonGroupFormCommon):
 
     @property
     def is_displayed(self):
-        if self.browser.appliance.version < "5.10":
-            expected_title = "Adding a new Buttons Group"
-        else:
-            expected_title = "Adding a new Button Group"
+        expected_title = "Adding a new Button Group"
 
         return (
             self.in_customization and
@@ -457,10 +541,8 @@ class EditButtonGroupView(ButtonGroupFormCommon):
 
     @property
     def is_displayed(self):
-        if self.browser.appliance.version < "5.10":
-            expected_title = "Editing Buttons Group"
-        else:
-            expected_title = "Editing Button Group"
+        expected_title = "Editing Button Group"
+
         return (
             self.in_customization
             and self.title.text.startswith(expected_title)
