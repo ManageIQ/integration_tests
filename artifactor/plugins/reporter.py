@@ -215,7 +215,7 @@ class ReporterBase(object):
             template_data["tests"] = [
                 x
                 for x in template_data["tests"]
-                if re.findall("{}[-\]]+".format(name_filter), x["name"])
+                if re.findall(r"{}[-\]]+".format(name_filter), x["name"])
             ]
 
         # Create the tree dict that is used for js tree
