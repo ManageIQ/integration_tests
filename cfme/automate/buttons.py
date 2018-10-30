@@ -388,14 +388,14 @@ class ButtonCollection(BaseCollection):
             # To-Do: extend enablement expression variations if needed.
             if self.group.type in ["Group", "User"]:
                 tag = "EVM {obj_type}.{tag}".format(
-                    obj_type=self.group.type, tag=visibility["tag"]
+                    obj_type=self.group.type, tag=enablement["tag"]
                 )
             elif self.group.type == "Tenant":
                 tag = "{obj_type}.Build.{tag}".format(
-                    obj_type=self.group.type, tag=visibility["tag"]
+                    obj_type=self.group.type, tag=enablement["tag"]
                 )
             else:
-                tag = "{obj_type}.{tag}".format(obj_type=self.group.type, tag=visibility["tag"])
+                tag = "{obj_type}.{tag}".format(obj_type=self.group.type, tag=enablement["tag"])
 
             if view.advanced.enablement.define_exp.is_displayed:
                 view.advanced.enablement.define_exp.click()
