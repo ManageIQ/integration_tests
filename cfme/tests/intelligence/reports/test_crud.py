@@ -12,6 +12,7 @@ from cfme.utils.rest import assert_response
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for_decorator
 
+
 report_crud_dir = data_path.join("reports_crud")
 schedules_crud_dir = data_path.join("schedules_crud")
 
@@ -46,6 +47,13 @@ def custom_report_values(request):
 def schedule_data(request):
     with schedules_crud_dir.join(request.param).open(mode="r") as rep_yaml:
         return yaml.load(rep_yaml)
+
+
+@pytest.fixture(scope="function")
+def get_custom_report(appliance, custom_report_values):
+    custom_report = appliance.collections.reports.create(**custom_report_values)
+    yield custom_report
+    custom_report.delete()
 
 
 @pytest.mark.rhel_testing
@@ -286,3 +294,19 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
     assert schedule.enabled
     schedule.delete(cancel=False)
     assert not schedule.exists
+
+
+def test_crud_custom_report_schedule(
+    appliance, request, get_custom_report, schedule_data
+):
+    """This test case creates a schedule for custom reports and tests if it was created
+    successfully.
+    """
+    schedule_data["filter"] = (
+        "My Company (All Groups)",
+        "Custom",
+        get_custom_report.menu_name,
+    )
+    custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
+    assert custom_report_schedule.exists
+    custom_report_schedule.delete(cancel=False)
