@@ -5,6 +5,7 @@
 
 aenum==2.1.2
 alabaster==0.7.12
+anytree==2.4.3
 apipkg==1.5
 asn1crypto==0.24.0
 attrs==18.2.0
@@ -146,7 +147,7 @@ sphinx-rtd-theme==0.4.2
 SQLAlchemy==1.2.12
 stevedore==1.30.0
 tabulate==0.7.7
-taretto==0.5.4
+taretto==0.5.5
 terminado==0.8.1
 testpath==0.4.2
 tornado==5.1.1
@@ -159,7 +160,7 @@ wcwidth==0.1.7
 webencodings==0.5.1
 websocket-client==0.40.0
 Werkzeug==0.14.1
-widgetastic.core==0.21.6
+widgetastic.core==0.30.2
 widgetastic.patternfly==0.0.39
 widgetsnbextension==3.4.2
 wrapt==1.10.11
