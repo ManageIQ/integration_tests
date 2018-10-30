@@ -232,3 +232,47 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
         )
     except TimedOutError:
         assert False, "Expected 1 requests not found in automation log"
+
+
+@pytest.mark.ignore_stream("5.9")
+def test_visibility_expression(appliance, request, setup_obj, button_group):
+    """ Test custom button visibility as per expression
+
+    prerequisites:
+        * Appliance
+
+    Steps:
+        * Create custom button group with the Object type
+        * Create a custom button with visibility expression (Tag)
+        * Navigate to object Detail page
+        * Check: button should not display without tag
+        * Check: button should display with tag
+    """
+
+    group, obj_type = button_group
+    button = group.buttons.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        display_for="Single entity",
+        system="Request",
+        request="InspectMe",
+        visibility={"tag": "My Company Tags : Department", "value": "Engineering"},
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    tag_cat = appliance.collections.categories.instantiate(
+        name="department", display_name="Department"
+    )
+    tag = tag_cat.collections.tags.instantiate(name="engineering", display_name="Engineering")
+
+    view = navigate_to(setup_obj, "Details")
+    custom_button_group = Dropdown(view, group.hover)
+
+    if tag.display_name in [item.display_name for item in setup_obj.get_tags()]:
+        assert custom_button_group.is_displayed
+        setup_obj.remove_tag(tag)
+        assert not custom_button_group.is_displayed
+    else:
+        assert not custom_button_group.is_displayed
+        setup_obj.add_tag(tag)
+        assert custom_button_group.is_displayed
