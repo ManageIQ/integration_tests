@@ -64,7 +64,7 @@ def setup_virtualenv(target, use_site):
     if PY3:
         run_cmd_or_exit([sys.executable, '-m', 'venv', target] + add)
     else:
-        run_cmd_or_exit(['virtualenv', target] + add)
+        run_cmd_or_exit([sys.executable, '-m', 'virtualenv', target] + add)
     venv_call(target,
               'pip', 'install', '-U',
               # pip wheel and setuptools are updated just in case
