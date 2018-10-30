@@ -139,6 +139,8 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             zone_collect: Set True to collect logs for zone
 
     """
+    # we need to use some name that indicates it is test data
+    ALERT_PROMPT = 'test_cfme_can_be_deleted'
 
     _depot_types = dict(
         anon_ftp="Anonymous FTP",
@@ -178,13 +180,15 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             view = navigate_to(self, 'DiagnosticsCollectLogsEditSlave')
         else:
             view = navigate_to(self, 'DiagnosticsCollectLogsEdit')
-        view.fill({'depot_type': depot_type})
+        updated = view.fill({'depot_type': depot_type})
         fill_dict = {}
         if depot_type != 'Red Hat Dropbox':
             fill_dict.update({'depot_info': {
                 'depot_name': updates.get('depot_name'),
                 'uri': updates.get('uri')}
             })
+        else:  # all data is filled automatically for Red Hat Dropbox depot type
+            updated = True
         if depot_type in ['FTP', 'Samba']:
             fill_dict.update({'depot_creds': {
                 'username': updates.get('username'),
@@ -193,7 +197,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             })
             if self.appliance.version < '5.9':
                 fill_dict['depot_creds']['confirm_password'] = updates.get('password')
-        updated = view.fill(fill_dict)
+        updated = view.fill(fill_dict) or updated
         try:
             view.depot_creds.validate_button.click()
             view.flash.assert_message('Log Depot Settings were validated')
@@ -271,7 +275,9 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             view = navigate_to(self, 'DiagnosticsCollectLogs')
         last_collection = self.last_collection
         # Initiate the collection
-        view.toolbar.collect.item_select(selection)
+        view.toolbar.collect.item_select(selection, handle_alert=None)
+        if self.browser.alert_present:
+            self.browser.handle_alert(prompt=self.ALERT_PROMPT)
         slave_servers = self.appliance.server.slave_servers
         first_slave_server = slave_servers[0] if slave_servers else None
 
@@ -340,7 +346,8 @@ class ServerCollectLogsView(ServerDiagnosticsView):
         return (
             self.in_server_collect_logs and
             self.title.text == 'Diagnostics Server "{} [{}]" (current)'.format(
-                self.context['object'].name, self.context['object'].sid)
+                self.context['object'].appliance.server.name,
+                self.context['object'].appliance.server.sid)
         )
 
     @property

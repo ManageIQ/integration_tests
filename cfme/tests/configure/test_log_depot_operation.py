@@ -5,13 +5,16 @@
 Author: Milan Falešník <mfalesni@redhat.com>
 Since: 2013-02-20
 """
-from datetime import datetime
+from datetime import datetime, timedelta
+from ftplib import FTP
+from wait_for import TimedOutError
 
 import fauxfactory
 import pytest
 import re
 
 from cfme import test_requirements
+from cfme.configure.configuration.diagnostics_settings import CollectLogsBase
 from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.ftp import FTPClient
@@ -108,7 +111,12 @@ def depot_machine_ip(appliance):
     depot_template_name = data["log_db_depot_template"]["template_name"]
     vm = deploy_template(depot_provider_key,
                          depot_machine_name,
-                         template_name=depot_template_name)
+                         template_name=depot_template_name,
+                         timeout=1200)
+    try:
+        wait_for(lambda: vm.ip is not None, timeout=600)
+    except TimedOutError:
+        pytest.skip('Depot VM does not have IP address')
     yield vm.ip
     vm.cleanup()
 
@@ -141,10 +149,11 @@ def configured_depot(log_depot, depot_machine_ip, appliance):
     server_log_depot = appliance.server.collect_logs
     with update(server_log_depot):
         server_log_depot.depot_type = log_depot.protocol
-        server_log_depot.depot_name = fauxfactory.gen_alphanumeric()
-        server_log_depot.uri = uri
-        server_log_depot.username = log_depot.credentials.username
-        server_log_depot.password = log_depot.credentials.password
+        if log_depot.protocol != 'dropbox':
+            server_log_depot.depot_name = fauxfactory.gen_alphanumeric()
+            server_log_depot.uri = uri
+            server_log_depot.username = log_depot.credentials.username
+            server_log_depot.password = log_depot.credentials.password
     yield server_log_depot
     server_log_depot.clear()
 
@@ -235,8 +244,7 @@ def ansible_catalog_item(appliance, ansible_repository):
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
             "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
-            "extra_vars": [("some_var", "some_value")]
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric()
         }
     )
     yield cat_item
@@ -271,6 +279,9 @@ def service_request(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
+@pytest.mark.uncollectif(lambda appliance, log_depot:
+                         not appliance.is_downstream and log_depot.protocol == 'dropbox',
+                         reason='Dropbox test only for downstream version of product')
 def test_collect_log_depot(log_depot, appliance, service_request, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
 
@@ -291,10 +302,46 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
         ftp.recursively_delete()
 
     # Start the collection
+    collect_time = datetime.utcnow() - timedelta(hours=4)  # time on dropbox is UTC-4
     configured_depot.collect_all()
     # Check it on FTP
-    check_ftp(ftp=log_depot.ftp, server_name=appliance.server.name,
-              server_zone_id=appliance.server.zone.id, check_ansible_logs=True)
+    if log_depot.protocol != 'dropbox':
+        check_ftp(ftp=log_depot.ftp, server_name=appliance.server.name,
+                  server_zone_id=appliance.server.zone.id, check_ansible_logs=True)
+    elif appliance.is_downstream:  # check for logs on dropbox, not applicable for upstream
+        try:
+            username = conf.credentials['rh_dropbox']['username']
+            password = conf.credentials['rh_dropbox']['password']
+            host = conf.cfme_data['rh_dropbox']['download_host']
+        except KeyError:
+            pytest.skip('There are no Red Hat Dropbox credentials!')
+
+        dropbox = FTP(host=host, user=username, passwd=password)
+        contents = dropbox.nlst()
+
+        server_string = '{}_{}'.format(appliance.server.name, appliance.server.zone.id)
+        date_group = '(_.*?){4}'
+        pattern = re.compile(
+            r"(^{})(.*?){}{}[.]zip$".format(CollectLogsBase.ALERT_PROMPT,
+                                            server_string, date_group))
+        zip_files = filter(pattern.match, contents)
+        assert zip_files, "No logs found!"
+        # Check the time of the last file
+        datetimes = []
+        for zip_file in zip_files:
+            # files look like "Current_region_0_default_1_EVM_1_20170127_043343_20170127_051010.zip"
+            # 20170127_043343 - date and time
+            date = zip_file.split("_")
+            date_from = '{}{}'.format(date[-4], date[-3])
+            # removing ".zip" from the name
+            date_to = '{}{}'.format(date[-2], date[-1][:-4])
+            try:
+                date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
+                date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
+            except ValueError:
+                assert False, "Wrong file matching of {}".format(zip_file)
+            datetimes.append(date_to)
+        assert max(datetimes) >= collect_time
 
 
 @pytest.mark.tier(3)

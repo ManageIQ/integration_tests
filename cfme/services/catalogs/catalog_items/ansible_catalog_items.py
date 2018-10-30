@@ -160,7 +160,13 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
 class AddAnsibleCatalogItemView(AnsibleCatalogItemForm):
     add = Button("Add")
 
-    is_displayed = displayed_not_implemented
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and
+            self.title.text == 'Adding a new Service Catalog Item' and
+            self.provisioning.repository.is_displayed  # this field should be visible
+        )
 
 
 class EditAnsibleCatalogItemView(AnsibleCatalogItemForm):

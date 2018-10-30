@@ -185,7 +185,7 @@ class Repository(BaseEntity, Fillable, Taggable):
         wait_for(
             lambda: not self.exists,
             delay=10,
-            timeout=120,
+            timeout=300,
             fail_func=repo_list_page.browser.selenium.refresh)
 
     def refresh(self):
