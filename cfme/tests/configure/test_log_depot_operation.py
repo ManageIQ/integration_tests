@@ -7,6 +7,7 @@ Since: 2013-02-20
 """
 from datetime import datetime, timedelta
 from ftplib import FTP
+from wait_for import TimedOutError
 
 import fauxfactory
 import pytest
@@ -112,6 +113,10 @@ def depot_machine_ip(appliance):
                          depot_machine_name,
                          template_name=depot_template_name,
                          timeout=1200)
+    try:
+        wait_for(lambda: vm.ip is not None, timeout=600)
+    except TimedOutError:
+        pytest.skip('Depot VM does not have IP address')
     yield vm.ip
     vm.cleanup()
 
