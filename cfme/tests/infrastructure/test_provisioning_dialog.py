@@ -371,3 +371,33 @@ def test_provision_vm_with_2_nics(provisioner, provisioning, prov_data, vm_name)
 
     nics = vm.mgmt.get_nics()
     assert len(nics) == 2, 'The VM should have 2 NICs attached.'
+
+
+@pytest.mark.provider([VMwareProvider], override=True)
+def test_vmware_default_placement(provisioner, prov_data, provider, setup_provider, vm_name):
+    """ Tests whether vm placed in Datacenter root after the provisioning.
+
+    Prerequisites:
+        * A provider set up, supporting provisioning in CFME
+
+    Steps:
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, set "Choose automatically"
+        * Submit the provisioning request and wait for it to finish.
+        * The VM should be placed in the Datacenter root folder (that's two levels up in API).
+    Metadata:
+        test_flag: provision
+    """
+    template_name = provider.data['provisioning']['template']
+    prov_data['catalog']['vm_name'] = vm_name
+    prov_data['environment'] = {'automatic_placement': True}
+
+    vm = provisioner(template_name, prov_data)
+
+    wait_for(
+        lambda: vm.exists_on_provider,
+        num_sec=240, delay=5,
+        message="VM {} exists on provider.".format(vm_name)
+    )
+    assert 'Datacenter' == provider.mgmt.get_vm(vm_name).raw.parent.parent.name, (
+        'The new vm is not placed in the Datacenter root directory!')
