@@ -307,10 +307,9 @@ def test_custom_button_automate(appliance, request, submit, setup_objs, button_g
                 entity_count = 1
 
             # Clear the automation log
-            clean = appliance.ssh_client.run_command(
+            assert appliance.ssh_client.run_command(
                 'echo -n "" > ' "/var/www/miq/vmdb/log/automation.log"
             )
-            assert clean.success
             custom_button_group.item_select(button.text)
             view.flash.assert_message('"{}" was executed'.format(button.text))
 
