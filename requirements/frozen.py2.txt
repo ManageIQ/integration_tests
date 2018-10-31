@@ -315,7 +315,7 @@ wcwidth==0.1.7
 webencodings==0.5.1
 websocket-client==0.40.0
 Werkzeug==0.14.1
-widgetastic.core==0.30.2
+git+git://github.com/izapolsk/widgetastic.core.git@get_rid_of_increment_in_row
 widgetastic.patternfly==0.0.39
 widgetsnbextension==3.4.2
 wrapanapi==3.0.31
