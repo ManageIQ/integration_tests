@@ -200,17 +200,6 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
             )
 
 
-@pytest.mark.meta(
-    blockers=[
-        BZ(
-            1635797,
-            forced_streams=["5.9", "5.10"],
-            unblock=lambda button_group: bool(
-                [obj for obj in ["HOST", "VM_INSTANCE", "TEMPLATE_IMAGE"] if obj in button_group]
-            ),
-        )
-    ]
-)
 def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_group):
     """ Test custom button with dialog and InspectMe method
 
@@ -259,11 +248,6 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
 
     # Submit order
     dialog_view.submit.click()
-
-    if not (
-        BZ(bug_id=1640592, forced_streams=["5.9", "5.10"]).blocks and obj_type == "TEMPLATE_IMAGE"
-    ):
-        view.wait_displayed("60s")
     view.flash.assert_message("Order Request was Submitted")
 
     # Check for request in automation log
