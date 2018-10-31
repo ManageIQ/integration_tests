@@ -32,3 +32,22 @@ def test_dashboard_card_availability_zones(provider):
     view.toolbar.view_selector.select('Dashboard View')
     dashboard_card = view.entities.cards("Availability Zones")
     assert dashboard_card.value == len(provider.mgmt.api.availability_zones.list())
+
+
+@pytest.mark.ignore_stream('5.9')
+def test_dashboard_card_tenants(provider):
+    collection = provider.appliance.collections.cloud_tenants
+    view = navigate_to(provider, 'Details')
+    view.toolbar.view_selector.select('Dashboard View')
+    card_tenants = view.entities.cards("Cloud Tenants").value
+    view = navigate_to(collection, 'All')
+    assert card_tenants == view.entities.paginator.items_amount
+
+
+@pytest.mark.ignore_stream('5.9')
+def test_dashboard_card_security_groups(provider):
+    view = navigate_to(provider, 'Details')
+    sec_groups = view.entities.summary('Relationships').get_text_of('Security Groups')
+    view.toolbar.view_selector.select('Dashboard View')
+    sec_groups_card = view.entities.cards("Security Groups").value
+    assert sec_groups_card == int(sec_groups)
