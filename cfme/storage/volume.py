@@ -102,9 +102,10 @@ class VolumeAddEntities(View):
 
 class VolumeAddForm(View):
     storage_manager = BootstrapSelect(name='storage_manager_id')
-    volume_name = TextInput(name='name')
-    size = TextInput(name='size')
     tenant = BootstrapSelect(name='cloud_tenant_id')
+    volume_name = TextInput(name='name')
+    volume_type = BootstrapSelect(name='volume_type')
+    size = TextInput(name='size')
     add = Button('Add')
     cancel = Button('Cancel')
 
@@ -309,7 +310,7 @@ class VolumeCollection(BaseCollection, TaggableCollection):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     ENTITY = Volume
 
-    def create(self, name, storage_manager, tenant, provider, size=1, cancel=False):
+    def create(self, name, storage_manager, tenant, provider, volume_type=None, size=1, cancel=False):
         """Create new storage volume
 
         Args:
@@ -330,6 +331,7 @@ class VolumeCollection(BaseCollection, TaggableCollection):
             view.form.fill({'storage_manager': storage_manager,
                             'tenant': tenant,
                             'volume_name': name,
+                            'volume_type': volume_type,
                             'size': size})
             view.form.add.click()
             base_message = 'Cloud Volume "{}" created'
