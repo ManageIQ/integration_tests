@@ -1993,7 +1993,10 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
         # This provider does not have VMs
         return
     for vm in sorted(provider_api.list_vms()):
-        if Appliance.objects.filter(name=vm.name, template__provider=provider).count() != 0:
+        if (
+            Appliance.objects.filter(name=getattr(vm, 'name', vm),
+                                     template__provider=provider).count() != 0
+        ):
             continue
         # We have an untracked VM. Let's investigate
         try:
