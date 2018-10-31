@@ -7,7 +7,6 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import log_request_check, TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError, wait_for
 
@@ -153,21 +152,6 @@ def test_custom_button_display(appliance, request, display, setup_objs, button_g
     lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
     and appliance.version < "5.10"
 )
-@pytest.mark.meta(
-    blockers=[
-        BZ(
-            1635797,
-            forced_streams=["5.9", "5.10"],
-            unblock=lambda button_group: bool(
-                [
-                    obj
-                    for obj in ["PROVIDER", "VM_INSTANCE", "CLOUD_NETWORK"]
-                    if obj in button_group
-                ]
-            ),
-        )
-    ]
-)
 def test_custom_button_dialog(appliance, dialog, request, setup_objs, button_group):
     """ Test custom button with dialog and InspectMe method
 
@@ -185,7 +169,7 @@ def test_custom_button_dialog(appliance, dialog, request, setup_objs, button_gro
         * Check for the proper flash message related to button execution
 
     Bugzillas:
-        * 1635797, 1555331, 1574403
+        * 1635797, 1555331, 1574403, 1640592
     """
 
     group, obj_type = button_group
@@ -217,12 +201,6 @@ def test_custom_button_dialog(appliance, dialog, request, setup_objs, button_gro
 
         # Submit order request
         dialog_view.submit.click()
-
-        if not (
-            BZ(bug_id=1640592, forced_streams=["5.9", "5.10"]).blocks
-            and obj_type == "TEMPLATE_IMAGE"
-        ):
-            view.wait_displayed("60s")
         view.flash.assert_message("Order Request was Submitted")
 
         # Check for request in automation log
