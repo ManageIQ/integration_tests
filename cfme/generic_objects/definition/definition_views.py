@@ -23,7 +23,7 @@ class GenericObjectDefinitionView(BaseLoggedInPage):
     def in_generic_object_definition(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Automation', 'Automate']
+            self.navigation.currently_selected == ['Automation', 'Automate', 'Generic Objects']
         )
 
 
@@ -101,7 +101,7 @@ class ParametersForm(View):
 
 
 class GenericObjectDefinitionAddEditView(GenericObjectDefinitionView):
-    title = Text('#explorer_title_text')
+    title = Text('//div[@id="main-content"]//div/h1')
     name = Input(id='generic_object_definition_name')
     description = Input(id='generic_object_definition_description')
     cancel = Button('Cancel')
