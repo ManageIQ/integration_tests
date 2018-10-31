@@ -11,6 +11,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.regression
 def test_number_of_cpu(provider, soft_assert):
     view_details = navigate_to(provider, 'Details')
     v = view_details.entities.summary('Properties').get_text_of('Aggregate Node CPU Resources')
@@ -21,6 +22,7 @@ def test_number_of_cpu(provider, soft_assert):
     assert int(v) > 0, "Aggregate Node CPU Cores is 0"
 
 
+@pytest.mark.regression
 def test_node_memory(provider):
     view_details = navigate_to(provider, 'Details')
     node_memory = view_details.entities.summary('Properties').get_text_of('Aggregate Node Memory')

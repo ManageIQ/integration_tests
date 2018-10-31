@@ -12,6 +12,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.regression
 def test_api_port(provider):
     view_details = navigate_to(provider, 'Details')
     port = provider.data['endpoints']['default']['api_port']
@@ -19,6 +20,7 @@ def test_api_port(provider):
     assert api_port == port, 'Invalid API Port'
 
 
+@pytest.mark.regression
 def test_credentials_quads(provider):
     view = navigate_to(provider, 'All')
     prov_item = view.entities.get_entity(name=provider.name, surf_pages=True)
@@ -29,6 +31,7 @@ def test_credentials_quads(provider):
         assert prov_item.data.get('creds') and 'checkmark' in prov_item.data['creds']
 
 
+@pytest.mark.regression
 def test_delete_provider(provider):
     provider.delete(cancel=False)
     provider.wait_for_delete()

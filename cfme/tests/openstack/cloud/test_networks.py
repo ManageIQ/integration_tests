@@ -110,6 +110,7 @@ def router_with_gw(provider, appliance, ext_subnet):
     delete_entity(router)
 
 
+@pytest.mark.regression
 def test_create_network(network, provider):
     """Creates private cloud network and verifies it's relationships"""
     assert network.exists
@@ -117,6 +118,7 @@ def test_create_network(network, provider):
     assert network.cloud_tenant == provider.data.get('provisioning').get('cloud_tenant')
 
 
+@pytest.mark.regression
 def test_edit_network(network):
     """Edits private cloud network's name"""
     network.edit(name=fauxfactory.gen_alpha())
@@ -127,6 +129,7 @@ def test_edit_network(network):
     assert network.exists
 
 
+@pytest.mark.regression
 def test_delete_network(network):
     """Deletes private cloud network"""
     network.delete()
@@ -137,6 +140,7 @@ def test_delete_network(network):
     assert not network.exists
 
 
+@pytest.mark.regression
 def test_create_subnet(subnet, provider):
     """Creates private subnet and verifies it's relationships"""
     assert subnet.exists
@@ -147,6 +151,7 @@ def test_create_subnet(subnet, provider):
     assert subnet.net_protocol == 'ipv4'
 
 
+@pytest.mark.regression
 def test_edit_subnet(subnet):
     """Edits private subnet's name"""
     subnet.edit(new_name=fauxfactory.gen_alpha())
@@ -156,6 +161,7 @@ def test_edit_subnet(subnet):
     assert subnet.exists
 
 
+@pytest.mark.regression
 def test_delete_subnet(subnet):
     """Deletes private subnet"""
     subnet.delete()
@@ -166,12 +172,14 @@ def test_delete_subnet(subnet):
     assert not subnet.exists
 
 
+@pytest.mark.regression
 def test_create_router(router, provider):
     """Create router without gateway"""
     assert router.exists
     assert router.cloud_tenant == provider.data.get('provisioning').get('cloud_tenant')
 
 
+@pytest.mark.regression
 def test_create_router_with_gateway(router_with_gw, provider):
     """Creates router with gateway (external network)"""
     assert router_with_gw.exists
@@ -179,6 +187,7 @@ def test_create_router_with_gateway(router_with_gw, provider):
     assert router_with_gw.cloud_network == router_with_gw.ext_network
 
 
+@pytest.mark.regression
 def test_edit_router(router):
     """Edits router's name"""
     router.edit(name=fauxfactory.gen_alpha())
@@ -189,6 +198,7 @@ def test_edit_router(router):
     assert router.exists
 
 
+@pytest.mark.regression
 def test_delete_router(router, appliance):
     """Deletes router"""
     router.delete()
@@ -200,6 +210,7 @@ def test_delete_router(router, appliance):
     assert not router.exists
 
 
+@pytest.mark.regression
 def test_clear_router_gateway(router_with_gw):
     """Deletes a gateway from the router"""
     router_with_gw.edit(change_external_gw=False)
@@ -212,6 +223,7 @@ def test_clear_router_gateway(router_with_gw):
     assert 'Cloud Network' not in view.entities.relationships.fields
 
 
+@pytest.mark.regression
 def test_add_gateway_to_router(router, ext_subnet):
     """Adds gateway to the router"""
     router.edit(change_external_gw=True, ext_network=ext_subnet.network,
@@ -223,6 +235,7 @@ def test_add_gateway_to_router(router, ext_subnet):
     assert router.cloud_network == ext_subnet.network
 
 
+@pytest.mark.regression
 def test_add_interface_to_router(router, subnet):
     """Adds interface (subnet) to router"""
     view = navigate_to(router, 'Details')
@@ -239,6 +252,7 @@ def test_add_interface_to_router(router, subnet):
         assert False, "After waiting an interface to the router is still not added"
 
 
+@pytest.mark.regression
 def test_list_networks(provider, appliance):
     networks = [n.label for n in provider.mgmt.api.networks.list()]
     displayed_networks = [n.name for n in appliance.collections.cloud_networks.all()]

@@ -70,6 +70,7 @@ def new_instance(provider, zero_disk_flavor):
     instance.cleanup_on_provider()
 
 
+@pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_create_instance_with_zero_disk_flavor(new_instance, soft_assert):
     view = navigate_to(new_instance, 'Details')
@@ -94,6 +95,7 @@ def test_create_instance_with_zero_disk_flavor(new_instance, soft_assert):
         soft_assert(v == prov_data[p[1]])
 
 
+@pytest.mark.regression
 def test_flavor_crud(appliance, provider, request):
     collection = appliance.collections.cloud_flavors
     flavor = collection.create(name=fauxfactory.gen_alpha(),

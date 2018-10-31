@@ -36,12 +36,14 @@ def volume(appliance, provider):
         logger.warning('Exception during volume deletion - skipping..')
 
 
+@pytest.mark.regression
 def test_create_volume(volume, provider):
     assert volume.exists
     assert volume.size == '{} GB'.format(VOLUME_SIZE)
     assert volume.tenant == provider.data['provisioning']['cloud_tenant']
 
 
+@pytest.mark.regression
 def test_edit_volume(volume, appliance):
     new_name = fauxfactory.gen_alpha()
     with update(volume):
@@ -50,6 +52,7 @@ def test_edit_volume(volume, appliance):
     assert view.entities.get_entity(name=new_name, surf_pages=True)
 
 
+@pytest.mark.regression
 def test_delete_volume(volume):
     volume.delete()
     assert not volume.exists

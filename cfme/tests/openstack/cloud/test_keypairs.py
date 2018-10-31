@@ -21,6 +21,7 @@ def keypair(appliance, provider):
         keypair.delete(wait=False)
 
 
+@pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_download_private_key(keypair):
     assert keypair.exists

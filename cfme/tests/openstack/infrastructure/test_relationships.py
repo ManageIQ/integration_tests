@@ -16,6 +16,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.regression
 def test_assigned_roles(provider):
     view = navigate_to(provider, 'Details')
     try:
@@ -25,6 +26,7 @@ def test_assigned_roles(provider):
     assert int(res) > 0
 
 
+@pytest.mark.regression
 def test_nodes(provider):
     view = navigate_to(provider, 'Details')
     nodes = len(provider.mgmt.iapi.node.list())
@@ -32,6 +34,7 @@ def test_nodes(provider):
     assert int(view.entities.summary('Relationships').get_text_of('Nodes')) == nodes
 
 
+@pytest.mark.regression
 def test_templates(provider, soft_assert):
     view = navigate_to(provider, 'Details')
     images = [i.name for i in provider.mgmt.images]
@@ -46,6 +49,7 @@ def test_templates(provider, soft_assert):
         soft_assert(image in template_names, 'Missing template: {}'.format(image))
 
 
+@pytest.mark.regression
 def test_stacks(provider):
     view = navigate_to(provider, 'Details')
     """

@@ -36,6 +36,7 @@ def has_mistral_service(provider):
         pytest.skip('Skipping because no Mistral service found on OSPD deployment')
 
 
+@pytest.mark.regression
 def test_scale_provider_down(provider, host, has_mistral_service):
     """Scale down Openstack Infrastructure provider
     Metadata:
@@ -70,6 +71,7 @@ def test_scale_provider_down(provider, host, has_mistral_service):
     assert prov_state == 'available'
 
 
+@pytest.mark.regression
 def test_delete_host(appliance, host, provider, has_mistral_service):
     """Remove host from appliance and Ironic service
     Metadata:
@@ -85,6 +87,7 @@ def test_delete_host(appliance, host, provider, has_mistral_service):
     assert host.name not in host_collection.all(provider)
 
 
+@pytest.mark.regression
 def test_register_host(provider, host, has_mistral_service):
     """Register new host by uploading instackenv.json file
     Metadata:
@@ -108,6 +111,7 @@ def test_register_host(provider, host, has_mistral_service):
     assert host.exists
 
 
+@pytest.mark.regression
 def test_introspect_host(host, provider, has_mistral_service):
     """Introspect host
     Metadata:
@@ -125,6 +129,7 @@ def test_introspect_host(host, provider, has_mistral_service):
     assert view.entities.summary('Openstack Hardware').get_text_of('Introspected') == 'true'
 
 
+@pytest.mark.regression
 def test_provide_host(host, provider, has_mistral_service):
     """Provide host
     Metadata:
@@ -139,6 +144,7 @@ def test_provide_host(host, provider, has_mistral_service):
     assert prov_state == 'available'
 
 
+@pytest.mark.regression
 def test_scale_provider_out(host, provider, has_mistral_service):
     """Scale out Infra provider
     Metadata:

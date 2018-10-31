@@ -98,16 +98,19 @@ def attached_volume(appliance, provider, volume_backup, new_instance):
         return new_instance.volume_count == initial_volume_count
 
 
+@pytest.mark.rfe
 def test_create_volume_backup(volume_backup):
     assert volume_backup.exists
     assert volume_backup.size == VOLUME_SIZE
 
 
+@pytest.mark.rfe
 def test_create_volume_incremental_backup(incremental_backup):
     assert incremental_backup.exists
     assert incremental_backup.size == VOLUME_SIZE
 
 
+@pytest.mark.rfe
 def test_incr_backup_of_attached_volume_crud(appliance, provider, request, attached_volume):
     backup_name = fauxfactory.gen_alpha()
     collection = appliance.collections.volume_backups.filter({'provider': provider})

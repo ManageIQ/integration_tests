@@ -17,6 +17,7 @@ def host_collection(appliance):
     return appliance.collections.hosts
 
 
+@pytest.mark.regression
 def test_host_configuration(host_collection, provider, soft_assert, appliance):
     hosts = host_collection.all()
     assert hosts
@@ -32,6 +33,7 @@ def test_host_configuration(host_collection, provider, soft_assert, appliance):
             soft_assert(value > 0, 'Nodes number of {} is 0'.format(field))
 
 
+@pytest.mark.regression
 def test_host_cpu_resources(host_collection, provider, soft_assert):
     hosts = host_collection.all()
     assert hosts
@@ -44,6 +46,7 @@ def test_host_cpu_resources(host_collection, provider, soft_assert):
             soft_assert(value > 0, "Aggregate Node {} is 0".format(field))
 
 
+@pytest.mark.regression
 def test_host_auth(host_collection, provider, soft_assert):
     hosts = host_collection.all()
     assert hosts
@@ -55,6 +58,7 @@ def test_host_auth(host_collection, provider, soft_assert):
                     'Incorrect SSH authentication status {}'.format(auth_status))
 
 
+@pytest.mark.regression
 def test_host_devices(host_collection, provider):
     hosts = host_collection.all()
     assert hosts
@@ -64,6 +68,7 @@ def test_host_devices(host_collection, provider):
         assert result > 0
 
 
+@pytest.mark.regression
 def test_host_hostname(host_collection, provider, soft_assert):
     hosts = host_collection.all()
     assert hosts
@@ -73,6 +78,7 @@ def test_host_hostname(host_collection, provider, soft_assert):
         soft_assert(result, "Missing hostname in: " + str(result))
 
 
+@pytest.mark.regression
 def test_host_memory(host_collection, provider):
     hosts = host_collection.all()
     assert hosts
@@ -82,6 +88,7 @@ def test_host_memory(host_collection, provider):
         assert result > 0
 
 
+@pytest.mark.regression
 def test_host_security(host_collection, provider, soft_assert):
     hosts = host_collection.all()
     assert hosts
@@ -96,6 +103,7 @@ def test_host_security(host_collection, provider, soft_assert):
             'Nodes number of Groups is 0')
 
 
+@pytest.mark.regression
 def test_host_smbios_data(host_collection, provider, soft_assert):
     """Checks that Manufacturer/Model values are shown for each infra node"""
     hosts = host_collection.all()
@@ -107,6 +115,7 @@ def test_host_smbios_data(host_collection, provider, soft_assert):
         soft_assert(res != 'N/A')
 
 
+@pytest.mark.regression
 def test_host_zones_assigned(host_collection, provider):
     hosts = host_collection.all()
     assert hosts
@@ -116,6 +125,7 @@ def test_host_zones_assigned(host_collection, provider):
         assert result, "Availability zone doesn't specified"
 
 
+@pytest.mark.rfe
 def test_hypervisor_hostname(host_collection, provider, soft_assert):
     hvisors = provider.mgmt.list_hosts()
     hosts = host_collection.all()
@@ -126,6 +136,7 @@ def test_hypervisor_hostname(host_collection, provider, soft_assert):
             "Hypervisor hostname {} is not in Hypervisor list".format(hv_name))
 
 
+@pytest.mark.rfe
 @pytest.mark.parametrize("view_type", VIEWS)
 def test_hypervisor_hostname_views(host_collection, provider, view_type, soft_assert):
     hvisors = provider.mgmt.list_hosts()
