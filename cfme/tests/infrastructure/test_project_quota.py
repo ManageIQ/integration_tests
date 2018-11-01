@@ -60,10 +60,20 @@ def new_project(appliance):
 
 
 @pytest.fixture(scope='module')
-def new_group(appliance, new_project):
+def new_role(appliance):
+    collection = appliance.collections.roles
+    role = collection.create(name='role_{}'.format(fauxfactory.gen_alphanumeric()),
+                             vm_restriction=None,
+                             product_features=[(['Everything'], True)])
+    yield role
+    role.delete()
+
+
+@pytest.fixture(scope='module')
+def new_group(appliance, new_project, new_role):
     collection = appliance.collections.groups
     group = collection.create(description='group_{}'.format(fauxfactory.gen_alphanumeric()),
-                              role='EvmRole-super_administrator',
+                              role=new_role.name,
                               tenant='My Company/{}'.format(new_project.name))
     yield group
     group.delete()
