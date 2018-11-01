@@ -5,13 +5,17 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.containers.provider import ContainersProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.tests.automate.custom_button import log_request_check, TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.wait import TimedOutError, wait_for
 
 
 pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([ContainersProvider], selector=ONE_PER_TYPE),
+    pytest.mark.meta(blockers=[BZ(1640304, forced_streams=["5.10"])]),
 ]
 
 CONTAINER_OBJECTS = [
@@ -105,3 +109,66 @@ def test_custom_button_display(request, display, setup_obj, button_group):
         custom_button_group = Dropdown(view, group.hover)
         assert custom_button_group.is_displayed
         assert custom_button_group.has_item(button.text)
+
+
+@pytest.mark.uncollectif(
+    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
+    and appliance.version < "5.10"
+)
+def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_group):
+    """ Test custom button with dialog and InspectMe method
+
+    Prerequisites:
+        * Appliance
+        * Simple TextInput service dialog
+
+    Steps:
+        * Create custom button group with the Object type
+        * Create a custom button with service dialog
+        * Navigate to object Details page
+        * Check for button group and button
+        * Select/execute button from group dropdown for selected entities
+        * Fill dialog and submit
+        * Check for the proper flash message related to button execution
+        * Check request in automation log
+    """
+
+    group, obj_type = button_group
+
+    # Note: No need to set display_for dialog only work with Single entity
+    button = group.buttons.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        dialog=dialog,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    view = navigate_to(setup_obj, "Details")
+    custom_button_group = Dropdown(view, group.hover)
+    assert custom_button_group.has_item(button.text)
+    custom_button_group.item_select(button.text)
+
+    dialog_view = view.browser.create_view(TextInputDialogView)
+    dialog_view.wait_displayed()
+    assert dialog_view.service_name.fill("Custom Button Execute")
+
+    # Clear the automation log
+    assert appliance.ssh_client.run_command('echo -n "" > /var/www/miq/vmdb/log/automation.log')
+
+    # Submit order
+    dialog_view.submit.click()
+    view.flash.assert_message("Order Request was Submitted")
+
+    # Check for request in automation log
+    try:
+        wait_for(
+            log_request_check,
+            [appliance, 1],
+            timeout=300,
+            message="Check for expected request count",
+            delay=20,
+        )
+    except TimedOutError:
+        assert False, "Expected 1 requests not found in automation log"
