@@ -46,8 +46,8 @@ def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
 def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modscope):
     """Set and check timezones are set correctly through appliance conosle cli"""
     app = temp_appliance_preconfig_modscope
-    app.ssh_client.run_command("appliance_console_cli --timezone {}".format(timezone))
-    app.appliance_console.timezone_check(timezone)
+    app.ssh_client.run_command("appliance_console_cli --timezone {}".format(timezone[0]))
+    assert app.appliance_console.timezone_check(timezone)
 
 
 @pytest.mark.meta(blockers=[BZ(1598427, forced_streams=['5.9', '5.10'])])
