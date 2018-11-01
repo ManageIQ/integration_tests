@@ -89,10 +89,7 @@ def order(self):
     if self.ansible_dialog_values:
         view.fill(self.ansible_dialog_values)
     msg = "Order Request was Submitted"
-    msg_type = VersionPicker({
-        LOWEST: "success",
-        "5.10": "info"
-    }).pick()
+    msg_type = "success"
     view.submit_button.click()
     view = self.create_view(RequestsView)
     view.flash.assert_no_error()
