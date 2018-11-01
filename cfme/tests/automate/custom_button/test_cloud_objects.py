@@ -35,6 +35,8 @@ DISPLAY_NAV = {
     "Single and list": ["All", "Details"],
 }
 
+SUBMIT = ["Submit all", "One by one"]
+
 OBJ_TYPE_59 = [
     "CLOUD_TENANT",
     "CLOUD_VOLUME",
@@ -214,3 +216,90 @@ def test_custom_button_dialog(appliance, dialog, request, setup_objs, button_gro
             )
         except TimedOutError:
             assert False, "Expected 1 requests not found in automation log"
+
+
+@pytest.mark.uncollectif(
+    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
+    and appliance.version < "5.10"
+)
+@pytest.mark.parametrize("submit", SUBMIT, ids=[item.replace(" ", "_") for item in SUBMIT])
+def test_custom_button_automate(appliance, request, submit, setup_objs, button_group):
+    """ Test custom button for automate and requests count as per submit
+    prerequisites:
+        * Appliance with Cloud provider
+    Steps:
+        * Create custom button group with the Object type
+        * Create a custom button with specific submit option and Single and list display
+        * Navigate to object type pages (All and Details)
+        * Check for button group and button
+        * Select/execute button from group dropdown for selected entities
+        * Check for the proper flash message related to button execution
+        * Check automation log requests. Submitted as per selected submit option or not.
+        * Submit all: single request for all entities execution
+        * One by one: separate requests for all entities execution
+
+    Bugzillas:
+        * 1628224, 1642147
+    """
+
+    group, obj_type = button_group
+    button = group.buttons.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        display_for="Single and list",
+        submit=submit,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+    for setup_obj in setup_objs:
+        for destination in ["All", "Details"]:
+            obj = setup_obj.parent if destination == "All" else setup_obj
+
+            view = navigate_to(obj, destination)
+            custom_button_group = Dropdown(view, group.hover)
+            assert custom_button_group.has_item(button.text)
+
+            # Entity count depends on the destination for `All` available entities and
+            # `Details` means a single entity.
+            # To-Do: remove Manager check as BZ-1642147 fix
+            if destination == "All":
+                try:
+                    paginator = view.paginator
+                except AttributeError:
+                    paginator = view.entities.paginator
+                entity_count = min(paginator.items_amount, paginator.items_per_page)
+
+                # Work around for  BZ-1642147
+                try:
+                    if "Manager" in setup_obj.name:
+                        entity_count = 1
+                except AttributeError:
+                    pass
+
+                paginator.check_all()
+            else:
+                entity_count = 1
+
+            # Clear the automation log
+            assert appliance.ssh_client.run_command(
+                'echo -n "" > ' "/var/www/miq/vmdb/log/automation.log"
+            )
+            custom_button_group.item_select(button.text)
+            view.flash.assert_message('"{}" was executed'.format(button.text))
+
+            # Submit all: single request for all entity execution
+            # One by one: separate requests for all entity execution
+            expected_count = 1 if submit == "Submit all" else entity_count
+            try:
+                wait_for(
+                    log_request_check,
+                    [appliance, expected_count],
+                    timeout=300,
+                    message="Check for expected request count",
+                    delay=10,
+                )
+            except TimedOutError:
+                assert False, "Expected {} requests not found in automation log".format(
+                    str(expected_count)
+                )
