@@ -143,8 +143,8 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, request, cu
     current_time, tz_num = current_server_time
     start_date = current_time + relativedelta.relativedelta(minutes=5)
     view = navigate_to(appliance.collections.system_schedules, 'Add')
-    available_list = view.time_zone.all_options
     # bz is here 1559904
+    available_list = view.form.time_zone.all_options
     for tz in available_list:
         if '{}:00'.format(tz_num[0:3]) in tz.text and 'Atlantic Time (Canada)' not in tz.text:
             tz_select = tz.text
