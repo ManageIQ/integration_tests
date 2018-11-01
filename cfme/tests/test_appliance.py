@@ -180,3 +180,9 @@ def test_keys_included(appliance, soft_assert):
         soft_assert(appliance.ssh_client.run_command(
             "test -e /var/www/miq/vmdb/certs/{}".format(k)).success,
             "{} was not included in the build".format(k))
+
+
+@pytest.mark.ignore_stream("5.9")
+def test_appliance_console_packages(appliance):
+    """Test that we have no scl packages installed."""
+    assert appliance.ssh_client.run_command('scl --list | grep -v rh-ruby').success
