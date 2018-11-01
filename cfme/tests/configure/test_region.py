@@ -28,5 +28,9 @@ def test_description_change(appliance, request):
     view.save.click()
     view.flash.assert_message('Region "{}" was saved'.format(region_description))
     view.redhat_updates.click()
-    assert view.title.text == 'Settings Region "{} [{}]"'.format(
-        region_description, appliance.server.zone.region.number)
+    if appliance.version < "5.10":
+        assert view.title.text == 'Settings Region "{} [{}]"'.format(
+            region_description, appliance.server.zone.region.number)
+    else:
+        assert view.title.text == 'CFME Region "{} [{}]"'.format(
+            region_description, appliance.server.zone.region.number)
