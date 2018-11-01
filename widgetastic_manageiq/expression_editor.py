@@ -270,7 +270,15 @@ class ExpressionEditor(View, Pretty):
             value: Value to check against.
         """
         view = self.tag_form_view
-        view.fill(dict(type="Tag", tag=tag, value=value))
+        view.type.fill("Tag")
+        view.tag.fill(tag)
+        # workaround
+        if view.tag.read() != tag:
+            view.tag.fill(tag)
+        view.value.fill(value)
+        if view.value.read() != value:
+            view.value.fill(value)
+
         # In case of advanced search box
         if view.user_input.is_displayed:
             user_input = value is None
