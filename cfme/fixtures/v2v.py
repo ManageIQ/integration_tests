@@ -1,6 +1,7 @@
 import fauxfactory
 import itertools
 import pytest
+import json
 from collections import namedtuple
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
@@ -112,6 +113,18 @@ def conversion_tags(request, appliance, host_creds):
         if _tag_cleanup(host, tag1, tag2):
             # so we call add_tags to add only required tags
             host.add_tags(tags=(tag1, tag2))
+            # set conversion host via rails console
+            if appliance.version >= '5.10':
+                if isinstance(host.provider, RHEVMProvider):
+                    resource_type = 'Host'
+                else:
+                    resource_type = 'VmOrTemplate'
+                appliance.ssh_client.run_rails_command("\'r = Host.find_by(name:{host});\
+                c_host = ConversionHost.create(name:{host},resource_id:r.id,resource_type:{type});\
+                c_host.{method}_transport_supported = true;\
+                c_host.save\'".format(host=json.dumps(host.name),
+                                      type=json.dumps(resource_type),
+                                      method=transformation_method.lower()))
     yield
     for host in host_creds:
         host.remove_tags(tags=(tag1, tag2))
