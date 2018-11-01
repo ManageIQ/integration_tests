@@ -240,14 +240,11 @@ def test_custom_button_dialog(appliance, dialog, request, setup_objs, button_gro
             assert False, "Expected 1 requests not found in automation log"
 
 
-@pytest.mark.meta(
-    blockers=[BZ(1628224, forced_streams=["5.10"], unblock=lambda submit: submit != "Submit all")]
-)
 @pytest.mark.uncollectif(
     lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
     and appliance.version < "5.10"
 )
-@pytest.mark.parametrize("submit", SUBMIT, ids=["_".join(item.split()) for item in SUBMIT])
+@pytest.mark.parametrize("submit", SUBMIT, ids=[item.replace(" ", "_") for item in SUBMIT])
 def test_custom_button_automate(appliance, request, submit, setup_objs, button_group):
     """ Test custom button for automate and requests count as per submit
     prerequisites:
@@ -320,9 +317,9 @@ def test_custom_button_automate(appliance, request, submit, setup_objs, button_g
                 wait_for(
                     log_request_check,
                     [appliance, expected_count],
-                    timeout=600,
+                    timeout=300,
                     message="Check for expected request count",
-                    delay=20,
+                    delay=10,
                 )
             except TimedOutError:
                 assert False, "Expected {} requests not found in automation log".format(
