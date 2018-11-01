@@ -8,12 +8,9 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance import ViaREST, ViaUI
 from cfme.utils.update import update
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
-pytestmark = [
-    test_requirements.generic_objects,
-    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9",
-                            reason="5.8 appliance doesn't support generic objects")
-]
+pytestmark = [test_requirements.generic_objects]
 
 
 @pytest.mark.sauce
@@ -49,7 +46,7 @@ def test_generic_object_definition_crud(appliance, context, soft_assert):
             soft_assert("addr01" not in rest_definition.properties['attributes'])
 
         definition.delete()
-        if context.name == 'UI':
+        if context.name == 'UI' and not BZ(bug_id=1644658, forced_streams=["5.10"]).blocks:
             view.flash.assert_success_message(
                 'Generic Object Class:"{}" was successfully deleted'.format(definition.name))
         assert not definition.exists

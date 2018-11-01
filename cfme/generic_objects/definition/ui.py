@@ -89,7 +89,7 @@ def delete(self):
     view.configuration.item_select(
         'Remove this Generic Object Classes from Inventory', handle_alert=True)
     view = self.create_view(GenericObjectDefinitionAllView)
-    assert view.is_displayed
+    view.wait_displayed('15s')
     view.flash.assert_no_error()
 
 

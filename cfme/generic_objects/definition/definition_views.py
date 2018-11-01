@@ -18,12 +18,16 @@ class GenericObjectDefinitionToolbar(View):
 
 
 class GenericObjectDefinitionView(BaseLoggedInPage):
-
     @property
     def in_generic_object_definition(self):
+        expected_nav = (
+            ["Automation", "Automate"]
+            if self.browser.appliance.version < "5.10"
+            else ["Automation", "Automate", "Generic Objects"]
+        )
+
         return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Automation', 'Automate']
+            self.logged_in_as_current_user and self.navigation.currently_selected == expected_nav
         )
 
 
@@ -101,7 +105,7 @@ class ParametersForm(View):
 
 
 class GenericObjectDefinitionAddEditView(GenericObjectDefinitionView):
-    title = Text('#explorer_title_text')
+    title = Text('//div[@id="main-content"]//div/h1')
     name = Input(id='generic_object_definition_name')
     description = Input(id='generic_object_definition_description')
     cancel = Button('Cancel')
