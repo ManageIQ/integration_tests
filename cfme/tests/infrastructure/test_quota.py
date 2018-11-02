@@ -196,7 +196,7 @@ def test_quota(appliance, provider, setup_provider, custom_prov_data, vm_name, a
     """This test case checks quota limit using the automate's predefine method 'quota source'"""
     recursive_update(prov_data, custom_prov_data)
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
-                       provisioning_data=prov_data, smtp_test=False, wait=False, request=None)
+                       provisioning_data=prov_data, wait=False, request=None)
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
@@ -229,8 +229,7 @@ def test_user_quota_diff_groups(request, appliance, provider, setup_provider, ne
         recursive_update(prov_data, custom_prov_data)
         logger.info("Successfully updated VM provisioning data")
         do_vm_provisioning(appliance, template_name=template_name, provider=provider,
-                           vm_name=vm_name, provisioning_data=prov_data, smtp_test=False,
-                           wait=False, request=None)
+                           vm_name=vm_name, provisioning_data=prov_data, wait=False, request=None)
 
         # nav to requests page to check quota validation
         request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name,

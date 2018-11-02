@@ -143,7 +143,7 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
-                       provisioning_data=prov_data, smtp_test=False, wait=False, request=None)
+                       provisioning_data=prov_data, wait=False, request=None)
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name, extra_msg)

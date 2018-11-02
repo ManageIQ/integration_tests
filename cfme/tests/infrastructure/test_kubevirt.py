@@ -57,8 +57,7 @@ def test_k6t_vm_crud(request, appliance, provider, provisioning, custom_prov_dat
     provider.refresh_provider_relationships()
     prov_data.update(custom_prov_data)
     template = provisioning['template']
-    do_vm_provisioning(appliance, template, provider, vm_name, prov_data, request,
-                       smtp_test=False, wait=False)
+    do_vm_provisioning(appliance, template, provider, vm_name, prov_data, request, wait=False)
     logger.info('Waiting for cfme provision request for vm %s', vm_name)
     request_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
     provision_request = appliance.collections.requests.instantiate(request_description)

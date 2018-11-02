@@ -72,7 +72,7 @@ def test_provision_vm_to_virtual_network(appliance, setup_provider, provider,
     wait_for(
         do_vm_provisioning,
         [appliance, template, provider, vm_name, provisioning_data, request],
-        {'num_sec': 900, 'smtp_test': False},
+        {'num_sec': 900},
         handle_exception=True,
         delay=50,
         num_sec=900,

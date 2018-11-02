@@ -155,7 +155,7 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider, setup_p
                                            vm_name, template_name, prov_data):
     recursive_update(prov_data, custom_prov_data)
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
-                       provisioning_data=prov_data, smtp_test=False, wait=False, request=None)
+                       provisioning_data=prov_data, wait=False, request=None)
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)

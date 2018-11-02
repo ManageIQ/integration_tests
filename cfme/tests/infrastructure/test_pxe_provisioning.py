@@ -95,10 +95,7 @@ def vm_name():
 
 
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[BZ(1633516, forced_streams=['5.10'],
-                            unblock=lambda provider: not provider.one_of(RHEVMProvider)),
-                            GH('ManageIQ/integration_tests:7965')])
-def test_pxe_provision_from_template(appliance, provider, vm_name, smtp_test, setup_provider,
+def test_pxe_provision_from_template(appliance, provider, vm_name, setup_provider,
                                      request, setup_pxe_servers_vm_prov):
     """Tests provisioning via PXE
 
@@ -141,4 +138,4 @@ def test_pxe_provision_from_template(appliance, provider, vm_name, smtp_test, se
             'vlan': partial_match(pxe_vlan)}}
 
     do_vm_provisioning(appliance, pxe_template, provider, vm_name, provisioning_data, request,
-                       smtp_test, num_sec=3600)
+                       num_sec=3600)
