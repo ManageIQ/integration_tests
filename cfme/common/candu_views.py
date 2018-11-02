@@ -27,8 +27,6 @@ class VMUtilizationView(View):
                 "Capacity & Utilization data for Virtual Machine" in self.title.text and
                 self.options.compare_to.selected_option == "<Nothing>"
             )
-        else:
-            return "Capacity & Utilization data for Virtual Machine" in self.title.text
 
 
 class UtilizationZoomView(View):

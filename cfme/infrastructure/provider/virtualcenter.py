@@ -18,7 +18,7 @@ class VirtualCenterEndpointForm(DefaultEndpointForm):
     pass
 
 
-class VirtualCenterVMUtilizationView(VMUtilizationView):
+class VirtualCenterVMUtilizationView(RHEVMVMUtilizationView):
     """A VM Utilization view for virtual center providers"""
     vm_cpu = LineChart(id='miq_chart_parent_candu_0')
     vm_cpu_state = LineChart(id='miq_chart_parent_candu_1')

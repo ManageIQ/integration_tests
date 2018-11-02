@@ -40,7 +40,7 @@ class EC2EndpointForm(View):
         validate = Button('Validate')
 
 
-class EC2InstanceUtilizationView(VMUtilizationView):
+class EC2InstanceUtilizationView(AzureInstanceUtilizationView):
     """A VM Utilization view for AWS providers"""
     vm_cpu = LineChart(id='miq_chart_parent_candu_0')
     vm_disk = LineChart(id='miq_chart_parent_candu_1')
