@@ -149,6 +149,7 @@ def test_hypervisor_hostname_views(host_collection, provider, view_type, soft_as
                     "Hypervisor hostname {} is not in Hypervisor list".format(hv_name))
 
 
+@pytest.mark.rfe
 def test_host_networks(provider, host_collection, soft_assert):
     hosts = host_collection.all()
     nodes = provider.mgmt.nodes
@@ -163,6 +164,7 @@ def test_host_networks(provider, host_collection, soft_assert):
                     "Networks associated to host does not match between UI and OSP")
 
 
+@pytest.mark.rfe
 def test_host_subnets(provider, appliance, host_collection, soft_assert):
     hosts = host_collection.all()
     net_collection = appliance.collections.cloud_networks
