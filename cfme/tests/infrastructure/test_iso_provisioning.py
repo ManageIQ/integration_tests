@@ -81,9 +81,7 @@ def vm_name():
 
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
-#@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8033')])
-def test_iso_provision_from_template(appliance, provider, vm_name, datastore_init,
-                                     request, smtp_test):
+def test_iso_provision_from_template(appliance, provider, vm_name, datastore_init, request):
     """Tests ISO provisioning
 
     Metadata:
@@ -117,4 +115,4 @@ def test_iso_provision_from_template(appliance, provider, vm_name, datastore_ini
         'schedule': {
             'power_on': False}}
     do_vm_provisioning(appliance, iso_template, provider, vm_name, provisioning_data, request,
-                       smtp_test, num_sec=1800)
+                       num_sec=1800)

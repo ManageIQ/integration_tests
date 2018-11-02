@@ -120,8 +120,7 @@ def test_project_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pr
     with new_user:
         recursive_update(prov_data, custom_prov_data)
         do_vm_provisioning(appliance, template_name=template_name, provider=provider,
-                           vm_name=vm_name, provisioning_data=prov_data, smtp_test=False,
-                           wait=False, request=None)
+                           vm_name=vm_name, provisioning_data=prov_data, wait=False, request=None)
 
         # nav to requests page to check quota validation
         request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name,
