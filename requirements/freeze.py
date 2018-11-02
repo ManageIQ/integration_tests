@@ -18,7 +18,7 @@ os.environ.pop("PYTHONPATH", "")
 
 parser = argparse.ArgumentParser(description=__doc__.strip())
 parser.add_argument("--venv", default=None)
-parser.add_argument("--keep-venv", action="store_true")
+parser.add_argument("--keep-venv", action="store_true", dest="keep")
 parser.add_argument("--template", default="requirements/template.txt")
 parser.add_argument("--out", default=None, help="the file where packages should be written to")
 parser.add_argument(
