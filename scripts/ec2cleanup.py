@@ -23,6 +23,8 @@ def parse_cmd_line():
                         help='List of ENIs, which should be excluded. ENI ID is allowed.')
     parser.add_argument('--exclude_stacks', nargs='+',
                        help='List of Stacks, which should be excluded')
+    parser.add_argument('--exclude_snapshots', nargs='+',
+                        help='List of snapshots, which should be excluded. Snapshot ID is allowed')
     parser.add_argument('--stack-template',
                         help='Stack name template to be removed', default="test", type=str)
     parser.add_argument("--output", dest="output", help="target file name, default "
@@ -164,10 +166,34 @@ def delete_stacks(provider_mgmt, excluded_stacks, stack_template, output):
         logger.exception('Exception in %r', delete_stacks.__name__)
 
 
+def delete_snapshots(provider_mgmt, excluded_snapshots, output):
+    snapshot_list = []
+    provider_name = provider_mgmt.kwargs['name']
+    try:
+        for snapshot in provider_mgmt.list_own_snapshots():
+            snapshot_id = snapshot.get("SnapshotId")
+            if excluded_snapshots and snapshot_id in excluded_snapshots:
+                logger.info(" Excluding Snapshot with id: %r", snapshot_id)
+                continue
+            else:
+                if provider_mgmt.delete_snapshot(snapshot_id=snapshot_id):
+                    snapshot_list.append([provider_name, snapshot_id])
+        logger.info("  Deleted Snapshots: %r", snapshot_list)
+        with open(output, 'a+') as report:
+            if snapshot_list:
+                report.write(tabulate(tabular_data=snapshot_list,
+                                      headers=['Provider Key', 'Snapshot ID'],
+                                      tablefmt='orgtbl'))
+    except Exception:
+        # TODO don't diaper this whole method
+        logger.exception('Exception in %r', delete_snapshots.__name__)
+
+
 def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclude_stacks,
-               stack_template, output):
+               exclude_snapshots, stack_template, output):
     with open(output, 'w') as report:
-        report.write('ec2cleanup.py, Address, Volume, LoadBalancer and Network Interface Cleanup')
+        report.write('ec2cleanup.py, Address, Volume, LoadBalancer, Snapshot and '
+                     'Network Interface Cleanup')
         report.write("\nDate: {}\n".format(datetime.now()))
     for provider_key in list_provider_keys('ec2'):
         provider_mgmt = get_mgmt(provider_key)
@@ -189,6 +215,10 @@ def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclud
                       excluded_stacks=exclude_stacks,
                       stack_template=stack_template,
                       output=output)
+        logger.info("Deleting snapshots...")
+        delete_snapshots(provider_mgmt=provider_mgmt,
+                         excluded_snapshots=exclude_snapshots,
+                         output=output)
         logger.info("Releasing addresses...")
         delete_disassociated_addresses(provider_mgmt=provider_mgmt,
                                        excluded_eips=exclude_eips,
@@ -198,4 +228,5 @@ def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclud
 if __name__ == "__main__":
     args = parse_cmd_line()
     sys.exit(ec2cleanup(args.exclude_volumes, args.exclude_eips, args.exclude_elbs,
-                        args.exclude_enis, args.exclude_stacks, args.stack_template, args.output))
+                        args.exclude_enis, args.exclude_stacks, args.exclude_snapshots,
+                        args.stack_template, args.output))
