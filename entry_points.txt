@@ -116,6 +116,7 @@ v2v_plans = cfme.v2v.migrations:MigrationPlanCollection
 volume_backups = cfme.storage.volume_backup:VolumeBackupCollection
 volume_snapshots = cfme.storage.volume_snapshot:VolumeSnapshotCollection
 volumes = cfme.storage.volume:VolumeCollection
+volume_types = cfme.storage.volume_type:VolumeTypeCollection
 zones = cfme.base:ZoneCollection
 
 [manageiq.auth_provider_types]

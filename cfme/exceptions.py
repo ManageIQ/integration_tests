@@ -292,6 +292,13 @@ class VolumeNotFoundError(CFMEException):
     pass
 
 
+class VolumeTypeNotFoundError(CFMEException):
+    """
+    Raised if a specific cloud volume type cannot be found in the UI
+    """
+    pass
+
+
 class OptionNotAvailable(CFMEException):
     """
     Raised if a specified option is not available.
