@@ -279,3 +279,41 @@ def test_quota_vm_reconfigure(
     provision_request.wait_for_request(method="ui")
     assert small_vm.configuration != original_config
     assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
+@pytest.mark.parametrize(
+    ['custom_prov_data'],
+    [
+        [{'hardware': {'memory': '4096'}}],
+        [{}],
+        [{'hardware': {'vm_num': '21'}}],
+        [{'hardware': {'num_sockets': '8'}}]
+    ],
+    ids=['max_memory', 'max_storage', 'max_vm', 'max_cpu']
+)
+def test_quota_infra(request, appliance, provider, setup_provider, admin_email, entities,
+                     custom_prov_data, prov_data, catalog_item, context, vm_name, template_name):
+
+    """This test case verifies the quota assigned by automation method for user and group
+       is working correctly for the infra providers.
+
+    Steps:
+        1. Navigate to Automation > Automate > Explorer
+        2. Add quota automation methods to domain
+        3. Change 'quota_source_type' to 'user' or 'group'
+        4. Test quota by provisioning VMs over quota limit via UI or SSUI for user and group
+        5. Check whether quota is exceeded or not
+    """
+    prov_data.update(custom_prov_data)
+    with appliance.context.use(context):
+        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+        if context is ViaSSUI:
+            service_catalogs.add_to_shopping_cart()
+        service_catalogs.order()
+    # nav to requests page to check quota validation
+    request_description = 'Provisioning Service [{0}] from [{0}]'.format(catalog_item.name)
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(provision_request.remove_request)
+    assert provision_request.row.reason.text == "Quota Exceeded"
