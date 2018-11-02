@@ -10,6 +10,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs.ui import OrderServiceCatalogView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError, wait_for
@@ -23,7 +24,8 @@ pytestmark = [
     test_requirements.ansible,
     pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
                             reason="5.8 pod appliance doesn't support embedded ansible"),
-    pytest.mark.tier(3)
+    pytest.mark.tier(3),
+    pytest.mark.meta(blockers=[BZ(1640533, forced_streams=["5.10"])])
 ]
 
 

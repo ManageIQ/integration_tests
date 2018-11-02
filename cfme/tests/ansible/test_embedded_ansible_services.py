@@ -20,7 +20,8 @@ pytestmark = [
     pytest.mark.ignore_stream("upstream", '5.7'),
     test_requirements.ansible,
     pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
-                            reason="5.8 pod appliance doesn't support embedded ansible")
+                            reason="5.8 pod appliance doesn't support embedded ansible"),
+    pytest.mark.meta(blockers=[BZ(1640533, forced_streams=["5.10"])])
 ]
 
 

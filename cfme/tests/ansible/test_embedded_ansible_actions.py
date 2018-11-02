@@ -6,6 +6,7 @@ from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -18,7 +19,8 @@ pytestmark = [
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, scope="module"),
     test_requirements.ansible,
     pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
-                            reason="5.8 pod appliance doesn't support embedded ansible")
+                            reason="5.8 pod appliance doesn't support embedded ansible"),
+    pytest.mark.meta(blockers=[BZ(1640533, forced_streams=["5.10"])])
 ]
 
 
