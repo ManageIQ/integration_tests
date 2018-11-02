@@ -16,6 +16,7 @@ CARDS = [("Flavors", "list_flavor"), ("Images", "list_templates"),
          ("Instances", "list_vms"), ("Cloud Volumes", "list_volume")]
 
 
+@pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 @pytest.mark.parametrize('card, api', CARDS)
 def test_cloud_provider_cards(provider, card, api):
@@ -26,6 +27,7 @@ def test_cloud_provider_cards(provider, card, api):
     assert dashboard_card.value == len(attr())
 
 
+@pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_dashboard_card_availability_zones(provider):
     view = navigate_to(provider, 'Details')
@@ -34,6 +36,7 @@ def test_dashboard_card_availability_zones(provider):
     assert dashboard_card.value == len(provider.mgmt.api.availability_zones.list())
 
 
+@pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_dashboard_card_tenants(provider):
     collection = provider.appliance.collections.cloud_tenants
@@ -44,6 +47,7 @@ def test_dashboard_card_tenants(provider):
     assert card_tenants == view.entities.paginator.items_amount
 
 
+@pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_dashboard_card_security_groups(provider):
     view = navigate_to(provider, 'Details')
