@@ -1,5 +1,6 @@
 import pytest
 
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -7,7 +8,8 @@ pytestmark = [
                             reason="5.8 pod appliance doesn't support embedded ansible"),
     pytest.mark.uncollectif(lambda appliance: appliance.version < "5.8",
                             reason="Ansible was added only in 5.8"),
-    pytest.mark.ignore_stream("upstream")
+    pytest.mark.ignore_stream("upstream"),
+    pytest.mark.meta(blockers=[BZ(1640533, forced_streams=["5.10"])])
 ]
 
 

@@ -3,12 +3,14 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.ansible,
     pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9",
-                            reason="5.8 is not support tagging via UI")
+                            reason="5.8 is not support tagging via UI"),
+    pytest.mark.meta(blockers=[BZ(1640533, forced_streams=["5.10"])])
 ]
 
 
