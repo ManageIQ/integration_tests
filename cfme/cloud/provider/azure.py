@@ -30,6 +30,7 @@ class AzureInstanceUtilizationView(RHEVMVMUtilizationView):
     """A VM Utilization view for Azure providers"""
     pass
 
+
 @attr.s(hash=False)
 class AzureProvider(CloudProvider):
     """
