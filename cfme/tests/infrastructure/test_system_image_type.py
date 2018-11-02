@@ -31,7 +31,12 @@ def test_system_image_duplicate_name_error_validation(appliance):
     sys_image_type = collection.create(
         name=name,
         provision_type=SystemImageType.VM_OR_INSTANCE)
-    with pytest.raises(Exception, match='Name has already been taken'):
+    error_message = (
+        "Name has already been taken"
+        if appliance.version < "5.10"
+        else "Name is not unique within region 0"
+    )
+    with pytest.raises(Exception, match=error_message):
         collection.create(
             name=name,
             provision_type=SystemImageType.VM_OR_INSTANCE)
