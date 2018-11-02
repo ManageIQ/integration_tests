@@ -142,7 +142,7 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
         # Entity count depends on the destination for `All` available entities and
         # `Details` means a single entity.
         if destination == "All":
-            entity_count = view.paginator.items_amount  # we are counting entity on same page
+            entity_count = min(view.paginator.items_amount, view.paginator.items_per_page)
             view.paginator.check_all()
         else:
             entity_count = 1
