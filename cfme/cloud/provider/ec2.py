@@ -4,7 +4,7 @@ from widgetastic_patternfly import Input, Button
 from wrapanapi.systems import EC2System
 
 from cfme.cloud.instance.ec2 import EC2Instance
-from cfme.cloud.provider.azure import AzureInstanceUtilizationView
+from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.services.catalogs.catalog_items import AmazonCatalogItem
@@ -40,7 +40,7 @@ class EC2EndpointForm(View):
         validate = Button('Validate')
 
 
-class EC2InstanceUtilizationView(AzureInstanceUtilizationView):
+class EC2InstanceUtilizationView(VMUtilizationView):
     """A VM Utilization view for AWS providers"""
     vm_cpu = LineChart(id='miq_chart_parent_candu_0')
     vm_disk = LineChart(id='miq_chart_parent_candu_1')

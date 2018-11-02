@@ -2,9 +2,9 @@ import attr
 
 from wrapanapi.systems import VMWareSystem
 
+from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.exceptions import ItemNotFound
-from cfme.infrastructure.provider.rhevm import RHEVMVMUtilizationView
 from cfme.services.catalogs.catalog_items import VMwareCatalogItem
 from widgetastic_manageiq import LineChart
 from . import InfraProvider
@@ -18,7 +18,7 @@ class VirtualCenterEndpointForm(DefaultEndpointForm):
     pass
 
 
-class VirtualCenterVMUtilizationView(RHEVMVMUtilizationView):
+class VirtualCenterVMUtilizationView(VMUtilizationView):
     """A VM Utilization view for virtual center providers"""
     vm_cpu = LineChart(id='miq_chart_parent_candu_0')
     vm_cpu_state = LineChart(id='miq_chart_parent_candu_1')

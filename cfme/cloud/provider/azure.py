@@ -28,12 +28,7 @@ class AzureEndpointForm(DefaultEndpointForm):
 
 class AzureInstanceUtilizationView(RHEVMVMUtilizationView):
     """A VM Utilization view for Azure providers"""
-    VM_TYPE = "Instance"
-
-    @property
-    def is_displayed(self):
-        return 'Capacity & Utilization data for {}'.format(self.context['object'].VM_TYPE) in self.title.text
-
+    pass
 
 @attr.s(hash=False)
 class AzureProvider(CloudProvider):

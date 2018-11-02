@@ -47,16 +47,11 @@ class RHEVMEndpointForm(View):
 
 class RHEVMVMUtilizationView(VMUtilizationView):
     """A VM Utilization view for rhevm providers"""
-    VM_TYPE = "Virtual Machine"
-
     vm_cpu = LineChart(id='miq_chart_parent_candu_0')
     vm_memory = LineChart(id='miq_chart_parent_candu_1')
     vm_disk = LineChart(id='miq_chart_parent_candu_2')
     vm_network = LineChart(id='miq_chart_parent_candu_3')
 
-    @property
-    def is_displayed(self):
-        return 'Capacity & Utilization data for {}'.format(self.context['object'].VM_TYPE) in self.title.text
 
 @attr.s(hash=False)
 class RHEVMProvider(InfraProvider):
