@@ -543,6 +543,13 @@ class AddMigrationPlanView(View):
             return vms_selected
 
     @View.nested
+    class advanced(View):  # noqa
+        pre_playbook = BootstrapSelect('preMigrationPlaybook')
+        post_playbook = BootstrapSelect('postMigrationPlaybook')
+        pre_checkbox = Text(locator='.//input[contains(@id, "pre_migration_select_all")]')
+        post_checkbox = Text(locator='.//input[contains(@id, "post_migration_select_all")]')
+
+    @View.nested
     class options(View):  # noqa
         create = Button('Create')
         run_migration = RadioGroup('.//div[contains(@id,"migration_plan_choice_radio")]')
@@ -728,7 +735,7 @@ class MigrationPlanCollection(BaseCollection):
     ENTITY = MigrationPlan
 
     def create(self, name, infra_map, vm_list, description=None, csv_import=False,
-               start_migration=False):
+               pre_playbook=False, post_playbook=False, start_migration=False):
         """Create new migration plan in UI
         Args:
             name: (string) plan name
@@ -767,6 +774,13 @@ class MigrationPlanCollection(BaseCollection):
                     row[0].fill(True)
             view.vms.clear_filters.click()
         view.next_btn.click()
+
+        if pre_playbook:
+            view.advanced.pre_playbook.fill(pre_playbook)
+            view.advanced.pre_checkbox.click()
+        if post_playbook:
+            view.advanced.post_playbook.fill(pre_playbook)
+            view.advanced.post_playbook.click()
         view.next_btn.click()
 
         if start_migration:
