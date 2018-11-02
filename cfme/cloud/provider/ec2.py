@@ -4,7 +4,7 @@ from widgetastic_patternfly import Input, Button
 from wrapanapi.systems import EC2System
 
 from cfme.cloud.instance.ec2 import EC2Instance
-from cfme.common.candu_views import VMUtilizationView
+from cfme.cloud.provider.azure import AzureInstanceUtilizationView
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.services.catalogs.catalog_items import AmazonCatalogItem

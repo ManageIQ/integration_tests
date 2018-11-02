@@ -2,9 +2,9 @@ import attr
 
 from wrapanapi.systems import VMWareSystem
 
-from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.exceptions import ItemNotFound
+from cfme.infrastructure.provider.rhevm import RHEVMVMUtilizationView
 from cfme.services.catalogs.catalog_items import VMwareCatalogItem
 from widgetastic_manageiq import LineChart
 from . import InfraProvider
