@@ -22,8 +22,6 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.version import Version, VersionPicker
 from cfme.utils.wait import wait_for
 
-from selenium.common.exceptions import StaleElementReferenceException
-
 
 # Widgets
 
@@ -343,8 +341,7 @@ class MigrationDashboardViewWithConditionalSwitchable(BaseLoggedInPage):
 
     @plans_list.register(lambda cards, title: (
         'Not Started' in cards and
-        'Not started' in title),
-        default=True)
+        'Not started' in title))
     class plans_not_started(View):  # noqa
         sort_type_dropdown = Dropdown(text="Name")
         sort_direction = Text(locator=".//span[contains(@class,'sort-direction')]")
@@ -375,33 +372,29 @@ class MigrationDashboardViewWithConditionalSwitchable(BaseLoggedInPage):
 
     @property
     def in_dashboard(self):
-        return (self.navigation.currently_selected == ['Compute', 'Migration'] and
+        return (self.navigation.currently_selected == ['Compute', 'Migration', 'Overview'] and
             (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
             (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0))
 
-
-class NotStartedPlansView(MigrationDashboardViewWithConditionalSwitchable):
     @property
     def is_displayed(self):
-        return self.in_dashboard and "Not Started" in self.title.read()
+        return self.in_dashboard and self.TITLE in self.title.read()
+
+
+class NotStartedPlansView(MigrationDashboardViewWithConditionalSwitchable):
+    TITLE = "Not Started"
 
 
 class InProgressPlansView(MigrationDashboardViewWithConditionalSwitchable):
-    @property
-    def is_displayed(self):
-        return self.in_dashboard and "In Progress" in self.title.read()
+    TITLE = "In Progress"
 
 
 class CompletedPlansView(MigrationDashboardViewWithConditionalSwitchable):
-    @property
-    def is_displayed(self):
-        return self.in_dashboard and "Completed" in self.title.read()
+    TITLE = "Completed"
 
 
 class ArchivedPlansView(MigrationDashboardViewWithConditionalSwitchable):
-    @property
-    def is_displayed(self):
-        return self.in_dashboard and "Archived" in self.title.read()
+    TITLE = "Archived"
 
 
 class MigrationDashboardView59z(BaseLoggedInPage):
@@ -465,10 +458,9 @@ class InfrastructureMappingView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        # TODO: Remove 1st condition, once /manageiq-v2v/issues/726 fix is backported to 510z
-        return ((self.navigation.currently_selected ==
-            ['Compute', 'Migration'] or self.navigation.currently_selected ==
-            ['Compute', 'Migration', 'Infrastructure Mappings']) and
+        return (self.navigation.currently_selected ==
+            ['Compute', 'Migration', 'Overview'] or self.navigation.currently_selected ==
+            ['Compute', 'Migration', 'Infrastructure Mappings'] and
             len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0 and
             (self.create_infrastructure_mapping.is_displayed or
                 self.infra_mapping_list.is_displayed or self.configure_providers.is_displayed))
@@ -819,6 +811,7 @@ class All(CFMENavigateStep):
             self.prerequisite_view.navigation.select('Compute', 'Migration')
         else:
             self.prerequisite_view.navigation.select('Compute', 'Migration', 'Overview')
+            self.view.cards.not_started.click()
 
 
 @navigator.register(MigrationPlanCollection, 'Not Started')
