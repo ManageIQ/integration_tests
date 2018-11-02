@@ -743,6 +743,8 @@ class MigrationPlanCollection(BaseCollection):
             infra_map: (object) infra map object name
             vm_list: (list) list of vm objects
             csv_import: (bool) flag for importing vms
+            pre_playbook: (string) pre-migration playbook name
+            post_playbook: (string) post-migration playbook name
             start_migration: (bool) flag for start migration
         """
         view = navigate_to(self, 'Add')
