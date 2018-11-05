@@ -13,8 +13,7 @@ from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
-from cfme.utils.wait import wait_for
-
+from cfme.utils.wait import wait_for, wait_for_decorator
 
 pytestmark = [
     pytest.mark.usefixtures("setup_provider_modscope"),
@@ -73,6 +72,34 @@ def volume(appliance, provider):
 
     if volume.exists:
         volume.delete(wait=False)
+
+
+@pytest.fixture(scope='function')
+def volume_with_type(appliance, provider):
+    vol_type = provider.mgmt.capi.volume_types.create(name=fauxfactory.gen_alpha())
+    volume_type = appliance.collections.volume_types.instantiate(vol_type.name, provider)
+
+    @wait_for_decorator(delay=10, timeout=300,
+                        message="Waiting for volume type to appear")
+    def volume_type_is_displayed():
+        volume_type.refresh()
+        return volume_type.exists
+
+    collection = appliance.collections.volumes
+    storage_manager = '{} Cinder Manager'.format(provider.name)
+    volume = collection.create(name=fauxfactory.gen_alpha(),
+                               storage_manager=storage_manager,
+                               tenant=provider.data['provisioning']['cloud_tenant'],
+                               volume_type=volume_type.name,
+                               size=VOLUME_SIZE,
+                               provider=provider)
+    yield volume
+
+    if volume.exists:
+        volume.delete(wait=False)
+
+    if volume_type.exists:
+        provider.mgmt.capi.volume_types.delete(vol_type)
 
 
 @pytest.mark.regression
@@ -236,3 +263,30 @@ def test_instance_attach_volume(new_instance, volume, appliance):
              delay=20,
              timeout=300, message="Waiting for volume to be attached to instance",
              fail_func=new_instance.refresh_relationships)
+
+
+@pytest.mark.rfe
+@pytest.mark.ignore_stream('5.9')
+def test_instance_attach_detach_volume_with_type(volume_with_type, new_instance, appliance):
+    initial_volume_count = new_instance.volume_count
+    new_instance.attach_volume(volume_with_type.name)
+    view = appliance.browser.create_view(navigator.get_class(new_instance, 'Details').VIEW)
+    view.flash.assert_success_message(
+        'Attaching Cloud Volume "{}" to {} finished'.format(volume_with_type.name, new_instance.name))
+
+    @wait_for_decorator(delay=10, timeout=300,
+                        message="Waiting for volume to be attached to instance")
+    def volume_attached_to_instance():
+        new_instance.refresh_relationships()
+        return new_instance.volume_count > initial_volume_count
+
+    new_instance.detach_volume(volume_with_type.name)
+    view = appliance.browser.create_view(navigator.get_class(new_instance, 'Details').VIEW)
+    view.flash.assert_success_message(
+        'Detaching Cloud Volume "{}" from {} finished'.format(volume_with_type.name, new_instance.name))
+
+    @wait_for_decorator(delay=10, timeout=300,
+                        message="Waiting for volume to be detached from instance")
+    def volume_detached_from_instance():
+        new_instance.refresh_relationships()
+        return new_instance.volume_count == initial_volume_count
