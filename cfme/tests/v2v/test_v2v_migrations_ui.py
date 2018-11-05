@@ -37,6 +37,8 @@ def test_infra_mapping_ui_assertions(appliance, v2v_providers, form_data_single_
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
     view = navigate_to(infrastructure_mapping_collection, 'All')
+    if appliance.version >= '5.10':  # As mapping could be on any page due to pagination
+        infrastructure_mapping_collection.find_mapping(mapping)  # We need to find mapping first
     soft_assert(mapping.name in view.infra_mapping_list.read())
     mapping_list = view.infra_mapping_list
     soft_assert(str(mapping_list.get_map_description(mapping.name)) == mapping.description)
@@ -53,6 +55,7 @@ def test_infra_mapping_ui_assertions(appliance, v2v_providers, form_data_single_
     soft_assert(mapping.form_data['network'].values()[0]['mappings'][0]['target'][0].format() in
      mapping_list.get_map_target_networks(mapping.name)[0])
 
+    # Testing if refreshing hosts cause any "Network Missing"
     rhv_prov = v2v_providers.rhv_provider
     host = rhv_prov.hosts.all()[0]
     host.refresh(cancel=True)

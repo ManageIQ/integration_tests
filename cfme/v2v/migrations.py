@@ -485,7 +485,8 @@ class AddMigrationPlanView(View):
             'Select': Checkbox(locator=".//input"),
             1: Text('.//span/button[contains(@class,"btn btn-link")]')})
         filter_by_dropdown = SelectorDropdown('id', 'filterFieldTypeMenu')
-        search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
+        search_box = TextInput(locator='.//div[contains(@class, "modal-content")]'
+            '//div[contains(@class,"input-group")]/input')
         clear_filters = Text(".//a[text()='Clear All Filters']")
         error_text = Text('.//h3[contains(@class,"blank-slate-pf-main-action") and '
                           'contains(text(), "Error:")]')
@@ -494,12 +495,14 @@ class AddMigrationPlanView(View):
 
         @property
         def is_displayed(self):
-            return (self.filter_by_dropdown.is_displayed and
+            return (self.table.is_displayed and
                  (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0))
 
         def filter_by_name(self, vm_name):
             try:
-                self.filter_by_dropdown.item_select("VM Name")
+                # remove `if` cond https://github.com/ManageIQ/manageiq-v2v/issues/771 fixed
+                if self.browser.appliance.version < '5.10':  # Don't remove nxt line, remove `if`
+                    self.filter_by_dropdown.item_select("VM Name")  # just unindent
             except NoSuchElementException:
                 self.logger.info("`VM Name` not present in filter dropdown!")
             self.search_box.fill(vm_name)
@@ -680,10 +683,17 @@ class InfrastructureMappingCollection(BaseCollection):
         view.form.fill(form_data)
         return infra_map
 
+    def find_mapping(self, mapping):
+        view = navigate_to(self, 'All')
+        if not self.appliance.version < '5.10':  # means 5.10+ or upstream
+            view.items_on_page.item_select('15')
+            while not view.clear_filters.is_displayed:
+                view.search_box.fill("{}\n\n".format(mapping.name))
+        return mapping.name in view.infra_mapping_list.read()
+
     def delete(self, mapping):
         view = navigate_to(self, 'All', wait_for_view=20)
-        if not self.appliance.version < '5.10':  # means 5.10+ or upstream
-            view.search_box.fill("{}\n\n".format(mapping.name))
+        self.find_mapping(mapping)
         mapping_list = view.infra_mapping_list
         mapping_list.delete_mapping(mapping.name)
 
