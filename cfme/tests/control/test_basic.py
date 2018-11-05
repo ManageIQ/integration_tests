@@ -540,9 +540,7 @@ def test_modify_condition_expression(condition_for_expressions, fill_type, expre
 def test_alert_crud(alert_collection):
     # CR
     alert = alert_collection.create(
-        fauxfactory.gen_alphanumeric(),
-        timeline_event=True,
-        driving_event="Hourly Timer"
+        fauxfactory.gen_alphanumeric()
     )
     # U
     with update(alert):
