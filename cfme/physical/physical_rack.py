@@ -249,7 +249,7 @@ class PhysicalRackEntitiesView(BaseEntitiesView):
     """Represents the view with different items like hosts."""
     @property
     def entity_class(self):
-        return PhysicalRackEntity().pick(self.browser.product_version)
+        return PhysicalRackEntity
 
 
 class PhysicalRacksView(ComputePhysicalInfrastructureRacksView):
