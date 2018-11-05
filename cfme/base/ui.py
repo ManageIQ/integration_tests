@@ -304,11 +304,11 @@ class LoginScreen(CFMENavigateStep):
     VIEW = LoginPage
 
     def prerequisite(self):
-        self.ojb.appliance.browser.open_browser()
+        self.obj.appliance.browser.open_browser()
 
     def step(self):
         # Can be either blank or logged in
-        browser = self.ojb.appliance.browser
+        browser = self.obj.appliance.browser
         logged_in_view = self.create_view(BaseLoggedInPage)
         if logged_in_view.logged_in:
             logged_in_view.logout()

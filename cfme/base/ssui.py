@@ -184,7 +184,7 @@ class LoginScreen(SSUINavigateStep):
     def step(self):
         # Can be either blank or logged in
         del self.view  # In order to unbind the browser
-        # XXXthis is in part just broken as it triggers actions at a distance
+        # FIXME: this is in part just broken as it triggers actions at a distance
         quit()
         ensure_browser_open(self.obj.appliance.server.address())
         if not self.view.is_displayed:
