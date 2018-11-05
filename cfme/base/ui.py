@@ -575,8 +575,8 @@ class CustomLogos(CFMENavigateStep):
         self.prerequisite_view.customlogos.select()
 
 
-@navigator.register(Server)
-class Advanced(CFMENavigateStep):
+@navigator.register(Server, "Advanced")
+class AdvancedServer(CFMENavigateStep):
     VIEW = ServerView
     prerequisite = NavigateToSibling('Details')
 
@@ -1079,7 +1079,7 @@ class HelpMenu(CFMENavigateStep):
         self.prerequisite_view.help_menu.select()
 
 
-@navigator.register(Region)
+@navigator.register(Region, "Advanced")
 class AdvancedRegion(CFMENavigateStep):
     VIEW = RegionView
     prerequisite = NavigateToSibling('Details')
