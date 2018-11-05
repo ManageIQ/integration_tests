@@ -52,6 +52,7 @@ class EditAlertProfileView(AlertProfileFormCommon):
                 self.context["object"].description) and
             self.alert_profiles.tree.currently_selected == [
                 "All Alert Profiles",
+                "{} Alert Profiles".format(self.context["object"].TYPE),
                 self.context["object"].description
             ]
         )
