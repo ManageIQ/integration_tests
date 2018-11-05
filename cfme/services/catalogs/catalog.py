@@ -79,7 +79,7 @@ class EditCatalogView(CatalogForm):
     def is_displayed(self):
         return (
             self.in_explorer and self.catalogs.is_opened and
-            self.title.text == "Editing Catalog {}".format(self.name)
+            self.title.text == 'Editing Catalog "{}"'.format(self.context["object"].name)
         )
 
 
