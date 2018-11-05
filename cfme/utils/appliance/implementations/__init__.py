@@ -23,10 +23,7 @@ class Implementation(object):
 
     def quit_browser(self):
         manager.quit()
-        try:
-            del self.widgetastic
-        except AttributeError:
-            pass
+        self._reset_cache()
 
     def _reset_cache(self):
         try:
