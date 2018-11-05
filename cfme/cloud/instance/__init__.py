@@ -293,7 +293,7 @@ class Instance(VM):
             view = navigate_to(self, 'AllForProvider')
             view.toolbar.view_selector.select('List View')
             try:
-                row = view.entities.get_entity(name=self.name)
+                row = view.entities.get_entity(name=self.name, surf_pages=True)
             except ItemNotFound:
                 raise InstanceNotFound('Failed to find instance in table: {}'.format(self.name))
             row.check()
