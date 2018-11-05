@@ -235,28 +235,32 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
 
 
 @pytest.mark.ignore_stream("5.9")
-def test_visibility_expression(appliance, request, setup_obj, button_group):
-    """ Test custom button visibility as per expression
+@pytest.mark.parametrize("expression", ["enablement", "visibility"])
+def test_custom_button_expression(appliance, request, setup_obj, button_group, expression):
+    """ Test custom button as per expression enablement/visibility.
 
     prerequisites:
         * Appliance
 
     Steps:
         * Create custom button group with the Object type
-        * Create a custom button with visibility expression (Tag)
+        * Create a custom button with expression (Tag)
+            1. Enablement Expression
+            2. Visibility Expression
         * Navigate to object Detail page
-        * Check: button should not display without tag
-        * Check: button should display with tag
+        * Check: button should not enable/visible without tag
+        * Check: button should enable/visible with tag
     """
 
     group, obj_type = button_group
+    exp = {expression: {"tag": "My Company Tags : Department", "value": "Engineering"}}
     button = group.buttons.create(
         text=fauxfactory.gen_alphanumeric(),
         hover=fauxfactory.gen_alphanumeric(),
         display_for="Single entity",
         system="Request",
         request="InspectMe",
-        visibility={"tag": "My Company Tags : Department", "value": "Engineering"},
+        **exp
     )
     request.addfinalizer(button.delete_if_exists)
 
@@ -269,10 +273,20 @@ def test_visibility_expression(appliance, request, setup_obj, button_group):
     custom_button_group = Dropdown(view, group.hover)
 
     if tag.display_name in [item.display_name for item in setup_obj.get_tags()]:
-        assert custom_button_group.is_displayed
-        setup_obj.remove_tag(tag)
-        assert not custom_button_group.is_displayed
+        if expression == "enablement":
+            assert custom_button_group.item_enabled(button.text)
+            setup_obj.remove_tag(tag)
+            assert not custom_button_group.item_enabled(button.text)
+        elif expression == "visibility":
+            assert custom_button_group.is_displayed
+            setup_obj.remove_tag(tag)
+            assert not custom_button_group.is_displayed
     else:
-        assert not custom_button_group.is_displayed
-        setup_obj.add_tag(tag)
-        assert custom_button_group.is_displayed
+        if expression == "enablement":
+            assert not custom_button_group.item_enabled(button.text)
+            setup_obj.add_tag(tag)
+            assert custom_button_group.item_enabled(button.text)
+        elif expression == "visibility":
+            assert not custom_button_group.is_displayed
+            setup_obj.add_tag(tag)
+            assert custom_button_group.is_displayed
