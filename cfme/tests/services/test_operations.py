@@ -10,7 +10,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.browser import browser
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -89,7 +88,7 @@ def generated_request(appliance, provider, provisioning, template_name, vm_name)
     provision_request = appliance.collections.requests.instantiate(cells=request_cells)
     yield provision_request
 
-    browser().get(appliance.url)
+    appliance.browser.open_browser().get(appliance.url)
     appliance.server.login_admin()
 
     provision_request.remove_request()

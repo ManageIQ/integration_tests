@@ -32,7 +32,6 @@ from cfme.utils.log import nth_frame_info
 from cfme.utils.path import get_rel_path
 import sys
 import traceback
-import cfme.utils
 from cfme.utils.appliance import DummyAppliance, find_appliance
 
 import base64
@@ -121,7 +120,7 @@ def handle_assert_artifacts(request, fail_message=None):
         short_tb = full_tb = base64_from_text(fail_message)
 
     try:
-        ss = cfme.utils.browser.browser().get_screenshot_as_base64()
+        ss = appliance.browser.open_browser().get_screenshot_as_base64()
         ss_error = None
     except Exception as b_ex:
         ss = None

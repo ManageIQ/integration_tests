@@ -5,7 +5,6 @@ from collections import namedtuple
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.browser import manager
 from cfme.utils.ssh import SSHClient
 from cfme.utils.conf import credentials, cfme_data
 from cfme.utils.log import logger
@@ -265,7 +264,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     appl1.db_service.restart()
     command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
-    manager.quit()
+    appl1.browser.quit_browser()
     appl1.evmserverd.start()
     appl1.wait_for_web_ui()
     appl1.reboot()

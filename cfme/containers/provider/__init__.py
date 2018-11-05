@@ -26,7 +26,6 @@ from cfme.common.provider_views import (
 from cfme.exceptions import LabelNotFoundException, displayed_not_implemented
 from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.browser import browser
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
@@ -103,7 +102,7 @@ class LoggingableView(View):
         def report_kibana_failure():
             raise RuntimeError("Kibana not found in the window title or content")
 
-        browser_instance = browser()
+        browser_instance = self.root_browser.selenium
 
         all_windows_before = browser_instance.window_handles
         appliance_window = browser_instance.current_window_handle

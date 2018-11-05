@@ -435,11 +435,11 @@ def quit():
 ScreenShot = namedtuple("screenshot", ['png', 'error'])
 
 
-def take_screenshot():
+def take_screenshot(driver=None):
     screenshot = None
     screenshot_error = None
     try:
-        screenshot = browser().get_screenshot_as_base64()
+        screenshot = (driver or browser()).get_screenshot_as_base64()
     except (AttributeError, WebDriverException):
         # See comments utils.browser.ensure_browser_open for why these two exceptions
         screenshot_error = 'browser error'

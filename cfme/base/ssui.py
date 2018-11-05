@@ -125,7 +125,6 @@ LOGIN_METHODS = ['click_on_login', 'press_enter_after_password']
 @MiqImplementationContext.external_for(Server.login, ViaSSUI)
 def login(self, user=None, method=LOGIN_METHODS[-1]):
     if not user:
-        from cfme.configure.access_control import User
         username = conf.credentials['default']['username']
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)
@@ -185,6 +184,7 @@ class LoginScreen(SSUINavigateStep):
     def step(self):
         # Can be either blank or logged in
         del self.view  # In order to unbind the browser
+        # XXXthis is in part just broken as it triggers actions at a distance
         quit()
         ensure_browser_open(self.obj.appliance.server.address())
         if not self.view.is_displayed:

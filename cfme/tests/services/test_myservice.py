@@ -8,10 +8,8 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ui import MyServiceDetailView
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils import browser
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.browser import ensure_browser_open
 from cfme.utils.log import logger
 from cfme.utils.update import update
 from cfme.utils.version import appliance_is_downstream
@@ -27,13 +25,13 @@ pytestmark = [
 
 
 @pytest.fixture
-def needs_firefox():
+def needs_firefox(appliance):
     """ Fixture which skips the test if not run under firefox.
 
     I recommend putting it in the first place.
     """
-    ensure_browser_open()
-    if browser.browser().name != "firefox":
+    driver = appliance.browser.open_browser()
+    if driver.name != "firefox":
         pytest.skip(msg="This test needs firefox to run")
 
 

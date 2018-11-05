@@ -4,8 +4,7 @@ import base64
 import six
 from six.moves.urllib_error import URLError
 
-import cfme.utils.browser
-from cfme.utils import browser as browser_module, safe_string
+from cfme.utils import safe_string
 from cfme.utils.browser import take_screenshot
 from cfme.utils.datafile import template_env
 from cfme.utils.log import logger
@@ -31,19 +30,21 @@ def pytest_runtest_setup(item):
         return
 
     if set(getattr(item, 'fixturenames', [])) & browser_fixtures:
-        cfme.utils.browser.ensure_browser_open()
+        appliance.browser.open_browser()
 
 
 def pytest_exception_interact(node, call, report):
     from cfme.fixtures.pytest_store import store
     from six.moves.http_client import BadStatusLine
     from socket import error
+    appliance = find_appliance(node)
 
     val = safe_string(call.excinfo.value)
     if isinstance(call.excinfo.value, (URLError, BadStatusLine, error)):
         logger.error("internal Exception:\n %s", str(call.excinfo))
-        from cfme.utils.browser import manager
-        manager.start()  # start will quit first and cycle wharf as well
+        # the restart will cycle wharf as well
+        appliance.browser.quit_browser()
+        appliance.browser.open_browser()
 
     last_lines = "\n".join(report.longreprtext.split("\n")[-4:])
 
@@ -97,7 +98,7 @@ def pytest_exception_interact(node, call, report):
     # an isinstance(val, WebDriverException) check in addition to the browser fixture check that
     # exists here in commit 825ef50fd84a060b58d7e4dc316303a8b61b35d2
 
-    screenshot = take_screenshot()
+    screenshot = take_screenshot(driver=appliance.browser.open_browser())
     template_data['screenshot'] = screenshot.png
     template_data['screenshot_error'] = screenshot.error
     if screenshot.png:
@@ -141,4 +142,6 @@ def browser(appliance):
     from cfme.utils.appliance import DummyAppliance
     if isinstance(appliance, DummyAppliance):
         pytest.xfail("browser not supported with DummyAppliance")
-    return browser_module.browser
+    def browser(*k, **kw):
+        return appliance.browser.open_browser(*k, **kw)
+    return browser

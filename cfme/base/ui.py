@@ -304,20 +304,19 @@ class LoginScreen(CFMENavigateStep):
     VIEW = LoginPage
 
     def prerequisite(self):
-        from cfme.utils.browser import ensure_browser_open
-        ensure_browser_open(self.obj.appliance.server.address())
+        self.ojb.appliance.browser.open_browser()
 
     def step(self):
         # Can be either blank or logged in
-        from cfme.utils import browser
+        browser = self.ojb.appliance.browser
         logged_in_view = self.create_view(BaseLoggedInPage)
         if logged_in_view.logged_in:
             logged_in_view.logout()
         if not self.view.is_displayed:
             # Something is wrong
             del self.view  # In order to unbind the browser
-            browser.quit()
-            browser.ensure_browser_open(self.obj.appliance.server.address())
+            browser.quit_browser()
+            browser.open_browser()
             if not self.view.is_displayed:
                 raise Exception('Could not open the login screen')
 
@@ -1081,7 +1080,7 @@ class HelpMenu(CFMENavigateStep):
 
 
 @navigator.register(Region)
-class Advanced(CFMENavigateStep):
+class AdvancedRegion(CFMENavigateStep):
     VIEW = RegionView
     prerequisite = NavigateToSibling('Details')
 
@@ -1356,7 +1355,7 @@ class SmartProxyAffinity(CFMENavigateStep):
 
 
 @navigator.register(Zone, 'Advanced')
-class Advanced(CFMENavigateStep):
+class AdvancedZone(CFMENavigateStep):
     VIEW = ZoneDetailsView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Zones')
 
