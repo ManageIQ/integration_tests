@@ -30,13 +30,12 @@ requires_59 = pytest.mark.uncollectif(
 
 
 @requires_59
-def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
+def test_appliance_console_cli_datetime(appliance):
     """Grab fresh appliance and set time and date through appliance_console_cli and check result"""
-    app = temp_appliance_preconfig_funcscope
-    app.ssh_client.run_command("appliance_console_cli --datetime 2020-10-20T09:59:00")
+    appliance.ssh_client.run_command("appliance_console_cli --datetime 2020-10-20T09:59:00")
 
     def date_changed():
-        return app.ssh_client.run_command("date +%F-%T | grep 2020-10-20-10:00").success
+        return appliance.ssh_client.run_command("date +%F-%T | grep 2020-10-20-10:00").success
     wait_for(date_changed)
 
 
@@ -51,10 +50,10 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
 
 
 @pytest.mark.meta(blockers=[BZ(1598427, forced_streams=['5.9', '5.10'])])
-def test_appliance_console_cli_set_hostname(configured_appliance):
+def test_appliance_console_cli_set_hostname(appliance):
     hostname = 'test.example.com'
-    configured_appliance.appliance_console_cli.set_hostname(hostname)
-    result = configured_appliance.ssh_client.run_command("hostname -f")
+    appliance.appliance_console_cli.set_hostname(hostname)
+    result = appliance.ssh_client.run_command("hostname -f")
     assert result.success
     assert result.output.strip() == hostname
 
