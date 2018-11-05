@@ -87,6 +87,23 @@ def catalog_item(appliance, provider, dialog, catalog, prov_data):
         catalog_item.delete()
 
 
+@pytest.fixture
+def catalog_bundle(appliance, dialog, catalog, catalog_item):
+    catalog_item_list = []
+    catalog_item_list.append(catalog_item)
+    collection = appliance.collections.catalog_bundles
+    catalog_bundle = collection.create(name='test_{}'.format(fauxfactory.gen_alphanumeric()),
+                                       catalog_items=catalog_item_list,
+                                       description='test catalog bundle',
+                                       display_in=True,
+                                       catalog=catalog,
+                                       dialog=dialog)
+
+    yield catalog_bundle
+    if catalog_bundle.exists:
+        catalog_bundle.delete()
+
+
 @pytest.fixture(scope='module')
 def max_quota_test_instance(appliance, test_domain):
     miq = appliance.collections.domains.instantiate('ManageIQ')
@@ -313,6 +330,47 @@ def test_quota_infra(request, appliance, provider, setup_provider, admin_email, 
         service_catalogs.order()
     # nav to requests page to check quota validation
     request_description = 'Provisioning Service [{0}] from [{0}]'.format(catalog_item.name)
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(provision_request.remove_request)
+    assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
+@pytest.mark.parametrize(
+    ['custom_prov_data'],
+    [
+        [{'hardware': {'memory': '4096'}}],
+        [{}],
+        [{'hardware': {'vm_num': '21'}}],
+        [{'hardware': {'num_sockets': '8'}}]
+    ],
+    ids=['max_memory', 'max_storage', 'max_vm', 'max_cpu']
+)
+def test_quota_catalog_bundle_infra(request, appliance, provider, setup_provider, admin_email,
+                                    entities, custom_prov_data, prov_data, catalog_bundle, context,
+                                    vm_name, template_name):
+
+    """This test case verifies the quota assigned by automation method for user and group
+       is working correctly for the infra providers by ordering catalog bundle.
+
+    Steps:
+        1. Navigate to Automation > Automate > Explorer
+        2. Add quota automation methods to domain
+        3. Change 'quota_source_type' to 'user' or 'group'
+        4. Create one or more catalogs to test quota by provisioning VMs over quota limit via UI or
+           SSUI for user and group
+        5. Add more than one catalog to catalog bundle and order catalog bundle
+        6. Check whether quota is exceeded or not
+    """
+    prov_data.update(custom_prov_data)
+    with appliance.context.use(context):
+        service_catalogs = ServiceCatalogs(appliance, catalog_bundle.catalog, catalog_bundle.name)
+        if context is ViaSSUI:
+            service_catalogs.add_to_shopping_cart()
+        service_catalogs.order()
+    # nav to requests page to check quota validation
+    request_description = 'Provisioning Service [{0}] from [{0}]'.format(catalog_bundle.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
