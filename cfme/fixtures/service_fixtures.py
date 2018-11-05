@@ -16,6 +16,7 @@ from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.blockers import BZ
 from cfme.fixtures.provider import console_template
 
 
@@ -129,7 +130,8 @@ def order_service(appliance, provider, provisioning, dialog, catalog, request):
     assert provision_request.is_succeeded()
     if provision_request.exists():
         provision_request.wait_for_request()
-        provision_request.remove_request()
+        if not BZ(1646333, forced_streams=['5.10']).blocks:
+            provision_request.remove_request()
     yield catalog_item
     service = MyService(appliance, catalog_item.name)
     if service.exists:
