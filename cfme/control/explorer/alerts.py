@@ -300,7 +300,7 @@ class AlertCollection(BaseCollection):
         alert._fill(view)
         view.add_button.click()
         view = alert.create_view(AlertDetailsView)
-        assert view.is_displayed
+        view.wait_displayed()
         view.flash.assert_success_message('Alert "{}" was added'.format(alert.description))
         return alert
 
