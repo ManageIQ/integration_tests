@@ -59,9 +59,4 @@ def test_router_crud(provider, appliance):
     router.delete()
     provider.refresh_provider_relationships()
 
-    def router_doesnt_exists():
-        # Navigate somewhere else then to Router Details to enforce page refresh.
-        collection = appliance.collections.network_providers.filter({'provider': provider})
-        return router.name not in (r.name for r in collection.all())
-
-    wait_for(router_doesnt_exists, fail_condition=False, timeout=240, delay=1)
+    wait_for(lambda: not router.exists, fail_condition=False, timeout=240, delay=1)

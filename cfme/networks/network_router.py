@@ -185,6 +185,10 @@ class Details(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
+    def resetter(self):
+        """Reset the view"""
+        self.view.browser.refresh()
+
 
 @navigator.register(NetworkRouterCollection, 'Add')
 class AddRouter(CFMENavigateStep):
