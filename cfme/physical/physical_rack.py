@@ -253,7 +253,7 @@ class PhysicalRackDetailsView(ComputePhysicalInfrastructureRacksView):
 
 
 class PhysicalRacksToolbar(View):
-    """Represents hosts toolbar and its controls."""
+    """Represents racks toolbar and its controls."""
     configuration = Dropdown(text="Configuration")
     view_selector = View.nested(ItemsToolBarViewSelector)
 

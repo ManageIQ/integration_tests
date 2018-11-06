@@ -115,11 +115,11 @@ class RedfishPhysicalServerCollection(PhysicalServerCollection):
 
 @attr.s
 class RedfishPhysicalChassis(PhysicalChassis):
-    INVENTORY_TO_MATCH = []
-    STATS_TO_MATCH = []
+    INVENTORY_TO_MATCH = ['chassis_name', 'description', 'identify_led_state']
+    STATS_TO_MATCH = ['num_physical_servers']
 
     def __init__(self):
-        super(RedfishPhysicalServer, self)
+        super(RedfishPhysicalChassis, self)
 
 
 @attr.s

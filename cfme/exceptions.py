@@ -131,6 +131,14 @@ class RackStatsDoesNotContain(CFMEException):
     pass
 
 
+class ChassisStatsDoesNotContain(CFMEException):
+    """
+    Raised if the chassis information does not contain the specified key whilst running
+    :py:meth:`cfme.cloud.provider.Provider.do_stats_match`.
+    """
+    pass
+
+
 class NavigationError(CFMEException):
     """Raised when pytest_selenium.go_to function is unable to navigate to the requested page."""
     def __init__(self, page_name):

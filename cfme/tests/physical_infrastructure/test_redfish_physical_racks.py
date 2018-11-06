@@ -2,7 +2,6 @@
 import pytest
 
 from cfme.physical.provider.redfish import RedfishProvider
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 
 pytestmark = [pytest.mark.provider([RedfishProvider], scope="function")]
 

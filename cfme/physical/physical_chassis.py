@@ -3,24 +3,13 @@
 import attr
 
 from lxml.html import document_fromstring
-from navmazing import NavigateToSibling, NavigateToAttribute
-from cached_property import cached_property
+from navmazing import NavigateToAttribute
 from widgetastic_patternfly import Dropdown, Accordion
 from widgetastic.widget import Text, View
 from wrapanapi.entities import PhysicalContainer
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import PolicyProfileAssignable, Taggable
-from cfme.common.physical_server_views import (
-    PhysicalServerDetailsView,
-    PhysicalServerManagePoliciesView,
-    PhysicalServersView,
-    PhysicalServerProvisionView,
-    PhysicalServerTimelinesView,
-    PhysicalServerEditTagsView,
-    PhysicalServerNetworkDevicesView,
-    PhysicalServerStorageDevicesView
-)
 from cfme.exceptions import (
     ItemNotFound,
     StatsDoNotMatch,
@@ -34,13 +23,12 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
-from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     BaseEntitiesView,
     JSBaseEntity,
     BreadCrumb,
     ItemsToolBarViewSelector,
-    SummaryTable,
+    ParametrizedSummaryTable,
     ManageIQTree
 )
 
@@ -82,25 +70,101 @@ class PhysicalChassis(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, T
         view.toolbar.custom_button(button).item_select(option, handle_alert=handle_alert)
         return view
 
+    @property
+    def exists(self):
+        """Checks if the physical_chassis exists in the UI.
+
+        Returns: :py:class:`bool`
+        """
+        try:
+            navigate_to(self, 'Details')
+        except ItemNotFound:
+            return False
+        else:
+            return True
+
     @variable(alias='ui')
     def chassis_name(self):
         view = navigate_to(self, "Details")
-        return view.entities.properties.get_text_of("Chassis name")
+        return view.entities.summary("Properties").get_text_of("Chassis name")
 
     @variable(alias='ui')
     def description(self):
         view = navigate_to(self, "Details")
-        return view.entities.properties.get_text_of("Description")
+        return view.entities.summary("Properties").get_text_of("Description")
 
     @variable(alias='ui')
     def identify_led_state(self):
         view = navigate_to(self, "Details")
-        return view.entities.properties.get_text_of("Identify LED State")
+        return view.entities.summary("Properties").get_text_of("Identify LED State")
 
     @variable(alias='ui')
     def num_physical_servers(self):
         view = navigate_to(self, "Details")
-        return view.entities.relationships.get_text_of("Physical Servers")
+        return view.entities.summary("Relationships").get_text_of("Physical Servers")
+
+    def validate_stats(self, ui=False):
+        """ Validates that the detail page matches the physical chassis' information.
+
+        This method logs into the provider using the mgmt_system interface and collects
+        a set of statistics to be matched against the UI. An exception will be raised
+        if the stats retrieved from the UI do not match those retrieved from wrapanapi.
+        """
+
+        # Make sure we are on the physical chassis detail page
+        if ui:
+            self.load_details()
+
+        # Retrieve the client and the stats and inventory to match
+        client = self.provider.mgmt
+        stats_to_match = self.STATS_TO_MATCH
+        inventory_to_match = self.INVENTORY_TO_MATCH
+
+        # Retrieve the stats and inventory from wrapanapi
+        chassis_stats = client.chassis_stats(self, stats_to_match)
+        chassis_inventory = client.chassis_inventory(self, inventory_to_match)
+
+        # Refresh the browser
+        if ui:
+            self.browser.selenium.refresh()
+
+        # Verify that the stats retrieved from wrapanapi match those retrieved
+        # from the UI
+        for stat in stats_to_match:
+            logger.debug("Validating stat {} of {}".format(stat, self.name))
+            try:
+                cfme_stat = int(getattr(self, stat)(method='ui' if ui else None))
+                chassis_stat = int(chassis_stats[stat])
+
+                if chassis_stat != cfme_stat:
+                    msg = ("The {} stat does not match. "
+                        "(chassis: {}, chassis stat: {}, cfme stat: {})")
+                    raise StatsDoNotMatch(msg.format(stat, self.name, chassis_stat, cfme_stat))
+            except KeyError:
+                raise HostStatsNotContains(
+                    "Chassis stats information does not contain '{}'".format(stat))
+            except AttributeError:
+                raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(stat))
+
+        # Verify that the inventory retrieved from wrapanapi match those retrieved
+        # from the UI
+        for inventory in inventory_to_match:
+            logger.debug("Validating inventory {} of {}".format(inventory, self.name))
+            try:
+                cfme_inventory = getattr(self, inventory)(method='ui' if ui else None)
+                chass_inventory = chassis_inventory[inventory]
+
+                if chass_inventory != cfme_inventory:
+                    msg = "The {} inventory does not match. (server: {}, server inventory: {}, " \
+                          "cfme inventory: {})"
+                    raise StatsDoNotMatch(msg.format(inventory, self.name, chass_inventory,
+                                                     cfme_inventory))
+            except KeyError:
+                raise HostStatsNotContains(
+                    "Server inventory information does not contain '{}'".format(inventory))
+            except AttributeError:
+                msg = "Provider does not know how to get '{}'"
+                raise ProviderHasNoProperty(msg.format(inventory))
 
 
 @attr.s
@@ -137,7 +201,7 @@ class ComputePhysicalInfrastructureChassisView(BaseLoggedInPage):
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
 
     @property
-    def in_compute_physical_infrastructure_chassis(self):
+    def is_displayed(self):
         return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ["Compute", "Physical Infrastructure",
                                                        "Chassis"])
@@ -147,9 +211,9 @@ class PhysicalChassisEntity(JSBaseEntity):
     @property
     def data(self):
         data_dict = super(PhysicalChassisEntity, self).data
-        if 'quadicon' in data_dict and data_dict['quadicon']:
-            quad_data = document_fromstring(data_dict['quadicon'])
-            data_dict['no_host'] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)
+        if data_dict.get("quadicon", ""):
+            quad_data = document_fromstring(data_dict["quadicon"])
+            data_dict["no_host"] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)
         return data_dict
 
 
@@ -160,10 +224,7 @@ class PhysicalChassisDetailsToolbar(View):
 
 class PhysicalChassisDetailsEntities(View):
     """Represents Details page Entities."""
-    properties = SummaryTable(title="Properties")
-    relationships = SummaryTable(title="Relationships")
-    management_network = SummaryTable(title="Management Network")
-    classis_slots = SummaryTable(title="Chassis Slots")
+    summary = ParametrizedSummaryTable
 
 
 class PhysicalChassisDetailsView(ComputePhysicalInfrastructureChassisView):
@@ -175,7 +236,7 @@ class PhysicalChassisDetailsView(ComputePhysicalInfrastructureChassisView):
     @property
     def is_displayed(self):
         title = "{name} (Summary)".format(name=self.context["object"].name)
-        return (self.in_compute_physical_infrastructure_chassis and
+        return (super(self.__class__, self).is_displayed and
                 self.breadcrumb.active_location == title)
 
 
@@ -208,7 +269,7 @@ class PhysicalChassisView(ComputePhysicalInfrastructureChassisView):
 
     @property
     def is_displayed(self):
-        return (self.in_compute_physical_infrastructure_chassis and
+        return (super(self.__class__, self).is_displayed and
                 self.title.text == "Physical Chassis")
 
 
