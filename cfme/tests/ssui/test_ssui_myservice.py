@@ -33,7 +33,6 @@ pytestmark = [
 
 @pytest.mark.rhel_testing
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[BZ(1646925, forced_streams=['5.10'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_service):
     """Test Myservice crud in SSUI.
@@ -46,8 +45,7 @@ def test_myservice_crud(appliance, setup_provider, context, order_service):
         my_service = MyService(appliance, catalog_item.name)
         my_service.set_ownership("Administrator", "EvmGroup-approver")
         my_service.update({'description': '{}_edited'.format(catalog_item.name)})
-        if appliance.version > "5.8":
-            my_service.edit_tags("Cost Center", "Cost Center 001")
+        my_service.edit_tags("Cost Center", "Cost Center 002")
         my_service.delete()
 
 
