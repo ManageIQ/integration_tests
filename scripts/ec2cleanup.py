@@ -1,5 +1,6 @@
 import argparse
 import sys
+import time
 from datetime import datetime, timedelta
 from tabulate import tabulate
 
@@ -22,9 +23,11 @@ def parse_cmd_line():
     parser.add_argument('--exclude-enis', nargs='+',
                         help='List of ENIs, which should be excluded. ENI ID is allowed.')
     parser.add_argument('--exclude_stacks', nargs='+',
-                       help='List of Stacks, which should be excluded')
+                        help='List of Stacks, which should be excluded')
     parser.add_argument('--exclude_snapshots', nargs='+',
                         help='List of snapshots, which should be excluded. Snapshot ID is allowed')
+    parser.add_argument('--exclude_queues', nargs='+',
+                        help='List of queues, which should be excluded. Queue Url is allowed')
     parser.add_argument('--stack-template',
                         help='Stack name template to be removed', default="test", type=str)
     parser.add_argument("--output", dest="output", help="target file name, default "
@@ -54,8 +57,8 @@ def delete_disassociated_addresses(provider_mgmt, excluded_eips, output):
                     ip_list.append([provider_name, ip.public_ip, 'N/A'])
                     provider_mgmt.release_address(address=ip.public_ip)
         logger.info("  Released Addresses: %r", ip_list)
-        with open(output, 'a+') as report:
-            if ip_list:
+        if ip_list:
+            with open(output, 'a+') as report:
                 # tabulate ip_list and write it
                 report.write(tabulate(tabular_data=ip_list,
                                       headers=['Provider Key', 'Public IP', 'Allocation ID'],
@@ -78,8 +81,8 @@ def delete_unattached_volumes(provider_mgmt, excluded_volumes, output):
                 volume_list.append([provider_name, volume.id])
                 volume.delete()
         logger.info("  Deleted Volumes: %r", volume_list)
-        with open(output, 'a+') as report:
-            if volume_list:
+        if volume_list:
+            with open(output, 'a+') as report:
                 # tabulate volume_list and write it
                 report.write(tabulate(tabular_data=volume_list,
                                       headers=['Provider Key', 'Volume ID'],
@@ -101,8 +104,8 @@ def delete_unused_loadbalancers(provider_mgmt, excluded_elbs, output):
                 elb_list.append([provider_name, elb.name])
                 provider_mgmt.delete_loadbalancer(loadbalancer=elb)
         logger.info("  Deleted Elastic LoadBalancers: %r", elb_list)
-        with open(output, 'a+') as report:
-            if elb_list:
+        if elb_list:
+            with open(output, 'a+') as report:
                 # tabulate volume_list and write it
                 report.write(tabulate(tabular_data=elb_list,
                                       headers=['Provider Key', 'ELB name'],
@@ -124,8 +127,8 @@ def delete_unused_network_interfaces(provider_mgmt, excluded_enis, output):
                 eni_list.append([provider_name, eni.id])
                 eni.delete()
         logger.info("  Deleted Elastic Network Interfaces: %r", eni_list)
-        with open(output, 'a+') as report:
-            if eni_list:
+        if eni_list:
+            with open(output, 'a+') as report:
                 # tabulate volume_list and write it
                 report.write(tabulate(tabular_data=eni_list,
                                       headers=['Provider Key', 'ENI ID'],
@@ -156,8 +159,8 @@ def delete_stacks(provider_mgmt, excluded_stacks, stack_template, output):
                         logger.error(e)
                         continue
         logger.info("  Deleted CloudFormation Stacks: %r", stack_list)
-        with open(output, 'a+') as report:
-            if stack_list:
+        if stack_list:
+            with open(output, 'a+') as report:
                 report.write(tabulate(tabular_data=stack_list,
                                       headers=['Provider Key', 'Stack Name'],
                                       tablefmt='orgtbl'))
@@ -179,8 +182,8 @@ def delete_snapshots(provider_mgmt, excluded_snapshots, output):
                 if provider_mgmt.delete_snapshot(snapshot_id=snapshot_id):
                     snapshot_list.append([provider_name, snapshot_id])
         logger.info("  Deleted Snapshots: %r", snapshot_list)
-        with open(output, 'a+') as report:
-            if snapshot_list:
+        if snapshot_list:
+            with open(output, 'a+') as report:
                 report.write(tabulate(tabular_data=snapshot_list,
                                       headers=['Provider Key', 'Snapshot ID'],
                                       tablefmt='orgtbl'))
@@ -189,8 +192,34 @@ def delete_snapshots(provider_mgmt, excluded_snapshots, output):
         logger.exception('Exception in %r', delete_snapshots.__name__)
 
 
+def delete_queues(provider_mgmt, excluded_queues, output):
+    queue_list = []
+    provider_name = provider_mgmt.kwargs['name']
+    current_timestamp = time.time()
+    try:
+        queues = provider_mgmt.list_queues_with_creation_timestamps()
+        for queue in queues:
+            if excluded_queues and queue in excluded_queues:
+                logger.info(" Excluding Queue with url: %r", queue)
+                continue
+            else:
+                # 1209600 is 14 days in seconds
+                if current_timestamp - float(queues[queue]) > 1209600:
+                    provider_mgmt.delete_sqs_queue(queue)
+                    queue_list.append([provider_name, queue])
+        logger.info("  Deleted Queues: %r", queue_list)
+        if queue_list:
+            with open(output, 'a+') as report:
+                report.write(tabulate(tabular_data=queue_list,
+                                      headers=['Provider Key', 'Queue Url'],
+                                      tablefmt='orgtbl'))
+    except Exception:
+        # TODO don't diaper this whole method
+        logger.exception('Exception in %r', delete_queues.__name__)
+
+
 def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclude_stacks,
-               exclude_snapshots, stack_template, output):
+               exclude_snapshots, exclude_queues, stack_template, output):
     with open(output, 'w') as report:
         report.write('ec2cleanup.py, Address, Volume, LoadBalancer, Snapshot and '
                      'Network Interface Cleanup')
@@ -215,6 +244,10 @@ def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclud
                       excluded_stacks=exclude_stacks,
                       stack_template=stack_template,
                       output=output)
+        logger.info("Deleting old queues...")
+        delete_queues(provider_mgmt=provider_mgmt,
+                      excluded_queues=exclude_queues,
+                      output=output)
         logger.info("Deleting snapshots...")
         delete_snapshots(provider_mgmt=provider_mgmt,
                          excluded_snapshots=exclude_snapshots,
@@ -229,4 +262,4 @@ if __name__ == "__main__":
     args = parse_cmd_line()
     sys.exit(ec2cleanup(args.exclude_volumes, args.exclude_eips, args.exclude_elbs,
                         args.exclude_enis, args.exclude_stacks, args.exclude_snapshots,
-                        args.stack_template, args.output))
+                        args.exclude_queues, args.stack_template, args.output))
