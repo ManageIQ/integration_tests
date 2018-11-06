@@ -687,8 +687,11 @@ class InfrastructureMappingCollection(BaseCollection):
         view = navigate_to(self, 'All')
         if not self.appliance.version < '5.10':  # means 5.10+ or upstream
             view.items_on_page.item_select('15')
+            # TODO: Remove While loop. It is a DIRTY HACK for now, to be addressed in PR 8075
+            # =========================================================
             while not view.clear_filters.is_displayed:
                 view.search_box.fill("{}\n\n".format(mapping.name))
+            # =========================================================
         return mapping.name in view.infra_mapping_list.read()
 
     def delete(self, mapping):
@@ -765,6 +768,17 @@ class MigrationPlanCollection(BaseCollection):
         view.results.close.click()
         return self.instantiate(name)
 
+    def find_completed_plan(self, migration_plan):
+        """Uses search box to find migration plan, return True if found.
+        Args:
+            migration_plan: (object) Migration Plan object
+        """
+        view = navigate_to(self, 'All')
+        view.switch_to("Completed Plans")
+        if not self.appliance.version < '5.10':  # means 5.10+ or upstream
+            view.items_on_page.item_select('15')
+            view.search_box.fill("{}\n\n".format(migration_plan.name))
+        return migration_plan.name in view.migration_plans_completed_list.read()
 # Navigations
 
 

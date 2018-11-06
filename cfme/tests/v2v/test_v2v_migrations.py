@@ -70,6 +70,7 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
         delay=5, num_sec=1800)
     view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
             migration_plan.name), view.migration_plans_completed_list.get_clock(
@@ -212,6 +213,7 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
         migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
             migration_plan.name), view.migration_plans_completed_list.get_clock(
             migration_plan.name))
+    migration_plan_collection.find_completed_plan(migration_plan)
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
     # validate MAC address matches between source and target VMs
     src_vm = form_data_vm_obj_dual_nics.vm_list.pop()

@@ -54,7 +54,7 @@ from widgetastic_patternfly import (
     NavDropdown,
     Tab,
     BreadCrumb,
-    AggregateStatusCard
+    AggregateStatusCard,
 )
 
 from cfme.exceptions import ItemNotFound
@@ -4860,7 +4860,9 @@ class MigrationProgressBar(Widget):
 
 
 class MigrationDashboardStatusCard(AggregateStatusCard):
-    ROOT = ParametrizedLocator('.//div[contains(@class, "card-pf-aggregate-status")'
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class, "card-pf-aggregate-status")'
         ' and not(contains(@class, "card-pf-aggregate-status-mini")) and'
-        ' h2[contains(@class,"card-pf-title")  and contains(.,{@name|quote})]]')
-    TITLE_ANCHOR = './h2'
+        ' h2[contains(@class,"card-pf-title")  and contains(.,{@name|quote})]]'
+    )
+    TITLE_ANCHOR = "./h2"

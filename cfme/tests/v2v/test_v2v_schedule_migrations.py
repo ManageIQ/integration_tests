@@ -64,6 +64,7 @@ def test_single_vm_scheduled_migration(request, appliance, v2v_providers, host_c
 
     view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name,
         view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
