@@ -4,12 +4,14 @@ import pytest
 
 from widgetastic.exceptions import NoSuchElementException
 
+from cfme.exceptions import ItemNotFound
 from cfme.fixtures.provider import small_template
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.tests.services.test_service_rbac import new_user, new_group, new_role
+from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 from cfme.v2v.migrations import MigrationPlanRequestDetailsView
 
@@ -309,6 +311,7 @@ def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, con
     view.sort_direction.click()
     plans_list_after_sort = view.migration_plans_not_started_list.read()
     soft_assert(plans_list_before_sort != plans_list_after_sort)
+    # TODO: Create new method to unschedule the migration plans.
     view.migration_plans_not_started_list.schedule_migration(plan1.name)
     view.wait_displayed()
     view.migration_plans_not_started_list.schedule_migration(plan2.name)
@@ -316,7 +319,10 @@ def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, con
     for plan in (plan1, plan2):
         view.switch_to("Not Started Plans")
         view.wait_displayed()
-        view.migration_plans_not_started_list.migrate_plan(plan.name)
+        try:
+            view.migration_plans_not_started_list.migrate_plan(plan.name)
+        except ItemNotFound:
+            logger.info("Item not found in Not Started List, switching to In Progress plans.")
         view.switch_to("In Progress Plans")
         wait_for(func=view.progress_card.is_plan_started, func_args=[plan.name],
             message="migration plan is starting, be patient please", delay=5, num_sec=150,
