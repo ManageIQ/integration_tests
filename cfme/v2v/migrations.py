@@ -57,7 +57,7 @@ class v2vPaginationDropup(SelectorDropdown):
         './/div[contains(@class, "dropup") and ./button[@{@b_attr}={@b_attr_value|quote}]]')
 
 
-class MigrationPlanRequestDetailsPaginationPane(View):
+class v2vPaginatorPane(View):
     """ Represents Paginator Pane for V2V."""
 
     ROOT = './/form[contains(@class,"content-view-pf-pagination")]'
@@ -65,14 +65,6 @@ class MigrationPlanRequestDetailsPaginationPane(View):
     items_on_page = v2vPaginationDropup('id', 'pagination-row-dropdown')
     paginator = v2vPaginator()
 
-
-class InfrastructureMappingsPaginatorPane(View):
-    """ Represents Paginator Pane for V2V."""
-
-    ROOT = './/form[contains(@class,"content-view-pf-pagination")]'
-
-    items_on_page = v2vPaginationDropup('id', 'pagination-row-dropdown')
-    paginator = v2vPaginator()
 # Views
 
 
@@ -332,6 +324,11 @@ class MigrationDashboardView(BaseLoggedInPage):
     in_progress_plans = MigrationDashboardStatusCard(name="In Progress")
     completed_plans = MigrationDashboardStatusCard(name="Complete")
     archived_plans = MigrationDashboardStatusCard(name="Archived")
+    # TODO: next 3 lines are specialized only for 510z and inheritance for DashboardView59z
+    # is incorrect. Need to fix it.
+    paginator_view = View.include(v2vPaginatorPane, use_parent=True)
+    search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
+    clear_filters = Text(".//a[text()='Clear All Filters']")
 
     @property
     def is_displayed(self):
@@ -409,13 +406,13 @@ class MigrationDashboardView59z(MigrationDashboardView):
 class InfrastructureMappingView(BaseLoggedInPage):
     """This is an entire separate page, with many elements similar to what we had in
     MigrationPlanRequestDetailsView , so re-using some of those Paginator things
-    by renaming those from MigrationPlanRequestDetailsPaginator to v2vPaginator, etc."""
+    by renaming those from v2vPaginator to v2vPaginator, etc."""
 
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
     create_infrastructure_mapping = Text(locator='(//a|//button)'
                                                  '[text()="Create Infrastructure Mapping"]')
     configure_providers = Text(locator='//a[text()="Configure Providers"]')
-    paginator_view = View.include(InfrastructureMappingsPaginatorPane, use_parent=True)
+    paginator_view = View.include(v2vPaginatorPane, use_parent=True)
     search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
     clear_filters = Text(".//a[text()='Clear All Filters']")
     # Used for Ascending/Descending sort
@@ -555,7 +552,7 @@ class AddMigrationPlanView(View):
 class MigrationPlanRequestDetailsView(View):
     migration_request_details_list = MigrationPlanRequestDetailsList("plan-request-details-list")
     sort_type = SelectorDropdown('id', 'sortTypeMenu')
-    paginator_view = View.include(MigrationPlanRequestDetailsPaginationPane, use_parent=True)
+    paginator_view = View.include(v2vPaginatorPane, use_parent=True)
     search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
     clear_filters = Text(".//a[text()='Clear All Filters']")
     # Used for Ascending/Descending sort
@@ -687,6 +684,8 @@ class InfrastructureMappingCollection(BaseCollection):
         view = navigate_to(self, 'All')
         if not self.appliance.version < '5.10':  # means 5.10+ or upstream
             view.items_on_page.item_select('15')
+            if mapping.name in view.infra_mapping_list.read():
+                return True
             # TODO: Remove While loop. It is a DIRTY HACK for now, to be addressed in PR 8075
             # =========================================================
             while not view.clear_filters.is_displayed:
@@ -777,8 +776,16 @@ class MigrationPlanCollection(BaseCollection):
         view.switch_to("Completed Plans")
         if not self.appliance.version < '5.10':  # means 5.10+ or upstream
             view.items_on_page.item_select('15')
-            view.search_box.fill("{}\n\n".format(migration_plan.name))
+            if migration_plan.name in view.migration_plans_completed_list.read():
+                return True
+        # TODO: Next while loop is dirty hack to avoid page refresh/resetter. Need to fix it.
+        # ==================================================================================
+            while not view.clear_filters.is_displayed:
+                view.switch_to("Completed Plans")
+                view.search_box.fill("{}\n\n".format(migration_plan.name))
+        # ==================================================================================
         return migration_plan.name in view.migration_plans_completed_list.read()
+
 # Navigations
 
 
