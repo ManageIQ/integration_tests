@@ -498,12 +498,17 @@ class ButtonGroupDetailView(AutomateCustomizationView):
     @property
     def is_displayed(self):
         return (
-            self.in_customization and
-            self.title.text == 'Button Group "{}"'.format(self.context['object'].text) and
-            self.buttons.is_opened and
-            not self.buttons.is_dimmed and
-            self.buttons.tree.currently_selected == [
-                'Object Types', self.context['object'].type, self.context['object'].text])
+            self.in_customization
+            and self.title.text
+            in [
+                'Button Group "{}"'.format(self.context["object"].text),
+                '{} Button Group "Unassigned Buttons"'.format(self.context["object"].type),
+            ]
+            and self.buttons.is_opened
+            and not self.buttons.is_dimmed
+            and self.buttons.tree.currently_selected
+            == ["Object Types", self.context["object"].type, self.context["object"].text]
+        )
 
 
 class ButtonGroupFormCommon(AutomateCustomizationView):
