@@ -31,19 +31,11 @@ def group_collection(appliance):
 
 
 def new_credential():
-    if BZ(1487199, forced_streams=['5.8']).blocks:
-        return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric().lower()),
-                          secret='redhat')
-    else:
-        return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()),
-                          secret='redhat')
+    return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
+                      secret='redhat')
 
 
 def new_user(appliance, groups, name=None, credential=None):
-    from cfme.fixtures.blockers import bug
-
-    uppercase_username_bug = bug(1487199)
-
     name = name or 'user{}'.format(fauxfactory.gen_alphanumeric())
     credential = credential or new_credential()
 
@@ -54,11 +46,6 @@ def new_user(appliance, groups, name=None, credential=None):
         groups=groups,
         cost_center='Workload',
         value_assign='Database')
-
-    # Version 5.8.2 has a regression blocking logins for usernames w/ uppercase chars
-    if '5.8.2' <= user.appliance.version < '5.9' and uppercase_username_bug:
-        user.credential.principal = user.credential.principal.lower()
-
     return user
 
 
