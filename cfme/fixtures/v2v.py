@@ -138,9 +138,11 @@ def get_vm(request, appliance, second_provider, template, datastore='nfs'):
     vm_obj = collection.instantiate(vm_name,
                                     second_provider,
                                     template_name=template(second_provider)['name'])
-
+    power_on_vm = True
+    if template.__name__ == 'win10_template':
+        power_on_vm = False
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default",
-                              datastore=source_datastore)
+                              datastore=source_datastore, power_on=power_on_vm)
     request.addfinalizer(lambda: vm_obj.cleanup_on_provider())
     return vm_obj
 
