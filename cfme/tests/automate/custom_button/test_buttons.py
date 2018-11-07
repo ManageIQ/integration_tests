@@ -197,3 +197,46 @@ def test_button_avp_displayed(appliance, dialog, request):
         assert view.advanced.attribute(n).key.is_displayed
         assert view.advanced.attribute(n).value.is_displayed
     view.cancel_button.click()
+
+
+@pytest.mark.tier(3)
+@pytest.mark.parametrize("field", ["icon", "request"])
+def test_button_required(appliance, field):
+    """Test Icon and Request are required field while adding custom button.
+
+    Prerequisities:
+        * Button Group
+
+    Steps:
+        * Try to add custom button without icon/request
+        * Assert flash message.
+    """
+    unassigned_gp = appliance.collections.button_groups.instantiate(
+        text="[Unassigned Buttons]", hover="Unassigned Buttons", type="Provider"
+    )
+    button_coll = appliance.collections.buttons
+    button_coll.group = unassigned_gp  # Need for supporting navigation
+
+    view = navigate_to(button_coll, "Add")
+    view.fill(
+        {
+            "options": {
+                "text": fauxfactory.gen_alphanumeric(),
+                "hover": fauxfactory.gen_alphanumeric(),
+                "open_url": True,
+            },
+            "advanced": {"system": "Request", "request": "InspectMe"},
+        }
+    )
+
+    if field == "icon":
+        msg = "Button Icon must be selected"
+    elif field == "request":
+        view.fill({"options": {"image": "fa-user"}, "advanced": {"request": ""}})
+        msg = "Request is required"
+
+    view.title.click()  # Workaround automation unable to read upside flash message
+
+    view.add_button.click()
+    view.flash.assert_message(msg)
+    view.cancel_button.click()
