@@ -5,10 +5,8 @@ from wrapanapi.utils.random import random_name
 from cfme.utils.log import logger
 
 
-@pytest.fixture
-def with_nuage_sandbox(networks_provider):
-    nuage = networks_provider.mgmt
-    sandbox = box = {}
+def create_basic_sandbox(nuage):
+    box = {}
 
     # Create empty enterprise aka 'sandbox'.
     enterprise = box['enterprise'] = nuage.create_enterprise()
@@ -45,9 +43,18 @@ def with_nuage_sandbox(networks_provider):
     box['l2_group'] = box['l2_domain'].create_child(
         nuage.vspk.NUPolicyGroup(name=random_name()))[0]
 
+    return box
+
+
+@pytest.fixture
+def with_nuage_sandbox(networks_provider):
+    nuage = networks_provider.mgmt
+    sandbox = create_basic_sandbox(nuage)
+
     # Let integration test do whatever it needs to do.
     yield sandbox
 
     # Destroy the sandbox.
+    enterprise = sandbox['enterprise']
     nuage.delete_enterprise(enterprise)
     logger.info('Destroyed sandbox enterprise {} ({})'.format(enterprise.name, enterprise.id))
