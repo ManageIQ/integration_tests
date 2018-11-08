@@ -1,4 +1,3 @@
-
 try:
     from pathlib import Path
 except ImportError:

@@ -3687,7 +3687,7 @@ class WaitTab(Tab):
             _tries += 1
             self.select()
             try:
-                wait_for(self.is_active, delay=.1, num_sec=2)
+                wait_for(self.is_active, delay=0.1, num_sec=2)
                 break  # no retry, wait passed
             except TimedOutError:
                 self.logger.exception(
