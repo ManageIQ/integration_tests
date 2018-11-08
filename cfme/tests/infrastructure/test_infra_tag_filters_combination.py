@@ -51,7 +51,7 @@ def group_tag_datacenter_combination(group_with_tag, provider):
                                         provider.data['datacenters'][0]], True)
 
 
-@pytest.mark.meta(blockers=[BZ(1533391, forced_streams=["5.9", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'not_visible'])
 def test_tagvis_tag_datacenter_combination(testing_vis_object, group_tag_datacenter_combination,
                                 check_item_visibility, visibility):
