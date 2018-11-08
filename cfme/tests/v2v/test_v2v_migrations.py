@@ -492,7 +492,7 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
         return True
 
     wait_for(func=_is_migration_started, message="migration is not started for all VMs, "
-        "be patient please", delay=5, num_sec=300)
+        "be patient please", delay=5, num_sec=600)
 
     hosts_dict = {key.name: [] for key in host_creds}
     for vm in vms:
