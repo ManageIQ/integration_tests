@@ -49,13 +49,20 @@ class AzureInstance(Instance):
         provisioning = self.provider.data['provisioning']
         vm_user = provisioning.get('customize_username')
         vm_password = provisioning.get('customize_password')
+        if self.appliance.version >= '5.10':
+            instance_type = provisioning.get('instance_type').title()
+        else:
+            instance_type = provisioning.get('instance_type')
         recursive_update(inst_args, {
             'environment': {
                 'public_ip_address': '<None>',
             },
             'customize': {
                 'admin_username': vm_user,
-                'root_password': vm_password}})
+                'root_password': vm_password
+            },
+            'properties': {
+                'instance_type': instance_type}})
         return inst_args
 
     @property
