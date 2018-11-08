@@ -290,9 +290,10 @@ class InfraVmDetailsView(InfraVmView):
     @property
     def is_displayed(self):
         if isinstance(self.context['object'], InfraVm):
-            expected_title = 'VM and Instance "{}"'.format(self.context["object"].name)
+            expected_title = ['VM and Instance "{}"'.format(self.context["object"].name),
+                              'Virtual Machine "{}"'.format(self.context["object"].name)]
         elif isinstance(self.context['object'], InfraTemplate):
-            expected_title = 'VM Template and Image "{}"'.format(self.context["object"].name)
+            expected_title = ['VM Template and Image "{}"'.format(self.context["object"].name)]
         else:
             return False
 
@@ -312,7 +313,7 @@ class InfraVmDetailsView(InfraVmView):
             return False
         return (
             self.in_infra_vms and
-            self.entities.title.text == expected_title and
+            self.entities.title.text in expected_title and
             relationship_provider_name == expected_provider)
 
 
