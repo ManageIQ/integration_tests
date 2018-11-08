@@ -838,9 +838,15 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
         fail_func=view.toolbar.reload.click
     )
     # check drift difference
-    soft_assert(ssa_vm.equal_drift_results(
-        '{} (1)'.format(added_tag.category.display_name), 'My Company Tags', 1, 2),
-        "Drift analysis results are equal when they shouldn't be")
+    soft_assert(
+        ssa_vm.equal_drift_results(
+            '{} (1)'.format(added_tag.category.display_name),
+            'My Company Tags',
+            -2,
+            -1
+        ),
+        "Drift analysis results are equal when they shouldn't be"
+    )
 
     # Test UI features that modify the drift grid
     drift_analysis_view = appliance.browser.create_view(DriftAnalysis)
