@@ -217,6 +217,7 @@ class GenericObjectEditButtonView(GenericObjectAddEditButtonView):
 
 
 class GenericObjectActionsDetailsView(GenericObjectDefinitionView):
+    title = Text('#explorer_title_text')
     group_table = Table('//h3[contains(text(), "Groups")]/following-sibling::table[1]')
     button_table = Table('//h3[contains(text(), "Buttons")]/following-sibling::table[1]')
     accordion = View.nested(AccordionForm)
@@ -243,7 +244,7 @@ class GenericObjectButtonGroupAddView(GenericObjectDefinitionView):
     @property
     def is_displayed(self):
         return (
-            self.title.text == 'GenericObjectButtonGroupAddView' and
+            self.title.text == "Add a new Custom Button Group" and
             self.name.is_displayed and
             self.in_generic_object_definition
         )

@@ -33,17 +33,19 @@ class MyServicesView(BaseLoggedInPage):
     toolbar = View.nested(MyServiceToolbar)
     search = View.nested(Search)
 
+    @property
     def in_myservices(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Services', 'MyServices'])
+            self.navigation.currently_selected == ["Services", "My Services"])
 
     @property
     def is_displayed(self):
         return (
             self.in_myservices and
-            self.toolbar.configuration.is_displayed and not
-            self.myservice.is_dimmed)
+            self.toolbar.configuration.is_displayed and
+            not self.myservice.is_dimmed
+        )
 
     @View.nested
     class myservice(Accordion):  # noqa

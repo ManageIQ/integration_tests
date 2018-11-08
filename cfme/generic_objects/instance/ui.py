@@ -75,15 +75,13 @@ class MyServiceGenericObjectInstanceView(BaseLoggedInPage):
 
 @MiqImplementationContext.external_for(GenericObjectInstance.exists.getter, ViaUI)
 def exists(self):
-    try:
-        # first need to check if any instances are created
-        view = navigate_to(self.definition, 'Instances')
-        if view.is_displayed:
+    if self.definition.instance_count > 0:
+        try:
             navigate_to(self, 'Details')
             return True
-        else:
+        except CandidateNotFound:
             return False
-    except CandidateNotFound:
+    else:
         return False
 
 
