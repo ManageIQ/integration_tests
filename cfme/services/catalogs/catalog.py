@@ -99,8 +99,7 @@ class Catalog(BaseEntity, Updateable, Pretty, Taggable):
         else:
             view.cancel_button.click()
         view = self.create_view(DetailsCatalogView, override=updates)
-        view.wait_displayed()
-        assert view.is_displayed
+        assert view.wait_displayed()
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
