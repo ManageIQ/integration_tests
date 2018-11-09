@@ -209,6 +209,7 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
 
     view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
             migration_plan.name), view.migration_plans_completed_list.get_clock(
@@ -251,6 +252,7 @@ def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, c
 
     view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
             migration_plan.name), view.migration_plans_completed_list.get_clock(
@@ -373,6 +375,7 @@ def test_single_vm_migration_with_ssh(request, appliance, v2v_providers, host_cr
 
     view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name,
         view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
@@ -431,6 +434,7 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
 
     view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name,
         view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
@@ -548,6 +552,7 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
 
     view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
             migration_plan.name), view.migration_plans_completed_list.get_clock(

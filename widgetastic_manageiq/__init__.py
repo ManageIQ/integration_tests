@@ -4867,4 +4867,4 @@ class MigrationDashboardStatusCard(AggregateStatusCard):
         ' and not(contains(@class, "card-pf-aggregate-status-mini")) and'
         ' h2[contains(@class,"card-pf-title")  and contains(.,{@name|quote})]]'
     )
-    TITLE_ANCHOR = "./h2"
+    TITLE_ANCHOR = ".//h2"
