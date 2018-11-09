@@ -1017,9 +1017,10 @@ class ISODatastore(Updateable, Pretty, Navigatable):
         view.sidebar.datastores.tree.click_path('All ISO Datastores', self.provider,
                                                 'ISO Images', image_name)
         view.toolbar.configuration.item_select('Edit this ISO Image')
-        view.fill({'image_type': image_type})
+        view = view.browser.create_view(PXEImageEditView)
+        changed = view.fill({'type': image_type})
         # Click save if enabled else click Cancel
-        if view.save.active:
+        if changed:
             view.save.click()
         else:
             view.cancel.click()
