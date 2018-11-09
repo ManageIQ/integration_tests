@@ -7,6 +7,7 @@ from widgetastic_patternfly import (
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import displayed_not_implemented
+from cfme.utils.log import logger
 from widgetastic_manageiq import (
     Accordion, BaseEntitiesView, Button,
     Checkbox, DriftComparison, Input, ItemsToolBarViewSelector, JSBaseEntity, ManageIQTree,
@@ -269,13 +270,35 @@ class HostsEditView(HostEditView):
 
 class ProviderAllHostsView(HostsView):
     """
-    This view is used in test_provider_relationships
+    This view is used in Provider and HostCollection contexts
     """
 
     @property
     def is_displayed(self):
+        """Accounts for both Provider and HostCollection contexts"""
+        from cfme.modeling.base import BaseEntity, BaseCollection
+        expected_title = "{} (All Managed Hosts)"
+        obj = self.context['object']
+        is_entity = getattr(obj, 'name', False) and isinstance(obj, BaseEntity)
+        is_filtered = isinstance(obj, BaseCollection) and obj.filters  # empty dict on not filtered
+        filter = obj.filters.get('parent') or obj.filters.get('provider') if is_filtered else None
+
+        # could condense the following logic in a more pythonic way, but would lose the logging
+        if is_entity:
+            # object has name attribute and is BaseEntity derived, assuming its a provider
+            logger.debug('Hosts view context object is assumed to be provider: %r', obj)
+            matched_title = self.title.text == expected_title.format(obj.name)
+        elif filter and hasattr(filter, 'name'):
+            # filtered collection, use filter object's name
+            logger.debug(
+                'Hosts view context object has filter related to view with name attribute: %r',
+                obj.filters
+            )
+            matched_title = self.title.text == expected_title.format(filter.name)
+        else:
+            matched_title = False  # not an entity with a name, or a filtered collection
+
         return (
-            self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
-            self.title.text == "{} (All Managed Hosts)".format(
-                self.context["object"].filters['parent'].name)
+            matched_title and
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers']
         )
