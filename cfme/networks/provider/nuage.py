@@ -1,7 +1,10 @@
 import attr
 import copy
+
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect, Input, Button
+
+from cfme.cloud.tenant import TenantCollection
 from wrapanapi.systems import NuageSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm, EventsEndpoint
@@ -68,6 +71,7 @@ class NuageProvider(NetworkProvider):
 
     _collections = {
         'security_groups': SecurityGroupCollection,
+        'cloud_tenants': TenantCollection
     }
 
     key = attr.ib(default=None)

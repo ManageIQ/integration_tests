@@ -10,6 +10,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.exceptions import TenantNotFound, DestinationNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.networks import ValidateStatsMixin
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
@@ -101,12 +102,41 @@ class ProviderTenantAllView(TenantAllView):
 
     @property
     def is_displayed(self):
-        return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
-            self.entities.title.text == '{} (All Cloud Tenants)'.format(
-                self.context['object'].name)
-        )
+        def get_provider_navigation(provider):
+            # Return navigation path based on a type of a provider
+            # TODO: Store navigation target as class attribute in Provider classes
+            if getattr(provider, 'name', False) and provider.category == 'cloud':
+                return ['Compute', 'Clouds', 'Providers']
+            elif getattr(provider, 'name', False) and provider.category == 'networks':
+                return ['Networks', 'Providers']
+            return []
+
+        expected_title = '{} (All Cloud Tenants)'
+        obj = self.context['object']
+        is_entity = getattr(obj, 'name', False) and isinstance(obj, BaseEntity)
+        is_filtered = isinstance(obj, BaseCollection) and obj.filters
+        provider = obj.filters.get('parent') or obj.filters.get('provider') if is_filtered else None
+
+        if is_entity:
+            logger.debug('Tenant view context object is assumed to be provider: %r', obj)
+            matched_title = self.entities.title.text == expected_title.format(obj.name)
+            matched_navigation = self.navigation.currently_selected == get_provider_navigation(obj)
+        elif provider and hasattr(provider, 'name'):
+            # filtered collection, use provider object's name and provider object's navigation
+            logger.debug(
+                'Tenant view context object has provider related to view with name attribute: %r',
+                obj.filters
+            )
+            matched_title = self.entities.title.text == expected_title.format(provider.name)
+            matched_navigation = (
+                self.navigation.currently_selected == get_provider_navigation(provider)
+            )
+        else:
+            # not an entity with a name, or a filtered collection
+            matched_title = False
+            matched_navigation = False
+
+        return self.logged_in_as_current_user and matched_navigation and matched_title
 
 
 class TenantDetailsView(TenantView):
@@ -173,7 +203,7 @@ class TenantEditView(TenantView):
 
 
 @attr.s
-class Tenant(BaseEntity, Taggable):
+class Tenant(BaseEntity, Taggable, ValidateStatsMixin):
     """Tenant Class
 
     """
@@ -335,7 +365,17 @@ class TenantAll(CFMENavigateStep):
 @navigator.register(Tenant, 'Details')
 class TenantDetails(CFMENavigateStep):
     VIEW = TenantDetailsView
-    prerequisite = NavigateToAttribute('parent', 'All')
+
+    def prerequisite(self, *args, **kwargs):
+        """
+        Navigate through provider or collection filter if it exists else navigate through collection
+        object """
+        # Here we assume that every tenant has a parent collection
+        filter = self.obj.provider or self.obj.parent.filters.get('parent')
+        if filter:
+            return navigate_to(filter, 'CloudTenants')
+        else:
+            return navigate_to(self.obj.parent, 'All')
 
     def step(self, *args, **kwargs):
         """Navigate to the details page"""

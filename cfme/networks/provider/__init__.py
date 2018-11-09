@@ -2,6 +2,7 @@ import attr
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 
+from cfme.cloud.tenant import ProviderTenantAllView
 from cfme.common import Taggable
 from cfme.common.provider import BaseProvider, prepare_endpoints
 from cfme.exceptions import DestinationNotFound
@@ -364,6 +365,20 @@ class Edit(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.configuration.item_select('Edit Selected Network Provider')
+
+
+@navigator.register(NetworkProvider, 'CloudTenants')
+class OpenCloudTenants(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+    VIEW = ProviderTenantAllView
+
+    def step(self):
+        item = 'Cloud Tenants'
+        item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
+        if item_amt > 0:
+            self.prerequisite_view.entities.relationships.click_at(item)
+        else:
+            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
 
 
 @navigator.register(NetworkProvider, 'CloudSubnets')
