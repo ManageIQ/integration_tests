@@ -9,6 +9,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.services.myservice import MyService
 from cfme.utils.appliance import ViaREST, ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.update import update
 
@@ -202,6 +203,7 @@ def test_generic_objects_with_buttons_ui(appliance, request, add_generic_object_
             assert view.toolbar.button(generic_button.name).custom_button.is_displayed
 
 
+@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=['5.9'])])
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'collection'])
 def test_generic_objects_tag_ui(appliance, generic_object, tag_place):
     """Tests assigning and unassigning tags using UI.
