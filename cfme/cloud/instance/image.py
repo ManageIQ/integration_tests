@@ -66,12 +66,16 @@ class ImageProviderAllView(CloudInstanceView):
 
     @property
     def is_displayed(self):
-        expected_title = 'Images under Provider "{}"'.format(self.context['object'].provider.name)
+        try:
+            provider = self.context['object'].provider.name
+        except AttributeError:
+            provider = self.context['object'].filters['provider'].name
+        expected_title = 'Images under Provider "{}"'.format(provider)
         accordion = self.sidebar.images_by_provider
         return (
             self.in_cloud_instance and
             accordion.is_opened and
-            accordion.tree.selected_item.text == self.context['object'].provider.name and
+            accordion.tree.selected_item.text == provider and
             self.entities.title.text == expected_title)
 
 
