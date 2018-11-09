@@ -103,7 +103,7 @@ class CatalogBundlesCollection(BaseCollection):
                 "StateMachines", "ServiceProvision_Template", "CatalogItemInitialization")
             view.apply_button.click()
         for cat_item in catalog_items:
-            view.resources.fill({'select_resource': cat_item.name})
+            view.resources.fill({'select_resource': cat_item})
         view.add_button.click()
         view.flash.assert_success_message('Catalog Bundle "{}" was added'.format(name))
         view = self.create_view(AllCatalogItemView)

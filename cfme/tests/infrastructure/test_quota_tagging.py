@@ -89,11 +89,9 @@ def catalog_item(appliance, provider, dialog, catalog, prov_data):
 
 @pytest.fixture
 def catalog_bundle(appliance, dialog, catalog, catalog_item):
-    catalog_item_list = []
-    catalog_item_list.append(catalog_item)
     collection = appliance.collections.catalog_bundles
     catalog_bundle = collection.create(name='test_{}'.format(fauxfactory.gen_alphanumeric()),
-                                       catalog_items=catalog_item_list,
+                                       catalog_items=[catalog_item.name],
                                        description='test catalog bundle',
                                        display_in=True,
                                        catalog=catalog,
