@@ -8,9 +8,10 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 
 from cfme.common import Taggable
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.update import Updateable
-from cfme.utils.pretty import Pretty
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
 
 from . import ServicesCatalogView
 
@@ -54,7 +55,7 @@ class DetailsCatalogView(ServicesCatalogView):
     def is_displayed(self):
         return (
             self.in_explorer and self.catalogs.is_opened and
-            self.title.text == 'Catalog "{}"'.format(self.context['object'].name)
+            self.title.text == 'Catalog "{}"'.format(self.context["object"].name)
         )
 
 
@@ -66,7 +67,7 @@ class AddCatalogView(CatalogForm):
     def is_displayed(self):
         return (
             self.in_explorer and self.catalogs.is_opened and
-            self.title.text == "Adding a new Catalog"
+            self.title.text == 'Adding a new Catalog'
         )
 
 
@@ -98,7 +99,7 @@ class Catalog(BaseEntity, Updateable, Pretty, Taggable):
         else:
             view.cancel_button.click()
         view = self.create_view(DetailsCatalogView, override=updates)
-        assert view.is_displayed
+        assert view.wait_displayed()
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
