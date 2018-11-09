@@ -58,6 +58,13 @@ def candu_tag_vm(provider, enable_candu_category):
     """Add location tag to VM if not available"""
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate('cu-24x7', provider)
+    if not vm.exists:
+        pytest.skip(
+            "{vm_name} Utilization VM not exist on {prov}".format(
+                vm_name=vm.name, prov=provider.name
+            )
+        )
+
     available_tags = vm.get_tags()
     tag = enable_candu_category.collections.tags.instantiate(name="london", display_name="London")
 
