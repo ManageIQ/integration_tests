@@ -334,7 +334,7 @@ class ClusterCollection(BaseCollection):
             providers_db = {
                 prov.id: get_crud_by_name(prov.name)
                 for prov in providers
-                if not getattr(prov, "parent_ems_id", False)
+                if not (getattr(prov, "parent_ems_id", False) and ("Manager" in prov.name))
             }
             cluster_obj = [
                 self.instantiate(name=cluster.name, provider=providers_db[cluster.ems_id])

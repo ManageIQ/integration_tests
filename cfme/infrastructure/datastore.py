@@ -328,13 +328,14 @@ class DatastoreCollection(BaseCollection):
     def all(self):
         "Returning all datastore objects with filtering support as per provider"
         provider = self.filters.get("provider")
-        datastores = self.appliance.rest_api.collections.data_stores
-        datastores = datastores.all_include_attributes(attributes=["hosts"])
-        datastore_db = {ds.name: ds.hosts[0]["ems_id"] for ds in datastores}
+        datastores = self.appliance.rest_api.collections.data_stores.all_include_attributes(
+            attributes=["hosts"]
+        )
+        datastore_db = {ds.name: ds.hosts[0]["ems_id"] for ds in datastores if ds.hosts}
         provider_db = {
             prov.id: get_crud_by_name(prov.name)
             for prov in self.appliance.rest_api.collections.providers.all
-            if not getattr(prov, "parent_ems_id", False)
+            if not (getattr(prov, "parent_ems_id", False) and ("Manager" in prov.name))
         }
         datastores = [
             self.instantiate(name=name, provider=provider_db[prov_id])
