@@ -239,7 +239,7 @@ def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_ro
     ],
     ids=['cpu', 'memory', 'storage', 'vm', 'template']
 )
-def test_setting_child_quota_more_than_parent(tenants_setup, parent_quota, child_quota,
+def test_setting_child_quota_more_than_parent(appliance, tenants_setup, parent_quota, child_quota,
                                               flash_text):
     test_parent, test_child = tenants_setup
     view = navigate_to(test_parent, 'ManageQuotas')
@@ -250,9 +250,17 @@ def test_setting_child_quota_more_than_parent(tenants_setup, parent_quota, child
     view.form.fill({'{}_cb'.format(child_quota[0]): True,
                     '{}_txt'.format(child_quota[0]): child_quota[1]})
     view.save_button.click()
-    view.flash.assert_message('Error when saving tenant quota: Validation failed: {} allocated '
-                              'quota is over allocated, parent tenant does not have enough quota'.
-                              format(flash_text))
+    message = (
+        "Error when saving tenant quota: Validation failed:"
+        if appliance.version < "5.10"
+        else "Error when saving tenant quota: Validation failed: TenantQuota:"
+    )
+    view.flash.assert_message(
+        "{message} {flash_text} allocated "
+        "quota is over allocated, parent tenant does not have enough quota".format(
+            message=message, flash_text=flash_text
+        )
+    )
 
 
 @pytest.mark.long_running
