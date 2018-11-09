@@ -269,7 +269,7 @@ def ssa_single_vm(request, local_setup_provider, enable_smartproxy_affinity, pro
 
             do_vm_provisioning(vm_name=vm_name, appliance=appliance, provider=provider,
                                provisioning_data=provisioning_data, template_name=template_name,
-                               request=request, smtp_test=False, num_sec=2500)
+                               request=request, num_sec=2500)
         else:
             deploy_template(vm.provider.key, vm_name, template_name, timeout=2500)
             vm.wait_to_appear(timeout=900, load_details=False)
