@@ -7,7 +7,7 @@ from cfme.exceptions import VmOrInstanceNotFound
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
-
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     test_requirements.tag,
@@ -117,6 +117,7 @@ def check_vm_visibility(user_restricted, appliance):
 
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9',
                          reason="Tag expression starts from 5.9 version")
+@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
 def test_tag_expression_and_condition(
     request, vms_for_tagging, location_tag,
@@ -145,6 +146,7 @@ def test_tag_expression_and_condition(
 
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9',
                          reason="Tag expression starts from 5.9 version")
+@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
 def test_tag_expression_or_condition(
     request, vms_for_tagging, location_tag,
@@ -173,6 +175,7 @@ def test_tag_expression_or_condition(
 
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9',
                          reason="Tag expression starts from 5.9 version")
+@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
 def test_tag_expression_not_condition(
     request, vms_for_tagging, location_tag,
@@ -197,6 +200,7 @@ def test_tag_expression_not_condition(
 
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9',
                          reason="Tag expression starts from 5.9 version")
+@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
 def test_tag_expression_not_and_condition(
         request, vms_for_tagging, location_tag,
@@ -232,6 +236,7 @@ def test_tag_expression_not_and_condition(
 
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9',
                          reason="Tag expression starts from 5.9 version")
+@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
 def test_tag_expression_not_or_condition(
     request, vms_for_tagging, location_tag, service_level_tag, group_with_tag_expression,

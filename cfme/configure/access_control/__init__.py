@@ -872,7 +872,7 @@ class GroupCollection(BaseCollection):
         except AssertionError:
             pass
 
-        wait_for(lambda: view.is_displayed, delay=1, timeout=10)
+        view.wait_displayed()
         view.flash.assert_success_message(flash_message)
         assert view.is_displayed
 

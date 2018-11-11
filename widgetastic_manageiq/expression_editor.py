@@ -159,7 +159,7 @@ class ExpressionEditor(View, Pretty):
 
     def click_commit(self):
         self.browser.click(self.COMMIT)
-        wait_for(lambda: self.UNDO.is_displayed, delay=2)
+        self.UNDO.wait_displayed()
 
     def click_discard(self):
         self.browser.click(self.DISCARD)
@@ -192,6 +192,8 @@ class ExpressionEditor(View, Pretty):
             fail_condition=[],
             timeout=5,
         )
+        # els[0] is the result of wait_for and els[1] is the duration
+        # select first element (first_expression) of the elements in the result
         self.browser.click(els[0][0])
 
     def select_expression_by_text(self, text):
