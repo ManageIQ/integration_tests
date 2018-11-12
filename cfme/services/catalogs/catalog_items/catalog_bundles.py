@@ -48,7 +48,7 @@ class EditCatalogBundleView(CatalogBundleFormView):
         return (
             self.in_explorer and
             self.catalog_items.is_opened and
-            self.title.text == 'Editing Catalog Bundle "{}"'.format(self.obj.name)
+            self.title.text == 'Editing Catalog Bundle "{}"'.format(self.context["object"].name)
         )
 
 
