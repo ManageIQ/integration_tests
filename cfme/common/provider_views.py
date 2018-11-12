@@ -249,11 +249,14 @@ class ProviderTemplatesView(ProviderVmsTemplatesView):
 
     @property
     def is_displayed(self):
-        title = '{name} (All Miq Templates)'.format(name=self.context['object'].name)
+        if self.browser.product_version < '5.10':
+            title = '{name} (All VM Templates)'.format(name=self.context['object'].name)
+        else:
+            title = '{name} (All VM Templates and Images)'.format(name=self.context['object'].name)
+
         return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
                 self.title.text == title)
-
 
 class ProviderVmsView(ProviderVmsTemplatesView):
 
