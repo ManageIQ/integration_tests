@@ -86,6 +86,7 @@ class ConditionFormCommon(ControlExplorerView):
 
 class NewConditionView(ConditionFormCommon):
     add_button = Button("Add")
+    scope_button = Button("Define Scope")
 
     @property
     def is_displayed(self):
@@ -111,7 +112,7 @@ class EditConditionView(ConditionFormCommon):
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == '{} "{}"'.format(self.context["object"].FIELD_VALUE,
+            self.title.text == 'Editing {} Condition "{}"'.format(self.context["object"].FIELD_VALUE,
                 self.context["object"].description) and
             self.conditions.is_opened and
             self.conditions.tree.currently_selected == [
@@ -183,8 +184,7 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
         view.fill(updates)
         view.save_button.click()
         view = self.create_view(ConditionDetailsView, override=updates)
-        wait_for(lambda: view.is_displayed, timeout=10,
-            message="wait until ConditionDetailsView will be displayed")
+        view.wait_displayed()
         view.flash.assert_success_message(
             'Condition "{}" was saved'.format(updates.get("description", self.description)))
 
@@ -238,12 +238,20 @@ class ConditionCollection(BaseCollection):
         condition = condition_class(self, description, expression=expression, scope=scope,
             notes=notes)
         view = navigate_to(condition, "Add")
+        # first fill description, expression, and notes
         view.fill({
             "description": condition.description,
             "expression": condition.expression,
-            "scope": condition.scope,
             "notes": condition.notes
         })
+        view.wait_displayed()
+        # then fill scope if it is present
+        if scope is not None:
+            view.scope_button.click()
+            view.fill({
+                "scope": condition.scope
+            })
+            view.wait_displayed()
         view.add_button.click()
         view = condition.create_view(ConditionDetailsView)
         assert view.is_displayed
