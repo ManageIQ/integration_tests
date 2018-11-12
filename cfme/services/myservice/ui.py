@@ -32,6 +32,7 @@ class MyServiceToolbar(View):
 class MyServicesView(BaseLoggedInPage):
     toolbar = View.nested(MyServiceToolbar)
     search = View.nested(Search)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
     @property
     def in_myservices(self):
@@ -338,6 +339,9 @@ class MyServiceAll(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Services', 'My Services')
+
+    def resetter(self, *args, **kwargs):
+        self.view.myservice.tree.click_path('Active Services')
 
 
 @navigator.register(MyService, 'Details')
