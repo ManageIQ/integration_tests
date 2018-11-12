@@ -293,7 +293,6 @@ def vm_off(provider, vm):
 
 
 @pytest.mark.rhel_testing
-@pytest.mark.rhv2
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
@@ -320,7 +319,6 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_
         pytest.fail("CFME did not power on the VM {}".format(vm.name))
 
 
-@pytest.mark.rhv2
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
@@ -347,7 +345,6 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
         pytest.fail("CFME did not power off the VM {}".format(vm.name))
 
 
-@pytest.mark.rhv2
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
@@ -373,7 +370,6 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, poli
         pytest.fail("CFME did not suspend the VM {}".format(vm.name))
 
 
-@pytest.mark.rhv3
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
@@ -401,7 +397,6 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
         pytest.fail("CFME did not prevent starting of the VM {}".format(vm.name))
 
 
-@pytest.mark.rhv3
 @pytest.mark.meta(blockers=[1439331])
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
@@ -452,7 +447,6 @@ def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, p
         pytest.fail("CFME did not prevent analysing the VM {}".format(vm.name))
 
 
-@pytest.mark.rhv3
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
 def test_action_prevent_host_ssa(request, appliance, host, host_policy):
     """Tests preventing Smart State Analysis on a host.
@@ -490,7 +484,6 @@ def test_action_prevent_host_ssa(request, appliance, host, host_policy):
         pytest.fail("CFME did not prevent analysing the Host {}".format(host.name))
 
 
-@pytest.mark.rhv3
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
@@ -530,7 +523,6 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testi
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-@pytest.mark.rhv3
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
@@ -733,7 +725,6 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
 #     wait_for(search_logs, num_sec=180, message="log search")
 
 
-@pytest.mark.rhv3
 # Purely custom actions
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
@@ -773,7 +764,6 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, appliance):
         pytest.fail("Tags were not assigned!")
 
 
-@pytest.mark.rhv3
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
@@ -861,7 +851,6 @@ def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, poli
     assert clone_request.status == "Error"
 
 
-@pytest.mark.rhv3
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
