@@ -240,3 +240,41 @@ def test_button_required(appliance, field):
     view.add_button.click()
     view.flash.assert_message(msg)
     view.cancel_button.click()
+
+
+@pytest.mark.tier(3)
+def test_open_url_availability(appliance):
+    """Test open URL option should only available for Single display.
+
+    Prerequisities:
+        * Button Group
+
+    Steps:
+        * Create a Button with other than Single display options
+        * Assert flash message.
+    """
+
+    unassigned_gp = appliance.collections.button_groups.instantiate(
+        text="[Unassigned Buttons]", hover="Unassigned buttons", type="Provider"
+    )
+    button_coll = appliance.collections.buttons
+    button_coll.group = unassigned_gp  # Need for supporting navigation
+
+    view = navigate_to(button_coll, "Add")
+    view.fill(
+        {
+            "options": {
+                "text": "test_open_url",
+                "hover": "Open Url Test",
+                "image": "fa-user",
+                "open_url": True,
+            },
+            "advanced": {"system": "Request", "request": "InspectMe"},
+        }
+    )
+
+    for display in ["List", "Single and list"]:
+        view.options.display_for.fill(display)
+        view.add_button.click()
+        view.flash.assert_message("URL can be opened only by buttons for a single entity")
+    view.cancel_button.click()
