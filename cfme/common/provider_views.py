@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
+from widgetastic.utils import Version
 
 from widgetastic_patternfly import BreadCrumb, Dropdown, BootstrapSelect
 from widgetastic.exceptions import NoSuchElementException
@@ -7,6 +8,7 @@ from widgetastic.widget import View, Text, ConditionalSwitchableView
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.host_views import HostEntitiesView
+from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import (
     ParametrizedSummaryTable,
     Button,
@@ -249,14 +251,14 @@ class ProviderTemplatesView(ProviderVmsTemplatesView):
 
     @property
     def is_displayed(self):
-        if self.browser.product_version < '5.10':
-            title = '{name} (All VM Templates)'.format(name=self.context['object'].name)
-        else:
-            title = '{name} (All VM Templates and Images)'.format(name=self.context['object'].name)
-
+        title = VersionPicker({
+            Version.lowest(): '{name} (All VM Templates)'.format(name=self.context['object'].name),
+            '5.10': '{name} (All VM Templates and Images)'.format(name=self.context['object'].name),
+        }).pick(self.extra.appliance.version)
         return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
                 self.title.text == title)
+
 
 class ProviderVmsView(ProviderVmsTemplatesView):
 
