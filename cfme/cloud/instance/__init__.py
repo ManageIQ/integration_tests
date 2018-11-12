@@ -104,7 +104,7 @@ class InstanceProviderAllView(CloudInstanceView):
         return (
             self.in_cloud_instance and
             self.entities.title.text == 'Instances under Provider "{}"'
-                               .format(self.context['object'].provider.name) and
+                               .format(self.context['object'].filters.get('provider').name) and
             self.sidebar.instances_by_provider.is_opened)
 
     toolbar = View.nested(VMToolbar)
