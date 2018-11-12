@@ -12,6 +12,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import DestinationNotFound, ItemNotFound, displayed_not_implemented
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView
 
@@ -502,6 +503,12 @@ class EditTagsFromDetails(CFMENavigateStep):
     def step(self):
         # not for all entities we have select like 'Edit Tags',
         # users, groups, tenants have specific dropdown title
+
+        # To-Do remove this check after BZ fixed
+        if BZ(1648243, forced_streams=["5.9"]).blocks:
+            import pytest
+            pytest.skip("Skipping test due to BZ-1648243")
+
         try:
             self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
         except DropdownItemNotFound:
@@ -524,6 +531,11 @@ class EditTagsFromListCollection(CFMENavigateStep):
             args: pass an entities objects or entities names
             Return: navigation step
         """
+        # To-Do remove this check after BZ fixed
+        if not BZ(1648243, forced_streams=["5.9"]).blocks:
+            import pytest
+            pytest.skip("Skipping test due to BZ-1648243")
+
         if args:
             for entity in args:
                 name = entity.name if isinstance(entity, BaseEntity) else entity
