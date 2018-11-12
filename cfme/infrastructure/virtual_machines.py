@@ -255,10 +255,10 @@ class HostTemplatesOnlyAllView(TemplatesOnlyAllView):
 
     @property
     def is_displayed(self):
-        if self.browser.product_version < "5.9":
-            title = "{} (All Templates)".format(self.context["object"].name)
-        else:
+        if self.browser.product_version < "5.10":
             title = "{} (All VM Templates)".format(self.context["object"].name)
+        else:
+            title = "{} (All VM Templates and Images)".format(self.context["object"].name)
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Hosts'] and
