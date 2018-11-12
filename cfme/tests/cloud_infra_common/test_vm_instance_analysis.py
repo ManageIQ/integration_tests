@@ -161,9 +161,18 @@ def set_hosts_credentials(appliance, request, provider):
 def set_agent_creds(appliance, request, provider):
     version = appliance.version.vstring
     docker_image_name = "simaishi/amazon-ssa:{}".format(version)
-    agent_data = {"ems": {"ems_amazon": {"agent_coordinator": {"agent_label": "test_smartstate",
-                                                               "docker_image": docker_image_name,
-                                                               "docker_registry": "docker.io"}}}}
+    unique_agent = 'test_ssa_agent-{}'.format(fauxfactory.gen_alpha(length=5))
+    agent_data = {
+        "ems": {
+            "ems_amazon": {
+                "agent_coordinator": {
+                    "agent_label": unique_agent,
+                    "docker_image": docker_image_name,
+                    "docker_registry": "docker.io"
+                }
+            }
+        }
+    }
     appliance.update_advanced_settings(agent_data)
 
     # Adding SmartState Docker credentials
