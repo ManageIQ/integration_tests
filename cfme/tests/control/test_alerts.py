@@ -231,7 +231,7 @@ def setup_snmp(appliance):
 
 @pytest.mark.rhv3
 @pytest.mark.meta(blockers=[BZ(1533451,
-                            forced_streams=['5.8', '5.9', 'upstream'],
+                            forced_streams=['5.8', '5.9', '5.10', 'upstream'],
                             unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope="module")
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider, full_template_vm,
