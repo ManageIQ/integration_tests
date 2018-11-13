@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.manager import StorageManagerDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [
@@ -45,6 +46,7 @@ def test_manager_navigation(manager):
     manager.refresh()
 
 
+@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 def test_storage_manager_edit_tag(manager):
     """ Test add and remove tag to storage manager
 
