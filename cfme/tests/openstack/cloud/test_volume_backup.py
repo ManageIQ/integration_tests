@@ -48,6 +48,49 @@ def volume_backup(appliance, provider):
 
 
 @pytest.fixture(scope='function')
+def volume_backup_with_type(appliance, provider):
+    vol_type = provider.mgmt.capi.volume_types.create(name=fauxfactory.gen_alpha())
+    volume_type = appliance.collections.volume_types.instantiate(vol_type.name, provider)
+
+    @wait_for_decorator(delay=10, timeout=300,
+                        message="Waiting for volume type to appear")
+    def volume_type_is_displayed():
+        volume_type.refresh()
+        return volume_type.exists
+
+    volume_collection = appliance.collections.volumes
+    storage_manager = '{} Cinder Manager'.format(provider.name)
+    backup_collection = appliance.collections.volume_backups.filter({'provider': provider})
+
+    # create new volume
+    volume = volume_collection.create(name=fauxfactory.gen_alpha(),
+                                      storage_manager=storage_manager,
+                                      tenant=provider.data['provisioning']['cloud_tenant'],
+                                      volume_type=volume_type.name,
+                                      size=VOLUME_SIZE,
+                                      provider=provider)
+
+    # create new backup for crated volume
+    if volume.status == 'available':
+        backup_name = fauxfactory.gen_alpha()
+        volume.create_backup(backup_name)
+        volume_backup = backup_collection.instantiate(backup_name, provider)
+        yield volume_backup
+    else:
+        pytest.skip('Skipping volume backup tests, provider side volume creation fails')
+
+
+    if volume_backup.exists:
+        backup_collection.delete(volume_backup)
+
+    if volume.exists:
+        volume.delete(wait=False)
+
+    if volume_type.exists:
+        provider.mgmt.capi.volume_types.delete(vol_type)
+
+
+@pytest.fixture(scope='function')
 def incremental_backup(volume_backup, provider):
     backup_collection = provider.appliance.collections.volume_backups.filter({'provider': provider})
     volume = volume_backup.appliance.collections.volumes.instantiate(volume_backup.volume, provider)
@@ -134,3 +177,10 @@ def test_incr_backup_of_attached_volume_crud(appliance, provider, request, attac
     wait_for(lambda: not incr_backup_of_attached_volume.exists, delay=5, timeout=600,
              fail_func=incr_backup_of_attached_volume.refresh,
              message='Wait for Backup to disappear')
+
+
+@pytest.mark.rfe
+@pytest.mark.ignore_stream('5.9')
+def test_create_backup_of_volume_with_type(volume_backup_with_type):
+    assert volume_backup_with_type.exists
+    assert volume_backup_with_type.size == VOLUME_SIZE

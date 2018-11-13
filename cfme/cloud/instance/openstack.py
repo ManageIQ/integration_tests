@@ -3,6 +3,9 @@ import attr
 from navmazing import NavigateToSibling
 from widgetastic.widget import View, NoSuchElementException
 from widgetastic_patternfly import Button, BootstrapSelect
+
+from cfme.utils.blockers import BZ
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import CheckboxSelect, Select, Input
 from widgetastic.utils import partial_match
 
@@ -64,8 +67,7 @@ class OpenStackInstance(Instance):
 
     def detach_volume(self, name):
         view = navigate_to(self, 'DetachVolume')
-        view.form.volume.fill(name)
-        view.form.submit_button.click()
+        view.fill({'volume': name})
 
     def reconfigure(self, flavor):
         view = navigate_to(self, 'Reconfigure')
@@ -124,14 +126,21 @@ class AttachVolumeView(CloudInstanceView):
 
 
 class DetachVolumeView(CloudInstanceView):
-    @View.nested
-    class form(View):  # noqa
-        volume = BootstrapSelect('volume_id')
-        submit_button = Button('Submit')
-        cancel_button = Button('Cancel')
+    volume = BootstrapSelect('volume_id')
+    submit_button = Button('Submit')
+    cancel_button = Button('Cancel')
 
     # Only the instance name is displayed, cannot confirm provider
     is_displayed = displayed_not_implemented
+
+    def after_fill(self, was_change):
+        # TODO: Remove this method once BZ1647695 has been fixed
+        self.submit_button.click()
+        if was_change and BZ(1647695, forced_streams=['5.10', 'upstream']).blocks:
+            instance = self.context['object']
+            view = self.browser.create_view(navigator.get_class(instance, 'Details').VIEW)
+            wait_for(lambda: view.entities.title.text == 'Instance "{}"'.format(
+                self.context['object'].name), timeout=20, delay=2)
 
 
 class EvacuateView(CloudInstanceView):
