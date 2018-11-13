@@ -3,7 +3,7 @@ import pytest
 import random
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -12,6 +12,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 def test_object_add_remove_tag(appliance, provider):
     collection = appliance.collections.object_store_objects.filter({'provider': provider})
     all_objects = collection.all()

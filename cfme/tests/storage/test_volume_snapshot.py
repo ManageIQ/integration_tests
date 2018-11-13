@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
 from cfme.storage.volume import VolumeDetailsView, VolumeSnapshotView
@@ -148,6 +149,7 @@ def test_storage_volume_snapshot_crud(volume):
     assert not snapshot.exists
 
 
+@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 @pytest.mark.tier(3)
 def test_storage_volume_snapshot_edit_tag_from_detail(snapshot, tag):
     """ Test tags for snapshot

@@ -5,6 +5,7 @@ import fauxfactory
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.volume import VolumeAllView
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.update import update
 
@@ -100,6 +101,7 @@ def test_storage_volume_crud(appliance, provider):
     assert not volume.exists
 
 
+@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 def test_storage_volume_edit_tag(volume):
     """ Test add and remove tag to storage volume
 
@@ -123,6 +125,7 @@ def test_storage_volume_edit_tag(volume):
     assert not tag_available
 
 
+@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 def test_multiple_cloud_volumes_tag_edit(appliance, soft_assert):
     """Test tag can be added to multiple volumes at once"""
     all_volumes = appliance.collections.volumes.all()

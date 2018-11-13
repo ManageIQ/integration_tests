@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 
@@ -50,6 +51,7 @@ def test_storage_volume_backup_create(backup):
     assert backup.size == STORAGE_SIZE
 
 
+@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 @pytest.mark.tier(3)
 def test_storage_volume_backup_edit_tag_from_detail(backup):
     # add tag with category Department and tag communication

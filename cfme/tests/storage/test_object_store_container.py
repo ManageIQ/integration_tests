@@ -3,7 +3,7 @@ import pytest
 import random
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -20,6 +20,7 @@ def containers(appliance, provider):
     yield containers if containers else pytest.skip("No Containers Available")
 
 
+@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 def test_add_remove_tag(containers):
     container = random.choice(containers)
 
