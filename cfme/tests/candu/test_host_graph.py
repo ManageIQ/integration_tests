@@ -233,18 +233,17 @@ def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_can
     assert graph.is_displayed
 
     def refresh():
+        provider.refresh_provider_relationships()
+        host.capture_historical_data()
         provider.browser.refresh()
-        view.flush_widget_cache()
         view.wait_displayed(timeout='20s')
         view.options.fill(data)
 
     # wait, for specific vm tag data. It take time to reload metrics with specific vm tag.
-    wait_for(lambda: "London" in graph.all_legends,
-    delay=30, timeout=2400, fail_func=refresh)
-    view.wait_displayed(timeout='20s')
+    wait_for(lambda: "London" in graph.all_legends, delay=120, timeout=2100, fail_func=refresh)
 
     graph.zoom_in()
-    view = view.browser.create_view(UtilizationZoomView)
+    view = view.browser.create_view(UtilizationZoomView, wait="20s")
 
     # check for chart and tag London available or not in legend list.
     view.flush_widget_cache()

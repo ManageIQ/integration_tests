@@ -4128,12 +4128,12 @@ class LineChart(Widget, ClickableMixin):
     def zoom_in(self):
         """For zoom in to chart"""
         self.browser.element(self.ZOOM_IN).click()
-        self.parent_browser.wait_for_element(self.ZOOM_OUT, timeout=10)
+        self.parent_browser.wait_for_element(self.ZOOM_OUT, timeout=30)
 
     def zoom_out(self):
         """For zoom out to chart"""
         self.parent_browser.element(self.ZOOM_OUT).click()
-        self.browser.wait_for_element(self.ZOOM_IN, timeout=10)
+        self.browser.wait_for_element(self.ZOOM_IN, timeout=20)
 
     @property
     def title(self):
