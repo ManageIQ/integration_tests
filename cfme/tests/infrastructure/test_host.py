@@ -174,13 +174,24 @@ def test_multiple_host_bad_creds(setup_provider, provider):
     edit_view.cancel_button.click()
 
 
+@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
 def test_tag_host_after_provider_delete(provider, appliance, setup_provider, request):
     """Test if host can be tagged after delete"""
-    host = provider.hosts.all()[0]
+    host_on_provider = provider.hosts.all()[0]
     provider.delete(cancel=False)
     provider.wait_for_delete()
-    tag = host.add_tag()
+    all_hosts = appliance.collections.hosts.all()
+    # need to find the host without the link to the provider,
+    # so the navigation goes Compute -> Infrastructure -> Hosts, not Providers
+    for host in all_hosts:
+        if host.name == host_on_provider.name:
+            host_to_tag = host
+            break
+    try:
+        tag = host_to_tag.add_tag()
+    except NameError:
+        raise pytest.fail("Host not found!")
     request.addfinalizer(lambda: host.remove_tag(tag))
 
 
