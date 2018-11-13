@@ -33,8 +33,7 @@ pytestmark = [
 
 @pytest.mark.rhel_testing
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[BZ(1633540, forced_streams=['5.10'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.meta(blockers=[BZ(1646925, forced_streams=['5.10'])])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_service):
     """Test Myservice crud in SSUI.
