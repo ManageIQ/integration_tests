@@ -13,7 +13,6 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -27,11 +26,13 @@ from wrapanapi import VmState
 pf1 = ProviderFilter(classes=[InfraProvider])
 pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)
 
-CANDU_PROVIDER_TYPES = [VMwareProvider]  # TODO: rhevm
+CANDU_PROVIDER_TYPES = [VMwareProvider]
 
+# note: RHV provider is not supported for alerts via the Cloudforms support matrix
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+automate", "+smartproxy", "+notifier"]),
+    pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider)),
     pytest.mark.usefixtures("setup_provider_modscope"),
     pytest.mark.tier(3),
     test_requirements.alert
@@ -230,9 +231,6 @@ def setup_snmp(appliance):
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1533451,
-                            forced_streams=['5.8', '5.9', 'upstream'],
-                            unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope="module")
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider, full_template_vm,
         smtp_test, alert_collection, setup_for_alerts):
