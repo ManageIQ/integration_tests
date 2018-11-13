@@ -18,16 +18,16 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 LoginOption = namedtuple('LoginOption', ['name', 'option', 'index'])
 TZ = namedtuple('TimeZone', ['name', 'option'])
 tzs = [
-    TZ('Africa/Abidjan', ('1', '1')),
-    TZ('America/Argentina/Buenos_Aires', ('2', '6', '1')),
-    TZ('Antarctica/Casey', ('3', 'q', '1')),
-    TZ('Arctic/Longyearbyen', ('4', 'q', '1')),
-    TZ('Asia/Aden', ('5', '1')),
-    TZ('Atlantic/Azores', ('6', 'q', '1')),
-    TZ('Australia/Adelaide', ('7', 'q', '1')),
-    TZ('Europe/Amsterdam', ('8', '1')),
-    TZ('Indian/Antananarivo', ('9', 'q', '1')),
-    TZ('Pacific/Apia', ('10', '1')),
+    TZ('Africa/Abidjan', ('1', 'q', '1')),
+    TZ('America/Argentina/Buenos_Aires', ('2', 'q', '6', '1')),
+    TZ('Antarctica/Casey', ('3', '1')),
+    TZ('Arctic/Longyearbyen', ('4', '1')),
+    TZ('Asia/Aden', ('5', 'q', '1')),
+    TZ('Atlantic/Azores', ('6', '1')),
+    TZ('Australia/Adelaide', ('7', '1')),
+    TZ('Europe/Amsterdam', ('8', 'q', '1')),
+    TZ('Indian/Antananarivo', ('9', '1')),
+    TZ('Pacific/Apia', ('10', 'q', '1')),
     TZ('UTC', ('11',))
 ]
 RETURN = ''
@@ -37,7 +37,6 @@ ext_auth_options = [
     LoginOption('saml', 'saml_enabled', '2'),
     LoginOption('local_login', 'local_login_disabled', '3')
 ]
-
 
 @pytest.mark.rhel_testing
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
@@ -56,16 +55,14 @@ def test_appliance_console(appliance):
 
 @pytest.mark.rhel_testing
 def test_appliance_console_set_hostname(configured_appliance):
-    """ Commands:
-    1. 'ap' launch appliance_console,
-    2. '' clear info screen,
-    3. '1' loads network settings,
-    4. '5' gives access to set hostname,
-    5. 'hostname' sets new hostname."""
+    """ Test setting the hostname. """
 
     hostname = 'test.example.com'
-    command_set = ('ap', '', '1', '5', hostname,)
-    configured_appliance.appliance_console.run_commands(command_set)
+    (configured_appliance
+        .appliance_console()
+        .advanced_settings()
+        .configure_network()
+        .set_hostname(hostname))
 
     def is_hostname_set(appliance):
         assert appliance.ssh_client.run_command("hostname -f | grep {hostname}"
@@ -79,18 +76,13 @@ def test_appliance_console_set_hostname(configured_appliance):
 @pytest.mark.rhel_testing
 @pytest.mark.parametrize('timezone', tzs, ids=[tz.name for tz in tzs])
 def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modscope):
-    """ Commands:
-    1. 'ap' launch appliance_console,
-    2. '' clear info screen,
-    3. '2' set timezone,
-    4. 'opt' select region,
-    5. 'timezone' selects zone,
-    6. 'y' confirm slection,
-    7. '' finish."""
-    command_set = ('ap', '', '2') + timezone[1] + ('y', '')
-    temp_appliance_preconfig_modscope.appliance_console.run_commands(command_set)
+    """ Test setting various timezones. """
+    (temp_appliance_preconfig_modscope
+        .appliance_console()
+        .advanced_settings()
+        .set_timezone(timezone[1]))
 
-    temp_appliance_preconfig_modscope.appliance_console.timezone_check(timezone)
+    temp_appliance_preconfig_modscope.appliance_console().timezone_check(timezone[0])
 
 
 @pytest.mark.rhel_testing
