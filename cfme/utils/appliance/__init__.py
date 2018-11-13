@@ -22,6 +22,7 @@ import yaml
 from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
+from paramiko_expect import SSHClientInteraction
 from six.moves.urllib.parse import urlparse
 from werkzeug.local import LocalStack, LocalProxy
 from wrapanapi import VmState
@@ -90,26 +91,106 @@ class ApplianceException(Exception):
     pass
 
 
-class ApplianceConsole(object):
+class NavContext(object):
+    def __init__(self, appliance):
+        self.appliance = appliance
+        self.interaction = None
+
+
+class ACNav(object):
+    def __init__(self, ctx, key):
+        self.ctx = ctx
+        self.key = key
+        self.init_next_steps()
+
+    def init_next_steps(self):
+        pass
+
+    def pre_nav_step(self):
+        self.ctx.interaction.send(str(self.key))
+
+    def nav_step(self):
+        pass
+
+    def __call__(self, *args, **kwargs):
+        self.pre_nav_step()
+        self.nav_step(*args, **kwargs)
+        return self
+
+
+class AdvancedSettings(ACNav):
+    def init_next_steps(self):
+        self.configure_network = NetworkConfiguration(self.ctx, 1)
+        self.set_timezone = SetTimezone(self.ctx, 2)
+        if self.ctx.appliance.version < '5.10':
+            self.create_database_backup = CreateDatabaseBackup(self.ctx, 4)
+
+    def nav_step(self):
+        self.ctx.interaction.send('')
+        self.ctx.interaction.expect('Choose the advanced setting: ')
+
+
+class NetworkConfiguration(ACNav):
+    def init_next_steps(self):
+        self.set_dhcp_network_configuration = DHCPNetworkConfiguration(self.ctx, 1)
+        self.set_hostname = SetHostname(self.ctx, 5)
+
+    def nav_step(self):
+        self.ctx.interaction.expect('Choose the network configuration: ')
+
+
+class DHCPNetworkConfiguration(ACNav):
+    def nav_step(self, enable_ipv4_dhcp, enable_ipv6_dhcp):
+        self.ctx.interaction.expect(r'Enable DHCP for IPv4 network configuration\? \(Y/N\): ')
+        self.ctx.interaction.send('Y' if enable_ipv4_dhcp else 'N')
+        self.ctx.interaction.expect(r'Enable DHCP for IPv6 network configuration\? \(Y/N\): ')
+        self.ctx.interaction.send('Y' if enable_ipv6_dhcp else 'N')
+
+
+class SetHostname(ACNav):
+    def nav_step(self, hostname):
+        self.ctx.interaction.expect('Enter the new hostname: |.*|')
+        self.ctx.interaction.send(hostname)
+
+
+class CreateDatabaseBackup(ACNav):
+    def nav_step(self, storage_system):
+        self.ctx.interaction.expect('Choose the backup output storage system: |1|')
+        self.ctx.interaction.send(storage_system)
+
+
+class SetTimezone(ACNav):
+    def nav_step(self, options):
+        self.ctx.interaction.expect('Choose the geographic location: ')
+        for option in options:
+            self.ctx.interaction.send(str(option))
+            self.ctx.interaction.expect('.*')
+        # Answer to 'Change the timezone to .*'
+        self.ctx.interaction.send('Y')
+
+
+class ApplianceConsole(ACNav):
     """ApplianceConsole is used for navigating and running appliance_console commands against an
     appliance."""
 
     def __init__(self, appliance):
         self.appliance = appliance
+        ACNav.__init__(self, NavContext(appliance), 'ap')
+        self.advanced_settings = AdvancedSettings(self.ctx, '')
+
+    def pre_nav_step(self):
+        interaction = SSHClientInteraction(self.ctx.appliance.ssh_client,
+                                           timeout=10, display=True)
+        self.ctx.interaction = interaction
+        super(ApplianceConsole, self).pre_nav_step()
+
+    def nav_step(self):
+        self.ctx.interaction.expect('Press any key to continue.', timeout=60)
 
     def timezone_check(self, timezone):
-        channel = self.appliance.ssh_client.invoke_shell()
-        channel.settimeout(20)
-        channel.send("ap")
-        result = ''
-        try:
-            while True:
-                result += channel.recv(1)
-                if ("{}".format(timezone[0])) in result:
-                    break
-        except socket.timeout:
-            pass
-        logger.debug(result)
+        ia = self.ctx.interaction
+        m = re.search('Timezone: *(.*)$', ia.current_output, re.MULTILINE)
+        assert m.group(1) != timezone
 
     def run_commands(self, commands, autoreturn=True, timeout=10, channel=None):
         if not channel:
@@ -375,9 +456,6 @@ class IPAppliance(object):
         self.openshift_creds = openshift_creds or {}
         self.is_dev = is_dev
         self._user = None
-        self.appliance_console = ApplianceConsole(self)
-        self.appliance_console_cli = ApplianceConsoleCli(self)
-
         if self.openshift_creds:
             self.is_pod = True
         else:
@@ -386,6 +464,9 @@ class IPAppliance(object):
             # only set when given so we can defer to therest api via the
             # cached property
             self.version = Version(version)
+
+        self.appliance_console = ApplianceConsole(self)
+        self.appliance_console_cli = ApplianceConsoleCli(self)
 
     def unregister(self):
         """ unregisters appliance from RHSM/SAT6 """

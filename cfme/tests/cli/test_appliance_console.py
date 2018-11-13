@@ -38,6 +38,7 @@ ext_auth_options = [
     LoginOption('local_login', 'local_login_disabled', '3')
 ]
 
+
 @pytest.mark.rhel_testing
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 @pytest.mark.smoke
