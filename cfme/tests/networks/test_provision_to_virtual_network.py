@@ -7,6 +7,7 @@ from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.networks.provider import NetworkProvider
 from cfme.provisioning import do_vm_provisioning
+from cfme.utils.blockers import BZ, GH
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
 
@@ -41,6 +42,9 @@ def network(provider, appliance):
 
 
 @pytest.mark.rhv1
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8128'),
+    BZ(1633540, forced_streams=['5.9', '5.10'],
+        unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_provision_vm_to_virtual_network(appliance, setup_provider, provider,
                                          request, provisioning, network):
     """ Tests provisioning a vm from a template to a virtual network
