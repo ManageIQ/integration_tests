@@ -78,7 +78,7 @@ def catalog_item(appliance, provider, provisioning, template_name, dialog, catal
                             display_in=True,
                             catalog=catalog,
                             dialog=dialog,
-                            provider_type=provider.category,
+                            provider=provider,
                             field_entry_point=set_default,
                             prov_data=prov_data)
 
@@ -187,7 +187,8 @@ def test_service_cloud_tenant_quota_with_default_entry_point(request, appliance,
                                                              set_roottenant_quota, set_default,
                                                              custom_prov_data, extra_msg,
                                                              template_name, catalog_item):
-    """Test Tenant Quota in UI and SSUI by selecting default entry point
+    """Test Tenant Quota in UI and SSUI by selecting default entry point.
+       Quota has to be checked if its working with default entry point also.
 
     Steps:
     1. Add cloud provider
@@ -204,7 +205,8 @@ def test_service_cloud_tenant_quota_with_default_entry_point(request, appliance,
             service_catalogs.add_to_shopping_cart()
         service_catalogs.order()
     # nav to requests page to check quota validation
-    request_description = 'Provisioning Service [{0}] from [{0}]'.format(catalog_item.name)
+    request_description = "Provisioning Service [{name}] from [{name}]".format(
+        name=catalog_item.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.reason.text == "Quota Exceeded"

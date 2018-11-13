@@ -488,13 +488,13 @@ class CatalogItemsCollection(BaseCollection):
     def instantiate(self, catalog_item_class, *args, **kwargs):
         return catalog_item_class.from_collection(self, *args, **kwargs)
 
-    def create(self, catalog_item_class, provider_type=None, field_entry_point=False, *args,
+    def create(self, catalog_item_class, provider, field_entry_point=False, *args,
                **kwargs):
         """Creates a catalog item in the UI.
 
         Args:
             catalog_item_class: type of a catalog item
-            provider_type: Used to distinguish default entry point path
+            provider: Used to distinguish default entry point path
             field_entry_point: Used to add default entry point
             *args: see the respectful catalog item class
             **kwargs: see the respectful catalog item class
@@ -503,19 +503,20 @@ class CatalogItemsCollection(BaseCollection):
             An instance of catalog_item_class
         """
         cat_item = self.instantiate(catalog_item_class, *args, **kwargs)
-        view = navigate_to(cat_item, 'Add')
+        view = navigate_to(cat_item, "Add")
         if field_entry_point:
-            if provider_type == 'cloud':
-                view.basic_info.field_entry_point.fill("")
-                view.basic_info.modal.tree.click_path('Datastore', 'ManageIQ (Locked)', 'Cloud',
-                                                      'VM', 'Provisioning', 'StateMachines',
-                                                      'ProvisionRequestApproval', 'Default')
-            elif provider_type == 'infra':
-                view.basic_info.field_entry_point.fill("")
-                view.basic_info.modal.tree.click_path('Datastore', 'ManageIQ (Locked)',
-                                                      'Infrastructure', 'VM', 'Provisioning',
-                                                      'StateMachines', 'ProvisionRequestApproval',
-                                                      'Default')
+            prov_type = "Cloud" if provider.category == "cloud" else "Infrastructure"
+            view.basic_info.field_entry_point.fill("")
+            view.basic_info.modal.tree.click_path(
+                "Datastore",
+                "ManageIQ (Locked)",
+                prov_type,
+                "VM",
+                "Provisioning",
+                "StateMachines",
+                "ProvisionRequestApproval",
+                "Default",
+            )
             view.basic_info.modal.include_domain.fill(True)
             view.basic_info.modal.apply.click()
         view.fill(cat_item.fill_dict)
