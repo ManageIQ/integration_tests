@@ -11,46 +11,46 @@ class ACNav(object):
     def __init__(self, ctx, key):
         self.ctx = ctx
         self.key = key
-        self.init_next_steps()
+        self.init_options()
 
-    def init_next_steps(self):
+    def init_options(self):
         pass
 
-    def pre_nav_step(self):
+    def pre_menu_step(self):
         self.ctx.interaction.send(str(self.key))
 
-    def nav_step(self):
+    def menu_step(self):
         pass
 
     def __call__(self, *args, **kwargs):
-        self.pre_nav_step()
-        self.nav_step(*args, **kwargs)
+        self.pre_menu_step()
+        self.menu_step(*args, **kwargs)
         return self
 
 
 class AdvancedSettings(ACNav):
-    def init_next_steps(self):
+    def init_options(self):
         self.configure_network = NetworkConfiguration(self.ctx, 1)
         self.set_timezone = SetTimezone(self.ctx, 2)
         if self.ctx.appliance.version < '5.10':
             self.create_database_backup = CreateDatabaseBackup(self.ctx, 4)
 
-    def nav_step(self):
+    def menu_step(self):
         self.ctx.interaction.send('')
         self.ctx.interaction.expect('Choose the advanced setting: ')
 
 
 class NetworkConfiguration(ACNav):
-    def init_next_steps(self):
+    def init_options(self):
         self.set_dhcp_network_configuration = DHCPNetworkConfiguration(self.ctx, 1)
         self.set_hostname = SetHostname(self.ctx, 5)
 
-    def nav_step(self):
+    def menu_step(self):
         self.ctx.interaction.expect('Choose the network configuration: ')
 
 
 class DHCPNetworkConfiguration(ACNav):
-    def nav_step(self, enable_ipv4_dhcp, enable_ipv6_dhcp):
+    def menu_step(self, enable_ipv4_dhcp, enable_ipv6_dhcp):
         self.ctx.interaction.expect(r'Enable DHCP for IPv4 network configuration\? \(Y/N\): ')
         self.ctx.interaction.send('Y' if enable_ipv4_dhcp else 'N')
         self.ctx.interaction.expect(r'Enable DHCP for IPv6 network configuration\? \(Y/N\): ')
@@ -58,19 +58,19 @@ class DHCPNetworkConfiguration(ACNav):
 
 
 class SetHostname(ACNav):
-    def nav_step(self, hostname):
+    def menu_step(self, hostname):
         self.ctx.interaction.expect('Enter the new hostname: |.*|')
         self.ctx.interaction.send(hostname)
 
 
 class CreateDatabaseBackup(ACNav):
-    def nav_step(self, storage_system):
+    def menu_step(self, storage_system):
         self.ctx.interaction.expect('Choose the backup output storage system: |1|')
         self.ctx.interaction.send(storage_system)
 
 
 class SetTimezone(ACNav):
-    def nav_step(self, options):
+    def menu_step(self, options):
         self.ctx.interaction.expect('Choose the geographic location: ')
         for option in options:
             self.ctx.interaction.send(str(option))
@@ -80,16 +80,16 @@ class SetTimezone(ACNav):
 
 
 class ConfigureDatabase(ACNav):
-    def init_next_steps(self):
+    def init_options(self):
         self.set_dhcp_network_configuration = DHCPNetworkConfiguration(self.ctx, 1)
         self.set_hostname = SetHostname(self.ctx, 5)
 
-    def nav_step(self):
+    def menu_step(self):
         self.ctx.interaction.expect('Choose the database operation: ')
 
 
 class CreateInternalDatabase(ACNav):
-    def nav_step(self, disk_option):
+    def menu_step(self, disk_option):
         self.ctx.interaction.expect('Choose the database disk: |1|')
         self.ctx.interaction.send(str(disk_option))
 
@@ -103,13 +103,13 @@ class ApplianceConsole(ACNav):
         ACNav.__init__(self, NavContext(appliance), 'ap')
         self.advanced_settings = AdvancedSettings(self.ctx, '')
 
-    def pre_nav_step(self):
+    def pre_menu_step(self):
         interaction = SSHClientInteraction(self.ctx.appliance.ssh_client,
                                            timeout=10, display=True)
         self.ctx.interaction = interaction
-        super(ApplianceConsole, self).pre_nav_step()
+        super(ApplianceConsole, self).pre_menu_step()
 
-    def nav_step(self):
+    def menu_step(self):
         self.ctx.interaction.expect('Press any key to continue.', timeout=60)
 
     def timezone_check(self, timezone):
