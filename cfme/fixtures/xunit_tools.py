@@ -20,7 +20,6 @@ compiled_whitelist = re.compile('(' + ')|('.join(whitelist) + ')')
 
 
 blacklist = [
-    'cfme/tests/containers/',
     'cfme/tests/openstack/',
     'hawkular',
     r'\[.*rhos',
@@ -220,6 +219,7 @@ def testrun_gen(tests, filename, config, collectonly=True):
         'testrun-title': config.getoption('xmls_testrun_title') or xunit.get('testrun_title'),
         'testrun-id': config.getoption('xmls_testrun_id') or xunit.get('testrun_id'),
         'project-id': xunit['project_id'],
+        'group-id': xunit.get('group_id'),
         'dry-run': xunit.get('dry_run', False),
         'testrun-status-id': xunit['testrun_status_id'],
         'lookup-method': xunit['lookup_method']
