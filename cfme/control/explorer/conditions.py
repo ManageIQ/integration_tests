@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import attr
-from wait_for import wait_for
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, TextInput, Widget
@@ -77,8 +76,8 @@ class ConditionFormCommon(ControlExplorerView):
 
     title = Text("#explorer_title_text")
     description = Input(name="description")
-    scope = ExpressionEditor("//img[@alt='Edit this Scope']")
-    expression = ExpressionEditor("//img[@alt='Edit this Expression']")
+    scope = ExpressionEditor("//button[normalize-space(.)='Define Scope']")
+    expression = ExpressionEditor("//button[normalize-space(.)='Define Expression']")
     notes = TextInput(name="notes")
 
     cancel_button = Button("Cancel")
@@ -86,7 +85,6 @@ class ConditionFormCommon(ControlExplorerView):
 
 class NewConditionView(ConditionFormCommon):
     add_button = Button("Add")
-    scope_button = Button("Define Scope")
 
     @property
     def is_displayed(self):
@@ -102,6 +100,21 @@ class NewConditionView(ConditionFormCommon):
         )
 
 
+class ConditionClassAllView(ControlExplorerView):
+    title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_control_explorer and
+            self.title.text == "All {} Conditions".format(self.context["object"].FIELD_VALUE) and
+            self.conditions.is_opened and
+            self.conditions.tree.currently_selected == [
+                "All Conditions","{} Conditions".format(self.context["object"].TREE_NODE)
+            ]
+        )
+
+
 class EditConditionView(ConditionFormCommon):
     title = Text("#explorer_title_text")
 
@@ -112,8 +125,10 @@ class EditConditionView(ConditionFormCommon):
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == 'Editing {} Condition "{}"'.format(self.context["object"].FIELD_VALUE,
-                self.context["object"].description) and
+            self.title.text == 'Editing {} Condition "{}"'.format(
+                self.context["object"].FIELD_VALUE,
+                self.context["object"].description
+            ) and
             self.conditions.is_opened and
             self.conditions.tree.currently_selected == [
                 "All Conditions",
@@ -201,8 +216,8 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            view = self.create_view(ConditionsAllView)
-            assert view.is_displayed
+            view = self.create_view(ConditionClassAllView)
+            view.wait_displayed()
             view.flash.assert_success_message('Condition "{}": Delete successful'.format(
                 self.description))
 
@@ -242,16 +257,10 @@ class ConditionCollection(BaseCollection):
         view.fill({
             "description": condition.description,
             "expression": condition.expression,
+            "scope": condition.scope,
             "notes": condition.notes
         })
         view.wait_displayed()
-        # then fill scope if it is present
-        if scope is not None:
-            view.scope_button.click()
-            view.fill({
-                "scope": condition.scope
-            })
-            view.wait_displayed()
         view.add_button.click()
         view = condition.create_view(ConditionDetailsView)
         assert view.is_displayed
