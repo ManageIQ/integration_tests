@@ -275,6 +275,12 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             view = navigate_to(self, 'DiagnosticsCollectLogs')
         last_collection = self.last_collection
         # Initiate the collection
+        wait_for(lambda: view.toolbar.collect.item_enabled(selection),
+                 delay=20,
+                 timeout=7*60,
+                 handle_exception=True,
+                 fail_condition=False,
+                 fail_func=self.browser.refresh)
         view.toolbar.collect.item_select(selection, handle_alert=None)
         if self.browser.alert_present:
             self.browser.handle_alert(prompt=self.ALERT_PROMPT)
@@ -328,7 +334,6 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
 
 
 # ======================= Server Collect Logs ============================
-
 class ServerCollectLogsToolbar(View):
     edit = Button(title="Edit the Log Depot settings for the selected Server")
     collect = Dropdown('Collect Logs')
@@ -341,13 +346,30 @@ class ServerCollectLogsView(ServerDiagnosticsView):
     last_log_collection = SummaryFormItem('Basic Info', 'Last Log Collection')
     last_log_message = SummaryFormItem('Basic Info', 'Last Message')
 
+    title_template = 'Diagnostics Server "{name} [{sid}]"{current}'
+
+    def form_expected_title(self, name, sid, current):
+        return self.title_template.format(name=name, sid=sid, current=current)
+
     @property
     def is_displayed(self):
+        tree = self.accordions.diagnostics.tree.currently_selected
+        # tree is a list with 3 values: Region, Zone and Server, so we are taking the last
+        # Server value is like 'Server: EVM [1] (current)',
+        # so we are taking the actual name of the server without the 'Server: '
+        selected_server = tree[-1].split(': ')[-1]
+        if 'current' in selected_server:
+            name, sid, current = selected_server.split()
+        else:  # no (current) for slave servers
+            name, sid = selected_server.split()
+            current = None
         return (
             self.in_server_collect_logs and
-            self.title.text == 'Diagnostics Server "{} [{}]" (current)'.format(
-                self.context['object'].appliance.server.name,
-                self.context['object'].appliance.server.sid)
+            # compare with the selection in accordion as it can be a slave server
+            self.title.text ==
+            self.form_expected_title(name=name,
+                                     sid=sid,
+                                     current='' if current is None else ' (current)')
         )
 
     @property
@@ -355,6 +377,35 @@ class ServerCollectLogsView(ServerDiagnosticsView):
         return (
             self.collectlogs.is_displayed and
             self.collectlogs.is_active()
+        )
+
+
+class ServerCollectLogsSlaveView(ServerCollectLogsView):
+    @property
+    def is_displayed(self):
+        # select the first slave server (there's only one slave server in the tests,
+        # but appliance.server.slave_servers returns a list)
+        try:
+            slave_server = self.context['object'].appliance.server.slave_servers[0]
+        except IndexError:
+            return False  # no slave servers - no ServerCollectLogsSlaveView
+        return (
+            self.in_server_collect_logs and
+            self.title.text == self.form_expected_title(name=slave_server.name,
+                                                        sid=slave_server.sid,
+                                                        current='')
+        )
+
+
+class ServerCollectLogsMasterView(ServerCollectLogsView):
+    @property
+    def is_displayed(self):
+        master_server = self.context['object'].appliance.server
+        return (
+            self.in_server_collect_logs and
+            self.title.text == self.form_expected_title(name=master_server.name,
+                                                        sid=master_server.sid,
+                                                        current=' (current)')
         )
 
 
@@ -428,7 +479,7 @@ class ZoneDiagnosticsCollectLogsView(ServerDiagnosticsView):
             self.collectlogs.is_displayed and
             self.collectlogs.is_active and
             self.title.text == 'Diagnostics Zone "{}" (current)'.format(
-                self.context['object'].description))
+                self.context['object'].appliance.default_zone.description))
 
 
 class ZoneCollectLog(CollectLogsBase):
@@ -461,19 +512,26 @@ class DiagnosticsSummary(CFMENavigateStep):
 
 @navigator.register(ServerCollectLog, "DiagnosticsCollectLogs")
 class DiagnosticsCollectLogs(CFMENavigateStep):
-    VIEW = ServerCollectLogsView
+    VIEW = ServerCollectLogsMasterView
     prerequisite = NavigateToAttribute('appliance.server', 'Diagnostics')
 
     def step(self):
+        # navigate to the master server
+        self.prerequisite_view.accordions.diagnostics.tree.click_path(
+            self.appliance.server_region_string(),
+            "Zone: {} (current)".format(self.appliance.server.zone.description),
+            "Server: {} [{}] (current)".format(self.appliance.server.name,
+                                               self.appliance.server.sid))
         self.prerequisite_view.collectlogs.select()
 
 
 @navigator.register(ServerCollectLog, "DiagnosticsCollectLogsSlave")
 class DiagnosticsCollectLogsSlave(CFMENavigateStep):
-    VIEW = ServerCollectLogsView
+    VIEW = ServerCollectLogsSlaveView
     prerequisite = NavigateToAttribute('appliance.server', 'Diagnostics')
 
     def step(self):
+        # navigate to the slave server
         slave_server = self.appliance.server.slave_servers[0]
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.appliance.server_region_string(),
