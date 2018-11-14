@@ -87,18 +87,15 @@ def tags(request, appliance, categories):
 
 @pytest.fixture(scope="module")
 def generic_object_button_group(appliance, definition):
-
     def _generic_object_button_group(create_action=True):
         if create_action:
             with appliance.context.use(ViaUI):
-                group_name = 'button_group_{}'.format(fauxfactory.gen_alphanumeric())
-                group_desc = 'Group_button_description_{}'.format(fauxfactory.gen_alphanumeric())
-                generic_object_button_group = definition.collections.generic_object_groups_buttons\
-                    .create(
-                        name=group_name,
-                        description=group_desc,
-                        image='fa-user'
-                    )
+                group_name = "button_group_{}".format(fauxfactory.gen_alphanumeric())
+                group_desc = "Group_button_description_{}".format(fauxfactory.gen_alphanumeric())
+                groups_buttons = definition.collections.generic_object_groups_buttons
+                generic_object_button_group = groups_buttons.create(
+                    name=group_name, description=group_desc, image="fa-user"
+                )
                 view = appliance.browser.create_view(BaseLoggedInPage)
                 view.flash.assert_no_error()
             return generic_object_button_group
@@ -108,7 +105,6 @@ def generic_object_button_group(appliance, definition):
 
 @pytest.fixture(scope="module")
 def generic_object_button(appliance, generic_object_button_group, definition):
-
     def _generic_object_button(button_group):
         with appliance.context.use(ViaUI):
             button_parent = (
@@ -203,7 +199,7 @@ def test_generic_objects_with_buttons_ui(appliance, request, add_generic_object_
             assert view.toolbar.button(generic_button.name).custom_button.is_displayed
 
 
-@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=['5.9'])])
+@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=['5.9'])])
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'collection'])
 def test_generic_objects_tag_ui(appliance, generic_object, tag_place):
     """Tests assigning and unassigning tags using UI.
