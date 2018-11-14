@@ -1,5 +1,15 @@
 import re
+import logging
+
 from paramiko_expect import SSHClientInteraction
+
+
+logger = logging.getLogger('cfme.application_console')
+
+
+def yorn(sel):
+    return ('Y' if sel else 'N')
+
 
 class NavContext(object):
     def __init__(self, appliance):
@@ -17,7 +27,7 @@ class ACNav(object):
         pass
 
     def pre_menu_step(self):
-        self.ctx.interaction.send(str(self.key))
+        self.send(self.key)
 
     def menu_step(self):
         pass
@@ -27,17 +37,36 @@ class ACNav(object):
         self.menu_step(*args, **kwargs)
         return self
 
+    def expect(self, what, timeout=None):
+        logger.info('Expecting %s', what)
+        if timeout is None:
+            self.ctx.interaction.expect(what)
+        else:
+            self.ctx.interaction.expect(what, timeout)
+
+    def send(self, what):
+        logger.info('Sending %s', what)
+        self.ctx.interaction.send(str(what))
+
 
 class AdvancedSettings(ACNav):
     def init_options(self):
         self.configure_network = NetworkConfiguration(self.ctx, 1)
         self.set_timezone = SetTimezone(self.ctx, 2)
         if self.ctx.appliance.version < '5.10':
+            self.configure_database_without_key = ConfigureDatabaseWithoutKey(self.ctx, 5)
+            self.configure_database_with_key = ConfigureDatabaseWithKey(self.ctx, 5)
+        else:
             self.create_database_backup = CreateDatabaseBackup(self.ctx, 4)
+            self.create_database_dump = CreateDatabaseDump(self.ctx, 5)
+            self.logfile_configuration = LogfileConfiguration(self.ctx, 6)
+            self.configure_database_without_key = ConfigureDatabaseWithoutKey(self.ctx, 7)
+            self.configure_database_with_key = ConfigureDatabaseWithKey(self.ctx, 7)
+
 
     def menu_step(self):
-        self.ctx.interaction.send('')
-        self.ctx.interaction.expect('Choose the advanced setting: ')
+        self.send('')
+        self.expect('Choose the advanced setting: ')
 
 
 class NetworkConfiguration(ACNav):
@@ -46,52 +75,108 @@ class NetworkConfiguration(ACNav):
         self.set_hostname = SetHostname(self.ctx, 5)
 
     def menu_step(self):
-        self.ctx.interaction.expect('Choose the network configuration: ')
+        self.expect('Choose the network configuration: ')
 
 
 class DHCPNetworkConfiguration(ACNav):
     def menu_step(self, enable_ipv4_dhcp, enable_ipv6_dhcp):
-        self.ctx.interaction.expect(r'Enable DHCP for IPv4 network configuration\? \(Y/N\): ')
-        self.ctx.interaction.send('Y' if enable_ipv4_dhcp else 'N')
-        self.ctx.interaction.expect(r'Enable DHCP for IPv6 network configuration\? \(Y/N\): ')
-        self.ctx.interaction.send('Y' if enable_ipv6_dhcp else 'N')
+        self.expect(r'Enable DHCP for IPv4 network configuration\? \(Y/N\): ')
+        self.send(yorn(enable_ipv4_dhcp))
+        self.expect(r'Enable DHCP for IPv6 network configuration\? \(Y/N\): ')
+        self.send(yorn(enable_ipv6_dhcp))
 
 
 class SetHostname(ACNav):
     def menu_step(self, hostname):
-        self.ctx.interaction.expect('Enter the new hostname: |.*|')
-        self.ctx.interaction.send(hostname)
+        self.expect('Enter the new hostname: |.*|')
+        self.send(hostname)
 
 
 class CreateDatabaseBackup(ACNav):
     def menu_step(self, storage_system):
-        self.ctx.interaction.expect('Choose the backup output storage system: |1|')
-        self.ctx.interaction.send(storage_system)
+        self.expect('Choose the backup output storage system: |1|')
+        self.send(storage_system)
+
+
+class CreateDatabaseDump(ACNav):
+    def menu_step(self, storage_system):
+        raise NotImplementedError()
 
 
 class SetTimezone(ACNav):
     def menu_step(self, options):
-        self.ctx.interaction.expect('Choose the geographic location: ')
+        self.expect('Choose the geographic location: ')
         for option in options:
-            self.ctx.interaction.send(str(option))
-            self.ctx.interaction.expect('.*')
+            self.send(option)
+            self.expect('.*')
         # Answer to 'Change the timezone to .*'
-        self.ctx.interaction.send('Y')
+        self.send('Y')
 
 
-class ConfigureDatabase(ACNav):
+class LogfileConfiguration(ACNav):
+    def menu_step(self, storage_system):
+        raise NotImplementedError()
+
+
+class ConfigureDatabaseWithKey(ACNav):
     def init_options(self):
-        self.set_dhcp_network_configuration = DHCPNetworkConfiguration(self.ctx, 1)
-        self.set_hostname = SetHostname(self.ctx, 5)
+        self.create_internal_database = CreateInternalDatabase(self.ctx, 1)
+        self.create_region_in_external_db = CreateRegionInExternalDatabase(self.ctx, 2)
+        self.join_region_in_external_db = JoinRegionInExternalDatabase(self.ctx, 3)
+        self.reset_configured_db = ResetConfiguredDatabase(self.ctx, 4)
 
     def menu_step(self):
-        self.ctx.interaction.expect('Choose the database operation: ')
+        self.expect('Choose the database operation: ')
+
+
+class ConfigureDatabaseWithoutKey(ACNav):
+    def init_options(self):
+        self.create_key = ConfigureDatabaseWithKey(self.ctx, 1)
+        self.fetch_key_from_remote_machine = FetchKeyFromRemoteMachine(self.ctx, 2)
+
+    def menu_step(self):
+        self.expect('Choose the encryption key: |1| ')
+
+
+class FetchKeyFromRemoteMachine(ACNav):
+    def menu_step(self, storage_system):
+        raise NotImplementedError()
 
 
 class CreateInternalDatabase(ACNav):
-    def menu_step(self, disk_option):
-        self.ctx.interaction.expect('Choose the database disk: |1|')
-        self.ctx.interaction.send(str(disk_option))
+    def menu_step(self, disk_option, standalone, region, db_pass):
+        self.expect('Choose the database disk: |1|')
+        self.send(disk_option)
+        self.expect(
+            'Should this appliance run as a standalone database server\?.*'
+            '\(Y\/N\): |N| ')
+        self.send(yorn(standalone))
+        self.expect('Enter the database region number: ')
+        self.send(region)
+        self.expect('Enter the database password on localhost: ')
+        self.send(db_pass)
+        self.expect('Enter the database password again: ')
+        self.send(db_pass)
+        self.expect('Create region complete.*'
+                    'Configuration activated successfully\..*'
+                    'Press any key to continue.', timeout=60)
+        self.send('')
+
+class CreateRegionInExternalDatabase(ACNav):
+    def menu_step(self, storage_system):
+        raise NotImplementedError()
+
+
+class JoinRegionInExternalDatabase(ACNav):
+    def menu_step(self, storage_system):
+        raise NotImplementedError()
+
+
+class ResetConfiguredDatabase(ACNav):
+    def menu_step(self, storage_system):
+        raise NotImplementedError()
+
+
 
 
 class ApplianceConsole(ACNav):
@@ -110,7 +195,7 @@ class ApplianceConsole(ACNav):
         super(ApplianceConsole, self).pre_menu_step()
 
     def menu_step(self):
-        self.ctx.interaction.expect('Press any key to continue.', timeout=60)
+        self.expect('Press any key to continue.', timeout=60)
 
     def timezone_check(self, timezone):
         ia = self.ctx.interaction

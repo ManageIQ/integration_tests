@@ -100,23 +100,15 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
 
 @pytest.mark.rhel_testing
 def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
-    """ Commands:
-    1. 'ap' launch appliance_console,
-    2. '' clear info screen,
-    3. '5' setup db,
-    4. '1' Creates v2_key,
-    5. '1' selects internal db,
-    6. 'y' continue,
-    7. '1' use partition,
-    8. 'n' don't create dedicated db,
-    9. '0' db region number,
-    10. 'pwd' db password,
-    11. 'pwd' confirm db password + wait 360 secs
-    12. '' finish."""
+    """ Test creates internal DB and checks whether the web_ui loads. """
 
     pwd = app_creds['password']
-    command_set = ('ap', '', '5', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 360), '')
-    unconfigured_appliance.appliance_console.run_commands(command_set)
+    disk = (2 if unconfigured_appliance.version > '5.9' else 1)
+    (unconfigured_appliance.appliance_console()
+        .advanced_settings()
+        .configure_database_without_key()
+        .create_key()
+        .create_internal_database(disk, False, 0, pwd))
     unconfigured_appliance.evmserverd.wait_for_running()
     unconfigured_appliance.wait_for_web_ui()
 
