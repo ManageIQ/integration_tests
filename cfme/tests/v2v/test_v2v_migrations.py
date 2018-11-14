@@ -300,7 +300,7 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
     vms = request_details_list.read()
 
     wait_for(func=view.plan_in_progress, message="migration plan is in progress, be patient please",
-     delay=5, num_sec=3600)
+     delay=5, num_sec=4200)
 
     for vm in vms:
         soft_assert(request_details_list.is_successful(vm) and

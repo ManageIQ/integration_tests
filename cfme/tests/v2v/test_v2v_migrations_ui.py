@@ -268,7 +268,6 @@ def test_v2v_ui_set2(request, appliance, v2v_providers, form_data_single_datasto
     view.cancel_btn.click()
 
     view = navigate_to(infrastructure_mapping_collection, 'All')
-    soft_assert(view.infra_mapping_list.get_associated_plans(mapping.name) == plan_name)
     view.wait_displayed()
     soft_assert(view.infra_mapping_list.get_associated_plans_count(mapping.name) ==
      '1 Associated Plan')

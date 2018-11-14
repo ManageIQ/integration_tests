@@ -140,6 +140,9 @@ def get_vm(request, appliance, second_provider, template, datastore='nfs'):
                                     template_name=template(second_provider)['name'])
     power_on_vm = True
     if template.__name__ == 'win10_template':
+        # Need to leave this off, otherwise migration fails
+        # because when migration process tries to power off the VM if it is powered off
+        # and for win10, it hibernates and that state of filesystem is unsupported
         power_on_vm = False
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default",
                               datastore=source_datastore, power_on=power_on_vm)
