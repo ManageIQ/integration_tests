@@ -6,6 +6,7 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.exceptions import DestinationNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -56,6 +57,7 @@ def test_sdn_balancers_detail(provider, network_prov_with_load_balancers):
 
 
 # only one provider is needed for that test, used Azure as it has balancers
+@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.provider([AzureProvider], scope='module', override=True)
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_sdn_balancers_tagvis(check_item_visibility, visibility, network_prov_with_load_balancers):
