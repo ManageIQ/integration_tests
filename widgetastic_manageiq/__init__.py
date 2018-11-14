@@ -2573,14 +2573,19 @@ class TimelinesChart(View):
         node = document_fromstring(evt)
         # lxml doesn't replace <br> with \n in this case. so this has to be done by us
         for br in node.xpath("*//br"):
-            br.tail = "\n" + br.tail if br.tail else "\n"
+            br.tail = "\n" + br.tail.rstrip() if br.tail and br.tail.rstrip() else "\n"
 
         # parsing event and preparing its attributes
         event = self.TimelinesEvent()
         for line in node.text_content().split("\n"):
-            attr_name, attr_val = re.search(r"^(.*?):(.*)$", line).groups()
-            attr_name = attr_name.strip().lower().replace(" ", "_")
-            setattr(event, attr_name, attr_val.strip())
+            try:
+                attr_name, attr_val = re.search(r"^(.*?):(.*)$", line).groups()
+                attr_name = attr_name.strip().lower().replace(" ", "_")
+                setattr(event, attr_name, attr_val.strip())
+            except AttributeError:
+                self.logger.exception(
+                    "Regex search failed for line: {} in TimelinesChart Cell".format(line)
+                )
         event.category = category
         return event
 
