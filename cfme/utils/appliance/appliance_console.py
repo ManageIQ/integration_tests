@@ -162,6 +162,7 @@ class CreateInternalDatabase(ACNav):
                     'Press any key to continue.', timeout=60)
         self.send('')
 
+
 class CreateRegionInExternalDatabase(ACNav):
     def menu_step(self, storage_system):
         raise NotImplementedError()
@@ -173,10 +174,9 @@ class JoinRegionInExternalDatabase(ACNav):
 
 
 class ResetConfiguredDatabase(ACNav):
-    def menu_step(self, storage_system):
-        raise NotImplementedError()
-
-
+    def menu_step(self):
+        self.expect('Are you sure you want to reset the configured database\? \(Y\/N\): ')
+        self.send('Y')
 
 
 class ApplianceConsole(ACNav):

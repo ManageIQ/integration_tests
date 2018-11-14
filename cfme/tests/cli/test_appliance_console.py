@@ -114,18 +114,14 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
 
 
 def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope):
-    """ Commands:
-    1. 'ap' launch appliance_console,
-    2. '' clear info screen,
-    3. '5' setup db,
-    4. '4' reset db,
-    5. 'y' confirm db reset,
-    6. '1' db region number + wait 360 secs,
-    7. '' continue"""
+    """ Test resets the database on preconfigured instance and then checks
+    whether the evmserverd can start."""
 
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
-    command_set = ('ap', '', '5', '4', 'y', TimedCommand('1', 360), '')
-    temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+    (temp_appliance_preconfig_funcscope.appliance_console()
+        .advanced_settings()
+        .configure_database_with_key()
+        .reset_configured_db())
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl start evmserverd')
     temp_appliance_preconfig_funcscope.evmserverd.wait_for_running()
     temp_appliance_preconfig_funcscope.wait_for_web_ui()
