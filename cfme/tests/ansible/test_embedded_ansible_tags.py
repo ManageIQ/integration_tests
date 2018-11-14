@@ -126,6 +126,7 @@ def test_tagvis_ansible_credential(credential, check_item_visibility, visibility
     check_item_visibility(credential, visibility)
 
 
+@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_tagvis_playbook(playbook, check_item_visibility, visibility):
     """ Test for cloud items tagging action from list and details pages """

@@ -52,7 +52,7 @@ class PlaybookDetailsView(PlaybookBaseView):
     @property
     def is_displayed(self):
         return (
-            self.in_ansible_repositories and
+            self.in_ansible_playbooks and
             self.title.text == "{} (Summary)".format(self.context["object"].name)
         )
 
