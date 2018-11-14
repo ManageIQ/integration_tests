@@ -488,20 +488,25 @@ class CatalogItemsCollection(BaseCollection):
     def instantiate(self, catalog_item_class, *args, **kwargs):
         return catalog_item_class.from_collection(self, *args, **kwargs)
 
-    def create(self, catalog_item_class, provider, field_entry_point=False, *args,
-               **kwargs):
+    def create(self, catalog_item_class, *args, **kwargs):
         """Creates a catalog item in the UI.
 
         Args:
             catalog_item_class: type of a catalog item
-            provider: Used to distinguish default entry point path
-            field_entry_point: Used to add default entry point
             *args: see the respectful catalog item class
             **kwargs: see the respectful catalog item class
 
         Returns:
             An instance of catalog_item_class
         """
+        if args:
+            """args should not contain any value while instantiating cat_item.
+               Hence released 'provider' and 'field_entry_point' elements from args tuple."""
+            provider, field_entry_point = args[0], args[1]
+            release_extra_args = list(args)
+            release_extra_args.pop(1)
+            release_extra_args.pop(0)
+            args = tuple(release_extra_args)
         cat_item = self.instantiate(catalog_item_class, *args, **kwargs)
         view = navigate_to(cat_item, "Add")
         if field_entry_point:
