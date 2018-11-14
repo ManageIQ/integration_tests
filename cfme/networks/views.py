@@ -675,7 +675,7 @@ class OneProviderBalancerView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        title = '{name} (All Balancers)'.format(name=self.context['object'].name)
+        title = '{name} (All Load Balancers)'.format(name=self.context['object'].name)
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
                 self.entities.title.text == title)
