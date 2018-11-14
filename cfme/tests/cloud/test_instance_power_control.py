@@ -353,8 +353,12 @@ def test_hard_reboot_unsupported(appliance, testing_instance):
     testing_instance.power_control_from_cfme(option=testing_instance.HARD_REBOOT,
                                              from_details=False)
     # power_control_from_cfme navigated
-    appliance.browser.create_view(BaseLoggedInPage).flash.assert_message(
-        "Reset does not apply to at least one of the selected items")
+    message = (
+        "Reset does not apply to at least one of the selected items"
+        if appliance.version < "5.10"
+        else "Reset action does not apply to selected items"
+    )
+    appliance.browser.create_view(BaseLoggedInPage).flash.assert_message(message)
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider, OpenStackProvider))
