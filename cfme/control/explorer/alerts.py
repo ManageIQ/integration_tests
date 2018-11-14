@@ -7,6 +7,7 @@ from copy import copy
 from navmazing import NavigateToAttribute, NavigateToSibling
 
 from widgetastic.widget import Checkbox, Text, View
+from widgetastic.utils import partial_match
 from widgetastic_manageiq import AlertEmail, SNMPForm, SummaryForm
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
@@ -125,11 +126,14 @@ class AlertDetailsView(ControlExplorerView):
 class Alert(BaseEntity, Updateable, Pretty):
     """Alert representation object.
     Example:
-        >>> alert = Alert("my_alert", timeline_event=True, driving_event="Hourly Timer")
-        >>> alert.create()
+        >>> alert = appliance.collections.alerts.create(
+        >>>    "my_alert",
+        >>>    timeline_event=True,
+        >>>    driving_event="Hourly Timer"
+        >>> )
         >>> alert.delete()
 
-    Args:
+    Attributes:
         description: Name of the Alert.
         based_on: Cluster, Datastore, Host, Provider, ...
         evaluate: Use it as follows:
@@ -291,12 +295,26 @@ class AlertCollection(BaseCollection):
 
     def create(self, description, severity=None, active=None, based_on=None, evaluate=None,
             driving_event=None, notification_frequency=None, snmp_trap=None, emails=None,
-            timeline_event=None, mgmt_event=None):
+            timeline_event=True, mgmt_event=None):
+        """ Create a new alert in the UI.
+
+            Note: Since alerts in CFME require a description, driving_event, and one
+            of snmp_trap, emails, timeline_event, or mgmt_event, we set defaults to
+            timeline_event=True, and driving_event=<first_item_from_dropdown>
+            We select the first item from the dropdown for efficiency.
+
+            This allows creation of an alert only by a description. e.g.
+            >>> alert = appliance.collections.alerts.create('my_alert_description')
+            >>> alert.delete()
+        """
+        view = navigate_to(self,"Add")
+        if driving_event is None:
+            driving_event = view.driving_event.all_options[1].text
+        # instantiate the alert
         alert = self.instantiate(description, severity=severity, active=active, based_on=based_on,
             evaluate=evaluate, driving_event=driving_event,
             notification_frequency=notification_frequency, snmp_trap=snmp_trap, emails=emails,
             timeline_event=timeline_event, mgmt_event=mgmt_event)
-        view = navigate_to(self, "Add")
         alert._fill(view)
         view.add_button.click()
         view = alert.create_view(AlertDetailsView)
