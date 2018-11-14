@@ -872,6 +872,7 @@ class GroupCollection(BaseCollection):
         except AssertionError:
             pass
 
+        view.wait_displayed()
         view.flash.assert_success_message(flash_message)
         assert view.is_displayed
 

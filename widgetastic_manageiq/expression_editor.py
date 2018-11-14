@@ -159,6 +159,7 @@ class ExpressionEditor(View, Pretty):
 
     def click_commit(self):
         self.browser.click(self.COMMIT)
+        self.UNDO.wait_displayed()
 
     def click_discard(self):
         self.browser.click(self.DISCARD)
@@ -186,8 +187,14 @@ class ExpressionEditor(View, Pretty):
 
     def select_first_expression(self):
         """There is always at least one (???), so no checking of bounds."""
-        el = self.browser.elements(self.EXPRESSION_TEXT, parent=self._expressions_root)[0]
-        self.browser.click(el)
+        els = wait_for(
+            lambda: self.browser.elements(self.EXPRESSION_TEXT, parent=self._expressions_root),
+            fail_condition=[],
+            timeout=5,
+        )
+        # els[0] is the result of wait_for and els[1] is the duration
+        # select first element (first_expression) of the elements in the result
+        self.browser.click(els[0][0])
 
     def select_expression_by_text(self, text):
         self.browser.click(
