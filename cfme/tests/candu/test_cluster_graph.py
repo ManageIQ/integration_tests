@@ -4,6 +4,7 @@ from cfme import test_requirements
 from cfme.common.candu_views import UtilizationZoomView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.candu import compare_data
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
@@ -15,7 +16,7 @@ pytestmark = [
     test_requirements.c_and_u,
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider(
-        [VMwareProvider, RHEVMProvider], required_fields=[["cap_and_util", "cluster"]]
+        [VMwareProvider, RHEVMProvider], selector=ONE_PER_TYPE, required_fields=[["cap_and_util", "cluster"]]
     ),
 ]
 
