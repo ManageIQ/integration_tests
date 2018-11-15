@@ -6,7 +6,6 @@ from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
 pytestmark = [
@@ -45,11 +44,10 @@ def get_collection_entity(appliance, collection_name, destination, provider):
     else:
         collection = getattr(appliance.collections, collection_name)
         collection.filters = {'provider': provider}
-        view = navigate_to(collection, destination)
-        names = view.entities.entity_names
-        if not names:
+        try:
+            return collection.all()[0]
+        except IndexError:
             pytest.skip("No content found for test")
-        return collection.instantiate(name=names[0], provider=provider)
 
 
 def tag_cleanup(test_item, tag):
@@ -128,6 +126,7 @@ def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
         request.addfinalizer(lambda: tag_cleanup(cloud_test_item, tag))
 
 
+@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):

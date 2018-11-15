@@ -648,7 +648,7 @@ class All(CFMENavigateStep):
     def prerequisite(self):
         parent = self.obj.filters.get('parent') or self.obj.filters.get('provider')
         if parent:
-            return navigate_to(self.obj.parent, 'Details')
+            return navigate_to(parent, 'Details')
         else:
             return navigate_to(self.obj.appliance.server, 'LoggedIn')
 
