@@ -87,6 +87,7 @@ def test_delete_volume(volume):
     assert not volume.exists
 
 
+@pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_create_volume_with_type(volume_with_type, provider):
     assert volume_with_type.exists
@@ -94,6 +95,7 @@ def test_create_volume_with_type(volume_with_type, provider):
     assert volume_with_type.tenant == provider.data['provisioning']['cloud_tenant']
 
 
+@pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_edit_volume_with_type(volume_with_type, appliance):
     new_name = fauxfactory.gen_alpha()
@@ -103,6 +105,7 @@ def test_edit_volume_with_type(volume_with_type, appliance):
     assert view.entities.get_entity(name=new_name, surf_pages=True)
 
 
+@pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_delete_volume_with_type(volume_with_type):
     volume_with_type.delete()
