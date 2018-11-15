@@ -36,7 +36,7 @@ pytestmark = [
 @pytest.fixture(scope="module")
 def iso_cust_template(provider, appliance):
     iso_cust_template = provider.data['provisioning']['iso_kickstart']
-    return get_template_from_config(iso_cust_template, appliance=appliance)
+    return get_template_from_config(iso_cust_template, create=True, appliance=appliance)
 
 
 @pytest.fixture(scope="module")
@@ -49,8 +49,6 @@ def setup_iso_datastore(setup_provider, iso_cust_template, iso_datastore, provis
     if not iso_datastore.exists():
         iso_datastore.create()
     iso_datastore.set_iso_image_type(provisioning['iso_file'], provisioning['iso_image_type'])
-    if not iso_cust_template.exists():
-        iso_cust_template.create()
 
 
 @pytest.fixture(scope="function")
