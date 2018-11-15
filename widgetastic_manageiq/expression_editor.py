@@ -3,6 +3,7 @@
 
 """
 import re
+import time
 from functools import partial
 
 import six
@@ -12,6 +13,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect as VanillaBootstrapSelect
 from widgetastic_patternfly import Button, Input
 
+from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import TimedOutError, wait_for
 from widgetastic_manageiq import Calendar, Checkbox
@@ -31,6 +33,11 @@ class BootstrapSelect(VanillaBootstrapSelect):
         # should wait until it appears and only then we can fill it.
         self.logger.info("FILLING WIDGET %s", str(self))
         self.wait_displayed()
+        # BZ 1649057 documents that a loading screen appears twice when a scope or expression
+        # element is selected. Between loads, the page is displayed and we make a selection, which
+        # is then overwritten in the next load. This work-around will wait for both loads.
+        if BZ(1649057, forced_streams=["5.9", "5.10"]).blocks:
+            time.sleep(1)
         super(BootstrapSelect, self).fill(value)
 
 
