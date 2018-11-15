@@ -107,6 +107,12 @@ def generic_objects(self):
     return self.collections.generic_objects
 
 
+@MiqImplementationContext.external_for(GenericObjectDefinition.instance_count.getter, ViaUI)
+def instance_count(self):
+    view = navigate_to(self, "Details")
+    return int(view.summary("Relationships").get_text_of("Instances"))
+
+
 @navigator.register(GenericObjectDefinitionCollection)
 class All(CFMENavigateStep):
     VIEW = GenericObjectDefinitionAllView
@@ -115,6 +121,9 @@ class All(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.navigation.select('Automation', 'Automate', 'Generic Objects')
+
+    def resetter(self, *args, **kwargs):
+        self.view.accordion.fill({'classes': {'tree': [u'All Generic Object Classes']}})
 
 
 @navigator.register(GenericObjectDefinitionCollection)
