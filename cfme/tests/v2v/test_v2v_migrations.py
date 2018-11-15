@@ -58,7 +58,8 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
         vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -67,9 +68,9 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
     wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
         message="migration plan is in progress, be patient please",
         delay=5, num_sec=1800)
-
-    view.migr_dropdown.item_select("Completed Plans")
+    view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
             migration_plan.name), view.migration_plans_completed_list.get_clock(
@@ -100,7 +101,8 @@ def test_single_network_single_vm_migration(request, appliance, v2v_providers, h
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
         vm_list=form_data_vm_obj_single_network.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -147,7 +149,8 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
         vm_list=form_data_dual_vm_obj_dual_datastore.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -193,7 +196,8 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
         vm_list=form_data_vm_obj_dual_nics.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -203,12 +207,14 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
         message="migration plan is in progress, be patient please",
         delay=5, num_sec=2700)
 
-    view.migr_dropdown.item_select("Completed Plans")
+    view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
             migration_plan.name), view.migration_plans_completed_list.get_clock(
             migration_plan.name))
+    migration_plan_collection.find_completed_plan(migration_plan)
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
     # validate MAC address matches between source and target VMs
     src_vm = form_data_vm_obj_dual_nics.vm_list.pop()
@@ -233,7 +239,8 @@ def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, c
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
         vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -243,8 +250,9 @@ def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, c
         message="migration plan is in progress, be patient please",
         delay=5, num_sec=3600)
 
-    view.migr_dropdown.item_select("Completed Plans")
+    view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
             migration_plan.name), view.migration_plans_completed_list.get_clock(
@@ -278,7 +286,8 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
         vm_list=form_data_multiple_vm_obj_single_datastore.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -291,7 +300,7 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
     vms = request_details_list.read()
 
     wait_for(func=view.plan_in_progress, message="migration plan is in progress, be patient please",
-     delay=5, num_sec=3600)
+     delay=5, num_sec=4200)
 
     for vm in vms:
         soft_assert(request_details_list.is_successful(vm) and
@@ -353,7 +362,8 @@ def test_single_vm_migration_with_ssh(request, appliance, v2v_providers, host_cr
         vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -363,8 +373,9 @@ def test_single_vm_migration_with_ssh(request, appliance, v2v_providers, host_cr
         message="migration plan is in progress, be patient please",
         delay=5, num_sec=1800)
 
-    view.migr_dropdown.item_select("Completed Plans")
+    view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name,
         view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
@@ -410,7 +421,8 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
         vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -420,8 +432,9 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
         message="migration plan is in progress, be patient please",
         delay=5, num_sec=1800)
 
-    view.migr_dropdown.item_select("Completed Plans")
+    view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name,
         view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
@@ -462,7 +475,8 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
         vm_list=form_data_multiple_vm_obj_single_datastore.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -482,7 +496,7 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
         return True
 
     wait_for(func=_is_migration_started, message="migration is not started for all VMs, "
-        "be patient please", delay=5, num_sec=300)
+        "be patient please", delay=5, num_sec=600)
 
     hosts_dict = {key.name: [] for key in host_creds}
     for vm in vms:
@@ -517,21 +531,16 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
-    src_vm_obj = form_data_vm_obj_single_datastore.vm_obj[0]
-    wait_for(lambda: src_vm_obj.ip_address is not None,
-        message="Waiting for VM to display IP in CFME",
-        fail_func=src_vm_obj.refresh_relationships,
-        delay=5, timeout=300)
-
     migration_plan_collection = appliance.collections.v2v_plans
     # fauxfactory.gen_special() used here to create special character string e.g. #$@#@
     migration_plan = migration_plan_collection.create(
         name="{}".format(fauxfactory.gen_special()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore.vm_obj, start_migration=True)
+        vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -541,14 +550,15 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
         message="migration plan is in progress, be patient please",
         delay=5, num_sec=1800)
 
-    view.migr_dropdown.item_select("Completed Plans")
+    view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
             migration_plan.name), view.migration_plans_completed_list.get_clock(
             migration_plan.name))
     # validate MAC address matches between source and target VMs
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
-    src_vm = form_data_vm_obj_single_datastore.vm_obj[0]
+    src_vm = form_data_vm_obj_single_datastore.vm_list[0]
     migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
     assert src_vm.mac_address == migrated_vm.mac_address

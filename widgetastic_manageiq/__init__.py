@@ -54,6 +54,7 @@ from widgetastic_patternfly import (
     NavDropdown,
     Tab,
     BreadCrumb,
+    AggregateStatusCard,
 )
 
 from cfme.exceptions import ItemNotFound
@@ -4378,6 +4379,8 @@ class MigrationPlansList(Widget):
         except NoSuchElementException:
             return False
 
+        # TODO: Create new method to unschedule the migration plans.
+
 
 class InfraMappingList(Widget):
     """Represents the list of Infrastructure Mappings."""
@@ -4856,3 +4859,12 @@ class MigrationProgressBar(Widget):
             for div in self.browser.elements(self.PROGRESS_BARS, parent=el)
         ]
         return dict(zip(desc, val))
+
+
+class MigrationDashboardStatusCard(AggregateStatusCard):
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class, "card-pf-aggregate-status")'
+        ' and not(contains(@class, "card-pf-aggregate-status-mini")) and'
+        ' h2[contains(@class,"card-pf-title")  and contains(.,{@name|quote})]]'
+    )
+    TITLE_ANCHOR = ".//h2"

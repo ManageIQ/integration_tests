@@ -10,7 +10,8 @@ from widgetastic.widget import Checkbox, View
 from widgetastic.utils import ParametrizedLocator
 from widgetastic_manageiq import (
     InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList, Paginator,
-    Table, MigrationPlanRequestDetailsList, RadioGroup, HiddenFileInput, MigrationProgressBar
+    Table, MigrationPlanRequestDetailsList, RadioGroup, HiddenFileInput, MigrationProgressBar,
+    MigrationDashboardStatusCard
 )
 from widgetastic_patternfly import (Text, TextInput, Button, BootstrapSelect, SelectorDropdown,
                                     Dropdown)
@@ -27,7 +28,7 @@ from selenium.common.exceptions import StaleElementReferenceException
 
 # Widgets
 
-class MigrationPlanRequestDetailsPaginator(Paginator):
+class v2vPaginator(Paginator):
     """ Represents Paginator control for V2V."""
 
     PAGINATOR_CTL = './/div[contains(@class,"form-group")][./ul]'
@@ -51,19 +52,18 @@ class MigrationPlanRequestDetailsPaginator(Paginator):
         return self.browser.text(self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator))
 
 
-class MigrationPlanRequestDetailsPaginationDropup(SelectorDropdown):
+class v2vPaginationDropup(SelectorDropdown):
     ROOT = ParametrizedLocator(
         './/div[contains(@class, "dropup") and ./button[@{@b_attr}={@b_attr_value|quote}]]')
 
 
-class MigrationPlanRequestDetailsPaginationPane(View):
+class v2vPaginatorPane(View):
     """ Represents Paginator Pane for V2V."""
 
     ROOT = './/form[contains(@class,"content-view-pf-pagination")]'
 
-    items_on_page = MigrationPlanRequestDetailsPaginationDropup('id', 'pagination-row-dropdown')
-    paginator = MigrationPlanRequestDetailsPaginator()
-
+    items_on_page = v2vPaginationDropup('id', 'pagination-row-dropdown')
+    paginator = v2vPaginator()
 
 # Views
 
@@ -316,19 +316,40 @@ class MigrationDashboardView(BaseLoggedInPage):
     migration_plans_not_started_list = MigrationPlansList("plans-not-started-list")
     migration_plans_completed_list = MigrationPlansList("plans-complete-list")
     migration_plans_archived_list = MigrationPlansList("plans-complete-list")
-    infra_mapping_list = InfraMappingList("infra-mappings-list-view")
-    migr_dropdown = MigrationDropdown(text="Not Started Plans")
-    sort_type_dropdown = Dropdown(text="Name")
+    sort_type_dropdown = SelectorDropdown('id', 'sortTypeMenu')
     sort_direction = Text(locator=".//span[contains(@class,'sort-direction')]")
     # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
     progress_card = MigrationProgressBar(locator='.//div[3]/div/div[3]/div[3]/div/div')
+    not_started_plans = MigrationDashboardStatusCard(name="Not Started")
+    in_progress_plans = MigrationDashboardStatusCard(name="In Progress")
+    completed_plans = MigrationDashboardStatusCard(name="Complete")
+    archived_plans = MigrationDashboardStatusCard(name="Archived")
+    # TODO: next 3 lines are specialized only for 510z and inheritance for DashboardView59z
+    # is incorrect. Need to fix it.
+    paginator_view = View.include(v2vPaginatorPane, use_parent=True)
+    search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
+    clear_filters = Text(".//a[text()='Clear All Filters']")
 
     @property
     def is_displayed(self):
-        return (self.navigation.currently_selected == ['Compute', 'Migration'] and
+        # TODO: Remove next line, after fix for https://github.com/ManageIQ/manageiq-v2v/issues/726
+        # has been backported to downstream 510z
+        return ((self.navigation.currently_selected == ['Compute', 'Migration'] or
+            self.navigation.currently_selected == ['Compute', 'Migration', 'Overview']) and
             (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
             (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0) and
             len(self.browser.elements(".//div[contains(@class,'pficon-warning-triangle-o')]")) < 1)
+
+    def switch_to(self, section):
+        """Switches to Not Started, In Progress, Complete or Archived Plans section."""
+        sections = {
+            'Not Started Plans': self.not_started_plans,
+            'In Progress Plans': self.in_progress_plans,
+            'Completed Plans': self.completed_plans,
+            'Archived Plans': self.archived_plans
+        }
+        self.logger.info("Switching to Migration Dashboard section: %s", section)
+        sections[section].click()
 
     def plan_in_progress(self, plan_name):
         """MIQ V2V UI is going through redesign as OSP will be integrated.
@@ -360,21 +381,68 @@ class MigrationDashboardView(BaseLoggedInPage):
             return not is_plan_visible
         except StaleElementReferenceException:
             self.browser.refresh()
-            self.migr_dropdown.item_select("In Progress Plans")
+            self.switch_to("In Progress Plans")
             return False
+
+
+class MigrationDashboardView59z(MigrationDashboardView):
+    """Dashboard for 59z has infra_mapping_list while 510z moves it to a separate page.
+    Hence, Inheritance."""
+    infra_mapping_list = InfraMappingList("infra-mappings-list-view")
+    migr_dropdown = MigrationDropdown(text="Not Started Plans")
+
+    @property
+    def is_displayed(self):
+        return (self.navigation.currently_selected == ['Compute', 'Migration'] and
+            (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
+            (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0))
+
+    def switch_to(self, section):
+        """Switches to Not Started, In Progress, Complete or Archived Plans section."""
+        self.logger.info("Switching to Migration Dashboard section: %s", section)
+        self.migr_dropdown.item_select(section)
+
+
+class InfrastructureMappingView(BaseLoggedInPage):
+    """This is an entire separate page, with many elements similar to what we had in
+    MigrationPlanRequestDetailsView , so re-using some of those Paginator things
+    by renaming those from v2vPaginator to v2vPaginator, etc."""
+
+    infra_mapping_list = InfraMappingList("infra-mappings-list-view")
+    create_infrastructure_mapping = Text(locator='(//a|//button)'
+                                                 '[text()="Create Infrastructure Mapping"]')
+    configure_providers = Text(locator='//a[text()="Configure Providers"]')
+    paginator_view = View.include(v2vPaginatorPane, use_parent=True)
+    search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
+    clear_filters = Text(".//a[text()='Clear All Filters']")
+    # Used for Ascending/Descending sort
+    sort_order = Text(".//button[./span[contains(@class,'sort-direction')]]")
+    # Used to select filter_by 'Name' or 'Description'
+    filter_by_dropdown = SelectorDropdown('id', 'filterFieldTypeMenu')
+    # USed to select sort by options like 'Name', 'Number of Associated Plans'
+    sort_by_dropdown = SelectorDropdown('id', 'sortTypeMenu')
+
+    @property
+    def is_displayed(self):
+        # TODO: Resmove 1st condition, once /manageiq-v2v/issues/768 fix is backported to 510z
+        return ((self.navigation.currently_selected ==
+            ['Compute', 'Migration', 'Overview'] or self.navigation.currently_selected ==
+            ['Compute', 'Migration', 'Infrastructure Mappings']) and
+            len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0 and
+            (self.create_infrastructure_mapping.is_displayed or
+                self.infra_mapping_list.is_displayed or self.configure_providers.is_displayed))
 
 
 class AddInfrastructureMappingView(View):
     form = InfraMappingWizard()
+    form_title_text = VersionPicker({
+        Version.lowest(): 'Infrastructure Mapping Wizard',
+        '5.10': 'Create Infrastructure Mapping'
+    })
 
     @property
     def is_displayed(self):
-        form_title_text = VersionPicker({
-            Version.lowest(): 'Infrastructure Mapping Wizard',
-            '5.10': 'Create Infrastructure Mapping'
-        })
-
-        return (self.form.title.text == form_title_text.pick())
+        return (self.form.title.text == self.form_title_text)
 
 
 class AddMigrationPlanView(View):
@@ -386,6 +454,10 @@ class AddMigrationPlanView(View):
     # because want to keep it consistent
     next_btn = Button('Next')
     cancel_btn = Button('Cancel')
+    form_title_text = VersionPicker({
+        Version.lowest(): 'Migration Plan Wizard',
+        '5.10': 'Create Migration Plan'
+    })
 
     @View.nested
     class general(View):  # noqa
@@ -410,7 +482,8 @@ class AddMigrationPlanView(View):
             'Select': Checkbox(locator=".//input"),
             1: Text('.//span/button[contains(@class,"btn btn-link")]')})
         filter_by_dropdown = SelectorDropdown('id', 'filterFieldTypeMenu')
-        search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
+        search_box = TextInput(locator='.//div[contains(@class, "modal-content")]'
+            '//div[contains(@class,"input-group")]/input')
         clear_filters = Text(".//a[text()='Clear All Filters']")
         error_text = Text('.//h3[contains(@class,"blank-slate-pf-main-action") and '
                           'contains(text(), "Error:")]')
@@ -419,12 +492,14 @@ class AddMigrationPlanView(View):
 
         @property
         def is_displayed(self):
-            return (self.filter_by_dropdown.is_displayed and
+            return (self.table.is_displayed and
                  (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0))
 
         def filter_by_name(self, vm_name):
             try:
-                self.filter_by_dropdown.item_select("VM Name")
+                # remove `if` cond https://github.com/ManageIQ/manageiq-v2v/issues/771 fixed
+                if self.browser.appliance.version < '5.10':  # Don't remove nxt line, remove `if`
+                    self.filter_by_dropdown.item_select("VM Name")  # just unindent
             except NoSuchElementException:
                 self.logger.info("`VM Name` not present in filter dropdown!")
             self.search_box.fill(vm_name)
@@ -471,18 +546,13 @@ class AddMigrationPlanView(View):
 
     @property
     def is_displayed(self):
-        form_title_text = VersionPicker({
-            Version.lowest(): 'Migration Plan Wizard',
-            '5.10': 'Create Migration Plan'
-        })
-
-        return self.title.text == form_title_text.pick()
+        return self.title.text == self.form_title_text
 
 
 class MigrationPlanRequestDetailsView(View):
     migration_request_details_list = MigrationPlanRequestDetailsList("plan-request-details-list")
     sort_type = SelectorDropdown('id', 'sortTypeMenu')
-    paginator_view = View.include(MigrationPlanRequestDetailsPaginationPane, use_parent=True)
+    paginator_view = View.include(v2vPaginatorPane, use_parent=True)
     search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
     clear_filters = Text(".//a[text()='Clear All Filters']")
     # Used for Ascending/Descending sort
@@ -610,8 +680,22 @@ class InfrastructureMappingCollection(BaseCollection):
         view.form.fill(form_data)
         return infra_map
 
-    def delete(self, mapping):
+    def find_mapping(self, mapping):
         view = navigate_to(self, 'All')
+        if not self.appliance.version < '5.10':  # means 5.10+ or upstream
+            view.items_on_page.item_select('15')
+            if mapping.name in view.infra_mapping_list.read():
+                return True
+            # TODO: Remove While loop. It is a DIRTY HACK for now, to be addressed in PR 8075
+            # =========================================================
+            while not view.clear_filters.is_displayed:
+                view.search_box.fill("{}\n\n".format(mapping.name))
+            # =========================================================
+        return mapping.name in view.infra_mapping_list.read()
+
+    def delete(self, mapping):
+        view = navigate_to(self, 'All', wait_for_view=20)
+        self.find_mapping(mapping)
         mapping_list = view.infra_mapping_list
         mapping_list.delete_mapping(mapping.name)
 
@@ -683,17 +767,42 @@ class MigrationPlanCollection(BaseCollection):
         view.results.close.click()
         return self.instantiate(name)
 
+    def find_completed_plan(self, migration_plan):
+        """Uses search box to find migration plan, return True if found.
+        Args:
+            migration_plan: (object) Migration Plan object
+        """
+        view = navigate_to(self, 'All')
+        view.switch_to("Completed Plans")
+        if not self.appliance.version < '5.10':  # means 5.10+ or upstream
+            view.items_on_page.item_select('15')
+            if migration_plan.name in view.migration_plans_completed_list.read():
+                return True
+        # TODO: Next while loop is dirty hack to avoid page refresh/resetter. Need to fix it.
+        # ==================================================================================
+            while not view.clear_filters.is_displayed:
+                view.switch_to("Completed Plans")
+                view.search_box.fill("{}\n\n".format(migration_plan.name))
+        # ==================================================================================
+        return migration_plan.name in view.migration_plans_completed_list.read()
+
 # Navigations
 
 
 @navigator.register(InfrastructureMappingCollection, 'All')
-@navigator.register(MigrationPlanCollection, 'All')
-class All(CFMENavigateStep):
-    VIEW = MigrationDashboardView
+class AllMappings(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = VersionPicker({
+        Version.lowest(): MigrationDashboardView59z,
+        '5.10': InfrastructureMappingView
+    })
 
     def step(self):
-        self.prerequisite_view.navigation.select('Compute', 'Migration')
+        if self.obj.appliance.version < '5.10':
+            self.prerequisite_view.navigation.select('Compute', 'Migration')
+        else:
+            self.prerequisite_view.navigation.select(
+                'Compute', 'Migration', 'Infrastructure Mappings')
 
 
 @navigator.register(InfrastructureMappingCollection, 'Add')
@@ -704,6 +813,21 @@ class AddInfrastructureMapping(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.wait_displayed()
         self.prerequisite_view.create_infrastructure_mapping.click()
+
+
+@navigator.register(MigrationPlanCollection, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = VersionPicker({
+        Version.lowest(): MigrationDashboardView59z,
+        '5.10': MigrationDashboardView
+    })
+
+    def step(self):
+        if self.obj.appliance.version < '5.10':
+            self.prerequisite_view.navigation.select('Compute', 'Migration')
+        else:
+            self.prerequisite_view.navigation.select('Compute', 'Migration', 'Overview')
 
 
 @navigator.register(MigrationPlanCollection, 'Add')

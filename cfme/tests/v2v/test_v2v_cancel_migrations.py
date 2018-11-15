@@ -50,7 +50,8 @@ def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, h
         .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
         vm_list=form_data_multiple_vm_obj_single_datastore.vm_list, start_migration=True)
     # as migration is started, try to track progress using migration plan request details page
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
+    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
+                                                            'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
         handle_exception=True)
@@ -86,3 +87,5 @@ def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, h
 
     for vm in vms:
         soft_assert(request_details_list.is_cancelled(vm))
+        soft_assert(request_details_list.progress_percent(vm) < 100.0 or
+            "Virtual machine migrated" not in request_details_list.get_message_text(vm))
