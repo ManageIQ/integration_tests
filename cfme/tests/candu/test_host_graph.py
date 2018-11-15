@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.common.candu_views import UtilizationZoomView
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.candu import compare_data, compare_data_with_unit
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -16,7 +17,7 @@ pytestmark = [
     pytest.mark.tier(3),
     test_requirements.c_and_u,
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([VMwareProvider, RHEVMProvider],
+    pytest.mark.provider([VMwareProvider, RHEVMProvider], selector=ONE_PER_TYPE,
                          required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')]),
     pytest.mark.meta(blockers=[BZ(1635126, forced_streams=['5.10'])])
 ]
