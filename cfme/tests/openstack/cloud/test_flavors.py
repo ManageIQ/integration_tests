@@ -37,6 +37,31 @@ def zero_disk_flavor(provider):
 
 
 @pytest.fixture(scope='function')
+def private_flavor(appliance, provider):
+    collection = appliance.collections.cloud_flavors
+    private_flavor = collection.create(name=fauxfactory.gen_alpha(),
+                               provider=provider,
+                               ram=RAM,
+                               vcpus=VCPUS,
+                               disk=DISK_SIZE,
+                               swap=SWAP_SIZE,
+                               rxtx=RXTX,
+                               is_public=False)
+
+    view = appliance.browser.create_view(navigator.get_class(collection, 'All').VIEW)
+    view.flash.assert_success_message(
+        'Add of Flavor "{}" was successfully initialized.'.format(private_flavor.name))
+
+    wait_for(lambda: private_flavor.exists, delay=5, timeout=600, fail_func=private_flavor.refresh,
+             message='Wait for flavor to appear')
+
+    yield private_flavor
+
+    if private_flavor.exists:
+        private_flavor.delete()
+
+
+@pytest.fixture(scope='function')
 def new_instance(provider, zero_disk_flavor):
     flavor_name = zero_disk_flavor.name
     prov_data = provider.data['provisioning']
@@ -125,3 +150,32 @@ def test_flavor_crud(appliance, provider, request):
 
     wait_for(lambda: not flavor.exists, delay=5, timeout=600, fail_func=flavor.refresh,
              message='Wait for flavor to appear')
+
+
+@pytest.mark.rfe
+@pytest.mark.ignore_stream('5.9')
+def test_flavors_details_from_list_view(appliance, soft_assert, private_flavor):
+    collection = appliance.collections.cloud_flavors
+    view = navigate_to(collection, 'All')
+    item = view.entities.get_entity(name=private_flavor.name, surf_pages=True)
+    soft_assert(item.data['name'] == private_flavor.name)
+    soft_assert(item.data['cpus'] == str(private_flavor.vcpus))
+    soft_assert(item.data['publicly_available'] == str(private_flavor.is_public))
+    soft_assert(item.data['memory'].split()[0] == str(private_flavor.ram))
+    soft_assert(item.data['cloud_provider'] == private_flavor.provider.name)
+
+
+@pytest.mark.rfe
+@pytest.mark.ignore_stream('5.9')
+def test_flavor_details(appliance, soft_assert, private_flavor):
+    view = navigate_to(private_flavor, 'Details')
+    soft_assert(view.entities.properties.get_text_of('CPUs') == str(private_flavor.vcpus))
+
+    soft_assert(view.entities.properties.get_text_of('Memory').split()[0] ==
+                str(private_flavor.ram))
+
+    soft_assert(view.entities.properties.get_text_of('Public') ==
+                str(private_flavor.is_public).lower())
+
+    soft_assert(view.entities.relationships.get_text_of('Cloud Provider') ==
+                private_flavor.provider.name)
