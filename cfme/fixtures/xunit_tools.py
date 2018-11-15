@@ -15,6 +15,7 @@ from cfme.utils.pytest_shortcuts import extract_fixtures_values
 whitelist = [
     r'cfme/tests/infrastructure/test_quota_tagging.py::test_.*\[.*rhe?v',
     r'test_tenant_quota.py',
+    r'cfme/tests/v2v/.*',
 ]
 compiled_whitelist = re.compile('(' + ')|('.join(whitelist) + ')')
 
