@@ -16,7 +16,7 @@ from cfme.utils.appliance import Navigatable
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.version import Version, VersionPicker
+from cfme.utils.version import Version, VersionPicker, LOWEST
 
 from . import AutomateExplorerView, check_tree_path
 from .common import Copiable, CopyViewBase
@@ -83,11 +83,17 @@ class ClassAddView(ClassForm):
 
     @property
     def is_displayed(self):
+        expected_title = VersionPicker(
+            {
+                LOWEST: 'Adding a new Class',
+                '5.10': 'Adding a new Automate Class'
+            }
+        ).pick(self.browser.product_version)
         return (
             self.in_explorer and
-            self.title.text == 'Datastore' and
             self.datastore.is_opened and
-            self.title.text == 'Adding a new Class')
+            self.title.text == expected_title
+        )
 
 
 class ClassEditView(ClassForm):
