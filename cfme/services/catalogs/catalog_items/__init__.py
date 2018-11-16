@@ -499,14 +499,16 @@ class CatalogItemsCollection(BaseCollection):
         Returns:
             An instance of catalog_item_class
         """
-        if args:
-            """args should not contain any value while instantiating cat_item.
-               Hence released 'provider' and 'field_entry_point' elements from args tuple."""
-            provider, field_entry_point = args[0], args[1]
-            release_extra_args = list(args)
-            release_extra_args.pop(1)
-            release_extra_args.pop(0)
-            args = tuple(release_extra_args)
+        if kwargs:
+            provider = kwargs.get("provider", None)
+            field_entry_point = kwargs.get("field_entry_point", None)
+            if provider and field_entry_point:
+                """kwargs should not contain value of 'provider' and 'field_entry_point'
+                    while instantiating cat_item. Hence released 'provider' and 'field_entry_point'
+                    elements from kwargs.
+                """
+                kwargs.pop("provider")
+                kwargs.pop("field_entry_point")
         cat_item = self.instantiate(catalog_item_class, *args, **kwargs)
         view = navigate_to(cat_item, "Add")
         if field_entry_point:

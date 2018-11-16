@@ -73,14 +73,15 @@ def catalog_item(appliance, provider, provisioning, template_name, dialog, catal
                  set_default):
     collection = appliance.collections.catalog_items
     yield collection.create(provider.catalog_item_type,
-                            provider,
-                            set_default,
                             name='test_{}'.format(fauxfactory.gen_alphanumeric()),
                             description='test catalog',
                             display_in=True,
                             catalog=catalog,
                             dialog=dialog,
-                            prov_data=prov_data)
+                            prov_data=prov_data,
+                            provider=provider,
+                            field_entry_point=set_default
+                            )
 
 
 # first arg of parametrize is the list of fixtures or parameters,
