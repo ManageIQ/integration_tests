@@ -101,9 +101,15 @@ class ClassEditView(ClassForm):
 
     @property
     def is_displayed(self):
+        expected_title = VersionPicker(
+            {
+                LOWEST: 'Editing Class "{}"',
+                '5.10': 'Editing Automate Class "{}"'
+            }
+        ).pick(self.browser.product_version)
         return (
             self.in_explorer and
-            self.title.text == 'Editing Class "{}"'.format(self.context['object'].name))
+            self.title.text == expected_title.format(self.context['object'].name))
 
 
 class Class(BaseEntity, Copiable):
