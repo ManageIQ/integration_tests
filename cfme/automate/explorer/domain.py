@@ -82,7 +82,7 @@ class DomainEditView(DomainForm):
     def is_displayed(self):
         return (
             self.in_explorer and
-            self.title.text == 'Editing Automate Domain "{}"'.format(self.obj.name))
+            self.title.text == 'Editing Automate Domain "{}"'.format(self.context['object'].name))
 
 
 class Domain(BaseEntity, Fillable):
