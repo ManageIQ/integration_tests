@@ -300,17 +300,18 @@ class AlertCollection(BaseCollection):
             timeline_event=True, mgmt_event=None):
         """ Create a new alert in the UI.
 
-            Note: Since alerts in CFME require a description, driving_event, and one
+            Note: Since alerts in CFME require a description, driving_event or evaluate, and one
             of snmp_trap, emails, timeline_event, or mgmt_event, we set defaults to
             timeline_event=True, and driving_event=<first_item_from_dropdown>
             We select the first item from the dropdown for efficiency.
+            The driving event is only selected if evaluate is None.
 
             This allows creation of an alert only by a description. e.g.
             >>> alert = appliance.collections.alerts.create('my_alert_description')
             >>> alert.delete()
         """
         view = navigate_to(self,"Add")
-        if driving_event is None:
+        if driving_event is None and evaluate is None:
             driving_event = view.driving_event.all_options[1].text
         # instantiate the alert
         alert = self.instantiate(description, severity=severity, active=active, based_on=based_on,
