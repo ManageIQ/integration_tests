@@ -188,12 +188,7 @@ class ReconfigureServiceView(SetOwnershipForm):
 class ServiceVMDetailsView(VMDetailsEntities):
     @property
     def is_displayed(self):
-        return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Services', 'MyServices'] and
-            self.myservice.is_opened and
-            self.title.text == 'VM and Instance "{}"'.format(self.context['object'].name)
-        )
+        return self.title.text == 'VM and Instance "{}"'.format(self.context['object'].vm_name)
 
 
 class AllGenericObjectInstanceView(BaseLoggedInPage):
