@@ -16,7 +16,7 @@ from cfme.utils.appliance import Navigatable
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.version import Version, VersionPicker
+from cfme.utils.version import Version, VersionPicker, LOWEST
 
 from . import AutomateExplorerView, check_tree_path
 from .common import Copiable, CopyViewBase
@@ -83,11 +83,17 @@ class ClassAddView(ClassForm):
 
     @property
     def is_displayed(self):
+        expected_title = VersionPicker(
+            {
+                LOWEST: 'Adding a new Class',
+                '5.10': 'Adding a new Automate Class'
+            }
+        ).pick(self.browser.product_version)
         return (
             self.in_explorer and
-            self.title.text == 'Datastore' and
             self.datastore.is_opened and
-            self.title.text == 'Adding a new Class')
+            self.title.text == expected_title
+        )
 
 
 class ClassEditView(ClassForm):
@@ -95,9 +101,15 @@ class ClassEditView(ClassForm):
 
     @property
     def is_displayed(self):
+        expected_title = VersionPicker(
+            {
+                LOWEST: 'Editing Class "{}"',
+                '5.10': 'Editing Automate Class "{}"'
+            }
+        ).pick(self.browser.product_version)
         return (
             self.in_explorer and
-            self.title.text == 'Editing Class "{}"'.format(self.context['object'].name))
+            self.title.text == expected_title.format(self.context['object'].name))
 
 
 class Class(BaseEntity, Copiable):
@@ -341,7 +353,7 @@ class Copy(CFMENavigateStep):
 # schema
 class ClassSchemaEditView(ClassDetailsView):
     class schema(WaitTab):  # noqa
-        schema_title = Text('//div[@id="form_div"]/h3')
+        schema_title = Text('//div[@class="form_div"]/h3')
 
         @ParametrizedView.nested
         class fields(ParametrizedView):  # noqa
