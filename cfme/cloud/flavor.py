@@ -170,6 +170,16 @@ class Flavor(BaseEntity, Taggable):
         except FlavorNotFound:
             return False
 
+    @property
+    def instance_count(self):
+        """ number of instances using flavor.
+
+        Returns:
+            :py:class:`int` instance count.
+        """
+        view = navigate_to(self, 'Details')
+        return int(view.entities.relationships.get_text_of('Instances'))
+
 
 @attr.s
 class FlavorCollection(BaseCollection):
