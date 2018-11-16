@@ -219,8 +219,9 @@ def local_setup_provider(request, setup_provider_modscope, provider, appliance):
 def enable_smartproxy_affinity(request, appliance, provider):
     if provider.data.get('smartproxy_affinity', False):
         view = navigate_to(appliance.server.zone, 'SmartProxyAffinity')
-        view.smartproxy_affinity.check_node(view.smartproxy_affinity.root_item.text)
-        view.save.click()
+        changed = view.smartproxy_affinity.check_node(view.smartproxy_affinity.root_item.text)
+        if changed:
+            view.save.click()
 
         @request.addfinalizer
         def _disable_smartproxy_affinty():
