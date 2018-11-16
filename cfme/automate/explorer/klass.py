@@ -353,7 +353,7 @@ class Copy(CFMENavigateStep):
 # schema
 class ClassSchemaEditView(ClassDetailsView):
     class schema(WaitTab):  # noqa
-        schema_title = Text('//div[@id="form_div"]/h3')
+        schema_title = Text('//div[@class="form_div"]/h3')
 
         @ParametrizedView.nested
         class fields(ParametrizedView):  # noqa

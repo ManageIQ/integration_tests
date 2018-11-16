@@ -94,7 +94,6 @@ class InstanceAddView(AutomateExplorerView):
     def is_displayed(self):
         return (
             self.in_explorer and
-            self.title.text == 'Datastore' and
             self.datastore.is_opened and
             self.title.text == 'Adding a new Automate Instance')
 
