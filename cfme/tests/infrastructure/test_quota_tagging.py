@@ -339,7 +339,12 @@ def test_quota_infra(request, appliance, provider, setup_provider, admin_email, 
     ['custom_prov_data'],
     [
         [{'hardware': {'memory': '4096'}}],
-        [{}],
+        [{}],  # This parameterization is for selecting storage while provisioning VM.
+        # But it is not possible to parameterize storage size.
+        # Becuase it is defined in disk formats(Thin, Thick, Default and other types).
+        # Also it varies with providers.
+        # But we don't need to select storage because by default storage is already more than
+        #  assigned storage quota which is 2GB maximum.
         [{'hardware': {'vm_num': '21'}}],
         [{'hardware': {'num_sockets': '8'}}]
     ],
