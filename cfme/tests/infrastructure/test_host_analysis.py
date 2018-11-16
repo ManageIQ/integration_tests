@@ -8,6 +8,7 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils import testgen
 
@@ -63,6 +64,8 @@ def host_with_credentials(provider, host_name):
 @pytest.mark.uncollectif(
     lambda provider, appliance:
     appliance.version == miq_version.UPSTREAM and provider.one_of(RHEVMProvider))
+@pytest.mark.meta(blockers=[BZ(1650179, forced_streams=['5.10'],
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_name, register_event,
                            soft_assert, host_with_credentials):
     """ Run host SmartState analysis
