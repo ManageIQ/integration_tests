@@ -147,4 +147,4 @@ def test_tagvis_infra_object(infra_test_item, check_item_visibility, visibility,
         4. Login as restricted user, iten is not visible for user
     """
     check_item_visibility(infra_test_item, visibility)
-    request.addfinalizer(lambda: tag_cleanup(cloud_test_item, tag))
+    request.addfinalizer(lambda: tag_cleanup(infra_test_item, tag))
