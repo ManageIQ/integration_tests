@@ -101,10 +101,14 @@ class InstanceAllView(CloudInstanceView):
 class InstanceProviderAllView(CloudInstanceView):
     @property
     def is_displayed(self):
+        try:
+            provider = self.context['object'].filters.get('provider').name
+        except AttributeError:
+            provider = self.context['object'].provider.name
         return (
             self.in_cloud_instance and
             self.entities.title.text == 'Instances under Provider "{}"'
-                               .format(self.context['object'].filters.get('provider').name) and
+                               .format(provider) and
             self.sidebar.instances_by_provider.is_opened)
 
     toolbar = View.nested(VMToolbar)
