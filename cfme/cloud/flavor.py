@@ -3,13 +3,13 @@
 import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic_patternfly import (Accordion, BootstrapSwitch, BreadCrumb, Button,
+from widgetastic_patternfly import (BootstrapSelect, BootstrapSwitch, BreadCrumb, Button,
                                     Dropdown, TextInput, View)
 
 from widgetastic.widget import Text, Select
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import Taggable
+from cfme.common import Taggable, TaggableCollection
 from cfme.exceptions import FlavorNotFound, ItemNotFound
 from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -119,6 +119,7 @@ class FlavorAddForm(View):
     swap_size = TextInput(name='swap')
     rxtx_factor = TextInput(name='rxtx_factor')
     public = BootstrapSwitch(name='is_public')
+    tenant = BootstrapSelect(id='cloud_tenant')
     add = Button('Add')
     cancel = Button('Cancel')
 
@@ -151,6 +152,8 @@ class Flavor(BaseEntity, Taggable):
     swap = attr.ib(default=None)
     rxtx = attr.ib(default=None)
     is_public = attr.ib(default=True)
+    tenant = attr.ib(default=None)
+
 
     def delete(self, cancel=False):
         """Delete current falvor """
@@ -183,10 +186,10 @@ class Flavor(BaseEntity, Taggable):
 
 
 @attr.s
-class FlavorCollection(BaseCollection):
+class FlavorCollection(BaseCollection, TaggableCollection):
     ENTITY = Flavor
 
-    def create(self, name, provider, ram, vcpus, disk, swap, rxtx, is_public=True, cancel=False):
+    def create(self, name, provider, ram, vcpus, disk, swap, rxtx, is_public=True, tenant=None, cancel=False):
         """Create new falvor"""
         view = navigate_to(self, 'Add')
         form_params = {'provider': provider.name,
@@ -196,7 +199,8 @@ class FlavorCollection(BaseCollection):
                        'disk_size': disk,
                        'swap_size': swap,
                        'rxtx_factor': rxtx,
-                       'public': is_public}
+                       'public': is_public,
+                       'tenant': tenant}
 
         view.form.fill(form_params)
 
