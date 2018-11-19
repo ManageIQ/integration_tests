@@ -803,6 +803,7 @@ def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
         new_appliance_name = gen_appliance_name(template_id, username=pool.owner.username)
         appliance = Appliance(template=template, name=new_appliance_name, appliance_pool=pool)
         appliance.save()
+        appliance.set_lease_time()
         # Set pool to these params to keep the appliances with same versions/dates
         pool.version = template.version
         pool.date = template.date
@@ -816,9 +817,7 @@ def apply_lease_times(self, appliance_id, time_minutes):
         "Applying lease time {} minutes on appliance {}".format(time_minutes, appliance_id))
     with transaction.atomic():
         appliance = Appliance.objects.get(id=appliance_id)
-        appliance.datetime_leased = timezone.now()
-        appliance.leased_until = appliance.datetime_leased + timedelta(minutes=int(time_minutes))
-        appliance.save(update_fields=['datetime_leased', 'leased_until'])
+        appliance.set_lease_time(time_minutes)
         self.logger.info(
             "Lease time has been applied successfully "
             "on appliance {}, pool {}, provider {}".format(appliance_id,

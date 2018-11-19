@@ -1080,6 +1080,7 @@ class Appliance(MetadataMixin):
                     with appliance.kill_lock:
                         appliance.appliance_pool = pool
                         appliance.save(update_fields=['appliance_pool'])
+                        appliance.set_lease_time()
                         appliance.set_status("Given to pool {}".format(pool.id))
                         tasks = [appliance_power_on.si(appliance.id)]
                         if pool.yum_update:
@@ -1098,6 +1099,13 @@ class Appliance(MetadataMixin):
                 if len(appliances) >= limit:
                     break
         return len(appliances)
+
+    def set_lease_time(self, time_minutes=120):
+        # sometimes appliances get lost w/o lease time.
+        # so, we set default lease time to 2h on the off-chance
+        self.datetime_leased = timezone.now()
+        self.leased_until = self.datetime_leased + timedelta(minutes=time_minutes)
+        self.save(update_fields=['datetime_leased', 'leased_until'])
 
     @classmethod
     def kill(cls, appliance_or_id, force_delete=False):
