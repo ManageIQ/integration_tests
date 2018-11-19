@@ -158,6 +158,19 @@ CACHES = {
     }
 }
 
+CLEANUP_RULES = [
+    # appliance name , max appliance lifetime
+    {'name': r'^test', 'lifetime': dict(hours=1)},
+    {'name': r'^(long-test|i-)', 'lifetime': dict(hours=6)},
+    {'name': r'^(external-test|s_tpl|s_appl)', 'lifetime': dict(hours=12)},
+    {'name': r'^jenkins-template', 'lifetime': dict(hours=4)},
+    {'name': r'^jenkins_', 'lifetime': dict(hours=24)},
+    {'name': r'^sprout', 'lifetime': dict(hours=24)},
+    {'name': r'^dockerbot_', 'lifetime': dict(hours=24)},
+    {'name': r'.*_cfme_', 'lifetime': dict(hours=24)},
+]
+
+
 BROKEN_APPLIANCE_GRACE_TIME = dict(
     hours=1,
 )
@@ -186,6 +199,11 @@ CELERYBEAT_SCHEDULE = {
     'kill-unused-appliances': {
         'task': 'appliances.tasks.kill_unused_appliances',
         'schedule': timedelta(minutes=1),
+    },
+
+    'kill-lost-appliances': {
+        'task': 'appliances.tasks.kill_lost_appliances',
+        'schedule': timedelta(minutes=75),
     },
 
     'delete-nonexistent-appliances': {

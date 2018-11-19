@@ -153,6 +153,110 @@ def kill_unused_appliances(self):
 
 
 @singleton_task()
+def delete_nonexistent_appliances(self):
+    """Goes through orphaned appliances' objects and deletes them from the database."""
+    expiration_time = (timezone.now() - timedelta(**settings.ORPHANED_APPLIANCE_GRACE_TIME))
+    for appliance in Appliance.objects.filter(ready=True).all():
+        if appliance.name in redis.renaming_appliances:
+            continue
+        if appliance.power_state == Appliance.Power.ORPHANED:
+            if appliance.power_state_changed > expiration_time:
+                # Ignore it for now
+                continue
+            self.logger.info(
+                "I will delete orphaned appliance {}/{}".format(appliance.id, appliance.name))
+            try:
+                appliance.delete()
+            except ObjectDoesNotExist as e:
+                if "AppliancePool" in str(e):
+                    # Someone managed to delete the appliance pool before
+                    appliance.appliance_pool = None
+                    appliance.save(update_fields=['appliance_pool'])
+                    appliance.delete()
+                else:
+                    raise  # No diaper pattern here!
+    # If something happened to the appliance provisioning process, just delete it to remove
+    # the garbage. It will be respinned again by shepherd.
+    # Grace time is specified in BROKEN_APPLIANCE_GRACE_TIME
+    expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
+    for appliance in Appliance.objects.filter(ready=False, marked_for_deletion=False).all():
+        if appliance.status_changed < expiration_time:
+            self.logger.info("Killing broken appliance {}/{}".format(appliance.id, appliance.name))
+            Appliance.kill(appliance)  # Use kill because the appliance may still exist
+    # And now - if something happened during appliance deletion, call kill again
+    for appliance in Appliance.objects.filter(
+            marked_for_deletion=True, status_changed__lt=expiration_time).all():
+        self.logger.info(
+            "Trying to kill unkilled appliance {}/{}".format(appliance.id, appliance.name))
+        Appliance.kill(appliance, force_delete=True)
+
+
+@singleton_task()
+def kill_lost_appliances(self):
+    """Looks for lost appliances present on sprout provider and kills them"""
+    self.logger.info("looking for old lost vms on sprout providers")
+    for provider in Provider.objects.filter(disabled=False, working=True, appliance_limit__gt=0):
+        kill_lost_appliances_per_provider(provider.id)
+
+
+@singleton_task()
+def kill_lost_appliances_per_provider(self, provider_id):
+    """Looks for lost appliance in some certain provider"""
+    rules = settings.CLEANUP_RULES
+    provider = Provider.objects.get(id=provider_id)
+    self.logger.info("obtaining list of vms on provider {}".format(provider.id))
+    try:
+        vms = provider.api.list_vms()
+        vm_names = vms if provider.provider_type == 'openshift' else [vm.name for vm in vms]
+        # skipping appliances present in sprout db. those will be handled by another task
+        vm_names = [name for name in vm_names
+                    if not Appliance.objects.filter(name=name, template__provider=provider)]
+        # checking vm time
+        for rule in rules:
+            expiration_time = timezone.now() - timedelta(**rule['lifetime'])
+            for name in vm_names:
+                if not re.match(rule['name'], name):
+                    continue
+
+                if provider.provider_type != 'openshift':
+                    try:
+                        vm_creation_time = provider.api.get_vm(name).creation_time
+                    except Exception as e:
+                        self.logger.exception("Couldn't get vm {vm} timestamp (prov: {p}) "
+                                              "because of exception {e}".format(vm=name,
+                                                                                p=provider_id,
+                                                                                e=e))
+                        continue
+                else:
+                    vm_creation_time = provider.api.vm_creation_time(name)
+
+                if vm_creation_time > expiration_time:
+                    continue
+
+                # looks like vm matches all rule and can be killed
+                kill_lost_appliance.delay(provider.id, name)
+    except Exception as e:
+        self.logger.exception("exception occurred during obtaining list of vms "
+                              "on provider {}".format(provider_id))
+        self.logger.exception(e)
+        self.retry(args=(), exc=e, countdown=10, max_retries=5)
+
+
+@singleton_task()
+def kill_lost_appliance(self, provider_id, vm_name):
+    """Removes passed vm on provider"""
+    try:
+        self.logger.info("killing vm {} on provider {}".format(vm_name, provider_id))
+        provider = Provider.objects.get(id=provider_id)
+        if provider.provider_type != 'openshift':
+            provider.api.get_vm(vm_name).stop()
+
+        provider.api.delete_vm(vm_name)
+    except Exception as e:
+        self.retry(args=(provider_id, vm_name), exc=e, countdown=30, max_retries=5)
+
+
+@singleton_task()
 def kill_appliance(self, appliance_id, replace_in_pool=False, minutes=60):
     """As-reliable-as-possible appliance deleter. Turns off, deletes the VM and deletes the object.
 
@@ -1348,45 +1452,6 @@ def check_templates_in_provider(self, provider_id):
         #         with transaction.atomic():
         #             tpl = Template.objects.get(pk=template.pk)
         #             tpl.delete()
-
-
-@singleton_task()
-def delete_nonexistent_appliances(self):
-    """Goes through orphaned appliances' objects and deletes them from the database."""
-    expiration_time = (timezone.now() - timedelta(**settings.ORPHANED_APPLIANCE_GRACE_TIME))
-    for appliance in Appliance.objects.filter(ready=True).all():
-        if appliance.name in redis.renaming_appliances:
-            continue
-        if appliance.power_state == Appliance.Power.ORPHANED:
-            if appliance.power_state_changed > expiration_time:
-                # Ignore it for now
-                continue
-            self.logger.info(
-                "I will delete orphaned appliance {}/{}".format(appliance.id, appliance.name))
-            try:
-                appliance.delete()
-            except ObjectDoesNotExist as e:
-                if "AppliancePool" in str(e):
-                    # Someone managed to delete the appliance pool before
-                    appliance.appliance_pool = None
-                    appliance.save(update_fields=['appliance_pool'])
-                    appliance.delete()
-                else:
-                    raise  # No diaper pattern here!
-    # If something happened to the appliance provisioning process, just delete it to remove
-    # the garbage. It will be respinned again by shepherd.
-    # Grace time is specified in BROKEN_APPLIANCE_GRACE_TIME
-    expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
-    for appliance in Appliance.objects.filter(ready=False, marked_for_deletion=False).all():
-        if appliance.status_changed < expiration_time:
-            self.logger.info("Killing broken appliance {}/{}".format(appliance.id, appliance.name))
-            Appliance.kill(appliance)  # Use kill because the appliance may still exist
-    # And now - if something happened during appliance deletion, call kill again
-    for appliance in Appliance.objects.filter(
-            marked_for_deletion=True, status_changed__lt=expiration_time).all():
-        self.logger.info(
-            "Trying to kill unkilled appliance {}/{}".format(appliance.id, appliance.name))
-        Appliance.kill(appliance, force_delete=True)
 
 
 def generic_shepherd(self, preconfigured):
