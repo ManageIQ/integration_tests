@@ -8,6 +8,7 @@ from cfme import test_requirements
 from cfme.control.explorer import alert_profiles, policies
 from cfme.control.explorer.alert_profiles import AlertProfileDetailsView
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -32,7 +33,7 @@ CANDU_PROVIDER_TYPES = [VMwareProvider]
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+automate", "+smartproxy", "+notifier"]),
-    pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider)),
+    pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider, KubeVirtProvider)),
     pytest.mark.usefixtures("setup_provider_modscope"),
     pytest.mark.tier(3),
     test_requirements.alert
