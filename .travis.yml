@@ -31,6 +31,8 @@ jobs:
       - pre-commit install-hooks
       script:
       - pre-commit run --all-files
+      after_failure:
+      - git diff
 env:
   #   work around travis being missconfigured
   - BOTO_CONFIG=/dev/null
