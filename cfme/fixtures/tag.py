@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme.base.credential import Credential
+from cfme.infrastructure.host import Host
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -119,6 +120,10 @@ def check_item_visibility(tag, user_restricted):
                 vis_object.remove_tag(tag=tag)
         with user_restricted:
             try:
+                if isinstance(vis_object, Host):
+                    # need to remove the link to the provider from the host,
+                    # so the navigation goes Compute -> Infrastructure -> Hosts, not Providers
+                    vis_object.parent.filters.update({'provider': None})
                 navigate_to(vis_object, 'Details')
                 actual_visibility = True
             except Exception:
