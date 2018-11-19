@@ -67,6 +67,8 @@ class CloudIntelReports(CFMENavigateStep):
     def step(self):
         self.view.navigation.select("Cloud Intel", "Reports")
 
+    def resetter(self):
+        self.view.saved_reports.open()
 
 class ReportsMultiBoxSelect(MultiBoxSelect):
     move_into_button = Button(title=Parameter("@move_into"))
