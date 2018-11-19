@@ -77,6 +77,7 @@ def test_relationships_tables(soft_assert, provider, has_persistent_volume, appl
         view = navigate_to(test_obj, 'Details')
 
 
+@pytest.mark.ignore_stream("5.10")
 @pytest.mark.usefixtures('setup_provider')
 def test_container_status_relationships_data_integrity(provider, appliance, soft_assert):
     """ This test verifies that the sum of running, waiting and terminated containers

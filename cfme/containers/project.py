@@ -129,8 +129,7 @@ class Dashboard(CFMENavigateStep):
                                                    use_search=search_visible).click()
 
     def resetter(self):
-        if self.appliance.version.is_in_series('5.9'):
-            self.view.toolbar.view_selector.select("Dashboard View")
+        self.view.toolbar.view_selector.select("Dashboard View")
 
 
 @navigator.register(Project, 'EditTags')

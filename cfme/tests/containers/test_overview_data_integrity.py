@@ -47,9 +47,11 @@ def get_api_object_counts(appliance):
             out[Project] += len(provider.mgmt.list_project())
             out[Route] += len(provider.mgmt.list_route())
             # TODO image count? list_templates too high, list_image_stream_images too low
-            # TODO container count? list_container returning different count than MIQ reports
             out[ImageRegistry] += len(provider.mgmt.list_image_registry())
-            out[Container] += len(provider.mgmt.list_container())
+            listed_containers = provider.mgmt.list_container()
+            # Get all container pods
+            out[Container] += sum(1 for pod in listed_containers for c in pod)
+
     return out
 
 
