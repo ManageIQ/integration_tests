@@ -21,7 +21,7 @@ from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import ssh, safe_string, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
+from cfme.utils.blockers import BZ, GH
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.virtual_machines import deploy_template
@@ -29,6 +29,7 @@ from cfme.utils.wait import wait_for, wait_for_decorator
 
 pytestmark = [
     pytest.mark.tier(3),
+    pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8152')]),
     test_requirements.smartstate,
 ]
 
@@ -624,11 +625,7 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-@pytest.mark.meta(blockers=[
-    BZ(1551273, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider)),
-    BZ(1578792, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: vm_system_type != 'redhat')])
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8157')])
 def test_ssa_vm(ssa_vm, soft_assert, vm_system_type):
     """ Tests SSA can be performed and returns sane results
 
