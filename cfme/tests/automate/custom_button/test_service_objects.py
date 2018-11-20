@@ -101,7 +101,7 @@ def button_group(appliance, request):
     blockers=[
         BZ(
             1650066,
-            forced_streams=["5.10"],
+            forced_streams=["5.9", "5.10"],
             unblock=lambda display, context: not (
                 context is ViaSSUI and display in ["List", "Single and list"]
             ),
