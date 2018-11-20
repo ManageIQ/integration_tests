@@ -282,35 +282,25 @@ def test_control_identical_descriptions(request, create_function, collections, a
 
 
 @pytest.mark.meta(blockers=[1231889], automates=[1231889])
-def test_vmware_alarm_selection_does_not_fail(alert_collection):
+def test_vmware_alarm_selection_does_not_fail(request, alert_collection):
     """Test the bug that causes CFME UI to explode when VMware Alarm type is selected.
+        We assert that the alert using this type is simply created. Then we destroy
+        the alert.
 
     Metadata:
         test_flag: alerts
     """
-    alert_obj = alert_collection.instantiate(
-        "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
-        active=True,
-        based_on="VM and Instance",
-        evaluate=("VMware Alarm", {}),
-        notification_frequency="5 Minutes"
-    )
     try:
-        alert_collection.create(
+        alert = alert_collection.create(
             "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
             active=True,
             based_on="VM and Instance",
             evaluate=("VMware Alarm", {}),
             notification_frequency="5 Minutes"
         )
+        request.addfinalizer(lambda: alert.delete() if alert.exists else None)
     except CFMEExceptionOccured as e:
-        pytest.fail("The CFME has thrown an error: {}".format(str(e)))
-    except Exception as e:
-        view = alert_obj.create_view(AlertDetailsView)
-        view.flash.assert_message("At least one of E-mail, SNMP Trap, Timeline Event, or"
-            " Management Event must be configured")
-    else:
-        pytest.fail("Creating this alert passed although it must fail.")
+        pytest.fail("CFME has thrown an error: {}".format(str(e)))
 
 
 def test_alert_ram_reconfigured(hardware_reconfigured_alert):
