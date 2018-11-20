@@ -12,6 +12,8 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 @attr.s
 class FloatingIp(Taggable, BaseEntity):
     """Class representing floating ips"""
+    address = attr.ib()
+
     in_version = ('5.8', version.LATEST)
     category = "networks"
     page_name = 'floating_ip'
@@ -20,8 +22,6 @@ class FloatingIp(Taggable, BaseEntity):
     detail_page_suffix = 'floating_ip_detail'
     quad_name = None
     db_types = ["FloatingIP"]
-
-    address = attr.ib()
 
     @property
     def status(self):
@@ -39,7 +39,6 @@ class FloatingIpCollection(BaseCollection):
     """ Collection object for NetworkPort object
         Note: Network providers object are not implemented in mgmt
     """
-
     ENTITY = FloatingIp
 
     def all(self):
@@ -71,25 +70,8 @@ class Details(CFMENavigateStep):
     VIEW = FloatingIpDetailsView
 
     def step(self):
-        # as for 5.9 floating ip doesn't have name att, will get id for navigation
-        # for 5.8 floating ip table view doesn't have name to search for,
-        # in this case we will use address
-        if self.obj.appliance.version < '5.9':
-            try:
-                element = self.prerequisite_view.entities.get_entity(
-                    name=self.obj.address, surf_pages=True)
-            except ItemNotFound:
-                element = self.prerequisite_view.entities.get_entity(
-                    address=self.obj.address, surf_pages=True)
-        else:
-            all_items = self.prerequisite_view.entities.get_all(surf_pages=True)
-            for entity in all_items:
-                if entity.data['address'] == self.obj.address:
-                    entity_id = entity.data['id']
-                    element = self.prerequisite_view.entities.get_entity(
-                        entity_id=entity_id, surf_pages=True)
-                    break
         try:
-            element.click()
+            self.prerequisite_view.entities.get_entity(address=self.obj.address,
+                                                       surf_pages=True).click()
         except Exception:
             raise ItemNotFound('Floating IP not found on the page')
