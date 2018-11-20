@@ -252,7 +252,7 @@ def test_instance_operating_system_linux(new_instance):
 
 
 @pytest.mark.regression
-def test_instance_attach_volume(new_instance, volume, appliance):
+def test_instance_attach_volume(volume, new_instance, appliance):
     initial_volume_count = new_instance.volume_count
     new_instance.attach_volume(volume.name)
     view = appliance.browser.create_view(navigator.get_class(new_instance, 'AttachVolume').VIEW)
