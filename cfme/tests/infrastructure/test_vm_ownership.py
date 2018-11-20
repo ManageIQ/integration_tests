@@ -118,7 +118,9 @@ def test_rename_vm(appliance, setup_provider, small_vm):
     6. Check whether VM is renamed or not
     """
     view = navigate_to(small_vm, 'Details')
-    small_vm.rename_vm(new_vm_name="test-{}".format(fauxfactory.gen_alphanumeric()))
+    changed_vm_name = small_vm.rename_vm(new_vm_name="test-{}".
+                                         format(fauxfactory.gen_alphanumeric()))
     view.flash.wait_displayed("20s")
     msg = 'Rename of Virtual Machine "{vm_name}" has been initiated'.format(vm_name=small_vm.name)
     view.flash.assert_success_message(msg)
+    assert changed_vm_name.exists

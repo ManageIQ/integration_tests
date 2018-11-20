@@ -442,28 +442,29 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
         view = self.create_view(navigator.get_class(self, 'Details').VIEW)
         view.flash.assert_success_message(msg)
 
-    def rename_vm(self, new_vm_name, click_cancel=False, click_reset=False):
+    def rename_vm(self, new_vm_name, cancel=False, reset=False):
         """Rename the VM
 
         Args:
             new_vm_name: object for renaming vm
-            click_cancel (bool): Whether to cancel form submission
-            click_reset (bool): Whether to reset form after filling
+            cancel (bool): Whether to cancel form submission
+            reset (bool): Whether to reset form after filling
         """
         view = navigate_to(self, 'Rename')
-        view.form.fill({'vm_name': new_vm_name})
-        if click_reset:
-            view.form.reset_button.click()
-            view.flash.assert_no_error()
-            view.form.cancel_button.click()
-
-        elif click_cancel:
-            view.form.cancel_button.click()
-            view.flash.assert_no_error()
-
-        else:
-            # save the form
-            view.form.save_button.click()
+        changed = view.vm_name.fill(new_vm_name)
+        if changed:
+            if reset:
+                view.reset_button.click()
+                view.flash.assert_no_error()
+                view.cancel_button.click()
+            else:
+                # save the form
+                view.save_button.click()
+                view.flash.assert_no_error()
+                return self.appliance.collections.infra_vms.instantiate(new_vm_name, self.provider,
+                                                                        self.template_name)
+        if cancel:
+            view.cancel_button.click()
             view.flash.assert_no_error()
 
 

@@ -487,13 +487,10 @@ class RenameVmView(BaseLoggedInPage):
     """Rename VM page for VMs"""
 
     title = Text('#explorer_title_text')
-
-    @View.nested
-    class form(View):  # noqa
-        vm_name = Input("name")
-        save_button = Button('Save')
-        reset_button = Button('Reset')
-        cancel_button = Button('Cancel')
+    vm_name = Input("name")
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+    cancel_button = Button('Cancel')
 
     @property
     def is_displayed(self):
