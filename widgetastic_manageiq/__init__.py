@@ -2439,6 +2439,7 @@ class AlertEmail(View):
                 self.recipients(value).remove()
             for value in values_to_add:
                 self._add_recipient(value)
+                wait_for(lambda: value in self.all_emails, num_sec=10, delay=3)
             return True
 
     def _values_to_remove(self, values):
