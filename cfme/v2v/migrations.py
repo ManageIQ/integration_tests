@@ -20,6 +20,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.update import Updateable
 from cfme.utils.version import Version, VersionPicker
 from cfme.utils.wait import wait_for
 
@@ -186,6 +187,7 @@ class InfraMappingWizardNetworksView(View):
     source_networks = MultiSelectList('source_networks')
     target_networks = MultiSelectList('target_networks')
     next_btn = Button("Create")  # overriding, since 'Next' is called 'Create' in this form
+    cancel = Button("Cancel")
     cluster_selector = BootstrapSelect(id='cluster_select')
 
     @property
@@ -442,7 +444,18 @@ class AddInfrastructureMappingView(View):
 
     @property
     def is_displayed(self):
-        return (self.form.title.text == self.form_title_text)
+        return self.form.title.text == self.form_title_text
+
+
+class EditInfrastructureMappingView(View):
+    form = InfraMappingWizard()
+    form_title_text = 'Edit Infrastructure Mapping'
+
+    # infra_mapping_list = MigrationPlansList("infra-mappings-list-view")
+
+    @property
+    def is_displayed(self):
+        return self.form.title.text == self.form_title_text
 
 
 class AddMigrationPlanView(View):
@@ -658,11 +671,21 @@ class MigrationPlanRequestDetailsView(View):
 
 
 @attr.s
-class InfrastructureMapping(BaseEntity):
+class InfrastructureMapping(BaseEntity, Updateable):
     """Class representing v2v infrastructure mappings"""
     name = attr.ib()
     description = attr.ib(default=None)
     form_data = attr.ib(default=None)
+
+    def update(self, updates):
+        view = navigate_to(self, 'Edit', wait_for_view=20)
+        assert view.wait_displayed()
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel.click()
+
 
 
 @attr.s
@@ -698,6 +721,9 @@ class InfrastructureMappingCollection(BaseCollection):
         self.find_mapping(mapping)
         mapping_list = view.infra_mapping_list
         mapping_list.delete_mapping(mapping.name)
+
+
+
 
 
 @attr.s
@@ -813,6 +839,17 @@ class AddInfrastructureMapping(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.wait_displayed()
         self.prerequisite_view.create_infrastructure_mapping.click()
+
+
+@navigator.register(InfrastructureMapping, 'Edit')
+class EditInfrastructureMapping(CFMENavigateStep):
+    VIEW = EditInfrastructureMappingView
+    # prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
+
+    def step(self):
+        self.prerequisite_view.infra_mapping_list.edit_mapping(
+            self.obj.name)
 
 
 @navigator.register(MigrationPlanCollection, 'All')

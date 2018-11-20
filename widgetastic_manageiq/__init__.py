@@ -4409,6 +4409,7 @@ class InfraMappingList(Widget):
         './/div[@role="document"]' '//button[@class="btn-cancel btn btn-default"]'
     )
     ITEM_DELETE_TRASH_ICON_LOCATOR = './/button[./span[contains(@class,"pficon-delete")]]'
+    EDIT_MAPPING = './/button[./span[contains(@class,"pficon-edit")]]'
 
     def __init__(self, parent, list_class, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4567,6 +4568,19 @@ class InfraMappingList(Widget):
                 del_btn = self.root_browser.element(self.ITEM_PROMPT_DELETE_BUTTON_LOCATOR)
                 del_btn.click()
             else:
+                cancel_btn = self.root_browser.element(self.ITEM_PROMPT_CANCEL_BUTTON_LOCATOR)
+                cancel_btn.click()
+            return True
+        except NoSuchElementException:
+            return False
+
+    def edit_mapping(self, map_name, cancel=False):
+        try:
+            el = self._get_map_element(map_name)
+            self.browser.click(self.EDIT_MAPPING, parent=el)
+            # below root_browser is required as the buttons below are on modal prompt
+            # browser with parent=el won't work here.
+            if cancel:
                 cancel_btn = self.root_browser.element(self.ITEM_PROMPT_CANCEL_BUTTON_LOCATOR)
                 cancel_btn.click()
             return True
