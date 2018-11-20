@@ -66,7 +66,7 @@ class EditTemplateView(TemplateForm):
     @property
     def is_displayed(self):
         return (
-            self.title.text == "Editing {}".format(self.context['object'].name) and
+            self.title.text == "Editing {}".format(self.context['object'].template_name) and
             self.orchestration_templates.is_opened
         )
 
@@ -79,7 +79,7 @@ class CopyTemplateView(CopyTemplateForm):
     def is_displayed(self):
         return (
             self.is_displayed and
-            self.title.text == "Copying {}".format(self.context['object'].name) and
+            self.title.text == "Copying {}".format(self.context['object'].template_name) and
             self.orchestration_templates.is_opened
         )
 
@@ -152,6 +152,7 @@ class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
                    'draft': updates.get('draft'),
                    'content': updates.get('content')})
         view.save_button.click()
+        view.flash.wait_displayed("10s")
         view.flash.assert_success_message('Orchestration Template "{}" was saved'.format(
             self.template_name))
 
@@ -178,7 +179,7 @@ class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
                    })
         view.add_button.click()
         view.flash.assert_no_error()
-        #TODO - Move assertions to tests
+        # TODO - Move assertions to tests
         return self.parent.instantiate(template_group=self.template_group,
                                        description=description,
                                        template_name=template_name,
