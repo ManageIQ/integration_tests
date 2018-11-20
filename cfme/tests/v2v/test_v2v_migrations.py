@@ -219,7 +219,7 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
     # validate MAC address matches between source and target VMs
     src_vm = form_data_vm_obj_dual_nics.vm_list.pop()
     migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
-    assert src_vm.mac_address == migrated_vm.mac_address
+    assert set(src_vm.mac_address.split(", ")) == set(migrated_vm.mac_address.split(", "))
 
 
 @pytest.mark.parametrize('form_data_vm_obj_single_datastore', [['nfs', 'nfs', dual_disk_template]],
