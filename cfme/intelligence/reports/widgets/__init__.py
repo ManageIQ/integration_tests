@@ -58,13 +58,14 @@ class BaseDashboardReportWidget(BaseEntity, Updateable, Pretty):
         """
         # In order to update the tree in the side menu we have to refresh a whole page
         self.browser.refresh()
-        view = navigate_to(self, "Edit")
+        view = navigate_to(self, "Edit", use_resetter=False)
         changed = view.fill_with(
             updates,
             on_change=view.save_button.click,
             no_change=view.cancel_button.click
         )
         view = self.create_view(DashboardWidgetDetailsView, override=updates)
+        view.wait_displayed()
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:

@@ -55,7 +55,7 @@ class NewDashboardView(DashboardFormCommon):
             self.dashboards.tree.currently_selected == [
                 "All Dashboards",
                 "All Groups",
-                self.context["object"].group
+                self.context["object"]._group
             ]
         )
 
@@ -68,7 +68,7 @@ class EditDashboardView(DashboardFormCommon):
     def is_displayed(self):
         return (
             self.in_intel_reports and
-            self.title.text == "Editing Dashboard {}".format(self.context["object"].name) and
+            self.title.text == "Editing Dashboard \"{}\"".format(self.context["object"].name) and
             self.dashboards.is_opened and
             self.dashboards.tree.currently_selected == [
                 "All Dashboards",
@@ -163,7 +163,7 @@ class Dashboard(BaseEntity, Updateable, Pretty):
         Args:
             updates: Provided by update() context manager.
         """
-        view = navigate_to(self, "Edit")
+        view = navigate_to(self, "Edit", use_resetter=False)
         if "widgets" in updates:
             updates["widget_picker"] = updates.pop("widgets")
         changed = view.fill(updates)
@@ -172,6 +172,7 @@ class Dashboard(BaseEntity, Updateable, Pretty):
         else:
             view.cancel_button.click()
         view = self.create_view(DashboardDetailsView, override=updates)
+        view.wait_displayed()
         assert view.is_displayed
         view.flash.assert_no_error()
         if self.appliance.version < "5.9":
