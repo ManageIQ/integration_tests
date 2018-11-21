@@ -40,6 +40,7 @@ def get_migrated_vm_obj(src_vm_obj, target_provider):
     migrated_vm = collection.instantiate(src_vm_obj.name, target_provider)
     return migrated_vm
 
+
 @pytest.fixture(scope="module")
 def wait_for_ansible(appliance):
     appliance.wait_for_embedded_ansible()
@@ -101,8 +102,8 @@ def catalog_item(request, appliance, machine_credential, ansible_repository, pla
 @pytest.mark.parametrize(
     "form_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True
 )
-def test_migration_playbooks(request, appliance, wait_for_ansible, ansible_repository,
-            credentials_collection, v2v_providers, host_creds, conversion_tags,
+def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conversion_tags,
+                             wait_for_ansible, ansible_repository, credentials_collection,
                              form_data_vm_obj_single_datastore):
     """Test for migrating vms with pre and post playbooks"""
     CREDENTIALS = (

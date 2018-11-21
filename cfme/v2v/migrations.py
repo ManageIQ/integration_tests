@@ -781,8 +781,8 @@ class MigrationPlanCollection(BaseCollection):
             view.advanced.pre_playbook.fill(pre_playbook)
             view.advanced.pre_checkbox.click()
         if post_playbook:
-            view.advanced.post_playbook.fill(pre_playbook)
-            view.advanced.post_playbook.click()
+            view.advanced.post_playbook.fill(post_playbook)
+            view.advanced.post_checkbox.click()
         view.next_btn.click()
 
         if start_migration:
