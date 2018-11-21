@@ -67,7 +67,9 @@ class ReportMenu(BaseEntity):
         """
         view = self.go_to_group(group)
         view.reports_tree.click_path("Top Level")
-        return view.manager.fields
+        fields = view.manager.fields
+        view.discard_button.click()
+        return fields
 
     def get_subfolders(self, group, folder):
         """Returns list of sub-folders for given user group and folder.
@@ -78,7 +80,9 @@ class ReportMenu(BaseEntity):
         """
         view = self.go_to_group(group)
         view.reports_tree.click_path("Top Level", folder)
-        return view.manager.fields
+        fields = view.manager.fields
+        view.discard_button.click()
+        return fields
 
     def add_folder(self, group, folder):
         """Adds a folder under top-level.
