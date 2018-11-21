@@ -21,7 +21,7 @@ def ensure_websocket_role_disabled(appliance):
 @pytest.fixture(scope="session", autouse=True)
 def fix_merkyl_workaround(request, appliance):
     """Workaround around merkyl not opening an iptables port for communication"""
-    if isinstance(appliance, DummyAppliance) or appliance.is_dev:
+    if isinstance(appliance, DummyAppliance) or appliance.is_dev or appliance.is_pod:
         return
     ssh_client = appliance.ssh_client
     if ssh_client.run_command('test -s /etc/init.d/merkyl').failed:
