@@ -144,7 +144,7 @@ class ScheduleEditView(ConfigurationView):
         return (
             self.in_configuration and
             self.accordions.settings.tree.currently_selected == expected_tree and
-            self.title.text == 'Edit Schedule "{}"'.format(self.context['object'].name)
+            self.title.text == 'Editing Schedule "{}"'.format(self.context['object'].name)
         )
 
 
