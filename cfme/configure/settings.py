@@ -44,7 +44,7 @@ class TimeProfileAddView(TimeProfileView):
 
     @property
     def is_displayed(self):
-        return self.entities.title == 'Time Profile Information'
+        return self.entities.title.text == 'Time Profile Information'
 
 
 class TimeProfileEditView(TimeProfileView):
