@@ -77,8 +77,7 @@ class NewScheduleView(SchedulesFormCommon):
         return (
             self.in_intel_reports and
             self.title.text == "Adding a new Schedule" and
-            # TODO uncomment when https://bugzilla.redhat.com/show_bug.cgi?id=1441101 will be fixed
-            # self.schedules.is_opened and
+            self.schedules.is_opened and
             self.schedules.tree.currently_selected == ["All Schedules"]
         )
 
@@ -92,8 +91,7 @@ class EditScheduleView(SchedulesFormCommon):
         return (
             self.in_intel_reports and
             self.title.text == 'Editing Schedule "{}"'.format(self.context["object"].name) and
-            # TODO uncomment when https://bugzilla.redhat.com/show_bug.cgi?id=1441101 will be fixed
-            # self.schedules.is_opened and
+            self.schedules.is_opened and
             self.schedules.tree.currently_selected == ["All Schedules", self.context["object"].name]
         )
 
@@ -106,8 +104,7 @@ class ScheduleDetailsView(CloudIntelReportsView):
         return (
             self.in_intel_reports and
             self.title.text == 'Schedule "{}"'.format(self.context["object"].name) and
-            # TODO uncomment when https://bugzilla.redhat.com/show_bug.cgi?id=1441101 will be fixed
-            # self.schedules.is_opened and
+            self.schedules.is_opened and
             self.schedules.tree.currently_selected == ["All Schedules", self.context["object"].name]
         )
 
@@ -159,14 +156,13 @@ class Schedule(Updateable, Pretty, BaseEntity):
         view = self.create_view(ScheduleDetailsView, override=updates)
         view.wait_displayed()
         assert view.is_displayed
-        # TODO Doesn't work due https://bugzilla.redhat.com/show_bug.cgi?id=1441101
-        # view.flash.assert_no_error()
-        # if changed:
-        #     view.flash.assert_message(
-        #         'Schedule "{}" was saved'.format(updates.get("name", self.name)))
-        # else:
-        #     view.flash.assert_message(
-        #         'Edit of Schedule "{}" was cancelled by the user'.format(self.name))
+        view.flash.assert_no_error()
+        if changed:
+            view.flash.assert_message(
+                'Schedule "{}" was saved'.format(updates.get("name", self.name)))
+        else:
+            view.flash.assert_message(
+                'Edit of Schedule "{}" was cancelled by the user'.format(self.name))
 
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
@@ -176,8 +172,7 @@ class Schedule(Updateable, Pretty, BaseEntity):
         else:
             view = self.create_view(SchedulesAllView)
             assert view.is_displayed
-        # TODO Doesn't work due https://bugzilla.redhat.com/show_bug.cgi?id=1441101
-        # view.flash.assert_no_error()
+        view.flash.assert_no_error()
 
     def queue(self):
         """Queue this schedule."""
@@ -224,8 +219,7 @@ class ScheduleCollection(BaseCollection):
         view.add_button.click()
         view = schedule.create_view(ScheduleDetailsView)
         assert view.is_displayed
-        # TODO Doesn't work due https://bugzilla.redhat.com/show_bug.cgi?id=1441101
-        # view.flash.assert_success_message('Schedule "{}" was added'.format(name))
+        view.flash.assert_success_message('Schedule "{}" was added'.format(name))
         return schedule
 
     def _select_schedules(self, schedules):
@@ -262,8 +256,7 @@ class ScheduleCollection(BaseCollection):
         """
         view = self._select_schedules(schedules)
         view.configuration.item_select(action)
-        # TODO https://bugzilla.redhat.com/show_bug.cgi?id=1441101
-        # view.flash.assert_no_errors()
+        view.flash.assert_no_errors()
 
     def enable_schedules(self, *schedules):
         """Select and enable specified schedules.
