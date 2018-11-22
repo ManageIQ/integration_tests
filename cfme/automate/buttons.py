@@ -531,8 +531,8 @@ class NewButtonGroupView(ButtonGroupFormCommon):
 
     @property
     def is_displayed(self):
-        expected_title = "Adding a new Button Group"
-
+        ver = self.browser.appliance.version
+        expected_title = "Adding a new {} Group".format("Buttons" if ver < "5.10" else "Button")
         return (
             self.in_customization and
             self.title.text == expected_title and
@@ -549,7 +549,8 @@ class EditButtonGroupView(ButtonGroupFormCommon):
 
     @property
     def is_displayed(self):
-        expected_title = "Editing Button Group"
+        ver = self.browser.appliance.version
+        expected_title = "Editing {} Group".format("Buttons" if ver < "5.10" else "Button")
 
         return (
             self.in_customization
