@@ -40,7 +40,14 @@ def template_name(provider):
     if provider.one_of(RHEVMProvider):
         return provider.data.templates.get('full_template')['name']
     elif provider.one_of(VMwareProvider):
-        return provider.data.templates.get('big_template')['name']
+        if provider.name == "vSphere 6 (nested)":
+            return provider.data.templates.get('rhel74_template')['name']
+        # Tests running with vsphere 6 (nested) does not have Fedora_24WS template. Thus it is not
+        # found in list of provisioning templates. Which results in Error - 'TemplateNotFound'.
+        # So Automation doesn't able to select template from provisioning template list.
+        # Hence used rhel74_template - 'env-rhel74-tpl'.
+        else:
+            return provider.data.templates.get('big_template')['name']
 
 
 @pytest.fixture
