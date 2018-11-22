@@ -76,10 +76,8 @@ def tag_value(appliance, category, tag, request):
         tag_for_create = ([category.display_name, tag.display_name], True)
         tag_for_update = ([category.display_name, tag.display_name], False)
     else:
-        if BZ(1579867, forced_streams=['5.9']).blocks:
-            tag_for_create = 'fill_tag(My Company Tags : Cost Center, Cost Center 001)'
-        else:
-            tag_for_create = 'fill_tag(My Company Tags : {})'.format(category.display_name)
+        tag_for_create = 'fill_tag(My Company Tags : {}, {})'.format(category.display_name,
+                                                                     tag.display_name)
         tag_for_update = 'delete_whole_expression'
     return tag_for_create, tag_for_update
 
