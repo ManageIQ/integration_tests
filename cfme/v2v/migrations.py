@@ -360,10 +360,10 @@ class MigrationDashboardView(BaseLoggedInPage):
             # TODO: This also means that mappings/plans may be moved to different pages. Once all of
             that is settled we will need to refactor and also account for notifications.
         """
+        new_msg = ""
         try:
             try:
                 is_plan_visible = self.progress_card.is_plan_visible(plan_name)
-                plan_time_elapsed = self.progress_card.get_clock(plan_name)
             except ItemNotFound:
                 # This will end the wait_for loop and check the plan under completed_plans section
                 return True
@@ -376,10 +376,16 @@ class MigrationDashboardView(BaseLoggedInPage):
                 # logger.info("For plan %s, current migrated VMs are %s out of total VMs %s",
                 #     migration_plan.name, view.progress_card.migrated_vms(migration_plan.name),
                 #     view.progress_card.total_vm_to_be_migrated(migration_plan.name))
-                self.logger.info("For plan %s, is plan in progress: %s,"
-                    "time elapsed for migration: %s",
-                    plan_name, is_plan_visible,
-                    plan_time_elapsed)
+                try:
+                    plan_time_elapsed = self.progress_card.get_clock(plan_name)
+                    new_msg = "time elapsed for migration: {}".format(plan_time_elapsed)
+                except NoSuchElementException:
+                    new_msg = "playbook is executing.."
+                    pass
+                msg = "For plan {}, is plan in progress: {}, {}".format(
+                    plan_name, is_plan_visible, new_msg
+                )
+                self.logger.info(msg)
             # return False if plan visible under "In Progress Plans"
             return not is_plan_visible
         except StaleElementReferenceException:
@@ -778,9 +784,11 @@ class MigrationPlanCollection(BaseCollection):
         view.next_btn.click()
 
         if pre_playbook:
+            view.advanced.pre_playbook.wait_displayed("5s")
             view.advanced.pre_playbook.fill(pre_playbook)
             view.advanced.pre_checkbox.click()
         if post_playbook:
+            view.advanced.post_playbook.wait_displayed("5s")
             view.advanced.post_playbook.fill(post_playbook)
             view.advanced.post_checkbox.click()
         view.next_btn.click()

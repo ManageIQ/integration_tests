@@ -7,9 +7,9 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from cfme.utils.conf import credentials
 
 
 pytestmark = [
@@ -27,7 +27,7 @@ pytestmark = [
         classes=[VMwareProvider],
         selector=ONE_PER_VERSION,
         fixture_name="second_provider",
-        required_flags=["v2v"],
+        required_flags=["v2v"]
     ),
 ]
 
@@ -35,7 +35,7 @@ REPOSITORIES = "https://github.com/v2v-test/ansible_playbooks.git"
 
 
 def get_migrated_vm_obj(src_vm_obj, target_provider):
-    """Returns the migrated_vm obj from target_provider."""
+    """Returns migrated_vm obj from target_provider"""
     collection = target_provider.appliance.provider_based_collection(target_provider)
     migrated_vm = collection.instantiate(src_vm_obj.name, target_provider)
     return migrated_vm
@@ -47,17 +47,14 @@ def wait_for_ansible(appliance):
 
 
 @pytest.fixture(scope="module")
-def action_collection(appliance):
-    return appliance.collections.actions
-
-
-@pytest.fixture(scope="module")
 def credentials_collection(appliance):
+    """Fixture to add machine credentials"""
     return appliance.collections.ansible_credentials
 
 
 @pytest.fixture(scope="module")
 def ansible_repository(appliance):
+    """Fixture to add ansible repository"""
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
         fauxfactory.gen_alpha(), REPOSITORIES, description=fauxfactory.gen_alpha()
@@ -67,11 +64,9 @@ def ansible_repository(appliance):
         refresh = view.browser.refresh
     else:
         refresh = view.toolbar.refresh.click
-    wait_for(
-        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
-        timeout=60,
-        fail_func=refresh,
-    )
+    wait_for(lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
+             timeout=60,
+             fail_func=refresh)
     yield repository
 
     if repository.exists:
@@ -79,6 +74,7 @@ def ansible_repository(appliance):
 
 
 def catalog_item(request, appliance, machine_credential, ansible_repository, playbook_type):
+    """Add provisioning and retire ansible catalog item"""
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
         fauxfactory.gen_alphanumeric(),
@@ -110,9 +106,11 @@ def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conv
         "Machine",
         {
             "username": credentials[
-                v2v_providers.vmware_provider.data.templates.get("rhel7_minimal").creds].username,
+                v2v_providers.vmware_provider.data.templates.get("rhel7_minimal").creds
+            ].username,
             "password": credentials[
-                v2v_providers.vmware_provider.data.templates.get("rhel7_minimal").creds].password,
+                v2v_providers.vmware_provider.data.templates.get("rhel7_minimal").creds
+            ].password,
             "privilage_escalation": "sudo",
         },
     )
@@ -122,10 +120,14 @@ def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conv
         **CREDENTIALS[1]
     )
 
+    # TODO: Add cleanup for added crede
+
     provision_catalog = catalog_item(
-        request, appliance, credential.name, ansible_repository, "provision")
+        request, appliance, credential.name, ansible_repository, "provision"
+    )
     retire_catalog = catalog_item(
-        request, appliance, credential.name, ansible_repository, "retire")
+        request, appliance, credential.name, ansible_repository, "retire"
+    )
 
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(
@@ -150,16 +152,16 @@ def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conv
         post_playbook=retire_catalog.name,
     )
 
-    # explicit wait for spinner of in-progress status car
+    # explicit wait for spinner of in-progress status card
     view = appliance.browser.create_view(
-        navigator.get_class(migration_plan_collection, "All").VIEW
+        navigator.get_class(migration_plan_collection, "All").VIEW.pick()
     )
     wait_for(
         func=view.progress_card.is_plan_started,
         func_args=[migration_plan.name],
         message="migration plan is starting, be patient please",
         delay=5,
-        num_sec=150,
+        num_sec=280,
         handle_exception=True,
     )
 
@@ -168,18 +170,20 @@ def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conv
         func=view.plan_in_progress,
         func_args=[migration_plan.name],
         message="migration plan is in progress, be patient please",
-        delay=5,
-        num_sec=1800,
+        delay=15,
+        num_sec=3600,
     )
-
-    view.migr_dropdown.item_select("Completed Plans")
+    view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info(
         "For plan %s, migration status after completion: %s, total time elapsed: %s",
         migration_plan.name,
         view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
         view.migration_plans_completed_list.get_clock(migration_plan.name),
     )
+
+    # validate MAC address matches between source and target VMs
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
     migrated_vm = get_migrated_vm_obj(src_vm_obj, v2v_providers.rhv_provider)
     assert src_vm_obj.mac_address == migrated_vm.mac_address
