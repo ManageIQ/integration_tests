@@ -160,14 +160,13 @@ CACHES = {
 
 CLEANUP_RULES = [
     # appliance name , max appliance lifetime
-    {'name': r'^test', 'lifetime': dict(hours=1)},
-    {'name': r'^(long-test|i-)', 'lifetime': dict(hours=6)},
-    {'name': r'^(external-test|s_tpl|s_appl)', 'lifetime': dict(hours=12)},
-    {'name': r'^jenkins-template', 'lifetime': dict(hours=4)},
-    {'name': r'^jenkins_', 'lifetime': dict(hours=24)},
-    {'name': r'^sprout', 'lifetime': dict(hours=24)},
-    {'name': r'^dockerbot_', 'lifetime': dict(hours=24)},
-    {'name': r'.*_cfme_', 'lifetime': dict(hours=24)},
+    {'name': r'^i(-|_)', 'lifetime': dict(hours=6)},
+    {'name': r'^(external(-|_)|s(-|_)tpl|s(-|_)appl)', 'lifetime': dict(hours=12)},
+    {'name': r'^jenkins(-|_)template', 'lifetime': dict(hours=4)},
+    {'name': r'^jenkins(-|_)', 'lifetime': dict(hours=4)},
+    {'name': r'^sprout(-|_)', 'lifetime': dict(hours=4)},
+    {'name': r'^dockerbot(-|_)', 'lifetime': dict(hours=4)},
+    {'name': r'.*(-|_)cfme(-|_)', 'lifetime': dict(hours=12)},
 ]
 
 
@@ -204,6 +203,11 @@ CELERYBEAT_SCHEDULE = {
     'kill-lost-appliances': {
         'task': 'appliances.tasks.kill_lost_appliances',
         'schedule': timedelta(minutes=75),
+    },
+
+    'kill-empty-pools': {
+        'task': 'appliances.tasks.remove_empty_appliance_pools',
+        'schedule': timedelta(hours=2),
     },
 
     'delete-nonexistent-appliances': {

@@ -162,9 +162,13 @@ def delete_nonexistent_appliances(self):
         if appliance.power_state == Appliance.Power.ORPHANED:
             if appliance.power_state_changed > expiration_time:
                 # Ignore it for now
+                self.logger.info("orphaned appliance {} power "
+                                 "state has been changed".format(appliance.id))
                 continue
             self.logger.info(
-                "I will delete orphaned appliance {}/{}".format(appliance.id, appliance.name))
+                "I will delete orphaned "
+                "appliance {}/{} on provider {}".format(appliance.id, appliance.name,
+                                                        appliance.provider.id))
             try:
                 appliance.delete()
             except ObjectDoesNotExist as e:
@@ -181,13 +185,16 @@ def delete_nonexistent_appliances(self):
     expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
     for appliance in Appliance.objects.filter(ready=False, marked_for_deletion=False).all():
         if appliance.status_changed < expiration_time:
-            self.logger.info("Killing broken appliance {}/{}".format(appliance.id, appliance.name))
+            self.logger.info("Killing broken appliance {}/{} "
+                             "on provider {}".format(appliance.id, appliance.name,
+                                                     appliance.provider.id))
             Appliance.kill(appliance)  # Use kill because the appliance may still exist
     # And now - if something happened during appliance deletion, call kill again
     for appliance in Appliance.objects.filter(
             marked_for_deletion=True, status_changed__lt=expiration_time).all():
         self.logger.info(
-            "Trying to kill unkilled appliance {}/{}".format(appliance.id, appliance.name))
+            "Trying to kill unkilled appliance {}/{} "
+            "on provider {}".format(appliance.id, appliance.name, appliance.provider.id))
         Appliance.kill(appliance, force_delete=True)
 
 
@@ -249,11 +256,24 @@ def kill_lost_appliance(self, provider_id, vm_name):
         self.logger.info("killing vm {} on provider {}".format(vm_name, provider_id))
         provider = Provider.objects.get(id=provider_id)
         if provider.provider_type != 'openshift':
-            provider.api.get_vm(vm_name).stop()
-
-        provider.api.delete_vm(vm_name)
+            vm = provider.api.get_vm(vm_name)
+            vm.stop()
+            vm.delete()
+        else:
+            provider.api.delete_vm(vm_name)
     except Exception as e:
         self.retry(args=(provider_id, vm_name), exc=e, countdown=30, max_retries=5)
+
+
+@singleton_task()
+def remove_empty_appliance_pools(self):
+    """There are sometimes empty lost pools. this task is going to remote such lost pools """
+    for pool in [pool for pool in AppliancePool.objects.all() if pool.broken_with_no_appliances]:
+        try:
+            self.logger.info("Removing empty pool id: {}".format(pool.id))
+            pool.delete()
+        except Exception as e:
+            self.logger.exception("Can't delete pool id {} because of {} ".format(pool.id, e))
 
 
 @singleton_task()

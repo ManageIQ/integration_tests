@@ -1475,7 +1475,7 @@ class AppliancePool(MetadataMixin):
 
     @property
     def broken_with_no_appliances(self):
-        return (not self.finished) and self.age >= timedelta(days=1) and self.current_count == 0
+        return self.age >= timedelta(hours=2) and self.current_count == 0
 
     @property
     def queued_provision_tasks(self):
