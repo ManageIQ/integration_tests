@@ -105,7 +105,7 @@ def small_vm(provider, small_template_modscope):
 
 @pytest.mark.ignore_stream('5.9')
 @pytest.mark.provider([VMwareProvider], override=True, scope="module", selector=ONE_PER_TYPE)
-def test_rename_vm(appliance, setup_provider, small_vm):
+def test_rename_vm(request, appliance, setup_provider, small_vm):
 
     """Test for rename the VM.
        This feature is included in 5.10z.
@@ -124,3 +124,4 @@ def test_rename_vm(appliance, setup_provider, small_vm):
     msg = 'Rename of Virtual Machine "{vm_name}" has been initiated'.format(vm_name=small_vm.name)
     view.flash.assert_success_message(msg)
     assert changed_vm_name.exists
+    request.addfinalizer(changed_vm_name.cleanup_on_provider)
