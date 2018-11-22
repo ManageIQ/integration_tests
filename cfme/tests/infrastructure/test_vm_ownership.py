@@ -100,7 +100,8 @@ def small_vm(provider, small_template_modscope):
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     vm.refresh_relationships()
     yield vm
-    vm.cleanup_on_provider()
+    if vm.exists:
+        vm.cleanup_on_provider()
 
 
 @pytest.mark.ignore_stream('5.9')
@@ -124,4 +125,4 @@ def test_rename_vm(request, appliance, setup_provider, small_vm):
     msg = 'Rename of Virtual Machine "{vm_name}" has been initiated'.format(vm_name=small_vm.name)
     view.flash.assert_success_message(msg)
     assert changed_vm_name.exists
-    request.addfinalizer(changed_vm_name.cleanup_on_provider)
+    changed_vm_name.rename_vm(small_vm.name)
