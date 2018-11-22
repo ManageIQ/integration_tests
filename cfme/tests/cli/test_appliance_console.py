@@ -18,16 +18,16 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 LoginOption = namedtuple('LoginOption', ['name', 'option', 'index'])
 TZ = namedtuple('TimeZone', ['name', 'option'])
 tzs = [
-    TZ('Africa/Abidjan', ('1', '1')),
-    TZ('America/Argentina/Buenos_Aires', ('2', '6', '1')),
-    TZ('Antarctica/Casey', ('3', 'q', '1')),
-    TZ('Arctic/Longyearbyen', ('4', 'q', '1')),
-    TZ('Asia/Aden', ('5', '1')),
-    TZ('Atlantic/Azores', ('6', 'q', '1')),
-    TZ('Australia/Adelaide', ('7', 'q', '1')),
-    TZ('Europe/Amsterdam', ('8', '1')),
-    TZ('Indian/Antananarivo', ('9', 'q', '1')),
-    TZ('Pacific/Apia', ('10', '1')),
+    TZ('Africa/Abidjan', ('1', 'q', '1')),
+    TZ('America/Argentina/Buenos_Aires', ('2', 'q', '6', '1')),
+    TZ('Antarctica/Casey', ('3', '1')),
+    TZ('Arctic/Longyearbyen', ('4', '1')),
+    TZ('Asia/Aden', ('5', 'q', '1')),
+    TZ('Atlantic/Azores', ('6', '1')),
+    TZ('Australia/Adelaide', ('7', '1')),
+    TZ('Europe/Amsterdam', ('8', 'q', '1')),
+    TZ('Indian/Antananarivo', ('9', '1')),
+    TZ('Pacific/Apia', ('10', 'q', '1')),
     TZ('UTC', ('11',))
 ]
 RETURN = ''
@@ -56,16 +56,14 @@ def test_appliance_console(appliance):
 
 @pytest.mark.rhel_testing
 def test_appliance_console_set_hostname(configured_appliance):
-    """ Commands:
-    1. 'ap' launch appliance_console,
-    2. '' clear info screen,
-    3. '1' loads network settings,
-    4. '5' gives access to set hostname,
-    5. 'hostname' sets new hostname."""
+    """ Test setting the hostname. """
 
     hostname = 'test.example.com'
-    command_set = ('ap', '', '1', '5', hostname,)
-    configured_appliance.appliance_console.run_commands(command_set)
+    (configured_appliance
+        .appliance_console()
+        .advanced_settings()
+        .configure_network()
+        .set_hostname(hostname))
 
     def is_hostname_set(appliance):
         assert appliance.ssh_client.run_command("hostname -f | grep {hostname}"
@@ -79,18 +77,13 @@ def test_appliance_console_set_hostname(configured_appliance):
 @pytest.mark.rhel_testing
 @pytest.mark.parametrize('timezone', tzs, ids=[tz.name for tz in tzs])
 def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modscope):
-    """ Commands:
-    1. 'ap' launch appliance_console,
-    2. '' clear info screen,
-    3. '2' set timezone,
-    4. 'opt' select region,
-    5. 'timezone' selects zone,
-    6. 'y' confirm slection,
-    7. '' finish."""
-    command_set = ('ap', '', '2') + timezone[1] + ('y', '')
-    temp_appliance_preconfig_modscope.appliance_console.run_commands(command_set)
+    """ Test setting various timezones. """
+    (temp_appliance_preconfig_modscope
+        .appliance_console()
+        .advanced_settings()
+        .set_timezone(timezone[1]))
 
-    temp_appliance_preconfig_modscope.appliance_console.timezone_check(timezone)
+    temp_appliance_preconfig_modscope.appliance_console().timezone_check(timezone[0])
 
 
 @pytest.mark.rhel_testing
@@ -107,40 +100,28 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
 
 @pytest.mark.rhel_testing
 def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
-    """ Commands:
-    1. 'ap' launch appliance_console,
-    2. '' clear info screen,
-    3. '5' setup db,
-    4. '1' Creates v2_key,
-    5. '1' selects internal db,
-    6. 'y' continue,
-    7. '1' use partition,
-    8. 'n' don't create dedicated db,
-    9. '0' db region number,
-    10. 'pwd' db password,
-    11. 'pwd' confirm db password + wait 360 secs
-    12. '' finish."""
+    """ Test creates internal DB and checks whether the web_ui loads. """
 
     pwd = app_creds['password']
-    command_set = ('ap', '', '5', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 360), '')
-    unconfigured_appliance.appliance_console.run_commands(command_set)
+    disk = (2 if unconfigured_appliance.version > '5.9' else 1)
+    (unconfigured_appliance.appliance_console()
+        .advanced_settings()
+        .configure_database_without_key()
+        .create_key()
+        .create_internal_database(disk, False, 0, pwd))
     unconfigured_appliance.evmserverd.wait_for_running()
     unconfigured_appliance.wait_for_web_ui()
 
 
 def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope):
-    """ Commands:
-    1. 'ap' launch appliance_console,
-    2. '' clear info screen,
-    3. '5' setup db,
-    4. '4' reset db,
-    5. 'y' confirm db reset,
-    6. '1' db region number + wait 360 secs,
-    7. '' continue"""
+    """ Test resets the database on preconfigured instance and then checks
+    whether the evmserverd can start."""
 
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
-    command_set = ('ap', '', '5', '4', 'y', TimedCommand('1', 360), '')
-    temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+    (temp_appliance_preconfig_funcscope.appliance_console()
+        .advanced_settings()
+        .configure_database_with_key()
+        .reset_configured_db())
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl start evmserverd')
     temp_appliance_preconfig_funcscope.evmserverd.wait_for_running()
     temp_appliance_preconfig_funcscope.wait_for_web_ui()

@@ -31,6 +31,7 @@ from cfme.fixtures import ui_coverage
 from cfme.fixtures.pytest_store import store
 from cfme.utils import clear_property_cache
 from cfme.utils import conf, ssh, ports
+from cfme.utils.appliance.appliance_console import ApplianceConsole
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import hidden
 from cfme.utils.datafile import load_data_file
@@ -88,101 +89,6 @@ class MiqApi(VanillaMiqApi):
 
 class ApplianceException(Exception):
     pass
-
-
-class ApplianceConsole(object):
-    """ApplianceConsole is used for navigating and running appliance_console commands against an
-    appliance."""
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def timezone_check(self, timezone):
-        channel = self.appliance.ssh_client.invoke_shell()
-        channel.settimeout(20)
-        channel.send("ap")
-        result = ''
-        try:
-            while True:
-                result += channel.recv(1)
-                if ("{}".format(timezone[0])) in result:
-                    break
-        except socket.timeout:
-            pass
-        logger.debug(result)
-
-    def run_commands(self, commands, autoreturn=True, timeout=10, channel=None):
-        if not channel:
-            channel = self.appliance.ssh_client.invoke_shell()
-        self.commands = commands
-        for command in commands:
-            if isinstance(command, six.string_types):
-                command_string, timeout = command, timeout
-            else:
-                command_string, timeout = command
-            channel.settimeout(timeout)
-            if autoreturn:
-                command_string = (command_string + '\n')
-            channel.send("{}".format(command_string))
-            result = ''
-            try:
-                while True:
-                    result += channel.recv(1)
-                    if 'Press any key to continue' in result:
-                        break
-            except socket.timeout:
-                pass
-            logger.debug(result)
-
-    def scap_harden_appliance(self):
-        """Commands:
-        1. 'ap' launches appliance_console,
-        2. '' clears info screen,
-        3. '14' Hardens appliance using SCAP configuration,
-        4. '' complete."""
-        command_set = ('ap', '', '13', '')
-        self.appliance.appliance_console.run_commands(command_set)
-
-    def scap_check_rules(self):
-        """Check that rules have been applied correctly."""
-        rules_failures = []
-        with tempfile.NamedTemporaryFile('w') as f:
-            f.write(hidden['scap.rb'])
-            f.flush()
-            os.fsync(f.fileno())
-            self.appliance.ssh_client.put_file(
-                f.name, '/tmp/scap.rb')
-        if self.appliance.version >= "5.8":
-            rules = '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml'
-        else:
-            rules = '/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml'
-        self.appliance.ssh_client.run_command(
-            'cd /tmp/ && ruby scap.rb --rulesfile={rules}'.format(rules=rules))
-        self.appliance.ssh_client.get_file(
-            '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
-        self.appliance.ssh_client.get_file(
-            '{rules}'.format(rules=rules), '/tmp/scap_rules.yml')  # Get the scap rules
-
-        with open('/tmp/scap_rules.yml') as f:
-            yml = yaml.load(f.read())
-            rules = yml['rules']
-
-        tree = lxml.etree.parse('/tmp/scap-results.xccdf.xml')
-        root = tree.getroot()
-        for rule in rules:
-            elements = root.findall(
-                './/{{http://checklists.nist.gov/xccdf/1.1}}rule-result[@idref="{}"]'.format(rule))
-            if elements:
-                result = elements[0].findall('./{http://checklists.nist.gov/xccdf/1.1}result')
-                if result:
-                    if result[0].text != 'pass':
-                        rules_failures.append(rule)
-                    logger.info("{}: {}".format(rule, result[0].text))
-                else:
-                    logger.info("{}: no result".format(rule))
-            else:
-                logger.info("{}: rule not found".format(rule))
-        return rules_failures
 
 
 class ApplianceConsoleCli(object):
@@ -375,9 +281,6 @@ class IPAppliance(object):
         self.openshift_creds = openshift_creds or {}
         self.is_dev = is_dev
         self._user = None
-        self.appliance_console = ApplianceConsole(self)
-        self.appliance_console_cli = ApplianceConsoleCli(self)
-
         if self.openshift_creds:
             self.is_pod = True
         else:
@@ -386,6 +289,9 @@ class IPAppliance(object):
             # only set when given so we can defer to therest api via the
             # cached property
             self.version = Version(version)
+
+        self.appliance_console = ApplianceConsole(self)
+        self.appliance_console_cli = ApplianceConsoleCli(self)
 
     def unregister(self):
         """ unregisters appliance from RHSM/SAT6 """
