@@ -80,12 +80,16 @@ class variable(object):
             except KeyError:
                 raise AttributeError(
                     "Method {} does not have a variant for {}, valid variants are {}".format(
-                        self._name, method, ", ".join(map(str, self._mapping.keys()))))
+                        self._name, method, ", ".join(map(str, self._mapping.keys()))
+                    )
+                )
             return method(obj, *args, **kwargs)
+
         return caller
 
     def variant(self, *names):
         """Register a new variant of a method under a name."""
+
         def g(f):
             for name in names:
                 self._mapping[name] = f

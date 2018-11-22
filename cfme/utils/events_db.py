@@ -2,7 +2,7 @@
 
 """Library for event testing.
 """
-
+import six
 from cached_property import cached_property
 from contextlib import contextmanager
 from collections import Iterable
@@ -14,18 +14,19 @@ from threading import Thread, Event as ThreadEvent
 
 from cfme.utils.log import create_sublogger
 
-logger = create_sublogger('events')
+logger = create_sublogger("events")
 
 
 class EventTool(object):
     """EventTool serves as a wrapper to getting the events from the database.
     :var OBJECT_TABLE: Mapping of object types to tables and column names.
     """
+
     OBJECT_TABLE = {
         # target_type: (table_name, name_column, id_column)
-        'VmOrTemplate': ('vms', 'name', 'id'),
-        'Host': ('hosts', 'name', 'id'),
-        'Service': ('services', 'name', 'id'),
+        "VmOrTemplate": ("vms", "name", "id"),
+        "Host": ("hosts", "name", "id"),
+        "Service": ("services", "name", "id"),
     }
 
     def __init__(self, appliance):
@@ -34,19 +35,22 @@ class EventTool(object):
     @property
     def miq_event_definitions(self):
         """``miq_event_definitions`` table."""
-        return self.appliance.db.client['miq_event_definitions']
+        return self.appliance.db.client["miq_event_definitions"]
 
     @property
     def event_streams(self):
         """``event_streams`` table."""
-        return self.appliance.db.client['event_streams']
+        return self.appliance.db.client["event_streams"]
 
     @cached_property
     def event_streams_attributes(self):
         """``event_streams`` columns and python's column types"""
-        self.appliance.db.client._table('event_streams')
-        event_table = [tbl for tbl in self.appliance.db.client.metadata.sorted_tables
-                       if tbl.name == 'event_streams'][-1]
+        self.appliance.db.client._table("event_streams")
+        event_table = [
+            tbl
+            for tbl in self.appliance.db.client.metadata.sorted_tables
+            if tbl.name == "event_streams"
+        ][-1]
         return [(cl.name, cl.type.python_type) for cl in event_table.c.values()]
 
     def query(self, *args, **kwargs):
@@ -75,20 +79,33 @@ class EventTool(object):
             return target_name
         if target_type not in self.OBJECT_TABLE:
             raise TypeError(
-                ('Type {} is not specified in the auto-coercion OBJECT_TABLE. '
-                 'Pass a real id of the object or extend the table').format(target_type))
+                (
+                    "Type {} is not specified in the auto-coercion OBJECT_TABLE. "
+                    "Pass a real id of the object or extend the table"
+                ).format(target_type)
+            )
         table_name, name_column, id_column = self.OBJECT_TABLE[target_type]
         table = self.appliance.db.client[table_name]
         name_column = getattr(table, name_column)
         id_column = getattr(table, id_column)
-        o = self.appliance.db.client.session.query(id_column).filter(
-            name_column == target_name).first()
+        o = (
+            self.appliance.db.client.session.query(id_column)
+            .filter(name_column == target_name)
+            .first()
+        )
         if not o:
-            raise ValueError('{} with name {} not found.'.format(target_type, target_name))
+            raise ValueError("{} with name {} not found.".format(target_type, target_name))
         return o[0]
 
-    def query_miq_events(self, target_type=None, target_id=None, event_type=None, since=None,
-                         until=None, from_id=None):
+    def query_miq_events(
+        self,
+        target_type=None,
+        target_id=None,
+        event_type=None,
+        since=None,
+        until=None,
+        from_id=None,
+    ):
         """Checks whether an event occured.
 
         Args:
@@ -100,12 +117,12 @@ class EventTool(object):
             until: Until what time you want to check it.
         """
         until = until or datetime.utcnow()
-        query = self.query(self.event_streams).filter(self.event_streams.type == 'MiqEvent')
+        query = self.query(self.event_streams).filter(self.event_streams.type == "MiqEvent")
         if target_type:
             query = query.filter(self.event_streams.target_type == target_type)
         if target_id:
             if not target_type:
-                raise TypeError('When specifying target_id you also must specify target_type')
+                raise TypeError("When specifying target_id you also must specify target_type")
             target_id = self.process_id(target_type, target_id)
             query = query.filter(self.event_streams.target_id == target_id)
         if event_type:
@@ -118,13 +135,16 @@ class EventTool(object):
             query = query.filter(self.event_streams.id > from_id)
         results = []
         for event in query:
-            results.append({
-                'id': event.id,
-                'timestamp': event.timestamp,
-                'message': event.message,
-                'target_type': event.target_type,
-                'target_id': event.target_id,
-                'event_type': event.event_type})
+            results.append(
+                {
+                    "id": event.id,
+                    "timestamp": event.timestamp,
+                    "message": event.message,
+                    "target_type": event.target_type,
+                    "target_id": event.target_id,
+                    "event_type": event.event_type,
+                }
+            )
         return results
 
     @contextmanager
@@ -145,16 +165,18 @@ class EventTool(object):
         events = self.query_miq_events(target_type, target_id, event_type, time_started, time_ended)
         if len(events) == 0:
             raise AssertionError(
-                'Event {}/{}/{} did not happen.'.format(event_type, target_type, target_id))
+                "Event {}/{}/{} did not happen.".format(event_type, target_type, target_id)
+            )
 
 
 class EventAttr(object):
     """
     contains one event attribute and the method for comparing it.
     """
+
     def __init__(self, attr_type=None, cmp_func=None, **attrs):
         if len(attrs) > 1:
-            raise ValueError('event attribute can have only one key=value pair')
+            raise ValueError("event attribute can have only one key=value pair")
 
         self.name, self.value = attrs.items()[0]
         self.type = attr_type or type(self.value)
@@ -165,7 +187,7 @@ class EventAttr(object):
         compares current attribute with passed attribute
         """
         if not isinstance(attr, EventAttr) or self.name != attr.name:
-            raise ValueError('Incorrect attribute is passed')
+            raise ValueError("Incorrect attribute is passed")
 
         if not attr.value or not self.value:
             return attr.value is None and self.value is None
@@ -175,8 +197,9 @@ class EventAttr(object):
             return self.value == attr.value
 
     def __repr__(self):
-        return "{name}({type})={val}, cmp_func {cmp}".format(name=self.name, type=self.type,
-                                                             val=self.value, cmp=self.cmp_func)
+        return "{name}({type})={val}, cmp_func {cmp}".format(
+            name=self.name, type=self.type, val=self.value, cmp=self.cmp_func
+        )
 
 
 # fixme: would it be better to create event prototype and just clone it ?
@@ -184,6 +207,7 @@ class Event(object):
     """
     represents either db event received by CFME and stored in event_streams or an expected event
     """
+
     def __init__(self, event_tool, *args):
         self._tool = event_tool
         # filling obtaining default attributes and their types
@@ -200,13 +224,14 @@ class Event(object):
                 logger.warning("arg {} doesn't belong to EventAttr. ignoring it".format(arg))
 
     def __repr__(self):
-        params = ", ".join(["{}={}".format(attr.name, attr.value) for attr in
-                            self.event_attrs.values()])
+        params = ", ".join(
+            ["{}={}".format(attr.name, attr.value) for attr in self.event_attrs.values()]
+        )
         return "BaseEvent({})".format(params)
 
     def _populate_defaults(self):
         for attr_name, attr_type in self._tool.event_streams_attributes:
-            self._default_attrs[attr_name] = EventAttr(**{attr_name: None, 'attr_type': attr_type})
+            self._default_attrs[attr_name] = EventAttr(**{attr_name: None, "attr_type": attr_type})
 
     def _parse_raw_event(self, evt):
         for attr in self._default_attrs:
@@ -216,15 +241,16 @@ class Event(object):
             # weird thing happens here. getattr sometimes takes value not equal to python_type
             # so, force type conversion has to be done
             if evt_value and evt_type is not default_type:
-                if evt_type is unicode:
-                    evt_value = evt_value.encode('utf8')
+                if evt_type is six.text_type:
+                    # TODO: check if this actually is correct on python3
+                    evt_value = evt_value.encode("utf8")
                 else:
                     evt_value = default_type(evt_value)
 
             self.add_attrs(EventAttr(**{attr: evt_value}))
 
     def _is_raw_event(self, evt):
-        return evt.__tablename__ == 'event_streams'
+        return evt.__tablename__ == "event_streams"
 
     def matches(self, evt):
         """
@@ -234,11 +260,12 @@ class Event(object):
             raise ValueError("passed event doesn't belong to {}".format(type(self)))
 
         # checking only common attributes
-        if 'target_name' in self.event_attrs and 'target_id' not in self.event_attrs:
+        if "target_name" in self.event_attrs and "target_id" not in self.event_attrs:
             try:
-                target_id = self._tool.process_id(self.event_attrs['target_type'].value,
-                                                  self.event_attrs['target_name'].value)
-                self.event_attrs['target_id'] = EventAttr(**{'target_id': target_id})
+                target_id = self._tool.process_id(
+                    self.event_attrs["target_type"].value, self.event_attrs["target_name"].value
+                )
+                self.event_attrs["target_id"] = EventAttr(**{"target_id": target_id})
             except ValueError:
                 # vm or host name isn't added to db yet. need to wait
                 return False
@@ -257,7 +284,7 @@ class Event(object):
         """
         if isinstance(attrs, Iterable):
             for attr in attrs:
-                if attr.name == 'target_name':
+                if attr.name == "target_name":
                     # this is artificial attr which will be converted to target_id during matching
                     self.event_attrs[attr.name] = attr
                 elif attr.name in self._default_attrs:
@@ -265,8 +292,10 @@ class Event(object):
                     # and type of returned values are different
                     self.event_attrs[attr.name] = attr
                 else:
-                    logger.warning('The attribute {} type {} is absent in DB '
-                                   'or type mismatch.'.format(attr.name, attr.type))
+                    logger.warning(
+                        "The attribute {} type {} is absent in DB "
+                        "or type mismatch.".format(attr.name, attr.type)
+                    )
         else:
             raise ValueError("incorrect parameters are passed {}".format(attrs))
         return self
@@ -286,6 +315,7 @@ class DbEventListener(Thread):
      accepts "expected" events, listens to db events and compares showed up events with expected
      events. Runs callback function if expected events have it.
     """
+
     def __init__(self, appliance):
         super(DbEventListener, self).__init__()
         self._appliance = appliance
@@ -300,11 +330,12 @@ class DbEventListener(Thread):
 
     def set_last_record(self, evt=None):
         if evt:
-            self._last_processed_id = evt.event_attrs['id'].value
+            self._last_processed_id = evt.event_attrs["id"].value
         else:
             try:
                 self._last_processed_id = self._tool.query(
-                    func.max(self._tool.event_streams.id)).one()
+                    func.max(self._tool.event_streams.id)
+                ).one()
             except IndexError:
                 # No events yet, so do nothing
                 pass
@@ -341,13 +372,13 @@ class DbEventListener(Thread):
 
         By default EventListener collects and receives all matching events.
         """
-        if 'callback' in kwargs:
-            callback = kwargs['callback']
+        if "callback" in kwargs:
+            callback = kwargs["callback"]
         else:
             callback = None
 
         # if first_event = True, these expected events won't be checked after first match
-        if 'first_event' in kwargs and kwargs['first_event']:
+        if "first_event" in kwargs and kwargs["first_event"]:
             first_event = True
         else:
             first_event = False
@@ -356,23 +387,27 @@ class DbEventListener(Thread):
             for evt in evts:
                 if isinstance(evt, Event):
                     logger.info("event {} is added to listening queue".format(evt))
-                    self._events_to_listen.append({'event': evt,
-                                                   'callback': callback,
-                                                   'matched_events': [],
-                                                   'first_event': first_event})
+                    self._events_to_listen.append(
+                        {
+                            "event": evt,
+                            "callback": callback,
+                            "matched_events": [],
+                            "first_event": first_event,
+                        }
+                    )
                 else:
                     raise ValueError("one of events doesn't belong to Event class")
         else:
-            raise ValueError('incorrect is passed')
+            raise ValueError("incorrect is passed")
 
     def start(self):
-        logger.info('Event Listener has been started')
+        logger.info("Event Listener has been started")
         self.set_last_record()
         self._stop_event.clear()
         super(DbEventListener, self).start()
 
     def stop(self):
-        logger.info('Event Listener has been stopped')
+        logger.info("Event Listener has been stopped")
         self._stop_event.set()
 
     def run(self):
@@ -396,13 +431,13 @@ class DbEventListener(Thread):
                 logger.debug("processing event id {}".format(got_event.id))
                 got_event = Event(event_tool=self._tool).build_from_raw_event(got_event)
                 for exp_event in self._events_to_listen:
-                    if exp_event['first_event'] and len(exp_event['matched_events']) > 0:
+                    if exp_event["first_event"] and len(exp_event["matched_events"]) > 0:
                         continue
 
-                    if exp_event['event'].matches(got_event):
-                        if exp_event['callback']:
-                            exp_event['callback'](exp_event=exp_event['event'], got_event=got_event)
-                        exp_event['matched_events'].append(got_event)
+                    if exp_event["event"].matches(got_event):
+                        if exp_event["callback"]:
+                            exp_event["callback"](exp_event=exp_event["event"], got_event=got_event)
+                        exp_event["matched_events"].append(got_event)
                 self.set_last_record(got_event)
 
                 if self._stop_event.is_set():
@@ -413,33 +448,37 @@ class DbEventListener(Thread):
         """
         returns dict with expected events and all the events matched to expected ones
         """
-        evts = [(evt['event'], len(evt['matched_events'])) for evt in self._events_to_listen]
+        evts = [(evt["event"], len(evt["matched_events"])) for evt in self._events_to_listen]
         logger.info(evts)
         return self._events_to_listen
 
     def reset_matches(self):
         for event in self._events_to_listen:
-            event['matched_events'] = []
+            event["matched_events"] = []
 
     def reset_events(self):
         self._events_to_listen = []
 
     def get_next_portion(self):
         logger.debug("obtaining next portion of events")
-        return self._tool.query(self._tool.event_streams)\
-            .filter(self._tool.event_streams.id > self._last_processed_id)\
-            .order_by(self._tool.event_streams.id).yield_per(100).all()
+        return (
+            self._tool.query(self._tool.event_streams)
+            .filter(self._tool.event_streams.id > self._last_processed_id)
+            .order_by(self._tool.event_streams.id)
+            .yield_per(100)
+            .all()
+        )
 
     def check_expected_events(self):
-        return all([len(event['matched_events']) for event in self.got_events])
+        return all([len(event["matched_events"]) for event in self.got_events])
 
     def __call__(self, *args, **kwargs):
         """
         it is called by register_event fixture.
         bad idea, to replace register_event by object later
         """
-        if 'first_event' in kwargs:
-            first_event = kwargs.pop('first_event')
+        if "first_event" in kwargs:
+            first_event = kwargs.pop("first_event")
         else:
             first_event = True
         evt = self.new_event(*args, **kwargs)

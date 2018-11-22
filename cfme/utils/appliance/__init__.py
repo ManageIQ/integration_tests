@@ -48,9 +48,7 @@ from .services import SystemdService, SystemdException
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # EMS types recognized by IP or credentials
-RECOGNIZED_BY_IP = [
-    "InfraManager", "ContainerManager", "Openstack::CloudManager"
-]
+RECOGNIZED_BY_IP = ["InfraManager", "ContainerManager", "Openstack::CloudManager"]
 RECOGNIZED_BY_CREDS = ["CloudManager", "Nuage::NetworkManager"]
 
 # A helper for the IDs
@@ -62,7 +60,7 @@ def _current_miqqe_version():
 
     Returns: Version as int
     """
-    with patches_path.join('miq_application.js.diff').open("r") as f:
+    with patches_path.join("miq_application.js.diff").open("r") as f:
         match = re.search(r"MiqQE_version = (\d+);", f.read(), flags=0)
     version = int(match.group(1))
     return version
@@ -76,13 +74,13 @@ class MiqApi(VanillaMiqApi):
         """Parses the collections"""
         parsed = urlparse(href)
         # TODO: Check the netloc, scheme
-        path = [step for step in parsed.path.split('/') if step]
+        path = [step for step in parsed.path.split("/") if step]
         # Drop the /api
         path = path[1:]
         collection = getattr(self.collections, path.pop(0))
         entity = collection(int(path.pop(0)))
         if path:
-            raise ValueError('Subcollections not supported! ({})'.format(parsed.path))
+            raise ValueError("Subcollections not supported! ({})".format(parsed.path))
         return entity
 
 
@@ -101,7 +99,7 @@ class ApplianceConsole(object):
         channel = self.appliance.ssh_client.invoke_shell()
         channel.settimeout(20)
         channel.send("ap")
-        result = ''
+        result = ""
         try:
             while True:
                 result += channel.recv(1)
@@ -122,13 +120,13 @@ class ApplianceConsole(object):
                 command_string, timeout = command
             channel.settimeout(timeout)
             if autoreturn:
-                command_string = (command_string + '\n')
+                command_string = command_string + "\n"
             channel.send("{}".format(command_string))
-            result = ''
+            result = ""
             try:
                 while True:
                     result += channel.recv(1)
-                    if 'Press any key to continue' in result:
+                    if "Press any key to continue" in result:
                         break
             except socket.timeout:
                 pass
@@ -140,42 +138,45 @@ class ApplianceConsole(object):
         2. '' clears info screen,
         3. '14' Hardens appliance using SCAP configuration,
         4. '' complete."""
-        command_set = ('ap', '', '13', '')
+        command_set = ("ap", "", "13", "")
         self.appliance.appliance_console.run_commands(command_set)
 
     def scap_check_rules(self):
         """Check that rules have been applied correctly."""
         rules_failures = []
-        with tempfile.NamedTemporaryFile('w') as f:
-            f.write(hidden['scap.rb'])
+        with tempfile.NamedTemporaryFile("w") as f:
+            f.write(hidden["scap.rb"])
             f.flush()
             os.fsync(f.fileno())
-            self.appliance.ssh_client.put_file(
-                f.name, '/tmp/scap.rb')
+            self.appliance.ssh_client.put_file(f.name, "/tmp/scap.rb")
         if self.appliance.version >= "5.8":
-            rules = '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml'
+            rules = "/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml"
         else:
-            rules = '/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml'
+            rules = "/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml"
         self.appliance.ssh_client.run_command(
-            'cd /tmp/ && ruby scap.rb --rulesfile={rules}'.format(rules=rules))
+            "cd /tmp/ && ruby scap.rb --rulesfile={rules}".format(rules=rules)
+        )
         self.appliance.ssh_client.get_file(
-            '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
+            "/tmp/scap-results.xccdf.xml", "/tmp/scap-results.xccdf.xml"
+        )
         self.appliance.ssh_client.get_file(
-            '{rules}'.format(rules=rules), '/tmp/scap_rules.yml')  # Get the scap rules
+            "{rules}".format(rules=rules), "/tmp/scap_rules.yml"
+        )  # Get the scap rules
 
-        with open('/tmp/scap_rules.yml') as f:
+        with open("/tmp/scap_rules.yml") as f:
             yml = yaml.load(f.read())
-            rules = yml['rules']
+            rules = yml["rules"]
 
-        tree = lxml.etree.parse('/tmp/scap-results.xccdf.xml')
+        tree = lxml.etree.parse("/tmp/scap-results.xccdf.xml")
         root = tree.getroot()
         for rule in rules:
             elements = root.findall(
-                './/{{http://checklists.nist.gov/xccdf/1.1}}rule-result[@idref="{}"]'.format(rule))
+                './/{{http://checklists.nist.gov/xccdf/1.1}}rule-result[@idref="{}"]'.format(rule)
+            )
             if elements:
-                result = elements[0].findall('./{http://checklists.nist.gov/xccdf/1.1}result')
+                result = elements[0].findall("./{http://checklists.nist.gov/xccdf/1.1}result")
                 if result:
-                    if result[0].text != 'pass':
+                    if result[0].text != "pass":
                         rules_failures.append(rule)
                     logger.info("{}: {}".format(rule, result[0].text))
                 else:
@@ -186,81 +187,144 @@ class ApplianceConsole(object):
 
 
 class ApplianceConsoleCli(object):
-
     def __init__(self, appliance):
         self.appliance = appliance
 
     def _run(self, appliance_console_cli_command):
         return self.appliance.ssh_client.run_command(
-            "appliance_console_cli {}".format(appliance_console_cli_command))
+            "appliance_console_cli {}".format(appliance_console_cli_command)
+        )
 
     def set_hostname(self, hostname):
         return self._run("--host {host}".format(host=hostname))
 
-    def configure_appliance_external_join(self, dbhostname,
-            username, password, dbname, fetch_key, sshlogin, sshpass):
-        self._run("--hostname {dbhostname} --username {username} --password {password}"
+    def configure_appliance_external_join(
+        self, dbhostname, username, password, dbname, fetch_key, sshlogin, sshpass
+    ):
+        self._run(
+            "--hostname {dbhostname} --username {username} --password {password}"
             " --dbname {dbname} --verbose --fetch-key {fetch_key} --sshlogin {sshlogin}"
-            " --sshpassword {sshpass}".format(dbhostname=dbhostname, username=username,
-                password=password, dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin,
-                sshpass=sshpass))
+            " --sshpassword {sshpass}".format(
+                dbhostname=dbhostname,
+                username=username,
+                password=password,
+                dbname=dbname,
+                fetch_key=fetch_key,
+                sshlogin=sshlogin,
+                sshpass=sshpass,
+            )
+        )
 
-    def configure_appliance_external_create(self, region, dbhostname,
-            username, password, dbname, fetch_key, sshlogin, sshpass):
-        self._run("--region {region} --hostname {dbhostname} --username {username}"
+    def configure_appliance_external_create(
+        self, region, dbhostname, username, password, dbname, fetch_key, sshlogin, sshpass
+    ):
+        self._run(
+            "--region {region} --hostname {dbhostname} --username {username}"
             " --password {password} --dbname {dbname} --verbose --fetch-key {fetch_key}"
             " --sshlogin {sshlogin} --sshpassword {sshpass}".format(
-                region=region, dbhostname=dbhostname, username=username, password=password,
-                dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
+                region=region,
+                dbhostname=dbhostname,
+                username=username,
+                password=password,
+                dbname=dbname,
+                fetch_key=fetch_key,
+                sshlogin=sshlogin,
+                sshpass=sshpass,
+            )
+        )
 
     def configure_appliance_internal(self, region, dbhostname, username, password, dbname, dbdisk):
-        self._run("--region {region} --internal --hostname {dbhostname} --username {username}"
+        self._run(
+            "--region {region} --internal --hostname {dbhostname} --username {username}"
             " --password {password} --dbname {dbname} --verbose --dbdisk {dbdisk}".format(
-                region=region, dbhostname=dbhostname, username=username, password=password,
-                dbname=dbname, dbdisk=dbdisk))
+                region=region,
+                dbhostname=dbhostname,
+                username=username,
+                password=password,
+                dbname=dbname,
+                dbdisk=dbdisk,
+            )
+        )
 
-    def configure_appliance_internal_fetch_key(self, region, dbhostname,
-            username, password, dbname, dbdisk, fetch_key, sshlogin, sshpass):
-        self._run("--region {region} --internal --hostname {dbhostname} --username {username}"
+    def configure_appliance_internal_fetch_key(
+        self, region, dbhostname, username, password, dbname, dbdisk, fetch_key, sshlogin, sshpass
+    ):
+        self._run(
+            "--region {region} --internal --hostname {dbhostname} --username {username}"
             " --password {password} --dbname {dbname} --verbose --dbdisk {dbdisk} --fetch-key"
             " {fetch_key} --sshlogin {sshlogin} --sshpassword {sshpass}".format(
-                region=region, dbhostname=dbhostname, username=username, password=password,
-                dbname=dbname, dbdisk=dbdisk, fetch_key=fetch_key, sshlogin=sshlogin,
-                sshpass=sshpass))
+                region=region,
+                dbhostname=dbhostname,
+                username=username,
+                password=password,
+                dbname=dbname,
+                dbdisk=dbdisk,
+                fetch_key=fetch_key,
+                sshlogin=sshlogin,
+                sshpass=sshpass,
+            )
+        )
 
     def configure_appliance_dedicated_db(self, username, password, dbname, dbdisk):
-        self._run("--internal --username {username} --password {password}"
+        self._run(
+            "--internal --username {username} --password {password}"
             " --dbname {dbname} --verbose --dbdisk {dbdisk} --key --standalone".format(
-                username=username, password=password, dbname=dbname, dbdisk=dbdisk))
+                username=username, password=password, dbname=dbname, dbdisk=dbdisk
+            )
+        )
 
     def configure_ipa(self, ipaserver, ipaprincipal, ipapassword, ipadomain=None, iparealm=None):
         cmd_result = self._run(
-            '--ipaserver {s} --ipaprincipal {u} --ipapassword {p} {d} {r}'
-            .format(s=ipaserver, u=ipaprincipal, p=ipapassword,
-                    d='--ipadomain {}'.format(ipadomain) if ipadomain else '',
-                    r='--iparealm {}'.format(iparealm) if iparealm else ''))
-        logger.debug('IPA configuration output: %s', str(cmd_result))
+            "--ipaserver {s} --ipaprincipal {u} --ipapassword {p} {d} {r}".format(
+                s=ipaserver,
+                u=ipaprincipal,
+                p=ipapassword,
+                d="--ipadomain {}".format(ipadomain) if ipadomain else "",
+                r="--iparealm {}".format(iparealm) if iparealm else "",
+            )
+        )
+        logger.debug("IPA configuration output: %s", str(cmd_result))
         assert cmd_result.success
-        assert 'ipa-client-install exit code: 1' not in cmd_result.output
+        assert "ipa-client-install exit code: 1" not in cmd_result.output
         self.appliance.sssd.wait_for_running()
-        assert self.appliance.ssh_client.run_command("cat /etc/ipa/default.conf "
-                                                     "| grep 'enable_ra = True'")
+        assert self.appliance.ssh_client.run_command(
+            "cat /etc/ipa/default.conf " "| grep 'enable_ra = True'"
+        )
 
     def configure_appliance_dedicated_ha_primary(
-            self, username, password, reptype, primhost, node, dbname):
-        self._run("--username {username} --password {password} --replication {reptype}"
+        self, username, password, reptype, primhost, node, dbname
+    ):
+        self._run(
+            "--username {username} --password {password} --replication {reptype}"
             " --primary-host {primhost} --cluster-node-number {node} --auto-failover --verbose"
             " --dbname {dbname}".format(
-                username=username, password=password, reptype=reptype, primhost=primhost, node=node,
-                dbname=dbname))
+                username=username,
+                password=password,
+                reptype=reptype,
+                primhost=primhost,
+                node=node,
+                dbname=dbname,
+            )
+        )
 
     def configure_appliance_dedicated_ha_standby(
-            self, username, password, reptype, primhost, standhost, node, dbname, dbdisk):
-        self._run("--internal --username {username} --password {password} --replication {reptype}"
+        self, username, password, reptype, primhost, standhost, node, dbname, dbdisk
+    ):
+        self._run(
+            "--internal --username {username} --password {password} --replication {reptype}"
             " --primary-host {primhost} --standby-host {standhost} --cluster-node-number {node}"
             " --auto-failover --dbname {dbname} --verbose --dbdisk {dbdisk}"
-            " --standalone".format(username=username, password=password, reptype=reptype,
-                primhost=primhost, standhost=standhost, node=node, dbname=dbname, dbdisk=dbdisk))
+            " --standalone".format(
+                username=username,
+                password=password,
+                reptype=reptype,
+                primhost=primhost,
+                standhost=standhost,
+                node=node,
+                dbname=dbname,
+                dbdisk=dbdisk,
+            )
+        )
 
     def uninstall_ipa_client(self):
         assert self._run("--uninstall-ipa")
@@ -287,74 +351,92 @@ class IPAppliance(object):
         db_port: Database port.
         ssh_port: SSH port.
     """
+
     _nav_steps = {}
 
-    auditd = SystemdService.declare(unit_name='auditd')
-    chronyd = SystemdService.declare(unit_name='chronyd')
-    collectd = SystemdService.declare(unit_name='collectd')
+    auditd = SystemdService.declare(unit_name="auditd")
+    chronyd = SystemdService.declare(unit_name="chronyd")
+    collectd = SystemdService.declare(unit_name="collectd")
     db_service = SystemdService.declare(unit_name=ApplianceDB.service_name)
-    evmserverd = SystemdService.declare(unit_name='evmserverd')
-    httpd = SystemdService.declare(unit_name='httpd')
-    merkyl = SystemdService.declare(unit_name='merkyl')
-    sssd = SystemdService.declare(unit_name='sssd')
+    evmserverd = SystemdService.declare(unit_name="evmserverd")
+    httpd = SystemdService.declare(unit_name="httpd")
+    merkyl = SystemdService.declare(unit_name="merkyl")
+    sssd = SystemdService.declare(unit_name="sssd")
     db = ApplianceDB.declare()
 
     CONFIG_MAPPING = {
-        'hostname': 'hostname',
-        'ui_protocol': 'ui_protocol',
-        'ui_port': 'ui_port',
-        'browser_steal': 'browser_steal',
-        'container': 'container',
-        'pod': 'container',
-        'openshift_creds': 'openshift_creds',
-        'is_dev': 'is_dev',
-        'db_host': 'db_host',
-        'db_port': 'db_port',
-        'ssh_port': 'ssh_port',
-        'project': 'project',
-        'version': 'version',
+        "hostname": "hostname",
+        "ui_protocol": "ui_protocol",
+        "ui_port": "ui_port",
+        "browser_steal": "browser_steal",
+        "container": "container",
+        "pod": "container",
+        "openshift_creds": "openshift_creds",
+        "is_dev": "is_dev",
+        "db_host": "db_host",
+        "db_port": "db_port",
+        "ssh_port": "ssh_port",
+        "project": "project",
+        "version": "version",
     }
-    CONFIG_NONGLOBAL = {'hostname'}
-    PROTOCOL_PORT_MAPPING = {'http': 80, 'https': 443}
+    CONFIG_NONGLOBAL = {"hostname"}
+    PROTOCOL_PORT_MAPPING = {"http": 80, "https": 443}
     CONF_FILES = {
-        'upstream_templates': '/var/www/miq/system/TEMPLATE',
-        'downstream_templates': '/opt/rh/cfme-appliance/TEMPLATE',
-        'pam_httpd_auth': '/etc/pam.d/httpd-auth',
-        'httpd_remote_user': '/etc/httpd/conf.d/manageiq-remote-user.conf',
-        'httpd_ext_auth': '/etc/httpd/conf.d/manageiq-external-auth.conf',
-        'openldap': '/etc/openldap/ldap.conf',
-        'sssd': '/etc/sssd/sssd.conf'
+        "upstream_templates": "/var/www/miq/system/TEMPLATE",
+        "downstream_templates": "/opt/rh/cfme-appliance/TEMPLATE",
+        "pam_httpd_auth": "/etc/pam.d/httpd-auth",
+        "httpd_remote_user": "/etc/httpd/conf.d/manageiq-remote-user.conf",
+        "httpd_ext_auth": "/etc/httpd/conf.d/manageiq-external-auth.conf",
+        "openldap": "/etc/openldap/ldap.conf",
+        "sssd": "/etc/sssd/sssd.conf",
     }
 
     @property
     def as_json(self):
         """Dumps the arguments that can create this appliance as a JSON. None values are ignored."""
+
         def _version_tostr(x):
             if isinstance(x, Version):
                 return str(x)
             else:
                 return x
-        return json.dumps({
-            k: _version_tostr(getattr(self, k))
-            for k in set(self.CONFIG_MAPPING.values())
-            if k in self.__dict__})
+
+        return json.dumps(
+            {
+                k: _version_tostr(getattr(self, k))
+                for k in set(self.CONFIG_MAPPING.values())
+                if k in self.__dict__
+            }
+        )
 
     @classmethod
     def from_json(cls, json_string):
         return cls(**json.loads(json_string))
 
     def __init__(
-            self, hostname, ui_protocol='https', ui_port=None, browser_steal=False, project=None,
-            container=None, openshift_creds=None, db_host=None, db_port=None, ssh_port=None,
-            is_dev=False, version=None,
+        self,
+        hostname,
+        ui_protocol="https",
+        ui_port=None,
+        browser_steal=False,
+        project=None,
+        container=None,
+        openshift_creds=None,
+        db_host=None,
+        db_port=None,
+        ssh_port=None,
+        is_dev=False,
+        version=None,
     ):
         if not isinstance(hostname, six.string_types):
-            raise TypeError('Appliance\'s hostname must be a string!')
+            raise TypeError("Appliance's hostname must be a string!")
         self.hostname = hostname
         if ui_protocol not in self.PROTOCOL_PORT_MAPPING:
             raise TypeError(
-                'Wrong protocol {!r} passed, expected {!r}'.format(
-                    ui_protocol, list(self.PROTOCOL_PORT_MAPPING.keys())))
+                "Wrong protocol {!r} passed, expected {!r}".format(
+                    ui_protocol, list(self.PROTOCOL_PORT_MAPPING.keys())
+                )
+            )
         self.ui_protocol = ui_protocol
         self.ui_port = ui_port or self.PROTOCOL_PORT_MAPPING[ui_protocol]
         self.ssh_port = ssh_port or ports.SSH
@@ -365,9 +447,11 @@ class IPAppliance(object):
         self.rest_context = ViaREST(owner=self)
         self.rest_context.strict_calls = False
         self.context = MiqImplementationContext.from_instances(
-            [self.browser, self.ssui, self.rest_context])
+            [self.browser, self.ssui, self.rest_context]
+        )
 
         from cfme.modeling.base import EntityCollections
+
         self.collections = EntityCollections.for_appliance(self)
         self.browser_steal = browser_steal
         self.container = container
@@ -390,19 +474,19 @@ class IPAppliance(object):
     def unregister(self):
         """ unregisters appliance from RHSM/SAT6 """
         with self.ssh_client as ssh_client:
-            ssh_client.run_command('subscription-manager remove --all')
-            ssh_client.run_command('subscription-manager unregister')
-            ssh_client.run_command('subscription-manager clean')
-            ssh_client.run_command('mv -f /etc/rhsm/rhsm.conf.kat-backup /etc/rhsm/rhsm.conf')
-            ssh_client.run_command('rpm -qa | grep katello-ca-consumer | xargs rpm -e')
+            ssh_client.run_command("subscription-manager remove --all")
+            ssh_client.run_command("subscription-manager unregister")
+            ssh_client.run_command("subscription-manager clean")
+            ssh_client.run_command("mv -f /etc/rhsm/rhsm.conf.kat-backup /etc/rhsm/rhsm.conf")
+            ssh_client.run_command("rpm -qa | grep katello-ca-consumer | xargs rpm -e")
 
     def is_registration_complete(self, used_repo_or_channel):
         """ Checks if an appliance has the correct repos enabled with RHSM or SAT6 """
-        result = self.ssh_client.run_command('yum repolist enabled')
+        result = self.ssh_client.run_command("yum repolist enabled")
         # Check that the specified (or default) repo (can be multiple, separated by a space)
         # is enabled and that there are packages available
-        for repo in used_repo_or_channel.split(' '):
-            if (repo not in result.output) or (not re.search(r'repolist: [^0]', result.output)):
+        for repo in used_repo_or_channel.split(" "):
+            if (repo not in result.output) or (not re.search(r"repolist: [^0]", result.output)):
                 return False
         return True
 
@@ -417,24 +501,26 @@ class IPAppliance(object):
     @property
     def user(self):
         from cfme.base.credential import Credential
+
         if self._user is None:
             # Admin by default
-            username = conf.credentials['default']['username']
-            password = conf.credentials['default']['password']
+            username = conf.credentials["default"]["username"]
+            password = conf.credentials["default"]["password"]
             logger.info(
-                '%r.user was set to None before, therefore generating an admin user: %s/%s',
-                self, username, password)
-            cred = Credential(principal=username, secret=password)
-            user = self.collections.users.instantiate(
-                credential=cred, name='Administrator'
+                "%r.user was set to None before, therefore generating an admin user: %s/%s",
+                self,
+                username,
+                password,
             )
+            cred = Credential(principal=username, secret=password)
+            user = self.collections.users.instantiate(credential=cred, name="Administrator")
             self._user = user
         return self._user
 
     @user.setter
     def user(self, user_object):
         if user_object is None:
-            logger.info('%r.user set to None, will be set to admin on next access', self)
+            logger.info("%r.user set to None, will be set to admin on next access", self)
         self._user = user_object
 
     @property
@@ -443,7 +529,7 @@ class IPAppliance(object):
 
     def __repr__(self):
         # TODO: Put something better here. This solves the purpose temporarily.
-        return '{}.from_json({!r})'.format(type(self).__name__, self.as_json)
+        return "{}.from_json({!r})".format(type(self).__name__, self.as_json)
 
     def __call__(self, **kwargs):
         """Syntactic sugar for overriding certain instance variables for context managers.
@@ -467,12 +553,12 @@ class IPAppliance(object):
             from pytest import config
             from cfme.fixtures.pytest_store import store
         except ImportError:
-            logger.info('Not inside pytest run, ignoring')
+            logger.info("Not inside pytest run, ignoring")
             return
 
-        if (
-                exc_type is not None and not RUNNING_UNDER_SPROUT):
+        if exc_type is not None and not RUNNING_UNDER_SPROUT:
             from cfme.utils.browser import take_screenshot
+
             logger.info("Before we pop this appliance, a screenshot and a traceback will be taken.")
             ss, ss_error = take_screenshot()
             full_tb = "".join(traceback.format_tb(exc_tb))
@@ -482,23 +568,42 @@ class IPAppliance(object):
             g_id = "appliance-cm-screenshot-{}".format(fauxfactory.gen_alpha(length=6))
 
             fire_art_hook(
-                config, 'filedump',
+                config,
+                "filedump",
                 slaveid=store.slaveid,
-                description="Appliance CM error traceback", contents=full_tb, file_type="traceback",
-                display_type="danger", display_glyph="align-justify", group_id=g_id)
+                description="Appliance CM error traceback",
+                contents=full_tb,
+                file_type="traceback",
+                display_type="danger",
+                display_glyph="align-justify",
+                group_id=g_id,
+            )
 
             if ss:
                 fire_art_hook(
-                    config, 'filedump',
-                    slaveid=store.slaveid, description="Appliance CM error screenshot",
-                    file_type="screenshot", mode="wb", contents_base64=True, contents=ss,
-                    display_glyph="camera", group_id=g_id)
+                    config,
+                    "filedump",
+                    slaveid=store.slaveid,
+                    description="Appliance CM error screenshot",
+                    file_type="screenshot",
+                    mode="wb",
+                    contents_base64=True,
+                    contents=ss,
+                    display_glyph="camera",
+                    group_id=g_id,
+                )
             if ss_error:
                 fire_art_hook(
-                    config, 'filedump',
+                    config,
+                    "filedump",
                     slaveid=store.slaveid,
-                    description="Appliance CM error screenshot failure", mode="w",
-                    contents_base64=False, contents=ss_error, display_type="danger", group_id=g_id)
+                    description="Appliance CM error screenshot failure",
+                    mode="w",
+                    contents_base64=False,
+                    contents=ss_error,
+                    display_type="danger",
+                    group_id=g_id,
+                )
         elif exc_type is not None:
             logger.info("Error happened but we are not inside a test run so no screenshot now.")
 
@@ -509,7 +614,7 @@ class IPAppliance(object):
             # repr is used in order to avoid having the appliance object in the log record
             logger.exception("taking a screenshot for %s failed", repr(self))
         finally:
-            assert stack.pop() is self, 'appliance stack inconsistent'
+            assert stack.pop() is self, "appliance stack inconsistent"
 
     def __eq__(self, other):
         return isinstance(other, IPAppliance) and self.hostname == other.hostname
@@ -522,27 +627,27 @@ class IPAppliance(object):
 
     @cached_property
     def rest_logger(self):
-        return create_sublogger('rest-api')
+        return create_sublogger("rest-api")
 
-    @logger_wrap('Modifying httpd service config for semaphore workaround: {}')
+    @logger_wrap("Modifying httpd service config for semaphore workaround: {}")
     def fix_httpd_issue(self, log_callback=None):
         # This is workaround for issue when httpd cannot start after restart because
         # it didn't properly clean up semaphores
         if not self.is_pod:
             with self.ssh_client as ssh:
-                filename = 'httpd.service'
-                src = os.path.join('/usr/lib/systemd/system', filename)
-                dst = os.path.join('/etc/systemd/system', filename)
-                copy_cmd = 'cp {} {}'.format(src, dst)
+                filename = "httpd.service"
+                src = os.path.join("/usr/lib/systemd/system", filename)
+                dst = os.path.join("/etc/systemd/system", filename)
+                copy_cmd = "cp {} {}".format(src, dst)
                 assert ssh.run_command(copy_cmd).success
-                exec_pre = """
+                exec_pre = r"""
 [Service]
 ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line; \
                                do ipcrm sem $line; done"
         """
                 full_cmd = """echo '{cmd}' >> {dst}""".format(cmd=exec_pre, dst=dst)
                 assert ssh.run_command(full_cmd).success
-                log_callback('systemd httpd.service file written')
+                log_callback("systemd httpd.service file written")
                 self.httpd.daemon_reload()
 
     # Configuration methods
@@ -569,13 +674,13 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         """
 
         log_callback("Configuring appliance {}".format(self.hostname))
-        loosen_pgssl = kwargs.pop('loosen_pgssl', True)
-        fix_ntp_clock = kwargs.pop('fix_ntp_clock', True)
-        region = kwargs.pop('region', 0)
-        key_address = kwargs.pop('key_address', None)
-        db_address = kwargs.pop('db_address', None)
-        on_gce = kwargs.pop('on_gce', False)
-        on_openstack = kwargs.pop('on_openstack', False)
+        loosen_pgssl = kwargs.pop("loosen_pgssl", True)
+        fix_ntp_clock = kwargs.pop("fix_ntp_clock", True)
+        region = kwargs.pop("region", 0)
+        key_address = kwargs.pop("key_address", None)
+        db_address = kwargs.pop("db_address", None)
+        on_gce = kwargs.pop("on_gce", False)
+        on_openstack = kwargs.pop("on_openstack", False)
         with self as ipapp:
             ipapp.wait_for_ssh()
 
@@ -583,13 +688,16 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             # Rules are permanent and will be reloade after machine reboot
             with self.ssh_client as ssh_client:
                 ssh_client.run_command(
-                    "cp -pr /etc/sysconfig/network-scripts/ifcfg-eth0 /var/tmp", ensure_host=True)
+                    "cp -pr /etc/sysconfig/network-scripts/ifcfg-eth0 /var/tmp", ensure_host=True
+                )
                 ssh_client.run_command(
                     "echo '-w /etc/sysconfig/network-scripts/ifcfg-eth0 -p wa' >> "
-                    "/etc/audit/rules.d/audit.rules", ensure_host=True)
+                    "/etc/audit/rules.d/audit.rules",
+                    ensure_host=True,
+                )
                 self.httpd.daemon_reload()
                 # cannot restart through systemctl
-                ssh_client.run_command('service auditd restart', ensure_host=True)
+                ssh_client.run_command("service auditd restart", ensure_host=True)
 
             ipapp.wait_for_ssh()
 
@@ -607,8 +715,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             if on_openstack:
                 self.set_resolvable_hostname(log_callback=log_callback)
 
-            self.db.setup(region=region, key_address=key_address,
-                          db_address=db_address, is_pod=self.is_pod)
+            self.db.setup(
+                region=region, key_address=key_address, db_address=db_address, is_pod=self.is_pod
+            )
 
             if on_gce:
                 # evm serverd does not auto start on GCE instance..
@@ -621,7 +730,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             if loosen_pgssl:
                 self.db.loosen_pgssl()
                 restart_evm = True
-            if self.version >= '5.8':
+            if self.version >= "5.8":
                 self.configure_vm_console_cert(log_callback=log_callback)
                 restart_evm = True
             if restart_evm:
@@ -638,48 +747,57 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             # Seals the VM in order to work when spawned again.
             ssh_client.run_command("rm -rf /etc/ssh/ssh_host_*", ensure_host=True)
             if ssh_client.run_command(
-                    "grep '^HOSTNAME' /etc/sysconfig/network", ensure_host=True).success:
+                "grep '^HOSTNAME' /etc/sysconfig/network", ensure_host=True
+            ).success:
                 # Replace it
                 ssh_client.run_command(
                     "sed -i -r -e 's/^HOSTNAME=.*$/HOSTNAME=localhost.localdomain/' "
-                    "/etc/sysconfig/network", ensure_host=True)
+                    "/etc/sysconfig/network",
+                    ensure_host=True,
+                )
             else:
                 # Set it
                 ssh_client.run_command(
                     "echo HOSTNAME=localhost.localdomain >> /etc/sysconfig/network",
-                    ensure_host=True)
+                    ensure_host=True,
+                )
             # clear any set hostname from /etc/hosts
             self.remove_resolvable_hostname()
             ssh_client.run_command(
                 "sed -i -r -e '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0",
-                ensure_host=True)
+                ensure_host=True,
+            )
             ssh_client.run_command(
                 "sed -i -r -e '/^UUID/d' /etc/sysconfig/network-scripts/ifcfg-eth0",
-                ensure_host=True)
+                ensure_host=True,
+            )
             ssh_client.run_command("rm -f /etc/udev/rules.d/70-*", ensure_host=True)
             # Fix SELinux things
             ssh_client.run_command("restorecon -R /etc/sysconfig/network-scripts", ensure_host=True)
             ssh_client.run_command("restorecon /etc/sysconfig/network", ensure_host=True)
             # Stop the evmserverd and move the logs somewhere
             self.evmserverd.stop()
-            ssh_client.run_command("mkdir -p /var/www/miq/vmdb/log/preconfigure-logs",
-                ensure_host=True)
+            ssh_client.run_command(
+                "mkdir -p /var/www/miq/vmdb/log/preconfigure-logs", ensure_host=True
+            )
             ssh_client.run_command(
                 "mv /var/www/miq/vmdb/log/*.log /var/www/miq/vmdb/log/preconfigure-logs/",
-                ensure_host=True)
+                ensure_host=True,
+            )
             ssh_client.run_command(
                 "mv /var/www/miq/vmdb/log/*.gz /var/www/miq/vmdb/log/preconfigure-logs/",
-                ensure_host=True)
+                ensure_host=True,
+            )
             # Reduce swapping, because it can do nasty things to our providers
-            ssh_client.run_command('echo "vm.swappiness = 1" >> /etc/sysctl.conf',
-                ensure_host=True)
+            ssh_client.run_command('echo "vm.swappiness = 1" >> /etc/sysctl.conf', ensure_host=True)
 
     def _encrypt_string(self, string):
         try:
             # Let's not log passwords
             logging.disable(logging.CRITICAL)
             result = self.ssh_client.run_rails_command(
-                "\"puts MiqPassword.encrypt('{}')\"".format(string))
+                "\"puts MiqPassword.encrypt('{}')\"".format(string)
+            )
             return result.output.strip()
         finally:
             logging.disable(logging.NOTSET)
@@ -694,10 +812,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         """
         known_ems_list = []
         for ems in self.rest_api.collections.providers:
-            if not any(
-                    p_type in ems['type'] for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
+            if not any(p_type in ems["type"] for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
                 continue
-            known_ems_list.append(ems['name'])
+            known_ems_list.append(ems["name"])
         return known_ems_list
 
     @property
@@ -708,6 +825,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             Recognized by name only.
         """
         from cfme.utils.providers import list_providers
+
         prov_cruds = list_providers(use_global_filters=False)
 
         found_cruds = set()
@@ -722,7 +840,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 unrecognized_ems_names.add(ems_name)
         if unrecognized_ems_names:
             self.log.warning(
-                "Unrecognized managed providers: {}".format(', '.join(unrecognized_ems_names)))
+                "Unrecognized managed providers: {}".format(", ".join(unrecognized_ems_names))
+            )
         return list(found_cruds)
 
     @classmethod
@@ -740,7 +859,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             A :py:class:`IPAppliance` instance.
         """
         if not isinstance(url, six.string_types):
-            raise TypeError('url for .from_url must be a string')
+            raise TypeError("url for .from_url must be a string")
         parsed = urlparse(url)
         new_kwargs = {}
         if parsed.netloc:
@@ -749,10 +868,10 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             # If you only pass the hostname (+ port possibly) without scheme or anything else
             host_part = parsed.path
         else:
-            raise ValueError('Unsupported url specification: {}'.format(url))
+            raise ValueError("Unsupported url specification: {}".format(url))
 
-        if ':' in host_part:
-            hostname, port = host_part.rsplit(':', 1)
+        if ":" in host_part:
+            hostname, port = host_part.rsplit(":", 1)
             port = int(port)
         else:
             hostname = host_part
@@ -760,23 +879,25 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 port = cls.PROTOCOL_PORT_MAPPING[parsed.scheme]
             else:
                 port = None
-        new_kwargs['hostname'] = hostname
+        new_kwargs["hostname"] = hostname
         if port is not None:
-            new_kwargs['ui_port'] = port
+            new_kwargs["ui_port"] = port
         if parsed.scheme:
-            new_kwargs['ui_protocol'] = parsed.scheme
+            new_kwargs["ui_protocol"] = parsed.scheme
         new_kwargs.update(kwargs)
         return cls(**new_kwargs)
 
     def new_rest_api_instance(
-            self, entry_point=None, auth=None, logger="default", verify_ssl=False):
+        self, entry_point=None, auth=None, logger="default", verify_ssl=False
+    ):
         """Returns new REST API instance."""
         return MiqApi(
-            entry_point=entry_point or self.url_path('/api'),
-            auth=auth or (conf.credentials["default"]["username"],
-                          conf.credentials["default"]["password"]),
+            entry_point=entry_point or self.url_path("/api"),
+            auth=auth
+            or (conf.credentials["default"]["username"], conf.credentials["default"]["password"]),
             logger=self.rest_logger if logger == "default" else logger,
-            verify_ssl=verify_ssl)
+            verify_ssl=verify_ssl,
+        )
 
     @cached_property
     def rest_api(self):
@@ -799,35 +920,33 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         """
         show_port = self.PROTOCOL_PORT_MAPPING[self.ui_protocol] != self.ui_port
         if show_port:
-            return '{}://{}:{}/'.format(self.ui_protocol, self.hostname, self.ui_port)
+            return "{}://{}:{}/".format(self.ui_protocol, self.hostname, self.ui_port)
         else:
-            return '{}://{}/'.format(self.ui_protocol, self.hostname)
+            return "{}://{}/".format(self.ui_protocol, self.hostname)
 
     def url_path(self, path):
         """generates URL with an additional path. Useful for generating REST or SSUI URLs."""
-        return '{}/{}'.format(self.url.rstrip('/'), path.lstrip('/'))
+        return "{}/{}".format(self.url.rstrip("/"), path.lstrip("/"))
 
     @property
     def disks_and_partitions(self):
         """Returns list of all disks and partitions"""
         disks_and_partitions = self.ssh_client.run_command(
-            "ls -1 /dev/ | egrep '^[sv]d[a-z][0-9]?'").output.strip()
-        disks_and_partitions = re.split(r'\s+', disks_and_partitions)
-        return sorted('/dev/{}'.format(disk) for disk in disks_and_partitions)
+            "ls -1 /dev/ | egrep '^[sv]d[a-z][0-9]?'"
+        ).output.strip()
+        disks_and_partitions = re.split(r"\s+", disks_and_partitions)
+        return sorted("/dev/{}".format(disk) for disk in disks_and_partitions)
 
     @property
     def disks(self):
         """Returns list of disks only, excludes their partitions"""
-        disk_regexp = re.compile('^/dev/[sv]d[a-z]$')
-        return [
-            disk for disk in self.disks_and_partitions
-            if disk_regexp.match(disk)
-        ]
+        disk_regexp = re.compile("^/dev/[sv]d[a-z]$")
+        return [disk for disk in self.disks_and_partitions if disk_regexp.match(disk)]
 
     @property
     def unpartitioned_disks(self):
         """Returns list of any disks that have no partitions"""
-        partition_regexp = re.compile('^/dev/[sv]d[a-z][0-9]$')
+        partition_regexp = re.compile("^/dev/[sv]d[a-z][0-9]$")
         unpartitioned_disks = set()
 
         for disk in self.disks:
@@ -842,10 +961,11 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     @cached_property
     def product_name(self):
         try:
-            return self.rest_api.product_info['name']
+            return self.rest_api.product_info["name"]
         except (AttributeError, KeyError, IOError):
             self.log.exception(
-                'appliance.product_name could not be retrieved from REST, falling back')
+                "appliance.product_name could not be retrieved from REST, falling back"
+            )
             try:
                 # TODO: Review this section. Does not work unconfigured
                 # # We need to print to a file here because the deprecation warnings make it hard
@@ -856,22 +976,23 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 # result = self.ssh_client.run_command('cat /tmp/product_name.txt')
                 # return result.output
 
-                res = self.ssh_client.run_command('cat /etc/redhat-release')
+                res = self.ssh_client.run_command("cat /etc/redhat-release")
                 if res.failed:
-                    raise RuntimeError('Unable to retrieve /etc/redhat-release')
+                    raise RuntimeError("Unable to retrieve /etc/redhat-release")
                 version_string = res.output.strip()
-                if 'CentOS' in version_string:
-                    return 'ManageIQ'
+                if "CentOS" in version_string:
+                    return "ManageIQ"
                 else:
-                    return 'CFME'
+                    return "CFME"
             except Exception:
                 logger.exception(
-                    "Couldn't fetch the product name from appliance, using ManageIQ as default")
-                return 'ManageIQ'
+                    "Couldn't fetch the product name from appliance, using ManageIQ as default"
+                )
+                return "ManageIQ"
 
     @cached_property
     def is_downstream(self):
-        return self.product_name == 'CFME'
+        return self.product_name == "CFME"
 
     @cached_property
     def version(self):
@@ -879,9 +1000,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     def _version_from_rest(self):
         try:
-            return Version(self.rest_api.server_info['version'])
+            return Version(self.rest_api.server_info["version"])
         except (AttributeError, KeyError, IOError, APIException):
-            self.log.exception('appliance.version could not be retrieved from REST, falling back')
+            self.log.exception("appliance.version could not be retrieved from REST, falling back")
             return self.ssh_client.vmdb_version
 
     def verify_version(self):
@@ -891,14 +1012,14 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     @cached_property
     def build(self):
         if not self.is_downstream:
-            return 'master'
+            return "master"
         try:
-            return self.rest_api.server_info['build']
+            return self.rest_api.server_info["build"]
         except (AttributeError, KeyError, IOError):
-            self.log.exception('appliance.build could not be retrieved from REST, falling back')
-            res = self.ssh_client.run_command('cat /var/www/miq/vmdb/BUILD')
+            self.log.exception("appliance.build could not be retrieved from REST, falling back")
+            res = self.ssh_client.run_command("cat /var/www/miq/vmdb/BUILD")
             if res.failed:
-                raise RuntimeError('Unable to retrieve appliance VMDB version')
+                raise RuntimeError("Unable to retrieve appliance VMDB version")
             return res.output.strip("\n")
 
     @cached_property
@@ -906,9 +1027,10 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         # Currently parses the os version out of redhat release file to allow for
         # rhel and centos appliances
         res = self.ssh_client.run_command(
-            r"cat /etc/redhat-release | sed 's/.* release \(.*\) (.*/\1/' #)")
+            r"cat /etc/redhat-release | sed 's/.* release \(.*\) (.*/\1/' #)"
+        )
         if res.failed:
-            raise RuntimeError('Unable to retrieve appliance OS version')
+            raise RuntimeError("Unable to retrieve appliance OS version")
         return Version(res.output)
 
     @cached_property
@@ -920,12 +1042,12 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         return ui_coverage.CoverageManager(self)
 
     def ssh_client_with_privatekey(self):
-        with open(conf_path.join('appliance_private_key').strpath, 'w') as key:
-            key.write(conf.credentials['ssh']['private_key'])
+        with open(conf_path.join("appliance_private_key").strpath, "w") as key:
+            key.write(conf.credentials["ssh"]["private_key"])
         connect_kwargs = {
-            'hostname': self.hostname,
-            'username': conf.credentials['ssh']['ssh-user'],
-            'key_filename': conf_path.join('appliance_private_key').strpath,
+            "hostname": self.hostname,
+            "username": conf.credentials["ssh"]["ssh-user"],
+            "key_filename": conf_path.join("appliance_private_key").strpath,
         }
         ssh_client = ssh.SSHClient(**connect_kwargs)
         # FIXME: properly store ssh clients we made
@@ -949,42 +1071,44 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
         """
         if not self.is_ssh_running:
-            raise Exception('SSH is unavailable')
+            raise Exception("SSH is unavailable")
 
         # IPAppliance.ssh_client only connects to its address
         if self.openshift_creds:
             connect_kwargs = {
-                'hostname': self.openshift_creds['hostname'],
-                'username': self.openshift_creds['ssh']['username'],
-                'password': self.openshift_creds['ssh']['password'],
-                'oc_username': self.openshift_creds['username'],
-                'oc_password': self.openshift_creds['password'],
-                'container': self.container,
-                'is_pod': self.is_pod,
-                'port': self.ssh_port,
-                'project': self.project
+                "hostname": self.openshift_creds["hostname"],
+                "username": self.openshift_creds["ssh"]["username"],
+                "password": self.openshift_creds["ssh"]["password"],
+                "oc_username": self.openshift_creds["username"],
+                "oc_password": self.openshift_creds["password"],
+                "container": self.container,
+                "is_pod": self.is_pod,
+                "port": self.ssh_port,
+                "project": self.project,
             }
         else:
             connect_kwargs = {
-                'hostname': self.hostname,
-                'username': conf.credentials['ssh']['username'],
-                'password': conf.credentials['ssh']['password'],
-                'container': self.container,
-                'is_pod': self.is_pod,
-                'port': self.ssh_port,
+                "hostname": self.hostname,
+                "username": conf.credentials["ssh"]["username"],
+                "password": conf.credentials["ssh"]["password"],
+                "container": self.container,
+                "is_pod": self.is_pod,
+                "port": self.ssh_port,
             }
         if self.is_dev:
-            connect_kwargs.update({'is_dev': True})
+            connect_kwargs.update({"is_dev": True})
         ssh_client = ssh.SSHClient(**connect_kwargs)
         try:
             ssh_client.get_transport().is_active()
-            logger.info('default appliance ssh credentials are valid')
+            logger.info("default appliance ssh credentials are valid")
         except Exception as e:
             if self.is_dev:
-                raise Exception('SSH access on a dev alliance, (unsupported)')
+                raise Exception("SSH access on a dev alliance, (unsupported)")
             logger.error(e)
-            logger.error('default appliance ssh credentials failed, trying establish ssh connection'
-                         ' using ssh private key')
+            logger.error(
+                "default appliance ssh credentials failed, trying establish ssh connection"
+                " using ssh private key"
+            )
             ssh_client = self.ssh_client_with_privatekey()
         # FIXME: properly store ssh clients we made
         store.ssh_clients_to_close.append(ssh_client)
@@ -1002,12 +1126,13 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             :py:class:`paramiko.ssh_exception.SSHException` or :py:class:`socket.error`
         """
         try:
-            server = self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href'])
+            server = self.rest_api.get_entity_by_href(self.rest_api.server_info["server_href"])
             return server.system_swap_used / 1024 / 1024
         except (AttributeError, KeyError, IOError):
-            self.log.exception('appliance.swap could not be retrieved from REST, falling back')
+            self.log.exception("appliance.swap could not be retrieved from REST, falling back")
             value = self.ssh_client.run_command(
-                'free -m | tr -s " " " " | cut -f 3 -d " " | tail -n 1', reraise=True, timeout=15)
+                'free -m | tr -s " " " " | cut -f 3 -d " " | tail -n 1', reraise=True, timeout=15
+            )
             try:
                 value = int(value.output.strip())
             except (TypeError, ValueError):
@@ -1017,11 +1142,13 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def event_listener(self):
         """Returns an instance of the event listening class pointed to this appliance."""
         # There is no REST API for event streams on versions < 5.9
-        if self.version <= '5.9':
+        if self.version <= "5.9":
             from cfme.utils.events_db import DbEventListener
+
             return DbEventListener(self)
         else:
             from cfme.utils.events import RestEventListener
+
             return RestEventListener(self)
 
     def diagnose_evm_failure(self):
@@ -1033,39 +1160,39 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         such as in the template tester.
 
         """
-        logger.info('Diagnosing EVM failures, this can take a while...')
+        logger.info("Diagnosing EVM failures, this can take a while...")
 
         if not self.hostname:
-            return 'appliance has no IP Address; provisioning failed or networking is broken'
+            return "appliance has no IP Address; provisioning failed or networking is broken"
 
-        logger.info('Checking appliance SSH Connection')
+        logger.info("Checking appliance SSH Connection")
         if not self.is_ssh_running:
-            return 'SSH is not running on the appliance'
+            return "SSH is not running on the appliance"
 
         # Now for the DB
-        logger.info('Checking appliance database')
+        logger.info("Checking appliance database")
         if not self.db.online:
             # postgres isn't running, try to start it
-            logger.info('Database is not online, restarting')
+            logger.info("Database is not online, restarting")
             try:
                 self.db_service.restart()
             except SystemdException as ex:
-                return 'postgres failed to start: \n{}'.format(ex.message)
+                return "postgres failed to start: \n{}".format(ex.message)
             else:
-                return 'postgres was not running for unknown reasons'
+                return "postgres was not running for unknown reasons"
 
         if not self.db.has_database:
-            return 'vmdb_production database does not exist'
+            return "vmdb_production database does not exist"
 
         if not self.db.has_tables:
-            return 'vmdb_production has no tables'
+            return "vmdb_production has no tables"
 
         # try to start EVM
-        logger.info('Checking appliance evmserverd service')
+        logger.info("Checking appliance evmserverd service")
         try:
             self.evmserverd.restart()
         except ApplianceException as ex:
-            return 'evmserverd failed to start:\n{}'.format(ex.args[0])
+            return "evmserverd failed to start:\n{}".format(ex.args[0])
 
         # This should be pretty comprehensive, but we might add some net_checks for
         # 3000, 4000, and 80 at this point, and waiting a reasonable amount of time
@@ -1074,11 +1201,11 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     @logger_wrap("Fix NTP Clock: {}")
     def fix_ntp_clock(self, log_callback=None):
         """Fixes appliance time using ntpdate on appliance"""
-        log_callback('Fixing appliance clock')
+        log_callback("Fixing appliance clock")
         client = self.ssh_client
 
         # checking whether chrony is installed
-        check_cmd = 'yum list installed chrony'
+        check_cmd = "yum list installed chrony"
         if client.run_command(check_cmd).failed:
             raise ApplianceException("Chrony isn't installed")
 
@@ -1090,21 +1217,22 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             self.chronyd.daemon_reload()
 
         # Retrieve time servers from yamls
-        server_template = 'server {srv} iburst'
+        server_template = "server {srv} iburst"
         time_servers = set()
         try:
-            logger.debug('obtaining clock servers from config file')
-            clock_servers = conf.cfme_data.get('clock_servers')
+            logger.debug("obtaining clock servers from config file")
+            clock_servers = conf.cfme_data.get("clock_servers")
             for clock_server in clock_servers:
                 time_servers.add(server_template.format(srv=clock_server))
         except TypeError:
-            msg = 'No clock servers configured in cfme_data.yaml'
+            msg = "No clock servers configured in cfme_data.yaml"
             log_callback(msg)
             raise ApplianceException(msg)
 
-        filename = '/etc/chrony.conf'
-        chrony_conf = set(client.run_command("cat {f}".format(f=filename)).output.strip()
-                    .split('\n'))
+        filename = "/etc/chrony.conf"
+        chrony_conf = set(
+            client.run_command("cat {f}".format(f=filename)).output.strip().split("\n")
+        )
 
         modified_chrony_conf = chrony_conf.union(time_servers)
         if modified_chrony_conf != chrony_conf:
@@ -1117,16 +1245,17 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             conf_file_updated = False
 
         if conf_file_updated or not self.chronyd.running:
-            logger.debug('restarting chronyd')
+            logger.debug("restarting chronyd")
             self.chronyd.restart()
 
         # check that chrony is running correctly now
-        result = client.run_command('chronyc tracking')
+        result = client.run_command("chronyc tracking")
         if result.success:
-            logger.info('chronyc is running correctly')
+            logger.info("chronyc is running correctly")
         else:
-            raise ApplianceException("chrony doesn't work. "
-                                     "Error message: {e}".format(e=result.output))
+            raise ApplianceException(
+                "chrony doesn't work. " "Error message: {e}".format(e=result.output)
+            )
 
     @property
     def is_miqqe_patch_candidate(self):
@@ -1139,17 +1268,20 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     @logger_wrap("Patch appliance with MiqQE js: {}")
     def patch_with_miqqe(self, log_callback=None):
         # (local_path, remote_path, md5/None) trio
-        autofocus_patch = VersionPicker({
-            '5.5': 'autofocus.js.diff',
-            '5.7': 'autofocus_57.js.diff'
-        }).pick(self.version)
+        autofocus_patch = VersionPicker(
+            {"5.5": "autofocus.js.diff", "5.7": "autofocus_57.js.diff"}
+        ).pick(self.version)
         patch_args = (
-            (str(patches_path.join('miq_application.js.diff')),
-             '/var/www/miq/vmdb/app/assets/javascripts/miq_application.js',
-             None),
-            (str(patches_path.join(autofocus_patch)),
-             '/var/www/miq/vmdb/app/assets/javascripts/directives/autofocus.js',
-             None),
+            (
+                str(patches_path.join("miq_application.js.diff")),
+                "/var/www/miq/vmdb/app/assets/javascripts/miq_application.js",
+                None,
+            ),
+            (
+                str(patches_path.join(autofocus_patch)),
+                "/var/www/miq/vmdb/app/assets/javascripts/directives/autofocus.js",
+                None,
+            ),
         )
 
         for local_path, remote_path, md5 in patch_args:
@@ -1160,12 +1292,14 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         logger.info("Waiting for Web UI to start")
         wait_for(
             func=self.is_web_ui_running,
-            message='appliance.is_web_ui_running',
+            message="appliance.is_web_ui_running",
             delay=20,
-            timeout=300)
+            timeout=300,
+        )
         logger.info("Web UI is up and running")
         self.ssh_client.run_command(
-            "echo '{}' > /var/www/miq/vmdb/.miqqe_version".format(current_miqqe_version))
+            "echo '{}' > /var/www/miq/vmdb/.miqqe_version".format(current_miqqe_version)
+        )
         # Invalidate cached version
         del self.miqqe_version
 
@@ -1183,7 +1317,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         result = client.run_command("ls /opt/rh/cfme-gemset")
         if result.failed:
             return  # Not needed
-        log_callback('Fixing Gemfile issue')
+        log_callback("Fixing Gemfile issue")
         # Check if the error is there
         result = client.run_rails_command("puts 1")
         if result.success:
@@ -1197,27 +1331,28 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         """Precompile the static assets (images, css, etc) on an appliance
 
         """
-        log_callback('Precompiling assets')
+        log_callback("Precompiling assets")
         client = self.ssh_client
 
-        store.terminalreporter.write_line('Precompiling assets')
+        store.terminalreporter.write_line("Precompiling assets")
         store.terminalreporter.write_line(
-            'THIS IS NOT STUCK. Just wait until it\'s done, it will be only done once', red=True)
-        store.terminalreporter.write_line('Phase 1 of 2: rake assets:clobber')
+            "THIS IS NOT STUCK. Just wait until it's done, it will be only done once", red=True
+        )
+        store.terminalreporter.write_line("Phase 1 of 2: rake assets:clobber")
         result = client.run_rake_command("assets:clobber")
         if result.failed:
-            msg = 'Appliance {} failed to nuke old assets'.format(self.hostname)
+            msg = "Appliance {} failed to nuke old assets".format(self.hostname)
             log_callback(msg)
             raise ApplianceException(msg)
 
-        store.terminalreporter.write_line('Phase 2 of 2: rake assets:precompile')
+        store.terminalreporter.write_line("Phase 2 of 2: rake assets:precompile")
         result = client.run_rake_command("assets:precompile")
         if result.failed:
-            msg = 'Appliance {} failed to precompile assets'.format(self.hostname)
+            msg = "Appliance {} failed to precompile assets".format(self.hostname)
             log_callback(msg)
             raise ApplianceException(msg)
 
-        store.terminalreporter.write_line('Asset precompilation done')
+        store.terminalreporter.write_line("Asset precompilation done")
         return result.rc
 
     @logger_wrap("Clone automate domain: {}")
@@ -1232,37 +1367,39 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         client = self.ssh_client
 
         # Make sure the database is ready
-        log_callback('Waiting for database')
+        log_callback("Waiting for database")
         self.db.wait_for()
 
         # Make sure the working dir exists
-        client.run_command('mkdir -p /tmp/{}'.format(source))
+        client.run_command("mkdir -p /tmp/{}".format(source))
 
-        export_opts = 'DOMAIN={} EXPORT_DIR=/tmp/{} PREVIEW=false OVERWRITE=true'.format(source,
-            source)
-        export_cmd = 'evm:automate:export {}'.format(export_opts)
-        log_callback('Exporting domain ({}) ...'.format(export_cmd))
+        export_opts = "DOMAIN={} EXPORT_DIR=/tmp/{} PREVIEW=false OVERWRITE=true".format(
+            source, source
+        )
+        export_cmd = "evm:automate:export {}".format(export_opts)
+        log_callback("Exporting domain ({}) ...".format(export_cmd))
         result = client.run_rake_command(export_cmd)
         if result.failed:
-            msg = 'Failed to export {} domain'.format(source)
+            msg = "Failed to export {} domain".format(source)
             log_callback(msg)
             raise ApplianceException(msg)
 
-        ro_fix_cmd = ("sed -i 's/system: true/system: false/g' "
-                      "/tmp/{}/{}/__domain__.yaml".format(source, source))
+        ro_fix_cmd = "sed -i 's/system: true/system: false/g' " "/tmp/{}/{}/__domain__.yaml".format(
+            source, source
+        )
         result = client.run_command(ro_fix_cmd)
         if result.failed:
-            msg = 'Setting {} domain to read/write failed'.format(dest)
+            msg = "Setting {} domain to read/write failed".format(dest)
             log_callback(msg)
             raise ApplianceException(msg)
 
-        import_opts = 'DOMAIN={} IMPORT_DIR=/tmp/{} PREVIEW=false'.format(source, source)
-        import_opts += ' OVERWRITE=true IMPORT_AS={} ENABLED=true'.format(dest)
-        import_cmd = 'evm:automate:import {}'.format(import_opts)
-        log_callback('Importing domain ({}) ...'.format(import_cmd))
+        import_opts = "DOMAIN={} IMPORT_DIR=/tmp/{} PREVIEW=false".format(source, source)
+        import_opts += " OVERWRITE=true IMPORT_AS={} ENABLED=true".format(dest)
+        import_cmd = "evm:automate:import {}".format(import_opts)
+        log_callback("Importing domain ({}) ...".format(import_cmd))
         result = client.run_rake_command(import_cmd)
         if result.failed:
-            msg = 'Failed to import {} domain'.format(dest)
+            msg = "Failed to import {} domain".format(dest)
             log_callback(msg)
             raise ApplianceException(msg)
 
@@ -1274,27 +1411,36 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
         with self.ssh_client as client:
 
-            client.run_command('mkdir -p /root/merkyl')
-            for filename in ['__init__.py', 'merkyl.tpl', ('bottle.py.dontflake', 'bottle.py'),
-                             'allowed.files']:
+            client.run_command("mkdir -p /root/merkyl")
+            for filename in [
+                "__init__.py",
+                "merkyl.tpl",
+                ("bottle.py.dontflake", "bottle.py"),
+                "allowed.files",
+            ]:
                 try:
                     src, dest = filename
                 except (TypeError, ValueError):
                     # object is not iterable or too many values to unpack
                     src = dest = filename
-                log_callback('Sending {} to appliance'.format(src))
-                client.put_file(data_path.join(
-                    'bundles', 'merkyl', src).strpath, os.path.join('/root/merkyl', dest))
+                log_callback("Sending {} to appliance".format(src))
+                client.put_file(
+                    data_path.join("bundles", "merkyl", src).strpath,
+                    os.path.join("/root/merkyl", dest),
+                )
 
-            client.put_file(data_path.join(
-                'bundles', 'merkyl', 'merkyl').strpath, os.path.join('/etc/init.d/merkyl'))
-            client.run_command('chmod 775 /etc/init.d/merkyl')
+            client.put_file(
+                data_path.join("bundles", "merkyl", "merkyl").strpath,
+                os.path.join("/etc/init.d/merkyl"),
+            )
+            client.run_command("chmod 775 /etc/init.d/merkyl")
             client.run_command(
-                '/bin/bash -c '
+                "/bin/bash -c "
                 '\'if ! [[ $(iptables -L -n | grep "state NEW tcp dpt:8192") ]]; '
-                'then '
-                'iptables -I INPUT 6 -m state --state NEW -m tcp -p tcp --dport 8192 -j ACCEPT; '
-                'fi\'')
+                "then "
+                "iptables -I INPUT 6 -m state --state NEW -m tcp -p tcp --dport 8192 -j ACCEPT; "
+                "fi'"
+            )
 
         self.merkyl.daemon_reload()
 
@@ -1309,7 +1455,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
         Ignores certain files, like redhat.repo.
         """
-        repofiles = self.ssh_client.run_command('ls /etc/yum.repos.d').output.strip().split('\n')
+        repofiles = self.ssh_client.run_command("ls /etc/yum.repos.d").output.strip().split("\n")
         return [f for f in repofiles if f not in {"redhat.repo"} and f.endswith(".repo")]
 
     def read_repos(self):
@@ -1334,7 +1480,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     # Regexp that looks for product type and version in the update URL
     product_url_regexp = re.compile(
-        r"/((?:[A-Z]+|CloudForms|rhel|RHEL_Guest))(?:-|/|/server/)(\d+[^/]*)/")
+        r"/((?:[A-Z]+|CloudForms|rhel|RHEL_Guest))(?:-|/|/server/)(\d+[^/]*)/"
+    )
 
     def find_product_repos(self):
         """Returns a dictionary of products, where the keys are names of product (repos) and values
@@ -1378,7 +1525,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         if match is None:
             raise ValueError(
                 "The URL {} does not contain information about product and version.".format(
-                    repo_url))
+                    repo_url
+                )
+            )
         for repo_id, url in self.read_repos().items():
             if url == repo_url:
                 # It is already there, so just enable it
@@ -1396,7 +1545,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         logger.info("%s repository %s", "Enabling" if enable else "Disabling", repo_id)
         return self.ssh_client.run_command(
             "sed -i 's/^enabled=./enabled={}/' /etc/yum.repos.d/{}.repo".format(
-                1 if enable else 0, repo_id)).success
+                1 if enable else 0, repo_id
+            )
+        ).success
 
     @logger_wrap("Update RHEL: {}")
     def update_rhel(self, *urls, **kwargs):
@@ -1422,16 +1573,16 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         skip_broken = kwargs.pop("skip_broken", False)
         reboot = kwargs.pop("reboot", True)
         streaming = kwargs.pop("streaming", False)
-        cleanup = kwargs.pop('cleanup', False)
-        log_callback('updating appliance')
+        cleanup = kwargs.pop("cleanup", False)
+        log_callback("updating appliance")
         if not urls:
-            basic_info = conf.cfme_data.get('basic_info', {})
-            if os.environ.get('updates_urls'):
+            basic_info = conf.cfme_data.get("basic_info", {})
+            if os.environ.get("updates_urls"):
                 # try to pull URLs from env if var is non-empty
-                urls.extend(os.environ['update_urls'].split())
+                urls.extend(os.environ["update_urls"].split())
             else:
                 # fall back to cfme_data
-                updates_url = basic_info.get('rhel7_updates_url')
+                updates_url = basic_info.get("rhel7_updates_url")
 
                 if updates_url:
                     urls.append(updates_url)
@@ -1444,28 +1595,28 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         if cleanup:
             client.run_command(
                 "cd /etc/yum.repos.d && find . -not -name 'redhat.repo' "
-                "-not -name 'rhel-source.repo' -not -name . -exec rm {} \\;")
+                "-not -name 'rhel-source.repo' -not -name . -exec rm {} \\;"
+            )
 
         for url in urls:
             self.add_product_repo(url)
 
         # update
-        log_callback('Running rhel updates on appliance')
+        log_callback("Running rhel updates on appliance")
         # clean yum beforehand to clear metadata from earlier update repos, if any
         try:
-            skip = '--skip-broken' if skip_broken else ''
-            result = client.run_command('yum update -y --nogpgcheck {}'.format(skip),
-                timeout=3600)
+            skip = "--skip-broken" if skip_broken else ""
+            result = client.run_command("yum update -y --nogpgcheck {}".format(skip), timeout=3600)
         except socket.timeout:
-            msg = 'SSH timed out while updating appliance, exiting'
+            msg = "SSH timed out while updating appliance, exiting"
             log_callback(msg)
             # failure to update is fatal, kill this process
             raise KeyboardInterrupt(msg)
 
         self.log.error(result.output)
         if result.failed:
-            self.log.error('appliance update failed')
-            msg = 'Appliance {} failed to update RHEL, error in logs'.format(self.hostname)
+            self.log.error("appliance update failed")
+            msg = "Appliance {} failed to update RHEL, error in logs".format(self.hostname)
             log_callback(msg)
             raise ApplianceException(msg)
 
@@ -1476,7 +1627,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     def utc_time(self):
         client = self.ssh_client
-        result = client.run_command('date --iso-8601=seconds -u')
+        result = client.run_command("date --iso-8601=seconds -u")
         if result.success:
             return dateutil.parser.parse(result.output)
         else:
@@ -1490,14 +1641,14 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 self.log.info("Appliance online")
                 return True
             else:
-                self.log.debug('Appliance online, status code %s', response.status_code)
+                self.log.debug("Appliance online, status code %s", response.status_code)
         except requests.exceptions.Timeout:
-            self.log.debug('Appliance offline, connection timed out')
+            self.log.debug("Appliance offline, connection timed out")
         except ValueError:
             # requests exposes invalid URLs as ValueErrors, which is excellent
             raise
         except Exception as ex:
-            self.log.debug('Appliance online, but connection failed: %s', str(ex))
+            self.log.debug("Appliance online, but connection failed: %s", str(ex))
         return False
 
     def is_web_ui_running(self, unsure=False):
@@ -1525,36 +1676,45 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     @logger_wrap("Restart EVM Service: {}")
     def restart_evm_rude(self, log_callback=None):
         """Restarts the ``evmserverd`` service on this appliance"""
-        store.terminalreporter.write_line('evmserverd is being restarted, be patient please')
+        store.terminalreporter.write_line("evmserverd is being restarted, be patient please")
         with self.ssh_client as ssh:
             self.evmserverd.stop()
-            log_callback('Waiting for evm service to stop')
+            log_callback("Waiting for evm service to stop")
             try:
                 wait_for(
-                    lambda: self.evmserverd.running, num_sec=120, fail_condition=True, delay=5,
-                    message='evm service to stop')
+                    lambda: self.evmserverd.running,
+                    num_sec=120,
+                    fail_condition=True,
+                    delay=5,
+                    message="evm service to stop",
+                )
             except TimedOutError:
                 # Don't care if it's still running
                 pass
-            log_callback('killing any remaining processes and restarting postgres')
-            ssh.run_command('killall -9 ruby')
+            log_callback("killing any remaining processes and restarting postgres")
+            ssh.run_command("killall -9 ruby")
             self.db_service.restart()
-            log_callback('Waiting for database to be available')
+            log_callback("Waiting for database to be available")
             wait_for(
-                lambda: self.db.is_online, num_sec=90, delay=5,
-                message="database to be available")
+                lambda: self.db.is_online, num_sec=90, delay=5, message="database to be available"
+            )
             self.evmserverd.start()
 
     @logger_wrap("Rebooting Appliance: {}")
     def reboot(self, wait_for_web_ui=True, log_callback=None):
-        log_callback('Rebooting appliance')
+        log_callback("Rebooting appliance")
         client = self.ssh_client
 
         old_uptime = client.uptime()
-        client.run_command('reboot')
+        client.run_command("reboot")
 
-        wait_for(lambda: client.uptime() < old_uptime, handle_exception=True,
-            num_sec=600, message='appliance to reboot', delay=10)
+        wait_for(
+            lambda: client.uptime() < old_uptime,
+            handle_exception=True,
+            num_sec=600,
+            message="appliance to reboot",
+            delay=10,
+        )
 
         if wait_for_web_ui:
             self.wait_for_web_ui()
@@ -1569,9 +1729,10 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                      ``True`` == start, ``False`` == stop
         """
         prefix = "" if running else "dis"
-        (log_callback or self.log.info)('Waiting for web UI to ' + prefix + 'appear')
-        result, wait = wait_for(self._check_appliance_ui_wait_fn, num_sec=timeout,
-            fail_condition=not running, delay=10)
+        (log_callback or self.log.info)("Waiting for web UI to " + prefix + "appear")
+        result, wait = wait_for(
+            self._check_appliance_ui_wait_fn, num_sec=timeout, fail_condition=not running, delay=10
+        )
         return result
 
     @logger_wrap("Install VDDK: {}")
@@ -1589,56 +1750,58 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
         with self.ssh_client as client:
             is_already_installed = False
-            if client.run_command('test -d /usr/lib/vmware-vix-disklib/lib64').success:
+            if client.run_command("test -d /usr/lib/vmware-vix-disklib/lib64").success:
                 is_already_installed = True
 
             if not is_already_installed or force:
 
                 # start
-                filename = vddk_url.split('/')[-1]
+                filename = vddk_url.split("/")[-1]
 
                 # download
-                log_callback('Downloading VDDK')
-                result = client.run_command('curl {} -o {}'.format(vddk_url, filename))
+                log_callback("Downloading VDDK")
+                result = client.run_command("curl {} -o {}".format(vddk_url, filename))
                 if result.failed:
                     log_raise(Exception, "Could not download VDDK")
 
                 # install
-                log_callback('Installing vddk')
-                result = client.run_command(
-                    'yum -y install {}'.format(filename))
+                log_callback("Installing vddk")
+                result = client.run_command("yum -y install {}".format(filename))
                 if result.failed:
                     log_raise(
                         Exception,
-                        'VDDK installation failure (rc: {})\n{}'.format(result.rc, result.output)
+                        "VDDK installation failure (rc: {})\n{}".format(result.rc, result.output),
                     )
 
                 # verify
-                log_callback('Verifying vddk')
-                result = client.run_command('ldconfig -p | grep vix')
+                log_callback("Verifying vddk")
+                result = client.run_command("ldconfig -p | grep vix")
                 if len(result.output) < 2:
                     log_raise(
                         Exception,
-                        "Potential installation issue, libraries not detected\n{}"
-                        .format(result.output)
+                        "Potential installation issue, libraries not detected\n{}".format(
+                            result.output
+                        ),
                     )
 
     @logger_wrap("Uninstall VDDK: {}")
     def uninstall_vddk(self, log_callback=None):
         """Uninstall the vddk from an appliance"""
         with self.ssh_client as client:
-            is_installed = client.run_command('test -d /usr/lib/vmware-vix-disklib/lib64').success
+            is_installed = client.run_command("test -d /usr/lib/vmware-vix-disklib/lib64").success
             if is_installed:
-                result = client.run_command('yum -y remove vmware-vix-disklib')
+                result = client.run_command("yum -y remove vmware-vix-disklib")
                 if result.failed:
-                    log_callback('VDDK removing failure (rc: {})\n{}'
-                                 .format(result.rc, result.output))
-                    raise Exception('VDDK removing failure (rc: {})\n{}'
-                                    .format(result.rc, result.output))
+                    log_callback(
+                        "VDDK removing failure (rc: {})\n{}".format(result.rc, result.output)
+                    )
+                    raise Exception(
+                        "VDDK removing failure (rc: {})\n{}".format(result.rc, result.output)
+                    )
                 else:
-                    log_callback('VDDK has been successfully removed.')
+                    log_callback("VDDK has been successfully removed.")
             else:
-                log_callback('VDDK is not installed.')
+                log_callback("VDDK is not installed.")
 
     @logger_wrap("Install Netapp SDK: {}")
     def install_netapp_sdk(self, sdk_url=None, reboot=False, log_callback=None):
@@ -1655,46 +1818,47 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
         if sdk_url is None:
             try:
-                sdk_url = conf.cfme_data['basic_info']['netapp_sdk_url']
+                sdk_url = conf.cfme_data["basic_info"]["netapp_sdk_url"]
             except KeyError:
                 raise Exception("cfme_data.yaml/basic_info/netapp_sdk_url is not present!")
 
-        filename = sdk_url.split('/')[-1]
+        filename = sdk_url.split("/")[-1]
         foldername = os.path.splitext(filename)[0]
 
         with self.ssh_client as ssh:
-            log_callback('Downloading SDK from {}'.format(sdk_url))
+            log_callback("Downloading SDK from {}".format(sdk_url))
             result = ssh.run_command(
-                'wget {url} -O {file} > /root/unzip.out 2>&1'.format(
-                    url=sdk_url, file=filename))
+                "wget {url} -O {file} > /root/unzip.out 2>&1".format(url=sdk_url, file=filename)
+            )
             if result.failed:
-                log_raise(Exception, 'Could not download Netapp SDK: {}'.format(result.output))
+                log_raise(Exception, "Could not download Netapp SDK: {}".format(result.output))
 
-            log_callback('Extracting SDK ({})'.format(filename))
-            result = ssh.run_command(
-                'unzip -o -d /var/www/miq/vmdb/lib/ {}'.format(filename))
+            log_callback("Extracting SDK ({})".format(filename))
+            result = ssh.run_command("unzip -o -d /var/www/miq/vmdb/lib/ {}".format(filename))
             if result.failed:
-                log_raise(Exception, 'Could not extract Netapp SDK: {}'.format(result.output))
+                log_raise(Exception, "Could not extract Netapp SDK: {}".format(result.output))
 
-            path = '/var/www/miq/vmdb/lib/{}/lib/linux-64'.format(foldername)
+            path = "/var/www/miq/vmdb/lib/{}/lib/linux-64".format(foldername)
             # Check if we haven't already added this line
             if ssh.run_command("grep -F '{}' /etc/default/evm".format(path)).failed:
-                log_callback('Installing SDK ({})'.format(foldername))
+                log_callback("Installing SDK ({})".format(foldername))
                 result = ssh.run_command(
                     'echo "export LD_LIBRARY_PATH=\\$LD_LIBRARY_PATH:{}"'
-                    '>> /etc/default/evm'.format(
-                        path))
+                    ">> /etc/default/evm".format(path)
+                )
                 if result.failed:
-                    log_raise(Exception, 'SDK installation failure ($?={}): {}'
-                              .format(result.rc, result.output))
+                    log_raise(
+                        Exception,
+                        "SDK installation failure ($?={}): {}".format(result.rc, result.output),
+                    )
             else:
                 log_callback("Not needed to install, already done")
 
-            log_callback('ldconfig')
-            ssh.run_command('ldconfig')
+            log_callback("ldconfig")
+            ssh.run_command("ldconfig")
 
-            log_callback('Modifying YAML configuration')
-            c_yaml = {'product': {'storage': True}}
+            log_callback("Modifying YAML configuration")
+            c_yaml = {"product": {"storage": True}}
             self.update_advanced_settings(c_yaml)
 
             # To mark that we installed netapp
@@ -1704,22 +1868,23 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 self.reboot(log_callback=log_callback)
             else:
                 log_callback(
-                    'Appliance must be restarted before the netapp functionality can be used.')
-        clear_property_cache(self, 'is_storage_enabled')
+                    "Appliance must be restarted before the netapp functionality can be used."
+                )
+        clear_property_cache(self, "is_storage_enabled")
 
-    @logger_wrap('Updating appliance UUID: {}')
+    @logger_wrap("Updating appliance UUID: {}")
     def update_guid(self, log_callback=None):
-        guid_gen = 'uuidgen |tee /var/www/miq/vmdb/GUID'
-        log_callback('Running {} to generate UUID'.format(guid_gen))
+        guid_gen = "uuidgen |tee /var/www/miq/vmdb/GUID"
+        log_callback("Running {} to generate UUID".format(guid_gen))
         with self.ssh_client as ssh:
             result = ssh.run_command(guid_gen)
-            assert result.success, 'Failed to generate UUID'
-        log_callback('Updated UUID: {}'.format(str(result)))
+            assert result.success, "Failed to generate UUID"
+        log_callback("Updated UUID: {}".format(str(result)))
         try:
-            del self.__dict__['guid']  # invalidate cached_property
+            del self.__dict__["guid"]  # invalidate cached_property
         except KeyError:
             logger.exception('Exception clearing cached_property "guid"')
-        return str(result).rstrip('\n')  # should return UUID from stdout
+        return str(result).rstrip("\n")  # should return UUID from stdout
 
     def wait_for_ssh(self, timeout=600):
         """Waits for appliance SSH connection to be ready
@@ -1727,17 +1892,21 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         Args:
             timeout: Number of seconds to wait until timeout (default ``600``)
         """
-        wait_for(func=lambda: self.is_ssh_running,
-                 message='appliance.is_ssh_running',
-                 delay=5,
-                 num_sec=timeout)
+        wait_for(
+            func=lambda: self.is_ssh_running,
+            message="appliance.is_ssh_running",
+            delay=5,
+            num_sec=timeout,
+        )
 
     @property
     def _ansible_pod_name(self):
         if self.is_pod:
-            if self.version >= '5.9':
-                get_ansible_name = ("basename $(oc get pods -lname=ansible "
-                                    "-o name --namespace={n})".format(n=self.project))
+            if self.version >= "5.9":
+                get_ansible_name = (
+                    "basename $(oc get pods -lname=ansible "
+                    "-o name --namespace={n})".format(n=self.project)
+                )
                 return str(self.ssh_client.run_command(get_ansible_name, ensure_host=True)).strip()
             else:
                 # ansible stuff lives in the same container with main app in 5.8
@@ -1747,20 +1916,23 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     @property
     def is_supervisord_running(self):
-        output = self.ssh_client.run_command("systemctl status supervisord",
-                                             container=self._ansible_pod_name)
+        output = self.ssh_client.run_command(
+            "systemctl status supervisord", container=self._ansible_pod_name
+        )
         return output.success
 
     @property
     def is_nginx_running(self):
-        output = self.ssh_client.run_command("systemctl status nginx",
-                                             container=self._ansible_pod_name)
+        output = self.ssh_client.run_command(
+            "systemctl status nginx", container=self._ansible_pod_name
+        )
         return output.success
 
     @property
     def is_rabbitmq_running(self):
-        output = self.ssh_client.run_command("systemctl status rabbitmq-server",
-                                             container=self._ansible_pod_name)
+        output = self.ssh_client.run_command(
+            "systemctl status rabbitmq-server", container=self._ansible_pod_name
+        )
         return output.success
 
     @property
@@ -1777,7 +1949,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         Args:
             timeout: Number of seconds to wait until timeout (default ``1200``)
         """
-        if self.is_pod and BZ(1576744, forced_streams=['5.9']).blocks:
+        if self.is_pod and BZ(1576744, forced_streams=["5.9"]).blocks:
             # TODO: to remove this when BZ is fixed
             # openshift's ansible pod gets ready very long first time.
             # it even gets restarted once or twice
@@ -1785,43 +1957,45 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
         wait_for(
             func=lambda: self.is_embedded_ansible_running,
-            message='appliance.is_embedded_ansible_running',
+            message="appliance.is_embedded_ansible_running",
             delay=60,
-            num_sec=timeout
+            num_sec=timeout,
         )
 
     @cached_property
     def get_host_address(self):
         try:
-            server = self.advanced_settings.get('server')
+            server = self.advanced_settings.get("server")
             if server:
-                return server.get('host')
+                return server.get("host")
         except Exception as e:
             logger.exception(e)
-            self.log.error('Exception occured while fetching host address')
+            self.log.error("Exception occured while fetching host address")
 
     def wait_for_host_address(self):
         try:
-            wait_for(func=lambda: getattr(self, 'get_host_address'),
-                     fail_condition=None,
-                     delay=5,
-                     num_sec=120)
+            wait_for(
+                func=lambda: getattr(self, "get_host_address"),
+                fail_condition=None,
+                delay=5,
+                num_sec=120,
+            )
             return self.get_host_address
         except Exception as e:
             logger.exception(e)
-            self.log.error('waiting for host address from yaml_config timedout')
+            self.log.error("waiting for host address from yaml_config timedout")
 
     @property
     def is_ssh_running(self):
-        if self.openshift_creds and 'hostname' in self.openshift_creds:
-            hostname = self.openshift_creds['hostname']
+        if self.openshift_creds and "hostname" in self.openshift_creds:
+            hostname = self.openshift_creds["hostname"]
         else:
             hostname = self.hostname
         return net_check(ports.SSH, hostname, force=True)
 
     @property
     def has_cli(self):
-        return self.ssh_client.run_command('hash appliance_console_cli').success
+        return self.ssh_client.run_command("hash appliance_console_cli").success
 
     @property
     def is_idle(self):
@@ -1839,19 +2013,21 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             False if appliance is not idling for longer or equal to idle_time seconds.
         """
         idle_time = 3600
-        ssh_output = self.ssh_client.run_command('if [ $((`date "+%s"` - `date -d "$(egrep -v '
+        ssh_output = self.ssh_client.run_command(
+            'if [ $((`date "+%s"` - `date -d "$(egrep -v '
             r'"(Processing by Api::ApiController\#index as JSON|Started GET "/api" for '
             '127.0.0.1|Completed 200 OK in)" /var/www/miq/vmdb/log/production.log | tail -1 |cut '
-            '-d"[" -f3 | cut -d"]" -f1 | cut -d" " -f1)\" \"+%s\"`)) -lt {} ];'
+            '-d"[" -f3 | cut -d"]" -f1 | cut -d" " -f1)" "+%s"`)) -lt {} ];'
             'then echo "False";'
             'else echo "True";'
-            'fi;'.format(idle_time))
-        return True if 'True' in ssh_output else False
+            "fi;".format(idle_time)
+        )
+        return True if "True" in ssh_output else False
 
     @cached_property
     def build_datetime(self):
-        build_datetime_string = self.build.split('_', 1)[0]
-        return datetime.strptime(build_datetime_string, '%Y%m%d%H%M%S')
+        build_datetime_string = self.build.split("_", 1)[0]
+        return datetime.strptime(build_datetime_string, "%Y%m%d%H%M%S")
 
     @cached_property
     def build_date(self):
@@ -1863,23 +2039,24 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     @cached_property
     def guid(self):
         try:
-            server = self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href'])
+            server = self.rest_api.get_entity_by_href(self.rest_api.server_info["server_href"])
             return server.guid
         except (AttributeError, KeyError, IOError):
-            self.log.exception('appliance.guid could not be retrieved from REST, falling back')
-            result = self.ssh_client.run_command('cat /var/www/miq/vmdb/GUID')
+            self.log.exception("appliance.guid could not be retrieved from REST, falling back")
+            result = self.ssh_client.run_command("cat /var/www/miq/vmdb/GUID")
             return result.output
 
     @cached_property
     def evm_id(self):
         try:
-            server = self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href'])
+            server = self.rest_api.get_entity_by_href(self.rest_api.server_info["server_href"])
             return server.id
         except (AttributeError, KeyError, IOError):
-            self.log.exception('appliance.evm_id could not be retrieved from REST, falling back')
-            miq_servers = self.db.client['miq_servers']
-            return self.db.client.session.query(
-                miq_servers.id).filter(miq_servers.guid == self.guid)[0][0]
+            self.log.exception("appliance.evm_id could not be retrieved from REST, falling back")
+            miq_servers = self.db.client["miq_servers"]
+            return self.db.client.session.query(miq_servers.id).filter(
+                miq_servers.guid == self.guid
+            )[0][0]
 
     @property
     def fqdn(self):
@@ -1887,7 +2064,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         This should likely be 'hostname' as that is what its called on the appliance
         Currently hostname attribute holds IP addr
         """
-        return self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href']).hostname
+        return self.rest_api.get_entity_by_href(self.rest_api.server_info["server_href"]).hostname
 
     def get_disabled_regions(self, provider=None):
         """Fetch appliance advanced config, get disabled regions for given provider's type
@@ -1902,17 +2079,19 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             when provider given: disabled_regions list from config
             when no matching config found: None
         """
-        ems_config = self.advanced_settings.get('ems')
+        ems_config = self.advanced_settings.get("ems")
         if provider and ems_config:
             try:
-                prov_config = ems_config.get(getattr(provider, 'settings_key', None), {})  # safe
-                regions = prov_config['disabled_regions']  # KeyError
+                prov_config = ems_config.get(getattr(provider, "settings_key", None), {})  # safe
+                regions = prov_config["disabled_regions"]  # KeyError
             except KeyError:
                 regions = []
         elif ems_config:
-            regions = {ems_key: yaml['disabled_regions']
-                       for ems_key, yaml in ems_config.items()
-                       if 'disabled_regions' in yaml}
+            regions = {
+                ems_key: yaml["disabled_regions"]
+                for ems_key, yaml in ems_config.items()
+                if "disabled_regions" in yaml
+            }
         else:
             # 'ems' was NOT in advanced_settings
             regions = {}
@@ -1936,13 +2115,14 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         """
         try:
             yaml_conf = {
-                'ems': {getattr(provider, 'settings_key', None): {'disabled_regions': regions}}
+                "ems": {getattr(provider, "settings_key", None): {"disabled_regions": regions}}
             }
         except KeyError:
             # catches not-found settings_key or 'None' when the provider doesn't have it
-            raise ApplianceException('Provider %s settings_key attribute not set '
-                                     'or not found in config %s'
-                                     .format(provider, yaml_conf['ems']))
+            raise ApplianceException(
+                "Provider %s settings_key attribute not set "
+                "or not found in config %s".format(provider, yaml_conf["ems"])
+            )
 
         self.update_advanced_settings(yaml_conf)
         assert self.get_disabled_regions(provider) == list(regions)  # its a tuple if empty
@@ -1950,23 +2130,24 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     @property
     def server_roles(self):
         """Return a dictionary of server roles from database"""
-        asr = self.db.client['assigned_server_roles']
-        sr = self.db.client['server_roles']
+        asr = self.db.client["assigned_server_roles"]
+        sr = self.db.client["server_roles"]
         all_role_names = {row[0] for row in self.db.client.session.query(sr.name)}
         # Query all active server roles assigned to this server
-        query = self.db.client.session\
-            .query(sr.name)\
-            .join(asr, asr.server_role_id == sr.id)\
-            .filter(asr.miq_server_id == self.evm_id)\
-            .filter(asr.active == True)  # noqa
+        query = (
+            self.db.client.session.query(sr.name)
+            .join(asr, asr.server_role_id == sr.id)
+            .filter(asr.miq_server_id == self.evm_id)
+            .filter(asr.active == True)
+        )  # noqa
         active_roles = {row[0] for row in query}
         roles = {role_name: role_name in active_roles for role_name in all_role_names}
-        dead_keys = ['database_owner', 'vdi_inventory']
+        dead_keys = ["database_owner", "vdi_inventory"]
         for key in roles:
             if not self.is_storage_enabled:
-                if key.startswith('storage'):
+                if key.startswith("storage"):
                     dead_keys.append(key)
-                if key == 'vmdb_storage_bridge':
+                if key == "vmdb_storage_bridge":
                     dead_keys.append(key)
         for key in dead_keys:
             try:
@@ -1979,15 +2160,15 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def server_roles(self, roles):
         """Sets the server roles. Requires a dictionary full of the role keys with bool values."""
         if self.server_roles == roles:
-            self.log.debug(' Roles already match, returning...')
+            self.log.debug(" Roles already match, returning...")
             return
-        ansible_old = self.server_roles.get('embedded_ansible', False)
-        ansible_new = roles.get('embedded_ansible', False)
+        ansible_old = self.server_roles.get("embedded_ansible", False)
+        ansible_new = roles.get("embedded_ansible", False)
         enabling_ansible = ansible_old is False and ansible_new is True
 
-        server_data = self.advanced_settings.get('server', {})
-        server_data['role'] = ','.join([role for role, boolean in roles.items() if boolean])
-        self.update_advanced_settings({'server': server_data})
+        server_data = self.advanced_settings.get("server", {})
+        server_data["role"] = ",".join([role for role, boolean in roles.items() if boolean])
+        self.update_advanced_settings({"server": server_data})
         timeout = 600 if enabling_ansible else 300
         wait_for(lambda: self.server_roles == roles, num_sec=timeout, delay=15)
         if enabling_ansible:
@@ -1999,7 +2180,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         This is necessary because server_roles does not wait long enough"""
 
         roles = self.server_roles
-        roles['embedded_ansible'] = True
+        roles["embedded_ansible"] = True
         try:
             self.server_roles = roles
         except TimedOutError:
@@ -2010,7 +2191,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         """disables embbeded ansible role"""
 
         roles = self.server_roles
-        roles['embedded_ansible'] = False
+        roles["embedded_ansible"] = False
         self.server_roles = roles
 
     def update_server_roles(self, changed_roles):
@@ -2045,8 +2226,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     def server_region_string(self):
         r = self.server.zone.region.number
-        return "{} Region: Region {} [{}]".format(
-            self.product_name, r, r)
+        return "{} Region: Region {} [{}]".format(self.product_name, r, r)
 
     @cached_property
     def company_name(self):
@@ -2065,27 +2245,27 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     @cached_property
     def is_storage_enabled(self):
-        return 'storage' in self.advanced_settings.get('product', {})
+        return "storage" in self.advanced_settings.get("product", {})
 
     @property
     def advanced_settings(self):
         """Get settings from the base api/settings endpoint for appliance"""
-        if self.version > '5.9':
+        if self.version > "5.9":
             return self.rest_api.get(self.rest_api.collections.settings._href)
         else:
             writeout = self.ssh_client.run_rails_command(
-                '"File.open(\'/tmp/yam_dump.yaml\', \'w\') '
+                "\"File.open('/tmp/yam_dump.yaml', 'w') "
                 '{|f| f.write(Settings.to_hash.deep_stringify_keys.to_yaml) }"'
             )
             if writeout.rc:
                 logger.error("Config couldn't be found")
                 logger.error(writeout.output)
-                raise Exception('Error obtaining config')
-            base_data = self.ssh_client.run_command('cat /tmp/yam_dump.yaml')
+                raise Exception("Error obtaining config")
+            base_data = self.ssh_client.run_command("cat /tmp/yam_dump.yaml")
             if base_data.rc:
                 logger.error("Config couldn't be found")
                 logger.error(base_data.output)
-                raise Exception('Error obtaining config')
+                raise Exception("Error obtaining config")
             try:
                 return yaml.load(base_data.output)
             except Exception:
@@ -2106,52 +2286,47 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             ApplianceException when server_id isn't set
         """
         # Can only modify through server ID, raise if that's not set yet
-        if self.version < '5.9':
+        if self.version < "5.9":
             data_dict_base = self.advanced_settings
             data_dict_base.update(settings_dict)
 
             temp_yaml = NamedTemporaryFile()
-            dest_yaml = '/tmp/conf.yaml'
+            dest_yaml = "/tmp/conf.yaml"
             yaml.dump(data_dict_base, temp_yaml, default_flow_style=False)
             self.ssh_client.put_file(temp_yaml.name, dest_yaml)
             # Build and send ruby script
-            dest_ruby = '/tmp/set_conf.rb'
+            dest_ruby = "/tmp/set_conf.rb"
 
-            ruby_template = data_path.join('utils', 'cfmedb_set_config.rbt')
-            ruby_replacements = {
-                'config_file': dest_yaml
-            }
+            ruby_template = data_path.join("utils", "cfmedb_set_config.rbt")
+            ruby_replacements = {"config_file": dest_yaml}
             temp_ruby = load_data_file(ruby_template.strpath, ruby_replacements)
             self.ssh_client.put_file(temp_ruby.name, dest_ruby)
 
             # Run it
             result = self.ssh_client.run_rails_command(dest_ruby)
             if not result:
-                raise Exception('Unable to set config: {!r}:{!r}'.format(result.rc, result.output))
+                raise Exception("Unable to set config: {!r}:{!r}".format(result.rc, result.output))
         else:
             if self.server_id() is None:
-                raise ApplianceException('No server id is set, cannot modify yaml config via REST')
+                raise ApplianceException("No server id is set, cannot modify yaml config via REST")
             self.server.update_advanced_settings(settings_dict)
 
     def set_proxy(self, host, port, user=None, password=None, prov_type=None):
         vmdb_config = self.advanced_settings
-        proxy_type = prov_type or 'default'
-        settings = {'host': host,
-                    'port': port,
-                    'user': user,
-                    'password': password}
+        proxy_type = prov_type or "default"
+        settings = {"host": host, "port": port, "user": user, "password": password}
         try:
-            vmdb_config['http_proxy'][proxy_type] = settings
+            vmdb_config["http_proxy"][proxy_type] = settings
         except KeyError as ex:
-            logger.error('Incorrect provider type')
+            logger.error("Incorrect provider type")
             logger.exception(ex)
-            raise ApplianceException('Impossible to create proxy with current provider type')
+            raise ApplianceException("Impossible to create proxy with current provider type")
         self.update_advanced_settings(vmdb_config)
 
     def reset_proxy(self, prov_type=None):
         vmdb_config = self.advanced_settings
-        proxy_type = prov_type or 'default'
-        vmdb_config['http_proxy'][proxy_type] = False if self.version < "5.10" else "<<reset>>"
+        proxy_type = prov_type or "default"
+        vmdb_config["http_proxy"][proxy_type] = False if self.version < "5.10" else "<<reset>>"
         self.update_advanced_settings(vmdb_config)
 
     def set_session_timeout(self, timeout=86400, quiet=True):
@@ -2162,18 +2337,18 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             quiet: Whether to ignore any errors
         """
         try:
-            session_config = self.advanced_settings.get('session', {})
-            if session_config.get('timeout') != timeout:
-                session_config['timeout'] = timeout
-                self.update_advanced_settings({'session': session_config})
+            session_config = self.advanced_settings.get("session", {})
+            if session_config.get("timeout") != timeout:
+                session_config["timeout"] = timeout
+                self.update_advanced_settings({"session": session_config})
         except Exception as ex:
-            logger.error('Setting session timeout failed:')
+            logger.error("Setting session timeout failed:")
             logger.exception(ex)
             if not quiet:
                 raise
 
     def delete_all_providers(self):
-        logger.info('Destroying all appliance providers')
+        logger.info("Destroying all appliance providers")
         for prov in self.rest_api.collections.providers:
             prov.action.delete()
 
@@ -2184,74 +2359,76 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def clean_appliance(self):
         starttime = time()
         self.evmserverd.stop()
-        self.ssh_client.run_command('sync; '
-                                    'sync; '
-                                    'echo 3 > /proc/sys/vm/drop_caches')
+        self.ssh_client.run_command("sync; " "sync; " "echo 3 > /proc/sys/vm/drop_caches")
         self.collectd.stop()
         self.db_service.restart()
-        self.ssh_client.run_command('cd /var/www/miq/vmdb; '
-                                    'bin/rake evm:db:reset')
-        self.ssh_client.run_rake_command('db:seed')
+        self.ssh_client.run_command("cd /var/www/miq/vmdb; " "bin/rake evm:db:reset")
+        self.ssh_client.run_rake_command("db:seed")
         self.collectd.start()
-        self.ssh_client.run_command('rm -rf /var/www/miq/vmdb/log/*.log*')
-        self.ssh_client.run_command('rm -rf /var/www/miq/vmdb/log/apache/*.log*')
+        self.ssh_client.run_command("rm -rf /var/www/miq/vmdb/log/*.log*")
+        self.ssh_client.run_command("rm -rf /var/www/miq/vmdb/log/apache/*.log*")
         self.evmserverd.start()
         self.evmserverd.wait_for_running()
-        logger.debug('Cleaned appliance in: {}'.format(round(time() - starttime, 2)))
+        logger.debug("Cleaned appliance in: {}".format(round(time() - starttime, 2)))
 
     def set_full_refresh_threshold(self, threshold=100):
-        yaml_data = {'ems_refresh': {'full_refresh_threshold': threshold}}
+        yaml_data = {"ems_refresh": {"full_refresh_threshold": threshold}}
         self.update_advanced_settings(yaml_data)
 
     def set_cap_and_util_all_via_rails(self):
         """Turns on Collect for All Clusters and Collect for all Datastores without using Web UI."""
-        command = (
-            'Metric::Targets.perf_capture_always = {:storage=>true, :host_and_cluster=>true};')
+        command = "Metric::Targets.perf_capture_always = {:storage=>true, :host_and_cluster=>true};"
         self.ssh_client.run_rails_console(command, timeout=None)
 
     def set_cfme_server_relationship(self, vm_name, server_id=1):
         """Set MiqServer record to the id of a VM by name, effectively setting the CFME Server
         Relationship without using the Web UI."""
-        command = ('miq_server = MiqServer.find_by(id: {});'
-                   'miq_server.vm_id = Vm.find_by(name: \'{}\').id;'
-                   'miq_server.save'.format(server_id, vm_name))
+        command = (
+            "miq_server = MiqServer.find_by(id: {});"
+            "miq_server.vm_id = Vm.find_by(name: '{}').id;"
+            "miq_server.save".format(server_id, vm_name)
+        )
         self.ssh_client.run_rails_console(command, timeout=None)
 
-    def set_pglogical_replication(self, replication_type=':none'):
+    def set_pglogical_replication(self, replication_type=":none"):
         """Set pglogical replication type (:none, :remote, :global) without using the Web UI."""
-        command = ('MiqRegion.replication_type = {}'.format(replication_type))
+        command = "MiqRegion.replication_type = {}".format(replication_type)
         self.ssh_client.run_rails_console(command, timeout=None)
 
     def add_pglogical_replication_subscription(self, host):
         """Add a pglogical replication subscription without using the Web UI."""
-        user = conf.credentials['ssh']['username']
-        password = conf.credentials['ssh']['password']
-        dbname = 'vmdb_production'
+        user = conf.credentials["ssh"]["username"]
+        password = conf.credentials["ssh"]["password"]
+        dbname = "vmdb_production"
         port = 5432
-        command = ('sub = PglogicalSubscription.new;'
-                   'sub.dbname = \'{}\';'
-                   'sub.host = \'{}\';'
-                   'sub.user = \'{}\';'
-                   'sub.password = \'{}\';'
-                   'sub.port = {};'
-                   'sub.save'.format(dbname, host, user, password, port))
+        command = (
+            "sub = PglogicalSubscription.new;"
+            "sub.dbname = '{}';"
+            "sub.host = '{}';"
+            "sub.user = '{}';"
+            "sub.password = '{}';"
+            "sub.port = {};"
+            "sub.save".format(dbname, host, user, password, port)
+        )
         self.ssh_client.run_rails_console(command, timeout=None)
 
-    def set_rubyrep_replication(self, host, port=5432, database='vmdb_production',
-                                username='root', password=None):
+    def set_rubyrep_replication(
+        self, host, port=5432, database="vmdb_production", username="root", password=None
+    ):
         """Sets up rubyrep replication via advanced configuration settings yaml."""
-        password = password or self._encrypt_string(conf.credentials['ssh']['password'])
-        yaml_data = {'workers': {'worker_base': {'replication_worker': {'replication': {
-            'destination': {}}}}}
+        password = password or self._encrypt_string(conf.credentials["ssh"]["password"])
+        yaml_data = {
+            "workers": {"worker_base": {"replication_worker": {"replication": {"destination": {}}}}}
         }
-        dest = yaml_data['workers']['worker_base']['replication_worker']['replication'][
-            'destination']
-        dest['database'] = database
-        dest['username'] = username
-        dest['password'] = password
-        dest['port'] = port
-        dest['host'] = host
-        logger.debug('Dest: {}'.format(yaml_data))
+        dest = yaml_data["workers"]["worker_base"]["replication_worker"]["replication"][
+            "destination"
+        ]
+        dest["database"] = database
+        dest["username"] = username
+        dest["password"] = password
+        dest["port"] = port
+        dest["host"] = host
+        logger.debug("Dest: {}".format(yaml_data))
         self.update_advanced_settings(yaml_data)
 
     def wait_for_miq_server_workers_started(self, evm_tail=None, poll_interval=5):
@@ -2259,26 +2436,29 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         'INFO -- : MIQ(MiqServer#wait_for_started_workers) All workers have been started'
         """
         if evm_tail is None:
-            logger.info('Opening /var/www/miq/vmdb/log/evm.log for tail')
-            evm_tail = SSHTail('/var/www/miq/vmdb/log/evm.log')
+            logger.info("Opening /var/www/miq/vmdb/log/evm.log for tail")
+            evm_tail = SSHTail("/var/www/miq/vmdb/log/evm.log")
             evm_tail.set_initial_file_end()
 
         attempts = 0
         detected = False
         max_attempts = 60
-        while (not detected and attempts < max_attempts):
-            logger.debug('Attempting to detect MIQ Server workers started: {}'.format(attempts))
+        while not detected and attempts < max_attempts:
+            logger.debug("Attempting to detect MIQ Server workers started: {}".format(attempts))
             for line in evm_tail:
-                if 'MiqServer#wait_for_started_workers' in line:
-                    if ('All workers have been started' in line):
-                        logger.info('Detected MIQ Server is ready.')
+                if "MiqServer#wait_for_started_workers" in line:
+                    if "All workers have been started" in line:
+                        logger.info("Detected MIQ Server is ready.")
                         detected = True
                         break
             sleep(poll_interval)  # Allow more log lines to accumulate
             attempts += 1
         if not (attempts < max_attempts):
-            logger.error('Could not detect MIQ Server workers started in {}s.'.format(
-                poll_interval * max_attempts))
+            logger.error(
+                "Could not detect MIQ Server workers started in {}s.".format(
+                    poll_interval * max_attempts
+                )
+            )
         evm_tail.close()
 
     @logger_wrap("Setting dev branch: {}")
@@ -2290,17 +2470,18 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             branch: Branch of that repo
         """
         with self.ssh_client as ssh_client:
-            dev_branch_cmd = 'cd /var/www/miq/vmdb; git remote add dev_branch {}'.format(repo)
+            dev_branch_cmd = "cd /var/www/miq/vmdb; git remote add dev_branch {}".format(repo)
             if not ssh_client.run_command(dev_branch_cmd):
-                ssh_client.run_command('cd /var/www/miq/vmdb; git remote remove dev_branch')
+                ssh_client.run_command("cd /var/www/miq/vmdb; git remote remove dev_branch")
                 if not ssh_client.run_command(dev_branch_cmd):
-                    raise Exception('Could not add the dev_branch remote')
+                    raise Exception("Could not add the dev_branch remote")
             # We now have the repo and now let's update it
-            ssh_client.run_command('cd /var/www/miq/vmdb; git remote update')
+            ssh_client.run_command("cd /var/www/miq/vmdb; git remote update")
             self.evmserverd.stop()
             ssh_client.run_command(
-                'cd /var/www/miq/vmdb; git checkout dev_branch/{}'.format(branch))
-            ssh_client.run_command('cd /var/www/miq/vmdb; bin/update')
+                "cd /var/www/miq/vmdb; git checkout dev_branch/{}".format(branch)
+            )
+            ssh_client.run_command("cd /var/www/miq/vmdb; bin/update")
             self.evmserverd.start()
             self.evmserverd.wait_for_running()
             self.wait_for_web_ui()
@@ -2308,13 +2489,14 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def check_domain_enabled(self, domain):
         namespaces = self.db.client["miq_ae_namespaces"]
         q = self.db.client.session.query(namespaces).filter(
-            namespaces.parent_id == None, namespaces.name == domain)  # NOQA (for is/==)
+            namespaces.parent_id == None, namespaces.name == domain
+        )  # NOQA (for is/==)
         try:
             return list(q)[0].enabled
         except IndexError:
             raise KeyError("No such Domain: {}".format(domain))
 
-    @logger_wrap('Configuring openldap external auth provider')
+    @logger_wrap("Configuring openldap external auth provider")
     def configure_openldap(self, auth_provider, log_callback=None):
         """This method changes the /etc/sssd/sssd.conf and /etc/openldap/ldap.conf files to set
             up the appliance for an external authentication with OpenLdap.
@@ -2323,62 +2505,68 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 auth_provider: auth provider object derived from cfme.utils.auth.MIQAuthProvider
         """
         # write /etc/hosts entry for ldap hostname  TODO DNS
-        for key in ['ipaddress', 'cert_filename', 'cert_filepath', 'ldap_conf', 'sssd_conf']:
+        for key in ["ipaddress", "cert_filename", "cert_filepath", "ldap_conf", "sssd_conf"]:
             if not auth_provider.get(key):  # either not set, or None
-                raise ValueError('Auth Provider object {} needs attribute {} for external openldap'
-                                 .format(auth_provider, key))
+                raise ValueError(
+                    "Auth Provider object {} needs attribute {} for external openldap".format(
+                        auth_provider, key
+                    )
+                )
 
-        self.ssh_client.run_command('echo "{}  {}" >> /etc/hosts'
-                                    .format(auth_provider.ipaddress, auth_provider.host1))
+        self.ssh_client.run_command(
+            'echo "{}  {}" >> /etc/hosts'.format(auth_provider.ipaddress, auth_provider.host1)
+        )
         # place cert from local conf directory on ldap server
-        self.ssh_client.put_file(local_file=conf_path.join(auth_provider.cert_filename).strpath,
-                                 remote_file=auth_provider.cert_filepath)
+        self.ssh_client.put_file(
+            local_file=conf_path.join(auth_provider.cert_filename).strpath,
+            remote_file=auth_provider.cert_filepath,
+        )
         # configure ldap and sssd with conf file content from yaml
-        assert self.ssh_client.run_command('echo "{s}" > {c}'
-                                           .format(s=auth_provider.ldap_conf,
-                                                   c=self.CONF_FILES['openldap']))
-        assert self.ssh_client.run_command('echo "{s}" > {c}'
-                                           .format(s=auth_provider.sssd_conf,
-                                                   c=self.CONF_FILES['sssd']))
-        assert self.ssh_client.run_command('chown -R root:root {}').format(self.CONF_FILES['sssd'])
-        assert self.ssh_client.run_command('chmod 600 {}').format(self.CONF_FILES['sssd'])
+        assert self.ssh_client.run_command(
+            'echo "{s}" > {c}'.format(s=auth_provider.ldap_conf, c=self.CONF_FILES["openldap"])
+        )
+        assert self.ssh_client.run_command(
+            'echo "{s}" > {c}'.format(s=auth_provider.sssd_conf, c=self.CONF_FILES["sssd"])
+        )
+        assert self.ssh_client.run_command("chown -R root:root {}").format(self.CONF_FILES["sssd"])
+        assert self.ssh_client.run_command("chmod 600 {}").format(self.CONF_FILES["sssd"])
         # copy miq/cfme template files for httpd ext auth config
-        template_dir = self.CONF_FILES.get('downstream_templates'
-                                           if self.is_downstream
-                                           else 'upstream_templates')
+        template_dir = self.CONF_FILES.get(
+            "downstream_templates" if self.is_downstream else "upstream_templates"
+        )
         # pam httpd-auth and httpd remote-user.conf
-        for conf_file in [self.CONF_FILES['pam_httpd_auth'], self.CONF_FILES['httpd_remote_user']]:
-            assert self.ssh_client.run_command('cp {t}{c} {c}'.format(t=template_dir, c=conf_file))
+        for conf_file in [self.CONF_FILES["pam_httpd_auth"], self.CONF_FILES["httpd_remote_user"]]:
+            assert self.ssh_client.run_command("cp {t}{c} {c}".format(t=template_dir, c=conf_file))
 
         # https external-auth conf, template has extra '.erb' suffix
-        assert self.ssh_client.run_command('cp {t}{c}.erb {c}'
-                                           .format(t=template_dir,
-                                                   c=self.CONF_FILES['httpd_ext_auth']))
-        assert self.ssh_client.run_command('setenforce 0')
+        assert self.ssh_client.run_command(
+            "cp {t}{c}.erb {c}".format(t=template_dir, c=self.CONF_FILES["httpd_ext_auth"])
+        )
+        assert self.ssh_client.run_command("setenforce 0")
         self.sssd.restart()
         self.httpd.restart()
         self.wait_for_web_ui()
 
         # UI configuration of auth provider type
-        self.server.authentication.configure(auth_mode='external', auth_provider=auth_provider)
+        self.server.authentication.configure(auth_mode="external", auth_provider=auth_provider)
 
-    @logger_wrap('Disabling openldap external auth provider')
+    @logger_wrap("Disabling openldap external auth provider")
     def disable_openldap(self, log_callback=None):
         self.server.authentication.configure_auth()
         files_to_remove = [
-            self.CONF_FILES['sssd'],
-            self.CONF_FILES['pam_httpd_auth'],
-            self.CONF_FILES['httpd_ext_auth'],
-            self.CONF_FILES['httpd_remote_user']
+            self.CONF_FILES["sssd"],
+            self.CONF_FILES["pam_httpd_auth"],
+            self.CONF_FILES["httpd_ext_auth"],
+            self.CONF_FILES["httpd_remote_user"],
         ]
         for conf_file in files_to_remove:
-            assert self.ssh_client.run_command('rm -f $(ls {})'.format(conf_file))
+            assert self.ssh_client.run_command("rm -f $(ls {})".format(conf_file))
         self.evmserverd.restart()
         self.httpd.restart()
         self.wait_for_web_ui()
-        self.server.authentication.configure_auth(auth_mode='database')
+        self.server.authentication.configure_auth(auth_mode="database")
 
-    @logger_wrap('Configuring freeipa external auth provider')
+    @logger_wrap("Configuring freeipa external auth provider")
     def configure_freeipa(self, auth_provider, log_callback=None):
         """Configure appliance UI and backend for freeIPA
 
@@ -2391,7 +2579,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         if self.is_pod:
             # appliance_console_cli fails when calls hostnamectl --host. it seems docker issue
             # raise BZ ?
-            assert str(self.ssh_client.run_command('hostname')).rstrip() == self.fqdn
+            assert str(self.ssh_client.run_command("hostname")).rstrip() == self.fqdn
 
         # First, clear any existing ipa config, runs clean if not configured
         self.appliance_console_cli.uninstall_ipa_client()
@@ -2399,22 +2587,22 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
         # ext auth ipa requires NTP sync
         if auth_provider.host1 not in self.server.settings.ntp_servers_values:
-            self.server.settings.update_ntp_servers({'ntp_server_1': auth_provider.host1})
+            self.server.settings.update_ntp_servers({"ntp_server_1": auth_provider.host1})
 
         # backend appliance configuration of ext auth provider
         self.appliance_console_cli.configure_ipa(**auth_provider.as_external_value())
 
         # UI configuration of auth provider type
-        self.server.authentication.configure(auth_mode='external', auth_provider=auth_provider)
+        self.server.authentication.configure(auth_mode="external", auth_provider=auth_provider)
 
         # restart httpd
         self.httpd.restart()
 
-    @logger_wrap('Disabling freeipa external auth provider')
+    @logger_wrap("Disabling freeipa external auth provider")
     def disable_freeipa(self, log_callback=None):
         """Switch UI back to database authentication, and run --uninstall-ipa on appliance"""
         self.appliance_console_cli.uninstall_ipa_client()
-        self.server.authentication.configure(auth_mode='database')
+        self.server.authentication.configure(auth_mode="database")
         self.wait_for_web_ui()  # httpd restart in uninstall-ipa
 
     @logger_wrap("Configuring VM Console: {}")
@@ -2424,16 +2612,16 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
            HTML 5 VM Console feature.  Note evmserverd needs to be restarted
            after running this.
         """
-        log_callback('Installing SSL certificate')
+        log_callback("Installing SSL certificate")
 
-        cert = conf.cfme_data['vm_console'].get('cert')
+        cert = conf.cfme_data["vm_console"].get("cert")
         if cert is None:
-            raise Exception('vm_console:cert does not exist in cfme_data.yaml')
+            raise Exception("vm_console:cert does not exist in cfme_data.yaml")
 
-        cert_file = os.path.join(cert.install_dir, 'server.cer')
-        key_file = os.path.join(cert.install_dir, 'server.cer.key')
-        cert_generator = scripts_path.join('gen_ssl_cert.py').strpath
-        remote_cert_generator = os.path.join('/usr/bin', 'gen_ssl_cert.py')
+        cert_file = os.path.join(cert.install_dir, "server.cer")
+        key_file = os.path.join(cert.install_dir, "server.cer.key")
+        cert_generator = scripts_path.join("gen_ssl_cert.py").strpath
+        remote_cert_generator = os.path.join("/usr/bin", "gen_ssl_cert.py")
 
         # Copy self signed SSL certificate generator to the appliance
         # because it needs to get the FQDN for the cert it generates.
@@ -2441,15 +2629,14 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
         # Generate cert
         command = (
-            '{cert_generator}'
+            "{cert_generator}"
             ' --C "{country}"'
             ' --ST "{state}"'
             ' --L "{city}"'
             ' --O "{organization}"'
             ' --OU "{organizational_unit}"'
             ' --keyFile "{key}"'
-            ' --certFile "{cert}"'
-            .format(
+            ' --certFile "{cert}"'.format(
                 cert_generator=remote_cert_generator,
                 country=cert.country,
                 state=cert.state,
@@ -2463,12 +2650,10 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         result = self.ssh_client.run_command(command)
         if not result == 0:
             raise Exception(
-                'Failed to generate self-signed SSL cert on appliance: {}'.format(
-                    result.output
-                )
+                "Failed to generate self-signed SSL cert on appliance: {}".format(result.output)
             )
 
-    @logger_wrap('Get the resolvable hostname')
+    @logger_wrap("Get the resolvable hostname")
     def get_resolvable_hostname(self, log_callback=None):
         """Lookup the hostname based on self.hostname"""
         # Example lookups with self.hostname as IP and self.hostname as resolvable name
@@ -2476,24 +2661,25 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         # 137.3.2.1.in-addr.arpa domain name pointer 137.test.miq.com.
         # [root@host-192-168-55-85 ~]# host 137.test.miq.com
         # 137.test.miq.com has address 1.2.3.137
-        host_check = self.ssh_client.run_command('host {}'.format(self.hostname), ensure_host=True)
+        host_check = self.ssh_client.run_command("host {}".format(self.hostname), ensure_host=True)
         log_callback('Parsing for resolvable hostname from "{}"'.format(host_check.output))
         fqdn = None  # just in case the logic gets weird
-        if host_check.success and 'domain name pointer' in host_check.output:
+        if host_check.success and "domain name pointer" in host_check.output:
             # resolvable and reverse lookup
             # parse out the resolved hostname
-            fqdn = host_check.output.split(' ')[-1].rstrip('\n').rstrip('.')
+            fqdn = host_check.output.split(" ")[-1].rstrip("\n").rstrip(".")
             log_callback('Found FQDN by appliance IP: "{}"'.format(fqdn))
-        elif host_check.success and 'has address' in host_check.output:
+        elif host_check.success and "has address" in host_check.output:
             # resolvable and address returned
             fqdn = self.hostname
             log_callback('appliance hostname attr is FQDN: "{}"'.format(fqdn))
         else:
-            logger.warning('Bad RC from host command or unexpected output,'
-                           ' no resolvable hostname found')
+            logger.warning(
+                "Bad RC from host command or unexpected output," " no resolvable hostname found"
+            )
         return fqdn
 
-    @logger_wrap('Configuring resolvable hostname')
+    @logger_wrap("Configuring resolvable hostname")
     def set_resolvable_hostname(self, log_callback=None):
         """Try to lookup the hostname based on self.hostname, which is generally an IP
 
@@ -2513,7 +2699,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             result = self.appliance_console_cli.set_hostname(str(fqdn))
             return result.success
         else:
-            logger.error('Unable to set resolvable hostname')
+            logger.error("Unable to set resolvable hostname")
             return False
 
     def remove_resolvable_hostname(self):
@@ -2521,24 +2707,25 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         USE WITH CAUTION as it mangles /etc/hosts,
         recommended only for seal_for_templatizing with sprout appliances
         """
-        hosts_grep_cmd = 'grep {} /etc/hosts'.format(self.get_resolvable_hostname())
+        hosts_grep_cmd = "grep {} /etc/hosts".format(self.get_resolvable_hostname())
         with self.ssh_client as ssh_client:
             if ssh_client.run_command(hosts_grep_cmd, ensure_host=True).success:
                 # remove resolvable hostname from /etc/hosts
                 # tuples of (loopback, replacement string) for each proto
-                v6 = ('::1', re.escape('::1'.ljust(16)))
-                v4 = ('127.0.0.1', re.escape('127.0.0.1'.ljust(16)))
+                v6 = ("::1", re.escape("::1".ljust(16)))
+                v4 = ("127.0.0.1", re.escape("127.0.0.1".ljust(16)))
                 resolve_esc = re.escape(self.get_resolvable_hostname())
                 for addr, fill in [v6, v4]:
                     # regex finds lines for loopback addrs where resolvable hostname set
                     # sed replaces with the ljust (space padded) loopback addr
                     ssh_client.run_command(
-                        "sed -i -r -e 's|({}\s..*){}|{}|' /etc/hosts".format(addr,
-                                                                             resolve_esc,
-                                                                             fill),
-                        ensure_host=True)
+                        r"sed -i -r -e 's|({}\s..*){}|{}|' /etc/hosts".format(
+                            addr, resolve_esc, fill
+                        ),
+                        ensure_host=True,
+                    )
 
-    def provider_based_collection(self, provider, coll_type='vms'):
+    def provider_based_collection(self, provider, coll_type="vms"):
         """Given a provider, fetches a collection for the given collection type
 
         Some collections are provider based, like infra vms and cloud instances
@@ -2556,30 +2743,36 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             appliance.collections.provider_based_collection(rhevm_provider, 'vms')
         """
         from cfme.cloud.provider import CloudProvider  # for checking provider type
-        if coll_type == 'vms':
-            return getattr(self.collections,
-                           'cloud_instances' if provider.one_of(CloudProvider) else 'infra_vms')
-        if coll_type == 'templates':
-            return getattr(self.collections,
-                           'cloud_images' if provider.one_of(CloudProvider) else 'infra_templates')
+
+        if coll_type == "vms":
+            return getattr(
+                self.collections,
+                "cloud_instances" if provider.one_of(CloudProvider) else "infra_vms",
+            )
+        if coll_type == "templates":
+            return getattr(
+                self.collections,
+                "cloud_images" if provider.one_of(CloudProvider) else "infra_templates",
+            )
         else:
-            raise ValueError('No support for coll_type: "{}" collection name lookup'
-                             .format(coll_type))
+            raise ValueError(
+                'No support for coll_type: "{}" collection name lookup'.format(coll_type)
+            )
 
     def _switch_migration_ui(self, enable):
-        self.update_advanced_settings({'product': {'transformation': enable}})
+        self.update_advanced_settings({"product": {"transformation": enable}})
         self.appliance.server.logout()
         self.evmserverd.restart()
         self.evmserverd.wait_for_running()
         self.wait_for_web_ui()
 
     def enable_migration_ui(self):
-        if not self.advanced_settings.get('product', {}).get('transformation'):
+        if not self.advanced_settings.get("product", {}).get("transformation"):
             self._switch_migration_ui(True)
 
     def disable_migration_ui(self):
-        if self.advanced_settings.get('product', {}).get('transformation'):
-            self. _switch_migration_ui(False)
+        if self.advanced_settings.get("product", {}).get("transformation"):
+            self._switch_migration_ui(False)
 
 
 class Appliance(IPAppliance):
@@ -2589,7 +2782,7 @@ class Appliance(IPAppliance):
 
     """
 
-    _default_name = 'EVM'
+    _default_name = "EVM"
 
     @property
     def ipapp(self):
@@ -2615,7 +2808,8 @@ class Appliance(IPAppliance):
         provider = get_crud(provider_key)
         app_kwargs = kwargs.copy()
 
-        if 'hostname' not in app_kwargs:
+        if "hostname" not in app_kwargs:
+
             def is_ip_available():
                 try:
                     # TODO: change after openshift wrapanapi refactor
@@ -2627,26 +2821,22 @@ class Appliance(IPAppliance):
                     return ip or False  # get_ip_address might return None
                 except (AttributeError, VMInstanceNotFound):
                     return False
-            ec, tc = wait_for(is_ip_available,
-                              delay=5,
-                              num_sec=600)
-            app_kwargs['hostname'] = str(ec)
+
+            ec, tc = wait_for(is_ip_available, delay=5, num_sec=600)
+            app_kwargs["hostname"] = str(ec)
 
         if provider.one_of(OpenshiftProvider):
             # there should also be present appliance hostname, container, db_host
-            provider_creds = conf.credentials[provider.provider_data['credentials']]
-            ssh_creds = conf.credentials[provider.provider_data['ssh_creds']]
+            provider_creds = conf.credentials[provider.provider_data["credentials"]]
+            ssh_creds = conf.credentials[provider.provider_data["ssh_creds"]]
 
-            if not app_kwargs.get('project'):
-                app_kwargs['project'] = vm_name
-            app_kwargs['openshift_creds'] = {
-                'hostname': provider.provider_data['hostname'],
-                'username': provider_creds['username'],
-                'password': provider_creds['password'],
-                'ssh': {
-                    'username': ssh_creds['username'],
-                    'password': ssh_creds['password'],
-                }
+            if not app_kwargs.get("project"):
+                app_kwargs["project"] = vm_name
+            app_kwargs["openshift_creds"] = {
+                "hostname": provider.provider_data["hostname"],
+                "username": provider_creds["username"],
+                "password": provider_creds["password"],
+                "ssh": {"username": ssh_creds["username"], "password": ssh_creds["password"]},
             }
 
         appliance = cls(**app_kwargs)
@@ -2658,37 +2848,35 @@ class Appliance(IPAppliance):
 
     def _custom_configure(self, **kwargs):
         log_callback = kwargs.pop(
-            "log_callback",
-            lambda msg: logger.info("Custom configure %s: %s", self.vm_name, msg))
-        region = kwargs.get('region', 0)
-        db_address = kwargs.get('db_address')
-        key_address = kwargs.get('key_address')
-        db_username = kwargs.get('db_username')
-        db_password = kwargs.get('ssh_password')
-        ssh_password = kwargs.get('ssh_password')
-        db_name = kwargs.get('db_name')
-        on_openstack = kwargs.pop('on_openstack', False)
+            "log_callback", lambda msg: logger.info("Custom configure %s: %s", self.vm_name, msg)
+        )
+        region = kwargs.get("region", 0)
+        db_address = kwargs.get("db_address")
+        key_address = kwargs.get("key_address")
+        db_username = kwargs.get("db_username")
+        db_password = kwargs.get("ssh_password")
+        ssh_password = kwargs.get("ssh_password")
+        db_name = kwargs.get("db_name")
+        on_openstack = kwargs.pop("on_openstack", False)
 
-        if kwargs.get('fix_ntp_clock', True) is True:
+        if kwargs.get("fix_ntp_clock", True) is True:
             self.fix_ntp_clock(log_callback=log_callback)
         if self.is_downstream:
             # Upstream already has one.
-            if kwargs.get('db_address') is None:
+            if kwargs.get("db_address") is None:
                 # This is workaround for appliances to use only one disk for the VMDB
                 # If they have been provisioned with a second disk in the infra,
                 # 'self.unpartitioned_disks' should exist and therefore this won't run.
                 if not self.unpartitioned_disks:
                     self.db.create_db_lvm()
-                self.db.enable_internal(
-                    region, key_address, db_password, ssh_password)
+                self.db.enable_internal(region, key_address, db_password, ssh_password)
             else:
-                self.db.enable_external(
-                    db_address, region, db_name, db_username, db_password)
+                self.db.enable_external(db_address, region, db_name, db_username, db_password)
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-        if kwargs.get('loosen_pgssl', True) is True:
+        if kwargs.get("loosen_pgssl", True) is True:
             self.db.loosen_pgssl()
 
-        name_to_set = kwargs.get('name_to_set')
+        name_to_set = kwargs.get("name_to_set")
         if name_to_set is not None and name_to_set != self.name:
             self.rename(name_to_set)
             self.evmserverd.restart(log_callback=log_callback)
@@ -2736,27 +2924,30 @@ class Appliance(IPAppliance):
             if self.is_on_rhev:
                 self.add_rhev_direct_lun_disk()
 
-            log_callback('Enabling smart proxy role...')
+            log_callback("Enabling smart proxy role...")
             roles = self.server.settings.server_roles_db
             if not roles["smartproxy"]:
                 self.server.settings.enable_server_roles("smartproxy")
 
             # add provider
-            log_callback('Setting up provider...')
+            log_callback("Setting up provider...")
             self.provider.setup()
 
             # credential hosts
-            log_callback('Credentialing hosts...')
+            log_callback("Credentialing hosts...")
             if not RUNNING_UNDER_SPROUT:
                 self.provider.setup_hosts_credentials()
 
             # if rhev, set relationship
             if self.is_on_rhev:
                 from cfme.infrastructure.virtual_machines import InfraVm
-                log_callback('Setting up CFME VM relationship...')
+
+                log_callback("Setting up CFME VM relationship...")
                 from cfme.utils.providers import get_crud
-                vm = self.collections.infra_vms.instantiate(self.vm_name,
-                                                            get_crud(self.provider_key))
+
+                vm = self.collections.infra_vms.instantiate(
+                    self.vm_name, get_crud(self.provider_key)
+                )
                 cfme_rel = InfraVm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(self.server.name), self.server.sid)
 
@@ -2777,7 +2968,7 @@ class Appliance(IPAppliance):
             Database must be up and running and evm service must be (re)started afterwards
             for the name change to take effect.
         """
-        vmdb_config = {'server': {'name': new_name}}
+        vmdb_config = {"server": {"name": new_name}}
         self.update_advanced_settings(vmdb_config)
         self.name = new_name
 
@@ -2825,16 +3016,19 @@ class Appliance(IPAppliance):
     @property
     def is_on_rhev(self):
         from cfme.infrastructure.provider.rhevm import RHEVMProvider
+
         return isinstance(self.provider, RHEVMProvider.mgmt_class)
 
     @property
     def is_on_vsphere(self):
         from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+
         return isinstance(self.provider, VMwareProvider.mgmt_class)
 
     @property
     def is_on_openshift(self):
         from cfme.containers.provider.openshift import OpenshiftProvider
+
         return isinstance(self.provider, OpenshiftProvider.mgmt_class)
 
     @logger_wrap("Setting ansible url: {}")
@@ -2842,13 +3036,14 @@ class Appliance(IPAppliance):
         if self.is_on_openshift:
             try:
                 config_map = self.provider.get_appliance_tags(self.project)
-                url = config_map['cfme-openshift-embedded-ansible']['url']
-                tag = config_map['cfme-openshift-embedded-ansible']['tag']
-                config = {'embedded_ansible': {'container': {'image_name': url, 'image_tag': tag}}}
+                url = config_map["cfme-openshift-embedded-ansible"]["url"]
+                tag = config_map["cfme-openshift-embedded-ansible"]["tag"]
+                config = {"embedded_ansible": {"container": {"image_name": url, "image_tag": tag}}}
                 self.update_advanced_settings(config)
             except KeyError as e:
                 msg = "embedded ansible url was not changed in appliance {} because of {}".format(
-                    self.vm_name, str(e))
+                    self.vm_name, str(e)
+                )
                 log_callback(msg)
 
     @property
@@ -2861,7 +3056,7 @@ class Appliance(IPAppliance):
         if not self.is_on_rhev:
             log_callback("appliance NOT on rhev, unable to connect direct_lun")
             raise ApplianceException("appliance NOT on rhev, unable to connect direct_lun")
-        log_callback('Adding RHEV direct_lun hook...')
+        log_callback("Adding RHEV direct_lun hook...")
         self.wait_for_ssh()
         try:
             self.mgmt.connect_direct_lun(lun_name=self._lun_name)
@@ -2876,7 +3071,7 @@ class Appliance(IPAppliance):
             msg = "appliance {} NOT on rhev, unable to disconnect direct_lun".format(self.vm_name)
             log_callback(msg)
             raise ApplianceException(msg)
-        log_callback('Removing RHEV direct_lun hook...')
+        log_callback("Removing RHEV direct_lun hook...")
         self.wait_for_ssh()
         try:
             self.mgmt.disconnect_disk(self._lun_name)
@@ -2886,8 +3081,9 @@ class Appliance(IPAppliance):
             raise
 
 
-def provision_appliance(version=None, vm_name_prefix='cfme', template=None, provider_name=None,
-                        vm_name=None):
+def provision_appliance(
+    version=None, vm_name_prefix="cfme", template=None, provider_name=None, vm_name=None
+):
     """Provisions fresh, unconfigured appliance of a specific version
 
     Note:
@@ -2917,53 +3113,62 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
 
     def _generate_vm_name():
         if version is not None:
-            version_digits = ''.join([letter for letter in version if letter.isdigit()])
-            return '{}_{}_{}'.format(
-                vm_name_prefix, version_digits, fauxfactory.gen_alphanumeric(8))
+            version_digits = "".join([letter for letter in version if letter.isdigit()])
+            return "{}_{}_{}".format(
+                vm_name_prefix, version_digits, fauxfactory.gen_alphanumeric(8)
+            )
         else:
-            return '{}_{}'.format(vm_name_prefix, fauxfactory.gen_alphanumeric(8))
+            return "{}_{}".format(vm_name_prefix, fauxfactory.gen_alphanumeric(8))
 
     def _get_latest_template():
         from cfme.utils import trackerbot
+
         api = trackerbot.api()
         stream = get_stream(version)
         template_data = trackerbot.latest_template(api, stream, provider_name)
-        return template_data.get('latest_template')
+        return template_data.get("latest_template")
 
     if provider_name is None:
-        provider_name = conf.cfme_data.get('appliance_provisioning', {})['default_provider']
+        provider_name = conf.cfme_data.get("appliance_provisioning", {})["default_provider"]
 
     if template is not None:
         template_name = template
     elif version is not None:
-        templates_by_version = conf.cfme_data.get('appliance_provisioning', {}).get('versions', {})
+        templates_by_version = conf.cfme_data.get("appliance_provisioning", {}).get("versions", {})
         try:
             template_name = templates_by_version[version]
         except KeyError:
             # We try to get the latest template from the same stream - if trackerbot is set up
-            if conf.env.get('trackerbot', {}):
+            if conf.env.get("trackerbot", {}):
                 template_name = _get_latest_template()
                 if not template_name:
-                    raise ApplianceException('No template found for stream {} on provider {}'
-                        .format(get_stream(version), provider_name))
-                logger.warning('No template found matching version %s, using %s instead.',
-                    version, template_name)
+                    raise ApplianceException(
+                        "No template found for stream {} on provider {}".format(
+                            get_stream(version), provider_name
+                        )
+                    )
+                logger.warning(
+                    "No template found matching version %s, using %s instead.",
+                    version,
+                    template_name,
+                )
             else:
-                raise ApplianceException('No template found matching version {}'.format(version))
+                raise ApplianceException("No template found matching version {}".format(version))
     else:
-        raise ApplianceException('Either version or template name must be specified')
+        raise ApplianceException("Either version or template name must be specified")
 
-    prov_data = conf.cfme_data.get('management_systems', {})[provider_name]
+    prov_data = conf.cfme_data.get("management_systems", {})[provider_name]
     from cfme.utils.providers import get_mgmt
+
     provider = get_mgmt(provider_name)
     if not vm_name:
         vm_name = _generate_vm_name()
 
     deploy_args = {}
-    deploy_args['vm_name'] = vm_name
+    deploy_args["vm_name"] = vm_name
 
-    if prov_data['type'] == 'rhevm':
-        deploy_args['cluster'] = prov_data['default_cluster']
+    if prov_data["type"] == "rhevm":
+        deploy_args["cluster"] = prov_data["default_cluster"]
 
     if prov_data["type"] == "virtualcenter":
         if "allowed_datastores" in prov_data:
@@ -2976,15 +3181,18 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
 
 
 class ApplianceStack(LocalStack):
-
     def push(self, obj):
         was_before = self.top
         super(ApplianceStack, self).push(obj)
 
-        logger.info("Pushed appliance {} on stack (was {} before) ".format(
-            obj.hostname, getattr(was_before, 'hostname', 'empty')))
+        logger.info(
+            "Pushed appliance {} on stack (was {} before) ".format(
+                obj.hostname, getattr(was_before, "hostname", "empty")
+            )
+        )
         if obj.browser_steal:
             from cfme.utils import browser
+
             browser.start()
 
     def pop(self):
@@ -2992,10 +3200,12 @@ class ApplianceStack(LocalStack):
         current = self.top
         logger.info(
             "Popped appliance {} from the stack (now there is {})".format(
-                getattr(was_before, 'address', 'empty'),
-                getattr(current, 'address', 'empty')))
-        if getattr(was_before, 'browser_steal', False):
+                getattr(was_before, "address", "empty"), getattr(current, "address", "empty")
+            )
+        )
+        if getattr(was_before, "browser_steal", False):
             from cfme.utils import browser
+
             browser.start()
         return was_before
 
@@ -3019,7 +3229,7 @@ def load_appliances(appliance_list, global_kwargs):
         kwargs.update(global_kwargs)
         kwargs.update(appliance_kwargs)
 
-        if kwargs.pop('dummy', False):
+        if kwargs.pop("dummy", False):
             result.append(DummyAppliance(**kwargs))
         else:
             mapping = IPAppliance.CONFIG_MAPPING
@@ -3043,6 +3253,7 @@ def _version_for_version_or_stream(version_or_stream, sprout_client=None):
     assert isinstance(version_or_stream, six.string_types), version_or_stream
 
     from cfme.test_framework.sprout.client import SproutClient
+
     sprout_client = SproutClient.from_config() if sprout_client is None else sprout_client
 
     if version_or_stream[0].isdigit():  # presume streams start with non-number
@@ -3057,25 +3268,27 @@ def _version_for_version_or_stream(version_or_stream, sprout_client=None):
 
 def collections_for_appliance(appliance):
     from cfme.modeling.base import EntityCollections
+
     return EntityCollections.for_appliance(appliance)
 
 
 @attr.s
 class DummyAppliance(object):
     """a dummy with minimal attribute set"""
-    hostname = 'DummyApplianceHostname'
+
+    hostname = "DummyApplianceHostname"
     browser_steal = False
-    version = attr.ib(default=Version('5.9.0'), converter=_version_for_version_or_stream)
+    version = attr.ib(default=Version("5.9.0"), converter=_version_for_version_or_stream)
     is_downstream = True
     is_pod = False
     is_dev = False
-    build = 'missing :)'
+    build = "missing :)"
     managed_known_providers = []
     collections = attr.ib(default=attr.Factory(collections_for_appliance, takes_self=True))
 
     @classmethod
     def from_config(cls, pytest_config):
-        version = pytest_config.getoption('--dummy-appliance-version')
+        version = pytest_config.getoption("--dummy-appliance-version")
         return cls(version=(version or attr.NOTHING))
 
     def set_session_timeout(self, *k):
@@ -3088,15 +3301,16 @@ class DummyAppliance(object):
 
     def __exit__(self, *args, **kwargs):
         """This method will remove the appliance from the store"""
-        assert stack.pop() is self, 'Dummy appliance on stack inconsistent'
+        assert stack.pop() is self, "Dummy appliance on stack inconsistent"
 
 
 def find_appliance(obj, require=True):
     if isinstance(obj, NavigatableMixin):
         return obj.appliance
     # duck type - either is the config of pytest, or holds it
-    config = getattr(obj, 'config', obj)
+    config = getattr(obj, "config", obj)
     from cfme.test_framework.appliance import PLUGIN_KEY
+
     holder = config.pluginmanager.get_plugin(PLUGIN_KEY)
     if holder or require:
         assert holder
@@ -3116,14 +3330,15 @@ def load_appliances_from_config(config):
     Args:
         config: A dictionary with the configuration
     """
-    if 'appliances' not in config:
+    if "appliances" not in config:
         raise ValueError("Invalid config: missing an 'appliances' section")
-    appliances = config['appliances']
+    appliances = config["appliances"]
 
     global_kwargs = {
         k: config[k]
         for k in IPAppliance.CONFIG_MAPPING.keys()
-        if k not in IPAppliance.CONFIG_NONGLOBAL and k in config}
+        if k not in IPAppliance.CONFIG_NONGLOBAL and k in config
+    }
 
     return load_appliances(appliances, global_kwargs)
 
@@ -3174,7 +3389,8 @@ class NavigatableMixin(object):
         else:
             new_obj = o
         return self.appliance.browser.create_view(
-            view_class, additional_context={'object': new_obj})
+            view_class, additional_context={"object": new_obj}
+        )
 
     def list_destinations(self):
         """This function returns a list of all valid destinations for a particular object
@@ -3190,12 +3406,15 @@ class NavigatableDeprecationWarning(DeprecationWarning):
     pass
 
 
-warnings.simplefilter('ignore', NavigatableDeprecationWarning)
+warnings.simplefilter("ignore", NavigatableDeprecationWarning)
 
 
 @removals.removed_class(
-    "Navigatable", message=("Navigatable is being deprecated in favour of using Collections "
-                            "objects with the NavigatableMixin"),
+    "Navigatable",
+    message=(
+        "Navigatable is being deprecated in favour of using Collections "
+        "objects with the NavigatableMixin"
+    ),
     category=NavigatableDeprecationWarning,
 )
 class Navigatable(NavigatableMixin):
@@ -3208,4 +3427,5 @@ class Navigatable(NavigatableMixin):
 
 class MiqImplementationContext(sentaku.ImplementationContext):
     """ Our context for Sentaku"""
+
     pass

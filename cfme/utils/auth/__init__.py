@@ -4,8 +4,11 @@ from copy import deepcopy
 from six import iteritems
 
 from cfme.configure.configuration.server_settings import (
-    AmazonAuthenticationView, LdapAuthenticationView, LdapsAuthenticationView,
-    ExternalAuthenticationView, USER_TYPES
+    AmazonAuthenticationView,
+    LdapAuthenticationView,
+    LdapsAuthenticationView,
+    ExternalAuthenticationView,
+    USER_TYPES,
 )
 from cfme.exceptions import UnknownProviderType
 from cfme.utils.conf import credentials, auth_data
@@ -20,10 +23,8 @@ LDAPS_PORT = 636
 def auth_provider_types():
     """Fetch the registered classes from entry_points manageiq.auth_provider_categories"""
     from pkg_resources import iter_entry_points
-    return {
-        ep.name: ep.resolve()
-        for ep in iter_entry_points('manageiq.auth_provider_types')
-    }
+
+    return {ep.name: ep.resolve() for ep in iter_entry_points("manageiq.auth_provider_types")}
 
 
 def auth_class_from_type(auth_prov_type):
@@ -38,7 +39,7 @@ def auth_class_from_type(auth_prov_type):
     try:
         return auth_provider_types()[auth_prov_type]
     except KeyError:
-        raise UnknownProviderType('Unknown auth provider type: {}'.format(auth_prov_type))
+        raise UnknownProviderType("Unknown auth provider type: {}".format(auth_prov_type))
 
 
 def get_auth_crud(auth_prov_key):
@@ -50,8 +51,8 @@ def get_auth_crud(auth_prov_key):
         ValueError if the yaml type for given key doesn't match auth_type on fetched class
     """
     auth_prov_config = auth_prov_data[auth_prov_key]
-    klass = auth_class_from_type(auth_prov_config.get('type'))
-    if auth_prov_config.get('type') != klass.auth_type:
+    klass = auth_class_from_type(auth_prov_config.get("type"))
+    if auth_prov_config.get("type") != klass.auth_type:
         raise ValueError('{} must have type "{}"'.format(klass.__name__, klass.auth_type))
     return klass.from_config(auth_prov_config, auth_prov_key)
 
@@ -77,13 +78,16 @@ def auth_user_data(provider_key, user_type):
     Assert the data isn't empty, and skip the test if so
     """
     try:
-        data = [user
-                for user in auth_data.test_data.test_users
-                if provider_key in user.providers and user_type in user.user_types]
+        data = [
+            user
+            for user in auth_data.test_data.test_users
+            if provider_key in user.providers and user_type in user.user_types
+        ]
         assert data
     except (KeyError, AttributeError, AssertionError):
-        logger.warning('Exception fetching auth_user_data from key %s and type %s',
-                       provider_key, user_type)
+        logger.warning(
+            "Exception fetching auth_user_data from key %s and type %s", provider_key, user_type
+        )
         return None
     return data
 
@@ -91,6 +95,7 @@ def auth_user_data(provider_key, user_type):
 @attr.s
 class BaseAuthProvider(object):
     """Base class for authentication provider objects    """
+
     auth_type = None
     view_class = None
     key = attr.ib()
@@ -110,10 +115,8 @@ class BaseAuthProvider(object):
         Sets defaults for yaml configured objects separate from attr.ib definitions
         """
         config_copy = deepcopy(prov_config)  # copy to avoid modifying passed attrdict
-        config_copy.update(credentials[config_copy.get('credentials')])
-        class_params = {k: v
-                        for k, v in iteritems(config_copy)
-                        if k in attr.fields_dict(cls)}
+        config_copy.update(credentials[config_copy.get("credentials")])
+        class_params = {k: v for k, v in iteritems(config_copy) if k in attr.fields_dict(cls)}
         return cls(key=prov_key, **class_params)
 
     def as_fill_value(self, user_type=None, auth_mode=None):
@@ -122,9 +125,11 @@ class BaseAuthProvider(object):
             raise ValueError('invalid user_type "{}", must be key in USER_TYPES'.format(user_type))
         class_attrs = attr.fields_dict(type(self))  # dict of attr objects keyed by name
         # attr filter needs the Attribute object
-        include_attrs = [class_attrs.get(name)
-                         for name in self.view_class.cls_widget_names()
-                         if name in class_attrs]
+        include_attrs = [
+            class_attrs.get(name)
+            for name in self.view_class.cls_widget_names()
+            if name in class_attrs
+        ]
         fill = attr.asdict(self, filter=attr.filters.include(*include_attrs))
         return fill
 
@@ -134,9 +139,11 @@ class BaseAuthProvider(object):
         """
         class_attrs = attr.fields_dict(type(self))  # dict of attr objects keyed by name
         # attr filter needs the Attribute object
-        include_attrs = [class_attrs.get(name)
-                         for name in ExternalAuthenticationView.cls_widget_names()
-                         if name in class_attrs]
+        include_attrs = [
+            class_attrs.get(name)
+            for name in ExternalAuthenticationView.cls_widget_names()
+            if name in class_attrs
+        ]
         fill = attr.asdict(self, filter=attr.filters.include(*include_attrs))
         return fill
 
@@ -144,7 +151,8 @@ class BaseAuthProvider(object):
 @attr.s
 class AmazonAuthProvider(BaseAuthProvider):
     """AWS IAM auth provider"""
-    auth_type = 'amazon'
+
+    auth_type = "amazon"
     view_class = AmazonAuthenticationView
 
     username = attr.ib()
@@ -153,9 +161,11 @@ class AmazonAuthProvider(BaseAuthProvider):
 
     def as_fill_value(self, **kwargs):
         """Amazon auth only has 3 UI values"""
-        return {'access_key': self.username,
-                'secret_key': self.password,
-                'get_groups': self.get_groups}
+        return {
+            "access_key": self.username,
+            "secret_key": self.password,
+            "get_groups": self.get_groups,
+        }
 
 
 @attr.s
@@ -163,6 +173,7 @@ class MIQAuthProvider(BaseAuthProvider):
     """base class for miq auth providers (ldap/ldaps modes in UI)
     Intended to be used for freeipa, AD, openldap and openldaps type providers
     """
+
     host1 = attr.ib()
     bind_password = attr.ib()  # Ordered to adhere to mandatory attrs sequence
     host2 = attr.ib(default=None)
@@ -186,7 +197,7 @@ class MIQAuthProvider(BaseAuthProvider):
     sssd_conf = attr.ib(default=None)
 
     # TODO as_external_value method
-    def as_fill_value(self, user_type='upn', auth_mode='ldap'):
+    def as_fill_value(self, user_type="upn", auth_mode="ldap"):
         """miqldap config can have multiple settings per-provider based on user_type and
         auth_mode
 
@@ -198,34 +209,37 @@ class MIQAuthProvider(BaseAuthProvider):
 
         # Handle args that have multiple possibilities depending on user_type and auth_mode
         if self.ports:
-            fill['port'] = self.ports[auth_mode]
+            fill["port"] = self.ports[auth_mode]
         else:
             # default port numbers if not specified
-            fill['port'] = LDAP_PORT if auth_mode == 'ldap' else LDAPS_PORT
-        fill['user_suffix'] = self.user_types.get(user_type, {}).get('user_suffix')
+            fill["port"] = LDAP_PORT if auth_mode == "ldap" else LDAPS_PORT
+        fill["user_suffix"] = self.user_types.get(user_type, {}).get("user_suffix")
         # value lookup for user type
-        fill['user_type'] = USER_TYPES[user_type]
+        fill["user_type"] = USER_TYPES[user_type]
         return fill
 
 
 @attr.s
 class OpenLDAPAuthProvider(MIQAuthProvider):
     """openldap auth provider, NO SSL No attributes beyond MIQAuthProvider"""
-    auth_type = 'openldap'
+
+    auth_type = "openldap"
     view_class = LdapAuthenticationView
 
 
 @attr.s
 class OpenLDAPSAuthProvider(MIQAuthProvider):
     """openldap auth provider, WITH SSL"""
-    auth_type = 'openldaps'
+
+    auth_type = "openldaps"
     view_class = LdapsAuthenticationView
 
 
 @attr.s
 class ActiveDirectoryAuthProvider(MIQAuthProvider):
     """openldap auth provider, WITH SSL"""
-    auth_type = 'ad'
+
+    auth_type = "ad"
     view_class = LdapAuthenticationView
 
 
@@ -247,7 +261,8 @@ class FreeIPAAuthProvider(MIQAuthProvider):
     * all user type, suffix, base/bind_dn, get_groups/roles/referrals args are not used
 
     """
-    auth_type = 'freeipa'
+
+    auth_type = "freeipa"
     view_class = LdapAuthenticationView  # TODO could be SSL view, but ATM no difference in widgets
 
     ipaprincipal = attr.ib(default=None)  # ipaprincipal in external
@@ -257,11 +272,9 @@ class FreeIPAAuthProvider(MIQAuthProvider):
     def as_external_value(self):
         """return a dictionary that can be used with appliance_console_cli.configure_ipa"""
         external = dict(
-            ipaserver=self.host1,
-            ipaprincipal=self.ipaprincipal,
-            ipapassword=self.bind_password
+            ipaserver=self.host1, ipaprincipal=self.ipaprincipal, ipapassword=self.bind_password
         )
-        for att in ['iparealm', 'ipadomain']:  # optional args for external config
+        for att in ["iparealm", "ipadomain"]:  # optional args for external config
             if getattr(self, att):  # only include if set, don't pass key if None
                 external.update({att: getattr(self, att)})
 

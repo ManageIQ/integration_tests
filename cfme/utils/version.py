@@ -2,8 +2,13 @@
 from datetime import date, datetime
 
 from miq_version import (  # noqa
-    Version, LOWEST, LATEST, UPSTREAM, SPTuple, get_version,
-    version_stream_product_mapping
+    Version,
+    LOWEST,
+    LATEST,
+    UPSTREAM,
+    SPTuple,
+    get_version,
+    version_stream_product_mapping,
 )
 from widgetastic.utils import VersionPick
 from widgetastic.widget import Widget
@@ -34,14 +39,14 @@ def current_version():
 def appliance_build_datetime():
     try:
         return store.current_appliance.build_datetime
-    except:
+    except Exception:
         return None
 
 
 def appliance_build_date():
     try:
         return store.current_appliance.build_date
-    except:
+    except Exception:
         return None
 
 
@@ -62,7 +67,7 @@ def parsedate(o):
 def appliance_has_netapp():
     try:
         return store.current_appliance.has_netapp()
-    except:
+    except Exception:
         return None
 
 
@@ -94,6 +99,7 @@ class VersionPicker(VersionPick):
 
         v_dict = {get_version(k): v for (k, v) in self.version_dict.items()}
         versions = v_dict.keys()
-        sorted_matching_versions = sorted((v for v in versions if v <= active_version),
-                                          reverse=True)
+        sorted_matching_versions = sorted(
+            (v for v in versions if v <= active_version), reverse=True
+        )
         return v_dict.get(sorted_matching_versions[0]) if sorted_matching_versions else None

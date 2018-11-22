@@ -15,16 +15,16 @@ from cfme.utils.conf import docker as docker_conf
 from cfme.utils.log import setup_logger
 from cfme.utils.trackerbot import api
 
-token = docker_conf.get('gh_token')
-owner = docker_conf.get('gh_owner')
-repo = docker_conf.get('gh_repo')
+token = docker_conf.get("gh_token")
+owner = docker_conf.get("gh_owner")
+repo = docker_conf.get("gh_repo")
 
 tapi = api()
 
-CONT_LIMIT = docker_conf.get('workers')
-DEBUG = docker_conf.get('debug', False)
+CONT_LIMIT = docker_conf.get("workers")
+DEBUG = docker_conf.get("debug", False)
 
-logger, _ = setup_logger(logging.getLogger('prt'))
+logger, _ = setup_logger(logging.getLogger("prt"))
 
 # Disable pika logs
 logging.getLogger("pika").propagate = False
@@ -32,16 +32,16 @@ logging.getLogger("pika").propagate = False
 
 def send_message_to_bot(msg):
 
-    required_fields = set(['rabbitmq_url', 'gh_queue', 'gh_channel', 'gh_message_type'])
+    required_fields = {"rabbitmq_url", "gh_queue", "gh_channel", "gh_message_type"}
     if not required_fields.issubset(docker_conf.viewkeys()):
         logger.warn("Skipping - docker.yaml doesn't have {}".format(required_fields))
         return
 
     logger.info("Github PR bot: about to send '{}'".format(msg))
-    url = docker_conf['rabbitmq_url']
-    queue = docker_conf['gh_queue']
-    irc_channel = docker_conf['gh_channel']
-#    message_type = docker_conf['gh_message_type']
+    url = docker_conf["rabbitmq_url"]
+    queue = docker_conf["gh_queue"]
+    irc_channel = docker_conf["gh_channel"]
+    #    message_type = docker_conf['gh_message_type']
     params = pika.URLParameters(url)
     params.socket_timeout = 5
     connection = None
@@ -49,8 +49,9 @@ def send_message_to_bot(msg):
         connection = pika.BlockingConnection(params)  # Connect to CloudAMQP
         channel = connection.channel()
         message = {"channel": irc_channel, "body": msg}
-        channel.basic_publish(exchange='', routing_key=queue,
-                              body=json.dumps(message, ensure_ascii=True))
+        channel.basic_publish(
+            exchange="", routing_key=queue, body=json.dumps(message, ensure_ascii=True)
+        )
     except Exception:
         output = traceback.format_exc()
         logger.warn("Exception while sending a message to the bot: {}".format(output))
@@ -70,7 +71,7 @@ def perform_request(url):
     """
     out = {}
     if token:
-        headers = {'Authorization': 'token {}'.format(token)}
+        headers = {"Authorization": "token {}".format(token)}
         full_url = "https://api.github.com/repos/{}/{}/{}".format(owner, repo, url)
         r = requests.get(full_url, headers=headers)
         out = r.json()
@@ -84,11 +85,11 @@ def set_invalid_runs(db_pr):
         db_pr: The database pr_object, which will be a JSON
         pr: The GitHub PR object
     """
-    for run in db_pr['runs']:
-        if run['result'] == "pending":
-            run_db = tapi.run(run['id']).get()
-            for task in run_db['tasks']:
-                tapi.task(task['tid']).patch({'result': 'invalid', 'cleanup': False})
+    for run in db_pr["runs"]:
+        if run["result"] == "pending":
+            run_db = tapi.run(run["id"]).get()
+            for task in run_db["tasks"]:
+                tapi.task(task["tid"]).patch({"result": "invalid", "cleanup": False})
 
 
 def create_run(db_pr, pr):
@@ -102,21 +103,25 @@ def create_run(db_pr, pr):
         db_pr: The database pr_object, which will be a JSON
         pr: The GitHub PR object
     """
-    logger.info(' Creating new run for {}'.format(db_pr['number']))
+    logger.info(" Creating new run for {}".format(db_pr["number"]))
 
-    new_run = dict(pr="/api/pr/{}/".format(db_pr['number']),
-                   datestamp=str(datetime.now()),
-                   commit=pr['head']['sha'])
+    new_run = dict(
+        pr="/api/pr/{}/".format(db_pr["number"]),
+        datestamp=str(datetime.now()),
+        commit=pr["head"]["sha"],
+    )
     run_record = tapi.run.post(new_run)
-    for group in tapi.group.get(stream=True, use_for_prt=True)['objects']:
-        stream = group['name']
-        logger.info('  Adding task stream {}...'.format(stream))
-        task_data = dict(output="",
+    for group in tapi.group.get(stream=True, use_for_prt=True)["objects"]:
+        stream = group["name"]
+        logger.info("  Adding task stream {}...".format(stream))
+        task_data = dict(
+            output="",
             tid=fauxfactory.gen_alphanumeric(8),
             result="pending",
             stream=stream,
             datestamp=str(datetime.now()),
-            run="/api/run/{}/".format(run_record['id']))
+            run="/api/run/{}/".format(run_record["id"]),
+        )
         tapi.task.post(task_data)
 
 
@@ -129,20 +134,20 @@ def check_prs():
 
     numbers = []
     while True:
-        json_data = perform_request('pulls?per_page=100&page={}'.format(page))
+        json_data = perform_request("pulls?per_page=100&page={}".format(page))
         if not json_data:
             break
         for pr in json_data:
-            numbers.append(pr['number'])
-            if pr['state'] == 'open':
+            numbers.append(pr["number"])
+            if pr["state"] == "open":
                 check_pr(pr)
         page += 1
 
-    prs = tapi.pr.get(closed=False, limit=0)['objects']
+    prs = tapi.pr.get(closed=False, limit=0)["objects"]
     for pr in prs:
-        if pr['number'] not in numbers:
-            logger.info("PR {} closed".format(pr['number']))
-            tapi.pr(pr['number']).patch({'closed': True})
+        if pr["number"] not in numbers:
+            logger.info("PR {} closed".format(pr["number"]))
+            tapi.pr(pr["number"]).patch({"closed": True})
 
 
 def run_tasks():
@@ -155,13 +160,13 @@ def run_tasks():
     """
     cont_count = 0
     for container in dockerbot.dc.containers():
-        if "py_test_base" in container['Image']:
+        if "py_test_base" in container["Image"]:
             cont_count += 1
     while cont_count < CONT_LIMIT:
-        tasks = tapi.task().get(limit=1, result='pending')['objects']
+        tasks = tapi.task().get(limit=1, result="pending")["objects"]
         if tasks:
             task = tasks[0]
-            stream = task['stream']
+            stream = task["stream"]
             try:
                 # Get the latest available template and provision/configure an appliance
                 # template_obj = tapi.group(stream).get()
@@ -177,27 +182,29 @@ def run_tasks():
                 # template = template_obj['latest_template']
                 # vm_name = 'dkb-{}'.format(task['tid'])
                 task_update = {}
-                task_update['provider'] = "Sprout"
-                task_update['vm_name'] = "Sprout"
-                task_update['template'] = "Sprout"
-                tapi.task(task['tid']).patch(task_update)
+                task_update["provider"] = "Sprout"
+                task_update["vm_name"] = "Sprout"
+                task_update["template"] = "Sprout"
+                tapi.task(task["tid"]).patch(task_update)
 
                 # Create a dockerbot instance and run the PR test
-                dockerbot.DockerBot(dry_run=DEBUG,
-                                    auto_gen_test=True,
-                                    use_wharf=True,
-                                    prtester=True,
-                                    test_id=task['tid'],
-                                    nowait=True,
-                                    pr=task['pr_number'],
-                                    sprout=True,
-                                    sprout_stream=stream,
-                                    sprout_description=task['tid'])
+                dockerbot.DockerBot(
+                    dry_run=DEBUG,
+                    auto_gen_test=True,
+                    use_wharf=True,
+                    prtester=True,
+                    test_id=task["tid"],
+                    nowait=True,
+                    pr=task["pr_number"],
+                    sprout=True,
+                    sprout_stream=stream,
+                    sprout_description=task["tid"],
+                )
                 cont_count += 1
-                tapi.task(task['tid']).patch({'result': 'running'})
+                tapi.task(task["tid"]).patch({"result": "running"})
             except Exception:
                 output = traceback.format_exc()
-                tapi.task(task['tid']).patch({'result': 'failed', 'output': output})
+                tapi.task(task["tid"]).patch({"result": "failed", "output": output})
         else:
             # No tasks to process - Happy Days!
             break
@@ -210,41 +217,41 @@ def vm_reaper():
     task has completed, then the VM is cleaned up and then the docker container. If both of
     these operations occur, then the cleanup is set to True.
     """
-    tasks = tapi.task().get(cleanup=False, limit=0)['objects']
+    tasks = tapi.task().get(cleanup=False, limit=0)["objects"]
     for task in tasks:
-        if task['result'] in ["failed", "passed", "invalid"]:
+        if task["result"] in ["failed", "passed", "invalid"]:
             vm_cleanup = False
             docker_cleanup = False
 
-            if task['provider'] == "Sprout" and task['vm_name'] == "Sprout":
+            if task["provider"] == "Sprout" and task["vm_name"] == "Sprout":
                 vm_cleanup = True
             else:
-                if task['provider'] and task['vm_name']:
-                    logger.info('Cleaning up {} on {}'.format(task['vm_name'], task['provider']))
-                    if task['vm_name'] == "None":
+                if task["provider"] and task["vm_name"]:
+                    logger.info("Cleaning up {} on {}".format(task["vm_name"], task["provider"]))
+                    if task["vm_name"] == "None":
                         vm_cleanup = True
                     else:
-                        appliance = Appliance.from_provider(task['provider'], task['vm_name'])
+                        appliance = Appliance.from_provider(task["provider"], task["vm_name"])
                         try:
                             if appliance.does_vm_exist():
                                 logger.info("Destroying {}".format(appliance.vm_name))
                                 appliance.destroy()
                             vm_cleanup = True
                         except Exception:
-                            logger.info('Exception occured cleaning up')
+                            logger.info("Exception occured cleaning up")
 
             containers = dockerbot.dc.containers(all=True)
             for container in containers:
-                if task['tid'] in container['Names'][0]:
-                    logger.info('Cleaning up docker container {}'.format(container['Id']))
-                    dockerbot.dc.remove_container(container['Id'], force=True)
+                if task["tid"] in container["Names"][0]:
+                    logger.info("Cleaning up docker container {}".format(container["Id"]))
+                    dockerbot.dc.remove_container(container["Id"], force=True)
                     docker_cleanup = True
                     break
             else:
                 docker_cleanup = True
 
             if docker_cleanup and vm_cleanup:
-                tapi.task(task['tid']).patch({'cleanup': True})
+                tapi.task(task["tid"]).patch({"cleanup": True})
 
 
 def set_status(commit, status, context, runid):
@@ -261,14 +268,17 @@ def set_status(commit, status, context, runid):
     data = {
         "state": status,
         "description": "{} #{}".format(status, runid),
-        "context": "ci/{}".format(context)
+        "context": "ci/{}".format(context),
     }
     data_json = json.dumps(data)
 
     if not DEBUG:
-        headers = {'Authorization': 'token {}'.format(token)}
-        requests.post("https://api.github.com/repos/{}/{}/commits/{}/statuses".format(
-            owner, repo, commit), data=data_json, headers=headers)
+        headers = {"Authorization": "token {}".format(token)}
+        requests.post(
+            "https://api.github.com/repos/{}/{}/commits/{}/statuses".format(owner, repo, commit),
+            data=data_json,
+            headers=headers,
+        )
 
 
 def check_status(pr):
@@ -283,53 +293,64 @@ def check_status(pr):
     if DEBUG:
         return
 
-    db_pr = tapi.pr(pr['number']).get()
+    db_pr = tapi.pr(pr["number"]).get()
 
-    if db_pr['wip']:
+    if db_pr["wip"]:
         return
 
-    if db_pr['runs']:
-        commit = db_pr['runs'][0]['commit']
-        run_id = db_pr['runs'][0]['id']
+    if db_pr["runs"]:
+        commit = db_pr["runs"][0]["commit"]
+        run_id = db_pr["runs"][0]["id"]
     else:
         return
 
-    states = {'pending': 'pending',
-              'failed': 'failure',
-              'invalid': 'error',
-              'passed': 'success',
-              'running': 'pending'}
+    states = {
+        "pending": "pending",
+        "failed": "failure",
+        "invalid": "error",
+        "passed": "success",
+        "running": "pending",
+    }
 
     task_updated_state = None
     task_stream = None
 
     try:
-        tasks = tapi.task.get(run=run_id)['objects']
+        tasks = tapi.task.get(run=run_id)["objects"]
         statuses = perform_request("commits/{}/statuses".format(commit))
         for task in tasks:
             for status in statuses:
-                if status['context'] == "ci/{}".format(task['stream']):
-                    if status['state'] == states[task['result']]:
+                if status["context"] == "ci/{}".format(task["stream"]):
+                    if status["state"] == states[task["result"]]:
                         break
                     else:
-                        logger.info('Setting task {} for pr {} to {}'
-                                    .format(task['stream'], pr['number'], states[task['result']]))
-                        set_status(commit, states[task['result']], task['stream'], run_id)
-                        task_updated_state = states[task['result']]
-                        task_stream = task['stream']
+                        logger.info(
+                            "Setting task {} for pr {} to {}".format(
+                                task["stream"], pr["number"], states[task["result"]]
+                            )
+                        )
+                        set_status(commit, states[task["result"]], task["stream"], run_id)
+                        task_updated_state = states[task["result"]]
+                        task_stream = task["stream"]
                         break
             else:
-                logger.info('Setting task {} for pr {} to {}'
-                            .format(task['stream'], pr['number'], states[task['result']]))
-                set_status(commit, states[task['result']], task['stream'], run_id)
+                logger.info(
+                    "Setting task {} for pr {} to {}".format(
+                        task["stream"], pr["number"], states[task["result"]]
+                    )
+                )
+                set_status(commit, states[task["result"]], task["stream"], run_id)
     except HttpClientError:
         pass
 
-    failed_states = ['pending', 'invalid', 'running']
+    failed_states = ["pending", "invalid", "running"]
     if task_updated_state and task_stream and task_updated_state not in failed_states:
         # There are no pending, invalid or running states in the run_id
-        send_message_to_bot("PR: #{} {} - {} - {}".format(
-            pr['number'], pr['title'], task_stream, task_updated_state))
+        send_message_to_bot(
+            "PR: #{} {} - {} - {}".format(
+                pr["number"], pr["title"], task_stream, task_updated_state
+            )
+        )
 
 
 def check_pr(pr):
@@ -348,52 +369,57 @@ def check_pr(pr):
     prepared.
     """
 
-    commit = pr['head']['sha']
+    commit = pr["head"]["sha"]
     wip = False
     try:
-        db_pr = tapi.pr(pr['number']).get()
-        last_run = tapi.run().get(pr__number=pr['number'], order_by='-datestamp',
-                                  limit=1)['objects']
+        db_pr = tapi.pr(pr["number"]).get()
+        last_run = tapi.run().get(pr__number=pr["number"], order_by="-datestamp", limit=1)[
+            "objects"
+        ]
         if last_run:
-            if last_run[0]['retest'] is True and "[WIP]" not in pr['title']:
-                logger.info('Re-testing PR {}'.format(pr['number']))
+            if last_run[0]["retest"] is True and "[WIP]" not in pr["title"]:
+                logger.info("Re-testing PR {}".format(pr["number"]))
                 set_invalid_runs(db_pr)
                 create_run(db_pr, pr)
-            elif last_run[0]['commit'] != commit and "[WIP]" not in pr['title']:
-                logger.info('New commit ({}) detected for PR {}'.format(commit, pr['number']))
+            elif last_run[0]["commit"] != commit and "[WIP]" not in pr["title"]:
+                logger.info("New commit ({}) detected for PR {}".format(commit, pr["number"]))
                 set_invalid_runs(db_pr)
                 create_run(db_pr, pr)
-        elif "[WIP]" not in pr['title']:
-            logger.info('First run ({}) for PR {}'.format(commit, pr['number']))
+        elif "[WIP]" not in pr["title"]:
+            logger.info("First run ({}) for PR {}".format(commit, pr["number"]))
             create_run(db_pr, pr)
         else:
             wip = True
-        tapi.pr(pr['number']).put({
-            'current_commit_head': commit,
-            'wip': wip,
-            'title': pr['title'],
-            'description': pr['body']}
+        tapi.pr(pr["number"]).put(
+            {
+                "current_commit_head": commit,
+                "wip": wip,
+                "title": pr["title"],
+                "description": pr["body"],
+            }
         )
     except HttpClientError:
-        logger.info('PR {} not found in database, creating...'.format(pr['number']))
+        logger.info("PR {} not found in database, creating...".format(pr["number"]))
 
-        new_pr = {'number': pr['number'],
-                  'description': pr['body'],
-                  'current_commit_head': commit,
-                  'title': pr['title']}
+        new_pr = {
+            "number": pr["number"],
+            "description": pr["body"],
+            "current_commit_head": commit,
+            "title": pr["title"],
+        }
         tapi.pr().post(new_pr)
-        if "[WIP]" not in pr['title']:
+        if "[WIP]" not in pr["title"]:
             create_run(new_pr, pr)
-        elif "[WIP]" in pr['title']:
-            new_pr['wip'] = True
-        tapi.pr(pr['number']).put(new_pr)
-        send_message_to_bot("PR: #{} {} - New".format(pr['number'], pr['title']))
+        elif "[WIP]" in pr["title"]:
+            new_pr["wip"] = True
+        tapi.pr(pr["number"]).put(new_pr)
+        send_message_to_bot("PR: #{} {} - New".format(pr["number"], pr["title"]))
 
     check_status(pr)
 
 
 if __name__ == "__main__":
-    if docker_conf['pr_enabled']:
+    if docker_conf["pr_enabled"]:
 
         # First we check through the PRs from GitHub
         check_prs()

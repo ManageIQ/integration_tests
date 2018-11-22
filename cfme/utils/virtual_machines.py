@@ -43,36 +43,41 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
 
     if template_name is None:
         try:
-            template_name = provider_crud.data['templates']['small_template']['name']
+            template_name = provider_crud.data["templates"]["small_template"]["name"]
         except KeyError:
-            raise KeyError('small_template not defined for Provider {} in cfme_data.yaml'
-                           .format(provider_key))
+            raise KeyError(
+                "small_template not defined for Provider {} in cfme_data.yaml".format(provider_key)
+            )
 
     deploy_args.update(template=template_name)
 
     deploy_args.update(provider_crud.deployment_helper(deploy_args))
 
-    logger.info("Getting ready to deploy VM/instance %s from template %s on provider %s",
-                vm_name, deploy_args['template'], provider_crud.data['name'])
+    logger.info(
+        "Getting ready to deploy VM/instance %s from template %s on provider %s",
+        vm_name,
+        deploy_args["template"],
+        provider_crud.data["name"],
+    )
     try:
         try:
             logger.debug("Deploy args: %s", deploy_args)
             if isinstance(provider_crud.mgmt, AzureSystem):
                 template = provider_crud.mgmt.get_template(
-                    template_name, container=deploy_args['template_container'])
+                    template_name, container=deploy_args["template_container"]
+                )
             else:
                 template = provider_crud.mgmt.get_template(template_name)
             vm = template.deploy(timeout=timeout, **deploy_args)
             logger.info("Provisioned VM/instance %r", vm)
         except Exception as e:
             logger.exception(
-                'Could not provisioning VM/instance %s (%s: %s)',
-                vm_name, type(e).__name__, str(e)
+                "Could not provisioning VM/instance %s (%s: %s)", vm_name, type(e).__name__, str(e)
             )
             for vm_to_cleanup in provider_crud.mgmt.find_vms(vm_name):
                 try:
                     vm_to_cleanup.cleanup()
-                except Exception as e:
+                except Exception:
                     logger.exception("Unable to clean up vm: %r", vm_to_cleanup.name)
             raise
     except skip_exceptions as e:
@@ -81,7 +86,8 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
             raise
         # Make it visible also in the log.
         store.write_line(
-            "Skipping due to a provider error: {}: {}\n".format(e_c.__name__, str(e)), purple=True)
+            "Skipping due to a provider error: {}: {}\n".format(e_c.__name__, str(e)), purple=True
+        )
         logger.exception(e)
         pytest.skip("{}: {}".format(e_c.__name__, str(e)))
     return vm

@@ -145,15 +145,11 @@ import os
 MARKER_LEN = 80
 
 # set logging defaults
-_default_conf = {
-    'level': 'INFO',
-    'errors_to_console': False,
-    'to_console': False,
-}
+_default_conf = {"level": "INFO", "errors_to_console": False, "to_console": False}
 
 # let logging know we made a TRACE level
 logging.TRACE = 5
-logging.addLevelName(logging.TRACE, 'TRACE')
+logging.addLevelName(logging.TRACE, "TRACE")
 
 
 class logger_wrap(object):
@@ -161,22 +157,25 @@ class logger_wrap(object):
 
     If the logger doesn't exist, sets up a sensible alternative
     """
+
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
 
     def __call__(self, func):
         def newfunc(*args, **kwargs):
-            cb = kwargs.get('log_callback')
+            cb = kwargs.get("log_callback")
             if not cb:
                 cb = logger.info
-            kwargs['log_callback'] = lambda msg: cb(self.args[0].format(msg))
+            kwargs["log_callback"] = lambda msg: cb(self.args[0].format(msg))
             return func(*args, **kwargs)
+
         return newfunc
 
 
 class TraceLogger(logging.Logger):
     """A trace-loglevel-aware :py:class:`Logger <python:logging.Logger>`"""
+
     def trace(self, msg, *args, **kwargs):
         """
         Log 'msg % args' with severity 'TRACE'.
@@ -191,6 +190,7 @@ logging._loggerClass = TraceLogger
 
 class TraceLoggerAdapter(logging.LoggerAdapter):
     """A trace-loglevel-aware :py:class:`LoggerAdapter <python:logging.LoggerAdapter>`"""
+
     def trace(self, msg, *args, **kwargs):
         """
         Delegate a trace call to the underlying logger, after adding
@@ -206,27 +206,28 @@ class PrefixAddingLoggerFilter(logging.Filter):
 
     def filter(self, record):
         if self.prefix:
-            record.msg = "{0}{1}".format(safe_string(self.prefix), safe_string(record.msg))
+            record.msg = "{}{}".format(safe_string(self.prefix), safe_string(record.msg))
         return True
 
 
 class NamedLoggerAdapter(TraceLoggerAdapter):
     """An adapter that injects a name into log messages"""
+
     def process(self, message, kwargs):
-        return '({}) {}'.format(self.extra, message), kwargs
+        return "({}) {}".format(self.extra, message), kwargs
 
 
 def _load_conf(logger_name=None):
     # Reload logging conf from env, then update the logging_conf
     try:
-        del(conf['env'])
+        del (conf["env"])
     except KeyError:
         # env not loaded yet
         pass
 
     logging_conf = _default_conf.copy()
 
-    yaml_conf = conf.env.get('logging', {})
+    yaml_conf = conf.env.get("logging", {})
     # Update the defaults with values from env yaml
     logging_conf.update(yaml_conf)
     # Additionally, look in the logging conf for file-specific loggers
@@ -246,6 +247,7 @@ class _RelpathFilter(logging.Filter):
     record attributes if they aren't found.
 
     """
+
     def filter(self, record):
         record.pathname = get_rel_path(record.pathname)
         return True
@@ -253,9 +255,10 @@ class _RelpathFilter(logging.Filter):
 
 class WarningsRelpathFilter(logging.Filter):
     """filter to modify warnings messages, to use relative paths in the project"""
+
     def filter(self, record):
         if record.args:
-            new_record = record.args[0].replace(project_path.strpath, '.')
+            new_record = record.args[0].replace(project_path.strpath, ".")
             record.args = (new_record,) + record.args[1:]
         return True
 
@@ -268,11 +271,12 @@ class WarningsDeduplicationFilter(object):
     there is no indicative codepath that is clearly at fault
     so this low implementation cost solution was choosen to deduplicate off-band
     """
+
     def __init__(self):
         self.seen = set()
 
     def filter(self, record):
-        msg = record.args[0].splitlines()[0].split(': ', 1)[-1]
+        msg = record.args[0].splitlines()[0].split(": ", 1)[-1]
         if msg in self.seen:
             return False
         else:
@@ -295,9 +299,10 @@ class Perflog(object):
         # seconds_taken is also written to perf.log for later analysis
 
     """
+
     tracking_events = {}
 
-    def __init__(self, perflog_name='perf'):
+    def __init__(self, perflog_name="perf"):
         self.logger, _ = setup_logger(logging.getLogger(perflog_name))
 
     def start(self, event_name):
@@ -333,7 +338,8 @@ def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
     filename = os.path.join(root, filename)
     handler = logging.FileHandler(filename, **kw)
     formatter = logging.Formatter(
-        '%(asctime)-15s [%(levelname).1s] [%(name)s] %(message)s (%(pathname)s:%(lineno)s)')
+        "%(asctime)-15s [%(levelname).1s] [%(name)s] %(message)s (%(pathname)s:%(lineno)s)"
+    )
     handler.setFormatter(formatter)
     if level is not None:
         handler.setLevel(level)
@@ -342,7 +348,8 @@ def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
 
 def console_handler(level):
     formatter = logging.Formatter(
-        '[%(levelname)s] [%(name)s] %(message)s (%(pathname)s:%(lineno)s)')
+        "[%(levelname)s] [%(name)s] %(message)s (%(pathname)s:%(lineno)s)"
+    )
     handler = logging.StreamHandler()
     handler.setLevel(level)
     handler.setFormatter(formatter)
@@ -376,13 +383,13 @@ def setup_logger(logger, file_handler=None):
     # entire logging config into env.yaml
 
     if not file_handler:
-        file_handler = make_file_handler(logger.name + '.log', level=conf['level'])
+        file_handler = make_file_handler(logger.name + ".log", level=conf["level"])
     logger.addHandler(file_handler)
 
-    if conf['errors_to_console']:
+    if conf["errors_to_console"]:
         logger.addHandler(console_handler(logging.ERROR))
-    if conf['to_console']:
-        logger.addHandler(console_handler(conf['to_console']))
+    if conf["to_console"]:
+        logger.addHandler(console_handler(conf["to_console"]))
 
     logger.addFilter(_RelpathFilter())
     return logger, file_handler
@@ -409,23 +416,24 @@ def format_marker(mstring, mark="-"):
     """
     if len(mstring) <= MARKER_LEN - 2:
         # Pad with spaces
-        mstring = ' {} '.format(mstring)
+        mstring = " {} ".format(mstring)
         # Format centered, surrounded the leader_mark
-        format_spec = '{{:{leader_mark}^{marker_len}}}'\
-            .format(leader_mark=mark, marker_len=MARKER_LEN)
+        format_spec = "{{:{leader_mark}^{marker_len}}}".format(
+            leader_mark=mark, marker_len=MARKER_LEN
+        )
         mstring = format_spec.format(mstring)
     return mstring
 
 
 def _custom_excepthook(type, value, traceback):
     file, lineno, function, __ = extract_tb(traceback)[-1]
-    text = ''.join(format_tb(traceback)).strip()
-    logger.error('Unhandled %s', type.__name__)
-    logger.error(text, extra={'source_file': file, 'source_lineno': lineno})
+    text = "".join(format_tb(traceback)).strip()
+    logger.error("Unhandled %s", type.__name__)
+    logger.error(text, extra={"source_file": file, "source_lineno": lineno})
     _original_excepthook(type, value, traceback)
 
 
-if '_original_excepthook' not in globals():
+if "_original_excepthook" not in globals():
     # Guard the original excepthook against reloads so we don't hook twice
     _original_excepthook = sys.excepthook
 
@@ -459,15 +467,13 @@ class ArtifactorHandler(logging.Handler):
     def emit(self, record):
         if self.artifactor:
             self.artifactor.fire_hook(
-                'log_message',
-                log_record=record.__dict__,
-                slaveid=self.slaveid,
+                "log_message", log_record=record.__dict__, slaveid=self.slaveid
             )
 
 
-logger, cfme_file_handler = setup_logger(logging.getLogger('cfme'))
+logger, cfme_file_handler = setup_logger(logging.getLogger("cfme"))
 # Have wrapanapi log to the same FileHandler as cfme
-wrapanapi_logger, _ = setup_logger(logging.getLogger('wrapanapi'), cfme_file_handler)
+wrapanapi_logger, _ = setup_logger(logging.getLogger("wrapanapi"), cfme_file_handler)
 artifactor_handler = ArtifactorHandler()
 logger.addHandler(artifactor_handler)
 # Also have wrapanapi use the ArtifactorHandler to combine cfme+wrapanapi logging there
@@ -481,55 +487,52 @@ perflog = Perflog()
 
 def _configure_warnings():
     # Capture warnings
-    warnings.simplefilter('once')
+    warnings.simplefilter("once")
     # hack to avoid circular imports
-    maybe_appliance = sys.modules.get('cfme.utils.appliance')
+    maybe_appliance = sys.modules.get("cfme.utils.appliance")
     if maybe_appliance is not None:
         # TODO opt-out, follow up with the location of configuring things
         # these currently cause warnings in case something bad happens
         # the followup will reposition the setup so it no longer incurrs the issues
         try:
-            warnings.simplefilter(
-                'ignore', maybe_appliance.NavigatableDeprecationWarning)
+            warnings.simplefilter("ignore", maybe_appliance.NavigatableDeprecationWarning)
         except AttributeError:
             pass
         try:
-            warnings.simplefilter('error',
-
-                maybe_appliance.ApplianceSummoningWarning)
+            warnings.simplefilter("error", maybe_appliance.ApplianceSummoningWarning)
         except AttributeError:
             pass
 
     warnings.filterwarnings(
-        'ignore', module='entrypoints',
-        message=".*read_file.*", category=DeprecationWarning)
+        "ignore", module="entrypoints", message=".*read_file.*", category=DeprecationWarning
+    )
     logging.captureWarnings(True)
-    wlog = logging.getLogger('py.warnings')
+    wlog = logging.getLogger("py.warnings")
     wlog.addFilter(WarningsRelpathFilter())
     wlog.addFilter(WarningsDeduplicationFilter())
-    wlog.addHandler(make_file_handler('py.warnings.log'))
+    wlog.addHandler(make_file_handler("py.warnings.log"))
     wlog.addHandler(console_handler(logging.INFO))
     wlog.propagate = False
 
 
-def setup_for_worker(workername, loggers=('cfme', 'py.warnings', 'wrapanapi')):
+def setup_for_worker(workername, loggers=("cfme", "py.warnings", "wrapanapi")):
     # this function is a bad hack, at some point we want a more ballanced setup
     for logger in loggers:
         log = logging.getLogger(logger)
-        handler = next(x for x in log.handlers
-                       if isinstance(x, logging.FileHandler))
+        handler = next(x for x in log.handlers if isinstance(x, logging.FileHandler))
         handler.close()
         base, name = os.path.split(handler.baseFilename)
         add_prefix.prefix = "({})".format(workername)
         handler.baseFilename = os.path.join(
-            base, "{worker}-{name}".format(worker=workername, name=name))
+            base, "{worker}-{name}".format(worker=workername, name=name)
+        )
         log.debug("worker log started")  # directly reopens the file
 
 
 def add_stdout_handler(logger):
     """Look for a stdout handler in the logger, add one if not present"""
     for handle in logger.handlers:
-        if isinstance(handle, logging.StreamHandler) and 'stdout' in handle.stream.name:
+        if isinstance(handle, logging.StreamHandler) and "stdout" in handle.stream.name:
             break
     else:
         # Never found a stdout StreamHandler

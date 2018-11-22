@@ -15,7 +15,7 @@ class Ports(object):
 
     @property
     def _top(self, m=sys.modules):
-        mod = m.get('utils.appliance')
+        mod = m.get("utils.appliance")
 
         return mod and mod.stack.top
 
@@ -23,7 +23,7 @@ class Ports(object):
         super(self.__class__, self).__setattr__(attr, value)
         if self._top is not None:
             self.logger.info("Invalidating lazy_cache ssh_client current_appliance object")
-            clear_property_cache(self._top, 'ssh_client')
+            clear_property_cache(self._top, "ssh_client")
 
 
 sys.modules[__name__] = Ports()

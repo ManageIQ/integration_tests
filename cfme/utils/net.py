@@ -9,8 +9,8 @@ from cfme.utils.log import logger
 _ports = defaultdict(dict)
 _dns_cache = {}
 ip_address = re.compile(
-    r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}"
-    r"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
+    r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}" r"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+)
 
 
 def random_port(tcp=True):
@@ -30,7 +30,7 @@ def random_port(tcp=True):
     # Port 0 will allocate an ephemeral port
     socktype = socket.SOCK_STREAM if tcp else socket.SOCK_DGRAM
     s = socket.socket(socket.AF_INET, socktype)
-    s.bind(('', 0))
+    s.bind(("", 0))
     addr, port = s.getsockname()
     s.close()
     return port
@@ -50,7 +50,7 @@ def my_ip_address(http=False):
 def ip_echo_socket(port=32123):
     """A simple socket server, for use with :py:func:`my_ip_address`"""
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(('', port))
+    s.bind(("", port))
     s.listen(0)
     while True:
         conn, addr = s.accept()
@@ -75,7 +75,7 @@ def net_check(port, addr=None, force=False):
                 _ports[addr][port] = True
             except socket.error:
                 _ports[addr][port] = False
-        except:
+        except Exception:
             _ports[addr][port] = False
     return _ports[addr][port]
 
@@ -83,6 +83,7 @@ def net_check(port, addr=None, force=False):
 def net_check_remote(port, addr=None, machine_addr=None, ssh_creds=None, force=False):
     """Checks the availability of a port from outside using another machine (over SSH)"""
     from cfme.utils.ssh import SSHClient
+
     port = int(port)
     if not addr:
         addr = my_ip_address()
@@ -94,8 +95,8 @@ def net_check_remote(port, addr=None, machine_addr=None, ssh_creds=None, force=F
         else:
             ssh_client = SSHClient(
                 hostname=machine_addr,
-                username=ssh_creds['username'],
-                password=ssh_creds['password']
+                username=ssh_creds["username"],
+                password=ssh_creds["password"],
             )
         with ssh_client:
             # on exception => fails with return code 1
@@ -104,7 +105,10 @@ import sys, socket
 addr = socket.gethostbyname('%s')
 socket.create_connection((addr, %d), timeout=10)
 sys.exit(0)
-            "''' % (addr, port)
+            "''' % (
+                addr,
+                port,
+            )
             result = ssh_client.run_command(cmd)
             _ports[addr][port] = result.success
     return _ports[addr][port]
@@ -125,7 +129,7 @@ def resolve_ips(host_iterable, force_dns=False):
     to be converted to an IP. If that succeeds, it is appended to the set together with original
     hostname. If it can't be resolved, just the original hostname is appended.
     """
-    result = set([])
+    result = set()
     for host in map(str, host_iterable):
         result.add(host)  # It is already an  IP address
         if ip_address.match(host) is None:
@@ -145,9 +149,9 @@ def is_pingable(ip_addr):
     try:
         status = os.system("ping -c1 -w2 {}".format(ip_addr))
         if status == 0:
-            logger.info('IP: %s is UP !', ip_addr)
+            logger.info("IP: %s is UP !", ip_addr)
             return True
-        logger.info('IP: %s is DOWN !', ip_addr)
+        logger.info("IP: %s is DOWN !", ip_addr)
         return False
     except Exception as e:
         logger.exception(e)

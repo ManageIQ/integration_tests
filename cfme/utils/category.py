@@ -8,6 +8,7 @@ class CategoryBase(object):
     Args:
         value: Value to be categorized.
     """
+
     def __init__(self, value):
         self.value = value
 

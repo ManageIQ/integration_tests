@@ -25,7 +25,7 @@ def ping_connection(dbapi_connection, connection_record, connection_proxy):
     cursor = dbapi_connection.cursor()
     try:
         cursor.execute("SELECT 1")
-    except StandardError:
+    except Exception:
         raise DisconnectionError
     cursor.close()
 
@@ -68,12 +68,13 @@ class Db(Mapping):
         tables, like the mapping interface or :py:meth:`values`.
 
     """
+
     def __init__(self, hostname=None, credentials=None, port=None):
         self._table_cache = {}
         self.hostname = hostname or store.current_appliance.db.address
         self.port = port or store.current_appliance.db_port
 
-        self.credentials = credentials or conf.credentials['database']
+        self.credentials = credentials or conf.credentials["database"]
 
     def __getitem__(self, table_name):
         """Access tables as items contained in this db
@@ -89,7 +90,7 @@ class Db(Mapping):
         try:
             return self._table(table_name)
         except InvalidRequestError:
-            raise KeyError('Table {} could not be found'.format(table_name))
+            raise KeyError("Table {} could not be found".format(table_name))
 
     def __iter__(self):
         """Iterator of table names in this db"""
@@ -138,7 +139,7 @@ class Db(Mapping):
         """Check if this db is equal to another db"""
         try:
             return self.hostname == other.hostname
-        except:
+        except Exception:
             return False
 
     def __ne__(self, other):
@@ -257,10 +258,7 @@ class Db(Mapping):
         except KeyError:
             self.reflect_table(table_name)
             table = self.metadata.tables[table_name]
-            table_dict = {
-                '__table__': table,
-                '__tablename__': table_name
-            }
+            table_dict = {"__table__": table, "__tablename__": table_name}
 
             try:
                 table_cls = type(str(table_name), (self.table_base,), table_dict)

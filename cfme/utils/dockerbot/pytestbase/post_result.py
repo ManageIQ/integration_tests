@@ -8,12 +8,12 @@ from cfme.utils.trackerbot import post_task_result
 
 
 def main():
-    with open("{}/setup.txt".format(os.environ['ARTIFACTOR_DIR'])) as f:
+    with open("{}/setup.txt".format(os.environ["ARTIFACTOR_DIR"])) as f:
         data = f.read()
 
     coverage = 0.0
     try:
-        with open("{}/coverage_result.txt".format(os.environ['CFME_REPO_DIR'])) as f:
+        with open("{}/coverage_result.txt".format(os.environ["CFME_REPO_DIR"])) as f:
             data = f.read().strip("\n")
         coverage = float(data)
     except Exception:

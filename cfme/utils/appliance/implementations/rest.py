@@ -14,4 +14,4 @@ class ViaREST(object):
         return self.owner
 
     def __str__(self):
-        return 'REST'
+        return "REST"

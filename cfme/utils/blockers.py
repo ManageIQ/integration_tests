@@ -18,6 +18,7 @@ class Blocker(object):
     required for the blocker's operation, `call to ``super`` with ``**kwargs`` must be done!
     Failing to do this will render some of the functionality disabled ;).
     """
+
     blocks = False
     kwargs = {}
 
@@ -27,7 +28,7 @@ class Blocker(object):
 
     @property
     def url(self):
-        raise NotImplementedError('You need to implement .url')
+        raise NotImplementedError("You need to implement .url")
 
     @classmethod
     def all_blocker_engines(cls):
@@ -36,11 +37,7 @@ class Blocker(object):
         Having this as a separate function will later enable to scatter the engines across modules
         in case of extraction into a separate library.
         """
-        return {
-            'GH': GH,
-            'BZ': BZ,
-            'JIRA': JIRA,
-        }
+        return {"GH": GH, "BZ": BZ, "JIRA": JIRA}
 
     @classmethod
     def parse(cls, blocker, **kwargs):
@@ -56,9 +53,11 @@ class Blocker(object):
                 except KeyError:
                     raise ValueError(
                         "{} is a wrong engine specification for blocker! ({} available)".format(
-                            engine, ", ".join(cls.all_blocker_engines().keys())))
+                            engine, ", ".join(cls.all_blocker_engines().keys())
+                        )
+                    )
                 return engine_class(spec, **kwargs)
-            match = re.match('^[A-Z][A-Z0-9]+-[0-9]+$', blocker)
+            match = re.match("^[A-Z][A-Z0-9]+-[0-9]+$", blocker)
             if match is not None:
                 # React to the typical JIRA format of FOO-42
                 return JIRA(blocker)
@@ -86,27 +85,30 @@ class GH(Blocker):
         super(GH, self).__init__(**kwargs)
         self._repo = None
         self.issue = None
-        self.upstream_only = kwargs.get('upstream_only', False)
-        self.since = kwargs.get('since')
-        self.until = kwargs.get('until')
+        self.upstream_only = kwargs.get("upstream_only", False)
+        self.since = kwargs.get("since")
+        self.until = kwargs.get("until")
         if isinstance(description, (list, tuple)):
             try:
                 self.repo, self.issue = description
                 self.issue = int(self.issue)
             except ValueError:
                 raise ValueError(
-                    "The GH issue specification must have 2 items and issue must be number")
+                    "The GH issue specification must have 2 items and issue must be number"
+                )
         elif isinstance(description, int):
             if self.DEFAULT_REPOSITORY is None:
                 raise ValueError("You must specify github/default_repo in env.yaml!")
             self.issue = description
         elif isinstance(description, six.string_types):
             try:
-                owner, repo, issue_num = re.match(r"^([^/]+)/([^/:]+):([0-9]+)$",
-                                                  str(description).strip()).groups()
+                owner, repo, issue_num = re.match(
+                    r"^([^/]+)/([^/:]+):([0-9]+)$", str(description).strip()
+                ).groups()
             except AttributeError:
                 raise ValueError(
-                    "Could not parse '{}' as a proper GH issue anchor!".format(str(description)))
+                    "Could not parse '{}' as a proper GH issue anchor!".format(str(description))
+                )
             else:
                 self._repo = "{}/{}".format(owner, repo)
                 self.issue = int(issue_num)
@@ -171,7 +173,8 @@ class BZ(Blocker):
     @property
     def data(self):
         return self.bugzilla.resolve_blocker(
-            self.bug_id, ignore_bugs=self.ignore_bugs, force_block_streams=self.forced_streams)
+            self.bug_id, ignore_bugs=self.ignore_bugs, force_block_streams=self.forced_streams
+        )
 
     @property
     def bugzilla_bug(self):
@@ -201,7 +204,8 @@ class BZ(Blocker):
             logger.error("Bugzilla thrown a fault: %s/%s", code, s)
             logger.warning("Ignoring and taking the bug as non-blocking")
             store.terminalreporter.write(
-                "Bugzila made a booboo: {}/{}\n".format(code, s), bold=True)
+                "Bugzila made a booboo: {}/{}\n".format(code, s), bold=True
+            )
             return False
 
     def get_bug_url(self):
@@ -222,7 +226,8 @@ class JIRA(Blocker):
         if not hasattr(cls, "_jira"):
             try:
                 from jira import JIRA as JiraClient  # noqa
-                cls._jira = JiraClient(conf.env.jira_url, options={'verify': False})
+
+                cls._jira = JiraClient(conf.env.jira_url, options={"verify": False})
             except KeyError:
                 return None
         return cls._jira
@@ -237,7 +242,7 @@ class JIRA(Blocker):
             jira_url = conf.env.jira_url
         except KeyError:
             return None
-        return '{}/browse/{}'.format(jira_url.rstrip('/'), self.jira_id)
+        return "{}/browse/{}".format(jira_url.rstrip("/"), self.jira_id)
 
     @property
     def blocks(self):
@@ -245,8 +250,8 @@ class JIRA(Blocker):
         if jira is None:
             # JIRA unspecified, shut up and don't block
             return False
-        issue = jira.issue(self.jira_id, fields='status')
-        return issue.fields.status.name.lower() != 'done'
+        issue = jira.issue(self.jira_id, fields="status")
+        return issue.fields.status.name.lower() != "done"
 
     def __str__(self):
-        return 'Jira card {}'.format(self.url)
+        return "Jira card {}".format(self.url)

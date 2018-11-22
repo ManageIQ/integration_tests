@@ -19,26 +19,24 @@ from . import Implementation
 class MiqSSUIBrowser(Browser):
     def __init__(self, selenium, endpoint, extra_objects=None):
         extra_objects = extra_objects or {}
-        extra_objects.update({
-            'appliance': endpoint.owner,
-            'endpoint': endpoint,
-            'store': store,
-        })
+        extra_objects.update({"appliance": endpoint.owner, "endpoint": endpoint, "store": store})
         super(MiqSSUIBrowser, self).__init__(
             selenium,
             plugin_class=MiqSSUIBrowserPlugin,
-            logger=create_sublogger('MiqSSUIBrowser'),
-            extra_objects=extra_objects)
+            logger=create_sublogger("MiqSSUIBrowser"),
+            extra_objects=extra_objects,
+        )
         self.window_handle = selenium.current_window_handle
         # TODO: Use the same base class for both UI & SSUI since they are 99% the same
         self.logger.info(
-            'Opened browser %s %s',
-            selenium.capabilities.get('browserName', 'unknown'),
-            selenium.capabilities.get('version', 'unknown'))
+            "Opened browser %s %s",
+            selenium.capabilities.get("browserName", "unknown"),
+            selenium.capabilities.get("version", "unknown"),
+        )
 
     @property
     def appliance(self):
-        return self.extra_objects['appliance']
+        return self.extra_objects["appliance"]
 
     def create_view(self, *args, **kwargs):
         return self.appliance.ssui.create_view(*args, **kwargs)
@@ -50,7 +48,8 @@ class MiqSSUIBrowser(Browser):
 
 class MiqSSUIBrowserPlugin(DefaultPlugin):
 
-    ENSURE_PAGE_SAFE = jsmin('''
+    ENSURE_PAGE_SAFE = jsmin(
+        """
         function checkProgressBar() {
             try {
                 return $('#ngProgress').attr('style').indexOf('width: 0%') > -1;
@@ -68,9 +67,10 @@ class MiqSSUIBrowserPlugin(DefaultPlugin):
             }
         }
 
-        return checkProgressBar() && checkJquery();''')
+        return checkProgressBar() && checkJquery();"""
+    )
 
-    def ensure_page_safe(self, timeout='20s'):
+    def ensure_page_safe(self, timeout="20s"):
         # THIS ONE SHOULD ALWAYS USE JAVASCRIPT ONLY, NO OTHER SELENIUM INTERACTION
 
         def _check():
@@ -90,8 +90,8 @@ class SSUINavigateStep(NavigateStep):
     @cached_property
     def view(self):
         if self.VIEW is None:
-            raise AttributeError('{} does not have VIEW specified'.format(type(self).__name__))
-        return self.create_view(self.VIEW, additional_context={'object': self.obj})
+            raise AttributeError("{} does not have VIEW specified".format(type(self).__name__))
+        return self.create_view(self.VIEW, additional_context={"object": self.obj})
 
     @property
     def appliance(self):
@@ -133,7 +133,7 @@ class SSUINavigateStep(NavigateStep):
         )
 
     def go(self, _tries=0, *args, **kwargs):
-        nav_args = {'use_resetter': True, 'wait_for_view': 10}
+        nav_args = {"use_resetter": True, "wait_for_view": 10}
 
         self.log_message("Beginning SUI Navigation...", level="info")
         start_time = time.time()
@@ -155,29 +155,35 @@ class SSUINavigateStep(NavigateStep):
         try:
             here = self.am_i_here()
         except NotImplementedError:
-            nav_args['wait_for_view'] = 0
+            nav_args["wait_for_view"] = 0
             self.log_message(
-                "is_displayed not implemented for {} view".format(self.VIEW or ""), level="warn")
+                "is_displayed not implemented for {} view".format(self.VIEW or ""), level="warn"
+            )
         except Exception as e:
             self.log_message(
-                "Exception raised [{}] whilst checking if already here".format(e), level="error")
+                "Exception raised [{}] whilst checking if already here".format(e), level="error"
+            )
 
         if not here:
             self.log_message("Prerequisite Needed")
             self.prerequisite_view = self.prerequisite()
             self.do_nav(_tries, *args, **kwargs)
-        if nav_args['use_resetter']:
+        if nav_args["use_resetter"]:
             resetter_used = True
             self.resetter()
         self.post_navigate(_tries)
         view = self.view if self.VIEW is not None else None
         duration = int((time.time() - start_time) * 1000)
-        if view and nav_args['wait_for_view'] and not os.environ.get(
-                'DISABLE_NAVIGATE_ASSERT', False):
+        if (
+            view
+            and nav_args["wait_for_view"]
+            and not os.environ.get("DISABLE_NAVIGATE_ASSERT", False)
+        ):
             waited = True
             wait_for(
-                lambda: view.is_displayed, num_sec=nav_args['wait_for_view'],
-                message="Waiting for view [{}] to display".format(view.__class__.__name__)
+                lambda: view.is_displayed,
+                num_sec=nav_args["wait_for_view"],
+                message="Waiting for view [{}] to display".format(view.__class__.__name__),
             )
         self.log_message(
             self.construct_message(here, resetter_used, view, duration, waited), level="info"
@@ -196,7 +202,7 @@ class ViaSSUI(Implementation):
     navigator = navigator
 
     def __str__(self):
-        return 'SSUI'
+        return "SSUI"
 
     @cached_property
     def widgetastic(self):

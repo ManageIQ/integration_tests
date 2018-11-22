@@ -37,28 +37,26 @@ def data_path_for_filename(filename, base_path, testmod_path=None):
     """ Returns the data path for a given file name"""
     if testmod_path:
         # remove the base path from testmod path
-        test_path_fragment = testmod_path[len(base_path):]
+        test_path_fragment = testmod_path[len(base_path) :]
 
         # remove the .py extension
-        test_path_fragment = test_path_fragment.rsplit('.py', 1)[0]
+        test_path_fragment = test_path_fragment.rsplit(".py", 1)[0]
 
         # remove the tests dir (really just the first occurance of 'tests')
-        test_path_fragment = test_path_fragment.replace('tests', '', 1)
+        test_path_fragment = test_path_fragment.replace("tests", "", 1)
 
         # clean up any extraneous slashes or spaces
-        test_path_fragment = test_path_fragment.strip('/ ').replace('//', '/')
+        test_path_fragment = test_path_fragment.strip("/ ").replace("//", "/")
 
         # put it all back together, getting the absolute fs path to filename
         # in the data dir related to testmod_path
-        new_path = os.path.join(base_path, 'data', test_path_fragment, filename)
+        new_path = os.path.join(base_path, "data", test_path_fragment, filename)
     else:
         # No testmod_path? Well that's a lot easier!
         # Just join it with the data root, minus its leading slash
-        new_path = os.path.join(base_path, 'data', filename)
+        new_path = os.path.join(base_path, "data", filename)
 
     return new_path
 
 
-template_env = Environment(
-    loader=FileSystemLoader(template_path.strpath)
-)
+template_env = Environment(loader=FileSystemLoader(template_path.strpath))

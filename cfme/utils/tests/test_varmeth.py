@@ -69,10 +69,8 @@ def test_default_withparam(o):
 
 @pytest.mark.parametrize(
     ["v", "params", "returns"],
-    [
-        ("a", [1, 2], (1, 2)),
-        ("b", [], "b"),
-        ("c", [], "b")],
-    ids=["a", "b", "c"])
+    [("a", [1, 2], (1, 2)), ("b", [], "b"), ("c", [], "b")],
+    ids=["a", "b", "c"],
+)
 def test_variants_withparam(o, v, params, returns):
     assert o.meth2(*params, method=v) == returns

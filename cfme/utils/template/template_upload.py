@@ -19,13 +19,13 @@ from cfme.utils.template.virtualcenter import VMWareTemplateUpload
 from cfme.utils.template.rhopenshift import OpenshiftTemplateUpload
 
 CLASS_MAP = {
-    'openstack': OpenstackTemplateUpload,
-    'virtualcenter': VMWareTemplateUpload,
-    'scvmm': SCVMMTemplateUpload,
-    'gce': GoogleCloudTemplateUpload,
-    'ec2': EC2TemplateUpload,
-    'openshift': OpenshiftTemplateUpload,
-    'rhevm': RHEVMTemplateUpload
+    "openstack": OpenstackTemplateUpload,
+    "virtualcenter": VMWareTemplateUpload,
+    "scvmm": SCVMMTemplateUpload,
+    "gce": GoogleCloudTemplateUpload,
+    "ec2": EC2TemplateUpload,
+    "openshift": OpenshiftTemplateUpload,
+    "rhevm": RHEVMTemplateUpload,
 }
 
 add_stdout_handler(logger)
@@ -36,38 +36,37 @@ def parse_cmd_line():
 
     provider_group = parser.add_mutually_exclusive_group(required=True)
     provider_group.add_argument(
-        '--provider-type',
-        dest='provider_type',
-        choices=PROVIDER_TYPES,
-        help='Provider type')
+        "--provider-type", dest="provider_type", choices=PROVIDER_TYPES, help="Provider type"
+    )
     provider_group.add_argument(
-        '--provider',
-        nargs='+',
-        dest='provider',
-        help='Specific provider keys list')
+        "--provider", nargs="+", dest="provider", help="Specific provider keys list"
+    )
     parser.add_argument(
-        '--glance',
-        dest='glance_key',
+        "--glance",
+        dest="glance_key",
         default=None,
-        help='key for the glance server information in cfme_data.template_upload')
+        help="key for the glance server information in cfme_data.template_upload",
+    )
     parser.add_argument(
-        '--stream',
-        dest='stream',
-        help='Stream (downstream-59z)name for the image_url, or default to stable/latest in stream'
-             'Please check the cfme_data file for current streams.')
+        "--stream",
+        dest="stream",
+        help="Stream (downstream-59z)name for the image_url, or default to stable/latest in stream"
+        "Please check the cfme_data file for current streams.",
+    )
     parser.add_argument(
-        '--image-url',
-        dest='image_url',
-        help='URL for the image file to be uploaded. Please use with --stream.')
+        "--image-url",
+        dest="image_url",
+        help="URL for the image file to be uploaded. Please use with --stream.",
+    )
     parser.add_argument(
-        '--template-name',
-        dest='template_name',
-        help='Set the name of the template')
+        "--template-name", dest="template_name", help="Set the name of the template"
+    )
     parser.add_argument(
-        '--print-name-only',
-        dest='print_name_only',
+        "--print-name-only",
+        dest="print_name_only",
         action="store_true",
-        help='Only print the template name that will be generated without actually running it.')
+        help="Only print the template name that will be generated without actually running it.",
+    )
 
     return parser.parse_known_args()
 
@@ -76,23 +75,26 @@ def get_stream_from_image_url(image_url, quiet=False):
     """Get default image URL for a given stream name"""
     # strip trailing / from URL, and strip build number or link (5.9.2.3, latest, stable)
     # to get just https://url/builds/[cfme/manageiq]/[build-stream]
-    image_base = '/'.join(image_url.strip('/').split('/')[:-1])
+    image_base = "/".join(image_url.strip("/").split("/")[:-1])
     if not quiet:  # don't log (goes to stdout) when just printing name, for Jenkins
-        logger.info('Matching stream name based on image_url base: %s', image_base)
+        logger.info("Matching stream name based on image_url base: %s", image_base)
     # look for image_base URL component in basic_info dict
     matching_streams = [key for key, value in ALL_STREAMS.items() if image_base in value]
     if matching_streams:
         # sometimes multiple match, use first
         if len(matching_streams) > 1:
-            logger.warning('warning: Multiple stream name matches: %s for URL %s, using first',
-                           matching_streams, image_url)
+            logger.warning(
+                "warning: Multiple stream name matches: %s for URL %s, using first",
+                matching_streams,
+                image_url,
+            )
         return matching_streams[0]
     else:
-        logger.error('Cannot find stream in image url: %s', image_url)
+        logger.error("Cannot find stream in image url: %s", image_url)
         raise TemplateUploadException("Cannot find stream from image URL.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cmd_line_args = parse_cmd_line()
     cmd_args = cmd_line_args[0]
     specific_args = cmd_line_args[1]
@@ -111,8 +113,11 @@ if __name__ == '__main__':
 
     provider_type = cmd_args.provider_type
 
-    template_name = ("{}-{}".format(cmd_args.template_name, stream) if cmd_args.template_name else
-                     TemplateName(image_url).template_name)
+    template_name = (
+        "{}-{}".format(cmd_args.template_name, stream)
+        if cmd_args.template_name
+        else TemplateName(image_url).template_name
+    )
 
     if cmd_args.print_name_only:
         print(template_name)
@@ -121,9 +126,9 @@ if __name__ == '__main__':
     if not provider_type or cmd_args.provider:
         provider_types = PROVIDER_TYPES
     elif provider_type in PROVIDER_TYPES:
-        provider_types = [provider_type, ]
+        provider_types = [provider_type]
     else:
-        logger.error('Template upload for %r is not implemented yet.', provider_type)
+        logger.error("Template upload for %r is not implemented yet.", provider_type)
         sys.exit(1)
 
     thread_queue = []
@@ -139,17 +144,19 @@ if __name__ == '__main__':
                 continue
 
             # pulling class by provider type
-            provider_template_upload = (cfme_data.management_systems[provider_key]
-                                        .get('template_upload', {}))
+            provider_template_upload = cfme_data.management_systems[provider_key].get(
+                "template_upload", {}
+            )
             uploader = CLASS_MAP[provider_type](
                 provider_key=provider_key,
                 stream=stream,
                 template_name=template_name,
                 image_url=image_url,
                 cmd_line_args=specific_args,
-                glance_key=cmd_args.glance_key or provider_template_upload.get('glance_key'))
+                glance_key=cmd_args.glance_key or provider_template_upload.get("glance_key"),
+            )
 
-            if uploader.template_upload_data.get('block_upload', True):
+            if uploader.template_upload_data.get("block_upload", True):
                 logger.info("%s:%s Skipped due to block upload.", uploader.log_name, provider_key)
                 continue
 
@@ -159,7 +166,7 @@ if __name__ == '__main__':
             thread.start()
 
     if not thread_queue:
-        logger.error('No providers or types matched, check arguments')
+        logger.error("No providers or types matched, check arguments")
         sys.exit(1)
 
     for thread in thread_queue:

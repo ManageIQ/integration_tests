@@ -21,5 +21,5 @@ def random_vm_name(context=None, max_length=15):
     template_str_length = 6
     random_chars = 4
     context_length = max_length - random_chars - template_str_length
-    context = re.sub(r'[^a-z0-9-]', '', (context or 'vm').lower())[:context_length]
-    return 'test-{}-{}'.format(context, fauxfactory.gen_alphanumeric(length=random_chars).lower())
+    context = re.sub(r"[^a-z0-9-]", "", (context or "vm").lower())[:context_length]
+    return "test-{}-{}".format(context, fauxfactory.gen_alphanumeric(length=random_chars).lower())

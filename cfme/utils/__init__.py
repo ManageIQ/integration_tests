@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import atexit
+
 # import diaper for backward compatibility
 import diaper
 import os
@@ -11,11 +12,12 @@ from functools import partial
 from cached_property import cached_property
 from werkzeug.local import LocalProxy
 
-on_rtd = os.environ.get('READTHEDOCS') == 'True'
+on_rtd = os.environ.get("READTHEDOCS") == "True"
 
 
 class TriesExceeded(Exception):
     """Default exception raised when tries() method doesn't catch a func exception"""
+
     pass
 
 
@@ -46,6 +48,7 @@ def clear_property_cache(obj, *names):
 
 class _classproperty(property):
     """Subclass property to make classmethod properties possible"""
+
     def __get__(self, cls, owner):
         return self.fget.__get__(None, owner)()
 
@@ -74,7 +77,7 @@ def at_exit(f, *args, **kwargs):
 def _prenormalize_text(text):
     """Makes the text lowercase and removes all characters that are not digits, alphas, or spaces"""
     # _'s represent spaces so convert those to spaces too
-    return re.sub(r"[^a-z0-9 ]", "", text.strip().lower().replace('_', ' '))
+    return re.sub(r"[^a-z0-9 ]", "", text.strip().lower().replace("_", " "))
 
 
 def _replace_spaces_with(text, delim):
@@ -87,7 +90,7 @@ def normalize_text(text):
 
     The space is always one character long if it is present.
     """
-    return _replace_spaces_with(_prenormalize_text(text), ' ')
+    return _replace_spaces_with(_prenormalize_text(text), " ")
 
 
 def attributize_string(text):
@@ -96,7 +99,7 @@ def attributize_string(text):
     Usable for eg. generating object key names.
     The underscore is always one character long if it is present.
     """
-    return _replace_spaces_with(_prenormalize_text(text), '_')
+    return _replace_spaces_with(_prenormalize_text(text), "_")
 
 
 def normalize_space(text):
@@ -108,7 +111,7 @@ def normalize_space(text):
         replaces sequences of whitespace characters by a single space, and returns the resulting
         string.*
     """
-    return _replace_spaces_with(text.strip(), ' ')
+    return _replace_spaces_with(text.strip(), " ")
 
 
 def tries(num_tries, exceptions, f, *args, **kwargs):
@@ -127,7 +130,7 @@ def tries(num_tries, exceptions, f, *args, **kwargs):
     Raises:
         What ``f`` raises if the try count is exceeded.
     """
-    caught_exception = TriesExceeded('Tries were exhausted without a func exception')
+    caught_exception = TriesExceeded("Tries were exhausted without a func exception")
     tries = 0
     while tries < num_tries:
         tries += 1
@@ -142,7 +145,7 @@ def tries(num_tries, exceptions, f, *args, **kwargs):
 
 # There are some environment variables that get smuggled in anyway.
 # If there is yet another one that will be possibly smuggled in, update this entry.
-READ_ENV_UNWANTED = {'SHLVL', '_', 'PWD'}
+READ_ENV_UNWANTED = {"SHLVL", "_", "PWD"}
 
 
 def read_env(file):
@@ -163,11 +166,11 @@ def read_env(file):
     if file.check():
         # parse the file with bash, since it's pretty good at it, and dump the env
         # Use env -i to clean up the env (except the very few variables provider by bash itself)
-        command = ['env', '-i', 'bash', '-c', 'source {} && env'.format(file.strpath)]
+        command = ["env", "-i", "bash", "-c", "source {} && env".format(file.strpath)]
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1)
 
         # filter out the remaining unwanted things
-        for line in iter(proc.stdout.readline, b''):
+        for line in iter(proc.stdout.readline, b""):
             try:
                 key, value = line.split("=", 1)
             except ValueError:
@@ -197,11 +200,11 @@ def safe_string(o):
         else:
             o = str(o)
     if isinstance(o, bytes):
-        o = o.decode('utf-8', "ignore")
+        o = o.decode("utf-8", "ignore")
     if not isinstance(o, str):
         o = o.encode("ascii", "xmlcharrefreplace")
     elif not six.PY2:
-        o = o.encode("ascii", "xmlcharrefreplace").decode('ascii')
+        o = o.encode("ascii", "xmlcharrefreplace").decode("ascii")
     return o
 
 
@@ -226,16 +229,20 @@ def process_pytest_path(path):
         # Definitely a final segment
         return [path]
     else:
-        if (param_start is not None and param_end is not None and seg_end > param_start and
-                seg_end < param_end):
+        if (
+            param_start is not None
+            and param_end is not None
+            and seg_end > param_start
+            and seg_end < param_end
+        ):
             # The / inside []
-            segment = path[:param_end + 1]
-            rest = path[param_end + 1:]
+            segment = path[: param_end + 1]
+            rest = path[param_end + 1 :]
             return [segment] + process_pytest_path(rest)
         else:
             # The / that is not inside []
             segment = path[:seg_end]
-            rest = path[seg_end + 1:]
+            rest = path[seg_end + 1 :]
             return [segment] + process_pytest_path(rest)
 
 
@@ -258,7 +265,7 @@ def process_shell_output(value):
             result_lines.append(entry)
     elif isinstance(value, dict):
         for key, value in value.items():
-            result_lines.append('{}={}'.format(key, value))
+            result_lines.append("{}={}".format(key, value))
     elif isinstance(value, str):
         result_lines.append(value)
     elif isinstance(value, bool):
@@ -268,7 +275,7 @@ def process_shell_output(value):
         # Unknown type, print it
         result_lines.append(str(value))
 
-    return exit, '\n'.join(result_lines) if result_lines else None
+    return exit, "\n".join(result_lines) if result_lines else None
 
 
 def iterate_pairs(iterable):
@@ -282,7 +289,7 @@ def iterate_pairs(iterable):
         iterable: An iterable with even number of items to be iterated over.
     """
     if len(iterable) % 2 != 0:
-        raise ValueError('Iterable must have even number of items.')
+        raise ValueError("Iterable must have even number of items.")
     it = iter(iterable)
     for i in it:
         yield i, next(it)
@@ -346,6 +353,7 @@ class InstanceClassMethod(object):
     If you don't pass ``classmethod`` the "instance" method, the one that was passed first will
     be called for both kinds of invocation.
     """
+
     def __init__(self, instance_or_class_method):
         self.instance_or_class_method = instance_or_class_method
         self.class_method = None
@@ -383,7 +391,7 @@ class ParamClassName(object):
     the attribute that is passed in.
     """
 
-    def __init__(self, instance_attr, class_attr='__name__'):
+    def __init__(self, instance_attr, class_attr="__name__"):
         self.instance_attr = instance_attr
         self.class_attr = class_attr
 

@@ -10,43 +10,45 @@ def collect_log(ssh_client, log_prefix, local_file_name, strip_whitespace=False)
     """Collects all of the logs associated with a single log prefix (ex. evm or top_output) and
     combines to single gzip log file.  The log file is then scp-ed back to the host.
     """
-    log_dir = '/var/www/miq/vmdb/log/'
+    log_dir = "/var/www/miq/vmdb/log/"
 
-    log_file = '{}{}.log'.format(log_dir, log_prefix)
-    dest_file = '{}{}.perf.log'.format(log_dir, log_prefix)
-    dest_file_gz = '{}{}.perf.log.gz'.format(log_dir, log_prefix)
+    log_file = "{}{}.log".format(log_dir, log_prefix)
+    dest_file = "{}{}.perf.log".format(log_dir, log_prefix)
+    dest_file_gz = "{}{}.perf.log.gz".format(log_dir, log_prefix)
 
-    ssh_client.run_command('rm -f {}'.format(dest_file_gz))
+    ssh_client.run_command("rm -f {}".format(dest_file_gz))
 
-    result = ssh_client.run_command('ls -1 {}-*'.format(log_file))
+    result = ssh_client.run_command("ls -1 {}-*".format(log_file))
     if result.success:
-        files = result.output.strip().split('\n')
+        files = result.output.strip().split("\n")
         for lfile in sorted(files):
-            ssh_client.run_command('cp {} {}-2.gz'.format(lfile, lfile))
-            ssh_client.run_command('gunzip {}-2.gz'.format(lfile))
+            ssh_client.run_command("cp {} {}-2.gz".format(lfile, lfile))
+            ssh_client.run_command("gunzip {}-2.gz".format(lfile))
             if strip_whitespace:
-                ssh_client.run_command('sed -i  \'s/^ *//; s/ *$//; /^$/d; /^\s*$/d\' '
-                    '{}-2'.format(lfile))
-            ssh_client.run_command('cat {}-2 >> {}'.format(lfile, dest_file))
-            ssh_client.run_command('rm {}-2'.format(lfile))
+                ssh_client.run_command(
+                    r"sed -i  's/^ *//; s/ *$//; /^$/d; /^\s*$/d' " "{}-2".format(lfile)
+                )
+            ssh_client.run_command("cat {}-2 >> {}".format(lfile, dest_file))
+            ssh_client.run_command("rm {}-2".format(lfile))
 
-    ssh_client.run_command('cp {} {}-2'.format(log_file, log_file))
+    ssh_client.run_command("cp {} {}-2".format(log_file, log_file))
     if strip_whitespace:
-        ssh_client.run_command('sed -i  \'s/^ *//; s/ *$//; /^$/d; /^\s*$/d\' '
-            '{}-2'.format(log_file))
-    ssh_client.run_command('cat {}-2 >> {}'.format(log_file, dest_file))
-    ssh_client.run_command('rm {}-2'.format(log_file))
-    ssh_client.run_command('gzip {}{}.perf.log'.format(log_dir, log_prefix))
+        ssh_client.run_command(
+            r"sed -i  's/^ *//; s/ *$//; /^$/d; /^\s*$/d' " "{}-2".format(log_file)
+        )
+    ssh_client.run_command("cat {}-2 >> {}".format(log_file, dest_file))
+    ssh_client.run_command("rm {}-2".format(log_file))
+    ssh_client.run_command("gzip {}{}.perf.log".format(log_dir, log_prefix))
 
     ssh_client.get_file(dest_file_gz, local_file_name)
-    ssh_client.run_command('rm -f {}'.format(dest_file_gz))
+    ssh_client.run_command("rm -f {}".format(dest_file_gz))
 
 
 def convert_top_mem_to_mib(top_mem):
     """Takes a top memory unit from top_output.log and converts it to MiB"""
-    if top_mem[-1:] == 'm':
+    if top_mem[-1:] == "m":
         num = float(top_mem[:-1])
-    elif top_mem[-1:] == 'g':
+    elif top_mem[-1:] == "g":
         num = float(top_mem[:-1]) * 1024
     else:
         num = float(top_mem) / 1024
@@ -75,51 +77,62 @@ def generate_statistics(the_list, decimals=2):
         stddev = round(numpy.std(numpy_arr), decimals)
         percentile90 = round(numpy.percentile(numpy_arr, 90), decimals)
         percentile99 = round(numpy.percentile(numpy_arr, 99), decimals)
-        return [len(the_list), minimum, average, median, maximum, stddev, percentile90,
-            percentile99]
+        return [
+            len(the_list),
+            minimum,
+            average,
+            median,
+            maximum,
+            stddev,
+            percentile90,
+            percentile99,
+        ]
 
 
 def get_worker_pid(worker_type):
     """Obtains the pid of the first worker with the worker_type specified"""
     with SSHClient() as ssh_client:
         result = ssh_client.run_command(
-            'systemctl status evmserverd 2> /dev/null | grep -m 1 \'{}\' | awk \'{{print $7}}\''
-            .format(worker_type)
+            "systemctl status evmserverd 2> /dev/null | grep -m 1 '{}' | awk '{{print $7}}'".format(
+                worker_type
+            )
         )
     worker_pid = str(result.output).strip()
     if result.output:
-        logger.info('Obtained {} PID: {}'.format(worker_type, worker_pid))
+        logger.info("Obtained {} PID: {}".format(worker_type, worker_pid))
     else:
-        logger.error('Could not obtain {} PID, check evmserverd running or if specific role is'
-                     ' enabled...'.format(worker_type))
+        logger.error(
+            "Could not obtain {} PID, check evmserverd running or if specific role is"
+            " enabled...".format(worker_type)
+        )
         assert result.output
     return worker_pid
 
 
-def set_rails_loglevel(level, validate_against_worker='MiqUiWorker'):
+def set_rails_loglevel(level, validate_against_worker="MiqUiWorker"):
     """Sets the logging level for level_rails and detects when change occured."""
-    ui_worker_pid = '#{}'.format(get_worker_pid(validate_against_worker))
+    ui_worker_pid = "#{}".format(get_worker_pid(validate_against_worker))
 
-    logger.info('Setting log level_rails on appliance to {}'.format(level))
+    logger.info("Setting log level_rails on appliance to {}".format(level))
     yaml = store.current_appliance.advanced_settings
-    if not str(yaml['log']['level_rails']).lower() == level.lower():
-        logger.info('Opening /var/www/miq/vmdb/log/evm.log for tail')
-        evm_tail = SSHTail('/var/www/miq/vmdb/log/evm.log')
+    if not str(yaml["log"]["level_rails"]).lower() == level.lower():
+        logger.info("Opening /var/www/miq/vmdb/log/evm.log for tail")
+        evm_tail = SSHTail("/var/www/miq/vmdb/log/evm.log")
         evm_tail.set_initial_file_end()
 
-        log_yaml = yaml.get('log', {})
-        log_yaml['level_rails'] = level
-        store.current_appliance.update_advanced_settings({'log': log_yaml})
+        log_yaml = yaml.get("log", {})
+        log_yaml["level_rails"] = level
+        store.current_appliance.update_advanced_settings({"log": log_yaml})
 
         attempts = 0
         detected = False
-        while (not detected and attempts < 60):
-            logger.debug('Attempting to detect log level_rails change: {}'.format(attempts))
+        while not detected and attempts < 60:
+            logger.debug("Attempting to detect log level_rails change: {}".format(attempts))
             for line in evm_tail:
                 if ui_worker_pid in line:
-                    if 'Log level for production.log has been changed to' in line:
+                    if "Log level for production.log has been changed to" in line:
                         # Detects a log level change but does not validate the log level
-                        logger.info('Detected change to log level for production.log')
+                        logger.info("Detected change to log level for production.log")
                         detected = True
                         break
             time.sleep(1)  # Allow more log lines to accumulate
@@ -127,7 +140,7 @@ def set_rails_loglevel(level, validate_against_worker='MiqUiWorker'):
         if not (attempts < 60):
             # Note the error in the logger but continue as the appliance could be slow at logging
             # that the log level changed
-            logger.error('Could not detect log level_rails change.')
+            logger.error("Could not detect log level_rails change.")
         evm_tail.close()
     else:
-        logger.info('Log level_rails already set to {}'.format(level))
+        logger.info("Log level_rails already set to {}".format(level))

@@ -126,13 +126,14 @@ def _param_check(metafunc, argnames, argvalues):
     # items in argnames by looking in its fixture pool, which will almost certainly fail.
     else:
         # module and class are optional, but function isn't
-        modname = getattr(metafunc.module, '__name__', None)
-        classname = getattr(metafunc.cls, '__name__', None)
+        modname = getattr(metafunc.module, "__name__", None)
+        classname = getattr(metafunc.cls, "__name__", None)
         funcname = metafunc.function.__name__
 
-        test_name = '.'.join(filter(None, (modname, classname, funcname)))
-        uncollect_msg = 'Parametrization for {} yielded no values,'\
-            ' marked for uncollection'.format(test_name)
+        test_name = ".".join(filter(None, (modname, classname, funcname)))
+        uncollect_msg = (
+            "Parametrization for {} yielded no values," " marked for uncollection".format(test_name)
+        )
         logger.warning(uncollect_msg)
 
         # apply the mark
@@ -148,7 +149,7 @@ def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
     if _param_check(metafunc, argnames, argvalues):
         metafunc.parametrize(argnames, argvalues, *args, **kwargs)
     # if param check failed and the test was supposed to be parametrized around a provider
-    elif 'provider' in metafunc.fixturenames:
+    elif "provider" in metafunc.fixturenames:
         try:
             # hack to pass trough in case of a failed param_check
             # where it sets a custom message
@@ -200,10 +201,10 @@ def generate(*args, **kwargs):
     """
     # Pull out/default kwargs for this function and parametrize; any args and kwargs that are not
     # pulled out here will be passed into gen_func within pytest_generate_tests below
-    scope = kwargs.pop('scope', 'function')
-    indirect = kwargs.pop('indirect', False)
-    filter_unused = kwargs.pop('filter_unused', True)
-    gen_func = kwargs.pop('gen_func', providers_by_class)
+    scope = kwargs.pop("scope", "function")
+    indirect = kwargs.pop("indirect", False)
+    filter_unused = kwargs.pop("filter_unused", True)
+    gen_func = kwargs.pop("gen_func", providers_by_class)
     from cfme.utils.pytest_shortcuts import fixture_filter
 
     # If parametrize doesn't get you what you need, steal this and modify as needed
@@ -239,10 +240,10 @@ def providers(metafunc, filters=None):
     idlist = []
 
     # Obtains the test's flags in form of a ProviderFilter
-    meta = getattr(metafunc.function, 'meta', None)
-    test_flag_str = getattr(meta, 'kwargs', {}).get('from_docs', {}).get('test_flag')
+    meta = getattr(metafunc.function, "meta", None)
+    test_flag_str = getattr(meta, "kwargs", {}).get("from_docs", {}).get("test_flag")
     if test_flag_str:
-        test_flags = test_flag_str.split(',')
+        test_flags = test_flag_str.split(",")
         flags_filter = ProviderFilter(required_flags=test_flags)
         filters = filters + [flags_filter]
 
@@ -251,10 +252,10 @@ def providers(metafunc, filters=None):
         # Use the provider key for idlist, helps with readable parametrized test output
         idlist.append(provider.key)
         # Add provider to argnames if missing
-        if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
+        if "provider" in metafunc.fixturenames and "provider" not in argnames:
             metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
-            argnames.append('provider')
-        if metafunc.config.getoption('sauce'):
+            argnames.append("provider")
+        if metafunc.config.getoption("sauce"):
             break
 
     return argnames, argvalues, idlist
@@ -279,8 +280,9 @@ def providers_by_class(metafunc, classes, required_fields=None, required_flags=N
         # Using the parametrize wrapper
         pytest_generate_tests = testgen.parametrize([GCEProvider], scope='module')
     """
-    pf = ProviderFilter(classes=classes, required_fields=required_fields,
-     required_flags=required_flags)
+    pf = ProviderFilter(
+        classes=classes, required_fields=required_fields, required_flags=required_flags
+    )
     return providers(metafunc, filters=[pf])
 
 
@@ -303,11 +305,11 @@ def auth_groups(metafunc, auth_mode):
         auth_mode: One of the auth_modes specified in ``cfme_data.get('auth_modes', {})``
 
     """
-    argnames = ['group_name', 'group_data']
+    argnames = ["group_name", "group_data"]
     argvalues = []
     idlist = []
 
-    if auth_mode in auth_data.get('auth_providers', {}):
+    if auth_mode in auth_data.get("auth_providers", {}):
         # If auth_modes exists, group_roles is assumed to exist as well
         for group in group_data:
             argvalues.append([group, sorted(group_data[group])])
@@ -318,11 +320,11 @@ def auth_groups(metafunc, auth_mode):
 def config_managers(metafunc):
     """Provides config managers
     """
-    argnames = ['config_manager_obj']
+    argnames = ["config_manager_obj"]
     argvalues = []
     idlist = []
 
-    data = cfme_data.get('configuration_managers', {})
+    data = cfme_data.get("configuration_managers", {})
 
     for cfg_mgr_key in data:
         argvalues.append([get_config_manager_from_config(cfg_mgr_key)])
@@ -333,7 +335,7 @@ def config_managers(metafunc):
 def pxe_servers(metafunc):
     """Provides pxe data
     """
-    argnames = ['pxe_name']
-    argvalues = [[k] for k in sorted(cfme_data.get('pxe_servers', {}).keys())]
+    argnames = ["pxe_name"]
+    argvalues = [[k] for k in sorted(cfme_data.get("pxe_servers", {}).keys())]
     idlist = [k[0] for k in argvalues]
     return argnames, argvalues, idlist

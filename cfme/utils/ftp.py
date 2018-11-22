@@ -23,6 +23,7 @@ class FTPDirectory(object):
     and also all files in current directory (self.files)
 
     """
+
     def __init__(self, client, name, items, parent_dir=None, time=None):
         """ Constructor
 
@@ -41,11 +42,15 @@ class FTPDirectory(object):
         self.directories = []
         for item in items:
             if isinstance(item, dict):  # Is a directory
-                self.directories.append(FTPDirectory(self.client,
-                                                     item["dir"],
-                                                     item["content"],
-                                                     parent_dir=self,
-                                                     time=item["time"]))
+                self.directories.append(
+                    FTPDirectory(
+                        self.client,
+                        item["dir"],
+                        item["content"],
+                        parent_dir=self,
+                        time=item["time"],
+                    )
+                )
             else:
                 self.files.append(FTPFile(self.client, item[0], self, item[1]))
 
@@ -144,6 +149,7 @@ class FTPFile(object):
     It encapsulates mainly its position in FS and adds the possibility
     of downloading the file.
     """
+
     def __init__(self, client, name, parent_dir, time):
         """ Constructor
 
@@ -290,10 +296,11 @@ class FTPClient(object):
 
         """
         TIMECHECK_FILE_NAME = fauxfactory.gen_alphanumeric(length=16)
-        void_file = BytesIO(b'random_example')
+        void_file = BytesIO(b"random_example")
         self.cwd(self.upload_dir)
-        assert "Transfer complete" in self.storbinary(TIMECHECK_FILE_NAME, void_file),\
-            "Could not upload a file for time checking with name {}!".format(TIMECHECK_FILE_NAME)
+        assert "Transfer complete" in self.storbinary(
+            TIMECHECK_FILE_NAME, void_file
+        ), "Could not upload a file for time checking with name {}!".format(TIMECHECK_FILE_NAME)
         void_file.close()
         now = datetime.now()
         for d, name, time in self.ls():
@@ -321,9 +328,10 @@ class FTPClient(object):
             fields = re.split(r"\s+", line, maxsplit=8)
             # This is because how informations in LIST are presented
             # Nov 11 12:34 filename (from the end)
-            date = strptime(str(datetime.now().year) + " " + fields[-4] + " " + fields[-3] + " " +
-                            fields[-2],
-                            "%Y %b %d %H:%M")
+            date = strptime(
+                str(datetime.now().year) + " " + fields[-4] + " " + fields[-3] + " " + fields[-2],
+                "%Y %b %d %H:%M",
+            )
             # convert time.struct_time into datetime
             date = datetime.fromtimestamp(mktime(date))
             result.append((is_dir, fields[-1], date))
@@ -342,7 +350,7 @@ class FTPClient(object):
         """
         result = self.ftp.sendcmd("PWD")
         assert "is the current directory" in result, "PWD command failed"
-        x, d, y = result.strip().split("\"")
+        x, d, y = result.strip().split('"')
         return d.strip()
 
     def cdup(self):

@@ -1,5 +1,3 @@
-
-
 def tol_check(ref, compare, min_error=0.05, low_val_correction=3.0):
     """Tolerance check
 

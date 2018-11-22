@@ -30,17 +30,16 @@ PROVIDER_MGMT_CACHE = {}
 
 def load_setuptools_entrypoints():
     """ Load modules from querying the specified setuptools entrypoint name."""
-    from pkg_resources import (iter_entry_points, DistributionNotFound,
-                               VersionConflict)
-    for ep in iter_entry_points('manageiq_integration_tests'):
+    from pkg_resources import iter_entry_points, DistributionNotFound, VersionConflict
+
+    for ep in iter_entry_points("manageiq_integration_tests"):
         # is the plugin registered or blocked?
         try:
             ep.load()
         except DistributionNotFound:
             continue
         except VersionConflict as e:
-            raise Exception(
-                "Plugin {} could not be loaded: {}!".format(ep.name, e))
+            raise Exception("Plugin {} could not be loaded: {}!".format(ep.name, e))
 
 
 class ProviderFilter(object):
@@ -57,15 +56,29 @@ class ProviderFilter(object):
         conjunctive: If true, all subfilters are applied and all must match (default)
                      If false (disjunctive), at least one of the subfilters must match
     """
-    _version_operator_map = OrderedDict([('>=', operator.ge),
-                                        ('<=', operator.le),
-                                        ('==', operator.eq),
-                                        ('!=', operator.ne),
-                                        ('>', operator.gt),
-                                        ('<', operator.lt)])
 
-    def __init__(self, keys=None, classes=None, required_fields=None, required_tags=None,
-                 required_flags=None, restrict_version=False, inverted=False, conjunctive=True):
+    _version_operator_map = OrderedDict(
+        [
+            (">=", operator.ge),
+            ("<=", operator.le),
+            ("==", operator.eq),
+            ("!=", operator.ne),
+            (">", operator.gt),
+            ("<", operator.lt),
+        ]
+    )
+
+    def __init__(
+        self,
+        keys=None,
+        classes=None,
+        required_fields=None,
+        required_tags=None,
+        required_flags=None,
+        restrict_version=False,
+        inverted=False,
+        conjunctive=True,
+    ):
         self.keys = keys
         self.classes = classes
         self.required_fields = required_fields
@@ -119,7 +132,7 @@ class ProviderFilter(object):
 
     def _filter_required_tags(self, provider):
         """ Filters by required yaml tags """
-        prov_tags = provider.data.get('tags', [])
+        prov_tags = provider.data.get("tags", [])
         if self.required_tags is None:
             return None
         if set(self.required_tags) & set(prov_tags):
@@ -133,23 +146,26 @@ class ProviderFilter(object):
         if self.required_flags:
             test_flags = [flag.strip() for flag in self.required_flags]
 
-            defined_flags = conf.cfme_data.get('test_flags', '')
+            defined_flags = conf.cfme_data.get("test_flags", "")
             if isinstance(defined_flags, six.string_types):
-                defined_flags = defined_flags.split(',')
+                defined_flags = defined_flags.split(",")
             defined_flags = [flag.strip() for flag in defined_flags]
 
-            excluded_flags = provider.data.get('excluded_test_flags', '')
+            excluded_flags = provider.data.get("excluded_test_flags", "")
             if isinstance(excluded_flags, six.string_types):
-                excluded_flags = excluded_flags.split(',')
+                excluded_flags = excluded_flags.split(",")
             excluded_flags = [flag.strip() for flag in excluded_flags]
 
             allowed_flags = set(defined_flags) - set(excluded_flags)
 
             if set(test_flags) - allowed_flags:
-                logger.info("Filtering Provider %s out because it does not have the right flags, "
-                            "%s does not contain %s",
-                            provider.name, list(allowed_flags),
-                            list(set(test_flags) - allowed_flags))
+                logger.info(
+                    "Filtering Provider %s out because it does not have the right flags, "
+                    "%s does not contain %s",
+                    provider.name,
+                    list(allowed_flags),
+                    list(set(test_flags) - allowed_flags),
+                )
                 return False
         return True
 
@@ -162,10 +178,10 @@ class ProviderFilter(object):
             # "version_restrictions" and it should be a sequence of restrictions with operators
             # so that we can create ranges like ">= 5.6" and "<= 5.8"
             version_restrictions = []
-            since_version = provider.data.get('since_version')
+            since_version = provider.data.get("since_version")
             if since_version:
-                version_restrictions.append('>= {}'.format(since_version))
-            restricted_version = provider.data.get('restricted_version')
+                version_restrictions.append(">= {}".format(since_version))
+            restricted_version = provider.data.get("restricted_version")
             if restricted_version:
                 version_restrictions.append(restricted_version)
             for restriction in version_restrictions:
@@ -176,14 +192,14 @@ class ProviderFilter(object):
                         continue
                     try:
                         curr_ver = provider.appliance.version
-                    except:
+                    except Exception:
                         return True
                     ver = type(curr_ver)(ver)
                     if not comparator(curr_ver, ver):
                         return False
                     break
                 else:
-                    raise Exception('Operator not found in {}'.format(restriction))
+                    raise Exception("Operator not found in {}".format(restriction))
         return None
 
     def __call__(self, provider):
@@ -231,9 +247,9 @@ class ProviderFilter(object):
 
 
 # Only providers without the 'disabled' tag
-global_filters['enabled_only'] = ProviderFilter(required_tags=['disabled'], inverted=True)
+global_filters["enabled_only"] = ProviderFilter(required_tags=["disabled"], inverted=True)
 # Only providers relevant for current appliance version (requires SSH access when used)
-global_filters['restrict_version'] = ProviderFilter(restrict_version=True)
+global_filters["restrict_version"] = ProviderFilter(restrict_version=True)
 
 
 def list_providers(filters=None, use_global_filters=True):
@@ -249,8 +265,9 @@ def list_providers(filters=None, use_global_filters=True):
     """
     if isinstance(filters, six.string_types):
         raise TypeError(
-            'You are probably using the old-style invocation of provider setup functions! '
-            'You need to change it appropriately.')
+            "You are probably using the old-style invocation of provider setup functions! "
+            "You need to change it appropriately."
+        )
     filters = filters or []
     if use_global_filters:
         filters = filters + list(global_filters.values())
@@ -289,7 +306,7 @@ def list_provider_keys(provider_type=None):
     """
     try:
         all_keys = conf.cfme_data.management_systems.keys()
-    except:
+    except Exception:
         all_keys = []
 
     if provider_type:
@@ -320,10 +337,9 @@ def get_crud(provider_key):
     # TODO: note, get_crud will be enturely removed shortly and replaced with collections methods
 
     prov_config = providers_data[provider_key]
-    prov_type = prov_config.get('type')
+    prov_type = prov_config.get("type")
 
-    return get_class_from_type(prov_type).from_config(
-        prov_config, provider_key)
+    return get_class_from_type(prov_type).from_config(prov_config, provider_key)
 
 
 def get_crud_by_name(provider_name):
@@ -360,17 +376,17 @@ def get_mgmt(provider_key, providers=None, credentials=None):
     # TODO rename the parameter; might break things
     if isinstance(provider_key, Mapping):
         provider_data = provider_key
-        provider_key = provider_data['name']
+        provider_key = provider_data["name"]
     else:
         provider_data = providers[provider_key]
 
     if credentials is None:
         # We need to handle the in-place credentials
 
-        if provider_data.get('endpoints'):
-            credentials = provider_data['endpoints']['default']['credentials']
+        if provider_data.get("endpoints"):
+            credentials = provider_data["endpoints"]["default"]["credentials"]
         else:
-            credentials = provider_data['credentials']
+            credentials = provider_data["credentials"]
         # If it is not a mapping, it most likely points to a credentials yaml (as by default)
         if not isinstance(credentials, Mapping):
             credentials = conf.credentials[credentials]
@@ -381,16 +397,16 @@ def get_mgmt(provider_key, providers=None, credentials=None):
     provider_kwargs = provider_data.copy()
     provider_kwargs.update(credentials)
 
-    if not provider_kwargs.get('username') and provider_kwargs.get('principal'):
-        provider_kwargs['username'] = provider_kwargs['principal']
-        provider_kwargs['password'] = provider_kwargs['secret']
+    if not provider_kwargs.get("username") and provider_kwargs.get("principal"):
+        provider_kwargs["username"] = provider_kwargs["principal"]
+        provider_kwargs["password"] = provider_kwargs["secret"]
 
     if isinstance(provider_key, six.string_types):
-        provider_kwargs['provider_key'] = provider_key
-    provider_kwargs['logger'] = logger
+        provider_kwargs["provider_key"] = provider_key
+    provider_kwargs["logger"] = logger
 
     if provider_key not in PROVIDER_MGMT_CACHE:
-        mgmt_instance = get_class_from_type(provider_data['type']).mgmt_class(**provider_kwargs)
+        mgmt_instance = get_class_from_type(provider_data["type"]).mgmt_class(**provider_kwargs)
         PROVIDER_MGMT_CACHE[provider_key] = mgmt_instance
     else:
         logger.debug("returning cached mgmt class for '%s'", provider_key)
@@ -403,4 +419,4 @@ class UnknownProvider(Exception):
         self.provider_key = provider_key
 
     def __str__(self):
-        return ('Unknown provider: "{}"'.format(self.provider_key))
+        return 'Unknown provider: "{}"'.format(self.provider_key)

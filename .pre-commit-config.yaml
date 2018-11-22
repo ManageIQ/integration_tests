@@ -2,7 +2,7 @@ exclude: ^(data|sprout)/
 
 substitutions:
   - &exclude
-    exclude: ^(cfme|scripts) # for now disable - we shall gradually reenable it
+    exclude: ^(cfme/(?!utils)|scripts)|(cfme/utils/ssh\.py) # for now disable - we shall gradually reenable it
 repos:
 - repo: https://github.com/asottile/seed-isort-config
   rev: v1.3.0

@@ -77,10 +77,7 @@ def get_prs():
     gh = github.Github(docker.gh_token)
 
     pulls = gh.search_issues(
-        "",
-        type="pr",
-        repo="{d.gh_owner}/{d.gh_repo}".format(d=docker),
-        merged=">" + string_start,
+        "", type="pr", repo="{d.gh_owner}/{d.gh_repo}".format(d=docker), merged=">" + string_start
     )
 
     prs = {}
@@ -107,9 +104,7 @@ def get_prs():
 @click.command(help="Assist in generating release changelog")
 @click.argument("tag")
 @click.option(
-    "--old-tag",
-    default=None,
-    help="Build the changelog from an older tag, instead of git describe",
+    "--old-tag", default=None, help="Build the changelog from an older tag, instead of git describe"
 )
 @click.option(
     "--full",
@@ -118,12 +113,8 @@ def get_prs():
     default=True,
     help="Generates a full report with all PR description",
 )
-@click.option(
-    "--brief", "report_type", flag_value="brief", help="Generates brief report"
-)
-@click.option(
-    "--stats", "report_type", flag_value="stats", help="Generates stats only report"
-)
+@click.option("--brief", "report_type", flag_value="brief", help="Generates brief report")
+@click.option("--stats", "report_type", flag_value="stats", help="Generates stats only report")
 @click.option("--line-limit", default="80", help="Line length limit", type=int)
 def main(tag, old_tag, report_type, line_limit):
     """Script to assist in generating the release changelog
@@ -171,11 +162,7 @@ def main(tag, old_tag, report_type, line_limit):
 
                 print("-" * line_limit)
                 string = clean_body(prs[pr_number].body)
-                print(
-                    "\n".join(
-                        textwrap.wrap(string, line_limit, replace_whitespace=False)
-                    )
-                )
+                print("\n".join(textwrap.wrap(string, line_limit, replace_whitespace=False)))
                 print("=" * line_limit)
                 print("")
 

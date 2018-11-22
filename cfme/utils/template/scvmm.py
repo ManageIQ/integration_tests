@@ -4,13 +4,13 @@ from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
 
 
 class SCVMMTemplateUpload(ProviderTemplateUpload):
-    provider_type = 'scvmm'
-    log_name = 'SCVMM'
+    provider_type = "scvmm"
+    log_name = "SCVMM"
     image_pattern = re.compile(r'<a href="?\'?([^"\']*hyperv[^"\'>]*)')
 
     @property
     def library(self):
-        return self.template_upload_data.get('vhds', None)
+        return self.template_upload_data.get("vhds", None)
 
     @property
     def vhd_name(self):
@@ -20,7 +20,9 @@ class SCVMMTemplateUpload(ProviderTemplateUpload):
     def upload_vhd(self):
         script = """
                     (New-Object System.Net.WebClient).DownloadFile("{}", "{}{}")
-                """.format(self.raw_image_url, self.library, self.vhd_name)
+                """.format(
+            self.raw_image_url, self.library, self.vhd_name
+        )
 
         try:
             self.mgmt.run_script(script)
@@ -51,14 +53,16 @@ class SCVMMTemplateUpload(ProviderTemplateUpload):
                 -HardwareProfile $HWProfile -JobGroup $JobGroupID02 -RunAsynchronously `
                 -Generation 1 -NoCustomization
             Remove-HardwareProfile -HardwareProfile \"{name}\"
-        """.format(name=self.template_name,
-                   network=self.template_upload_data.get('network'),
-                   username_scvmm="{}\\{}".format(self.mgmt.domain, self.mgmt.user),
-                   ram=self.template_upload_data.get('ram'),
-                   cores=self.template_upload_data.get('cores'),
-                   src_path="{}{}".format(self.library, self.vhd_name),
-                   host_fqdn=self.provider_data['hostname_fqdn'],
-                   os_type=self.template_upload_data.get('os_type'))
+        """.format(
+            name=self.template_name,
+            network=self.template_upload_data.get("network"),
+            username_scvmm="{}\\{}".format(self.mgmt.domain, self.mgmt.user),
+            ram=self.template_upload_data.get("ram"),
+            cores=self.template_upload_data.get("cores"),
+            src_path="{}{}".format(self.library, self.vhd_name),
+            host_fqdn=self.provider_data["hostname_fqdn"],
+            os_type=self.template_upload_data.get("os_type"),
+        )
 
         try:
             self.mgmt.run_script(script)
@@ -68,13 +72,13 @@ class SCVMMTemplateUpload(ProviderTemplateUpload):
             return False
 
     def run(self):
-        template_upload_scvmm = self.from_template_upload('template_upload_scvmm')
+        template_upload_scvmm = self.from_template_upload("template_upload_scvmm")
 
-        if template_upload_scvmm.get('disk'):
+        if template_upload_scvmm.get("disk"):
             if not self.upload_vhd():
                 return False
 
-        if template_upload_scvmm.get('template'):
+        if template_upload_scvmm.get("template"):
             if not self.make_template():
                 return False
 

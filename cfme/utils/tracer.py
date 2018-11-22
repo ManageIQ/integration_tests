@@ -67,9 +67,10 @@ def trace(scope=1, file_name_limit=None):
             except IndexError:
                 line = ""
             if len(frames) <= scope:
-                logger.debug("{}:{}:{}{} {}".format(
-                    len(frames),
-                    frame.f_code.co_name, frame.f_lineno, padding, line)
+                logger.debug(
+                    "{}:{}:{}{} {}".format(
+                        len(frames), frame.f_code.co_name, frame.f_lineno, padding, line
+                    )
                 )
         if why == "call":
             frames.append(frame)
@@ -103,5 +104,7 @@ def trace(scope=1, file_name_limit=None):
             result = func(*args, **kwds)
             sys.settrace(None)
             return result
+
         return _f
+
     return wrap

@@ -6,10 +6,9 @@ def public_fields(o):
     """
     Returns: a dict of fields whose name don't start with underscore.
     """
-    if not hasattr(o, '__dict__'):
+    if not hasattr(o, "__dict__"):
         return dict()
-    return dict((key, value) for key, value in o.__dict__.items()
-                if not key.startswith('_'))
+    return {key: value for key, value in o.__dict__.items() if not key.startswith("_")}
 
 
 def all_public_fields_equal(a, b):

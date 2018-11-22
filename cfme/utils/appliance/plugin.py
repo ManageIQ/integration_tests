@@ -41,12 +41,14 @@ class AppliancePlugin(object):
 
     Instance of such plugin is then created upon first access.
     """
+
     appliance = attr.ib(repr=False, converter=proxy)
 
     @cached_property
     def logger(self):
         # TODO: Change when appliance gets its own
         from cfme.utils.log import logger
+
         return logger
 
     @classmethod

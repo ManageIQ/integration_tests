@@ -2,7 +2,7 @@ import subprocess
 from cfme.utils.wait import wait_for
 
 
-class IPMI():
+class IPMI:
     """ Utility to access IPMI via CLI.
 
     The IPMI utility uses the ``ipmitool`` package to access the remote management
@@ -22,16 +22,17 @@ class IPMI():
     Returns: A :py:class:`IPMI` instnace.
 
     """
+
     def __init__(self, hostname, username, password, interface_type="lan", timeout=30):
         self.hostname = hostname
         self.username = username
         self.password = password
         self.interface_type = interface_type
-        cmd_args = ['ipmitool']
-        cmd_args.extend(['-H', self.hostname])
-        cmd_args.extend(['-U', self.username])
-        cmd_args.extend(['-P', self.password])
-        cmd_args.extend(['-I', self.interface_type])
+        cmd_args = ["ipmitool"]
+        cmd_args.extend(["-H", self.hostname])
+        cmd_args.extend(["-U", self.username])
+        cmd_args.extend(["-P", self.password])
+        cmd_args.extend(["-I", self.interface_type])
         self.cmd_args = cmd_args
         self.timeout = timeout
 
@@ -140,4 +141,5 @@ class IPMIException(Exception):
     """
     Raised during :py:meth:`_run_ipmi` if the error code is non zero.
     """
+
     pass

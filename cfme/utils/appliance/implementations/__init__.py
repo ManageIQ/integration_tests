@@ -15,7 +15,7 @@ class Implementation(object):
         return self.owner
 
     def __str__(self):
-        return 'ViaUI'
+        return "ViaUI"
 
     def open_browser(self, url_key=None):
         # TODO: self.appliance.server.address() instead of None
@@ -50,9 +50,6 @@ class Implementation(object):
             An instance of the ``view_class``
         """
         additional_context = additional_context or {}
-        view = view_class(
-            self.widgetastic,
-            additional_context=additional_context,
-            logger=logger)
+        view = view_class(self.widgetastic, additional_context=additional_context, logger=logger)
 
         return view

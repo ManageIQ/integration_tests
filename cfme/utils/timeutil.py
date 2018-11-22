@@ -15,6 +15,7 @@ class parsetime(_datetime):  # NOQA
     """ Modified class with loaders for our datetime formats.
 
     """
+
     american_with_utc_format = "%m/%d/%y %H:%M:%S UTC"
     iso_with_utc_format = "%Y-%m-%d %H:%M:%S UTC"
     american_minutes = "%m/%d/%y %H:%M"
@@ -27,14 +28,7 @@ class parsetime(_datetime):  # NOQA
 
     @classmethod
     def _parse(cls, fmt, time_string):
-        return cls.fromtimestamp(
-            time.mktime(
-                time.strptime(
-                    time_string,
-                    fmt
-                )
-            )
-        )
+        return cls.fromtimestamp(time.mktime(time.strptime(time_string, fmt)))
 
     @classmethod
     def from_american_with_utc(cls, time_string):
@@ -229,30 +223,30 @@ class parsetime(_datetime):  # NOQA
 def nice_seconds(t_s):
     """Return nicer representation of seconds"""
     if t_s < 60.0:
-        return "{0:.2f}s".format(t_s)
+        return "{:.2f}s".format(t_s)
     minutes = 1
     while t_s - (minutes * 60.0) >= 60.0:
         minutes += 1
     seconds = t_s - (minutes * 60)
     if minutes < 60.0:
-        return "{0}m{1:.2f}s".format(minutes, seconds)
+        return "{}m{:.2f}s".format(minutes, seconds)
     # Hours
     hours = 1
     while minutes - (hours * 60.0) >= 60.0:
         hours += 1
     minutes = minutes - (hours * 60)
     if hours < 24.0:
-        return "{0}h{1}m{2:.2f}s".format(hours, minutes, seconds)
+        return "{}h{}m{:.2f}s".format(hours, minutes, seconds)
     # Days
     days = 1
     while hours - (days * 24.0) >= 24.0:
         days += 1
     hours = hours - (days * 24)
     if days < 7.0:
-        return "{0}d{1}h{2}m{3:.2f}s".format(days, hours, minutes, seconds)
+        return "{}d{}h{}m{:.2f}s".format(days, hours, minutes, seconds)
     # Weeks
     weeks = 1
     while days - (weeks * 7.0) >= 7.0:
         weeks += 1
     days = days - (weeks * 7)
-    return "{0}w{1}d{2}h{3}m{4:.2f}s".format(weeks, days, hours, minutes, seconds)
+    return "{}w{}d{}h{}m{:.2f}s".format(weeks, days, hours, minutes, seconds)

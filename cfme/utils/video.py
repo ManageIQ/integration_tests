@@ -18,9 +18,10 @@ import subprocess
 from signal import SIGINT
 
 from cfme.utils.conf import env
+
 # from utils.log import logger
 
-vid_options = env.get('logging', {}).get('video')
+vid_options = env.get("logging", {}).get("video")
 
 
 def process_running(pid):
@@ -52,6 +53,7 @@ class Recorder(object):
 
     The first way is preferred, obviously
     """
+
     def __init__(self, filename, display=None, quality=None):
         self.filename = filename
         self.display = display or vid_options["display"]
@@ -59,13 +61,18 @@ class Recorder(object):
         self.pid = None
 
     def start(self):
-        cmd_line = ['recordmydesktop',
-                    '--display', str(self.display),
-                    '-o', str(self.filename),
-                    '--no-sound',
-                    '--v_quality', str(self.quality),
-                    '--on-the-fly-encoding',
-                    '--overwrite']
+        cmd_line = [
+            "recordmydesktop",
+            "--display",
+            str(self.display),
+            "-o",
+            str(self.filename),
+            "--no-sound",
+            "--v_quality",
+            str(self.quality),
+            "--on-the-fly-encoding",
+            "--overwrite",
+        ]
         try:
             proc = subprocess.Popen(cmd_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self.pid = proc.pid

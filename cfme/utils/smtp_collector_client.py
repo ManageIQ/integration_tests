@@ -12,6 +12,7 @@ class SMTPCollectorClient(object):
         port: Port where the collector query interface listens (Default: 1026)
 
     """
+
     def __init__(self, host="localhost", port=1026):
         self._host = host
         self._port = port

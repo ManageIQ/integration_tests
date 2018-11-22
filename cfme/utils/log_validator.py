@@ -39,9 +39,9 @@ class LogValidator(object):
     """
 
     def __init__(self, remote_filename, **kwargs):
-        self.skip_patterns = kwargs.pop('skip_patterns', [])
-        self.failure_patterns = kwargs.pop('failure_patterns', [])
-        self.matched_patterns = kwargs.pop('matched_patterns', [])
+        self.skip_patterns = kwargs.pop("skip_patterns", [])
+        self.failure_patterns = kwargs.pop("failure_patterns", [])
+        self.matched_patterns = kwargs.pop("matched_patterns", [])
 
         self._remote_file_tail = SSHTail(remote_filename, **kwargs)
         self.matches = {}
@@ -60,23 +60,27 @@ class LogValidator(object):
     def _check_skip_logs(self, line):
         for pattern in self.skip_patterns:
             if re.match(pattern, line):
-                logger.info('Skip pattern {} was matched on line {},\
-                            so skipping this line'.format(pattern, line))
+                logger.info(
+                    "Skip pattern {} was matched on line {},\
+                            so skipping this line".format(
+                        pattern, line
+                    )
+                )
                 return True
         return False
 
     def _check_fail_logs(self, line):
         for pattern in self.failure_patterns:
             if re.match(pattern, line):
-                pytest.fail('Failure pattern {} was matched on line {}'.format(pattern, line))
+                pytest.fail("Failure pattern {} was matched on line {}".format(pattern, line))
 
     def _check_match_logs(self, line):
         for pattern in self.matched_patterns:
             if re.match(pattern, line):
-                logger.info('Expected pattern {} was matched on line {}'.format(pattern, line))
+                logger.info("Expected pattern {} was matched on line {}".format(pattern, line))
                 self.matches[pattern] = True
 
     def _verify_match_logs(self):
         for pattern in self.matched_patterns:
             if pattern not in self.matches:
-                pytest.fail('Expected pattern {} did not match'.format(pattern))
+                pytest.fail("Expected pattern {} did not match".format(pattern))

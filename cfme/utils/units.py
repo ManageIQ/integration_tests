@@ -8,14 +8,12 @@ import six
 
 # TODO: Split the 1000 and 1024 factor out. Now it is not an issue as it is used FOR COMPARISON ONLY
 FACTOR = 1024
-PREFIXES = ['', 'K', 'M', 'G', 'T', 'P']
+PREFIXES = ["", "K", "M", "G", "T", "P"]
 FACTORS = {prefix: int(math.pow(FACTOR, i)) for i, prefix in enumerate(PREFIXES)}
 
-UNITS = ['Byte', 'Bytes', 'B', 'b', 'Hz']
+UNITS = ["Byte", "Bytes", "B", "b", "Hz"]
 
-EQUAL_UNITS = {
-    'B': ('Byte', 'Bytes')
-}
+EQUAL_UNITS = {"B": ("Byte", "Bytes")}
 
 # Sanity check
 for target_unit, units in EQUAL_UNITS.items():
@@ -24,7 +22,8 @@ for target_unit, units in EQUAL_UNITS.items():
         assert unit in UNITS
 
 REGEXP = re.compile(
-    r'^\s*(\d+(?:\.\d+)?)\s*({})?({})\s*$'.format('|'.join(PREFIXES), '|'.join(UNITS)))
+    r"^\s*(\d+(?:\.\d+)?)\s*({})?({})\s*$".format("|".join(PREFIXES), "|".join(UNITS))
+)
 
 
 @functools.total_ordering
@@ -48,14 +47,15 @@ class Unit(object):
       Unit.parse('2 GB') == 2 *1024 * 1024 * 1024 `` is True
 
     """
-    __slots__ = ['number', 'prefix', 'unit_type']
+
+    __slots__ = ["number", "prefix", "unit_type"]
 
     @classmethod
     def parse(cls, s):
         s = str(s)
         match = REGEXP.match(s)
         if match is None:
-            raise ValueError('{} is not a proper value to be parsed!'.format(repr(s)))
+            raise ValueError("{} is not a proper value to be parsed!".format(repr(s)))
         number, prefix, unit_type = match.groups()
         # Check if it isnt just an another name for another unit.
         for target_unit, units in EQUAL_UNITS.items():
@@ -81,10 +81,10 @@ class Unit(object):
         elif isinstance(other, (int, float)):
             other = self._as_same_unit(other)
         elif not isinstance(other, Unit):
-            raise TypeError('Incomparable types {} and {}'.format(type(self), type(other)))
+            raise TypeError("Incomparable types {} and {}".format(type(self), type(other)))
         # other is instance of this class too now
         if self.unit_type != other.unit_type:
-            raise TypeError('Incomparable units {} and {}'.format(self.unit_type, other.unit_type))
+            raise TypeError("Incomparable units {} and {}".format(self.unit_type, other.unit_type))
         return other
 
     def __eq__(self, other):
@@ -102,24 +102,25 @@ class Unit(object):
         return int(self.absolute)
 
     def __repr__(self):
-        return '{}({}, {}, {})'.format(
-            type(self).__name__, repr(self.number), repr(self.prefix), repr(self.unit_type))
+        return "{}({}, {}, {})".format(
+            type(self).__name__, repr(self.number), repr(self.prefix), repr(self.unit_type)
+        )
 
     def __str__(self):
-        return '{} {}{}'.format(self.number, self.prefix, self.unit_type)
+        return "{} {}{}".format(self.number, self.prefix, self.unit_type)
 
 
 # Chargeback header names: used in chargeback tests for convenience
-_HeaderNames = namedtuple('_HeaderNames', ['rate_name', 'metric_name', 'cost_name'])
+_HeaderNames = namedtuple("_HeaderNames", ["rate_name", "metric_name", "cost_name"])
 CHARGEBACK_HEADER_NAMES = {
-    'Fixed1': _HeaderNames('Fixed Compute Cost 1', 'Fixed Compute Metric', 'Fixed Compute Cost 1'),
-    'Fixed2': _HeaderNames('Fixed Compute Cost 2', 'Fixed Compute Metric', 'Fixed Compute Cost 2'),
-    'CpuCores': _HeaderNames('Used CPU Cores', 'Cpu Cores Used Metric', 'Cpu Cores Used Cost'),
-    'Memory': _HeaderNames('Used Memory', 'Memory Used', 'Memory Used Cost'),
-    'Network': _HeaderNames('Used Network I/O', 'Network I/O Used', 'Network I/O Used Cost'),
+    "Fixed1": _HeaderNames("Fixed Compute Cost 1", "Fixed Compute Metric", "Fixed Compute Cost 1"),
+    "Fixed2": _HeaderNames("Fixed Compute Cost 2", "Fixed Compute Metric", "Fixed Compute Cost 2"),
+    "CpuCores": _HeaderNames("Used CPU Cores", "Cpu Cores Used Metric", "Cpu Cores Used Cost"),
+    "Memory": _HeaderNames("Used Memory", "Memory Used", "Memory Used Cost"),
+    "Network": _HeaderNames("Used Network I/O", "Network I/O Used", "Network I/O Used Cost"),
 }
 
 
 def parse_number(str_):
     """parsing only the numbers in the string"""
-    return float(''.join(re.findall(r'[\d\.]+', str_)) or 0)
+    return float("".join(re.findall(r"[\d\.]+", str_)) or 0)

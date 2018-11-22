@@ -8,26 +8,26 @@
 
 import re
 
-__all__ = ('quote',)
+__all__ = ("quote",)
 
 _bash_reserved_words = {
-    'case',
-    'coproc',
-    'do',
-    'done',
-    'elif',
-    'else',
-    'esac',
-    'fi',
-    'for',
-    'function',
-    'if',
-    'in',
-    'select',
-    'then',
-    'until',
-    'while',
-    'time'
+    "case",
+    "coproc",
+    "do",
+    "done",
+    "elif",
+    "else",
+    "esac",
+    "fi",
+    "for",
+    "function",
+    "if",
+    "in",
+    "select",
+    "then",
+    "until",
+    "while",
+    "time",
 }
 
 ####
@@ -47,7 +47,7 @@ def quote(*args):
     s = "".join(args)
     if s in _bash_reserved_words:
         return "\\" + s
-    elif s.find('\'') >= 0:
+    elif s.find("'") >= 0:
         s1 = '"' + _quote_re1.sub(r"\\\1", s) + '"'
     else:
         s1 = "'" + s + "'"

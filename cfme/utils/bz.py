@@ -51,7 +51,7 @@ class Bugzilla(object):
     def __init__(self, **kwargs):
         # __kwargs passed to _Bugzilla instantiation, pop our args out
         self.__product = kwargs.pop("product", None)
-        self.__config_options = kwargs.pop('config_options', {})
+        self.__config_options = kwargs.pop("config_options", {})
         self.__kwargs = kwargs
         self.__bug_cache = {}
         self.__product_cache = {}
@@ -81,19 +81,21 @@ class Bugzilla(object):
 
     @classmethod
     def from_config(cls):
-        bz_conf = env.get('bugzilla', {})  # default empty so we can call .get() later
-        url = bz_conf.get('url')
+        bz_conf = env.get("bugzilla", {})  # default empty so we can call .get() later
+        url = bz_conf.get("url")
         if url is None:
-            url = 'https://bugzilla.redhat.com/xmlrpc.cgi'
+            url = "https://bugzilla.redhat.com/xmlrpc.cgi"
             logger.warning("No Bugzilla URL specified in conf, using default: %s", url)
         cred_key = bz_conf.get("bugzilla", {}).get("credentials")
-        return cls(url=url,
-                   user=credentials.get(cred_key, {}).get("username"),
-                   password=credentials.get(cred_key, {}).get("password"),
-                   cookiefile=None,
-                   tokenfile=None,
-                   product=bz_conf.get("bugzilla", {}).get("product"),
-                   config_options=bz_conf)
+        return cls(
+            url=url,
+            user=credentials.get(cred_key, {}).get("username"),
+            password=credentials.get(cred_key, {}).get("password"),
+            cookiefile=None,
+            tokenfile=None,
+            product=bz_conf.get("bugzilla", {}).get("product"),
+            config_options=bz_conf,
+        )
 
     @cached_property
     def bugzilla(self):
@@ -125,9 +127,9 @@ class Bugzilla(object):
             bug = id
         else:
             bug = self.get_bug(id)
-        expanded = set([])
-        found = set([])
-        stack = set([bug])
+        expanded = set()
+        found = set()
+        stack = {bug}
         while stack:
             b = stack.pop()
             if b.status == "CLOSED" and b.resolution == "DUPLICATE":
@@ -145,7 +147,7 @@ class Bugzilla(object):
     def resolve_blocker(self, blocker, version=None, ignore_bugs=None, force_block_streams=None):
         # ignore_bugs is mutable but is not mutated here! Same force_block_streams
         force_block_streams = force_block_streams or []
-        ignore_bugs = set([]) if not ignore_bugs else ignore_bugs
+        ignore_bugs = set() if not ignore_bugs else ignore_bugs
         if isinstance(id, BugWrapper):
             bug = blocker
         else:
@@ -156,7 +158,7 @@ class Bugzilla(object):
             version = bug.product.latest_version
         is_upstream = version == bug.product.latest_version
         variants = self.get_bug_variants(bug)
-        filtered = set([])
+        filtered = set()
         version_series = ".".join(str(version).split(".")[:2])
         for variant in sorted(variants, key=lambda variant: variant.id):
             if variant.id in ignore_bugs:
@@ -164,22 +166,27 @@ class Bugzilla(object):
             if variant.version is not None and variant.version > version:
                 continue
             if variant.release_flag is not None and version.is_in_series(variant.release_flag):
-                logger.info('Found matching bug for %d by release - #%d', bug.id, variant.id)
+                logger.info("Found matching bug for %d by release - #%d", bug.id, variant.id)
                 filtered.clear()
                 filtered.add(variant)
                 break
-            elif is_upstream and variant.release_flag == 'future':
+            elif is_upstream and variant.release_flag == "future":
                 # It is an upstream bug
-                logger.info('Found a matching upstream bug #%d for bug #%d', variant.id, bug.id)
+                logger.info("Found a matching upstream bug #%d for bug #%d", variant.id, bug.id)
                 return variant
-            elif (isinstance(variant.version, Version) and
-                  isinstance(variant.target_release, Version) and
-                  (variant.version.is_in_series(version_series) or
-                   variant.target_release.is_in_series(version_series))):
+            elif (
+                isinstance(variant.version, Version)
+                and isinstance(variant.target_release, Version)
+                and (
+                    variant.version.is_in_series(version_series)
+                    or variant.target_release.is_in_series(version_series)
+                )
+            ):
                 filtered.add(variant)
             else:
                 logger.warning(
-                    "ATTENTION!!: No release flags, wrong versions, ignoring %s", variant.id)
+                    "ATTENTION!!: No release flags, wrong versions, ignoring %s", variant.id
+                )
         if not filtered:
             # No appropriate bug was found
             for forced_stream in force_block_streams:
@@ -191,11 +198,15 @@ class Bugzilla(object):
                 return None
         # First, use versions
         for bug in filtered:
-            if (isinstance(bug.version, Version) and
-                isinstance(bug.target_release, Version) and
-                check_fixed_in(bug.fixed_in, version_series) and
-                (bug.version.is_in_series(version_series) or
-                 bug.target_release.is_in_series(version_series))):
+            if (
+                isinstance(bug.version, Version)
+                and isinstance(bug.target_release, Version)
+                and check_fixed_in(bug.fixed_in, version_series)
+                and (
+                    bug.version.is_in_series(version_series)
+                    or bug.target_release.is_in_series(version_series)
+                )
+            ):
                 return bug
         # Otherwise prefer release_flag
         for bug in filtered:
@@ -214,11 +225,14 @@ def check_fixed_in(fixed_in, version_series):
 
 
 class BugWrapper(object):
-    _copy_matchers = map(re.compile, [
-        r'^[+]{3}\s*This bug is a CFME zstream clone. The original bug is:\s*[+]{3}\n[+]{3}\s*'
-        'https://bugzilla.redhat.com/show_bug.cgi\?id=(\d+)\.\s*[+]{3}',
-        r"^\+\+\+ This bug was initially created as a clone of Bug #([0-9]+) \+\+\+"
-    ])
+    _copy_matchers = map(
+        re.compile,
+        [
+            r"^[+]{3}\s*This bug is a CFME zstream clone. The original bug is:\s*[+]{3}\n[+]{3}\s*"
+            r"https://bugzilla.redhat.com/show_bug.cgi\?id=(\d+)\.\s*[+]{3}",
+            r"^\+\+\+ This bug was initially created as a clone of Bug #([0-9]+) \+\+\+",
+        ],
+    )
 
     def __init__(self, bugzilla, bug):
         self._bug = bug
@@ -320,8 +334,8 @@ class BugWrapper(object):
     def is_opened(self):
         states = self._bugzilla.open_states
         if not self.upstream_bug and appliance_is_downstream():
-            states.add('POST')
-            states.add('MODIFIED')
+            states.add("POST")
+            states.add("MODIFIED")
         return self.status in states
 
     @property
