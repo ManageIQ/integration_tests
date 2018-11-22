@@ -42,13 +42,13 @@ class FloatingIpCollection(BaseCollection):
     ENTITY = FloatingIp
 
     def all(self):
+        floating_ips = []
         view = navigate_to(self, 'All')
-        all_ips = view.entities.get_all(surf_pages=True)
-        list_floating_ip_obj = []
-        for ip in all_ips:
-            # as for 5.9 floating ip doesn't have name att, will get name as address from data
-            list_floating_ip_obj.append(ip.name if ip.name else ip.data['address'])
-        return [self.instantiate(address=name) for name in list_floating_ip_obj]
+        for _ in view.entities.paginator.pages():
+            ips = view.entities.get_all()
+            for ip in ips:
+                floating_ips.append(self.instantiate(address=ip.data['address']))
+        return floating_ips
 
 
 @navigator.register(FloatingIpCollection, 'All')
