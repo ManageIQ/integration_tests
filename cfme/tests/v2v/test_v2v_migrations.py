@@ -10,7 +10,7 @@ from cfme.fixtures.v2v import _form_data
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
-from cfme.utils.appliance.implementations.ui import navigate_to, navigator
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError, wait_for
@@ -654,14 +654,15 @@ def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, con
         infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_plans
-    # vm_obj is a list, taking only first object with [0] index
+    # vm_obj is a list, with only 1 VM object, hence [0]
     vm_obj = form_data_vm_obj_single_datastore.vm_list[0]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping.name,
-        vm_list=[vm_obj],
-        start_migration=True)
+        vm_list=form_data_vm_obj_single_datastore.vm_list,
+        start_migration=True,
+    )
 
     # explicit wait for spinner of in-progress status card
     view = appliance.browser.create_view(
