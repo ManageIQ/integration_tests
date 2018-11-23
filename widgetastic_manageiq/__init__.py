@@ -3690,6 +3690,7 @@ class WaitTab(Tab):
     def child_widget_accessed(self, widget):
         _to_try = 2
         _tries = 0
+        self.wait_displayed(timeout="5s")
         while _tries < _to_try:
             _tries += 1
             self.select()
