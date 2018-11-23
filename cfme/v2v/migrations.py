@@ -360,7 +360,6 @@ class MigrationDashboardView(BaseLoggedInPage):
             # TODO: This also means that mappings/plans may be moved to different pages. Once all of
             that is settled we will need to refactor and also account for notifications.
         """
-        new_msg = ""
         try:
             try:
                 is_plan_visible = self.progress_card.is_plan_visible(plan_name)
@@ -378,12 +377,14 @@ class MigrationDashboardView(BaseLoggedInPage):
                 #     view.progress_card.total_vm_to_be_migrated(migration_plan.name))
                 try:
                     plan_time_elapsed = self.progress_card.get_clock(plan_name)
-                    new_msg = "time elapsed for migration: {}".format(plan_time_elapsed)
+                    new_msg = "time elapsed for migration: {time}".format(time=plan_time_elapsed)
                 except NoSuchElementException:
                     new_msg = "playbook is executing.."
                     pass
-                msg = "For plan {}, is plan in progress: {}, {}".format(
-                    plan_name, is_plan_visible, new_msg
+                msg = "For plan {plan_name}, is plan in progress: {visibility}, {message}".format(
+                    plan_name=plan_name,
+                    visibility=is_plan_visible,
+                    message=new_msg
                 )
                 self.logger.info(msg)
             # return False if plan visible under "In Progress Plans"

@@ -13,7 +13,6 @@ from cfme.utils.wait import wait_for
 
 
 pytestmark = [
-    pytest.mark.ignore_stream("5.8"),
     test_requirements.ansible,
     pytest.mark.meta(
         server_roles=["+embedded_ansible"]
@@ -60,11 +59,9 @@ def ansible_repository(appliance):
         fauxfactory.gen_alpha(), REPOSITORIES, description=fauxfactory.gen_alpha()
     )
     view = navigate_to(repository, "Details")
-    if appliance.version < "5.9":
-        refresh = view.browser.refresh
-    else:
-        refresh = view.toolbar.refresh.click
+    refresh = view.toolbar.refresh.click
     wait_for(lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
+             delay=10,
              timeout=60,
              fail_func=refresh)
     yield repository
@@ -102,25 +99,20 @@ def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conv
                              wait_for_ansible, ansible_repository, credentials_collection,
                              form_data_vm_obj_single_datastore):
     """Test for migrating vms with pre and post playbooks"""
+    creds = credentials[v2v_providers.vmware_provider.data.templates.get("rhel7_minimal").creds]
     CREDENTIALS = (
         "Machine",
         {
-            "username": credentials[
-                v2v_providers.vmware_provider.data.templates.get("rhel7_minimal").creds
-            ].username,
-            "password": credentials[
-                v2v_providers.vmware_provider.data.templates.get("rhel7_minimal").creds
-            ].password,
+            "username": creds.username,
+            "password": creds.password,
             "privilage_escalation": "sudo",
         },
     )
     credential = credentials_collection.create(
-        name="{}_credential_{}".format(CREDENTIALS[0], fauxfactory.gen_alpha()),
+        name="{type}_credential_{cred}".format(type=CREDENTIALS[0], cred=fauxfactory.gen_alpha()),
         credential_type=CREDENTIALS[0],
         **CREDENTIALS[1]
     )
-
-    # TODO: Add cleanup for added crede
 
     provision_catalog = catalog_item(
         request, appliance, credential.name, ansible_repository, "provision"
