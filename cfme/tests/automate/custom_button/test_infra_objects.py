@@ -304,14 +304,20 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
         if expression == "enablement":
             assert custom_button_group.item_enabled(button.text)
             setup_obj.remove_tag(tag)
-            assert not custom_button_group.item_enabled(button.text)
+            if appliance.version < "5.10":
+                assert not custom_button_group.item_enabled(button.text)
+            else:
+                assert not custom_button_group.is_enabled
         elif expression == "visibility":
             assert custom_button_group.is_displayed
             setup_obj.remove_tag(tag)
             assert not custom_button_group.is_displayed
     else:
         if expression == "enablement":
-            assert not custom_button_group.item_enabled(button.text)
+            if appliance.version < "5.10":
+                assert not custom_button_group.item_enabled(button.text)
+            else:
+                assert not custom_button_group.is_enabled
             setup_obj.add_tag(tag)
             assert custom_button_group.item_enabled(button.text)
         elif expression == "visibility":
