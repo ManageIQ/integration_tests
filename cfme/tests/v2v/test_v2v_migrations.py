@@ -558,15 +558,18 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
 
 def test_migration_long_name(request, appliance, v2v_providers, host_creds, conversion_tags):
     """Test to check VM name with 64 character should work"""
-    source_datastores_list = v2v_providers.vmware_provider.data.get('datastores', [])
-    source_datastore = [d.name for d in source_datastores_list if d.type == 'nfs'][0]
-    # Following code will create vm name with 64 characters
-    vm_name = "{}{}".format(random_vm_name(context="v2v"), fauxfactory.gen_alpha(51))
+    source_datastores_list = v2v_providers.vmware_provider.data.get("datastores", [])
+    source_datastore = [d.name for d in source_datastores_list if d.type == "nfs"][0]
     collection = appliance.provider_based_collection(v2v_providers.vmware_provider)
+
+    # Following code will create vm name with 64 characters
+    vm_name = "{vm_name}{extra_words}".format(vm_name=random_vm_name(context="v2v"),
+                                              extra_words=fauxfactory.gen_alpha(51))
     vm_obj = collection.instantiate(
         name=vm_name,
         provider=v2v_providers.vmware_provider,
-        template_name=rhel7_minimal(v2v_providers.vmware_provider)['name'])
+        template_name=rhel7_minimal(v2v_providers.vmware_provider)["name"],
+    )
     vm_obj.create_on_provider(
         timeout=2400,
         find_in_cfme=True,
@@ -584,27 +587,43 @@ def test_migration_long_name(request, appliance, v2v_providers, host_creds, conv
 
     migration_plan_collection = appliance.collections.v2v_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_long_name{}".format(fauxfactory.gen_alphanumeric()),
+        name="long_name_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_long_name{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping.name,
         vm_list=[vm_obj],
-        start_migration=True)
+        start_migration=True,
+    )
 
     # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection, 'All').VIEW)
-    wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
-        message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True)
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, "All").VIEW.pick()
+    )
+    wait_for(
+        func=view.progress_card.is_plan_started,
+        func_args=[migration_plan.name],
+        message="migration plan is starting, be patient please",
+        delay=5,
+        num_sec=150,
+        handle_exception=True,
+    )
 
     # wait until plan is in progress
-    wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
+    wait_for(
+        func=view.plan_in_progress,
+        func_args=[migration_plan.name],
         message="migration plan is in progress, be patient please",
-        delay=15, num_sec=1800)
-
-    view.migr_dropdown.item_select("Completed Plans")
+        delay=5,
+        num_sec=1800,
+    )
+    view.switch_to("Completed Plans")
     view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan {plan_name}, migration status : {count}, total time elapsed: {clock}"
                 .format(plan_name=migration_plan.name,
                 count=view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
                 clock=view.migration_plans_completed_list.get_clock(migration_plan.name)))
+
+    # validate MAC address matches between source and target VMs
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
+    migrated_vm = get_migrated_vm_obj(vm_obj, v2v_providers.rhv_provider)
+    assert vm_obj.mac_address == migrated_vm.mac_address
