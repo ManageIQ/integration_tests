@@ -40,7 +40,7 @@ def volume_backup(appliance, provider):
 
     try:
         if volume_backup.exists:
-            backup_collection.delete(volume_backup)
+            backup_collection.delete(volume_backup, wait=False)
         if volume.exists:
             volume.delete(wait=False)
     except Exception:
@@ -96,10 +96,14 @@ def incremental_backup(volume_backup, provider):
     volume = volume_backup.appliance.collections.volumes.instantiate(volume_backup.volume, provider)
 
     # create incremental backup for a volume with existing backup
-    backup_name = fauxfactory.gen_alpha()
-    volume.create_backup(backup_name, incremental=True)
-    incremental_backup = backup_collection.instantiate(backup_name, provider)
-    yield incremental_backup
+    if volume.status == 'available':
+        backup_name = fauxfactory.gen_alpha()
+        volume.create_backup(backup_name, incremental=True)
+        incremental_backup = backup_collection.instantiate(backup_name, provider)
+        yield incremental_backup
+    else:
+        pytest.skip('Skipping incremental backup fixture: volume not available')
+
 
     try:
         if incremental_backup.exists:
@@ -179,8 +183,25 @@ def test_incr_backup_of_attached_volume_crud(appliance, provider, request, attac
              message='Wait for Backup to disappear')
 
 
+
 @pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_create_backup_of_volume_with_type(volume_backup_with_type):
     assert volume_backup_with_type.exists
     assert volume_backup_with_type.size == VOLUME_SIZE
+
+
+@pytest.mark.rfe
+def test_restore_volume_backup(volume_backup):
+    if volume_backup.status == 'available':
+        volume_backup.restore(volume_backup.volume)
+    else:
+        pytest.skip('Skipping restore volume backup test, volume backup is not available')
+
+
+@pytest.mark.rfe
+def test_restore_incremental_backup(incremental_backup):
+    if incremental_backup.status == 'available':
+        incremental_backup.restore(incremental_backup.volume)
+    else:
+        pytest.skip('Skipping restore incremental backup test, volume backup is not available')
