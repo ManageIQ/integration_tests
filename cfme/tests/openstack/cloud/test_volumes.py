@@ -4,7 +4,7 @@ import fauxfactory
 import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.log import logger
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for, wait_for_decorator
@@ -65,6 +65,16 @@ def volume_with_type(appliance, provider):
         provider.mgmt.capi.volume_types.delete(vol_type)
 
 
+@pytest.fixture(scope='function')
+def new_instance(provider):
+    instance_name = fauxfactory.gen_alpha()
+    collection = provider.appliance.provider_based_collection(provider)
+    instance = collection.create_rest(instance_name, provider)
+    yield instance
+
+    instance.cleanup_on_provider()
+
+
 @pytest.mark.regression
 def test_create_volume(volume, provider):
     assert volume.exists
@@ -110,3 +120,32 @@ def test_edit_volume_with_type(volume_with_type, appliance):
 def test_delete_volume_with_type(volume_with_type):
     volume_with_type.delete()
     assert not volume_with_type.exists
+
+
+@pytest.mark.regression
+def test_volume_attach_detach_instance(volume, new_instance, appliance):
+    # TODO: Test Reset and Cancel
+    initial_instance_count = volume.instance_count
+    volume.attach_instance(new_instance.name)
+    view = appliance.browser.create_view(navigator.get_class(volume, 'Details').VIEW)
+    view.flash.assert_success_message(
+        'Attaching Cloud Volume "{name}" to {instance} finished'.format(
+            name=volume.name, instance=new_instance.name))
+
+    @wait_for_decorator(delay=10, timeout=300,
+                        message="Waiting for volume to be attached to instance")
+    def volume_attached_to_instance():
+        new_instance.refresh_relationships()
+        return volume.instance_count == initial_instance_count + 1
+
+    volume.detach_instance(new_instance.name)
+    view = appliance.browser.create_view(navigator.get_class(volume, 'Details').VIEW)
+    view.flash.assert_success_message(
+        'Detaching Cloud Volume "{name}" from {instance} finished'.format(
+            name=volume.name, instance=new_instance.name))
+
+    @wait_for_decorator(delay=10, timeout=300,
+                        message="Waiting for volume to be detached from instance")
+    def volume_detached_from_instance():
+        new_instance.refresh_relationships()
+        return volume.instance_count == initial_instance_count
