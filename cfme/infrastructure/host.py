@@ -345,7 +345,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
         Args:
             drift_section (str): Title text of the row to compare
             section (str): Accordion section where the change happened
-            indexes: Indexes of results to compare starting with 1 for first row (latest result).
+            indexes: Indexes of results to compare starting with 0 for first row (latest result).
                      Compares all available drifts, if left empty (default)
 
         Note:

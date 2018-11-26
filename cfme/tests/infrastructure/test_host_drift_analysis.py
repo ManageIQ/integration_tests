@@ -116,8 +116,8 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
         a_host.equal_drift_results(
             '{} (1)'.format(added_tag.category.display_name),
             'My Company Tags',
-            -2,
-            -1
+            0,
+            1
         ),
         "Drift analysis results are equal when they shouldn't be"
     )

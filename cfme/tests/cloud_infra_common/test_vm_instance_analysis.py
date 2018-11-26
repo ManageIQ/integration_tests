@@ -849,8 +849,8 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
         ssa_vm.equal_drift_results(
             '{} (1)'.format(added_tag.category.display_name),
             'My Company Tags',
-            -2,
-            -1
+            0,
+            1
         ),
         "Drift analysis results are equal when they shouldn't be"
     )
