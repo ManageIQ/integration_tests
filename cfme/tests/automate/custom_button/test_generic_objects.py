@@ -254,6 +254,7 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
 
     group, obj_type = button_group
     exp = {expression: {"tag": "My Company Tags : Department", "value": "Engineering"}}
+
     button = group.buttons.create(
         text=fauxfactory.gen_alphanumeric(),
         hover=fauxfactory.gen_alphanumeric(),
@@ -271,19 +272,18 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
 
     view = navigate_to(setup_obj, "Details")
     custom_button_group = Dropdown(view, group.hover)
-
     if tag.display_name in [item.display_name for item in setup_obj.get_tags()]:
         if expression == "enablement":
             assert custom_button_group.item_enabled(button.text)
             setup_obj.remove_tag(tag)
-            assert not custom_button_group.item_enabled(button.text)
+            assert not custom_button_group.is_enabled
         elif expression == "visibility":
             assert custom_button_group.is_displayed
             setup_obj.remove_tag(tag)
             assert not custom_button_group.is_displayed
     else:
         if expression == "enablement":
-            assert not custom_button_group.item_enabled(button.text)
+            assert not custom_button_group.is_enabled
             setup_obj.add_tag(tag)
             assert custom_button_group.item_enabled(button.text)
         elif expression == "visibility":
