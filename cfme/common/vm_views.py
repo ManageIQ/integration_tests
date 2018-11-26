@@ -357,6 +357,9 @@ class ProvisionView(BaseLoggedInPage):
             self.continue_button.click()
             wait_for(self.browser.plugin.ensure_page_safe, delay=.1, num_sec=10)
 
+        def after_fill(self, was_change):
+            wait_for(self.browser.plugin.ensure_page_safe, delay=.1, num_sec=10)
+
     is_displayed = displayed_not_implemented
 
 
