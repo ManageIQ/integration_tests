@@ -36,8 +36,8 @@ def api_version(appliance):
     return appliance.new_rest_api_instance(entry_point=entry_point)
 
 
-@pytest.fixture(scope="module")
-def vm_modscope(request, provider, appliance):
+@pytest.fixture(scope="function")
+def vm_obj(request, provider, appliance):
     return _vm(request, provider, appliance.rest_api)
 
 
@@ -1030,9 +1030,9 @@ class TestNotificationsRESTAPI(object):
 
 
 class TestEventStreamsRESTAPI(object):
-    @pytest.fixture(scope='module')
-    def gen_events(self, appliance, vm_modscope, provider):
-        vm_name = vm_modscope
+    @pytest.fixture(scope='function')
+    def gen_events(self, appliance, vm_obj, provider):
+        vm_name = vm_obj
         # generating events for some vm
         # create vm and start vm events are produced by vm fixture
         # stop vm event
@@ -1053,13 +1053,13 @@ class TestEventStreamsRESTAPI(object):
         query_resource_attributes(collection[-1], soft_assert=soft_assert)
 
     @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
-    def test_find_created_events(self, appliance, vm_modscope, gen_events, provider, soft_assert):
+    def test_find_created_events(self, appliance, vm_obj, gen_events, provider, soft_assert):
         """Tests find_by and get functions of event_streams collection
 
         Metadata:
             test_flag: rest
         """
-        vm_name = vm_modscope
+        vm_name = vm_obj
         collections = appliance.rest_api.collections
         vm_id = collections.vms.get(name=vm_name).id
 
