@@ -15,7 +15,7 @@ from cfme.services.myservice import MyService
 from cfme.services.myservice.ssui import DetailsMyServiceView
 from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
-from cfme.utils.blockers import BZ
+from cfme.utils.blockers import BZ, GH
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -70,6 +70,7 @@ def test_retire_service_ssui(appliance, setup_provider,
 
 
 @pytest.mark.rhv3
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8200')])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_start(appliance, setup_provider, context,
                        order_service, provider, request):
