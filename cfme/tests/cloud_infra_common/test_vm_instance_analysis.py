@@ -592,8 +592,8 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-@pytest.mark.meta(blockers=[BZ(1578792, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: vm_system_type != 'redhat')])
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8157',
+    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
     """ Tests SSA can be performed and returns sane results
 
