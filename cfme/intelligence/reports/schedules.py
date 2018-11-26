@@ -256,7 +256,7 @@ class ScheduleCollection(BaseCollection):
         """
         view = self._select_schedules(schedules)
         view.configuration.item_select(action)
-        view.flash.assert_no_errors()
+        view.flash.assert_no_error()
 
     def enable_schedules(self, *schedules):
         """Select and enable specified schedules.
