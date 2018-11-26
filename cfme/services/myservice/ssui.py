@@ -11,6 +11,7 @@ from cfme.utils.appliance.implementations.ssui import (
     navigator, SSUINavigateStep, navigate_to, ViaSSUI
 )
 from cfme.utils.wait import wait_for
+from cfme.utils.version import VersionPicker, Version
 from widgetastic_manageiq import (SSUIlist, SSUIDropdown, Notification, SSUIAppendToBodyDropdown)
 from . import MyService
 
@@ -230,14 +231,9 @@ def launch_vm_console(self, catalog_item):
 @MiqImplementationContext.external_for(MyService.retire, ViaSSUI)
 def retire(self):
     view = navigate_to(self, 'Retire')
-    view.retire.click()
-    view = self.create_view(MyServicesView)
-    assert wait_for(
-        lambda: view.is_displayed, delay=3, num_sec=300,
-        message="waiting for view to be displayed"
-    )
-    # TODO - remove sleep when BZ 1518954 is fixed
-    time.sleep(10)
+    if self.appliance.version < "5.10":
+        view.retire.click()
+    assert view.wait_displayed("10s")
     assert view.notification.assert_message("{} was retired.".format(self.name))
 
 
@@ -329,12 +325,13 @@ class MyServiceEditTags(SSUINavigateStep):
 
 @navigator.register(MyService, 'Retire')
 class MyServiceRetire(SSUINavigateStep):
-    VIEW = RetireServiceView
+    # TODO - remove check when BZ 1653288 is fixed
+    VIEW = VersionPicker({
+        Version.lowest(): RetireServiceView,
+        '5.10': MyServicesView
+    })
 
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        if self.appliance.version >= "5.8":
-            self.prerequisite_view.lifecycle.item_select('Retire')
-        else:
-            self.prerequisite_view.lifecycle.item_select('Retire Now')
+        self.prerequisite_view.lifecycle.item_select('Retire')
