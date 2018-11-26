@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
+import os.path
+from textwrap import dedent
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
@@ -29,16 +31,36 @@ def proxy_machine():
     After test run vm deletes from provider
     """
     depot_machine_name = random_vm_name('proxy')
-    data = conf.cfme_data.get("proxy_template")
+    data = conf.cfme_data.get("utility_vm")
     proxy_provider_key = data["provider"]
     proxy_template_name = data["template_name"]
-    proxy_port = data['port']
+    proxy_port = '3128'
     prov = get_mgmt(proxy_provider_key)
     vm = deploy_template(proxy_provider_key,
                          depot_machine_name,
                          template_name=proxy_template_name)
     wait_for(func=lambda: vm.ip is not None, num_sec=300, delay=10,
              message='Waiting for instance "{}" ip to be present.'.format(vm.name))
+
+    credentials_key = conf.cfme_data['utility_vm']['credentials']
+    with SSHClient(
+            hostname=vm.ip,
+            **conf.credentials[credentials_key]) as ssh_client:
+        repofile = os.path.join(os.path.dirname(__file__), 'rhel.repo')
+        ssh_client.run_command(dedent('''\
+            cat > /etc/yum.repos.d/rhel.repo <<EOF
+            [rhel]
+            name=RHEL 7.5-Update
+            baseurl={baseurl}
+            enabled=1
+            gpgcheck=0
+            skip_if_unavailable=False
+            EOF
+            ''').format(baseurl=conf.cfme_data['basic_info']['rhel7_updates_url']))
+        for line in ('yum install -y squid && systemctl start squid',
+                     'firewall-cmd --zone=public --add-port=3128/tcp --permanent',
+                     'firewall-cmd --reload'):
+            assert ssh_client.run_command(line).success
 
     yield vm.ip, proxy_port
     vm.delete()
@@ -47,9 +69,10 @@ def proxy_machine():
 @pytest.fixture(scope='module')
 def proxy_ssh(proxy_machine):
     proxy_ip, __ = proxy_machine
+    credentials_key = conf.cfme_data['utility_vm']['credentials']
     with SSHClient(
             hostname=proxy_ip,
-            **conf.credentials['proxy_vm']) as ssh_client:
+            **conf.credentials[credentials_key]) as ssh_client:
         yield ssh_client
 
 
