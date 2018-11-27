@@ -1,4 +1,5 @@
 """manual: Marker for marking tests asmanual tests."""
+import pytest
 
 from cfme.fixtures.pytest_store import store
 
@@ -15,6 +16,7 @@ def pytest_addoption(parser):
                      help="Collect also manual tests (only for --collect-only)")
 
 
+@pytest.mark.tryfirst
 def pytest_collection_modifyitems(config, items):
     if config.getvalue('include_manual'):
         return
