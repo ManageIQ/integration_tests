@@ -7,7 +7,7 @@ import pytest
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider import base_types
-from cfme.configure.access_control import AddUserView
+from cfme.configure.access_control import AddUserView, AddTenantView
 from cfme.configure.tasks import TasksView
 from cfme.exceptions import RBACOperationBlocked
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -1119,3 +1119,24 @@ def test_copied_user_password_inheritance(appliance, group_collection, request):
     view = user.create_view(AddUserView)
     assert view.password_txt.value == '' and view.password_verify_txt.value == ''
     view.cancel_button.click()
+
+def test_tenant_unique_tenant_project_name_on_parent_level(appliance):
+    """ Test tenant name should be unique at same level
+
+    prerequisites:
+        * Appliance
+
+    Steps:
+        * Create a tenant under root tenat "MyCompany"
+        * Try to create a new tenant with the same name
+    """
+    coll = appliance.collections.tenants
+    root_tenant = coll.get_root_tenant()
+    tenant_obj = coll.create(name=fauxfactory.gen_alphanumeric(), description=fauxfactory.gen_alphanumeric(), parent=root_tenant)
+
+    view = navigate_to(root_tenant, "Details")
+    view.toolbar.configuration.item_select("Add child Tenant to this Tenant")
+    view = view.browser.create_view(AddTenantView)
+    view.form.fill({'name': tenant_obj.name, 'description': tenant_obj.description})
+    view.form.add_button.click()
+    view.flash.assert_message('Failed to add a new tenant resource - Name should be unique per parent')
