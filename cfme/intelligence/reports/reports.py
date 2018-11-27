@@ -164,7 +164,7 @@ class ReportDetailsView(CloudIntelReportsView):
         return (
             self.in_intel_reports and
             self.reports.is_opened and
-            self.report_info.is_active() and
+            self.report_info.is_displayed and
             self.reports.tree.currently_selected == expected_tree and
             self.title.text == expected_title
         )
@@ -330,7 +330,8 @@ class Report(BaseEntity, Updateable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ReportDetailsView, override=updates, wait="5s")
+        view = self.create_view(ReportDetailsView, override=updates)
+        wait_for(lambda: view.is_displayed, fail_condition=False, timeout=10)
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(

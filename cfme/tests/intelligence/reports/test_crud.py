@@ -121,6 +121,7 @@ def test_reports_disable_enable_schedule(schedule_data, appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[BZ(1653796, forced_streams=["5.9", "5.10"])])
 def test_menuwidget_crud(appliance):
     """
     Polarion:
@@ -177,6 +178,7 @@ def test_reportwidget_crud(appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[BZ(1653796, forced_streams=["5.9", "5.10"])])
 def test_chartwidget_crud(appliance):
     """
     Polarion:
@@ -202,6 +204,7 @@ def test_chartwidget_crud(appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[BZ(1653796, forced_streams=["5.9", "5.10"])])
 def test_rssfeedwidget_crud(appliance):
     """
     Polarion:
