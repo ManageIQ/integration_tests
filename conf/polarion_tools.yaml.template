@@ -1,4 +1,4 @@
-polarion-project-id: RHCF3
+polarion-project-id: PROJECTID
 xunit_import_properties:
     polarion-lookup-method: name
     polarion-testrun-status-id: inprogress
