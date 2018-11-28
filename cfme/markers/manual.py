@@ -1,4 +1,5 @@
 """manual: Marker for marking tests asmanual tests."""
+import pytest
 
 from cfme.fixtures.pytest_store import store
 
@@ -10,14 +11,25 @@ def pytest_configure(config):
 def pytest_addoption(parser):
     """Adds options for the composite uncollection system"""
     parser.addoption("--manual", action="store_true", default=False,
-                     help="Collect manual tests (only for --collect-only")
+                     help="Collect manual tests (only for --collect-only)")
+    parser.addoption("--include-manual", action="store_true", default=False,
+                     help="Collect also manual tests (only for --collect-only)")
 
 
-def pytest_collection_modifyitems(session, config, items):
-    len_collected = len(items)
+@pytest.mark.tryfirst
+def pytest_collection_modifyitems(config, items):
+    if config.getvalue('include_manual'):
+        return
     is_manual = config.getvalue('manual')
-    items[:] = [item for item in items if bool(item.get_marker('manual')) == is_manual]
 
-    len_filtered = len(items)
-    filtered_count = len_collected - len_filtered
-    store.uncollection_stats['manual'] = filtered_count
+    keep, discard = [], []
+    for item in items:
+        if bool(item.get_marker("manual")) == is_manual:
+            keep.append(item)
+        else:
+            discard.append(item)
+
+    items[:] = keep
+    config.hook.pytest_deselected(items=discard)
+
+    store.uncollection_stats['manual'] = len(discard)
