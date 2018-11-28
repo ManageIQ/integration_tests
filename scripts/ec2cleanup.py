@@ -34,6 +34,8 @@ def parse_cmd_line():
                         help='List of queues, which should be excluded. Queue Url is allowed')
     parser.add_argument('--stack-template',
                         help='Stack name template to be removed', default="test", type=str)
+    parser.add_argument('--bucket-name',
+                        help='Specified Bucket will be removed', default="smartstate", type=str)
     parser.add_argument("--output", dest="output", help="target file name, default "
                                                         "'cleanup_ec2.log' in utils.path.log_path",
                         default=log_path.join('cleanup_ec2.log').strpath)
@@ -222,8 +224,29 @@ def delete_queues(provider_mgmt, excluded_queues, output):
         logger.exception('Exception in %r', delete_queues.__name__)
 
 
+def delete_s3_bucket(provider_mgmt, bucket_name, output):
+    bucket_list = []
+    provider_name = provider_mgmt.kwargs['name']
+    try:
+        for bucket in provider_mgmt.list_s3_bucket():
+            if bucket_name in bucket:
+                deleted_bucket = provider_mgmt.delete_s3_buckets(bucket_names=[bucket])
+                if deleted_bucket:
+                    bucket_list.append([provider_name, bucket])
+            else:
+                logger.info("Smartstate Bucket is not found")
+        logger.info("  Deleted S3 Buckets: %r", bucket_list)
+        if bucket_list:
+            with open(output, 'a+') as report:
+                report.write(tabulate(tabular_data=bucket_list,
+                                      headers=['Provider Key', 'Bucket Name'],
+                                      tablefmt='orgtbl'))
+    except Exception as e:
+        logger.exception('Exception in %s', e.message)
+
+
 def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclude_stacks,
-               exclude_snapshots, exclude_queues, stack_template, output):
+               exclude_snapshots, exclude_queues, stack_template, bucket_name, output):
     with open(output, 'w') as report:
         report.write('ec2cleanup.py, Address, Volume, LoadBalancer, Snapshot and '
                      'Network Interface Cleanup')
@@ -256,6 +279,11 @@ def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclud
         delete_snapshots(provider_mgmt=provider_mgmt,
                          excluded_snapshots=exclude_snapshots,
                          output=output)
+
+        logger.info("Deleting S3 Buckets...")
+        delete_s3_bucket(provider_mgmt=provider_mgmt,
+                          bucket_name=bucket_name,
+                          output=output)
         logger.info("Releasing addresses...")
         delete_disassociated_addresses(provider_mgmt=provider_mgmt,
                                        excluded_eips=exclude_eips,
@@ -266,4 +294,4 @@ if __name__ == "__main__":
     args = parse_cmd_line()
     sys.exit(ec2cleanup(args.exclude_volumes, args.exclude_eips, args.exclude_elbs,
                         args.exclude_enis, args.exclude_stacks, args.exclude_snapshots,
-                        args.exclude_queues, args.stack_template, args.output))
+                        args.exclude_queues, args.stack_template, args.bucket_name, args.output))
