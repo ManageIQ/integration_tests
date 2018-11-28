@@ -218,8 +218,8 @@ def test_cloud_quota_by_lifecycle(request, appliance, provider, setup_provider,
 
 
 @pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
-def test_quota_cloud_via_services(appliance, request, provider, setup_provider, admin_email,
-                     entities, prov_data, catalog_item, context):
+def test_quota_cloud_via_services(appliance, request, setup_provider, admin_email, entities,
+                                  prov_data, catalog_item, context):
     """This test case verifies the quota assigned by automation method for user and group
        is working correctly for the cloud providers.
 
@@ -237,8 +237,8 @@ def test_quota_cloud_via_services(appliance, request, provider, setup_provider, 
             service_catalogs.add_to_shopping_cart()
         service_catalogs.order()
     # nav to requests page to check quota validation
-    request_description = "Provisioning Service [{catalog_item__name}] from [{catalog_item__name}]"\
-        .format(catalog_item__name=catalog_item.name)
+    request_description = ("Provisioning Service [{catalog_item_name}] from [{catalog_item_name}]"
+        .format(catalog_item_name=catalog_item.name))
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
