@@ -172,3 +172,68 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
         )
     except TimedOutError:
         assert False, "Expected 1 requests not found in automation log"
+
+
+@pytest.mark.uncollectif(
+    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
+    and appliance.version < "5.10"
+)
+@pytest.mark.parametrize("expression", ["enablement", "visibility"])
+def test_custom_button_expression(appliance, request, setup_obj, button_group, expression):
+    """ Test custom button as per expression enablement/visibility.
+    prerequisites:
+        * Appliance with Infra provider
+    Steps:
+        * Create custom button group with the Object type
+        * Create a custom button with expression (Tag)
+            1. Enablement Expression
+            2. Visibility Expression
+        * Navigate to object Detail page
+        * Check: button should not enable/visible without tag
+        * Check: button should enable/visible with tag
+    """
+
+    group, obj_type = button_group
+    exp = {expression: {"tag": "My Company Tags : Department", "value": "Engineering"}}
+    button = group.buttons.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        display_for="Single entity",
+        system="Request",
+        request="InspectMe",
+        **exp
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    tag_cat = appliance.collections.categories.instantiate(
+        name="department", display_name="Department"
+    )
+    tag = tag_cat.collections.tags.instantiate(name="engineering", display_name="Engineering")
+
+    view = navigate_to(setup_obj, "Details")
+    custom_button_group = Dropdown(view, group.hover)
+
+    if tag.display_name in [item.display_name for item in setup_obj.get_tags()]:
+        if expression == "enablement":
+            assert custom_button_group.item_enabled(button.text)
+            setup_obj.remove_tag(tag)
+            if appliance.version < "5.10":
+                assert not custom_button_group.item_enabled(button.text)
+            else:
+                assert not custom_button_group.is_enabled
+        elif expression == "visibility":
+            assert custom_button_group.is_displayed
+            setup_obj.remove_tag(tag)
+            assert not custom_button_group.is_displayed
+    else:
+        if expression == "enablement":
+            if appliance.version < "5.10":
+                assert not custom_button_group.item_enabled(button.text)
+            else:
+                assert not custom_button_group.is_enabled
+            setup_obj.add_tag(tag)
+            assert custom_button_group.item_enabled(button.text)
+        elif expression == "visibility":
+            assert not custom_button_group.is_displayed
+            setup_obj.add_tag(tag)
+            assert custom_button_group.is_displayed
