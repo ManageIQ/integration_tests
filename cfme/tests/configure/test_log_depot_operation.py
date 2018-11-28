@@ -7,6 +7,7 @@ Since: 2013-02-20
 """
 from datetime import datetime, timedelta
 from ftplib import FTP
+from pytz import timezone
 from wait_for import TimedOutError
 
 import fauxfactory
@@ -302,7 +303,9 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
         ftp.recursively_delete()
 
     # Start the collection
-    collect_time = datetime.utcnow() - timedelta(hours=4)  # time on dropbox is UTC-4
+    # set collect_time as time on dropbox and remove TZ for further comparison
+    tz_name = 'America/New_York'
+    collect_time = datetime.now(timezone('UTC')).astimezone(timezone(tz_name)).replace(tzinfo=None)
     configured_depot.collect_all()
     # Check it on FTP
     if log_depot.protocol != 'dropbox':
