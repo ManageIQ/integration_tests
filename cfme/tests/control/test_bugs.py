@@ -7,14 +7,15 @@ from widgetastic.widget import Text
 
 from cfme import test_requirements
 from cfme.control.explorer import ControlExplorerView
-from cfme.control.explorer.alerts import AlertDetailsView
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
-from cfme.exceptions import CFMEExceptionOccured
+from cfme.exceptions import CFMEExceptionOccured, ItemNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
-from cfme.utils.wait import TimedOutError
+from cfme.utils.log import logger
+from cfme.utils.wait import TimedOutError, wait_for
+from cfme.utils.version import current_version
 
 pytestmark = [
     test_requirements.control,
@@ -146,6 +147,42 @@ def hardware_reconfigured_alert(alert_collection):
     )
     yield alert
     alert.delete()
+
+
+@pytest.fixture
+def setup_for_monitor_alerts(request, appliance):
+    """ Setup a provider and insert a fired alert into the db if none is present.
+    """
+    query_str = ("SELECT * FROM miq_alert_statuses")
+
+    if appliance.db.client.engine.execute(query_str).rowcount == 0:
+        # first get the ems_id for the provider
+        table = appliance.db.client['ems_clusters']
+        ems_id_column = getattr(table, 'ems_id')
+        ems_id = appliance.db.client.session.query(ems_id_column)[0].ems_id
+
+        logger.info('Injecting a fired alert into the DB.')
+
+        description = 'a fake fired alert'
+
+        insert_str = (
+            "INSERT INTO miq_alert_statuses "
+            "(id, miq_alert_id, resource_id, resource_type, result, description, ems_id)"
+            " VALUES ('100', '1', '1', 'VmOrTemplate', 'f', '{}', '{}')"
+        ).format(description, int(ems_id))
+        delete_str = "DELETE FROM miq_alert_statuses WHERE id='100'"
+
+        appliance.db.client.engine.execute(insert_str)
+        # delete at end of test
+        request.addfinalizer(lambda: appliance.db.client.engine.execute(delete_str))
+    else:
+        # get the description of the alert that is already present on the appliance
+        table = appliance.db.client['miq_alert_statuses']
+        desc_column = getattr(table, 'description')
+        description = appliance.db.client.session.query(desc_column)[0].description
+        logger.info('A fired alert is already present on the appliance.')
+
+    return description
 
 
 @pytest.mark.meta(blockers=[1155284])
@@ -352,3 +389,29 @@ def test_alert_ram_reconfigured(hardware_reconfigured_alert):
     view = navigate_to(hardware_reconfigured_alert, "Details")
     attr = view.hardware_reconfigured_parameters.get_text_of("Hardware Attribute")
     assert attr == "RAM Increased"
+
+
+def test_alert_nav_from_monitor_goes_to_infra_provider(alert_collection, virtualcenter_provider,
+        setup_for_monitor_alerts):
+    """Test coverage for BZ 1637609, this test tries to navigate to the infra provider page
+    from the Monitor->Alerts->All Alerts page. This requires an appliance that has fired alerts
+    on it. If the appliance does not have fired alerts on it, then we inject one into the DB.
+    """
+    if current_version() < '5.10':
+        pytest.skip('The fix for BZ 1637609 is not backported to CFME 5.9, so skipping test.')
+
+    description = setup_for_monitor_alerts
+
+    view = navigate_to(alert_collection,'MonitorAlertsAll')
+    if BZ(1507011, forced_streams=['5.9','5.10']).blocks:
+        wait_for(lambda: view.is_displayed, timeout=10, delay=5.0)
+    try:
+        view.alerts_list[description].click_provider()
+    except ItemNotFound:
+        logger.exception(
+            'No alerts from provider {} '
+            'fired on this appliance.'.format(virtualcenter_provider.name)
+        )
+
+    # verify that we are in the correct location
+    assert view.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers']

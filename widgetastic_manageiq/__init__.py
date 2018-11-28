@@ -56,6 +56,7 @@ from widgetastic_patternfly import (
     Tab,
     BreadCrumb,
     AggregateStatusCard,
+    PFIcon,
 )
 
 from cfme.exceptions import ItemNotFound
@@ -5084,3 +5085,134 @@ class MigrationDashboardStatusCard(AggregateStatusCard):
         ' h2[contains(@class,"card-pf-title")  and contains(.,{@name|quote})]]'
     )
     TITLE_ANCHOR = ".//h2"
+
+
+class AlertItem(View):
+    """ Represents an item in the list-view of fired alerts """
+
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class,"list-group-item alert") and position()={@index}]'
+    )
+    DESCRIPTION_LOCATOR = './/span[contains(@class,"description-column")]'
+    EXPAND_LOCATOR = './/span[contains(@class,"{}")]'.format(PFIcon.icons.ANGLE_RIGHT)
+    COLLAPSE_LOCATOR = './/span[contains(@class,"{}")]'.format(PFIcon.icons.ANGLE_DOWN)
+    PROVIDER_LOCATOR = './/a[@href="#"]/span[@class="no-wrap ng-binding"]'
+
+    def __init__(self, parent, index=None, locator=None, logger=None):
+        View.__init__(self, parent, logger=logger)
+        if locator is None:
+            # use the ParametrizedLocator defined above
+            self.index = index
+        else:
+            # overwrite ROOT when we explicitly input a locator
+            self.ROOT = locator
+
+    # properties
+    @property
+    def alerts_list(self):
+        return self.parent
+
+    @property
+    def description(self):
+        desc = self.browser.element(self.DESCRIPTION_LOCATOR, parent=self)
+        return self.browser.text(desc)
+
+    @property
+    def provider(self):
+        prov = self.browser.element(self.PROVIDER_LOCATOR, parent=self)
+        return self.browser.text(prov)
+
+    # methods
+    def open(self):
+        expand_arrow = self.browser.element(self.EXPAND_LOCATOR, parent=self)
+        if self.history_table.is_displayed:
+            pass
+        else:
+            self.browser.click(expand_arrow)
+
+    def close(self):
+        collapse_arrow = self.browser.element(self.COLLAPSE_LOCATOR, parent=self)
+        if self.history_table.is_displayed:
+            self.browser.click(collapse_arrow)
+        else:
+            pass
+
+    def click_provider(self):
+        prov = self.browser.element(self.PROVIDER_LOCATOR, parent=self)
+        self.browser.click(prov)
+
+    def read(self):
+        return self.browser.text(self)
+
+    # nested views
+    @View.nested
+    class history_table(View):
+        """ history table only appears after clicking an item in the alerts list """
+
+        TABLE_LOCATOR = './/div[contains(@class, "list-group-item-container")]//table'
+        history_table = Table(TABLE_LOCATOR)
+
+        @property
+        def is_displayed(self):
+            return bool(self.browser.elements(self.TABLE_LOCATOR))
+
+        def read(self):
+            if not self.is_displayed:
+                self.parent_view.open()
+            return self.history_table.read()
+
+
+class AllAlertsList(View):
+    """Represents the list of fired alerts on the Monitor->All Alerts page"""
+
+    ROOT = ParametrizedLocator(".//div[contains(@class,{@list_class|quote})]")
+    ITEMS = './/div[contains(@class,"list-group-item alert")]'
+    # TODO: generalize this? way to make this less specific?
+    header_mapping = {
+        "provider": '[.//a[@href="#"]/span[@class="no-wrap ng-binding" and uib-tooltip="{}"]]',
+        "description": '[.//span[contains(@class,"description-column") '
+        'and contains(text(), "{}")]]',
+        "assignee": '[.//span[contains(@class, "assignee") and contains(text(), "{}")]]',
+    }
+
+    def __init__(self, parent, list_class, assoc_column=None, logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.list_class = list_class
+        self.assoc_column = assoc_column
+
+    def __getitem__(self, item):
+        # TODO: Update this to work with assoc_column like in Table
+        # This will be difficult since this list-view is not a table and doesn't have
+        # headers defined at specific horizontal indices like in a Table
+        """ allows the ability to directly select AlertItem by description with
+            item = view.alerts_list['<alert_description>']
+        """
+        item_loc = self._get_loc_by_attribute(item)
+        return self._filtered_items(self, locator=item_loc)
+
+    # properties
+    @property
+    def items(self):
+        return self._all_items()
+
+    @property
+    def item_count(self):
+        """Returns how many rows are currently in the table."""
+        return len(self.browser.elements(self.ITEMS, parent=self))
+
+    # methods
+    def _all_items(self):
+        for item_pos in range(1, self.item_count + 1):
+            yield AlertItem(self, index=item_pos)
+
+    def _filtered_items(self, item_loc):
+        """ returns a list of all items matching the item_loc"""
+        # items = self.browser.elements(item_loc, parent=self)
+        pass
+
+    def _get_loc_by_attribute(self, item):
+
+        if self.assoc_column is None:
+            raise TypeError("You cannot use string indices when no assoc_column specified!")
+        else:
+            return self.ITEMS + self.header_mapping[self.assoc_column].format(item)

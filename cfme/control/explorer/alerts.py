@@ -8,10 +8,14 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, Text, View
-from widgetastic_manageiq import AlertEmail, SNMPForm, SummaryForm, Table
-from widgetastic_patternfly import BootstrapSelect, Button, Input
-
+from widgetastic_manageiq import (
+    AllAlertsList, AlertEmail, SNMPForm, SummaryForm, Table
+)
+from widgetastic_patternfly import (
+    BootstrapSelect, Button, Input, SelectorDropdown
+)
 from . import ControlExplorerView
+from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.log import logger
@@ -122,6 +126,64 @@ class AlertDetailsView(ControlExplorerView):
                 self.context["object"].description
             ]
         )
+
+
+class MonitorAlertsAllView(BaseLoggedInPage):
+
+    result_header = Text('h5.ng-binding')
+    alerts_list = AllAlertsList(list_class='list-view-pf-view')
+    # Used for Ascending/Descending sort
+    sort_order = Text(".//button[./span[contains(@class,'sort-direction')]]")
+    # Used to select filter_by items like 'Name', 'Severity'
+    filter_by_dropdown = SelectorDropdown('uib-tooltip', 'Filter by')
+    # Used to select sort by options like 'Name', 'Number of Associated Plans'
+    sort_by_dropdown = SelectorDropdown('class','btn btn-default ng-binding dropdown-toggle')
+
+    @property
+    def in_monitor_alerts_all(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Monitor', 'Alerts', 'All Alerts']
+        )
+
+    @property
+    def is_displayed(self):
+        return self.in_monitor_alerts_all
+
+
+class MonitorAlertsOverviewView(BaseLoggedInPage):
+
+    # Used for Ascending/Descending sort
+    sort_order = Text(".//button[./span[contains(@class,'sort-direction')]]")
+    # Used to select filter_by items like 'Name', 'Severity'
+    filter_by_dropdown = SelectorDropdown('uib-tooltip', 'Filter by')
+    # Used to select sort by options like 'Name', 'Number of Associated Plans'
+    sort_by_dropdown = SelectorDropdown('class', 'btn btn-default dropdown-toggle')
+    # Used to set group by
+    group_by = BootstrapSelect(
+        locator=(
+            './/div[contains(@class, "bootstrap-select")] '
+            '/button[normalize-space(@title)="Environment"]/..'
+        )
+    )
+    # Used to set display
+    display = BootstrapSelect(
+        locator=(
+            './/div[contains(@class, "bootstrap-select")] '
+            '/button[normalize-space(@title)="providers"]/..'
+        )
+    )
+
+    @property
+    def in_monitor_alerts_overview(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Monitor', 'Alerts', 'Overview']
+        )
+
+    @property
+    def is_displayed(self):
+        return self.in_monitor_alerts_overview
 
 
 @attr.s
@@ -364,6 +426,24 @@ class AlertNew(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.configuration.item_select("Add a New Alert")
+
+
+@navigator.register(AlertCollection)
+class MonitorAlertsAll(CFMENavigateStep):
+    VIEW = MonitorAlertsAllView
+    prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
+
+    def step(self):
+        self.prerequisite_view.navigation.select("Monitor","Alerts","All Alerts")
+
+
+@navigator.register(AlertCollection)
+class MonitorAlertsOverview(CFMENavigateStep):
+    VIEW = MonitorAlertsOverviewView
+    prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
+
+    def step(self):
+        self.prerequisite_view.navigation.select("Monitor","Alerts","Overview")
 
 
 @navigator.register(Alert, "Edit")
