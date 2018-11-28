@@ -20,7 +20,6 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.update import Updateable
 from cfme.utils.version import Version, VersionPicker
 from cfme.utils.wait import wait_for
 
@@ -126,10 +125,12 @@ class InfraMappingWizardClustersView(View):
                        ...
                     }
         """
-        for mapping in values['mappings']:
-            self.source_clusters.fill(mapping['sources'])
-            self.target_clusters.fill(mapping['target'])
-            self.add_mapping.click()
+        if values:
+            for mapping in values['mappings']:
+                self.source_clusters.fill(mapping['sources'])
+                self.target_clusters.fill(mapping['target'])
+                self.add_mapping.click()
+
         was_change = not self.mappings_tree.is_empty
         if was_change:
             self.logger.info("Fill operation was successful, click Next.")
@@ -167,13 +168,14 @@ class InfraMappingWizardDatastoresView(View):
                         ...
                     }
         """
-        for cluster in values:
-            if self.cluster_selector.is_displayed:
-                self.cluster_selector.fill(cluster)
-            for mapping in values[cluster]['mappings']:
-                self.source_datastores.fill(mapping['sources'])
-                self.target_datastores.fill(mapping['target'])
-                self.add_mapping.click()
+        if values:
+            for cluster in values:
+                if self.cluster_selector.is_displayed:
+                    self.cluster_selector.fill(cluster)
+                for mapping in values[cluster]['mappings']:
+                    self.source_datastores.fill(mapping['sources'])
+                    self.target_datastores.fill(mapping['target'])
+                    self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
         if was_change:
             self.logger.info("Fill operation was successful, click Next.")
@@ -187,7 +189,6 @@ class InfraMappingWizardNetworksView(View):
     source_networks = MultiSelectList('source_networks')
     target_networks = MultiSelectList('target_networks')
     next_btn = Button("Create")  # overriding, since 'Next' is called 'Create' in this form
-    cancel = Button("Cancel")
     cluster_selector = BootstrapSelect(id='cluster_select')
 
     @property
@@ -213,17 +214,20 @@ class InfraMappingWizardNetworksView(View):
                         ...
                     }
         """
-        for cluster in values:
-            if self.cluster_selector.is_displayed:
-                self.cluster_selector.fill(cluster)
-            for mapping in values[cluster]['mappings']:
-                self.source_networks.fill(mapping['sources'])
-                self.target_networks.fill(mapping['target'])
-                self.add_mapping.click()
+        if values:
+            for cluster in values:
+                if self.cluster_selector.is_displayed:
+                    self.cluster_selector.fill(cluster)
+                for mapping in values[cluster]['mappings']:
+                    self.source_networks.fill(mapping['sources'])
+                    self.target_networks.fill(mapping['target'])
+                    self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
-        if was_change:
+        if was_change and self.next_btn.is_displayed:
             self.logger.info("Fill operation was successful, click Next.")
             self.next_btn.click()
+        else:
+            self.save.click()
         return was_change
 
 
@@ -451,8 +455,6 @@ class EditInfrastructureMappingView(View):
     form = InfraMappingWizard()
     form_title_text = 'Edit Infrastructure Mapping'
 
-    # infra_mapping_list = MigrationPlansList("infra-mappings-list-view")
-
     @property
     def is_displayed(self):
         return self.form.title.text == self.form_title_text
@@ -671,21 +673,16 @@ class MigrationPlanRequestDetailsView(View):
 
 
 @attr.s
-class InfrastructureMapping(BaseEntity, Updateable):
+class InfrastructureMapping(BaseEntity):
     """Class representing v2v infrastructure mappings"""
     name = attr.ib()
     description = attr.ib(default=None)
     form_data = attr.ib(default=None)
 
-    def update(self, updates):
+    def update(self, form_data):
         view = navigate_to(self, 'Edit', wait_for_view=20)
         assert view.wait_displayed()
-        changed = view.fill(updates)
-        if changed:
-            view.save_button.click()
-        else:
-            view.cancel.click()
-
+        view.form.fill(form_data)
 
 
 @attr.s
@@ -721,9 +718,6 @@ class InfrastructureMappingCollection(BaseCollection):
         self.find_mapping(mapping)
         mapping_list = view.infra_mapping_list
         mapping_list.delete_mapping(mapping.name)
-
-
-
 
 
 @attr.s
@@ -844,7 +838,7 @@ class AddInfrastructureMapping(CFMENavigateStep):
 @navigator.register(InfrastructureMapping, 'Edit')
 class EditInfrastructureMapping(CFMENavigateStep):
     VIEW = EditInfrastructureMappingView
-    # prerequisite = NavigateToSibling('All')
+
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
