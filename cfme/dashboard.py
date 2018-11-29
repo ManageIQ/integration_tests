@@ -78,8 +78,9 @@ class Kebab(Widget):
                 to set this to ``False``
         """
         try:
+            el = self.browser.element(self.ITEM.format(quote(item)))
             self.open()
-            self.browser.click(self.ITEM.format(quote(item)))
+            self.parent_browser.click(el)
         finally:
             if close:
                 self.close()
