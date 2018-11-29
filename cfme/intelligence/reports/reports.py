@@ -336,7 +336,7 @@ class Report(BaseEntity, Updateable):
         return self.collections.saved_reports
 
     def create_schedule(self, name=None, description=None, active=None,
-            timer=None, emails=None, email_options=None):
+            timer=None, from_email=None, emails=None, email_options=None):
 
         view = navigate_to(self, "ScheduleReport")
         view.fill({
@@ -349,6 +349,7 @@ class Report(BaseEntity, Updateable):
             "hour": timer.get("hour"),
             "minute": timer.get("minute"),
             "emails_send": bool(emails),
+            "from_email": from_email,
             "emails": emails,
             "send_if_empty": email_options.get("send_if_empty"),
             "send_txt": email_options.get("send_txt"),

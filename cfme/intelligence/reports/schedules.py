@@ -60,6 +60,7 @@ class SchedulesFormCommon(CloudIntelReportsView):
     minute = BootstrapSelect("start_min")
     # Email
     emails_send = Checkbox("send_email_cb")
+    from_email = TextInput(name="from")
     emails = AlertEmail()
     send_if_empty = Checkbox("send_if_empty")
     send_txt = Checkbox("send_txt")
@@ -135,6 +136,7 @@ class Schedule(Updateable, Pretty, BaseEntity):
     filter = attr.ib()
     active = attr.ib(default=None)
     timer = attr.ib(default=None)
+    from_email = attr.ib(default=None)
     emails = attr.ib(default=None)
     email_options = attr.ib(default=None)
 
@@ -193,7 +195,7 @@ class ScheduleCollection(BaseCollection):
     ENTITY = Schedule
 
     def create(self, name=None, description=None, filter=None, active=None,
-               timer=None, emails=None, email_options=None):
+               timer=None, from_email=None, emails=None, email_options=None):
         schedule = self.instantiate(name, description, filter, active=active, timer=timer,
             emails=emails, email_options=email_options)
         view = navigate_to(self, "Add")
@@ -210,6 +212,7 @@ class ScheduleCollection(BaseCollection):
             "hour": timer.get("hour"),
             "minute": timer.get("minute"),
             "emails_send": bool(emails),
+            "from_email": from_email,
             "emails": emails,
             "send_if_empty": email_options.get("send_if_empty"),
             "send_txt": email_options.get("send_txt"),
