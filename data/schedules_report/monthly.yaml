@@ -11,8 +11,7 @@ timer:
 emails:
     - test1@example.test
     - test2@example.test
-from_email:
-    - sender@example.test
+from_email: sender@example.test
 email_options:
   send_if_empty: True
   send_txt: True
