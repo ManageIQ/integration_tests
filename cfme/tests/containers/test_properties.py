@@ -30,8 +30,7 @@ TEST_ITEMS = [
     ContainersTestItem(
         Container, 'test_properties_container_provider',
         expected_fields=[
-            'Name', 'State', 'Last State', 'Restart count', 'Backing Ref (Container ID)',
-            'Privileged'],
+            'Name', 'State', 'Last State', 'Restart count', 'Backing Ref (Container ID)'],
         collection_object=ContainerCollection),
     ContainersTestItem(
         Project, 'test_properties_container_project',

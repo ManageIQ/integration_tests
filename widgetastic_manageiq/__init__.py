@@ -630,14 +630,22 @@ class SummaryTable(VanillaTable):
 
 
 class NestedSummaryTable(SummaryTable):
-    HEADER_IN_ROWS = "./tbody/tr[1]/td"
-    HEADERS = "./tbody/tr[1]/td/strong"
+    HEADER_IN_ROWS = "./tbody/tr[0]/td"
+
+    # In 5.9, table headers were in the body tag of the table div.
+    # Moved to the header tag in 5.10
+
+    HEADERS = VersionPick(
+        {Version.lowest(): "./tbody/tr[1]/td/strong", "5.10": "./thead/tr[2]/td/strong"}
+    )
 
     def __init__(self, parent, title, *args, **kwargs):
         SummaryTable.__init__(self, parent, title, *args, **kwargs)
 
     def _all_rows(self):
-        for row_pos in range(1, len(self.browser.elements(self.ROWS, parent=self))):
+
+        for row_pos in range(0, len(self.browser.elements(self.ROWS, parent=self))):
+
             yield self.Row(self, row_pos)
 
     def read(self):

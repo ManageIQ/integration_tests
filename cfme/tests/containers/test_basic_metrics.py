@@ -8,7 +8,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.path import scripts_path
 from cfme.utils.providers import ProviderFilter
-
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -85,11 +85,15 @@ def test_validate_metrics_collection_db(provider,
         timeout=WAIT_FOR_METRICS_CAPTURE_THRESHOLD_IN_MINUTES)
 
 
-def test_validate_metrics_collection_provider_gui(provider,
+def test_validate_metrics_collection_provider_gui(appliance, provider,
                                                   enable_capacity_and_utilization,
                                                   reduce_metrics_collection_threshold,
                                                   wait_for_metrics_rollup, soft_assert):
 
+    view = navigate_to(provider, "Details")
+    # Wait for the Utilization drop down to become enabled
+    wait_for(lambda: view.toolbar.monitoring.item_enabled('Utilization'),
+             delay=2, timeout=600, fail_func=appliance.server.browser.refresh)
     utilization = navigate_to(provider, "Utilization")
     soft_assert(utilization.cpu.all_data,
                 "No cpu's metrics exist in the cpu utilization graph!")
