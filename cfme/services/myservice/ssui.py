@@ -6,10 +6,12 @@ from widgetastic.widget import Text, Select
 from widgetastic_patternfly import Input, Button
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
+from cfme.dashboard import Kebab
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ssui import (
     navigator, SSUINavigateStep, navigate_to, ViaSSUI
 )
+from cfme.utils.version import Version, VersionPick
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (SSUIlist, SSUIDropdown, Notification, SSUIAppendToBodyDropdown)
 from . import MyService
@@ -47,7 +49,9 @@ class DetailsMyServiceView(MyServicesView):
 
     notification = Notification()
     policy = SSUIDropdown('Policy')
-    power_operations = SSUIDropdown('Power Operations')
+    power_operations = VersionPick(
+        {Version.lowest(): SSUIDropdown("Power Operations"), "5.10": Kebab()}
+    )
     access_dropdown = SSUIAppendToBodyDropdown('Access')
     remove_service = Button("Remove Service")
     configuration = SSUIDropdown('Configuration')
@@ -244,14 +248,14 @@ def retire(self):
 @MiqImplementationContext.external_for(MyService.service_power, ViaSSUI)
 def service_power(self, power=None):
     view = navigate_to(self, 'Details')
-    view.power_operations.item_select(power)
-    view = self.create_view(DetailsMyServiceView)
+    if self.appliance.version < "5.10":
+        view.power_operations.item_select(power)
+    else:
+        view.power_operations.select(power)
     wait_for(
         lambda: view.is_displayed, delay=3, num_sec=300,
         message="waiting for view to be displayed"
     )
-    # TODO - remove sleep when BZ 1518954 is fixed
-    time.sleep(10)
     # TODO - assert vm state through rest api
 
 
