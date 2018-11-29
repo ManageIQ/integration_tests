@@ -442,7 +442,7 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
         view = self.create_view(navigator.get_class(self, 'Details').VIEW)
         view.flash.assert_success_message(msg)
 
-    def rename_vm(self, new_vm_name, cancel=False, reset=False):
+    def rename(self, new_vm_name, cancel=False, reset=False):
         """Rename the VM
 
         Args:
@@ -461,8 +461,8 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
                 # save the form
                 view.save_button.click()
                 view.flash.assert_no_error()
-                return self.appliance.collections.infra_vms.instantiate(new_vm_name, self.provider,
-                                                                        self.template_name)
+                self.name = new_vm_name
+                return self
         if cancel:
             view.cancel_button.click()
             view.flash.assert_no_error()

@@ -92,11 +92,11 @@ class TestVmOwnershipRESTAPI(object):
         assert rest_vm.evm_owner.userid == "admin"
 
 
-@pytest.fixture(scope='module')
-def small_vm(provider, small_template_modscope):
+@pytest.fixture(scope='function')
+def small_vm(provider, small_template):
     vm = provider.appliance.collections.infra_vms.instantiate(random_vm_name(context='rename'),
                                                               provider,
-                                                              small_template_modscope.name)
+                                                              small_template.name)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     vm.refresh_relationships()
     yield vm
@@ -105,7 +105,7 @@ def small_vm(provider, small_template_modscope):
 
 
 @pytest.mark.ignore_stream('5.9')
-@pytest.mark.provider([VMwareProvider], override=True, scope="module", selector=ONE_PER_TYPE)
+@pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE_PER_TYPE)
 def test_rename_vm(small_vm):
 
     """Test for rename the VM.
@@ -119,9 +119,9 @@ def test_rename_vm(small_vm):
     6. Check whether VM is renamed or not
     """
     view = navigate_to(small_vm, 'Details')
-    changed_vm = small_vm.rename_vm(new_vm_name="test-{}".format(fauxfactory.gen_alphanumeric()))
+    vm_name = small_vm.name
+    changed_vm = small_vm.rename(new_vm_name="test-{}".format(fauxfactory.gen_alphanumeric()))
     view.flash.wait_displayed("20s")
-    msg = 'Rename of Virtual Machine "{vm_name}" has been initiated'.format(vm_name=small_vm.name)
+    msg = 'Rename of Virtual Machine "{vm_name}" has been initiated'.format(vm_name=vm_name)
     view.flash.assert_success_message(msg)
     assert changed_vm.exists
-    changed_vm.rename_vm(small_vm.name)
