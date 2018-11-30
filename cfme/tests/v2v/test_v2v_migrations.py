@@ -562,16 +562,3 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
     src_vm = form_data_vm_obj_single_datastore.vm_list[0]
     migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
     assert src_vm.mac_address == migrated_vm.mac_address
-
-
-@pytest.mark.parametrize('form_data_vm_obj_single_datastore', [['nfs', 'nfs', rhel7_minimal],],
-                        indirect=True)
-def test_edit_mapping_description(request, appliance, host_creds,
-                                conversion_tags, form_data_vm_obj_single_datastore):
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
-    edited_form_data = {
-        'general': {
-            'description': "my edited description"}
-    }
-    mapping.update(edited_form_data)

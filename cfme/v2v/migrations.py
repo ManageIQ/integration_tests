@@ -72,6 +72,7 @@ class InfraMappingFormControlButtons(View):
     # common footer buttons for first 3 pages
     back_btn = Button('Back')
     next_btn = Button('Next')
+    save = Button('Save')
     cancel_btn = Button('Cancel')
 
 
@@ -132,9 +133,7 @@ class InfraMappingWizardClustersView(View):
                 self.add_mapping.click()
 
         was_change = not self.mappings_tree.is_empty
-        if was_change:
-            self.logger.info("Fill operation was successful, click Next.")
-            self.next_btn.click()
+        self.next_btn.click()
         return was_change
 
 
@@ -177,8 +176,7 @@ class InfraMappingWizardDatastoresView(View):
                     self.target_datastores.fill(mapping['target'])
                     self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
-        if was_change:
-            self.logger.info("Fill operation was successful, click Next.")
+        if self.next_btn.wait_displayed():
             self.next_btn.click()
         return was_change
 
@@ -223,10 +221,10 @@ class InfraMappingWizardNetworksView(View):
                     self.target_networks.fill(mapping['target'])
                     self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
-        if was_change and self.next_btn.is_displayed:
-            self.logger.info("Fill operation was successful, click Next.")
+        self.cancel_btn.wait_displayed()
+        if self.next_btn.is_displayed:
             self.next_btn.click()
-        else:
+        elif self.save.is_displayed:
             self.save.click()
         return was_change
 
