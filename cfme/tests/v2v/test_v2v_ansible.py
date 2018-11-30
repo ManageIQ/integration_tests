@@ -7,7 +7,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator
-from cfme.utils.conf import credentials
+from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -30,8 +30,6 @@ pytestmark = [
     ),
 ]
 
-REPOSITORIES = "https://github.com/v2v-test/ansible_playbooks.git"
-
 
 def get_migrated_vm_obj(src_vm_obj, target_provider):
     """Returns migrated_vm obj from target_provider"""
@@ -41,22 +39,14 @@ def get_migrated_vm_obj(src_vm_obj, target_provider):
 
 
 @pytest.fixture(scope="module")
-def wait_for_ansible(appliance):
-    appliance.wait_for_embedded_ansible()
-
-
-@pytest.fixture(scope="module")
-def credentials_collection(appliance):
-    """Fixture to add machine credentials"""
-    return appliance.collections.ansible_credentials
-
-
-@pytest.fixture(scope="module")
 def ansible_repository(appliance):
     """Fixture to add ansible repository"""
+    appliance.wait_for_embedded_ansible()
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
-        fauxfactory.gen_alpha(), REPOSITORIES, description=fauxfactory.gen_alpha()
+        name=fauxfactory.gen_alpha(),
+        url=cfme_data.ansible_links.repositories.v2v,
+        description=fauxfactory.gen_alpha()
     )
     view = navigate_to(repository, "Details")
     refresh = view.toolbar.refresh.click
@@ -96,8 +86,7 @@ def catalog_item(request, appliance, machine_credential, ansible_repository, pla
     "form_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True
 )
 def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conversion_tags,
-                             wait_for_ansible, ansible_repository, credentials_collection,
-                             form_data_vm_obj_single_datastore):
+                             ansible_repository, form_data_vm_obj_single_datastore):
     """Test for migrating vms with pre and post playbooks"""
     creds = credentials[v2v_providers.vmware_provider.data.templates.get("rhel7_minimal").creds]
     CREDENTIALS = (
@@ -108,7 +97,7 @@ def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conv
             "privilage_escalation": "sudo",
         },
     )
-    credential = credentials_collection.create(
+    credential = appliance.collections.ansible_credentials.create(
         name="{type}_credential_{cred}".format(type=CREDENTIALS[0], cred=fauxfactory.gen_alpha()),
         credential_type=CREDENTIALS[0],
         **CREDENTIALS[1]
