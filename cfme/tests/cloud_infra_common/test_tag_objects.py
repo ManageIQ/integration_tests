@@ -119,11 +119,8 @@ def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
         3. As admin remove tag
         4. Login as restricted user, item is not visible for user
     """
-    if isinstance(cloud_test_item, KeyPair) and appliance.version < '5.9':
-        pytest.skip('Keypairs visibility works starting 5.9')
-
-        check_item_visibility(cloud_test_item, visibility)
-        request.addfinalizer(lambda: tag_cleanup(cloud_test_item, tag))
+    check_item_visibility(cloud_test_item, visibility)
+    request.addfinalizer(lambda: tag_cleanup(cloud_test_item, tag))
 
 
 @pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
