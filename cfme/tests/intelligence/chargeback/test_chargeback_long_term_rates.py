@@ -27,7 +27,7 @@ pytestmark = [
     pytest.mark.parametrize('interval', ['Daily', 'Weekly', 'Monthly'],
         ids=['daily_rate', 'weekly_rate', 'monthly_rate'], scope='module'),
     pytest.mark.provider([RHEVMProvider], selector=ONE,
-                       scope='function',
+                       scope='module',
                        required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
     pytest.mark.usefixtures('setup_provider'),
     test_requirements.chargeback,
