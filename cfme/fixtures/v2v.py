@@ -18,8 +18,24 @@ FormDataVmObj = namedtuple(
 )
 
 
+@pytest.fixture(scope='session')
+def v2v_downstream_enable(appliance):
+    """downstream 5.10 public beta has migration option disabled
+        Edit config and restart evm to enable it for testing
+        Not needed after GA
+    """
+    migration_check = appliance.ssh_client.run_command(
+        'grep "migration" /var/www/miq/vmdb/config/permissions.yml')
+    if appliance.version.is_in_series('5.10') and migration_check.rc == 1:
+        # 5.10 and migration is not in permissions.yml
+        assert appliance.ssh_client.run_command(
+            'echo "- :migration" >> /var/www/miq/vmdb/config/permissions.yml').success
+        appliance.evmserverd.restart()
+        appliance.wait_for_web_ui(timeout=300)
+
+
 @pytest.fixture(scope='function')
-def v2v_providers(request, second_provider, provider):
+def v2v_providers(request, second_provider, provider, v2v_downstream_enable):
     """ Fixture to setup providers """
     V2vProviders = namedtuple(
         'V2vProviders', ['vmware_provider', 'rhv_provider']
