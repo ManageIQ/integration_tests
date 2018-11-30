@@ -9,6 +9,7 @@ from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import assert_response
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [
@@ -121,7 +122,13 @@ def test_rename_vm(small_vm):
     view = navigate_to(small_vm, 'Details')
     vm_name = small_vm.name
     changed_vm = small_vm.rename(new_vm_name="test-{}".format(fauxfactory.gen_alphanumeric()))
-    view.flash.wait_displayed("20s")
-    msg = 'Rename of Virtual Machine "{vm_name}" has been initiated'.format(vm_name=vm_name)
-    view.flash.assert_success_message(msg)
-    assert changed_vm.exists
+    view.flash.wait_displayed(timeout=20)
+    view.flash.assert_success_message('Rename of Virtual Machine "{vm_name}" has been initiated'
+                                      .format(vm_name=vm_name))
+    exists, _ = wait_for(
+        lambda: changed_vm.exists,
+        timeout=300,
+        delay=5,
+        msg='waiting for vm rename',
+    )
+    assert exists
