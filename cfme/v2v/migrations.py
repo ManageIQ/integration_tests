@@ -20,6 +20,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.update import Updateable
 from cfme.utils.version import Version, VersionPicker
 from cfme.utils.wait import wait_for
 
@@ -672,22 +673,16 @@ class MigrationPlanRequestDetailsView(View):
 
 
 @attr.s
-class InfrastructureMapping(BaseEntity):
+class InfrastructureMapping(BaseEntity, Updateable):
     """Class representing v2v infrastructure mappings"""
     name = attr.ib()
     description = attr.ib(default=None)
     form_data = attr.ib(default=None)
 
-    def update(self, form_data):
+    def update(self, updates):
         view = navigate_to(self, 'Edit', wait_for_view=20)
         assert view.wait_displayed()
-        view.form.fill(form_data)
-        if form_data['general']['name']:
-            self.name = form_data['general']['name']
-        if form_data['general'].get('description', ''):
-            self.description = form_data['general'].get('description', '')
-        if form_data:
-            self.form_data = form_data
+        view.form.fill(updates)
 
 
 @attr.s
