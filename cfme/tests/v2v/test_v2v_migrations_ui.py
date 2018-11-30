@@ -372,6 +372,7 @@ def test_migration_rbac(appliance, new_credential, v2v_providers):
                                                     'rbac should allow this')
 
 
+@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.10')
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
 def test_edit_mapping_description(appliance, v2v_providers, form_data_single_datastore,
                                     host_creds, conversion_tags, soft_assert):
@@ -389,7 +390,6 @@ def test_edit_mapping_description(appliance, v2v_providers, form_data_single_dat
     mapping.update(edited_form_data)
 
     view = navigate_to(infrastructure_mapping_collection, 'All')
-    if appliance.version >= '5.10':
-        infrastructure_mapping_collection.find_mapping(mapping)
-        mapping_list = view.infra_mapping_list
-        soft_assert(str(mapping_list.get_map_description(mapping.name)) == mapping.description)
+    infrastructure_mapping_collection.find_mapping(mapping)
+    mapping_list = view.infra_mapping_list
+    soft_assert(str(mapping_list.get_map_description(mapping.name)) == mapping.description)
