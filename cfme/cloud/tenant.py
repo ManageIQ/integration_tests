@@ -12,6 +12,7 @@ from cfme.exceptions import TenantNotFound, DestinationNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
+from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import (
     Accordion, BootstrapSelect, ItemsToolBarViewSelector, PaginationPane,
@@ -315,6 +316,22 @@ class TenantCollection(BaseCollection):
 
         # TODO: Assert deletion flash message for selected tenants
         # it is not shown in current UI, so not asserting
+
+    def all(self):
+        provider = self.filters.get('provider')  # None if no filter, need for entity instantiation
+        view = navigate_to(self, 'All')
+        result = []
+        for _ in view.entities.paginator.pages():
+            tenants = view.entities.get_all()
+            for tenant in tenants:
+                if provider is not None:
+                    if tenant.data['cloud_provider'] == provider.name:
+                        entity = self.instantiate(tenant.data['name'], provider)
+                else:
+                    entity = self.instantiate(tenant.data['name'],
+                                              get_crud_by_name(tenant.data['cloud_provider']))
+                result.append(entity)
+        return result
 
 
 @navigator.register(TenantCollection, 'All')

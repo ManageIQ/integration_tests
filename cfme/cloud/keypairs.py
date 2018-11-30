@@ -120,7 +120,7 @@ class KeyPair(BaseEntity, Taggable):
     _param_name = "KeyPair"
 
     name = attr.ib()
-    provider = attr.ib()
+    provider = attr.ib(default=None)
     public_key = attr.ib(default="")
 
     def delete(self, cancel=False, wait=False):
@@ -207,6 +207,10 @@ class KeyPairCollection(BaseCollection):
         assert view.is_displayed
         view.flash.assert_success_message(flash_message)
         return self.instantiate(name, provider, public_key=public_key)
+
+    def all(self):
+        view = navigate_to(self, 'All')
+        return [self.instantiate(name) for name in view.entities.all_entity_names]
 
 
 @navigator.register(KeyPairCollection, 'All')

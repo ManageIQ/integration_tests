@@ -13,6 +13,7 @@ from cfme.common import Taggable
 from cfme.exceptions import FlavorNotFound, ItemNotFound
 from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.providers import get_crud_by_name
 from widgetastic_manageiq import (
     BaseEntitiesView, ItemsToolBarViewSelector, SummaryTable, Text, Table, Accordion, ManageIQTree,
     PaginationPane, Search)
@@ -209,6 +210,22 @@ class FlavorCollection(BaseCollection):
         view.flash.assert_no_error()
         flavor = self.instantiate(name, provider, ram, vcpus, disk, swap, rxtx, is_public)
         return flavor
+
+    def all(self):
+        provider = self.filters.get('provider')  # None if no filter, need for entity instantiation
+        view = navigate_to(self, 'All')
+        result = []
+        for _ in view.entities.paginator.pages():
+            flavors = view.entities.get_all()
+            for flavor in flavors:
+                if provider is not None:
+                    if flavor.data['cloud_provider'] == provider.name:
+                        entity = self.instantiate(flavor.data['name'], provider)
+                else:
+                    entity = self.instantiate(flavor.data['name'],
+                                              get_crud_by_name(flavor.data['cloud_provider']))
+                result.append(entity)
+        return result
 
 
 @navigator.register(FlavorCollection, 'All')
