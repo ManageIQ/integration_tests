@@ -442,6 +442,31 @@ class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, 
         view = self.create_view(navigator.get_class(self, 'Details').VIEW)
         view.flash.assert_success_message(msg)
 
+    def rename(self, new_vm_name, cancel=False, reset=False):
+        """Rename the VM
+
+        Args:
+            new_vm_name: object for renaming vm
+            cancel (bool): Whether to cancel form submission
+            reset (bool): Whether to reset form after filling
+        """
+        view = navigate_to(self, 'Rename')
+        changed = view.vm_name.fill(new_vm_name)
+        if changed:
+            if reset:
+                view.reset_button.click()
+                view.flash.assert_no_error()
+                view.cancel_button.click()
+            else:
+                # save the form
+                view.save_button.click()
+                view.flash.assert_no_error()
+                self.name = new_vm_name
+                return self
+        if cancel:
+            view.cancel_button.click()
+            view.flash.assert_no_error()
+
 
 @attr.s
 class BaseVMCollection(BaseCollection):

@@ -1,10 +1,16 @@
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
-from cfme.markers.env_markers.provider import ONE
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import assert_response
+from cfme.utils.wait import wait_for
+
 
 pytestmark = [
     test_requirements.ownership,
@@ -85,3 +91,44 @@ class TestVmOwnershipRESTAPI(object):
         rest_vm.reload()
         assert hasattr(rest_vm, "evm_owner_id")
         assert rest_vm.evm_owner.userid == "admin"
+
+
+@pytest.fixture(scope='function')
+def small_vm(provider, small_template):
+    vm = provider.appliance.collections.infra_vms.instantiate(random_vm_name(context='rename'),
+                                                              provider,
+                                                              small_template.name)
+    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    vm.refresh_relationships()
+    yield vm
+    if vm.exists:
+        vm.cleanup_on_provider()
+
+
+@pytest.mark.ignore_stream('5.9')
+@pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE_PER_TYPE)
+def test_rename_vm(small_vm):
+
+    """Test for rename the VM.
+       This feature is included in 5.10z.
+    Steps:
+    1. Add VMware provider
+    2. Provision VM
+    3. Navigate to details page of VM
+    4. Click on Configuration > Rename this VM > Enter new name
+    5. Click on submit
+    6. Check whether VM is renamed or not
+    """
+    view = navigate_to(small_vm, 'Details')
+    vm_name = small_vm.name
+    changed_vm = small_vm.rename(new_vm_name="test-{}".format(fauxfactory.gen_alphanumeric()))
+    view.flash.wait_displayed(timeout=20)
+    view.flash.assert_success_message('Rename of Virtual Machine "{vm_name}" has been initiated'
+                                      .format(vm_name=vm_name))
+    exists, _ = wait_for(
+        lambda: changed_vm.exists,
+        timeout=300,
+        delay=5,
+        msg='waiting for vm rename',
+    )
+    assert exists
