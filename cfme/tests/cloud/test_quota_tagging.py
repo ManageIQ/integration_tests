@@ -215,3 +215,31 @@ def test_cloud_quota_by_lifecycle(request, appliance, provider, setup_provider,
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
     assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
+def test_quota_cloud_via_services(appliance, request, setup_provider, admin_email, entities,
+                                  prov_data, catalog_item, context):
+    """This test case verifies the quota assigned by automation method for user and group
+       is working correctly for the cloud providers.
+
+       Steps:
+           1. Navigate to Automation > Automate > Explorer
+           2. Add quota automation methods to domain
+           3. Change 'quota_source_type' to 'user' or 'group'
+           4. Test quota by provisioning instances over quota limit via UI or
+              SSUI for user and group
+           5. Check whether quota is exceeded or not
+    """
+    with appliance.context.use(context):
+        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+        if context is ViaSSUI:
+            service_catalogs.add_to_shopping_cart()
+        service_catalogs.order()
+    # nav to requests page to check quota validation
+    request_description = ("Provisioning Service [{catalog_item_name}] from [{catalog_item_name}]"
+        .format(catalog_item_name=catalog_item.name))
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(provision_request.remove_request)
+    assert provision_request.row.reason.text == "Quota Exceeded"
