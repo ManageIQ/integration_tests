@@ -390,7 +390,6 @@ def test_edit_mapping_description(appliance, v2v_providers, form_data_single_dat
 
     view = navigate_to(infrastructure_mapping_collection, 'All')
     if appliance.version >= '5.10':
-        mapping_name = infrastructure_mapping_collection.find_mapping(mapping)
-        soft_assert(mapping_name == edited_name)
-        soft_assert(mapping.description in view.infra_mapping_list.read())
-        soft_assert(mapping.description == "my edited description")
+        infrastructure_mapping_collection.find_mapping(mapping)
+        mapping_list = view.infra_mapping_list
+        soft_assert(str(mapping_list.get_map_description(mapping.name)) == mapping.description)
