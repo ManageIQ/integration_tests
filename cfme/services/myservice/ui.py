@@ -14,7 +14,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
                                   BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector,
-                                  BaseEntitiesView, Search, WaitTab)
+                                  BaseEntitiesView, Search)
 
 
 class MyServiceToolbar(View):
@@ -92,7 +92,7 @@ class MyServiceDetailView(MyServicesView):
     entities = View.nested(BaseNonInteractiveEntitiesView)
 
     @View.nested
-    class details(WaitTab):  # noqa
+    class details(View):  # noqa
         properties = SummaryTable(title='Properties')
         lifecycle = SummaryTable(title='Lifecycle')
         relationships = SummaryTable(title='Relationships')
@@ -101,7 +101,7 @@ class MyServiceDetailView(MyServicesView):
         generic_objects = SummaryTable(title='Generic Objects')
 
     @View.nested
-    class provisioning(WaitTab):  # noqa
+    class provisioning(View):  # noqa
         results = SummaryTable(title='Results')
         plays = Table('.//table[./thead/tr/th[contains(@align, "left") and '
                       'normalize-space(.)="Plays"]]')
@@ -110,7 +110,7 @@ class MyServiceDetailView(MyServicesView):
         standart_output = Text('.//div[@id="provisioning"]//pre')
 
     @View.nested
-    class retirement(WaitTab):  # noqa
+    class retirement(View):  # noqa
         results = SummaryTable(title='Results')
         plays = Table('.//table[./thead/tr/th[contains(@align, "left") and '
                       'normalize-space(.)="Plays"]]')
