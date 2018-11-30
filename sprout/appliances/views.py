@@ -106,6 +106,7 @@ def providers(request, provider_id=None):
 
 def provider_usage(request):
     complete_usage = Provider.complete_user_usage(request.user)
+    total_usage = sum(count for pair in complete_usage for count in [int(pair[1])])
     return render(request, 'appliances/provider_usage.html', locals())
 
 
