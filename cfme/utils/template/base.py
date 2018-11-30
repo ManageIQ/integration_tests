@@ -1,13 +1,19 @@
+import os
+import re
+import tarfile
+
+
 from contextlib import closing
 from os import path
 from threading import Lock
-
+from zipfile import ZipFile
 from cached_property import cached_property
 from fauxfactory import gen_alphanumeric
 from glanceclient import Client
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import URLError
 from six.moves.urllib import request
+
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.gce import GCEProvider
@@ -87,6 +93,7 @@ class ProviderTemplateUpload(object):
         self.template_name = template_name
         self.glance_key = kwargs.get('glance_key')  # available for multiple provider type
         self.image_url = image_url  # TODO default
+        self._unzipped_file = None
 
     @property
     def stream_url(self):
@@ -132,11 +139,11 @@ class ProviderTemplateUpload(object):
 
     @property
     def image_name(self):
-        """ Returns filename of an image.
+        """ Returns filename of an downloaded or unzipped image.
 
         Example output: cfme-type-version-x86_64-vhd
         """
-        return self.raw_image_url.split("/")[-1]
+        return self._unzipped_file or self.raw_image_url.split("/")[-1]
 
     @property
     def local_file_path(self):
@@ -234,19 +241,46 @@ class ProviderTemplateUpload(object):
 
     @log_wrap("download image locally")
     def download_image(self):
+        suffix = re.compile(
+            r'^.*?[.](?P<ext>tar\.gz|tar\.bz2|\w+)$').match(self.image_name).group('ext')
         # Check if file exists already:
         if path.isfile(self.local_file_path):
             logger.info('Local image found, skipping download: %s', self.local_file_path)
-            return True
-
-        # Download file to cli-tool-client
-        try:
-            request.urlretrieve(self.raw_image_url, self.local_file_path)
-        except URLError:
-            logger.exception('Failed download of image using urllib')
-            return False
+            if suffix not in ['zip', 'tar.gz']:
+                return True
         else:
+            # Download file to cli-tool-client
+            try:
+                request.urlretrieve(self.raw_image_url, self.local_file_path)
+            except URLError:
+                logger.exception('Failed download of image using urllib')
+                return False
+
+        # Unzips image  when suffix is zip or tar.gz and then changes image name to extracted one.
+        # For EC2 and SCVMM images is zip used and for GCE is tar.gz used.
+
+        archive_path = self.image_name
+        try:
+            if suffix == 'zip':
+                archive = ZipFile(archive_path)
+                zipinfo = archive.infolist()
+                self._unzipped_file = zipinfo[0].filename
+            elif suffix == 'tar.gz':
+                archive = tarfile.open(archive_path, "r:gz")
+                self._unzipped_file = archive.firstmember.name
+            else:
+                return True
+            if path.isfile(self.image_name):
+                os.remove(self.image_name)
+            logger.info('Image archived - unzipping as : %s', self._unzipped_file)
+            archive.extractall()
+            archive.close()
+            # remove the archive
+            os.remove(archive_path)
             return True
+        except Exception:
+            logger.exception("{} archive unzip failed.".format(suffix))
+            return False
 
     @log_wrap('add template to glance')
     def glance_upload(self):
