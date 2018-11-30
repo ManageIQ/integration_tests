@@ -15,7 +15,6 @@ from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
-REPOSITORIES = ["https://github.com/lcouzens/ansible_playbooks"]
 pytestmark = [
     pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
                             reason="pod appliance should be updated thru openshift mechanism")
@@ -173,7 +172,7 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
     description = "edited_{}".format(fauxfactory.gen_alpha())
     repository = repositories.create(
         name,
-        REPOSITORIES[0],
+        cfme_data.ansible_links.repositories.console_db,
         description=description)
     view = navigate_to(repository, "Details")
     refresh = view.toolbar.refresh.click

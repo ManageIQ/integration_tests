@@ -4,6 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -28,7 +29,7 @@ def repository(enabled_embedded_ansible, appliance):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
         name=fauxfactory.gen_alpha(),
-        url="https://github.com/quarckster/ansible_playbooks",
+        url=cfme_data.ansible_links.repositories.embedded_ansible,
         description=fauxfactory.gen_alpha())
     view = navigate_to(repository, "Details")
     if appliance.version < "5.9":

@@ -11,7 +11,7 @@ from cfme.services.myservice import MyService
 from cfme.services.service_catalogs.ui import OrderServiceCatalogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import credentials
+from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError, wait_for
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -42,7 +42,7 @@ def ansible_repository(appliance, wait_for_ansible):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
         name=fauxfactory.gen_alpha(),
-        url="https://github.com/quarckster/ansible_playbooks",
+        url=cfme_data.ansible_links.repositories.embedded_ansible,
         description=fauxfactory.gen_alpha())
     view = navigate_to(repository, "Details")
     if appliance.version < "5.9":

@@ -54,10 +54,7 @@ def ansible_repository(appliance):
              delay=10,
              timeout=60,
              fail_func=refresh)
-    yield repository
-
-    if repository.exists:
-        repository.delete()
+    return repository
 
 
 def catalog_item(request, appliance, machine_credential, ansible_repository, playbook_type):

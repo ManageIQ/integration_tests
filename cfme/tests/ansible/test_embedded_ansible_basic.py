@@ -5,6 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -114,8 +115,8 @@ CREDENTIALS = [
 ]
 
 REPOSITORIES = [
-    "https://github.com/quarckster/ansible_playbooks",
-    "https://github.com/patchkez/ansible_playbooks"
+    cfme_data.ansible_links.repositories.embedded_ansible,
+    cfme_data.ansible_links.repositories.embedded_tower
 ]
 
 

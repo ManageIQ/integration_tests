@@ -18,6 +18,7 @@ from cfme import test_requirements
 from cfme.configure.configuration.diagnostics_settings import CollectLogsBase
 from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClient
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
@@ -218,7 +219,7 @@ def ansible_repository(appliance, wait_for_ansible):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
         name=fauxfactory.gen_alpha(),
-        url="https://github.com/quarckster/ansible_playbooks",
+        url=cfme_data.ansible_links.repositories.embedded_ansible,
         description=fauxfactory.gen_alpha())
     view = navigate_to(repository, "Details")
     refresh = view.toolbar.refresh.click
