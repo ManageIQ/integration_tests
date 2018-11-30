@@ -226,16 +226,20 @@ def delete_queues(provider_mgmt, excluded_queues, output):
 
 def delete_s3_bucket(provider_mgmt, bucket_name, output):
     bucket_list = []
+    buckets = []
     provider_name = provider_mgmt.kwargs['name']
     try:
         for bucket in provider_mgmt.list_s3_bucket():
             if bucket_name in bucket:
-                deleted_bucket = provider_mgmt.delete_s3_buckets(bucket_names=[bucket])
-                if deleted_bucket:
-                    bucket_list.append([provider_name, bucket])
-            else:
-                logger.info("Smartstate Bucket is not found")
-        logger.info("  Deleted S3 Buckets: %r", bucket_list)
+                buckets.append(bucket)
+        if buckets:
+            deleted_buckets = provider_mgmt.delete_s3_buckets(bucket_names=buckets)
+            for bucket in deleted_buckets:
+                bucket_list.append([provider_name, bucket])
+            logger.info("Deleted S3 Buckets: %r", bucket_list)
+        else:
+            logger.info("%s Bucket is not found", bucket_name)
+
         if bucket_list:
             with open(output, 'a+') as report:
                 report.write(tabulate(tabular_data=bucket_list,
@@ -282,8 +286,8 @@ def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclud
 
         logger.info("Deleting S3 Buckets...")
         delete_s3_bucket(provider_mgmt=provider_mgmt,
-                          bucket_name=bucket_name,
-                          output=output)
+                         bucket_name=bucket_name,
+                         output=output)
         logger.info("Releasing addresses...")
         delete_disassociated_addresses(provider_mgmt=provider_mgmt,
                                        excluded_eips=exclude_eips,
