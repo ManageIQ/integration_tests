@@ -176,7 +176,8 @@ class InfraMappingWizardDatastoresView(View):
                     self.target_datastores.fill(mapping['target'])
                     self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
-        if self.next_btn.wait_displayed():
+        self.cancel_btn.wait_displayed()
+        if self.next_btn.is_displayed:
             self.next_btn.click()
         return was_change
 
@@ -681,6 +682,12 @@ class InfrastructureMapping(BaseEntity):
         view = navigate_to(self, 'Edit', wait_for_view=20)
         assert view.wait_displayed()
         view.form.fill(form_data)
+        if form_data['general']['name']:
+            self.name = form_data['general']['name']
+        if form_data['general'].get('description', ''):
+            self.description = form_data['general'].get('description', '')
+        if form_data:
+            self.form_data = form_data
 
 
 @attr.s

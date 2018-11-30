@@ -5,7 +5,7 @@ import pytest
 from widgetastic.exceptions import NoSuchElementException
 
 from cfme.exceptions import ItemNotFound
-from cfme.fixtures.provider import small_template, rhel7_minimal
+from cfme.fixtures.provider import small_template
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
@@ -372,15 +372,15 @@ def test_migration_rbac(appliance, new_credential, v2v_providers):
                                                     'rbac should allow this')
 
 
-@pytest.mark.parametrize('form_data_vm_obj_single_datastore', [['nfs', 'nfs', rhel7_minimal],],
-                        indirect=True)
-def test_edit_mapping_description(request, appliance, host_creds, conversion_tags,
-                                  form_data_vm_obj_single_datastore,
-                                  soft_assert):
+@pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
+def test_edit_mapping_description(appliance, v2v_providers, form_data_single_datastore,
+                                    host_creds, conversion_tags, soft_assert):
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
+    mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
+    edited_name = 'edited_name_{}'.format(fauxfactory.gen_alphanumeric())
     edited_form_data = {
         'general': {
+            'name': edited_name,
             'description': "my edited description"},
         'cluster': {},
         'datastore': {},
@@ -390,7 +390,7 @@ def test_edit_mapping_description(request, appliance, host_creds, conversion_tag
 
     view = navigate_to(infrastructure_mapping_collection, 'All')
     if appliance.version >= '5.10':
-        infrastructure_mapping_collection.find_mapping(mapping)
-    soft_assert(mapping.name in view.infra_mapping_list.read())
-    mapping_list = view.infra_mapping_list
-    soft_assert(str(mapping_list.get_map_description(mapping.description)) == "my edited description")
+        mapping_name = infrastructure_mapping_collection.find_mapping(mapping)
+        soft_assert(mapping_name == edited_name)
+        soft_assert(mapping.description in view.infra_mapping_list.read())
+        soft_assert(mapping.description == "my edited description")
