@@ -413,7 +413,7 @@ def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_c
         cost_from_report = chargeback_report_custom[0]["Memory Used Cost"]
         # Eliminate '$' and ',' from string
         cost = cost_from_report.replace('$', '').replace(',', '')
-        soft_assert(estimated_cpu_usage_cost - DEVIATION <=
+        soft_assert(estimated_memory_usage_cost - DEVIATION <=
             float(cost) <= estimated_memory_usage_cost + DEVIATION,
             'Estimated cost and report cost do not match')
 
