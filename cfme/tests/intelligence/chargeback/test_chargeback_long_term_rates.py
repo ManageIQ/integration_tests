@@ -17,7 +17,7 @@ import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -26,7 +26,7 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.parametrize('interval', ['Daily', 'Weekly', 'Monthly'],
         ids=['daily_rate', 'weekly_rate', 'monthly_rate'], scope='module'),
-    pytest.mark.provider([VMwareProvider], selector=ONE,
+    pytest.mark.provider([RHEVMProvider], selector=ONE,
                        scope='module',
                        required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
     pytest.mark.usefixtures('setup_provider'),
@@ -388,17 +388,16 @@ def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_cust
     The cost reported in the Chargeback report should be approximately equal to the
     cost estimated in the chargeback_costs_custom fixture.
     """
-    for groups in chargeback_report_custom:
-        if not groups["CPU Used Cost"]:
-            pytest.skip('missing column in report')
-        else:
-            estimated_cpu_usage_cost = chargeback_costs_custom['cpu_used_cost']
-            cost_from_report = groups["CPU Used Cost"]
-            # Eliminate '$' and ',' from string
-            cost = cost_from_report.replace('$', '').replace(',', '')
-            soft_assert(estimated_cpu_usage_cost - DEVIATION <=
-                float(cost) <= estimated_cpu_usage_cost + DEVIATION,
-                'Estimated cost and report cost do not match')
+    if not chargeback_report_custom[0]["CPU Used Cost"]:
+        pytest.skip('missing column in report')
+    else:
+        estimated_cpu_usage_cost = chargeback_costs_custom['cpu_used_cost']
+        cost_from_report = chargeback_report_custom[0]["CPU Used Cost"]
+        # Eliminate '$' and ',' from string
+        cost = cost_from_report.replace('$', '').replace(',', '')
+        soft_assert(estimated_cpu_usage_cost - DEVIATION <=
+            float(cost) <= estimated_cpu_usage_cost + DEVIATION,
+            'Estimated cost and report cost do not match')
 
 
 def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_custom,
@@ -407,16 +406,16 @@ def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_c
     The cost reported in the Chargeback report should be approximately equal to the
     cost estimated in the chargeback_costs_custom fixture.
     """
-    for groups in chargeback_report_custom:
-        if not groups["Memory Used Cost"]:
-            pytest.skip('missing column in report')
-        else:
-            estimated_memory_usage_cost = chargeback_costs_custom['memory_used_cost']
-            cost_from_report = groups["Memory Used Cost"]
-            cost = cost_from_report.replace('$', '').replace(',', '')
-            soft_assert(estimated_memory_usage_cost - DEVIATION <=
-                float(cost) <= estimated_memory_usage_cost + DEVIATION,
-                'Estimated cost and report cost do not match')
+    if not chargeback_report_custom[0]["Memory Used Cost"]:
+        pytest.skip('missing column in report')
+    else:
+        estimated_memory_usage_cost = chargeback_costs_custom['memory_used_cost']
+        cost_from_report = chargeback_report_custom[0]["Memory Used Cost"]
+        # Eliminate '$' and ',' from string
+        cost = cost_from_report.replace('$', '').replace(',', '')
+        soft_assert(estimated_memory_usage_cost - DEVIATION <=
+            float(cost) <= estimated_memory_usage_cost + DEVIATION,
+            'Estimated cost and report cost do not match')
 
 
 def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_custom,
@@ -425,16 +424,16 @@ def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_
     The cost reported in the Chargeback report should be approximately equal to the
     cost estimated in the chargeback_costs_custom fixture.
     """
-    for groups in chargeback_report_custom:
-        if not groups["Network I/O Used Cost"]:
-            pytest.skip('missing column in report')
-        else:
-            estimated_network_usage_cost = chargeback_costs_custom['network_used_cost']
-            cost_from_report = groups["Network I/O Used Cost"]
-            cost = cost_from_report.replace('$', '').replace(',', '')
-            soft_assert(estimated_network_usage_cost - DEVIATION <=
-                float(cost) <= estimated_network_usage_cost + DEVIATION,
-                'Estimated cost and report cost do not match')
+    if not chargeback_report_custom[0]["Network I/O Used Cost"]:
+        pytest.skip('missing column in report')
+    else:
+        estimated_network_usage_cost = chargeback_costs_custom['network_used_cost']
+        cost_from_report = chargeback_report_custom[0]["Network I/O Used Cost"]
+        # Eliminate '$' and ',' from string
+        cost = cost_from_report.replace('$', '').replace(',', '')
+        soft_assert(estimated_network_usage_cost - DEVIATION <=
+            float(cost) <= estimated_network_usage_cost + DEVIATION,
+            'Estimated cost and report cost do not match')
 
 
 def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_custom,
@@ -443,16 +442,15 @@ def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_cus
     The cost reported in the Chargeback report should be approximately equal to the
     cost estimated in the chargeback_costs_custom fixture.
     """
-    for groups in chargeback_report_custom:
-        if not groups["Disk I/O Used Cost"]:
-            pytest.skip('missing column in report')
-        else:
-            estimated_disk_usage_cost = chargeback_costs_custom['disk_used_cost']
-            cost_from_report = groups["Disk I/O Used Cost"]
-            cost = cost_from_report.replace('$', '').replace(',', '')
-            soft_assert(estimated_disk_usage_cost - DEVIATION <=
-                float(cost) <= estimated_disk_usage_cost + DEVIATION,
-                'Estimated cost and report cost do not match')
+    if not chargeback_report_custom[0]["Disk I/O Used Cost"]:
+        pytest.skip('missing column in report')
+    else:
+        estimated_disk_usage_cost = chargeback_costs_custom['disk_used_cost']
+        cost_from_report = chargeback_report_custom[0]["Disk I/O Used Cost"]
+        cost = cost_from_report.replace('$', '').replace(',', '')
+        soft_assert(estimated_disk_usage_cost - DEVIATION <=
+            float(cost) <= estimated_disk_usage_cost + DEVIATION,
+            'Estimated cost and report cost do not match')
 
 
 def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_custom,
@@ -461,13 +459,12 @@ def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_
     The cost reported in the Chargeback report should be approximately equal to the
     cost estimated in the chargeback_costs_custom fixture.
     """
-    for groups in chargeback_report_custom:
-        if not groups["Storage Used Cost"]:
-            pytest.skip('missing column in report')
-        else:
-            estimated_storage_usage_cost = chargeback_costs_custom['storage_used_cost']
-            cost_from_report = groups["Storage Used Cost"]
-            cost = cost_from_report.replace('$', '').replace(',', '')
-            soft_assert(estimated_storage_usage_cost - DEVIATION <=
-                float(cost) <= estimated_storage_usage_cost + DEVIATION,
-                'Estimated cost and report cost do not match')
+    if not chargeback_report_custom[0]["Storage Used Cost"]:
+        pytest.skip('missing column in report')
+    else:
+        estimated_storage_usage_cost = chargeback_costs_custom['storage_used_cost']
+        cost_from_report = chargeback_report_custom[0]["Storage Used Cost"]
+        cost = cost_from_report.replace('$', '').replace(',', '')
+        soft_assert(estimated_storage_usage_cost - DEVIATION <=
+            float(cost) <= estimated_storage_usage_cost + DEVIATION,
+            'Estimated cost and report cost do not match')
