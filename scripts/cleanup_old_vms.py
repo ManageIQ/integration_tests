@@ -132,8 +132,19 @@ def scan_provider(provider_key, matchers, match_queue, scan_failure_queue):
         scan_failure_queue.put(VmReport(provider_key, FAIL, NULL, NULL, NULL))
         logger.exception('%r: Exception listing vms', provider_key)
         return
+    text_matched_vms = {}
+    text_matched_duplicate_vms = []
+    for vm in vm_list:
+        if match(matchers, vm.name):
+            if vm.name not in text_matched_vms:
+                text_matched_vms[vm.name] = vm
+            else:
+                text_matched_duplicate_vms.append(vm)
+    text_matched_vms = [vm for vm in text_matched_vms.values()]
+    for vm in text_matched_duplicate_vms:
+        logger.info("%r: DELETING DUPLICATE VMS: %r", provider_key, vm.name)
+        vm.cleanup()
 
-    text_matched_vms = [vm for vm in vm_list if match(matchers, vm.name)]
     for vm in text_matched_vms:
         match_queue.put(VmProvider(provider_key, vm.name))
 
