@@ -312,7 +312,7 @@ def test_crud_custom_report_schedule(
     custom_report_schedule.delete(cancel=False)
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < "5.10.0.26")
+@pytest.mark.ignore_stream('5.9')
 def test_report_schedules_invalid_email(appliance, schedule_data):
     schedule_data["emails"] = (fauxfactory.gen_alpha(), fauxfactory.gen_alpha())
     schedule_data["from_email"] = fauxfactory.gen_alpha()
