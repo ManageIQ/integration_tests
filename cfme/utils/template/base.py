@@ -1,6 +1,5 @@
 import os
 import re
-import tarfile
 
 
 from contextlib import closing
@@ -243,10 +242,11 @@ class ProviderTemplateUpload(object):
     def download_image(self):
         suffix = re.compile(
             r'^.*?[.](?P<ext>tar\.gz|tar\.bz2|\w+)$').match(self.image_name).group('ext')
+        print(self.image_name, self.local_file_path)
         # Check if file exists already:
         if path.isfile(self.local_file_path):
             logger.info('Local image found, skipping download: %s', self.local_file_path)
-            if suffix not in ['zip', 'tar.gz']:
+            if suffix not in ['zip']:
                 return True
         else:
             # Download file to cli-tool-client
@@ -265,9 +265,6 @@ class ProviderTemplateUpload(object):
                 archive = ZipFile(archive_path)
                 zipinfo = archive.infolist()
                 self._unzipped_file = zipinfo[0].filename
-            elif suffix == 'tar.gz':
-                archive = tarfile.open(archive_path, "r:gz")
-                self._unzipped_file = archive.firstmember.name
             else:
                 return True
             if path.isfile(self.image_name):
