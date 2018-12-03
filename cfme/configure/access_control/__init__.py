@@ -656,9 +656,15 @@ class Group(BaseEntity, Taggable):
         edit_group_txt = 'Edit this Group'
 
         view = navigate_to(self, 'Details')
-        if not view.toolbar.configuration.item_enabled(edit_group_txt):
-            raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
-                edit_group_txt))
+        if self.appliance.version < '5.10':
+            if not view.toolbar.configuration.item_enabled(edit_group_txt):
+                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
+                    edit_group_txt))
+        else:
+            if not view.toolbar.configuration.is_enabled:
+                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
+                    edit_group_txt))
+
         view = navigate_to(self, 'Edit')
 
         changed = view.fill({
@@ -708,9 +714,14 @@ class Group(BaseEntity, Taggable):
 
         view = navigate_to(self, 'Details')
 
-        if not view.toolbar.configuration.item_enabled(delete_group_txt):
-            raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
-                delete_group_txt))
+        if self.appliance.version < '5.10':
+            if not view.toolbar.configuration.item_enabled(delete_group_txt):
+                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
+                    delete_group_txt))
+        else:
+            if not view.toolbar.configuration.is_enabled:
+                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
+                    delete_group_txt))
 
         view.toolbar.configuration.item_select(delete_group_txt, handle_alert=cancel)
         for flash_blocked_msg in flash_blocked_msg_list:
