@@ -4,6 +4,53 @@ from widgetastic.widget import View, Text, TextInput
 from widgetastic_patternfly import Button
 
 
+OBJ_TYPE_59 = [
+    "CLOUD_TENANT",
+    "CLOUD_VOLUME",
+    "CLUSTERS",
+    "CONTAINER_NODES",
+    "CONTAINER_PROJECTS",
+    "DATASTORES",
+    "GENERIC",
+    "HOSTS",
+    "PROVIDER",
+    "SERVICE",
+    "TEMPLATE_IMAGE",
+    "VM_INSTANCE",
+]
+
+OBJ_TYPE = [
+    "AZONE",
+    "CLOUD_NETWORK",
+    "CLOUD_OBJECT_STORE_CONTAINER",
+    "CLOUD_SUBNET",
+    "CLOUD_TENANT",
+    "CLOUD_VOLUME",
+    "CLUSTERS",
+    "CONTAINER_IMAGES",
+    "CONTAINER_NODES",
+    "CONTAINER_PODS",
+    "CONTAINER_PROJECTS",
+    "CONTAINER_TEMPLATES",
+    "CONTAINER_VOLUMES",
+    "DATASTORES",
+    "GROUP",
+    "USER",
+    "GENERIC",
+    "HOSTS",
+    "LOAD_BALANCER",
+    "ROUTER",
+    "ORCHESTRATION_STACK",
+    "PROVIDER",
+    "SECURITY_GROUP",
+    "SERVICE",
+    "SWITCH",
+    "TENANT",
+    "TEMPLATE_IMAGE",
+    "VM_INSTANCE",
+]
+
+
 def check_log_requests_count(appliance, parse_str=None):
     """ Method for checking number of requests count in automation log
 

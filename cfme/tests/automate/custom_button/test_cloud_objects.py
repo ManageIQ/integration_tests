@@ -5,7 +5,7 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.tests.automate.custom_button import log_request_check, TextInputDialogView
+from cfme.tests.automate.custom_button import log_request_check, OBJ_TYPE_59, TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError, wait_for
@@ -36,21 +36,6 @@ DISPLAY_NAV = {
 }
 
 SUBMIT = ["Submit all", "One by one"]
-
-OBJ_TYPE_59 = [
-    "CLOUD_TENANT",
-    "CLOUD_VOLUME",
-    "CLUSTER",
-    "CONTAINER_NODE",
-    "CONTAINER_PROJECT",
-    "DATASTORE",
-    "GENERIC",
-    "HOST",
-    "PROVIDER",
-    "SERVICE",
-    "TEMPLATE_IMAGE",
-    "VM_INSTANCE",
-]
 
 
 @pytest.fixture(
