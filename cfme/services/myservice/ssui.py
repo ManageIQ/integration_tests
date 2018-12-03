@@ -21,6 +21,7 @@ class MyServicesView(SSUIBaseLoggedInPage):
     title = Text(locator='//li[@class="active"]')
     service = SSUIlist()
     notification = Notification()
+    # To-Do: Add Paginator; `PaginationPane` not going to work on `SSUI` pages.
 
     @property
     def in_myservices(self):
