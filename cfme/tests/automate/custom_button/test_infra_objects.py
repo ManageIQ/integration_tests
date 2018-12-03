@@ -8,7 +8,6 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import log_request_check, TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError, wait_for
 
 
@@ -18,7 +17,7 @@ pytestmark = [
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE),
 ]
 
-INFRA_OBJECTS = ["PROVIDER", "HOST", "VM_INSTANCE", "TEMPLATE_IMAGE", "DATASTORE", "CLUSTER"]
+INFRA_OBJECTS = ["PROVIDER", "HOSTS", "VM_INSTANCE", "TEMPLATE_IMAGE", "DATASTORES", "CLUSTERS"]
 
 DISPLAY_NAV = {
     "Single entity": ["Details"],
@@ -48,20 +47,18 @@ def setup_obj(button_group, provider):
     """ Setup object for specific custom button object type."""
     obj_type = button_group[1]
 
-    if obj_type == "PROVIDER":
-        obj = provider
-    elif obj_type == "HOST":
-        obj = provider.appliance.collections.hosts.all()[0]
-    elif obj_type == "VM_INSTANCE":
-        obj = provider.appliance.provider_based_collection(provider).all()[0]
-    elif obj_type == "TEMPLATE_IMAGE":
-        obj = provider.appliance.collections.infra_templates.all()[0]
-    elif obj_type == "DATASTORE":
-        obj = provider.appliance.collections.datastores.filter({"provider": provider}).all()[0]
-    elif obj_type == "CLUSTER":
-        obj = provider.appliance.collections.clusters.all()[0]
-    else:
-        logger.error("No object collected for custom button object type '{}'".format(obj_type))
+    try:
+        if obj_type == "PROVIDER":
+            obj = provider
+        elif obj_type == "VM_INSTANCE":
+            obj = provider.appliance.provider_based_collection(provider).all()[0]
+        elif obj_type == "TEMPLATE_IMAGE":
+            obj = provider.appliance.collections.infra_templates.all()[0]
+        else:
+            obj = getattr(provider.appliance.collections, obj_type.lower()).all()[0]
+    except IndexError:
+        pytest.skip("Object not found for {obj} type".format(obj=obj_type))
+
     return obj
 
 
@@ -242,9 +239,7 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
     assert dialog_view.service_name.fill("Custom Button Execute")
 
     # Clear the automation log
-    assert appliance.ssh_client.run_command(
-        'echo -n "" > /var/www/miq/vmdb/log/automation.log'
-    )
+    assert appliance.ssh_client.run_command('echo -n "" > /var/www/miq/vmdb/log/automation.log')
 
     # Submit order
     dialog_view.submit.click()
