@@ -111,7 +111,7 @@ def test_graph_screen(provider, interval, graph_type, enable_candu):
 
     if not provider.one_of(CloudProvider):
         wait_for(
-            vm.capture_historical_data,
+            func=vm.capture_historical_data,
             delay=20,
             timeout=1000,
             message="wait for capturing VM historical data"

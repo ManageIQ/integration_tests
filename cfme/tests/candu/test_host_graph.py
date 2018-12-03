@@ -119,7 +119,7 @@ def test_graph_screen(provider, interval, graph_type, host, enable_candu):
         * Compare table and graph data
     """
     wait_for(
-        host.capture_historical_data,
+        func=host.capture_historical_data,
         delay=20,
         timeout=1000,
         message="wait for capturing host historical data")
