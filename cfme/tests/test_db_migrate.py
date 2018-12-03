@@ -180,6 +180,7 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     wait_for(is_provider_replicated, func_args=[app, app2], timeout=30)
 
 
+@pytest.mark.meta(blockers=[BZ(1655143, forced_streams=[5.9])])
 def test_upgrade_single_inplace(appliance_preupdate, appliance):
     """Tests appliance upgrade between streams"""
     appliance_preupdate.evmserverd.stop()
