@@ -20,7 +20,7 @@ pytestmark = [
 
 
 class TestVmOwnershipRESTAPI(object):
-    @pytest.fixture(scope="module")
+    @pytest.fixture(scope="function")
     def vm(self, request, provider, appliance):
         return _vm(request, provider, appliance.rest_api)
 
