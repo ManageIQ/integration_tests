@@ -1620,7 +1620,7 @@ class AutomateSimulation(CFMENavigateStep):
 class AutomateImportExportBaseView(BaseLoggedInPage):
     # TODO This is currently overiding the base flash and should be renamed and efforts made
     # to update assocaited tests
-    flash = FlashMessages('.//div[@id="flash_msg_div"]')
+    flash = FlashMessages('div.import-flash-message')
     title = Text('.//div[@id="main-content"]//h1')
 
     @property
