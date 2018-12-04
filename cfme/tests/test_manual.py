@@ -6,6 +6,8 @@ import pytest
 
 from cfme import test_requirements
 
+pytestmark = [pytest.mark.ignore_stream('5.9', '5.10', 'upstream')]
+
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
