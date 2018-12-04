@@ -331,11 +331,18 @@ class DatastoreCollection(BaseCollection):
         datastores = self.appliance.rest_api.collections.data_stores.all_include_attributes(
             attributes=["hosts"]
         )
-        datastore_db = {ds.name: ds.hosts[0]["ems_id"] for ds in datastores if ds.hosts}
+        datastore_db = {}
+
+        for ds in datastores:
+            for host in ds.hosts:
+                if host.get("ems_id"):
+                    datastore_db.update({ds.name: host.get("ems_id")})
+                    break
+
         provider_db = {
             prov.id: get_crud_by_name(prov.name)
             for prov in self.appliance.rest_api.collections.providers.all
-            if not (getattr(prov, "parent_ems_id", False) and ("Manager" in prov.name))
+            if not (getattr(prov, "parent_ems_id", False) or ("Manager" in prov.name))
         }
         datastores = [
             self.instantiate(name=name, provider=provider_db[prov_id])
