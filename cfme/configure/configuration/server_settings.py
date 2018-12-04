@@ -34,9 +34,7 @@ class ServerInformationView(View):
     """ Class represents full Server tab view"""
     title = Text("//div[@id='settings_server']/h3[1]")
     # Local Flash widget for validation since class nested under a class inheriting BaseLoggedInPage
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")] | '
-                          './/div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]')
     save = Button('Save')
     reset = Button('Reset')
 
@@ -555,9 +553,7 @@ class ServerAuthenticationView(View):
     """ Server Authentication View."""
     title = Text("//div[@id='settings_authentication']/h3[1]")
     # Local Flash widget for validation since class nested under a class inheriting BaseLoggedInPage
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")] | '
-                          './/div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]')
     hours_timeout = BootstrapSelect(id='session_timeout_hours')
     minutes_timeout = BootstrapSelect(id='session_timeout_mins')
     # TODO new button widget to handle buttons_on buttons_off divs

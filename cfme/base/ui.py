@@ -41,7 +41,7 @@ def address(self):
 
 
 class LoginPage(View):
-    flash = FlashMessages('//div[@class="flash_text_div" or @id="flash_text_div"]')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]')
 
     class details(View):  # noqa
         region = Text('.//p[normalize-space(text())="Region:"]/span')
@@ -1620,7 +1620,7 @@ class AutomateSimulation(CFMENavigateStep):
 class AutomateImportExportBaseView(BaseLoggedInPage):
     # TODO This is currently overiding the base flash and should be renamed and efforts made
     # to update assocaited tests
-    flash = FlashMessages('div.import-flash-message')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]')
     title = Text('.//div[@id="main-content"]//h1')
 
     @property

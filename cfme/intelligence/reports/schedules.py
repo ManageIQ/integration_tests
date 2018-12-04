@@ -40,9 +40,7 @@ class BootstrapSelectRetry(BootstrapSelect):
 
 
 class SchedulesFormCommon(CloudIntelReportsView):
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")] | '
-                          './/div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]')
     # Basic Information
     title = Text("#explorer_title_text")
     name = TextInput(name="name")

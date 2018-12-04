@@ -21,7 +21,7 @@ class SSUIBaseLoggedInPage(View):
     """This page should be subclassed by any page that models any other page that is available as
     logged in.
     """
-    flash = FlashMessages('div#flash_text_div')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]')
     help = NavDropdown('.//li[./a[@id="dropdownMenu1"]]')
     navigation = SSUIVerticalNavigation('//ul[@class="list-group"]')
     domain_switcher = Button(id="domain-switcher")
@@ -82,7 +82,7 @@ class SSUIBaseLoggedInPage(View):
 
 
 class LoginPage(View):
-    flash = FlashMessages('div#flash_text_div')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]')
     username = Input(id='inputUsername')
     password = Input(id='inputPassword')
     login = Button('Log In')
