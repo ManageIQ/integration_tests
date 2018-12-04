@@ -490,6 +490,87 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
     assert vm.mgmt.is_running, "vm not running"
 
 
+@pytest.fixture
+def utility_vm():
+    """ Deploy vm for use in tests. The VM is deleted upon context exit.
+    """
+    temp_machine_name = random_vm_name('utility_vm')
+
+    data = cfme_data.get('utility_vm')
+    vm_provider_key = data["provider"]
+    vm = deploy_template(vm_provider_key, temp_machine_name,
+                         template_name=data["template_name"])
+    wait_for(lambda: vm.ip, fail_condition=None, timeout=300, delay=1)
+    yield {'ip': vm.ip, 'credentials': credentials[data.credentials]}
+    vm.delete()
+
+
+@pytest.fixture
+def nfs_samba_share_vm(utility_vm):
+    connect_kwargs = {
+        'hostname': utility_vm['ip'],
+        'username': utility_vm['credentials']['username'],
+        'password': utility_vm['credentials']['password']
+    }
+    nfs_smb = SSHClient(**connect_kwargs)
+    setup = (
+        dedent(''' \
+        cat > /etc/yum.repos.d/rhel.repo <<EOF
+        [rhel]
+        name=RHEL 7.5-Update
+        baseurl={baseurl}
+        enabled=1
+        gpgcheck=0
+        skip_if_unavailable=False
+        EOF
+        ''').format(baseurl=cfme_data['basic_info']['rhel7_updates_url']),
+
+        # Common setup.
+        'yum install -y nfs-utils samba',
+
+        # NFS setup
+        'mkdir -p /srv/export',
+        'chmod a=rwx /srv/export',
+        'echo "/srv/export *(ro)" >> /etc/exports',
+        'firewall-cmd --add-port=2049/udp --permanent',
+        'firewall-cmd --add-port=2049/tcp --permanent',
+        'firewall-cmd --add-port=111/udp --permanent',
+        'firewall-cmd --add-port=111/tcp --permanent',
+        'firewall-cmd --reload',
+        'systemctl enable nfs',
+        'systemctl start nfs',
+        'exportfs -ra',
+
+        # SMB setup
+        'mkdir -p /srv/samba',
+        'chmod a=rwx /srv/samba',
+        'firewall-cmd --add-port=139/tcp --permanent',
+        'firewall-cmd --add-port=445/tcp --permanent',
+        'firewall-cmd --reload',
+        dedent('''\
+            cat >> /etc/samba/smb.conf <<EOF
+            [public]
+            comment = Public Stuff
+            path = /srv/samba
+            public = yes
+            writable = no
+            printable = no
+            write list = +staff
+            EOF
+            '''),
+        'systemctl enable smb',
+        'systemctl start smb',
+    )
+    import ipdb; ipdb.set_trace()
+    for line in setup:
+        assert nfs_smb.run_command(line).success
+    return {'hostname': utility_vm['ip'],
+            'nfs_path': '/srv/export',
+            'smb_path': '/srv/samba',
+            'credentials': utility_vm['credentials']}
+
+
+#@pytest.mark.meta(blockers=[BZ(1633573, forced_streams=["5.9", "5.10"])])
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
                          reason='Test only for downstream version of product')
@@ -504,34 +585,44 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
         initialEstimate: 1h
     """
     appl1, appl2 = get_appliances_with_providers
-    host = cfme_data['network_share']['hostname']
-    loc = cfme_data['network_share']['nfs_path']
-    nfs_dump = 'nfs://{}{}share.backup'.format(host, loc)
+    host = nfs_samba_share_vm['hostname']
+    loc = nfs_samba_share_vm['nfs_path']
+    nfs_dump = 'nfs://{}{}'.format(host, os.path.join(loc, 'share.backup'))
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
-    setup_nfs_samba_backup(appl1)
+    setup_nfs_samba_backup(appl1, nfs_samba_share_vm)
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
     appl2.db.create()
-    command_set = ('ap', '', '4', '2', nfs_dump, TimedCommand('y', 60), '')
-    appl2.appliance_console.run_commands(command_set)
-    appl2.evmserverd.start()
+
+    interaction = SSHClientInteraction(appl2.ssh_client, timeout=5, display=True)
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=20)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('4')
+    interaction.expect('Choose the restore database file: |1| ')
+    interaction.send('2')
+    interaction.expect('Enter the location of the remote backup file\n.*db.backup: ')
+    interaction.send(nfs_dump)
+    interaction.expect('Are you sure you would like to restore the database\? \(Y/N\): ')
+    interaction.send('y')
+    interaction.expect('Restoring the database\.\.\.')
+    interaction.expect('Database restore succeed.*Press any key to continue.', timeout=20)
+
+    appl2.start_evm_service()
     appl2.wait_for_web_ui()
-    # Assert providers on the second appliance
-    assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
-        'Restored DB is missing some providers'
-    )
-    # Verify that existing provider can detect new VMs on the second appliance
-    virtual_crud = provider_app_crud(VMwareProvider, appl2)
-    vm = provision_vm(request, virtual_crud)
-    assert vm.mgmt.is_running, "vm not running"
+
+    do_checks(appl1, appl2)
 
 
+#@pytest.mark.meta(blockers=[BZ(1633573, forced_streams=["5.9", "5.10"])])
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
                          reason='Test only for downstream version of product')
-def test_appliance_console_restore_db_samba(request, get_appliances_with_providers):
+def test_appliance_console_restore_db_samba(request, get_appliances_with_providers,
+                                            nfs_samba_share_vm):
     """ Test single appliance backup and restore through smb, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
 
@@ -542,22 +633,44 @@ def test_appliance_console_restore_db_samba(request, get_appliances_with_provide
         initialEstimate: 1h
     """
     appl1, appl2 = get_appliances_with_providers
-    host = cfme_data['network_share']['hostname']
-    loc = cfme_data['network_share']['smb_path']
-    smb_dump = 'smb://{}{}share.backup'.format(host, loc)
-    pwd = credentials['depot_credentials']['password']
-    usr = credentials['depot_credentials']['username']
+    host = nfs_samba_share_vm['hostname']
+    loc = nfs_samba_share_vm['smb_path']
+    smb_dump = 'smb://{}{}'.format(host, os.path.join(loc, 'share.backup'))
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
-    setup_nfs_samba_backup(appl1)
+    setup_nfs_samba_backup(appl1, nfs_samba_share_vm)
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
     appl2.db.create()
-    command_set = ('ap', '', '4', '3', smb_dump, usr, pwd, TimedCommand('y', 60), '')
-    appl2.appliance_console.run_commands(command_set)
-    appl2.evmserverd.start()
+
+    interaction = SSHClientInteraction(appl2.ssh_client, timeout=5, display=True)
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=20)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('4')
+    interaction.expect('Choose the restore database file: |1| ')
+    interaction.send('3')
+    interaction.expect('Enter the location of the remote backup file\n.*db.backup: ')
+    interaction.send(smb_dump)
+    interaction.expect("Enter the username with access to this file.\n"
+                       "Example: 'mydomain.com/user': ")
+    interaction.send('nobody')
+    interaction.expect('Enter the password for .*: ')
+    interaction.send('')
+    interaction.expect('Are you sure you would like to restore the database\? \(Y/N\): ')
+    interaction.send('y')
+    interaction.expect('Restoring the database\.\.\.')
+    interaction.expect('Database restore succeed.*Press any key to continue.', timeout=20)
+
+    appl2.start_evm_service()
     appl2.wait_for_web_ui()
+
+    do_checks(appl1, appl2)
+
+
+def do_checks(appl1, appl2):
     # Assert providers on the second appliance
     assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
         'Restored DB is missing some providers'
