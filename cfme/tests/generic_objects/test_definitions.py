@@ -16,6 +16,12 @@ pytestmark = [test_requirements.generic_objects]
 @pytest.mark.sauce
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
 def test_generic_object_definition_crud(appliance, context, soft_assert):
+    """
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/30h
+        tags: 5.9
+    """
     with appliance.context.use(context):
         definition = appliance.collections.generic_object_definitions.create(
             name="{}_generic_class{}".format(context.name.lower(), fauxfactory.gen_alphanumeric()),

@@ -11,6 +11,11 @@ pytestmark = [
 
 
 def test_get_hardware(appliance, physical_switch):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_switch.reload(attributes=['hardware'])
     assert_response(appliance)
     assert physical_switch.hardware is not None
@@ -18,6 +23,11 @@ def test_get_hardware(appliance, physical_switch):
 
 @pytest.mark.parametrize('attribute', ['firmwares', 'nics', 'ports'])
 def test_get_hardware_attributes(appliance, physical_switch, attribute):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     expanded_attribute = 'hardware.{}'.format(attribute)
     physical_switch.reload(attributes=[expanded_attribute])
     assert_response(appliance)
@@ -25,6 +35,11 @@ def test_get_hardware_attributes(appliance, physical_switch, attribute):
 
 
 def test_get_asset_detail(appliance, physical_switch):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_switch.reload(attributes=['asset_detail'])
     assert_response(appliance)
     assert physical_switch.asset_detail is not None

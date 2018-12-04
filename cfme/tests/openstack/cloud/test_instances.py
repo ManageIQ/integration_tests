@@ -104,7 +104,12 @@ def volume_with_type(appliance, provider):
 
 @pytest.mark.regression
 def test_create_instance(new_instance, soft_assert):
-    """Creates an instance and verifies it appears on UI"""
+    """Creates an instance and verifies it appears on UI
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(new_instance, 'Details')
     prov_data = new_instance.provider.data['provisioning']
     power_state = view.entities.summary('Power Management').get_text_of('Power State')
@@ -128,6 +133,11 @@ def test_create_instance(new_instance, soft_assert):
 
 @pytest.mark.regression
 def test_stop_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.STOP)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_OFF)
@@ -138,6 +148,11 @@ def test_stop_instance(new_instance):
 
 @pytest.mark.regression
 def test_suspend_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SUSPEND)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SUSPENDED)
@@ -148,6 +163,11 @@ def test_suspend_instance(new_instance):
 
 @pytest.mark.regression
 def test_pause_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.PAUSE)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_PAUSED)
@@ -158,6 +178,11 @@ def test_pause_instance(new_instance):
 
 @pytest.mark.regression
 def test_shelve_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SHELVE)
     try:
@@ -172,6 +197,11 @@ def test_shelve_instance(new_instance):
 
 @pytest.mark.regression
 def test_shelve_offload_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SHELVE)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED)
@@ -189,6 +219,11 @@ def test_shelve_offload_instance(new_instance):
 
 @pytest.mark.regression
 def test_start_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.mgmt.ensure_state(VmState.STOPPED)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_OFF)
     new_instance.power_control_from_cfme(from_details=True,
@@ -201,6 +236,11 @@ def test_start_instance(new_instance):
 
 @pytest.mark.regression
 def test_soft_reboot_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SOFT_REBOOT)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_REBOOTING)
@@ -213,6 +253,11 @@ def test_soft_reboot_instance(new_instance):
 
 @pytest.mark.regression
 def test_hard_reboot_instance(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.HARD_REBOOT)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_REBOOTING)
@@ -225,6 +270,11 @@ def test_hard_reboot_instance(new_instance):
 
 @pytest.mark.regression
 def test_delete_instance(new_instance, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.TERMINATE)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_UNKNOWN)
@@ -245,6 +295,11 @@ def test_delete_instance(new_instance, provider):
                       required_fields=[['provisioning', 'image', 'os_distro']],
                       override=True, scope='module')
 def test_instance_operating_system_linux(new_instance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(new_instance, 'Details')
     os = view.entities.summary('Properties').get_text_of("Operating System")
     prov_data_os = new_instance.provider.data['provisioning']['image']['os_distro']
@@ -253,6 +308,11 @@ def test_instance_operating_system_linux(new_instance):
 
 @pytest.mark.regression
 def test_instance_attach_volume(volume, new_instance, appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     initial_volume_count = new_instance.volume_count
     new_instance.attach_volume(volume.name)
     view = appliance.browser.create_view(navigator.get_class(new_instance, 'AttachVolume').VIEW)
@@ -268,6 +328,11 @@ def test_instance_attach_volume(volume, new_instance, appliance):
 @pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_instance_attach_detach_volume_with_type(volume_with_type, new_instance, appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     initial_volume_count = new_instance.volume_count
     new_instance.attach_volume(volume_with_type.name)
     view = appliance.browser.create_view(navigator.get_class(new_instance, 'Details').VIEW)

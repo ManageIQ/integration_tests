@@ -49,7 +49,13 @@ def get_collection_entity(appliance, collection_name, provider):
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_container_objects(soft_assert, test_param, appliance, provider, request, tag,
                                tag_place):
-    """ Test for container items tagging action from list and details pages """
+    """ Test for container items tagging action from list and details pages
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
 
     obj_under_test = get_collection_entity(appliance=appliance, collection_name=test_param,
                                            provider=provider)

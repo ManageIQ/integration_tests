@@ -18,6 +18,11 @@ pytestmark = [
 
 @pytest.mark.regression
 def test_assigned_roles(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(provider, 'Details')
     try:
         res = view.entities.summary('Relationships').get_text_of('Deployment Roles')
@@ -28,6 +33,11 @@ def test_assigned_roles(provider):
 
 @pytest.mark.regression
 def test_nodes(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(provider, 'Details')
     nodes = len(provider.mgmt.iapi.node.list())
 
@@ -36,6 +46,11 @@ def test_nodes(provider):
 
 @pytest.mark.regression
 def test_templates(provider, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(provider, 'Details')
     images = [i.name for i in provider.mgmt.images]
 
@@ -51,6 +66,11 @@ def test_templates(provider, soft_assert):
 
 @pytest.mark.regression
 def test_stacks(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(provider, 'Details')
     """
     todo get the list of tenants from external resource and compare

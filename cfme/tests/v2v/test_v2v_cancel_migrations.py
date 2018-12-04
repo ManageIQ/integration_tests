@@ -34,6 +34,11 @@ def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, h
                                         conversion_tags,
                                         form_data_multiple_vm_obj_single_datastore, soft_assert,
                                         cancel_migration_after_percent):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     # TODO: Improve this test to cover cancel operation at various stages in migration.
     # This test will make use of migration request details page to track status of migration
     infrastructure_mapping_collection = appliance.collections.v2v_mappings

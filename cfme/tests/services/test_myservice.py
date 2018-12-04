@@ -66,6 +66,10 @@ def test_retire_service_ui(appliance, context, myservice):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: None
     """
     service_name, vm_name = myservice
     with appliance.context.use(context):
@@ -79,6 +83,10 @@ def test_retire_service_on_date(appliance, context, myservice):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: 1/4h
     """
     service_name, vm_name = myservice
     with appliance.context.use(context):
@@ -93,6 +101,10 @@ def test_crud_set_ownership_and_edit_tags(appliance, context, myservice):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: 1/4h
     """
 
     service_name, vm_name = myservice
@@ -114,6 +126,10 @@ def test_download_file(appliance, context, needs_firefox, myservice, filetype):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/16h
     """
     service_name, vm_name = myservice
     with appliance.context.use(context):
@@ -123,7 +139,12 @@ def test_download_file(appliance, context, needs_firefox, myservice, filetype):
 
 @pytest.mark.parametrize('context', [ViaUI])
 def test_service_link(appliance, context, myservice):
-    """Tests service link from VM details page(BZ1443772)"""
+    """Tests service link from VM details page(BZ1443772)
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: 1/4h
+    """
     service_name, vm_name = myservice
     with appliance.context.use(context):
         myservice = MyService(appliance, name=service_name, vm_name=vm_name)

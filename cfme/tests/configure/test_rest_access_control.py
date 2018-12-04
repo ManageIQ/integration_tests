@@ -39,6 +39,10 @@ class TestTenantsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         query_resource_attributes(tenants[0], soft_assert=soft_assert)
 
@@ -48,6 +52,11 @@ class TestTenantsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         for tenant in tenants:
             record = appliance.rest_api.collections.tenants.get(id=tenant.id)
@@ -61,6 +70,11 @@ class TestTenantsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         collection = appliance.rest_api.collections.tenants
         tenants_len = len(tenants)
@@ -96,6 +110,11 @@ class TestTenantsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(tenants, method=method)
 
@@ -105,6 +124,11 @@ class TestTenantsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(tenants)
 
@@ -124,6 +148,10 @@ class TestRolesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         query_resource_attributes(roles[0], soft_assert=soft_assert)
 
@@ -133,6 +161,11 @@ class TestRolesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         for role in roles:
             record = appliance.rest_api.collections.roles.get(id=role.id)
@@ -146,6 +179,11 @@ class TestRolesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         collection = appliance.rest_api.collections.roles
         roles_len = len(roles)
@@ -181,6 +219,11 @@ class TestRolesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(roles, method=method)
 
@@ -190,6 +233,11 @@ class TestRolesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(roles)
 
@@ -199,6 +247,11 @@ class TestRolesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         role_data = {"name": "role_name_{}".format(fauxfactory.gen_alphanumeric())}
         role = appliance.rest_api.collections.roles.action.add(role_data)[0]
@@ -223,6 +276,11 @@ class TestRolesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         feature = appliance.rest_api.collections.features.get(name="Everything")
         role = roles[0]
@@ -261,6 +319,10 @@ class TestGroupsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         query_resource_attributes(groups[0], soft_assert=soft_assert)
 
@@ -270,6 +332,11 @@ class TestGroupsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         for group in groups:
             record = appliance.rest_api.collections.groups.get(id=group.id)
@@ -283,6 +350,11 @@ class TestGroupsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         collection = appliance.rest_api.collections.groups
         groups_len = len(groups)
@@ -318,6 +390,11 @@ class TestGroupsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(groups, method=method)
 
@@ -327,6 +404,11 @@ class TestGroupsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(groups, not_found=True)
 
@@ -356,6 +438,10 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         query_resource_attributes(users[0], soft_assert=soft_assert)
 
@@ -365,6 +451,11 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         users, prov_data = users_data
         for index, user in enumerate(users):
@@ -386,6 +477,10 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         uniq = fauxfactory.gen_alphanumeric(4).upper()
         data = {
@@ -407,6 +502,11 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         user = users[0]
         new_password = fauxfactory.gen_alphanumeric()
@@ -422,6 +522,11 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         collection = appliance.rest_api.collections.users
         users_len = len(users)
@@ -463,6 +568,10 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
         groups = [appliance.rest_api.collections.groups.get(description=desc)
@@ -485,6 +594,10 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
         groups = [appliance.rest_api.collections.groups.get(description=desc)
@@ -537,6 +650,10 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: None
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
         groups = [appliance.rest_api.collections.groups.get(description=desc)
@@ -564,6 +681,10 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: None
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
         groups = [appliance.rest_api.collections.groups.get(description=desc)
@@ -589,6 +710,10 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
         groups = [appliance.rest_api.collections.groups.get(description=desc)
@@ -615,6 +740,10 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
         groups = [appliance.rest_api.collections.groups.get(description=desc)
@@ -637,6 +766,10 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         new_password = fauxfactory.gen_alphanumeric()
         new_user_auth = (user_auth[0], new_password)
@@ -658,6 +791,10 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         new_email = 'new@example.com'
 
@@ -676,6 +813,11 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(users, method=method)
 
@@ -685,5 +827,10 @@ class TestUsersViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(users)

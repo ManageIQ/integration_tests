@@ -53,6 +53,12 @@ def custom_report_values(request):
 @pytest.mark.meta(blockers=[BZ(1541324, forced_streams=["5.9"])])
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_top_level(appliance, group, report_menus):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        initialEstimate: 1/6h
+    """
     # Shuffle the order
     with report_menus.manage_folder(group) as folder:
         order = shuffle(folder.fields)
@@ -70,6 +76,13 @@ def test_shuffle_top_level(appliance, group, report_menus):
 @pytest.mark.meta(blockers=[BZ(1541324, forced_streams=["5.9"])])
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_first_level(appliance, group, report_menus):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/3h
+    """
     # Find a folder
     view = navigate_to(appliance.collections.reports, "All")
     tree = view.reports.tree.read_contents()[1]
@@ -95,7 +108,13 @@ def test_shuffle_first_level(appliance, group, report_menus):
 @test_requirements.report
 def test_add_reports_to_available_reports_menu(appliance, request, group,
                                                report_menus, custom_report_values):
-    """This test case moves custom menu to existing menus"""
+    """This test case moves custom menu to existing menus
+
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        initialEstimate: None
+    """
 
     custom_report = appliance.collections.reports.create(**custom_report_values)
     request.addfinalizer(custom_report.delete)

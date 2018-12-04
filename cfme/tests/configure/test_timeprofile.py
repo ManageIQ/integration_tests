@@ -15,6 +15,11 @@ pytestmark = [pytest.mark.tier(3),
 def test_time_profile_crud(appliance):
     """
         This test case performs the CRUD operation.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: config
+        initialEstimate: 1/8h
     """
     collection = appliance.collections.time_profiles
     time_profile = collection.create(
@@ -31,6 +36,12 @@ def test_time_profile_crud(appliance):
 def test_time_profile_name_max_character_validation(appliance):
     """
     This test case performs the check for max character validation.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
     """
     collection = appliance.collections.time_profiles
     time_profile = collection.create(
@@ -45,6 +56,12 @@ def test_time_profile_name_max_character_validation(appliance):
 def test_days_required_error_validation(appliance, soft_assert):
     """
     This test case performs the error validation of days field.
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/15h
     """
     collection = appliance.collections.time_profiles
     time_profile = collection.instantiate(description='UTC', scope='Current User',
@@ -61,6 +78,12 @@ def test_days_required_error_validation(appliance, soft_assert):
 def test_hours_required_error_validation(appliance, soft_assert):
     """
     This test case performs the error validation of hours field.
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/30h
     """
     collection = appliance.collections.time_profiles
     time_profile = collection.instantiate(description='UTC', scope='Current User',
@@ -77,6 +100,12 @@ def test_hours_required_error_validation(appliance, soft_assert):
 def test_time_profile_description_required_error_validation(appliance, soft_assert):
     """
     This test case performs the error validation of description field.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
     """
     collection = appliance.collections.time_profiles
     time_profile = collection.instantiate(description='UTC', scope='Current User',
@@ -93,6 +122,12 @@ def test_time_profile_description_required_error_validation(appliance, soft_asse
 def test_time_profile_copy(appliance):
     """
     This test case checks the copy operation of the time_profile.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/8h
     """
     collection = appliance.collections.time_profiles
     time_profile = collection.create(

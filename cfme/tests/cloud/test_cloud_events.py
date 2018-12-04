@@ -20,6 +20,10 @@ def test_manage_nsg_group(appliance, provider, register_event):
 
     Metadata:
         test_flag: events
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     nsg_name = random_vm_name(context='nsg')
@@ -68,6 +72,10 @@ def test_vm_capture(appliance, request, provider, register_event):
 
     Metadata:
         test_flag: events, provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     vm = appliance.collections.cloud_instances.instantiate(

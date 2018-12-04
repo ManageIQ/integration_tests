@@ -40,6 +40,11 @@ def test_graph_screen(provider, interval, graph_type, enable_candu):
         * Select interval Hourly
         * Zoom graph to get Table
         * Compare table and graph data
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        initialEstimate: None
     """
     vm_collection = provider.appliance.provider_based_collection(provider)
     vm = vm_collection.instantiate("cu-24x7", provider)

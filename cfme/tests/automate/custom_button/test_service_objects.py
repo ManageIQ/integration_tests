@@ -125,6 +125,11 @@ def test_custom_button_display(request, appliance, context, display, objects, bu
 
     Bugzilla:
         * 1650066
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: critical
+        initialEstimate: 1/4h
     """
 
     group, obj_type = button_group

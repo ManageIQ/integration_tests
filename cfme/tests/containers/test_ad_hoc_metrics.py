@@ -42,12 +42,24 @@ def is_ad_hoc_greyed(provider_object):
 
 def test_ad_hoc_metrics_overview(provider, metrics_up_and_running):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     assert is_ad_hoc_greyed(provider), (
         "Monitoring --> Ad hoc Metrics not activated despite provider was set")
 
 
 def test_ad_hoc_metrics_select_filter(provider, metrics_up_and_running):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     view = navigate_to(provider, 'AdHoc')
     view.wait_for_filter_option_to_load()
     view.set_filter(view.get_random_filter())

@@ -36,6 +36,13 @@ def catalog_item(appliance, dialog, catalog):
 
 
 def test_delete_catalog_deletes_service(appliance, dialog, catalog):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
@@ -49,6 +56,13 @@ def test_delete_catalog_deletes_service(appliance, dialog, catalog):
 
 
 def test_delete_catalog_item_deletes_service(appliance, catalog_item):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     catalog_item.delete()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     with pytest.raises(CandidateNotFound):
@@ -56,6 +70,13 @@ def test_delete_catalog_item_deletes_service(appliance, catalog_item):
 
 
 def test_service_circular_reference(appliance, catalog_item):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = appliance.collections.catalog_bundles.create(
         bundle_name, description="catalog_bundle",
@@ -73,6 +94,13 @@ def test_service_circular_reference(appliance, catalog_item):
 
 
 def test_service_generic_catalog_bundle(appliance, catalog_item):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     bundle_name = "generic_" + fauxfactory.gen_alphanumeric()
     appliance.collections.catalog_bundles.create(
         bundle_name, description="catalog_bundle",
@@ -90,6 +118,13 @@ def test_service_generic_catalog_bundle(appliance, catalog_item):
 
 
 def test_bundles_in_bundle(appliance, catalog_item):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: low
+        initialEstimate: 1/8h
+    """
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     appliance.collections.catalog_bundles.create(
         bundle_name, description="catalog_bundle",
@@ -117,6 +152,13 @@ def test_bundles_in_bundle(appliance, catalog_item):
 
 
 def test_delete_dialog_before_parent_item(appliance, catalog_item):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: low
+        initialEstimate: 1/8h
+    """
     service_dialog = appliance.collections.service_dialogs
     dialog = service_dialog.instantiate(label=catalog_item.dialog.label)
     error_message = ('Dialog \"{}\": Error during delete: Dialog cannot be'
@@ -136,6 +178,11 @@ class TestServiceCatalogViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         delete_resources_from_detail(service_catalogs, method=method)
 
@@ -144,6 +191,11 @@ class TestServiceCatalogViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         delete_resources_from_collection(service_catalogs)
 
@@ -156,6 +208,11 @@ class TestServiceCatalogViaREST(object):
             * Check if the service_catalog with ``new_name`` exists
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         for ctl in service_catalogs:
             new_name = fauxfactory.gen_alphanumeric()
@@ -175,6 +232,11 @@ class TestServiceCatalogViaREST(object):
             * Check if the service_catalogs with ``new_name`` each exist
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: low
+            initialEstimate: 1/3h
         """
 
         new_names = []

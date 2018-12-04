@@ -50,6 +50,12 @@ pytestmark = [
 @pytest.mark.requirement('general_ui')
 @pytest.mark.tier(3)
 def test_pull_splitter_persistence(request, appliance, model_object, destination):
+    """
+    Polarion:
+        assignee: mmojzis
+        caseimportance: low
+        initialEstimate: 1/20h
+    """
     splitter = Splitter(parent=appliance.browser.widgetastic)
 
     request.addfinalizer(splitter.reset)

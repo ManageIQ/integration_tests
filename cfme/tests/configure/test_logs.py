@@ -35,6 +35,10 @@ def test_provider_log_exists(log_exists):
 
     Metadata:
         test_flag: log
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     assert log_exists
 
@@ -49,6 +53,10 @@ def test_provider_log_rotate(appliance, provider, log_exists):
 
     Metadata:
         test_flag: log
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     assert log_exists, "Log file {}.log doesn't exist".format(provider.log_name)
     appliance.ssh_client.run_command("logrotate -f /etc/logrotate.d/miq_logs.conf")
@@ -74,6 +82,10 @@ def test_provider_log_updated(appliance, provider, log_exists):
 
     Metadata:
         test_flag: log
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     assert log_exists, "Log file {}.log doesn't exist".format(provider.log_name)
     log_before = appliance.ssh_client.run_command(
@@ -111,6 +123,10 @@ def test_provider_log_level(appliance, provider, log_exists):
 
     Metadata:
         test_flag: log
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     assert log_exists, "Log file {}.log doesn't exist".format(provider.log_name)
     log_level = appliance.server.advanced_settings['log']['level_{}'.format(provider.log_name)]

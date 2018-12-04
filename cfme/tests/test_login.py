@@ -25,7 +25,14 @@ pytestmark = pytest.mark.usefixtures('browser')
 @pytest.mark.uncollectif(lambda context, appliance: context == ViaSSUI and
                          appliance.version == UPSTREAM)
 def test_login(context, method, appliance):
-    """ Tests that the appliance can be logged into and shows dashboard page. """
+    """ Tests that the appliance can be logged into and shows dashboard page.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: config
+        initialEstimate: 1/8h
+        tags: rbac
+    """
 
     with appliance.context.use(context):
         logged_in_page = appliance.server.login()
@@ -44,7 +51,14 @@ def test_login(context, method, appliance):
 # BZ 1632718 is only relevant for Chrome browser
 @pytest.mark.meta(blockers=[BZ(1632718, forced_streams=['5.10'])])
 def test_bad_password(context, request, appliance):
-    """ Tests logging in with a bad password. """
+    """ Tests logging in with a bad password.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: web_ui
+        initialEstimate: 1/8h
+        tags: rbac
+    """
 
     username = conf.credentials['default']['username']
     password = "badpassword@#$"
@@ -67,7 +81,13 @@ def test_bad_password(context, request, appliance):
 @pytest.mark.parametrize('context', [ViaUI])
 @pytest.mark.meta(blockers=[BZ(1632718, forced_streams=['5.10'])])
 def test_update_password(context, request, appliance):
-    """ Test updating password from the login screen. """
+    """ Test updating password from the login screen.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        initialEstimate: 1/6h
+    """
 
     # First, create a temporary new user
     username = 'user_temp_{}'.format(fauxfactory.gen_alphanumeric(4).lower())

@@ -30,6 +30,14 @@ pytestmark = [
 def test_single_vm_scheduled_migration(request, appliance, v2v_providers, host_creds,
                                     conversion_tags, soft_assert,
                                     form_data_vm_obj_single_datastore):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(
         form_data_vm_obj_single_datastore.form_data)

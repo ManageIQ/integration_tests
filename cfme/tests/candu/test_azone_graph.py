@@ -49,6 +49,11 @@ def test_graph_screen(provider, azone, graph_type, interval, enable_candu):
         * Select interval Hourly
         * Zoom graph to get Table
         * Compare table and graph data
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        initialEstimate: None
     """
     azone.wait_candu_data_available(timeout=1200)
 

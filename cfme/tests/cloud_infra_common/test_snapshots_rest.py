@@ -102,6 +102,10 @@ class TestRESTSnapshots(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         vm, snapshot = vm_snapshot
         vm.snapshots.get(description=snapshot.description)
@@ -115,6 +119,10 @@ class TestRESTSnapshots(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         __, snapshot = vm_snapshot
         delete_resources_from_detail([snapshot], method=method, num_sec=300, delay=5)
@@ -125,6 +133,10 @@ class TestRESTSnapshots(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         vm, snapshot = vm_snapshot
         delete_resources_from_collection(
@@ -144,6 +156,10 @@ class TestRESTSnapshots(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         # create and delete snapshot #1
         __, snap1 = vm_snapshot(request, appliance, collection, vm)
@@ -168,6 +184,10 @@ class TestRESTSnapshots(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         __, snapshot = vm_snapshot
 

@@ -41,6 +41,10 @@ def default_alerts(appliance):
 def test_default_alerts(appliance,default_alerts):
     """ Tests the default pre-configured alerts on the appliance and
         ensures that they have not changed between versions.
+
+    Polarion:
+        assignee: jdupuy
+        initialEstimate: None
     """
     # get the alerts of the appliance
     alerts = appliance.collections.alerts.all()

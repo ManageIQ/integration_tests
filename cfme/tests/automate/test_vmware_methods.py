@@ -99,6 +99,10 @@ def test_vmware_vimapi_hotadd_disk(
 
     Metadata:
         test_flag: hotdisk, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/8h
     """
     meth = cls.methods.create(
         name='load_value_{}'.format(fauxfactory.gen_alpha()),

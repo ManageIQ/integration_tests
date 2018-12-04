@@ -41,6 +41,11 @@ def temp_vm(appliance, provider, provisioning):
 
 def test_k6t_provider_crud(provider):
 
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     with update(provider):
         provider.name = fauxfactory.gen_alphanumeric() + '_updated'
 
@@ -52,6 +57,11 @@ def test_k6t_provider_crud(provider):
                          [{}, {'hardware': {'cpu_cores': '8', 'memory': '8192'}}],
                          ids=['via_lifecycle', 'override_template_values'])
 def test_k6t_vm_crud(request, appliance, provider, provisioning, custom_prov_data):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     vm_name = random_vm_name('k6tvm')
     prov_data = {'catalog': {'vm_name': vm_name}}
     provider.refresh_provider_relationships()
@@ -72,6 +82,11 @@ def test_k6t_vm_crud(request, appliance, provider, provisioning, custom_prov_dat
                          ids=['PowerOn', 'PowerOff'])
 def test_vm_power_management(request, appliance, provider, temp_vm,
                              from_details, power_option, vm_state):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     # TODO: use wrapanapi to check power state before applying it
     temp_vm.power_control_from_cfme(from_details=from_details, option=power_option)
     provider.refresh_provider_relationships()

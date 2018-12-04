@@ -121,6 +121,10 @@ def test_login_evm_group(appliance, auth_user, user_obj, soft_assert):
             * ``auth_data.yaml`` file
             * auth provider configured with user as a member of a group matching default EVM group
         Test will configure auth and login
+
+    Polarion:
+        assignee: mpusater
+        initialEstimate: None
     """
     # get a list of groups for the user that match evm default group names
     # Replace spaces with dashes in UPN type usernames for login compatibility
@@ -181,6 +185,10 @@ def test_login_retrieve_group(appliance, request, auth_mode, auth_provider, soft
         Steps:
             * Make sure corresponding auth_modes data is updated to ``auth_data.yaml``
             * this test fetches the auth_modes from yaml and generates tests per auth_mode.
+
+    Polarion:
+        assignee: mpusater
+        initialEstimate: None
     """
     # get a list of (user_obj, groupname) tuples, creating the user object inline
     # filtering on those that do NOT evmgroup in groupname
@@ -257,6 +265,10 @@ def test_login_local_group(appliance, local_user, local_group, soft_assert):
     Test remote authentication with a locally created group.
     Group is NOT retrieved from or matched to those on authentication provider
 
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     # modify auth settings to not get groups
     appliance.server.authentication.auth_settings = {'auth_settings': {'get_groups': False}}
@@ -279,7 +291,12 @@ def test_login_local_group(appliance, local_user, local_group, soft_assert):
                          reason='User does not have multiple groups')
 def test_user_group_switching(appliance, auth_user, auth_mode, auth_provider, soft_assert, request,
                               user_obj):
-    """Test switching groups on a single user, between retreived group and built-in group"""
+    """Test switching groups on a single user, between retreived group and built-in group
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     retrieved_groups = []
     for group in auth_user.groups:
         # pick non-evm group when there are multiple groups for the user

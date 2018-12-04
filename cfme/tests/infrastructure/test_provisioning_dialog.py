@@ -128,6 +128,10 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/6h
     """
     prov_data['catalog']["vm_name"] = vm_name
     prov_data['hardware']["num_sockets"] = "4"
@@ -180,6 +184,10 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/6h
     """
 
     if provider.key == "vsphere55" and disk_format == "Thick":
@@ -220,6 +228,10 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/4h
     """
     prov_data['catalog']['vm_name'] = vm_name
     prov_data['schedule']["power_on"] = started
@@ -250,6 +262,10 @@ def test_tag(provisioner, prov_data, provider, vm_name):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: 1/8h
     """
     prov_data['catalog']['vm_name'] = vm_name
     prov_data['purpose']["apply_tags"] = CbTree.CheckNode(path=("Service Level *", "Gold"))
@@ -279,6 +295,10 @@ def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/4h
     """
     now = datetime.utcnow()
     prov_data['catalog']['vm_name'] = vm_name
@@ -322,6 +342,10 @@ def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, v
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     prov_data['catalog']['vm_name'] = vm_name
     prov_data['network'] = {'vlan': vnic_profile}
@@ -363,6 +387,10 @@ def test_provision_vm_with_2_nics(provisioner, provisioning, prov_data, vm_name)
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     template_name = provisioning.get('template_2_nics', None)
     prov_data['catalog']['vm_name'] = vm_name
@@ -387,6 +415,10 @@ def test_vmware_default_placement(provisioner, prov_data, provider, setup_provid
         * The VM should be placed in the Datacenter root folder (that's two levels up in API).
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     template_name = provider.data['provisioning']['template']
     prov_data['catalog']['vm_name'] = vm_name

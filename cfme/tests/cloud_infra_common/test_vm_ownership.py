@@ -144,6 +144,11 @@ def test_form_button_validation(request, user1, setup_provider, provider, vm_cru
 
     Metadata:
         test_flag: rbac
+
+    Polarion:
+        assignee: apagac
+        caseimportance: medium
+        initialEstimate: None
     """
     # Reset button test
     vm_crud.set_ownership(user=user1, click_reset=True)
@@ -161,6 +166,11 @@ def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
 
     Metadata:
         test_flag: rbac
+
+    Polarion:
+        assignee: apagac
+        caseimportance: medium
+        initialEstimate: None
     """
     # Set the ownership and checking it
     vm_crud.set_ownership(user=user1)
@@ -177,6 +187,11 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
 
     Metadata:
         test_flag: rbac
+
+    Polarion:
+        assignee: apagac
+        caseimportance: medium
+        initialEstimate: None
     """
 
     # user is only a member of a single group so it will always be the current group
@@ -195,6 +210,11 @@ def test_group_ownership_on_user_or_group_role(
 
     Metadata:
         test_flag: rbac
+
+    Polarion:
+        assignee: apagac
+        caseimportance: medium
+        initialEstimate: None
     """
     # user is only a member of a single group so it will always be the current group
     vm_crud.set_ownership(group=user3.groups[0])
@@ -214,6 +234,12 @@ def test_template_set_ownership(appliance, request, provider, setup_provider, vm
     then sets it back and in the end removes the template.
     VM is removed via fixture.
     Tests BZ 1446801 in RHCF3-14353
+
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
 
     # setup the test

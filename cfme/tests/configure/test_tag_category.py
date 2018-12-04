@@ -16,6 +16,13 @@ from cfme.utils.wait import wait_for
 @pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_category_crud(appliance, soft_assert):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/15h
+    """
     cg = appliance.collections.categories.create(
         name=fauxfactory.gen_alphanumeric(8).lower(),
         description=fauxfactory.gen_alphanumeric(32),
@@ -44,6 +51,11 @@ class TestCategoriesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         for ctg in categories:
             record = appliance.rest_api.collections.categories.get(id=ctg.id)
@@ -59,6 +71,11 @@ class TestCategoriesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         collection = appliance.rest_api.collections.categories
         categories_len = len(categories)
@@ -93,6 +110,11 @@ class TestCategoriesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_detail(categories, method=method)
 
@@ -102,5 +124,10 @@ class TestCategoriesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(categories, not_found=True)

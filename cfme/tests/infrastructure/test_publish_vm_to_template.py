@@ -43,6 +43,10 @@ def test_publish_vm_to_template(request, setup_provider, vm_crud):
         2) Publish the VM to a template
         3) Check that the template exists
 
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     vm_crud.mgmt.ensure_state(VmState.STOPPED)
     vm_crud.refresh_relationships()

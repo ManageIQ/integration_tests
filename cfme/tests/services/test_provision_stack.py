@@ -171,6 +171,10 @@ def test_provision_stack(order_stack):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/3h
     """
     provision_request, stack = order_stack
     assert provision_request.is_succeeded()
@@ -182,6 +186,10 @@ def test_reconfigure_service(appliance, service_catalogs, request):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: 1/4h
     """
     provision_request = service_catalogs.order()
     provision_request.wait_for_request(method='ui')
@@ -205,6 +213,10 @@ def test_remove_non_read_only_orch_template(appliance, provider, template, servi
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     provision_request = service_catalogs.order()
     request.addfinalizer(lambda: _cleanup(appliance, provision_request))
@@ -230,6 +242,10 @@ def test_remove_read_only_orch_template_neg(appliance, provider, template, servi
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     provision_request = service_catalogs.order()
     request.addfinalizer(lambda: _cleanup(appliance, provision_request))
@@ -248,6 +264,10 @@ def test_retire_stack(order_stack):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     _, stack = order_stack
     stack.retire_stack()

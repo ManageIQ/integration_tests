@@ -83,7 +83,12 @@ def navigate_and_select_quads(provider):
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
 def test_discover_host(request, provider, appliance, host_ips):
-    """Tests hosts discovery."""
+    """Tests hosts discovery.
+
+    Polarion:
+        assignee: mkourim
+        initialEstimate: None
+    """
     if provider.delete_if_exists(cancel=False):
         provider.wait_for_delete()
 
@@ -122,6 +127,11 @@ def test_discover_host(request, provider, appliance, host_ips):
     reason="Not relevant for RHEVM Provider."
 )
 def test_multiple_host_good_creds(setup_provider, provider, creds):
+    """
+    Polarion:
+        assignee: mkourim
+        initialEstimate: None
+    """
     if len(provider.data.get('hosts', {})) < 2:
         pytest.skip('not enough hosts to run test')
     """  Tests multiple host credentialing  with good credentials """
@@ -150,7 +160,13 @@ def test_multiple_host_good_creds(setup_provider, provider, creds):
 @pytest.mark.meta(blockers=[BZ(1619626, forced_streams=['5.9', '5.10'],
                                unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_multiple_host_bad_creds(setup_provider, provider):
-    """    Tests multiple host credentialing with bad credentials """
+    """    Tests multiple host credentialing with bad credentials
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        initialEstimate: 1/15h
+    """
     if len(provider.data.get('hosts', {})) < 2:
         pytest.skip('not enough hosts to run test')
 
@@ -177,7 +193,12 @@ def test_multiple_host_bad_creds(setup_provider, provider):
 @pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
 def test_tag_host_after_provider_delete(provider, appliance, setup_provider, request):
-    """Test if host can be tagged after delete"""
+    """Test if host can be tagged after delete
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: 1/8h
+    """
     host_on_provider = provider.hosts.all()[0]
     provider.delete(cancel=False)
     provider.wait_for_delete()
@@ -199,6 +220,10 @@ def test_tag_host_after_provider_delete(provider, appliance, setup_provider, req
 def test_250_vmware_hosts_loading(appliance, create_250_hosts, view_type):
     """
     Test to automate BZ1580569
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     # Without the patch, this will cause the process to consume roughly 10+ Gigs of RAM
     # due to a poorly optimized database query

@@ -95,6 +95,10 @@ def test_tagdialog_catalog_item(appliance, provider, catalog_item, request):
     """Tests tag dialog catalog item
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(

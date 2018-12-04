@@ -87,6 +87,11 @@ def vm(request, provider, small_template, ssa_analysis_profile):
 def test_ssa_vddk(vm, configure_vddk):
     """Check if different version of vddk works with provider
 
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/2h
     """
     vm.smartstate_scan(wait_for_task_result=True)
     view = navigate_to(vm, 'Details')

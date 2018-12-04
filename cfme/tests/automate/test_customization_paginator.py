@@ -60,6 +60,10 @@ def test_paginator(some_dialogs, soft_assert, appliance):
             dialogs must contain all idalogs you created before.
         * During the cycling, assert the numbers displayed in the paginator make sense
         * During the cycling, assert the paginator does not get stuck.
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     service_dialog = appliance.collections.service_dialogs
     view = navigate_to(service_dialog, 'All')

@@ -38,7 +38,13 @@ def schedule(schedule_data, appliance):
 @pytest.mark.tier(3)
 @test_requirements.report
 def test_schedule_queue(schedule, appliance):
-    """ To test scheduling of report using options: Once, Hourly, Daily, Weekly, Monthly """
+    """ To test scheduling of report using options: Once, Hourly, Daily, Weekly, Monthly
+
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        initialEstimate: None
+    """
 
     schedule.queue()
     view = schedule.create_view(ScheduleDetailsView)

@@ -55,6 +55,10 @@ def test_metrics_collection(clean_setup_provider, provider, enable_candu):
 
     Metadata:
         test_flag: metrics_collection
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     metrics_tbl = store.current_appliance.db.client['metrics']
     mgmt_systems_tbl = store.current_appliance.db.client['ext_management_systems']

@@ -44,6 +44,14 @@ def get_migrated_vm_obj(src_vm_obj, target_provider):
 def test_single_datastore_single_vm_migration(request, appliance, v2v_providers, host_creds,
                                             conversion_tags,
                                             form_data_vm_obj_single_datastore):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
 
@@ -89,6 +97,14 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
 def test_single_network_single_vm_migration(request, appliance, v2v_providers, host_creds,
                                             conversion_tags,
                                             form_data_vm_obj_single_network):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     # This test will make use of migration request details page to track status of migration
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_network.form_data)
@@ -136,6 +152,14 @@ def test_single_network_single_vm_migration(request, appliance, v2v_providers, h
 def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, host_creds,
                                         conversion_tags,
                                         form_data_dual_vm_obj_dual_datastore, soft_assert):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     # This test will make use of migration request details page to track status of migration
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_dual_vm_obj_dual_datastore.
@@ -184,6 +208,14 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
 )
 def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conversion_tags,
          form_data_vm_obj_dual_nics):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_dual_nics.form_data)
 
@@ -228,6 +260,14 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
                         indirect=True)
 def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, conversion_tags,
                                 form_data_vm_obj_single_datastore):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
 
@@ -274,6 +314,14 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
                                     conversion_tags,
                                     form_data_multiple_vm_obj_single_datastore,
                                     soft_assert):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(
         form_data_multiple_vm_obj_single_datastore.form_data)
@@ -320,6 +368,13 @@ def test_conversion_host_tags(appliance, v2v_providers):
 
     1)Test Attribute in UI indicating host has/has not been configured as conversion host like Tags
     2)Test converstion host tags
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
     """
     tag1 = (appliance.collections.categories.instantiate(
             display_name='V2V - Transformation Host *')
@@ -350,6 +405,14 @@ def test_conversion_host_tags(appliance, v2v_providers):
 def test_single_vm_migration_with_ssh(request, appliance, v2v_providers, host_creds,
                                     conversion_tags,
                                     form_data_vm_obj_single_datastore):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
 
@@ -396,6 +459,14 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
                                     host_creds, conversion_tags,
                                     form_data_vm_obj_single_datastore,
                                     power_state):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     # Test VM migration power state and tags are preserved
     # as this is single_vm_migration it only has one vm_obj, which we extract on next line
     src_vm = form_data_vm_obj_single_datastore.vm_list[0]
@@ -463,6 +534,14 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
 def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_creds,
                                     conversion_tags, soft_assert,
                                     form_data_multiple_vm_obj_single_datastore):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(
         form_data_multiple_vm_obj_single_datastore.form_data)
@@ -525,7 +604,15 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
 def test_migration_special_char_name(request, appliance, v2v_providers, host_creds, conversion_tags,
                                     form_data_vm_obj_single_datastore):
     """Tests migration where name of migration plan is comprised of special non-alphanumeric
-       characters, such as '@#$(&#@('."""
+       characters, such as '@#$(&#@('.
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
 
@@ -567,7 +654,12 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
 
 
 def test_migration_long_name(request, appliance, v2v_providers, host_creds, conversion_tags):
-    """Test to check VM name with 64 character should work"""
+    """Test to check VM name with 64 character should work
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     source_datastores_list = v2v_providers.vmware_provider.data.get("datastores", [])
     source_datastore = [d.name for d in source_datastores_list if d.type == "nfs"][0]
     collection = appliance.provider_based_collection(v2v_providers.vmware_provider)

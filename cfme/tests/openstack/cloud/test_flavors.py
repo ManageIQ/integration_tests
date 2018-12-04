@@ -98,6 +98,11 @@ def new_instance(provider, zero_disk_flavor):
 @pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_create_instance_with_zero_disk_flavor(new_instance, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(new_instance, 'Details')
     prov_data = new_instance.provider.data['provisioning']
     power_state = view.entities.summary('Power Management').get_text_of('Power State')
@@ -122,6 +127,11 @@ def test_create_instance_with_zero_disk_flavor(new_instance, soft_assert):
 
 @pytest.mark.regression
 def test_flavor_crud(appliance, provider, request):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     collection = appliance.collections.cloud_flavors
     flavor = collection.create(name=fauxfactory.gen_alpha(),
                                provider=provider,
@@ -155,6 +165,11 @@ def test_flavor_crud(appliance, provider, request):
 @pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_flavors_details_from_list_view(appliance, soft_assert, private_flavor):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     collection = appliance.collections.cloud_flavors
     view = navigate_to(collection, 'All')
     item = view.entities.get_entity(name=private_flavor.name, surf_pages=True)
@@ -168,6 +183,11 @@ def test_flavors_details_from_list_view(appliance, soft_assert, private_flavor):
 @pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_flavor_details(appliance, soft_assert, private_flavor):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(private_flavor, 'Details')
     soft_assert(view.entities.properties.get_text_of('CPUs') == str(private_flavor.vcpus))
 

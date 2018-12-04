@@ -232,6 +232,12 @@ def setup_nfs_samba_backup(appl1):
 def test_appliance_console_restore_db_local(request, get_appliances_with_providers):
     """ Test single appliance backup and restore, configures appliance with providers,
     backs up database, restores it to fresh appliance and checks for matching providers.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: critical
+        initialEstimate: 1/2h
     """
     appl1, appl2 = get_appliances_with_providers
     # Transfer v2_key and db backup from first appliance to second appliance
@@ -259,6 +265,13 @@ def test_appliance_console_restore_db_local(request, get_appliances_with_provide
 @pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream or appliance.version < '5.9',
                          reason='Test not supported below 5.9')
 def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansible):
+    """
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: critical
+        initialEstimate: 1/2h
+    """
     appl1 = get_appliance_with_ansible
     # Restore DB on the second appliance
     appl1.evmserverd.stop()
@@ -290,6 +303,14 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
                          reason='Test only for downstream version of product')
 def test_appliance_console_restore_pg_basebackup_replicated(
         request, get_replicated_appliances_with_providers):
+    """
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: critical
+        initialEstimate: 1/2h
+        upstream: no
+    """
     appl1, appl2 = get_replicated_appliances_with_providers
     providers_before_restore = set(appl1.managed_provider_names)
     # Restore DB on the second appliance
@@ -328,6 +349,12 @@ def test_appliance_console_restore_pg_basebackup_replicated(
 def test_appliance_console_restore_db_external(request, get_ext_appliances_with_providers):
     """Configure ext environment with providers, run backup/restore on configuration,
     Confirm that providers still exist after restore and provisioning works.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: critical
+        initialEstimate: 1h
     """
     appl1, appl2 = get_ext_appliances_with_providers
     # Restore DB on the second appliance
@@ -364,6 +391,12 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
                          reason='Test only for downstream version of product')
 def test_appliance_console_restore_db_replicated(
         request, get_replicated_appliances_with_providers):
+    """
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        initialEstimate: 1h
+    """
     appl1, appl2 = get_replicated_appliances_with_providers
     providers_before_restore = set(appl1.managed_provider_names)
     # Restore DB on the second appliance
@@ -406,6 +439,11 @@ def test_appliance_console_restore_db_replicated(
 def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_providers):
     """Configure HA environment with providers, run backup/restore on configuration,
     Confirm that ha failover continues to work correctly and providers still exist.
+
+    Polarion:
+        assignee: lcouzens
+        casecomponent: appl
+        initialEstimate: None
     """
     appl1, appl2, appl3 = get_ha_appliances_with_providers
     providers_before_restore = set(appl3.managed_provider_names)
@@ -452,6 +490,12 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
 def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers):
     """ Test single appliance backup and restore through nfs, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: critical
+        initialEstimate: 1h
     """
     appl1, appl2 = get_appliances_with_providers
     host = cfme_data['network_share']['hostname']
@@ -484,6 +528,12 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
 def test_appliance_console_restore_db_samba(request, get_appliances_with_providers):
     """ Test single appliance backup and restore through smb, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: critical
+        initialEstimate: 1h
     """
     appl1, appl2 = get_appliances_with_providers
     host = cfme_data['network_share']['hostname']

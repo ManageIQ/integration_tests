@@ -90,7 +90,12 @@ def appliance_preupdate(old_version, appliance):
 
 @pytest.mark.rhel_testing
 def test_update_yum(appliance_preupdate, appliance):
-    """Tests appliance update between versions"""
+    """Tests appliance update between versions
+
+    Polarion:
+        assignee: lcouzens
+        initialEstimate: 1/4h
+    """
     appliance_preupdate.evmserverd.stop()
     with appliance_preupdate.ssh_client as ssh:
         result = ssh.run_command('yum update -y', timeout=3600)
@@ -104,7 +109,12 @@ def test_update_yum(appliance_preupdate, appliance):
 @pytest.mark.ignore_stream("upstream")
 def test_update_webui(appliance_with_providers, appliance, request, old_version):
     """ Tests updating an appliance with providers, also confirms that the
-        provisioning continues to function correctly after the update has completed"""
+        provisioning continues to function correctly after the update has completed
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     update_appliance(appliance_with_providers)
 
     wait_for(do_appliance_versions_match, func_args=(appliance, appliance_with_providers),
@@ -119,7 +129,12 @@ def test_update_webui(appliance_with_providers, appliance, request, old_version)
 @pytest.mark.ignore_stream("upstream")
 def test_update_scap_webui(appliance_with_providers, appliance, request, old_version):
     """ Tests updating an appliance with providers and scap hardened, also confirms that the
-        provisioning continues to function correctly after the update has completed"""
+        provisioning continues to function correctly after the update has completed
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     appliance_with_providers.appliance_console.scap_harden_appliance()
     rules_failures = appliance_with_providers.appliance_console.scap_check_rules()
     assert not rules_failures, "Some rules have failed, check log"
@@ -140,7 +155,12 @@ def test_update_scap_webui(appliance_with_providers, appliance, request, old_ver
 @pytest.mark.ignore_stream("upstream")
 def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, old_version):
     """ Tests updating an appliance which has embedded ansible role enabled, also confirms that the
-        role continues to function correctly after the update has completed"""
+        role continues to function correctly after the update has completed
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     update_appliance(enabled_embedded_appliance)
     wait_for(do_appliance_versions_match, func_args=(appliance, enabled_embedded_appliance),
              num_sec=900, delay=20, handle_exception=True,
@@ -168,7 +188,12 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
 def test_update_distributed_webui(ext_appliances_with_providers, appliance, request, old_version,
                                   soft_assert):
     """ Tests updating an appliance with providers, also confirms that the
-            provisioning continues to function correctly after the update has completed"""
+            provisioning continues to function correctly after the update has completed
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     update_appliance(ext_appliances_with_providers[0])
     wait_for(do_appliance_versions_match, func_args=(appliance, ext_appliances_with_providers[0]),
              num_sec=900, delay=20, handle_exception=True,
@@ -189,7 +214,12 @@ def test_update_distributed_webui(ext_appliances_with_providers, appliance, requ
 def test_update_replicated_webui(replicated_appliances_with_providers, appliance, request,
                                  old_version, soft_assert):
     """ Tests updating an appliance with providers, also confirms that the
-            provisioning continues to function correctly after the update has completed"""
+            provisioning continues to function correctly after the update has completed
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     providers_before_upgrade = set(replicated_appliances_with_providers[0].managed_provider_names)
     update_appliance(replicated_appliances_with_providers[0])
     update_appliance(replicated_appliances_with_providers[1])
@@ -217,7 +247,12 @@ def test_update_replicated_webui(replicated_appliances_with_providers, appliance
 @pytest.mark.ignore_stream("upstream")
 def test_update_ha_webui(ha_appliances_with_providers, appliance, request, old_version):
     """ Tests updating an appliance with providers, also confirms that the
-            provisioning continues to function correctly after the update has completed"""
+            provisioning continues to function correctly after the update has completed
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     update_appliance(ha_appliances_with_providers[2])
     wait_for(do_appliance_versions_match, func_args=(appliance, ha_appliances_with_providers[2]),
              num_sec=900, delay=20, handle_exception=True,

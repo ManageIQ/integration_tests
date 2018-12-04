@@ -84,6 +84,10 @@ class TestAuthenticationsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: None
         """
         query_resource_attributes(authentications[0], soft_assert=soft_assert)
 
@@ -92,6 +96,10 @@ class TestAuthenticationsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         new_names = []
         responses = []
@@ -108,6 +116,10 @@ class TestAuthenticationsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         new_names = []
         auths_data_edited = []
@@ -129,6 +141,10 @@ class TestAuthenticationsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         for auth in authentications:
             auth.action.delete.POST()
@@ -146,6 +162,10 @@ class TestAuthenticationsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         for auth in authentications:
             auth.action.delete.DELETE()
@@ -163,6 +183,10 @@ class TestAuthenticationsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         appliance.rest_api.collections.authentications.action.delete.POST(*authentications)
         assert_response(appliance)
@@ -178,6 +202,11 @@ class TestAuthenticationsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.authentications
         assert 'credential_types' in collection.options()['data']

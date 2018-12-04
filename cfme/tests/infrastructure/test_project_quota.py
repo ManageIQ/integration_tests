@@ -116,6 +116,11 @@ def test_project_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pr
 
     Metadata:
         test_flag: quota
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: config
+        initialEstimate: 1/4h
     """
     with new_user:
         recursive_update(prov_data, custom_prov_data)

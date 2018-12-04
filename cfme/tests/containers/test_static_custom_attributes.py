@@ -54,6 +54,11 @@ def test_add_static_custom_attributes(add_delete_custom_attributes, provider):
         * Go to provider summary page
     Expected results:
         * The attributes was successfully added
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
 
     view = refresh_and_navigate(provider, 'Details')
@@ -72,6 +77,11 @@ def test_edit_static_custom_attributes(provider):
         * Go to provider summary page
     Expected results:
         * The attributes was successfully updated to the new values
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
 
     provider.add_custom_attributes(*ATTRIBUTES_DATASET)
@@ -95,6 +105,11 @@ def test_delete_static_custom_attributes(add_delete_custom_attributes, request, 
     Expected results:
         * The attributes was successfully deleted
         (you should not see a custom attributes table)
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
 
     provider.delete_custom_attributes(*ATTRIBUTES_DATASET)
@@ -132,6 +147,11 @@ def test_add_attribute_with_empty_name(provider):
     Expected results:
         * You should get an error
         * You should not see this attribute in the custom  attributes table
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     with pytest.raises(APIException):
         provider.add_custom_attributes(
@@ -145,7 +165,13 @@ def test_add_attribute_with_empty_name(provider):
 
 
 def test_add_date_attr_with_wrong_value(provider):
-    """Trying to add attribute of type date with non-date value"""
+    """Trying to add attribute of type date with non-date value
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     ca = CustomAttribute('nondate', "koko", 'Date')
     with pytest.raises(APIException):
         provider.add_custom_attributes(ca)
@@ -158,7 +184,13 @@ def test_add_date_attr_with_wrong_value(provider):
 
 
 def test_edit_non_exist_attribute(provider):
-    """Trying to edit non-exist attribute"""
+    """Trying to edit non-exist attribute
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     ca = choice(ATTRIBUTES_DATASET)
     # Note: we need to implement it inside the test instead of using
     #       the API (provider.edit_custom_attributes) in order to
@@ -180,6 +212,12 @@ def test_edit_non_exist_attribute(provider):
 
 def test_delete_non_exist_attribute(provider):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     ca = choice(ATTRIBUTES_DATASET)
     with pytest.raises(APIException):
         provider.delete_custom_attributes(ca)
@@ -190,6 +228,12 @@ def test_delete_non_exist_attribute(provider):
 
 @pytest.mark.meta(blockers=[BZ(1544800, forced_streams=["5.8", "5.9"])])
 def test_add_already_exist_attribute(provider):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     ca = choice(ATTRIBUTES_DATASET)
     provider.add_custom_attributes(ca)
     try:
@@ -203,6 +247,12 @@ def test_add_already_exist_attribute(provider):
 
 
 def test_very_long_name_with_special_characters(request, provider):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     ca = CustomAttribute(get_random_string(1000), 'very_long_name', None)
     request.addfinalizer(lambda: provider.delete_custom_attributes(ca))
     provider.add_custom_attributes(ca)
@@ -212,6 +262,12 @@ def test_very_long_name_with_special_characters(request, provider):
 
 # BZ 540647 was closed as no fix. Code was added that strips underscores from attribute names.
 def test_very_long_value_with_special_characters(request, provider):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     ca = CustomAttribute('very long value', get_random_string(1000), None)
     request.addfinalizer(lambda: provider.delete_custom_attributes(ca))
     provider.add_custom_attributes(ca)

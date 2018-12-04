@@ -70,6 +70,12 @@ TEST_ITEMS = [
                          ids=[ti.pretty_id() for ti in TEST_ITEMS])
 def test_tables_fields(provider, test_item, soft_assert, appliance):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     view = navigate_to((test_item.obj if test_item.obj is ContainersProvider
                         else getattr(appliance.collections, test_item.collection_name)), 'All')
     view.toolbar.view_selector.select('List View')
@@ -94,6 +100,11 @@ def test_containers_details_view_title(appliance):
     The word summery has to apper as part of the container title
     In this test the detail container view is tested
     Test based on BZ1338801
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     random_container = appliance.collections.containers.all().pop()
     view = navigate_to(random_container, "Details")

@@ -185,6 +185,10 @@ def test_crud_pod_appliance(temp_pod_appliance, provider, setup_provider):
 
     Metadata:
         test_flag: podtesting
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     appliance = temp_pod_appliance
     collection = appliance.collections.container_projects
@@ -201,6 +205,10 @@ def test_crud_pod_appliance_ansible_deployment(temp_pod_ansible_appliance, provi
 
     Metadata
        test_flag: podtesting
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     appliance = temp_pod_ansible_appliance
     collection = appliance.collections.container_projects
@@ -214,6 +222,10 @@ def test_crud_pod_appliance_ext_db():
     deploys pod appliance
     checks that it is alive
     deletes pod appliance
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     # add ext db templates to provider in template deployment
     # make sprout deploy ext db appliances ? or wrapanapi enhancement ?
@@ -226,6 +238,10 @@ def test_crud_pod_appliance_custom_config():
     overriding default values in template and deploys pod appliance
     checks that it is alive
     deletes pod appliance
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     # custom deployment
     pass
@@ -235,6 +251,10 @@ def test_crud_pod_appliance_custom_config():
 def test_pod_appliance_config_upgrade():
     """
     appliance config update should cause appliance re-deployment
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     pass
 
@@ -243,6 +263,10 @@ def test_pod_appliance_config_upgrade():
 def test_pod_appliance_image_upgrade():
     """
     one of appliance images has been changed. it should cause pod re-deployment
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     pass
 
@@ -251,6 +275,10 @@ def test_pod_appliance_image_upgrade():
 def test_pod_appliance_db_upgrade():
     """
     db scheme/version has been changed
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     pass
 
@@ -261,6 +289,10 @@ def test_pod_appliance_start_stop(temp_pod_appliance, provider, setup_provider):
 
         Metadata:
         test_flag: podtesting
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     appliance = temp_pod_appliance
     assert provider.mgmt.is_vm_running(appliance.project)
@@ -274,6 +306,10 @@ def test_pod_appliance_start_stop(temp_pod_appliance, provider, setup_provider):
 def test_pod_appliance_scale():
     """
     appliance should work correctly after scale up/down
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     pass
 
@@ -282,5 +318,9 @@ def test_pod_appliance_scale():
 def test_aws_smartstate_pod():
     """
     deploy aws smartstate pod and that it works
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     pass

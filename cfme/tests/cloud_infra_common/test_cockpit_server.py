@@ -33,6 +33,11 @@ def test_cockpit_server_role(appliance, provider, setup_provider, new_vm, enable
 
     Metadata:
         test_flag: inventory
+
+    Polarion:
+        assignee: nansari
+        caseimportance: medium
+        initialEstimate: None
     """
 
     if enable:

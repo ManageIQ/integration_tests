@@ -34,6 +34,10 @@ def test_order_catalog_item(appliance, provider, catalog_item, request,
     """Tests order catalog item
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: 1/4h
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
@@ -62,6 +66,10 @@ def test_order_catalog_item_via_rest(
     """Same as :py:func:`test_order_catalog_item`, but using REST.
     Metadata:
         test_flag: provision, rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/3h
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
@@ -92,6 +100,10 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
     """Tests ordering a catalog bundle
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: 1/4h
     """
 
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
@@ -124,6 +136,10 @@ def test_no_template_catalog_item(provider, provisioning, dialog, catalog, appli
     """Tests no template catalog item
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/8h
     """
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = appliance.collections.catalogs.instantiate(
@@ -140,6 +156,10 @@ def test_request_with_orphaned_template(appliance, provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: 1/4h
     """
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
@@ -160,6 +180,10 @@ def test_advanced_search_registry_element(request, appliance):
         Go to Services -> Workloads
         Advanced Search -> Registry element
         Element types select bar shouldn't disappear.
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     view = navigate_to(VmsInstances(appliance=appliance), 'All')
     view.search.open_advanced_search()

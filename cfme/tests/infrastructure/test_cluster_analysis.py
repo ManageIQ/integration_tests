@@ -21,6 +21,11 @@ def test_run_cluster_analysis(appliance, provider):
 
     Metadata:
         test_flag: cluster_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/3h
     """
     cluster_coll = appliance.collections.clusters.filter({'provider': provider})
     test_cluster = cluster_coll.all()[0]

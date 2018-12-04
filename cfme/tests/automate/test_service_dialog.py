@@ -28,6 +28,12 @@ def create_dialog(appliance, element_data, label=None):
 
 @pytest.mark.sauce
 def test_crud_service_dialog(appliance):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        initialEstimate: 1/4h
+    """
     element_data = {
         'element_information': {
             'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
@@ -51,6 +57,13 @@ def test_crud_service_dialog(appliance):
 
 
 def test_service_dialog_duplicate_name(appliance, request):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: low
+        initialEstimate: 1/8h
+    """
     element_data = {
         'element_information': {
             'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
@@ -77,6 +90,13 @@ def test_service_dialog_duplicate_name(appliance, request):
 
 
 def test_checkbox_dialog_element(appliance, request):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: low
+        initialEstimate: 1/8h
+    """
     element_data = {
         'element_information': {
             'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
@@ -94,6 +114,13 @@ def test_checkbox_dialog_element(appliance, request):
 
 
 def test_datecontrol_dialog_element(appliance, request):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     if appliance.version >= "5.9":
         choose_type = "Datepicker"
     else:
@@ -114,6 +141,13 @@ def test_datecontrol_dialog_element(appliance, request):
 
 
 def test_tagcontrol_dialog_element(appliance, request):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     element_data = {
         'element_information': {
             'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
@@ -131,6 +165,13 @@ def test_tagcontrol_dialog_element(appliance, request):
 
 
 def test_textareabox_dialog_element(appliance, request):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     if appliance.version >= "5.9":
         choose_type = "Text Area"
     else:
@@ -151,6 +192,12 @@ def test_textareabox_dialog_element(appliance, request):
 
 
 def test_reorder_elements(appliance, request):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        initialEstimate: 1/8h
+    """
     element_1_data = {
         'element_information': {
             'ele_label': "ele_label_" + fauxfactory.gen_alphanumeric(),
@@ -181,6 +228,13 @@ def test_reorder_elements(appliance, request):
 
 
 def test_reorder_unsaved_elements(appliance, request):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: low
+        initialEstimate: 1/16h
+    """
     # Automate BZ - https://bugzilla.redhat.com/show_bug.cgi?id=1238721
     box_label = 'box_' + fauxfactory.gen_alphanumeric()
     element_1_data = {
@@ -212,6 +266,13 @@ def test_reorder_unsaved_elements(appliance, request):
 
 
 def test_dropdownlist_dialog_element(appliance, request):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: low
+        initialEstimate: 1/4h
+    """
     if appliance.version >= "5.9":
         choose_type = "Dropdown"
     else:
@@ -229,6 +290,13 @@ def test_dropdownlist_dialog_element(appliance, request):
 
 
 def test_radiobutton_dialog_element(appliance, request):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: low
+        initialEstimate: 1/4h
+    """
     element_data = {
         'element_information': {
             'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),

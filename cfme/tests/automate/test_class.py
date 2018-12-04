@@ -41,6 +41,13 @@ def namespace(request, domain):
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_class_crud(namespace):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: critical
+        initialEstimate: 1/30h
+    """
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
@@ -59,6 +66,13 @@ def test_class_crud(namespace):
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1404788])
 def test_schema_crud(request, namespace):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: critical
+        initialEstimate: 1/20h
+    """
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
@@ -79,6 +93,13 @@ def test_schema_crud(request, namespace):
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1404788])
 def test_schema_duplicate_field_disallowed(request, domain):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: medium
+        initialEstimate: 1/16h
+    """
     ns = domain.namespaces.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha()
@@ -97,6 +118,13 @@ def test_schema_duplicate_field_disallowed(request, domain):
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[BZ(1428424, forced_streams=['5.8', 'upstream'])])
 def test_duplicate_class_disallowed(namespace):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseposneg: negative
+        initialEstimate: 1/30h
+    """
     name = fauxfactory.gen_alphanumeric()
     namespace.classes.create(name=name)
     with pytest.raises(Exception, match="Name has already been taken"):
@@ -105,6 +133,12 @@ def test_duplicate_class_disallowed(namespace):
 
 @pytest.mark.tier(2)
 def test_same_class_name_different_namespace(request, domain):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/16h
+    """
     ns1 = domain.namespaces.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha()
@@ -136,6 +170,12 @@ def test_same_class_name_different_namespace(request, domain):
 @pytest.mark.tier(3)
 @pytest.mark.polarion('RHCF3-3455')
 def test_class_display_name_unset_from_ui(request, namespace):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/30h
+    """
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),

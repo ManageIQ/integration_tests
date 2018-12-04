@@ -40,6 +40,11 @@ def test_control_navigation(destination, appliance):
 
     Steps:
         * Open each destination of Control tab.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: web_ui
+        initialEstimate: 1/60h
     """
     # some of views like Control -> Log incredibly long first time
     view = navigate_to(appliance.server, destination, wait_for_view=60)
@@ -52,6 +57,11 @@ def test_control_explorer_tree(control_explorer_view, destination, appliance):
 
     Steps:
         * Open each accordion tab and click on top node of the tree.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: web_ui
+        initialEstimate: 1/60h
     """
     navigate_to(appliance.server, 'ControlExplorer', wait_for_view=30)
     accordion_name = destination.lower().replace(" ", "_")

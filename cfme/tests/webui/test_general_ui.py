@@ -90,7 +90,12 @@ def create_20k_vms(appliance):
 
 @pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
 def test_add_provider_trailing_whitespaces(provider, soft_assert):
-    """Test to validate the hostname and username should be without whitespaces """
+    """Test to validate the hostname and username should be without whitespaces
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     provider.endpoints['default'].credentials.principal = '{}  '.format(
         provider.endpoints['default'].credentials.principal)
     provider.endpoints['default'].hostname = '{}  '.format(
@@ -108,7 +113,15 @@ def test_add_provider_trailing_whitespaces(provider, soft_assert):
 
 @pytest.mark.long_running
 def test_configuration_large_number_of_tags(appliance, import_tags, soft_assert):
-    """Test page should be loaded within a minute with large number of tags"""
+    """Test page should be loaded within a minute with large number of tags
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/3h
+    """
     group = appliance.collections.groups.instantiate(description='EvmGroup-administrator')
     view = navigate_to(group, 'Details')
     for category, tags in import_tags.items():
@@ -127,6 +140,12 @@ def test_configuration_help_menu(appliance, set_help_menu_options, soft_assert):
         2) Click on the "Help Menu" tab
         3) Fill the fields
         4) Check if the changes are reflected or not
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/4h
     """
     view = navigate_to(appliance.server, 'Dashboard')
     for option in set_help_menu_options:
@@ -144,6 +163,12 @@ def test_automate_can_edit_copied_method(appliance, request):
     5) Select it and try to edit it in the new Datastore
     6) Save it
     It should be saved successfully
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: automate
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
 
     domain = appliance.collections.domains.create(
@@ -182,6 +207,12 @@ def test_infrastructure_filter_20k_vms(appliance, create_20k_vms):
         2) In the UI go to Compute -> Infrastructure -> Virtual Machines -> VMs
         3) Create filter Field -> Virtual Machine: Vendor = "vmware"
         4) There should be filtered 20k vms
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/3h
     """
     view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     view.entities.search.save_filter(

@@ -179,6 +179,12 @@ def custom_service_button(appliance, ansible_catalog_item):
 @pytest.mark.tier(1)
 @pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
 def test_service_ansible_playbook_available(appliance):
+    """
+    Polarion:
+        assignee: sbulage
+        casecomponent: ansible
+        initialEstimate: 1/6h
+    """
     view = navigate_to(appliance.collections.catalog_items, "Choose Type")
     assert "Ansible Playbook" in [option.text for option in view.select_item_type.all_options]
 
@@ -186,6 +192,12 @@ def test_service_ansible_playbook_available(appliance):
 @pytest.mark.tier(1)
 @pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
 def test_service_ansible_playbook_crud(appliance, ansible_repository):
+    """
+    Polarion:
+        assignee: sbulage
+        casecomponent: ansible
+        initialEstimate: 1/6h
+    """
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
         fauxfactory.gen_alphanumeric(),
@@ -221,6 +233,11 @@ def test_service_ansible_playbook_tagging(ansible_catalog_item):
         2. Add tag for ansible_playbook
         3. Check added tag
         4. Remove the given tag
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: ansible
+        initialEstimate: 1/2h
     """
     added_tag = ansible_catalog_item.add_tag()
     assert any(tag.category.display_name == added_tag.category.display_name and
@@ -234,6 +251,13 @@ def test_service_ansible_playbook_tagging(ansible_catalog_item):
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
 def test_service_ansible_playbook_negative(appliance):
+    """
+    Polarion:
+        assignee: sbulage
+        casecomponent: ansible
+        caseposneg: negative
+        initialEstimate: 1/6h
+    """
     collection = appliance.collections.catalog_items
     cat_item = collection.instantiate(collection.ANSIBLE_PLAYBOOK, "", "", {})
     view = navigate_to(cat_item, "Add")
@@ -247,7 +271,15 @@ def test_service_ansible_playbook_negative(appliance):
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
 def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
-    """Ansible playbooks are not designed to be part of a cloudforms service bundle."""
+    """Ansible playbooks are not designed to be part of a cloudforms service bundle.
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: ansible
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/6h
+    """
     view = navigate_to(appliance.collections.catalog_bundles, "Add")
     options = view.resources.select_resource.all_options
     assert ansible_catalog_item.name not in [o.text for o in options]
@@ -260,7 +292,14 @@ def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
 ])
 def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catalog_item,
                                                         service_catalog, request):
-    """Tests if ansible playbook service provisioning is shown in service requests."""
+    """Tests if ansible playbook service provisioning is shown in service requests.
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: ansible
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     service_catalog.order()
     cat_item_name = ansible_catalog_item.name
     request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
@@ -283,6 +322,12 @@ def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catal
 def test_service_ansible_playbook_confirm(appliance, soft_assert):
     """Tests after selecting playbook additional widgets appear and are pre-populated where
     possible.
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: ansible
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     collection = appliance.collections.catalog_items
     cat_item = collection.instantiate(collection.ANSIBLE_PLAYBOOK, "", "", {})
@@ -326,6 +371,10 @@ def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item, 
         service_request, service, host_type, order_value, result, action):
     """Test ordering and retiring ansible playbook service against default host, blank field and
     unavailable host.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     service_catalog.ansible_dialog_values = {"hosts": order_value}
     service_catalog.order()
@@ -337,9 +386,17 @@ def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item, 
 
 
 @pytest.mark.meta(blockers=[BZ(1519275, forced_streams=['5.9'])])
+@pytest.mark.tier(3)
 def test_service_ansible_playbook_plays_table(service_catalog, service_request, service,
         soft_assert):
-    """Plays table in provisioned and retired service should contain at least one row."""
+    """Plays table in provisioned and retired service should contain at least one row.
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: ansible
+        caseimportance: low
+        initialEstimate: 1/6h
+    """
     service_catalog.order()
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
@@ -353,6 +410,12 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
         service_catalog, appliance):
     """Test if credentials avaialable in the dropdown in ordering ansible playbook service
     screen.
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: ansible
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
@@ -370,7 +433,12 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
 def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_request, service,
         action):
     """Test if extra vars passed into ansible during ansible playbook service provision and
-    retirement."""
+    retirement.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     service_catalog.order()
     service_request.wait_for_request()
     if action == "retirement":
@@ -395,6 +463,12 @@ def test_service_ansible_execution_ttl(request, service_catalog, ansible_catalog
     """Test if long running processes allowed to finish. There is a code that guarantees to have 100
     retries with a minimum of 1 minute per retry. So we need to run ansible playbook service more
     than 100 minutes and set max ttl greater than ansible playbook running time.
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: ansible
+        caseimportance: medium
+        initialEstimate: 2h
     """
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
@@ -426,6 +500,12 @@ def test_custom_button_ansible_credential_list(custom_service_button, service_ca
     """Test if credential list matches when the Ansible Playbook Service Dialog is invoked from a
     Button versus a Service Order Screen.
     https://bugzilla.redhat.com/show_bug.cgi?id=1448918
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: medium
+        initialEstimate: 1/3h
     """
     service_catalog.order()
     service_request.wait_for_request()
@@ -441,10 +521,17 @@ def test_custom_button_ansible_credential_list(custom_service_button, service_ca
     assert ["<Default>", "CFME Default Credential"] == all_options
 
 
+@pytest.mark.tier(3)
 def test_ansible_group_id_in_payload(service_catalog, service_request, service):
     """Test if group id is presented in manageiq payload.
     https://bugzilla.redhat.com/show_bug.cgi?id=1480019
     In order to get manageiq payload the service's standard output should be parsed.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: ansible
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     service_catalog.order()
     service_request.wait_for_request()
@@ -464,6 +551,11 @@ def test_ansible_group_id_in_payload(service_catalog, service_request, service):
 @pytest.mark.provider([EC2Provider], scope="function")
 def test_embed_tower_exec_play_against_amazon(request, provider, setup_provider,
         ansible_catalog_item, service, ansible_amazon_credential, service_catalog):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
             "playbook": "list_ec2_instances.yml",

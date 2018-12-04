@@ -22,6 +22,10 @@ def test_sdn_port_detail_name(provider, appliance):
 
     Metadata:
         test_flag: sdn
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
     """
     port_collection = NetworkPortCollection(appliance)
     ports = port_collection.all()
@@ -41,6 +45,10 @@ def test_sdn_port_net_prov(provider, appliance):
 
     Metadata:
         test_flag: sdn
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
     """
     prov_collection = NetworkProviderCollection(appliance)
 

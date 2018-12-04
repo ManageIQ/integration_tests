@@ -16,6 +16,12 @@ def test_group_roles(
     Validates expected menu and submenu names are present for default
     LDAP group roles
 
+
+    Polarion:
+        assignee: apagac
+        caseimportance: medium
+        initialEstimate: 1/4h
+        tags: rbac
     """
     request.addfinalizer(appliance.server.login_admin)
 

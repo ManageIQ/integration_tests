@@ -68,6 +68,13 @@ def chargeback_rate(rate_resource, rate_type, rate_action, request):
 
 
 def test_compute_chargeback_duplicate_disallowed(request):
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
     cb_rate = chargeback_rate('compute', 'fixed', 'add', request)
 
     cb_rate.create()
@@ -90,6 +97,11 @@ def test_compute_chargeback_duplicate_disallowed(request):
 @pytest.mark.parametrize('rate_type', ['fixed', 'variable'])
 @pytest.mark.parametrize('rate_action', ['add', 'delete', 'edit'])
 def test_chargeback_rate(rate_resource, rate_type, rate_action, request):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     cb_rate = chargeback_rate(rate_resource, rate_type, rate_action, request)
     cb_rate.create()
 
@@ -140,6 +152,12 @@ class TestRatesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: nachandr
+            casecomponent: candu
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         for rate in rates:
             record = appliance.rest_api.collections.rates.get(id=rate.id)
@@ -155,6 +173,12 @@ class TestRatesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: nachandr
+            casecomponent: candu
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         new_descriptions = []
         if multiple:
@@ -194,6 +218,12 @@ class TestRatesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: nachandr
+            casecomponent: candu
+            caseimportance: medium
+            initialEstimate: 1/20h
         """
         delete_resources_from_detail(rates, method=method)
 
@@ -203,5 +233,11 @@ class TestRatesViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: nachandr
+            casecomponent: candu
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection(rates)

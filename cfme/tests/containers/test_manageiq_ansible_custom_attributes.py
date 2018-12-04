@@ -53,7 +53,12 @@ def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provi
         2. Test navigates  to Providers page and verifies the Custom Attributes
          were added under Providers menu
 
-        """
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     setup_ansible_script(provider, script='add_custom_attributes',
                          values_to_update=custom_attributes_to_add,
                          script_type='custom_attributes')
@@ -75,7 +80,12 @@ def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, prov
         2. Test navigates to Providers page and verifies the Custom Attributes
          were edited under Providers menu
 
-        """
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     setup_ansible_script(provider, script='add_custom_attributes',
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
@@ -98,7 +108,12 @@ def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attribu
         2. Test navigates to Providers page and verifies the Custom Attributes
          weren't added under Providers menu
 
-        """
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     setup_ansible_script(provider, script='add_custom_attributes',
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
@@ -123,7 +138,12 @@ def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attribut
         3. Test navigates to Providers page and verifies the Custom Attributes
          weren't added under Providers menu
 
-        """
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     setup_ansible_script(provider, script='add_custom_attributes_bad_user',
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
@@ -142,7 +162,12 @@ def test_manageiq_ansible_remove_custom_attributes(ansible_custom_attributes, pr
         2. Test navigates to Providers page and verifies the Custom Attributes
          were removed under Providers menu
 
-        """
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     setup_ansible_script(provider, script='add_custom_attributes',
                          values_to_update=custom_attributes_to_add,
                          script_type='custom_attributes')

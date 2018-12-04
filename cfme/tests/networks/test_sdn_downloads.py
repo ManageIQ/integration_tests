@@ -52,6 +52,10 @@ def test_download_lists_base(filetype, collection_type, appliance):
 
     Metadata:
         test_flag: sdn
+
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/10h
     """
     collection = getattr(appliance.collections, collection_type)
     download(appliance, collection, filetype)
@@ -66,6 +70,10 @@ def test_download_pdf_summary(appliance, collection_type, provider):
 
     Metadata:
         test_flag: sdn
+
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/10h
     """
     collection = getattr(appliance.collections, collection_type)
     all_entities = collection.all()

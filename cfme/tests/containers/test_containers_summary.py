@@ -31,7 +31,12 @@ def test_containers_summary_objects(provider, soft_assert):
            * Checks how many objects are shown in the selected widget
            * Goes to Containers summary page and checks how many objects are shown there.
            * Checks the amount is equal
-       """
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     view = navigate_to(ContainersOverview, 'All')
     # Collecting status boxes values from overview page cards
     status_box_values = {obj: view.status_cards(obj.PLURAL.split(' ')[-1]).value

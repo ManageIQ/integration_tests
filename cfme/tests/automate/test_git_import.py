@@ -32,19 +32,33 @@ def imported_domain(appliance, branch):
     domain.delete_if_exists()
 
 
+@pytest.mark.tier(1)
 def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     imported_domain.delete()
     repo_path = urlparse(GIT_REPO_URL).path
     assert appliance.ssh_client.run_command(
         '[ ! -d "/var/www/vmdb/data/git_repos{}" ]'.format(repo_path)).success
 
 
+@pytest.mark.tier(2)
 def test_automate_git_domain_displayed_in_service(appliance, imported_domain, branch):
     """Tests if a domain is displayed in a service.
 
     Checks if the domain imported from git is displayed and usable in the pop-up tree in the
     dialog for creating services.
 
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/20h
     """
     collection = appliance.collections.catalog_items
     cat_item = collection.instantiate(collection.GENERIC, "test")

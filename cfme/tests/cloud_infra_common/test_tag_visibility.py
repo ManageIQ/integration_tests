@@ -32,6 +32,11 @@ def tagged_vm(tag, provider):
 
 @pytest.mark.rhv3
 def test_tag_vis_vm(tagged_vm, user_restricted):
+    """
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
+    """
     with user_restricted:
         assert tagged_vm.exists, "vm not found"
 
@@ -128,6 +133,10 @@ def test_tag_expression_and_condition(
         1. Create group with expression tag1 AND tag2
         2. Assign tag1 to vm1 -> vm should not be visible to restricted user
         3. Assign tag2 to vm1 -> vm should be visible to restricted user
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     first_vm, _ = vms_for_tagging
     group = group_with_tag_expression(';select_first_expression;click_and;'.join(
@@ -157,6 +166,10 @@ def test_tag_expression_or_condition(
         1. Create group with expression tag1 OR tag2
         2. Assign tag1 to vm1 -> vm should be visible to restricted user
         3. Assign tag2 to vm2 -> vm should be visible to restricted user
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     first_vm, second_vm = vms_for_tagging
     group = group_with_tag_expression(';select_first_expression;click_or;'.join(
@@ -186,6 +199,10 @@ def test_tag_expression_not_condition(
         1. Create group with expression NOT tag1
         2. Assign tag1 to vm1 -> vm should not be visible to restricted user
         3. vm2 should be visible to restricted user
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     first_vm, second_vm = vms_for_tagging
     group = group_with_tag_expression('{};select_first_expression;click_not;'.format(
@@ -213,6 +230,10 @@ def test_tag_expression_not_and_condition(
         2. Assign tag1 to vm1 -> vm should not be visible to restricted user
         3. Assign tag2 to vm1 -> vm should not be visible to restricted user
         4. Assign tag2 to vm2 -> vm should be visible to restricted user
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     first_vm, second_vm = vms_for_tagging
     group = group_with_tag_expression(
@@ -247,6 +268,10 @@ def test_tag_expression_not_or_condition(
         1. Create group with expression NOT tag1 OR tag2
         2. Assign tag1 to vm1 -> vm should not be visible to restricted user
         3. Assign tag2 to vm1 -> vm should be visible to restricted user
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     first_vm, _ = vms_for_tagging
     group = group_with_tag_expression(

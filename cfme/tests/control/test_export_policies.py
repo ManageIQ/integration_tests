@@ -39,5 +39,11 @@ def test_policy_profiles_listed(appliance, policy_profile):
         * Go to the Control / Import/Export page
         * Select ``Policy Profiles`` from the ``Export:`` dropdown.
         * Assert that the policy profile is displayed in the selector.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: control
+        caseimportance: low
+        initialEstimate: 1/12h
     """
     is_imported(appliance, policy_profile)

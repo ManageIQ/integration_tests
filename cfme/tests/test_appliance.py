@@ -23,7 +23,13 @@ pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
 ])
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 def test_rpms_present(appliance, package):
-    """Verifies nfs-util rpms are in place needed for pxe & nfs operations"""
+    """Verifies nfs-util rpms are in place needed for pxe & nfs operations
+
+    Polarion:
+        assignee: amavinag
+        initialEstimate: 1/4h
+        testtype: sanity
+    """
     result = appliance.ssh_client.run_command('rpm -q {}'.format(package))
     assert 'is not installed' not in result.output
     assert result.success
@@ -31,21 +37,39 @@ def test_rpms_present(appliance, package):
 
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 def test_selinux_enabled(appliance):
-    """Verifies selinux is enabled"""
+    """Verifies selinux is enabled
+
+    Polarion:
+        assignee: amavinag
+        initialEstimate: 1/11h
+        testtype: sanity
+    """
     result = appliance.ssh_client.run_command('getenforce').output
     assert 'Enforcing' in result
 
 
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 def test_firewalld_running(appliance):
-    """Verifies iptables service is running on the appliance"""
+    """Verifies iptables service is running on the appliance
+
+    Polarion:
+        assignee: amavinag
+        initialEstimate: 1/4h
+    """
     result = appliance.ssh_client.run_command('systemctl status firewalld').output
     assert 'active (running)' in result
 
 
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 def test_evm_running(appliance):
-    """Verifies overall evm service is running on the appliance"""
+    """Verifies overall evm service is running on the appliance
+
+    Polarion:
+        assignee: amavinag
+        caseimportance: critical
+        initialEstimate: 1/4h
+        testtype: sanity
+    """
     result = appliance.ssh_client.run_command('systemctl status evmserverd').output
     assert 'active (running)' in result
 
@@ -59,7 +83,14 @@ def test_evm_running(appliance):
 @pytest.mark.uncollectif(
     lambda appliance: appliance.is_pod)
 def test_service_enabled(appliance, service):
-    """Verifies if key services are configured to start on boot up"""
+    """Verifies if key services are configured to start on boot up
+
+    Polarion:
+        assignee: amavinag
+        caseimportance: critical
+        initialEstimate: 1/6h
+        testtype: sanity
+    """
     if service == 'postgresql':
         service = '{}-postgresql'.format(appliance.db.postgres_version)
     if appliance.os_version >= '7':
@@ -78,7 +109,14 @@ def test_service_enabled(appliance, service):
     ('tcp', 443),
 ])
 def test_iptables_rules(appliance, proto, port):
-    """Verifies key iptable rules are in place"""
+    """Verifies key iptable rules are in place
+
+    Polarion:
+        assignee: amavinag
+        initialEstimate: 1/4h
+        testtype: sanity
+        upstream: no
+    """
     # get the current iptables state, nicely formatted for us by iptables-save
     result = appliance.ssh_client.run_command('iptables-save')
     # get everything from the input chain
@@ -99,7 +137,13 @@ def test_iptables_rules(appliance, proto, port):
 
 # this is based on expected changes tracked in github/ManageIQ/cfme_build repo
 def test_memory_total(appliance):
-    """Verifies that the total memory on the box is >= 6GB"""
+    """Verifies that the total memory on the box is >= 6GB
+
+    Polarion:
+        assignee: amavinag
+        initialEstimate: 1/4h
+        testtype: sanity
+    """
     result = appliance.ssh_client.run_command(
         'free -g | grep Mem: | awk \'{ print $2 }\'').output
     assert int(result) >= 6
@@ -107,7 +151,13 @@ def test_memory_total(appliance):
 
 # this is based on expected changes tracked in github/ManageIQ/cfme_build repo
 def test_cpu_total(appliance):
-    """Verifies that the total number of cpus is >= 4"""
+    """Verifies that the total number of cpus is >= 4
+
+    Polarion:
+        assignee: amavinag
+        initialEstimate: 1/4h
+        testtype: sanity
+    """
     result = appliance.ssh_client.run_command(
         'lscpu | grep ^CPU\(s\): | awk \'{ print $2 }\'').output
     assert int(result) >= 4
@@ -115,7 +165,14 @@ def test_cpu_total(appliance):
 
 @pytest.mark.ignore_stream("upstream")
 def test_certificates_present(appliance, soft_assert):
-    """Test whether the required product certificates are present."""
+    """Test whether the required product certificates are present.
+
+    Polarion:
+        assignee: amavinag
+        initialEstimate: 1/4h
+        testtype: sanity
+        upstream: no
+    """
 
     rhsm_ca_cert = '/etc/rhsm/ca/redhat-uep.pem'
     rhsm_url = 'https://subscription.rhn.redhat.com/'
@@ -146,6 +203,12 @@ def test_html5_ssl_files_present(appliance, soft_assert):
        IPAppliance object.   Note, these files are installed by
        the cfme RPM, so we use rpm verify to make sure they do not verify
        and hence were replaced.
+
+    Polarion:
+        assignee: joden
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: None
     """
     cert = conf.cfme_data['vm_console']['cert']
     cert_file = os.path.join(cert.install_dir, 'server.cer')
@@ -163,18 +226,36 @@ def test_db_connection(appliance):
 
     This looks for a row in the miq_databases table, which should always exist
     on an appliance with a working database and UI
+
+    Polarion:
+        assignee: amavinag
+        initialEstimate: 1/4h
+        testtype: sanity
     """
     databases = appliance.db.client.session.query(appliance.db.client['miq_databases']).all()
     assert len(databases) > 0
 
 
 def test_asset_precompiled(appliance):
+    """
+    Polarion:
+        assignee: amavinag
+        initialEstimate: 1/4h
+        testtype: sanity
+    """
     assert appliance.ssh_client.run_command("test -d /var/www/miq/vmdb/public/assets").success, (
         "Assets not precompiled")
 
 
 @pytest.mark.ignore_stream("upstream")
 def test_keys_included(appliance, soft_assert):
+    """
+    Polarion:
+        assignee: amavinag
+        initialEstimate: 1/4h
+        testtype: sanity
+        upstream: no
+    """
     keys = ['v0_key', 'v1_key', 'v2_key']
     for k in keys:
         soft_assert(appliance.ssh_client.run_command(
@@ -184,5 +265,10 @@ def test_keys_included(appliance, soft_assert):
 
 @pytest.mark.ignore_stream("5.9")
 def test_appliance_console_packages(appliance):
-    """Test that we have no scl packages installed."""
+    """Test that we have no scl packages installed.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert appliance.ssh_client.run_command('scl --list | grep -v rh-ruby').success

@@ -148,6 +148,12 @@ def test_host_relationships(appliance, provider, setup_provider, host, relations
 
     Metadata:
         test_flag: inventory
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
     host_view = navigate_to(host, "Details")
     if host_view.entities.summary("Relationships").get_text_of(relationship) == "0":
@@ -167,6 +173,12 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
 
     Metadata:
         test_flag: inventory
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     provider_view = navigate_to(provider, "Details")  # resetter selects summary view
     if provider_view.entities.summary("Relationships").get_text_of(relationship) == "0":
@@ -180,7 +192,14 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
     ids=[rel[0] for rel in CLOUD_PROVIDER_RELATIONSHIPS])
 @pytest.mark.provider([CloudProvider], selector=ONE_PER_TYPE)
 def test_cloud_provider_relationships(appliance, provider, setup_provider, relationship, view):
-    """Tests relationship navigation for a cloud provider"""
+    """Tests relationship navigation for a cloud provider
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: cloud
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     # Version dependent strings
     relationship = _fix_item(appliance, relationship)
     provider_view = navigate_to(provider, "Details")  # resetter selects summary view
@@ -243,6 +262,10 @@ def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, r
     Steps:
         1. As admin add tag to provider
         2. Login as restricted user, providers child not visible for user
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     prov_child_visibility(relationship, visibility=False)
 
@@ -258,17 +281,27 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
     Steps:
         1. As admin add tag to provider
         2. Login as restricted user, providers child not visible for user
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: 1/8h
     """
     prov_child_visibility(relationship, visibility=False)
 
 
 @pytest.mark.rhv1
 @pytest.mark.provider([CloudProvider, InfraProvider])
+@pytest.mark.tier(1)
 def test_provider_refresh_relationship(provider, setup_provider):
     """Tests provider refresh
 
     Metadata:
         test_flag: inventory
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: infra
+        initialEstimate: 1/8h
     """
     provider.refresh_provider_relationships(method='ui')
     wait_for_relationship_refresh(provider)

@@ -47,6 +47,10 @@ def set_and_get_tenant_quota(appliance):
 def test_queue_tenant_quota_reports(appliance, request, set_and_get_tenant_quota):
     """This test case sets the tenant quota, generates a 'Tenant Quota' report
         and compares both the data.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     tenant_report = appliance.collections.reports.instantiate(
         type="Tenants", subtype="Tenant Quotas", menu_name="Tenant Quotas"

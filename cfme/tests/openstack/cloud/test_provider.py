@@ -20,6 +20,11 @@ CARDS = [("Flavors", "list_flavor"), ("Images", "list_templates"),
 @pytest.mark.ignore_stream('5.9')
 @pytest.mark.parametrize('card, api', CARDS)
 def test_cloud_provider_cards(provider, card, api):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(provider, 'Details')
     view.toolbar.view_selector.select('Dashboard View')
     dashboard_card = view.entities.cards(card)
@@ -30,6 +35,11 @@ def test_cloud_provider_cards(provider, card, api):
 @pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_dashboard_card_availability_zones(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(provider, 'Details')
     view.toolbar.view_selector.select('Dashboard View')
     dashboard_card = view.entities.cards("Availability Zones")
@@ -39,6 +49,11 @@ def test_dashboard_card_availability_zones(provider):
 @pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_dashboard_card_tenants(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     collection = provider.appliance.collections.cloud_tenants
     view = navigate_to(provider, 'Details')
     view.toolbar.view_selector.select('Dashboard View')
@@ -50,6 +65,11 @@ def test_dashboard_card_tenants(provider):
 @pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_dashboard_card_security_groups(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(provider, 'Details')
     sec_groups = view.entities.summary('Relationships').get_text_of('Security Groups')
     view.toolbar.view_selector.select('Dashboard View')

@@ -32,12 +32,22 @@ def get_server_attr(attr_name, provider, physical_server):
 
 
 def test_get_physical_server(physical_server, appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     existent_server = appliance.rest_api.get_entity('physical_servers', physical_server.id)
     existent_server.reload()
     assert_response(appliance)
 
 
 def test_get_nonexistent_physical_server(appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     nonexistent = appliance.rest_api.get_entity('physical_servers', 999999)
     with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
         nonexistent.reload()
@@ -45,6 +55,11 @@ def test_get_nonexistent_physical_server(appliance):
 
 
 def test_invalid_action(physical_server, appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     payload = {
         "action": "invalid_action"
     }
@@ -53,6 +68,11 @@ def test_invalid_action(physical_server, appliance):
 
 
 def test_refresh_physical_server(appliance, physical_server):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert getattr(physical_server.action, "refresh")()
     assert_response(appliance)
 
@@ -81,6 +101,10 @@ def test_server_actions(physical_server, appliance, provider, action,
         * desired_state:     the value of the attribute after the action execution
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     def condition():

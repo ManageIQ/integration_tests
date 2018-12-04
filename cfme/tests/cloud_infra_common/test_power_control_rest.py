@@ -85,6 +85,10 @@ def test_stop_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from_de
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     rest_api = appliance.rest_api
     vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_ON)
@@ -116,6 +120,10 @@ def test_start_vm_rest(appliance, vm_obj, ensure_vm_stopped, soft_assert, from_d
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     rest_api = appliance.rest_api
     vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_OFF, timeout=1200)
@@ -147,6 +155,10 @@ def test_suspend_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     rest_api = appliance.rest_api
     vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_ON)
@@ -185,6 +197,10 @@ def test_reset_vm_rest(vm_obj, ensure_vm_running, from_detail, appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     rest_api = appliance.rest_api
     vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_ON)

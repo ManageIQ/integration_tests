@@ -92,6 +92,10 @@ def test_provision_from_template(provider, provisioned_instance):
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     assert provisioned_instance.exists_on_provider, "Instance wasn't provisioned successfully"
 
@@ -100,6 +104,11 @@ def test_provision_from_template(provider, provisioned_instance):
                       override=True)
 @pytest.mark.usefixtures('setup_provider')
 def test_gce_preemptible_provision(appliance, provider, instance_args, soft_assert):
+    """
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/6h
+    """
     vm_name, inst_args = instance_args
     inst_args['properties']['is_preemptible'] = True
     instance = appliance.collections.cloud_instances.create(vm_name,
@@ -139,6 +148,10 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
     Metadata:
         test_flag: provision
         suite: infra_provisioning
+
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/8h
     """
     # generate_tests makes sure these have values
     # template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
@@ -245,6 +258,10 @@ def test_provision_from_template_using_rest(appliance, request, provider, vm_nam
 
     Metadata:
         test_flag: provision, rest
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     if auto:
         form_values = {"vm_fields": {"placement_auto": True}}
@@ -318,6 +335,10 @@ def test_cloud_provision_from_template_with_attached_disks(
 
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     vm_name, inst_args = instance_args
     # Modify availiability_zone for Azure provider
@@ -366,6 +387,10 @@ def test_provision_with_boot_volume(request, instance_args, provider, soft_asser
 
     Metadata:
         test_flag: provision, volumes
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     vm_name, inst_args = instance_args
 
@@ -430,6 +455,10 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
 
     Metadata:
         test_flag: provision, volumes
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     vm_name, inst_args = instance_args
 
@@ -506,6 +535,10 @@ def test_provision_with_tag(appliance, vm_name, tag, provider, request):
         * Visit instance page, it should display the selected tags
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
 
     inst_args = {'purpose': {

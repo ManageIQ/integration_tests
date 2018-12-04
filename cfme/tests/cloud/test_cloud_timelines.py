@@ -254,6 +254,10 @@ def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
     """
     Metadata:
         test_flag: timelines, events
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     targets = (new_instance, new_instance.provider, azone)
     event = 'create'
@@ -268,6 +272,10 @@ def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
     """
     Metadata:
         test_flag: timelines, events
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'policy'
     targets = (new_instance, new_instance.provider)
@@ -281,6 +289,10 @@ def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
     """
     Metadata:
         test_flag: timelines, events
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     targets = (new_instance, new_instance.provider, azone)
     event = 'stop'
@@ -294,6 +306,10 @@ def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
     """
     Metadata:
         test_flag: timelines, events
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     targets = (new_instance, new_instance.provider, azone)
     event = 'start'
@@ -308,6 +324,10 @@ def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_asse
 
     Metadata:
         test_flag: timelines, events
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'create'
     targets = (new_instance.appliance.server,)
@@ -322,6 +342,10 @@ def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
     """
     Metadata:
         test_flag: timelines, events
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'rename'
     targets = (new_instance, new_instance.provider, azone)
@@ -337,6 +361,10 @@ def test_cloud_timeline_delete_event(new_instance, soft_assert, azone):
     """
     Metadata:
         test_flag: timelines, events
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'delete'
     targets = (new_instance, new_instance.provider, azone)

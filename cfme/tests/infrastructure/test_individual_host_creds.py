@@ -72,6 +72,10 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
 
     Metadata:
         test_flag: inventory
+
+    Polarion:
+        assignee: nachandr
+        initialEstimate: 1/12h
     """
     test_host = random.choice(provider.data["hosts"])
     host_data = get_host_data_by_name(provider.key, test_host.name)
@@ -132,6 +136,11 @@ def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
 
     Metadata:
         test_flag: inventory
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        initialEstimate: 1/15h
     """
     test_host = random.choice(provider.data["hosts"])
     host_data = get_host_data_by_name(provider.key, test_host.name)

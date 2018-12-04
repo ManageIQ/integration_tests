@@ -67,6 +67,11 @@ def volume_with_type(appliance, provider):
 
 @pytest.mark.regression
 def test_create_volume(volume, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert volume.exists
     assert volume.size == '{} GB'.format(VOLUME_SIZE)
     assert volume.tenant == provider.data['provisioning']['cloud_tenant']
@@ -74,6 +79,11 @@ def test_create_volume(volume, provider):
 
 @pytest.mark.regression
 def test_edit_volume(volume, appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_name = fauxfactory.gen_alpha()
     with update(volume):
         volume.name = new_name
@@ -83,6 +93,11 @@ def test_edit_volume(volume, appliance):
 
 @pytest.mark.regression
 def test_delete_volume(volume):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     volume.delete()
     assert not volume.exists
 
@@ -90,6 +105,11 @@ def test_delete_volume(volume):
 @pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_create_volume_with_type(volume_with_type, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert volume_with_type.exists
     assert volume_with_type.size == '{} GB'.format(VOLUME_SIZE)
     assert volume_with_type.tenant == provider.data['provisioning']['cloud_tenant']
@@ -98,6 +118,11 @@ def test_create_volume_with_type(volume_with_type, provider):
 @pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_edit_volume_with_type(volume_with_type, appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     new_name = fauxfactory.gen_alpha()
     with update(volume_with_type):
         volume_with_type.name = new_name
@@ -108,5 +133,10 @@ def test_edit_volume_with_type(volume_with_type, appliance):
 @pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_delete_volume_with_type(volume_with_type):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     volume_with_type.delete()
     assert not volume_with_type.exists

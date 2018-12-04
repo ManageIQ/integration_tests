@@ -63,6 +63,11 @@ def test_containers_overview_data_integrity(appliance, soft_assert):
             # of nodes
             # of providers
             # ...
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     view = navigate_to(ContainersOverview, 'All')
     api_values = get_api_object_counts(appliance)

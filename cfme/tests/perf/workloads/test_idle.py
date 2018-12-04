@@ -17,7 +17,12 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.usefixtures('generate_version_files')
 def test_idle(appliance, request, scenario):
     """Runs an appliance at idle with specific roles turned on for specific amount of time. Memory
-    Monitor creates graphs and summary at the end of the scenario."""
+    Monitor creates graphs and summary at the end of the scenario.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     from_ts = int(time.time() * 1000)
     logger.debug('Scenario: {}'.format(scenario['name']))
 

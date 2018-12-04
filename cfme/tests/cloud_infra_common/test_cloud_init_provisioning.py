@@ -72,6 +72,10 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
 
     Metadata:
         test_flag: cloud_init, provision
+
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/4h
     """
     image = provisioning.get('ci-image') or provisioning['image']['name']
     note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
@@ -129,6 +133,10 @@ def test_provision_cloud_init_payload(appliance, request, setup_provider, provid
 
     Metadata:
         test_flag: cloud_init, provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     image = provisioning.get('ci-image', None)
     if not image:

@@ -20,7 +20,12 @@ roles_cap_and_util_rep = ['automate', 'database_operations', 'database_synchroni
 @pytest.mark.parametrize('scenario', get_capacity_and_utilization_replication_scenarios())
 def test_workload_capacity_and_utilization_rep(appliance, request, scenario, setup_perf_provider):
     """Runs through provider based scenarios enabling C&U and replication, run for a set period of
-    time. Memory Monitor creates graphs and summary at the end of each scenario."""
+    time. Memory Monitor creates graphs and summary at the end of each scenario.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     from_ts = int(time.time() * 1000)
     ssh_client = appliance.ssh_client()
 

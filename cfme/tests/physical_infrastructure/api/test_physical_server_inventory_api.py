@@ -17,6 +17,11 @@ def physical_server(setup_provider_modscope, appliance):
 
 
 def test_get_hardware(appliance, physical_server):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server.reload(attributes=['hardware'])
     assert_response(appliance)
     assert physical_server.hardware is not None
@@ -24,6 +29,11 @@ def test_get_hardware(appliance, physical_server):
 
 @pytest.mark.parametrize('attribute', ['firmwares', 'nics', 'ports'])
 def test_get_hardware_attributes(appliance, physical_server, attribute):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     expanded_attribute = 'hardware.{}'.format(attribute)
     physical_server.reload(attributes=[expanded_attribute])
     assert_response(appliance)
@@ -31,6 +41,11 @@ def test_get_hardware_attributes(appliance, physical_server, attribute):
 
 
 def test_get_asset_detail(appliance, physical_server):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server.reload(attributes=['asset_detail'])
     assert_response(appliance)
     assert physical_server.asset_detail is not None

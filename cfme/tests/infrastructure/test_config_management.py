@@ -46,17 +46,33 @@ def tag(category):
 
 @pytest.mark.tier(3)
 def test_config_manager_detail_config_btn(request, config_manager):
+    """
+    Polarion:
+        assignee: nachandr
+        initialEstimate: 1/2h
+    """
     config_manager.refresh_relationships()
 
 
 @pytest.mark.tier(2)
 def test_config_manager_add(request, config_manager_obj):
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: prov
+        initialEstimate: 1/4h
+    """
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.create()
 
 
 @pytest.mark.tier(3)
 def test_config_manager_add_invalid_url(request, config_manager_obj):
+    """
+    Polarion:
+        assignee: nachandr
+        initialEstimate: 1/15h
+    """
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.url = 'https://invalid_url'
     error_message = 'getaddrinfo: Name or service not known'
@@ -66,6 +82,12 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
 
 @pytest.mark.tier(3)
 def test_config_manager_add_invalid_creds(request, config_manager_obj):
+    """
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.credentials.principal = 'invalid_user'
     if config_manager_obj.type == "Ansible Tower":
@@ -79,6 +101,11 @@ def test_config_manager_add_invalid_creds(request, config_manager_obj):
 
 @pytest.mark.tier(3)
 def test_config_manager_edit(request, config_manager):
+    """
+    Polarion:
+        assignee: nachandr
+        initialEstimate: 1/15h
+    """
     new_name = fauxfactory.gen_alpha(8)
     old_name = config_manager.name
     with update(config_manager):
@@ -90,6 +117,11 @@ def test_config_manager_edit(request, config_manager):
 
 @pytest.mark.tier(3)
 def test_config_manager_remove(config_manager):
+    """
+    Polarion:
+        assignee: nachandr
+        initialEstimate: 1/15h
+    """
     config_manager.delete()
 
 
@@ -97,6 +129,11 @@ def test_config_manager_remove(config_manager):
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
 def test_config_system_tag(request, config_system, tag):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     config_system.add_tag(tag=tag, details=False)
     tags = config_system.get_tags()
     assert '{}: {}'.format(tag.category.display_name, tag.display_name) in \

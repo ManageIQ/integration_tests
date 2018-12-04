@@ -42,6 +42,13 @@ def klass(request, namespace):
 @pytest.mark.tier(2)
 @pytest.mark.polarion('RHCF3-3922')
 def test_instance_crud(klass):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: critical
+        initialEstimate: 1/16h
+    """
     instance = klass.instances.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
@@ -59,6 +66,13 @@ def test_instance_crud(klass):
 @pytest.mark.tier(2)
 @pytest.mark.polarion('RHCF3-20871')
 def test_duplicate_instance_disallowed(request, klass):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseposneg: negative
+        initialEstimate: 1/60h
+    """
     name = fauxfactory.gen_alphanumeric()
     klass.instances.create(name=name)
     with pytest.raises(Exception, match="Name has already been taken"):
@@ -69,6 +83,12 @@ def test_duplicate_instance_disallowed(request, klass):
 @pytest.mark.tier(3)
 @pytest.mark.polarion('RHCF3-20872')
 def test_instance_display_name_unset_from_ui(request, klass):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/30h
+    """
     instance = klass.instances.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric())
@@ -80,11 +100,17 @@ def test_instance_display_name_unset_from_ui(request, klass):
     assert instance.exists
 
 
+@pytest.mark.tier(1)
 def test_automate_instance_missing(domain, klass, namespace, appliance):
     """If an instance called in class does not exist, a .missing instance is processed if it exists.
 
     A _missing_instance attribute (which contains the name of the instance that was supposed to be
     called) is then set on $evm.object so it then can be used eg. to resolve methods dynamically.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/10h
     """
     catch_string = fauxfactory.gen_alphanumeric()
     method = klass.methods.create(

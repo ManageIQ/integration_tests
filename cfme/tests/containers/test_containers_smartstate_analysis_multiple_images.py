@@ -58,6 +58,12 @@ def random_image_instances(appliance):
 @pytest.mark.polarion('10031')
 def test_check_compliance(provider, random_image_instances, appliance):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     collection = appliance.collections.container_images
     # create conditions list that will match the images that we want to check
     conditions = []
@@ -85,6 +91,12 @@ def test_containers_smartstate_analysis(provider, test_item,
                                         delete_all_container_tasks, soft_assert,
                                         random_image_instances, appliance):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     collection = appliance.collections.container_images
     # create conditions list that will match the images that we want to check
     conditions = []

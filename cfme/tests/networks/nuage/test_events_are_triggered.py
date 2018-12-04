@@ -24,6 +24,10 @@ def test_creating_entities_emits_events(register_event, with_nuage_sandbox):
 
     Important: register_event fixture must be listed before with_nuage_sandbox fixture because we
         need to start collecting events before we actually create the entities.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     listener = register_event
     sandbox = with_nuage_sandbox
@@ -60,6 +64,10 @@ def test_creating_entities_triggers_targeted_refresh(targeted_refresh, with_nuag
 
     Important: targeted_refresh fixture must be listed before with_nuage_sandbox
     fixture because we have to start tracking evm.log before we create the entites
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     sandbox = with_nuage_sandbox
     with targeted_refresh.timeout():

@@ -53,6 +53,11 @@ def prov_data(provider, vm_name, template_name):
 
 @pytest.fixture(scope='module')
 def test_domain(appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     domain = appliance.collections.domains.create('test_{}'.format(fauxfactory.gen_alphanumeric()),
                                                   'description_{}'.format(
                                                       fauxfactory.gen_alphanumeric()),
@@ -152,7 +157,13 @@ def set_entity_quota_tag(request, entities, appliance):
 )
 def test_quota_tagging_cloud_via_lifecycle(request, appliance, provider, prov_data, setup_provider,
                                            set_entity_quota_tag, template_name, vm_name):
-    """Test Group and User Quota in UI using tagging"""
+    """Test Group and User Quota in UI using tagging
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: cloud
+        initialEstimate: 1/6h
+    """
     recursive_update(prov_data, {
         'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
     prov_data.update({'template_name': template_name})
@@ -178,7 +189,13 @@ def test_quota_tagging_cloud_via_lifecycle(request, appliance, provider, prov_da
 )
 def test_quota_tagging_cloud_via_services(appliance, request, provider, setup_provider, context,
                                           admin_email, set_entity_quota_tag, catalog_item):
-    """Test Group and User Quota in UI and SSUI using tagging"""
+    """Test Group and User Quota in UI and SSUI using tagging
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: cloud
+        initialEstimate: 1/6h
+    """
     with appliance.context.use(context):
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
         if context is ViaSSUI:
@@ -204,6 +221,10 @@ def test_cloud_quota_by_lifecycle(request, appliance, provider, setup_provider,
     4. Provision instance via lifecycle
     5. Make sure that provisioned 'template' is having more than assigned quota
     6. Check whether instance provision 'Denied' with reason 'Quota Exceeded'
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     recursive_update(prov_data, {
         'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
@@ -230,6 +251,10 @@ def test_quota_cloud_via_services(appliance, request, setup_provider, admin_emai
            4. Test quota by provisioning instances over quota limit via UI or
               SSUI for user and group
            5. Check whether quota is exceeded or not
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     with appliance.context.use(context):
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)

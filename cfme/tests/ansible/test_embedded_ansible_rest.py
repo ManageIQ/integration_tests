@@ -72,6 +72,11 @@ class TestReposRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         new_description = "Test Repository {}".format(fauxfactory.gen_alphanumeric(5))
 
@@ -102,6 +107,11 @@ class TestReposRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         del_action = getattr(repository.action.delete, method.upper())
         del_action()
@@ -122,6 +132,11 @@ class TestReposRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         delete_resources_from_collection([repository], not_found=False, num_sec=300, delay=5)
 
@@ -132,6 +147,10 @@ class TestPayloadsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.configuration_script_payloads
         collection.reload()
@@ -144,6 +163,10 @@ class TestPayloadsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         script_payloads = appliance.rest_api.collections.configuration_script_payloads
         script_payloads.reload()
@@ -154,6 +177,10 @@ class TestPayloadsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         script_sources = appliance.rest_api.collections.configuration_script_sources
         script_sources.reload()

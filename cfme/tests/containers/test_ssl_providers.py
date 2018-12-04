@@ -53,6 +53,11 @@ def test_add_provider_naming_conventions(provider, appliance, soft_assert, sync_
             - Long Alphanumeric name
             - Integer name
         * Assert that provider was added successfully with each of those
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     for provider_name in provider_names:
         new_provider = copy(provider)
@@ -81,7 +86,12 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert, sync_ssl_
         * Try to add a Container Provider with each of the following security options:
             Default Endpoint = SSL trusting custom CA/SSL without validation/SSL
         * Assert that provider was added successfully
-        """
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     new_provider = copy(provider)
     endpoints = {'default': new_provider.endpoints['default']}
     endpoints['default'].sec_protocol = default_sec_protocol
@@ -116,7 +126,12 @@ def test_add_mertics_provider_ssl(provider, appliance, test_item,
             Default Endpoint = SSL trusting custom CA/SSL without validation/SSL
             Hawkular Endpoint = SSL trusting custom CA/SSL without validation/SSL
         * Assert that provider was added successfully
-        """
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     if not provider.endpoints.get('metrics', False):
         pytest.skip("This test requires the metrics endpoint to be configured")
     new_provider = copy(provider)
@@ -147,6 +162,11 @@ def test_setup_with_wrong_port(provider, sec_protocol, sync_ssl_certificate):
     """
     Negative test: set a provider with wrong api port
     based on BZ1443520
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     new_provider = copy(provider)
     new_provider.endpoints["default"].api_port = "1234"

@@ -44,7 +44,14 @@ def pdf_get_text(file_obj, page_nums):
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.sauce
 def test_links(appliance):
-    """Test whether the PDF documents are present."""
+    """Test whether the PDF documents are present.
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: low
+        initialEstimate: 1/20h
+    """
     view = navigate_to(appliance.server, 'Documentation')
     for link_widget in view.links.sub_widgets:
         # link_widget is nested view, we care about 'link' widget here
@@ -67,7 +74,14 @@ def test_links(appliance):
 @pytest.mark.tier(3)
 @pytest.mark.ignore_stream("upstream")
 def test_contents(appliance, soft_assert):
-    """Test title of each document."""
+    """Test title of each document.
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: low
+        initialEstimate: 1/10h
+    """
     view = navigate_to(appliance.server, 'Documentation')
     cur_ver = appliance.version
     for doc_type, title in doc_titles.items():
@@ -106,7 +120,12 @@ def test_info(appliance, soft_assert):
     Test the alt/title and href attributes.
     Each doc link is an anchor with image child element, and then the link text anchor
     Verify anchor title matches alt in anchor image
-    Verify image anchor href matches link text href"""
+    Verify image anchor href matches link text href
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(appliance.server, 'Documentation')
     for link_widget in view.links.sub_widgets:
         if not (hasattr(link_widget, 'img_anchor') or hasattr(link_widget, 'img')):
@@ -131,6 +150,12 @@ def test_all_docs_present(appliance):
     """
     Check that all the documents that we expect to be in the UI are present
     Use the doc_titles dict keys to query widget is_displayed
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: low
+        initialEstimate: 1/10h
     """
     view = navigate_to(appliance.server, 'Documentation')
     for doc_type, title in doc_titles.items():

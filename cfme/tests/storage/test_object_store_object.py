@@ -14,6 +14,11 @@ pytestmark = [
 
 @pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 def test_object_add_remove_tag(appliance, provider):
+    """
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
+    """
     collection = appliance.collections.object_store_objects.filter({'provider': provider})
     all_objects = collection.all()
     if all_objects is None:

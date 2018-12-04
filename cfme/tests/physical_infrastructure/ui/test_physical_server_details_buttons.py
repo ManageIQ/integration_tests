@@ -18,6 +18,11 @@ def physical_server(appliance, provider):
 
 # Configuration Button
 def test_refresh_relationships(physical_server, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     last_refresh = provider.last_refresh_date()
     physical_server.refresh(provider, handle_alert=True)
     assert last_refresh != provider.last_refresh_date()
@@ -25,30 +30,55 @@ def test_refresh_relationships(physical_server, provider):
 
 # Power Button
 def test_power_off(physical_server, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server.power_off()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
     view.flash.assert_message('Requested Server power_off for the selected server')
 
 
 def test_power_on(physical_server, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server.power_on()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
     view.flash.assert_message('Requested Server power_on for the selected server')
 
 
 def test_power_off_immediately(physical_server, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server.power_off_immediately()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
     view.flash.assert_message('Requested Server power_off_now for the selected server')
 
 
 def test_restart(physical_server, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server.restart()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
     view.flash.assert_message('Requested Server restart for the selected server')
 
 
 def test_restart_immediately(physical_server, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server.restart_immediately()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
     view.flash.assert_message('Requested Server restart_now for the selected server')
@@ -56,18 +86,33 @@ def test_restart_immediately(physical_server, provider):
 
 # Identify Button
 def test_turn_on_led(physical_server, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server.turn_on_led()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
     view.flash.assert_message('Requested Server turn_on_loc_led for the selected server')
 
 
 def test_turn_off_led(physical_server, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server.turn_off_led()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
     view.flash.assert_message('Requested Server turn_off_loc_led for the selected server')
 
 
 def test_turn_blink_led(physical_server, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server.turn_blink_led()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
     view.flash.assert_message('Requested Server blink_loc_led for the selected server')
@@ -75,11 +120,21 @@ def test_turn_blink_led(physical_server, provider):
 
 # Lifecycle Button
 def test_lifecycle_provision(physical_server):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(physical_server, "Provision")
     assert view.is_displayed
 
 
 # Monitoring Button
 def test_monitoring_button(physical_server):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(physical_server, "Timelines")
     assert view.is_displayed

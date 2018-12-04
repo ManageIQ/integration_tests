@@ -77,6 +77,11 @@ def test_projects_dashboard_pods(provider, soft_assert, container_project_instan
         * Go to Projects / Dashboard View
         * Compare the data in the Pods status box to API data for
         Pods names
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     api_pod_names = get_api_pods_names(provider)
     view = navigate_to(container_project_instance, 'Dashboard')
@@ -96,6 +101,11 @@ def test_projects_dashboard_icons(provider, appliance, soft_assert, container_pr
         * Go to Projects / Dashboard View
         * Compare the data in the status boxes to API data forz
         Containers/Images/Services numbers
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     api_values = get_api_object_counts(appliance, PROJECT_NAME, provider)
     view = navigate_to(container_project_instance, 'Dashboard')
@@ -120,6 +130,11 @@ def test_project_has_provider(appliance, soft_assert, provider):
       * navigate to all project page
       * get through all the project to ensure that the provider column isn't
         empty on each on each of the projects
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     projects_collection = appliance.collections.container_projects
 

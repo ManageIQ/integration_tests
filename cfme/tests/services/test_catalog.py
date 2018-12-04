@@ -14,6 +14,12 @@ pytestmark = [test_requirements.service, pytest.mark.tier(2)]
 @pytest.mark.rhel_testing
 @pytest.mark.sauce
 def test_catalog_crud(appliance):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        initialEstimate: 1/8h
+    """
     catalog_name = fauxfactory.gen_alphanumeric()
     cat = appliance.collections.catalogs.create(name=catalog_name, description='my catalog')
 
@@ -28,6 +34,13 @@ def test_catalog_crud(appliance):
 
 @pytest.mark.sauce
 def test_catalog_duplicate_name(appliance):
+    """
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
     catalog_name = fauxfactory.gen_alphanumeric()
     cat = appliance.collections.catalogs.create(name=catalog_name, description='my catalog')
     with pytest.raises(AssertionError):
@@ -38,7 +51,14 @@ def test_catalog_duplicate_name(appliance):
 
 @pytest.mark.sauce
 def test_permissions_catalog_add(appliance, request):
-    """ Tests that a catalog can be added only with the right permissions"""
+    """ Tests that a catalog can be added only with the right permissions
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
 
     def _create_catalog(appliance):
         cat = appliance.collections.catalogs.create(name=fauxfactory.gen_alphanumeric(),

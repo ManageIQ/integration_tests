@@ -18,6 +18,13 @@ def has_no_pxe_servers():
 def test_pxe_server_crud(pxe_name, pxe_server_crud):
     """
     Basic Add test for PXE server including refresh.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: prov
+        caseimportance: medium
+        initialEstimate: 1/6h
+        upstream: yes
     """
     pxe_server_crud.create(refresh_timeout=300)
     with update(pxe_server_crud):

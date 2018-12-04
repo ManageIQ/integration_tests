@@ -277,7 +277,13 @@ def metering_report(appliance, vm_ownership, provider):
 # usage estimated in the resource_usage fixture, therefore a small deviation is fine.
 @pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
 def test_validate_cpu_usage(resource_usage, metering_report):
-    """Test to validate CPU usage.This metric is not collected for cloud providers."""
+    """Test to validate CPU usage.This metric is not collected for cloud providers.
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        initialEstimate: None
+    """
     for groups in metering_report:
         if groups["CPU Used"]:
             estimated_cpu_usage = resource_usage['cpu_used']
@@ -293,7 +299,12 @@ def test_validate_cpu_usage(resource_usage, metering_report):
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(EC2Provider, GCEProvider))
 def test_validate_memory_usage(resource_usage, metering_report):
-    """Test to validate memory usage.This metric is not collected for GCE, EC2."""
+    """Test to validate memory usage.This metric is not collected for GCE, EC2.
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: None
+    """
     for groups in metering_report:
         if groups["Memory Used"]:
             estimated_memory_usage = resource_usage['memory_used']
@@ -307,7 +318,13 @@ def test_validate_memory_usage(resource_usage, metering_report):
 
 
 def test_validate_network_usage(resource_usage, metering_report):
-    """Test to validate network usage."""
+    """Test to validate network usage.
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        initialEstimate: None
+    """
     for groups in metering_report:
         if groups["Network I/O Used"]:
             estimated_network_usage = resource_usage['network_io']
@@ -320,7 +337,12 @@ def test_validate_network_usage(resource_usage, metering_report):
 
 
 def test_validate_disk_usage(resource_usage, metering_report):
-    """Test to validate disk usage."""
+    """Test to validate disk usage.
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: None
+    """
     for groups in metering_report:
         if groups["Disk I/O Used"]:
             estimated_disk_usage = resource_usage['disk_io_used']
@@ -332,7 +354,12 @@ def test_validate_disk_usage(resource_usage, metering_report):
 
 
 def test_validate_storage_usage(resource_usage, metering_report):
-    """Test to validate storage usage."""
+    """Test to validate storage usage.
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: None
+    """
     for groups in metering_report:
         if groups["Storage Used"]:
             estimated_storage_usage = resource_usage['storage_used']

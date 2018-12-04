@@ -18,4 +18,9 @@ pytestmark = [
 
 
 def test_add_alerts_provider(provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     provider.setup()

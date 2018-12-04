@@ -40,6 +40,11 @@ def category(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_tag_crud(category):
+    """
+    Polarion:
+        assignee: anikifor
+        initialEstimate: 1/8h
+    """
     tag = category.collections.tags.create(
         name=fauxfactory.gen_alphanumeric(8).lower(),
         display_name=fauxfactory.gen_alphanumeric(32).lower()
@@ -122,6 +127,10 @@ class TestTagsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: None
         """
         collection = appliance.rest_api.collections.tags
         tags_len = len(tags)
@@ -147,6 +156,10 @@ class TestTagsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         edited = []
         new_names = []
@@ -170,6 +183,10 @@ class TestTagsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         delete_resources_from_detail(tags, method=method)
 
@@ -179,6 +196,10 @@ class TestTagsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         delete_resources_from_collection(tags, not_found=True)
 
@@ -188,6 +209,10 @@ class TestTagsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         data = {
             "name": "test_tag_{}".format(fauxfactory.gen_alphanumeric().lower()),
@@ -216,6 +241,10 @@ class TestTagsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         collection = getattr(appliance.rest_api.collections, collection_name)
         collection.reload()
@@ -241,6 +270,10 @@ class TestTagsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         collection = getattr(appliance.rest_api.collections, collection_name)
         collection.reload()
@@ -290,6 +323,10 @@ class TestTagsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         collection = getattr(appliance.rest_api.collections, collection_name)
         collection.reload()
@@ -322,6 +359,10 @@ class TestTagsViaREST(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         collection = appliance.rest_api.collections.services
         collection.reload()

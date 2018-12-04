@@ -49,6 +49,12 @@ def test_gap_collection(appliance, provider, element, graph_type, order_data):
         * Navigate to VM or Host Utilization page
         * Check for Hourly data
         * Check for Daily data
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: medium
+        initialEstimate: None
     """
     if element == 'host':
         collection = appliance.collections.hosts

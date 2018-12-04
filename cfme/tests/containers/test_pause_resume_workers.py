@@ -37,6 +37,11 @@ def test_pause_and_resume_provider_workers(appliance, provider):
         6. Resume the provider
         7. navigate to : User -> Configuration -> Diagnostics ->  Workers
         8. Validate the ems_ workers are started
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     view = navigate_to(provider, "Details")
     # pause the provider
@@ -60,6 +65,11 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
     collection and entity classes.
 
     RFE: BZ 1507812
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     evm_tail_disable = LogValidator('/var/www/miq/vmdb/log/evm.log',
                                     matched_patterns=['.*Disabling EMS \[{}\] id \[{}\].*'

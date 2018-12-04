@@ -30,6 +30,10 @@ class TestVmOwnershipRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/3h
         """
         if "set_ownership" not in appliance.rest_api.collections.services.action.all:
             pytest.skip("Set owner action for service is not implemented in this version")
@@ -50,6 +54,10 @@ class TestVmOwnershipRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/3h
         """
         rest_vm = appliance.rest_api.collections.vms.get(name=vm)
         group = appliance.rest_api.collections.groups.get(
@@ -79,6 +87,10 @@ class TestVmOwnershipRESTAPI(object):
             * Assert it has the attribute ``evm_owner`` as we set it.
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/3h
         """
         rest_vm = appliance.rest_api.collections.vms.get(name=vm)
         if from_detail:
@@ -118,6 +130,10 @@ def test_rename_vm(small_vm):
     4. Click on Configuration > Rename this VM > Enter new name
     5. Click on submit
     6. Check whether VM is renamed or not
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     view = navigate_to(small_vm, 'Details')
     vm_name = small_vm.name

@@ -50,6 +50,12 @@ def random_default_views(appliance):
 
 
 def test_default_views(appliance, random_default_views):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     for collection_name in objects_mapping.keys():
         obj = (ContainersProvider if collection_name is ContainersProvider
                else getattr(appliance.collections, collection_name))
@@ -62,6 +68,12 @@ def test_default_views(appliance, random_default_views):
 
 
 def test_table_views(appliance):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     for collection_name in objects_mapping.keys():
         obj = (ContainersProvider if collection_name is ContainersProvider
                else getattr(appliance.collections, collection_name))

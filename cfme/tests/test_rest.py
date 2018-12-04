@@ -198,6 +198,10 @@ def test_query_simple_collections(appliance, collection_name):
         * GET /api/<collection_name>
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/3h
     """
     collection = getattr(appliance.rest_api.collections, collection_name)
     assert_response(appliance)
@@ -222,6 +226,10 @@ def test_collections_actions(appliance, collection_name):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     collection_href = '{}/{}'.format(appliance.rest_api._entry_point, collection_name)
     response = appliance.rest_api.get(collection_href)
@@ -247,6 +255,10 @@ def test_query_with_api_version(api_version, collection_name):
         * GET /api/<version>/<collection_name>
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     collection = getattr(api_version.collections, collection_name)
     assert_response(api_version)
@@ -271,6 +283,10 @@ def test_select_attributes(appliance, collection_name):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/8h
     """
     if collection_name in COLLECTIONS_BUGGY_ATTRS and appliance.version < '5.9':
         pytest.skip("Affected by BZ 1437201, cannot test.")
@@ -291,6 +307,10 @@ def test_http_options(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/3h
     """
     assert 'boot_time' in appliance.rest_api.collections.vms.options()['attributes']
     assert_response(appliance)
@@ -302,6 +322,10 @@ def test_http_options_node_types(appliance, collection_name):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     collection = getattr(appliance.rest_api.collections, collection_name)
     assert 'node_types' in collection.options()['data']
@@ -313,6 +337,10 @@ def test_http_options_subcollections(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     assert 'tags' in appliance.rest_api.collections.vms.options()['subcollections']
     assert_response(appliance)
@@ -323,6 +351,10 @@ def test_server_info(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/3h
     """
     assert all(item in appliance.rest_api.server_info for item in ('appliance', 'build', 'version'))
 
@@ -332,6 +364,10 @@ def test_server_info_href(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     items = ('server_href', 'zone_href', 'region_href')
     for item in items:
@@ -344,6 +380,10 @@ def test_default_region(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     reg = appliance.rest_api.collections.regions[0]
     assert hasattr(reg, 'guid')
@@ -355,6 +395,10 @@ def test_product_info(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/3h
     """
     assert all(item in appliance.rest_api.product_info for item in
                ('copyright', 'name', 'name_full', 'support_website', 'support_website_text'))
@@ -365,6 +409,10 @@ def test_settings_collection(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     # the "settings" collection is untypical as it doesn't have "resources" and
     # for this reason can't be reloaded (bug in api client)
@@ -377,6 +425,10 @@ def test_identity(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/3h
     """
     assert all(item in appliance.rest_api.identity for item in
                ('userid', 'name', 'group', 'role', 'tenant', 'groups'))
@@ -387,6 +439,10 @@ def test_user_settings(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/3h
     """
     assert isinstance(appliance.rest_api.settings, dict)
 
@@ -396,6 +452,10 @@ def test_datetime_filtering(appliance, provider):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     collection = appliance.rest_api.collections.vms
     url_string = '{}{}'.format(
@@ -432,6 +492,10 @@ def test_date_filtering(appliance, provider):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     collection = appliance.rest_api.collections.vms
     url_string = '{}{}'.format(
@@ -464,6 +528,10 @@ def test_resources_hiding(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/8h
     """
     roles = appliance.rest_api.collections.roles
     resources_visible = appliance.rest_api.get(roles._href + '?filter[]=read_only=true')
@@ -481,6 +549,10 @@ def test_sorting_by_attributes(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     url_string = '{}{}'.format(
         appliance.rest_api.collections.groups._href,
@@ -519,6 +591,10 @@ def test_rest_paging(appliance, paging):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     limit, offset = paging
     url_string = '{}{}'.format(
@@ -590,6 +666,10 @@ def test_attributes_present(appliance, collection_name):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: None
     """
     attrs = 'href,id,href_slug'
     collection = getattr(appliance.rest_api.collections, collection_name)
@@ -611,6 +691,10 @@ def test_collection_class_valid(appliance, provider, vendor):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     collection = appliance.rest_api.collections.vms
     collection.reload()
@@ -634,6 +718,10 @@ def test_collection_class_invalid(appliance, provider):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     with pytest.raises(Exception, match='Invalid collection_class'):
         appliance.rest_api.collections.vms.query_string(
@@ -650,6 +738,10 @@ def test_bulk_delete(request, appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     collection = appliance.rest_api.collections.services
     data = [{'name': fauxfactory.gen_alphanumeric()} for __ in range(2)]
@@ -675,6 +767,10 @@ def test_rest_ping(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     ping_addr = '{}/ping'.format(appliance.rest_api._entry_point)
     assert appliance.rest_api._session.get(ping_addr).text == 'pong'
@@ -694,6 +790,10 @@ class TestPicturesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         picture = self.create_picture(appliance)
         outcome = query_resource_attributes(picture)
@@ -710,6 +810,10 @@ class TestPicturesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.pictures
         collection.reload()
@@ -724,6 +828,10 @@ class TestPicturesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.pictures
         count = collection.count
@@ -741,6 +849,10 @@ class TestPicturesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.pictures
         count = collection.count
@@ -759,6 +871,10 @@ class TestBulkQueryRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.events
         data0, data1, data2 = collection[0]._data, collection[1]._data, collection[2]._data
@@ -775,6 +891,10 @@ class TestBulkQueryRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         data = appliance.rest_api.collections.users[0]._data
         response = appliance.rest_api.collections.users.action.query(
@@ -788,6 +908,10 @@ class TestBulkQueryRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.roles
         data0, data1 = collection[0]._data, collection[1]._data
@@ -802,6 +926,10 @@ class TestBulkQueryRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.groups
         data0, data1 = collection[0]._data, collection[1]._data
@@ -828,6 +956,10 @@ class TestArbitrationSettingsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         query_resource_attributes(arbitration_settings[0], soft_assert=soft_assert)
 
@@ -836,6 +968,10 @@ class TestArbitrationSettingsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         for setting in arbitration_settings:
             record = appliance.rest_api.collections.arbitration_settings.get(id=setting.id)
@@ -847,6 +983,10 @@ class TestArbitrationSettingsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         delete_resources_from_detail(arbitration_settings, method=method)
 
@@ -855,6 +995,10 @@ class TestArbitrationSettingsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         delete_resources_from_collection(arbitration_settings)
 
@@ -866,6 +1010,10 @@ class TestArbitrationSettingsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         num_settings = len(arbitration_settings)
         uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_settings)]
@@ -903,6 +1051,10 @@ class TestArbitrationRulesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         query_resource_attributes(arbitration_rules[0], soft_assert=soft_assert)
 
@@ -911,6 +1063,10 @@ class TestArbitrationRulesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         for rule in arbitration_rules:
             record = appliance.rest_api.collections.arbitration_rules.get(id=rule.id)
@@ -922,6 +1078,10 @@ class TestArbitrationRulesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         delete_resources_from_detail(arbitration_rules, method='POST')
 
@@ -930,6 +1090,10 @@ class TestArbitrationRulesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         delete_resources_from_collection(arbitration_rules)
 
@@ -941,6 +1105,10 @@ class TestArbitrationRulesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         num_rules = len(arbitration_rules)
         uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_rules)]
@@ -974,6 +1142,10 @@ class TestNotificationsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.notifications
         collection.reload()
@@ -987,6 +1159,10 @@ class TestNotificationsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         unseen = appliance.rest_api.collections.notifications.find_by(seen=False)
         notifications = [unseen[-i] for i in range(1, 3)]
@@ -1011,6 +1187,10 @@ class TestNotificationsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         # BZ 1420872 was fixed for >= 5.9 only
         if method == 'delete' and appliance.version < '5.9':
@@ -1024,6 +1204,10 @@ class TestNotificationsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         notifications = appliance.rest_api.collections.notifications.all[-3:]
         delete_resources_from_collection(notifications)
@@ -1047,6 +1231,10 @@ class TestEventStreamsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.event_streams
         collection.reload()
@@ -1058,6 +1246,10 @@ class TestEventStreamsRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         vm_name = vm_obj
         collections = appliance.rest_api.collections

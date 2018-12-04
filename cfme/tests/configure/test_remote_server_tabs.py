@@ -24,6 +24,10 @@ def test_remote_server_advanced_config(temp_appliance_preconfig, request,
     """
     Test that starting in 5.10 it is possible to modify advanced settings for remote servers
     BZ1536524
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     appliance = temp_appliance_preconfig
     remote_server = appliance.server.slave_servers[0]

@@ -153,6 +153,10 @@ def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, an
         policy_for_testing, full_template_vm_modscope, ansible_credential, service_request,
         service):
     """Tests a policy with ansible playbook action against localhost.
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     with update(ansible_action):
         ansible_action.run_ansible_playbook = {"inventory": {"localhost": True}}
@@ -169,7 +173,12 @@ def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, an
 def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_item, ansible_action,
         policy_for_testing, full_template_vm_modscope, ansible_credential, service_request,
         service):
-    """Tests a policy with ansible playbook action against manual address."""
+    """Tests a policy with ansible playbook action against manual address.
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
+    """
     vm = full_template_vm_modscope
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {"machine_credential": ansible_credential.name}
@@ -193,7 +202,12 @@ def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_ite
 def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_item, ansible_action,
         policy_for_testing, full_template_vm_modscope, ansible_credential, service_request,
         service):
-    """Tests a policy with ansible playbook action against target machine."""
+    """Tests a policy with ansible playbook action against target machine.
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
+    """
     vm = full_template_vm_modscope
     with update(ansible_action):
         ansible_action.run_ansible_playbook = {"inventory": {"target_machine": True}}
@@ -210,7 +224,12 @@ def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_ite
 def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalog_item,
         full_template_vm_modscope, ansible_action, policy_for_testing, ansible_credential,
         service_request, service):
-    """Tests a policy with ansible playbook action against unavailable address."""
+    """Tests a policy with ansible playbook action against unavailable address.
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
+    """
     vm = full_template_vm_modscope
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {"machine_credential": ansible_credential.name}
@@ -233,7 +252,12 @@ def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalo
 @pytest.mark.tier(3)
 def test_control_action_run_ansible_playbook_in_requests(request,
         full_template_vm_modscope, policy_for_testing, service_request):
-    """Checks if execution of the Action result in a Task/Request being created."""
+    """Checks if execution of the Action result in a Task/Request being created.
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
+    """
     vm = full_template_vm_modscope
     added_tag = vm.add_tag()
     request.addfinalizer(lambda: vm.remove_tag(added_tag))
