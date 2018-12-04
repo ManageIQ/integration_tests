@@ -240,13 +240,13 @@ class ProviderTemplateUpload(object):
 
     @log_wrap("download image locally")
     def download_image(self):
+        ARCHIVE_TYPES = ['zip']
         suffix = re.compile(
             r'^.*?[.](?P<ext>tar\.gz|tar\.bz2|\w+)$').match(self.image_name).group('ext')
-        print(self.image_name, self.local_file_path)
         # Check if file exists already:
-        if path.isfile(self.local_file_path):
+        if path.isfile(self.image_name):
             logger.info('Local image found, skipping download: %s', self.local_file_path)
-            if suffix not in ['zip']:
+            if suffix not in ARCHIVE_TYPES:
                 return True
         else:
             # Download file to cli-tool-client
@@ -260,24 +260,36 @@ class ProviderTemplateUpload(object):
         # For EC2 and SCVMM images is zip used and for GCE is tar.gz used.
 
         archive_path = self.image_name
-        try:
-            if suffix == 'zip':
-                archive = ZipFile(archive_path)
-                zipinfo = archive.infolist()
-                self._unzipped_file = zipinfo[0].filename
-            else:
-                return True
-            if path.isfile(self.image_name):
-                os.remove(self.image_name)
-            logger.info('Image archived - unzipping as : %s', self._unzipped_file)
-            archive.extractall()
-            archive.close()
-            # remove the archive
-            os.remove(archive_path)
+        if suffix not in ARCHIVE_TYPES:
             return True
-        except Exception:
-            logger.exception("{} archive unzip failed.".format(suffix))
-            return False
+        else:
+            if suffix == 'zip':
+                try:
+                    archive = ZipFile(archive_path)
+                    zipinfo = archive.infolist()
+                    self._unzipped_file = zipinfo[0].filename
+                except Exception:
+                    logger.exception("Getting information of {} archive failed.".format(
+                        self.image_name))
+                    return False
+
+                if path.isfile(self.image_name):
+                    try:
+                        os.remove(self.image_name)
+                    except Exception:
+                        logger.exception("Deleting previously unpacked file {} failed.".format(
+                            self.image_name))
+                        return False
+                logger.info("Image archived - unpacking as : {}".format(self._unzipped_file))
+                try:
+                    archive.extractall()
+                    archive.close()
+                    # remove the archive
+                    os.remove(archive_path)
+                    return True
+                except Exception:
+                    logger.exception("{} archive unpacked failed.".format(suffix))
+                    return False
 
     @log_wrap('add template to glance')
     def glance_upload(self):
