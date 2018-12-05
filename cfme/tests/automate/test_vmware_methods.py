@@ -67,7 +67,7 @@ def testing_group(appliance, request):
 def testing_vm(setup_provider, provider):
     collection = provider.appliance.provider_based_collection(provider)
     try:
-        template_name = provider.data['full_template']['name']
+        template_name = provider.data['templates']['full_template']['name']
     except KeyError:
         pytest.skip('Unable to identify full_template for provider: {}'.format(provider))
 
