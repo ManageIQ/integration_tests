@@ -836,7 +836,13 @@ class GroupCollection(BaseCollection):
                 not having appropriate permissions OR delete is not allowed
                 for currently selected user
         """
-        flash_blocked_msg = "Description can't be blank"
+        flash_blocked_msg = (
+            "Description is not unique within region {}".format(
+                self.appliance.server.zone.region.number
+            )
+            if description
+            else "Description can't be blank"
+        )
 
         view = navigate_to(self, 'Add')
 
