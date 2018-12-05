@@ -19,6 +19,7 @@ from cfme.configure.configuration.diagnostics_settings import CollectLogsBase
 from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
+from cfme.utils.blockers import BZ
 from cfme.utils.ftp import FTPClient
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
@@ -169,7 +170,7 @@ def check_ftp(appliance, ftp, server_name, server_zone_id, check_ansible_logs=Fa
             r"^.*{}{}[.]zip$".format(server_string, date_group)), directories=False)
         assert zip_files, "No logs found!"
         # Collection of Models and Dialogs introduced in 5.10
-        if appliance.version >= '5.10':
+        if appliance.version >= '5.10' and not BZ(1656318, forced_streams=["5.10"]).blocks:
             models_files = ftp.filesystem.search(re.compile(
                 r"^Models_.*{}[.]zip$".format(server_string)), directories=False
             )
