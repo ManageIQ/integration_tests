@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from copy import copy
 from random import choice
 
 import pytest
@@ -41,27 +40,6 @@ def get_report(appliance):
     saved_report.delete(cancel=False)
 
 
-LANDING_PAGES = [
-    # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
-    # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331399
-    # TODO: update landing_pages once these bugs are fixed.
-    'Cloud Intel / Dashboard',
-    'Services / My Services',
-    'Services / Catalogs',
-    'Services / Requests',
-    'Infrastructure / Providers',
-    'Infrastructure / Clusters',
-    'Infrastructure / Hosts',
-    'Infrastructure / Resource Pools',
-    'Infrastructure / Datastores',
-    'Control / Explorer',
-    'Automate / Explorer',
-    'Optimize / Utilization',
-    'Optimize / Planning',
-    'Optimize / Bottlenecks',
-]
-
-
 @pytest.fixture(scope='module')
 def set_grid(appliance):
     gridlimit = appliance.user.my_settings.visual.grid_view_limit
@@ -88,10 +66,6 @@ def set_report(appliance):
     reportlimit = appliance.user.my_settings.visual.report_view_limit
     yield
     appliance.user.my_settings.visual.report_view_limit = reportlimit
-
-
-def set_default_page(appliance):
-    appliance.user.my_settings.visual.set_login_page = 'Cloud Intelligence / Dashboard'
 
 
 def go_to_grid(page):
@@ -263,36 +237,6 @@ def test_infra_report_page_per_item(appliance, value, set_report, get_report):
         assert int(max_item) == int(limit), "Reportview Failed!"
 
     assert int(max_item) <= int(item_amt)
-
-
-@pytest.mark.uncollect('Needs to be fixed after menu removed')
-@pytest.mark.meta(blockers=[1267148])
-@pytest.mark.parametrize('start_page', LANDING_PAGES, scope="module")
-def test_infra_start_page(visual, request, appliance, start_page):
-    """ Tests start page
-
-    Metadata:
-        test_flag: visuals
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Settings
-        caseimportance: medium
-        initialEstimate: 1/6h
-        tags: settings
-    """
-    request.addfinalizer(set_default_page)
-    if appliance.user.my_settings.visual.login_page != start_page:
-        appliance.user.my_settings.visual.login_page = start_page
-    appliance.server.logout()
-    appliance.server.login_admin()
-    steps = map(lambda x: x.strip(), start_page.split('/'))
-    longer_steps = copy(steps)
-    longer_steps.insert(0, None)
-    # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
-    # nav = menu.nav
-    # nav.initialize()
-    # assert nav.is_page_active(*steps) or nav.is_page_active(*longer_steps), "Landing Page Failed"
 
 
 def test_infraprovider_noquads(request, set_infra_provider_quad):

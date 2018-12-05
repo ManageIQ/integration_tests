@@ -3,29 +3,13 @@ import pytest
 import six
 
 from cfme import test_requirements
-from cfme.cloud.availability_zone import AvailabilityZoneAllView
-from cfme.cloud.flavor import FlavorAllView
-from cfme.cloud.keypairs import KeyPairAllView
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider import CloudProvidersView
-from cfme.cloud.stack import StackAllView
-from cfme.cloud.tenant import TenantAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
               pytest.mark.usefixtures('openstack_provider')]
-
-# Dict values are views which are required to check correct landing pages.
-landing_pages = {
-    'Compute / Clouds / Providers': CloudProvidersView,
-    'Compute / Clouds / Key Pairs': KeyPairAllView,
-    'Compute / Clouds / Tenants': TenantAllView,
-    'Compute / Clouds / Flavors': FlavorAllView,
-    'Compute / Clouds / Availability Zones': AvailabilityZoneAllView,
-    'Compute / Clouds / Stacks': StackAllView,
-}
 
 
 @pytest.fixture(scope='module', params=['5', '10', '20', '50', '100', '200', '500', '1000'])
@@ -66,10 +50,6 @@ def set_list(appliance):
     appliance.user.my_settings.visual.list_view_limit = 5
     yield
     appliance.user.my_settings.visual.list_view_limit = listlimit
-
-
-def set_default_page(appliance):
-    appliance.user.my_settings.visual.set_login_page = 'Cloud Intelligence / Dashboard'
 
 
 def go_to_grid(page):
@@ -184,27 +164,6 @@ def test_cloud_list_page_per_item(appliance, request, page, value, set_list):
     if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), 'Listview Failed for page {}!'.format(page)
     assert int(max_item) <= int(item_amt)
-
-
-@pytest.mark.parametrize('start_page', landing_pages, scope='module')
-def test_cloud_start_page(request, appliance, start_page):
-    """ Tests start page
-
-    Metadata:
-        test_flag: visuals
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Settings
-        caseimportance: medium
-        initialEstimate: 1/6h
-        tags: settings
-    """
-    request.addfinalizer(lambda: set_default_page(appliance))
-    appliance.user.my_settings.visual.login_page = start_page
-    appliance.server.logout()
-    appliance.server.login_admin()
-    appliance.browser.create_view(landing_pages[start_page], wait='10s')
 
 
 def test_cloudprovider_noquads(request, set_cloud_provider_quad):

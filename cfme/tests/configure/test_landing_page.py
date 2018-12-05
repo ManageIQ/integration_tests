@@ -1,159 +1,232 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.version import current_version
-
-LANDING_PAGES = [
-    'Cloud Intel / Dashboard',
-    'Cloud Intel / Reports',
-    'Cloud Intel / Chargeback',
-    'Cloud Intel / Timelines',
-    'Cloud Intel / RSS',
-    'Services / My Services',
-    'Services / Catalogs',
-    'Services / Workloads / VMs & Instances',
-    'Services / Workloads / Templates & Images',
-    'Services / Requests',
-    'Compute / Clouds / Providers',
-    'Compute / Clouds / Availability Zones',
-    'Compute / Clouds / Host Aggregates',
-    'Compute / Clouds / Tenants',
-    'Compute / Clouds / Flavors',
-    'Compute / Clouds / Instances / Instances By Providers',
-    'Compute / Clouds / Instances / Images By Providers',
-    'Compute / Clouds / Instances / Instances',
-    'Compute / Clouds / Instances / Images',
-    'Compute / Clouds / Stacks',
-    'Compute / Clouds / Key Pairs',
-    'Compute / Clouds / Topology',
-    'Compute / Infrastructure / Providers',
-    'Compute / Infrastructure / Clusters',
-    'Compute / Infrastructure / Hosts / Nodes',
-    'Compute / Infrastructure / Virtual Machines / VMs & Templates',
-    'Compute / Infrastructure / Virtual Machines / VMs',
-    'Compute / Infrastructure / Virtual Machines / Templates',
-    'Compute / Infrastructure / Resource Pools',
-    'Compute / Infrastructure / Datastores',
-    'Compute / Infrastructure / PXE',
-    'Compute / Infrastructure / Networking',
-    'Compute / Infrastructure / Topology',
-    'Compute / Containers / Overview',
-    'Compute / Containers / Providers',
-    'Compute / Containers / Projects',
-    'Compute / Containers / Routes',
-    'Compute / Containers / Container Services',
-    'Compute / Containers / Replicators',
-    'Compute / Containers / Pods',
-    'Compute / Containers / Containers',
-    'Compute / Containers / Container Nodes',
-    'Compute / Containers / Volumes',
-    'Compute / Containers / Container Builds',
-    'Compute / Containers / Image Registries',
-    'Compute / Containers / Container Images',
-    'Compute / Containers / Container Templates',
-    'Compute / Containers / Topology',
-    'Configuration / Management',
-    'Networks / Providers',
-    'Networks / Networks',
-    'Networks / Subnets',
-    'Networks / Network Routers',
-    'Networks / Security Groups',
-    'Networks / Floating IPs',
-    'Networks / Network Ports',
-    'Networks / Load Balancers',
-    'Networks / Topology',
-    'Storage / Block Storage / Managers',
-    'Storage / Block Storage / Volumes',
-    'Storage / Block Storage / Volume Snapshots',
-    'Storage / Block Storage / Volume Backups',
-    'Storage / Object Storage / Managers',
-    'Storage / Object Storage / Object Store Containers',
-    'Storage / Object Storage / Object Store Objects',
-    'Control / Explorer',
-    'Control / Simulation',
-    'Control / Import / Export',
-    'Control / Log',
-    'Automation / Ansible / Playbooks',
-    'Automation / Ansible / Repositories',
-    'Automation / Ansible / Credentials',
-    'Automation / Ansible Tower / Explorer',
-    'Automation / Ansible Tower / Jobs',
-    'Automation / Automate / Explorer',
-    'Automation / Automate / Simulation',
-    'Automation / Automate / Customization',
-    'Automation / Automate / Import / Export',
-    'Automation / Automate / Log',
-    'Automation / Automate / Requests',
-    'Optimize / Utilization',
-    'Optimize / Planning',
-    'Optimize / Bottlenecks',
-    'Monitor / Alerts / Overview',
-    'Monitor / Alerts / All Alerts',
-    'Monitor / Alerts / Most Recent Alerts',
-    'Settings / Tasks',
-    'Red Hat Access Insights']
+from cfme.cloud.instance import InstanceAllView
+from cfme.cloud.instance import InstanceProviderAllView
+from cfme.cloud.instance.image import ImageAllView
+from cfme.cloud.instance.image import ImageProviderAllView
+from cfme.common.host_views import HostsView
+from cfme.configure.tasks import TasksView
+from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.virtual_machines import TemplatesOnlyAllView
+from cfme.infrastructure.virtual_machines import VmsOnlyAllView
+from cfme.infrastructure.virtual_machines import VmsTemplatesAllView
+from cfme.markers.env_markers.provider import ONE
+from cfme.services.workloads import WorkloadsTemplate
+from cfme.services.workloads import WorkloadsVM
 
 
-LANDING_PAGES_5_9 = LANDING_PAGES + [
-    "Compute / Infrastructure / Requests",
-    "Middleware / Providers",
-    "Middleware / Domains",
-    "Middleware / Servers",
-    "Middleware / Deployments",
-    "Middleware / Datasources",
-    "Middleware / Messagings",
-    "Middleware / Topology",
+pytestmark = [
+    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.provider([InfraProvider], selector=ONE),
 ]
 
 
-@pytest.fixture(scope='module')
+SPECIAL_LANDING_PAGES = {
+    "Services / Workloads / VMs & Instances": WorkloadsVM,
+    "Services / Workloads / Templates & Images": WorkloadsTemplate,
+    "Compute / Clouds / Instances / Instances": InstanceAllView,
+    "Compute / Clouds / Instances / Images": ImageAllView,
+    "Compute / Clouds / Instances / Images By Providers": ImageProviderAllView,
+    "Compute / Clouds / Instances / Instances By Providers": InstanceProviderAllView,
+    "Compute / Infrastructure / Hosts / Nodes": HostsView,
+    "Compute / Infrastructure / Virtual Machines / VMs & Templates": VmsTemplatesAllView,
+    "Compute / Infrastructure / Virtual Machines / VMs": VmsOnlyAllView,
+    "Compute / Infrastructure / Virtual Machines / Templates": TemplatesOnlyAllView,
+    "Settings / Tasks": TasksView,
+}
+
+
+ALL_LANDING_PAGES = list(SPECIAL_LANDING_PAGES.keys()) + [
+    "Automation / Ansible / Credentials",
+    "Automation / Ansible / Playbooks",
+    "Automation / Ansible / Repositories",
+    "Automation / Ansible Tower / Explorer",
+    "Automation / Ansible Tower / Jobs",
+    "Automation / Automate / Customization",
+    "Automation / Automate / Explorer",
+    "Automation / Automate / Generic Objects",
+    "Automation / Automate / Import / Export",
+    "Automation / Automate / Log",
+    "Automation / Automate / Requests",
+    "Automation / Automate / Simulation",
+    "Cloud Intel / Chargeback",
+    "Cloud Intel / Dashboard",
+    "Cloud Intel / RSS",
+    "Cloud Intel / Reports",
+    "Cloud Intel / Timelines",
+    "Compute / Clouds / Availability Zones",
+    "Compute / Clouds / Flavors",
+    "Compute / Clouds / Host Aggregates",
+    "Compute / Clouds / Key Pairs",
+    "Compute / Clouds / Providers",
+    "Compute / Clouds / Stacks",
+    "Compute / Clouds / Tenants",
+    "Compute / Clouds / Topology",
+    "Compute / Containers / Container Builds",
+    "Compute / Containers / Container Images",
+    "Compute / Containers / Container Nodes",
+    "Compute / Containers / Container Services",
+    "Compute / Containers / Container Templates",
+    "Compute / Containers / Containers",
+    "Compute / Containers / Image Registries",
+    "Compute / Containers / Overview",
+    "Compute / Containers / Pods",
+    "Compute / Containers / Projects",
+    "Compute / Containers / Providers",
+    "Compute / Containers / Replicators",
+    "Compute / Containers / Routes",
+    "Compute / Containers / Topology",
+    "Compute / Containers / Volumes",
+    "Compute / Infrastructure / Clusters",
+    "Compute / Infrastructure / Datastores",
+    "Compute / Infrastructure / Networking",
+    "Compute / Infrastructure / PXE",
+    "Compute / Infrastructure / Providers",
+    "Compute / Infrastructure / Resource Pools",
+    "Compute / Infrastructure / Topology",
+    "Compute / Physical Infrastructure / Chassis",
+    "Compute / Physical Infrastructure / Overview",
+    "Compute / Physical Infrastructure / Providers",
+    "Compute / Physical Infrastructure / Racks",
+    "Compute / Physical Infrastructure / Servers",
+    "Compute / Physical Infrastructure / Storages",
+    "Compute / Physical Infrastructure / Switches",
+    "Compute / Physical Infrastructure / Topology",
+    "Configuration / Management",
+    "Control / Explorer",
+    "Control / Import / Export",
+    "Control / Log",
+    "Control / Simulation",
+    "Monitor / Alerts / All Alerts",
+    "Monitor / Alerts / Most Recent Alerts",
+    "Monitor / Alerts / Overview",
+    "Networks / Floating IPs",
+    "Networks / Load Balancers",
+    "Networks / Network Ports",
+    "Networks / Network Routers",
+    "Networks / Networks",
+    "Networks / Providers",
+    "Networks / Security Groups",
+    "Networks / Subnets",
+    "Networks / Topology",
+    "Optimize / Bottlenecks",
+    "Optimize / Planning",
+    "Optimize / Utilization",
+    "Red Hat Access Insights",
+    "Services / Catalogs",
+    "Services / My Services",
+    "Services / Requests",
+    "Storage / Block Storage / Managers",
+    "Storage / Block Storage / Volume Backups",
+    "Storage / Block Storage / Volume Snapshots",
+    "Storage / Block Storage / Volume Types",
+    "Storage / Block Storage / Volumes",
+    "Storage / Object Storage / Managers",
+    "Storage / Object Storage / Object Store Containers",
+    "Storage / Object Storage / Object Store Objects",
+]
+
+PAGES_NOT_IN_510 = [
+    "Compute / Physical Infrastructure / Chassis",
+    "Compute / Physical Infrastructure / Overview",
+    "Compute / Physical Infrastructure / Providers",
+    "Compute / Physical Infrastructure / Racks",
+    "Compute / Physical Infrastructure / Servers",
+    "Compute / Physical Infrastructure / Storages",
+    "Compute / Physical Infrastructure / Switches",
+    "Compute / Physical Infrastructure / Topology",
+    "Storage / Block Storage / Volume Types",
+]
+
+PAGES_NOT_IN_511 = [
+    "Cloud Intel / RSS",
+    "Cloud Intel / Timelines",
+    "Monitor / Alerts / Most Recent Alerts",
+    "Optimize / Bottlenecks",
+    "Optimize / Planning",
+    "Optimize / Utilization",
+    "Red Hat Access Insights",
+]
+
+
+@pytest.fixture(scope="module")
 def my_settings(appliance):
     return appliance.user.my_settings
 
 
-def set_landing_page(value, appliance, my_settings):
-    # page_list contains the list of pages which show some error or alerts after login.
-    page_list = []
-    view = navigate_to(my_settings, 'Visual')
-    if (not any(substring in value for substring in page_list) and
-            view.tabs.visual.start_page.show_at_login.fill(value)):
-        view.tabs.visual.save.click()
-    # This block will redirect to My setting page and update the startpage value to next parameter.
-    # except NoSuchElementException:
-    #     browser.start(url_key="{}/configuration/index".format(appliance.server.address))
-    #     view.visualstartpage.show_at_login.fill(value)
-    #     view.save.click()
-    login_page = navigate_to(appliance.server, 'LoginScreen')
-    login_page.login_admin()
-    logged_in_page = navigate_to(appliance.server, 'LoggedIn')
-    return logged_in_page.is_displayed
+@pytest.fixture(scope="module")
+def set_default_page(my_settings):
+    default_page = my_settings.visual.login_page
+    yield
+    my_settings.visual.login_page = default_page
 
 
-def set_to_default(page, my_settings):
-    view = navigate_to(my_settings, 'Visual')
-    view.tabs.visual.start_page.show_at_login.fill(page)
-    view.tabs.visual.save.click()
+@pytest.fixture(scope="module")
+def set_landing_page(appliance, my_settings, start_page):
+    my_settings.visual.login_page = start_page
+    appliance.server.logout()
 
 
-@test_requirements.settings
-@pytest.mark.parametrize(
-    "start_page",
-    LANDING_PAGES if current_version() > "5.10" else LANDING_PAGES_5_9,
-    scope="module",
+@pytest.mark.parametrize("start_page", ALL_LANDING_PAGES, scope="module")
+@pytest.mark.uncollectif(
+    lambda start_page, appliance: (
+        (appliance.version < "5.11" and start_page in PAGES_NOT_IN_510)
+        or (appliance.version > "5.11" and start_page in PAGES_NOT_IN_511)
+    )
 )
-def test_landing_page_admin(start_page, appliance, my_settings, request):
+@test_requirements.settings
+def test_landing_page_admin(
+    appliance, request, set_default_page, set_landing_page, start_page
+):
     """
-            This test checks the functioning of the landing page; 'Start at Login'
-            option on 'Visual' tab of setting page for administrator. This test case doesn't
-            check the exact page but verifies that all the landing page options works properly.
+    This test checks the functioning of the landing page; 'Start at Login'
+    option on 'Visual' tab of setting page for administrator. This test case
+    check the exact page and verifies that all the landing page options works properly.
 
     Polarion:
         assignee: pvala
         casecomponent: Configuration
-        caseimportance: medium
         initialEstimate: 1/8h
         tags: settings
+        setup:
+            1. Navigate to `My Settings` > `Visual` > `Start Page` and fill `Show at login`.
+            2. Logout and Login
+        testSteps:
+            1. Check the page displayed.
+        expectedResults:
+            1. The page displayed must be same as what  was set.
+
+    Bugzilla:
+        1656722
     """
-    request.addfinalizer(lambda: set_to_default('Cloud Intel / Dashboard', my_settings))
-    assert set_landing_page(start_page, appliance, my_settings)
+    logged_in_page = appliance.server.login_admin()
+    steps = map(lambda x: x.strip(), start_page.split("/"))
+
+    # splitting steps splits Import and Export, which we do not wanted, so joining them with /
+    if "Import / Export" in start_page:
+        steps = steps[:-2] + ["Import / Export"]
+    elif "Red Hat Access Insights" in start_page:
+        steps = ["Red Hat Insights", "Actions"]
+    elif "Most Recent Alerts" in start_page:
+        steps = steps[:-1]
+
+    # pages in SPECIAL_LANDING_PAGES indicate different accordions and can only be verified
+    # by creating the respective view and checking if it is displayed
+    if start_page in SPECIAL_LANDING_PAGES:
+        view = appliance.browser.create_view(SPECIAL_LANDING_PAGES[start_page])
+        if start_page in [
+            "Compute / Clouds / Instances / Images By Providers",
+            "Compute / Clouds / Instances / Instances By Providers",
+        ]:
+            # it is not possible to assert view.is_displayed since a context
+            # object is required for that and no context object is found while creating the view.
+            assert view.entities.title.text == "All {} by Provider".format(
+                steps[-1].split()[0]
+            )
+        else:
+            assert view.is_displayed, "Landing Page Failed"
+    else:
+        assert (
+            logged_in_page.navigation.currently_selected == steps
+        ), "Landing Page Failed"
