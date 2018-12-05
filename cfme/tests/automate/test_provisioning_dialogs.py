@@ -13,6 +13,12 @@ from cfme.utils.update import update
 @test_requirements.automate
 @pytest.mark.tier(3)
 def test_provisioning_dialog_crud(appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/10h
+    """
     # CREATE
     collection = appliance.collections.provisioning_dialogs
     dialog = collection.create(
@@ -54,6 +60,13 @@ for name in ProvisioningDialogsCollection.ALLOWED_TYPES:
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(("name", "by", "order"), sort_by_params)
 def test_provisioning_dialogs_sorting(appliance, name, by, order):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: medium
+        initialEstimate: 1/30h
+    """
     view = navigate_to(appliance.collections.provisioning_dialogs, 'All')
     view.sidebar.provisioning_dialogs.tree.click_path("All Dialogs", name)
     view.entities.table.sort_by(by, order)

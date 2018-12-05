@@ -139,6 +139,10 @@ class TestCustomAttributesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         resource = get_resource[collection_name]()
         attributes = add_custom_attributes(request, resource)
@@ -156,6 +160,10 @@ class TestCustomAttributesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         attributes = add_custom_attributes(request, get_resource[collection_name]())
         delete_resources_from_detail(attributes, method='POST')
@@ -170,6 +178,10 @@ class TestCustomAttributesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         attributes = add_custom_attributes(request, get_resource[collection_name]())
         delete_resources_from_detail(attributes, method='DELETE')
@@ -183,6 +195,10 @@ class TestCustomAttributesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         resource = get_resource[collection_name]()
         attributes = add_custom_attributes(request, resource)
@@ -198,6 +214,10 @@ class TestCustomAttributesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         resource = get_resource[collection_name]()
         attributes = add_custom_attributes(request, resource)
@@ -215,6 +235,10 @@ class TestCustomAttributesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: None
         """
         resource = get_resource[collection_name]()
         attributes = add_custom_attributes(request, resource)
@@ -262,6 +286,10 @@ class TestCustomAttributesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         resource = get_resource[collection_name]()
         attributes = add_custom_attributes(request, resource)
@@ -298,6 +326,10 @@ class TestCustomAttributesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         resource = get_resource[collection_name]()
         add_custom_attributes(request, resource)
@@ -324,6 +356,10 @@ class TestCustomAttributesRESTAPI(object):
 
         Metadata:
             test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: None
         """
         resource = get_resource[collection_name]()
         orig_attribute, = add_custom_attributes(request, resource, num=1)

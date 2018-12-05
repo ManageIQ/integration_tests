@@ -24,6 +24,11 @@ def physical_servers_collection(appliance):
 
 # Configuration Button
 def test_refresh_relationships(physical_servers_collection, physical_servers, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(physical_servers_collection, "All")
     last_refresh = provider.last_refresh_date()
     item = "Refresh Relationships and Power States"
@@ -67,6 +72,10 @@ def test_server_actions(physical_servers_collection, physical_servers, provider,
         current method on the manageIQ.
     Metadata:
         test_flag: crud
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     view = provider.create_view(PhysicalServersView)
 
@@ -91,12 +100,22 @@ def test_server_actions(physical_servers_collection, physical_servers, provider,
 
 # Policy Button
 def test_manage_button(physical_servers_collection, physical_servers):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_servers_collection.select_entity_rows(physical_servers)
     view = navigate_to(physical_servers_collection, "ManagePoliciesCollection")
     assert view.is_displayed
 
 
 def test_edit_tag(physical_servers_collection, physical_servers):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_servers_collection.select_entity_rows(physical_servers)
     view = navigate_to(physical_servers_collection, "EditTagsCollection")
     assert view.is_displayed
@@ -104,6 +123,11 @@ def test_edit_tag(physical_servers_collection, physical_servers):
 
 # Lifecycle Button
 def test_lifecycle_provision(physical_servers_collection, physical_servers):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_servers_collection.select_entity_rows(physical_servers)
     view = navigate_to(physical_servers_collection, "ProvisionCollection")
     assert view.is_displayed

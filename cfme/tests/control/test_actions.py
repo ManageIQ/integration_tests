@@ -310,6 +310,10 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power Off", ["Start Virtual Machine"])
@@ -336,6 +340,10 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Stop Virtual Machine"])
@@ -361,6 +369,10 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, poli
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Suspend Virtual Machine"])
@@ -386,6 +398,10 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On Request",
@@ -411,6 +427,10 @@ def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     policy_for_testing.assign_actions_to_event("VM Retire Request",
         ["Prevent current event from proceeding"])
@@ -434,6 +454,10 @@ def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, p
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/4h
     """
     policy_for_testing.assign_actions_to_event("VM Analysis Request",
         ["Prevent current event from proceeding"])
@@ -460,6 +484,10 @@ def test_action_prevent_host_ssa(request, appliance, host, host_policy):
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/4h
     """
     host_policy.assign_actions_to_event("Host Analysis Request",
         ["Prevent current event from proceeding"])
@@ -500,6 +528,10 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testi
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Generate log message"])
@@ -539,6 +571,10 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Generate Audit Event"])
@@ -584,6 +620,10 @@ def test_action_create_snapshot_and_delete_last(
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     # Set up the policy and prepare finalizer
     snapshot_name = fauxfactory.gen_alphanumeric()
@@ -628,6 +668,10 @@ def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on,
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     # Set up the policy and prepare finalizer
     snapshot_name = fauxfactory.gen_alphanumeric()
@@ -679,6 +723,10 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On",
@@ -739,6 +787,10 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, appliance):
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
            for tag in vm.crud.get_tags()):
@@ -777,6 +829,10 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, appliance, tag):
 
     Metadata:
         test_flag: actions, provision
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     if not any(vm_tag.category.display_name == tag.category.display_name and
                vm_tag.display_name == tag.display_name
@@ -823,6 +879,10 @@ def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, poli
     """This test checks if 'Cancel vCenter task' action works.
     For this test we need big template otherwise CFME won't have enough time
     to cancel the task https://bugzilla.redhat.com/show_bug.cgi?id=1383372#c9
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/4h
     """
     with update(policy_for_testing):
         policy_for_testing.scope = (
@@ -867,6 +927,10 @@ def test_action_check_compliance(request, provider, vm, vm_name, policy_for_test
 
     Metadata:
         test_flag: policy
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     compliance_policy.assign_conditions(compliance_condition)
     if any(vm_tag.category.display_name == tag.category.display_name and

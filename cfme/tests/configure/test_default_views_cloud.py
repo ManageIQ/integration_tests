@@ -31,6 +31,10 @@ def test_default_view_cloud_reset(appliance):
         * Check Reset Button is disabled
         * Select 'availability_zones' button from cloud region and change it's default mode
         * Check Reset Button is enabled
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     view = navigate_to(appliance.user.my_settings, "DefaultViews")
     assert view.tabs.default_views.reset.disabled
@@ -44,7 +48,12 @@ def test_default_view_cloud_reset(appliance):
 @pytest.mark.parametrize('group_name', gtl_params.keys())
 @pytest.mark.parametrize('expected_view', ['List View', 'Tile View', 'Grid View'])
 def test_cloud_default_view(appliance, group_name, expected_view):
-    """This test case changes the default view of a cloud related page and asserts the change."""
+    """This test case changes the default view of a cloud related page and asserts the change.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     page = gtl_params[group_name]
     default_views = appliance.user.my_settings.default_views
     old_default = default_views.get_default_view(group_name, fieldset='Clouds')
@@ -60,7 +69,12 @@ def test_cloud_default_view(appliance, group_name, expected_view):
                          ['Expanded View', 'Compressed View', 'Details Mode', 'Exists Mode'])
 def test_cloud_compare_view(appliance, expected_view):
     """This test changes the default view/mode for comparison between cloud provider instances
-    and asserts the change."""
+    and asserts the change.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
 
     if expected_view in ['Expanded View', 'Compressed View']:
         group_name, selector_type = 'Compare', 'views_selector'

@@ -70,6 +70,12 @@ def kibana_logging_url(provider):
                          ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
 def test_external_logging_activated(provider, appliance, test_item, kibana_logging_url):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     test_collection = ([provider] if test_item.obj is ContainersProvider
                        else test_item.collection_obj(appliance).all())
 

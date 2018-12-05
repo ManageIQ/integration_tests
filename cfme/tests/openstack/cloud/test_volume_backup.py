@@ -147,18 +147,33 @@ def attached_volume(appliance, provider, volume_backup, new_instance):
 
 @pytest.mark.rfe
 def test_create_volume_backup(volume_backup):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert volume_backup.exists
     assert volume_backup.size == VOLUME_SIZE
 
 
 @pytest.mark.rfe
 def test_create_volume_incremental_backup(incremental_backup):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert incremental_backup.exists
     assert incremental_backup.size == VOLUME_SIZE
 
 
 @pytest.mark.rfe
 def test_incr_backup_of_attached_volume_crud(appliance, provider, request, attached_volume):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     backup_name = fauxfactory.gen_alpha()
     collection = appliance.collections.volume_backups.filter({'provider': provider})
     attached_volume.create_backup(backup_name, incremental=True, force=True)
@@ -187,12 +202,22 @@ def test_incr_backup_of_attached_volume_crud(appliance, provider, request, attac
 @pytest.mark.rfe
 @pytest.mark.ignore_stream('5.9')
 def test_create_backup_of_volume_with_type(volume_backup_with_type):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert volume_backup_with_type.exists
     assert volume_backup_with_type.size == VOLUME_SIZE
 
 
 @pytest.mark.rfe
 def test_restore_volume_backup(volume_backup):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     if volume_backup.status == 'available':
         volume_backup.restore(volume_backup.volume)
     else:
@@ -201,6 +226,11 @@ def test_restore_volume_backup(volume_backup):
 
 @pytest.mark.rfe
 def test_restore_incremental_backup(incremental_backup):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     if incremental_backup.status == 'available':
         incremental_backup.restore(incremental_backup.volume)
     else:

@@ -18,7 +18,12 @@ def physical_rack(appliance, provider, setup_provider):
 
 
 def test_physical_rack_details_dropdowns(physical_rack):
-    """Navigate to the physical rack details page and verify the refresh button"""
+    """Navigate to the physical rack details page and verify the refresh button
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_rack.refresh()
 
 
@@ -28,7 +33,12 @@ def physical_rack_collection(appliance, provider, setup_provider_modscope):
 
 
 def test_physical_racks_view_dropdowns(physical_rack_collection):
-    """Navigate to the physical racks page and verify that the dropdown menus are present"""
+    """Navigate to the physical racks page and verify that the dropdown menus are present
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_racks_view = navigate_to(physical_rack_collection, 'All')
 
     configuration_items = physical_racks_view.toolbar.configuration.items

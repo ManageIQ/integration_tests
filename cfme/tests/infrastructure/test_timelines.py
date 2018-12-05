@@ -278,6 +278,10 @@ class VMEvent(object):
 def test_infra_timeline_create_event(new_vm, soft_assert):
     """Test that the event create is visible on the management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'create'
     vm_event = VMEvent(new_vm, event)
@@ -292,6 +296,10 @@ def test_infra_timeline_policy_event(new_vm, control_policy, soft_assert):
     """Test that the category Policy Event is properly working on the Timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider. For this purpose, there is need to create a policy
     profile, assign it to the VM and stopping it which triggers the policy.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     event = 'policy'
@@ -305,6 +313,10 @@ def test_infra_timeline_policy_event(new_vm, control_policy, soft_assert):
 def test_infra_timeline_stop_event(new_vm, soft_assert):
     """Test that the event Stop is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'stop'
     targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -317,6 +329,10 @@ def test_infra_timeline_stop_event(new_vm, soft_assert):
 def test_infra_timeline_start_event(new_vm, soft_assert):
     """Test that the event start is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'start'
     targets = (new_vm, new_vm.host, new_vm.cluster, new_vm.provider)
@@ -329,6 +345,10 @@ def test_infra_timeline_start_event(new_vm, soft_assert):
 def test_infra_timeline_suspend_event(new_vm, soft_assert):
     """Test that the event suspend is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider. The VM needs to be set before as management engine.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'suspend'
     targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -341,6 +361,10 @@ def test_infra_timeline_suspend_event(new_vm, soft_assert):
 def test_infra_timeline_diagnostic(new_vm, soft_assert, mark_vm_as_appliance):
     """Test that the event create is visible on the appliance timeline ( EVM/configuration/Server/
     diagnostic/Timelines.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'create'
     targets = (new_vm.appliance.server,)
@@ -352,6 +376,10 @@ def test_infra_timeline_diagnostic(new_vm, soft_assert, mark_vm_as_appliance):
 def test_infra_timeline_clone_event(new_vm, soft_assert):
     """Test that the event clone is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'clone'
     vm_event = VMEvent(new_vm, event)
@@ -364,6 +392,10 @@ def test_infra_timeline_clone_event(new_vm, soft_assert):
 def test_infra_timeline_migrate_event(new_vm, soft_assert):
     """Test that the event migrate is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'migrate'
     vm_event = VMEvent(new_vm, event)
@@ -378,6 +410,10 @@ def test_infra_timeline_rename_event(new_vm, soft_assert):
     """Test that the event rename is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
     Action "rename" does not exist on RHV, thats why it is excluded.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'rename'
     vm_event = VMEvent(new_vm, event)
@@ -392,6 +428,10 @@ def test_infra_timeline_rename_event(new_vm, soft_assert):
 def test_infra_timeline_delete_event(new_vm, soft_assert):
     """Test that the event delete is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     event = 'delete'
     vm_event = VMEvent(new_vm, event)

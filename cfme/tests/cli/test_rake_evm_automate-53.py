@@ -48,6 +48,10 @@ def test_evm_automate_import_export_works_upstream(appliance, rake, soft_assert)
         * Use ``evm:automate:import`` rake task to import the testing file.
         * Use ``evm:automate:export`` rake task to export the data to another file.
         * Verify the file exists.
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/3h
     """
     appliance.ssh_client.put_file(
         cli_path.join("QECliTesting.yaml").strpath, "/root/QECliTesting.yaml")
@@ -74,6 +78,11 @@ def test_evm_automate_simulate_upstream(rake, qe_ae_data, appliance):
             INSTANCE=touch`` rake task
         * Verify the file ``/var/www/miq/vmdb/check_file`` exists and it contains string
             ``check content``
+
+    Polarion:
+        assignee: dmisharo
+        caseimportance: low
+        initialEstimate: 1/4h
     """
     appliance.ssh_client.run_command("rm -f /var/www/miq/vmdb/check_file")
     result = rake(
@@ -98,6 +107,10 @@ def test_evm_automate_convert(request, rake, appliance):
         * Import the ZIP file using ``evm:automate_import`` rake task.
         * Use ``evm:automate:extract_methods FOLDER=/some_folder`` and verify that a file named
             ``relay_events.rb`` is present in the directory hierarchy.
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
     """
     appliance.ssh_client.put_file(
         data_path.join("qe_event_handler.xml").strpath, "/root/convert_test.xml")

@@ -118,6 +118,11 @@ def test_priority(
         * Then pick the domain order so the original domain is first.
         * Run the same simulation again.
         * The contents of the file should be the same as in the first case.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/4h
     """
     ssh_client = appliance.ssh_client
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))

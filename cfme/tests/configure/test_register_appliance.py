@@ -88,7 +88,12 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
 @pytest.mark.rhel_testing
 @pytest.mark.ignore_stream("upstream")
 def test_rh_creds_validation(reg_method, reg_data, proxy_url, proxy_creds):
-    """ Tests whether credentials are validated correctly for RHSM and SAT6 """
+    """ Tests whether credentials are validated correctly for RHSM and SAT6
+
+    Polarion:
+        assignee: lcouzens
+        initialEstimate: 1/12h
+    """
     repo = reg_data.get('enable_repo')
     if not repo:
         set_default_repo = True
@@ -123,7 +128,12 @@ def test_rh_creds_validation(reg_method, reg_data, proxy_url, proxy_creds):
 @pytest.mark.rhel_testing
 @pytest.mark.ignore_stream("upstream")
 def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, proxy_creds):
-    """ Tests whether an appliance can be registered against RHSM and SAT6 """
+    """ Tests whether an appliance can be registered against RHSM and SAT6
+
+    Polarion:
+        assignee: lcouzens
+        initialEstimate: 1/12h
+    """
     repo = reg_data.get('enable_repo')
     if not repo:
         set_default_repo = True
@@ -180,7 +190,12 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
 @pytest.mark.rhel_testing
 def test_rhsm_registration_check_repo_names(
         temp_appliance_preconfig_funcscope, soft_assert, appliance):
-    """ Checks default rpm repos on a fresh appliance """
+    """ Checks default rpm repos on a fresh appliance
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     ver = temp_appliance_preconfig_funcscope.version.series()
     repos = cfme_data.redhat_updates.repos
 
@@ -204,7 +219,12 @@ def test_rhsm_registration_check_repo_names(
 @pytest.mark.rhel_testing
 @pytest.mark.meta(blockers=[BZ(1500878, forced_streams=['5.9', 'upstream'])])
 def test_rh_updates(appliance_preupdate, appliance):
-    """ Tests whether the update button in the webui functions correctly """
+    """ Tests whether the update button in the webui functions correctly
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
 
     set_default_repo = True
 

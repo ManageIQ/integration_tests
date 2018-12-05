@@ -22,6 +22,10 @@ def test_sdn_crud(provider, appliance):
 
     Metadata:
         test_flag: sdn
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: 1/2h
     """
     collection = appliance.collections.network_providers.filter({'provider': provider})
     network_provider = collection.all()[0]

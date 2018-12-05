@@ -60,11 +60,25 @@ def hosts_advanced_search(host_collection):
 
 
 def test_can_open_host_advanced_search(hosts_advanced_search):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     hosts_advanced_search.entities.search.open_advanced_search()
 
 
 def test_host_filter_without_user_input(host_collection, hosts, hosts_with_vm_count,
                                    host_with_median_vm, infra_provider, hosts_advanced_search):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     median_host, median_vm_count = host_with_median_vm
     # Counting hosts with more than median VMs
     more_than_median_hosts = len([hostname for hostname, vmcount in hosts_with_vm_count
@@ -81,6 +95,13 @@ def test_host_filter_without_user_input(host_collection, hosts, hosts_with_vm_co
 
 def test_host_filter_with_user_input(host_collection, hosts, hosts_with_vm_count,
                                      host_with_median_vm, infra_provider, hosts_advanced_search):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     median_host, median_vm_count = host_with_median_vm
     # Counting hosts with more than median VMs
     more_than_median_hosts = len([hostname for hostname, vmcount in hosts_with_vm_count
@@ -97,6 +118,13 @@ def test_host_filter_with_user_input(host_collection, hosts, hosts_with_vm_count
 
 def test_host_filter_with_user_input_and_cancellation(host_collection, hosts, hosts_with_vm_count,
                                                       host_with_median_vm, hosts_advanced_search):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     median_host, median_vm_count = host_with_median_vm
 
     # Set up the filter
@@ -110,6 +138,13 @@ def test_host_filter_with_user_input_and_cancellation(host_collection, hosts, ho
 
 def test_host_filter_save_cancel(hosts_advanced_search,
                                  hosts, hosts_with_vm_count, host_with_median_vm):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     median_host, median_vm_count = host_with_median_vm
     filter_name = fauxfactory.gen_alphanumeric()
     # Try save filter
@@ -123,6 +158,13 @@ def test_host_filter_save_cancel(hosts_advanced_search,
 
 def test_host_filter_save_and_load(host_collection, request, hosts, hosts_with_vm_count,
                                    host_with_median_vm, infra_provider, hosts_advanced_search):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     median_host, median_vm_count = host_with_median_vm
     # We will filter out hosts with less than median VMs
     more_than_median_hosts = list(dropwhile(lambda h: h[1] <= median_vm_count, hosts_with_vm_count))
@@ -142,6 +184,13 @@ def test_host_filter_save_and_load(host_collection, request, hosts, hosts_with_v
 
 def test_host_filter_save_and_cancel_load(host_collection, request, hosts, hosts_with_vm_count,
                                      host_with_median_vm, hosts_advanced_search):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     median_host, median_vm_count = host_with_median_vm
 
     filter_name = fauxfactory.gen_alphanumeric()
@@ -163,6 +212,13 @@ def test_host_filter_save_and_cancel_load(host_collection, request, hosts, hosts
 def test_host_filter_save_and_load_cancel(
         hosts_advanced_search, request, hosts,
         hosts_with_vm_count, host_with_median_vm):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     median_host, median_vm_count = host_with_median_vm
 
     filter_name = fauxfactory.gen_alphanumeric()
@@ -188,6 +244,13 @@ def test_host_filter_save_and_load_cancel(
 
 def test_quick_search_without_host_filter(host_collection, request, hosts, hosts_with_vm_count,
                                           host_with_median_vm, infra_provider):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     view = navigate_to(host_collection, 'All')
     view.entities.search.remove_search_filters()
     view.flash.assert_no_error()
@@ -203,6 +266,13 @@ def test_quick_search_without_host_filter(host_collection, request, hosts, hosts
 
 def test_quick_search_with_host_filter(host_collection, request, hosts, hosts_with_vm_count,
                                        host_with_median_vm, infra_provider):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     view = navigate_to(host_collection, 'All')
     median_host, median_vm_count = host_with_median_vm
     view.entities.search.advanced_search(get_expression(False, ">=").format(median_vm_count))
@@ -218,6 +288,13 @@ def test_quick_search_with_host_filter(host_collection, request, hosts, hosts_wi
 
 
 def test_can_delete_host_filter(host_collection, hosts_advanced_search):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     filter_name = fauxfactory.gen_alphanumeric()
     hosts_advanced_search.entities.search.save_filter(get_expression(False).format(0), filter_name)
     hosts_advanced_search.flash.assert_no_error()
@@ -232,7 +309,14 @@ def test_can_delete_host_filter(host_collection, hosts_advanced_search):
 
 def test_delete_button_should_appear_after_save_host(host_collection,
                                                      hosts_advanced_search, request):
-    """Delete button appears only after load, not after save"""
+    """Delete button appears only after load, not after save
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     filter_name = fauxfactory.gen_alphanumeric()
     hosts_advanced_search.entities.search.save_filter(get_expression(False).format(0), filter_name)
 
@@ -246,7 +330,14 @@ def test_delete_button_should_appear_after_save_host(host_collection,
 
 
 def test_cannot_delete_host_filter_more_than_once(host_collection, hosts_advanced_search):
-    """When Delete button appars, it does not want to go away"""
+    """When Delete button appars, it does not want to go away
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     filter_name = fauxfactory.gen_alphanumeric()
     hosts_advanced_search.entities.search.save_filter(get_expression(False).format(0), filter_name)
     # circumvent the thing happening in previous test

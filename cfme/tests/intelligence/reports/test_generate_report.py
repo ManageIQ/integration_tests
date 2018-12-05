@@ -44,6 +44,11 @@ def test_reports_generate_report(request, path, appliance):
     Steps:
         *Run one default report
         *Delete this Saved Report from the Database
+
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        initialEstimate: 1/16h
     """
     report = appliance.collections.reports.instantiate(
         type=path[0],

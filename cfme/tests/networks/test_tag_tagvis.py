@@ -54,6 +54,11 @@ def child_visibility(appliance, network_provider, relationship, view):
                          ids=[rel[0] for rel in network_test_items])
 def test_tagvis_network_provider_children(provider, appliance, request, relationship, view,
                                           tag, user_restricted):
+    """
+    Polarion:
+        assignee: anikifor
+        initialEstimate: 1/8h
+    """
     collection = appliance.collections.network_providers.filter({'provider': provider})
     network_provider = collection.all()[0]
 
@@ -70,6 +75,11 @@ def test_tagvis_network_provider_children(provider, appliance, request, relation
 
 @pytest.fixture(params=network_collections, scope='module')
 def test_entity(request, appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     collection_name = request.param
     item_collection = getattr(appliance.collections, collection_name)
     items = item_collection.all()
@@ -90,5 +100,9 @@ def test_network_tagvis(check_item_visibility, test_entity, visibility):
         2. Login as restricted user, item is visible for user
         3. As admin remove tag
         4. Login as restricted user, iten is not visible for user
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     check_item_visibility(test_entity, visibility)

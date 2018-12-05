@@ -53,6 +53,11 @@ def prov_data(vm_name):
 
 @pytest.fixture(scope='module')
 def test_domain(appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     domain = appliance.collections.domains.create('test_{}'.format(fauxfactory.gen_alphanumeric()),
                                                   'description_{}'.format(
                                                       fauxfactory.gen_alphanumeric()),
@@ -193,7 +198,13 @@ def custom_prov_data(request, prov_data, vm_name, template_name):
 )
 def test_quota(appliance, provider, setup_provider, custom_prov_data, vm_name, admin_email,
                entities, template_name, prov_data):
-    """This test case checks quota limit using the automate's predefine method 'quota source'"""
+    """This test case checks quota limit using the automate's predefine method 'quota source'
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: infra
+        initialEstimate: 1/6h
+    """
     recursive_update(prov_data, custom_prov_data)
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
                        provisioning_data=prov_data, wait=False, request=None)
@@ -224,6 +235,10 @@ def test_user_quota_diff_groups(request, appliance, provider, setup_provider, ne
     steps:
 
     1. Provision VM with more than assigned quota
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     with new_user:
         recursive_update(prov_data, custom_prov_data)

@@ -20,6 +20,10 @@ def test_refresh_providers(appliance, request, scenario):
     """
     Refreshes providers then waits for a specific amount of time.
     Memory Monitor creates graphs and summary at the end of the scenario.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     from_ts = int(time.time() * 1000)
     logger.debug('Scenario: {}'.format(scenario['name']))

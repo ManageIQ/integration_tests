@@ -44,6 +44,12 @@ def clear_search(view):
 
 def test_breadcrumbs(provider, appliance, soft_assert):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     for data_set in TESTED_OBJECTS:
 
         instances = ([provider] if data_set.collection_obj == 'containers_providers'

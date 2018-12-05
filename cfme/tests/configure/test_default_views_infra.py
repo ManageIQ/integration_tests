@@ -70,6 +70,10 @@ def test_default_view_infra_reset(appliance):
         * Select 'infrastructure_providers' button from infrastructure region
         * Change it's default mode
         * Check Reset Button is enabled
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     view = navigate_to(appliance.user.my_settings, "DefaultViews")
     assert view.tabs.default_views.reset.disabled
@@ -83,7 +87,12 @@ def test_default_view_infra_reset(appliance):
 @pytest.mark.parametrize('group_name', gtl_params.keys(), scope="module")
 @pytest.mark.parametrize('view', ['List View', 'Tile View', 'Grid View'])
 def test_infra_default_view(appliance, group_name, view):
-    """This test case changes the default view of an infra related page and asserts the change."""
+    """This test case changes the default view of an infra related page and asserts the change.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     page = _get_page(gtl_params[group_name], appliance)
     default_views = appliance.user.my_settings.default_views
     old_default = default_views.get_default_view(group_name)
@@ -100,7 +109,12 @@ def test_infra_default_view(appliance, group_name, view):
                          ['Expanded View', 'Compressed View', 'Details Mode', 'Exists Mode'])
 def test_infra_compare_view(appliance, expected_view):
     """This test changes the default view/mode for comparison between infra provider instances
-    and asserts the change."""
+    and asserts the change.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     if expected_view in ['Expanded View', 'Compressed View']:
         group_name, selector_type = 'Compare', 'views_selector'
     else:
@@ -117,10 +131,24 @@ def test_infra_compare_view(appliance, expected_view):
 
 
 def test_vm_visibility_off(appliance):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
     appliance.user.my_settings.default_views.set_default_view_switch_off()
     assert not check_vm_visibility(appliance)
 
 
 def test_vm_visibility_on(appliance):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/5h
+    """
     appliance.user.my_settings.default_views.set_default_view_switch_on()
     assert check_vm_visibility(appliance, check=True)

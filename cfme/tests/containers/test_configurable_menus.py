@@ -27,6 +27,11 @@ def is_monitoring_menu_visible(appliance):
 
 
 def test_datawarehouse_invisible(is_datawarehouse_menu_visible):
+    """
+    Polarion:
+        assignee: rhcf3_machine
+        initialEstimate: None
+    """
     # This should be the default state
     # Verifies BZ#1421175
     assert not is_datawarehouse_menu_visible
@@ -34,6 +39,11 @@ def test_datawarehouse_invisible(is_datawarehouse_menu_visible):
 
 @pytest.mark.uncollectif(lambda: current_version() > "5.8")
 def test_monitoring_invisible(is_monitoring_menu_visible):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     # This should be the default state
     # Verifies BZ#1421173
     assert not is_monitoring_menu_visible

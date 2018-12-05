@@ -78,6 +78,12 @@ def random_labels(provider, appliance):
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7687')])
 def test_labels_create(provider, soft_assert, random_labels):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     provider.refresh_provider_relationships()
     # Verify that the labels appear in the UI:
     for instance, label_name, label_value, status_code, json_content in random_labels:
@@ -97,6 +103,12 @@ def test_labels_create(provider, soft_assert, random_labels):
 
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7687')])
 def test_labels_remove(provider, soft_assert, random_labels):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     # Removing the labels
     for instance, label_name, label_value, status_code, _ in random_labels:
         if status_code:

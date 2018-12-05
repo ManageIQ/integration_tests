@@ -74,7 +74,12 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
 def test_provisioning(appliance, request, scenario):
     """Runs through provisioning scenarios using the REST API to
     continously provision a VM for a specified period of time.
-    Memory Monitor creates graphs and summary at the end of each scenario."""
+    Memory Monitor creates graphs and summary at the end of each scenario.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
 
     from_ts = int(time.time() * 1000)
     logger.debug('Scenario: {}'.format(scenario['name']))

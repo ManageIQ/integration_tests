@@ -28,6 +28,11 @@ def stack(setup_provider_modscope, provider, appliance):
 
 @pytest.mark.tier(3)
 def test_security_group_link(stack):
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/4h
+    """
     try:
         view = navigate_to(stack, 'RelationshipSecurityGroups')
     except CandidateNotFound:
@@ -42,6 +47,11 @@ def test_security_group_link(stack):
 
 @pytest.mark.tier(3)
 def test_parameters_link(stack):
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/8h
+    """
     try:
         view = navigate_to(stack, 'RelationshipParameters')
     except CandidateNotFound:
@@ -56,6 +66,11 @@ def test_parameters_link(stack):
 
 @pytest.mark.tier(3)
 def test_outputs_link(stack):
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: None
+    """
     try:
         view = navigate_to(stack, 'RelationshipOutputs')
     except CandidateNotFound:
@@ -69,6 +84,11 @@ def test_outputs_link(stack):
 
 @pytest.mark.tier(3)
 def test_outputs_link_url(appliance, stack):
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: None
+    """
     try:
         view = navigate_to(stack, 'RelationshipOutputs')
     except CandidateNotFound:
@@ -85,6 +105,11 @@ def test_outputs_link_url(appliance, stack):
 
 @pytest.mark.tier(3)
 def test_resources_link(stack):
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/4h
+    """
     try:
         view = navigate_to(stack, 'RelationshipResources')
     except CandidateNotFound:
@@ -99,12 +124,24 @@ def test_resources_link(stack):
 @pytest.mark.tier(3)
 @test_requirements.tag
 def test_edit_tags(request, stack):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/8h
+    """
     added_tag = stack.add_tag()
     request.addfinalizer(lambda: stack.remove_tag(added_tag))
 
 
 @pytest.mark.tier(3)
 def test_delete_stack(stack, provider, request):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     stack.delete()
     assert not stack.exists
     request.addfinalizer(provider.refresh_provider_relationships)
@@ -112,6 +149,11 @@ def test_delete_stack(stack, provider, request):
 
 @pytest.mark.tier(3)
 def test_collection_delete(provider, setup_provider_modscope, appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     collection = appliance.collections.cloud_stacks
 
     stack1 = collection.instantiate(provider.data['provisioning']['stacks'][0], provider=provider)

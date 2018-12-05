@@ -14,13 +14,23 @@ def physical_server_collection(appliance, provider, setup_provider_modscope):
 
 
 def test_physical_servers_view_displayed(physical_server_collection):
-    """Navigate to the physical servers page and verify that servers are displayed"""
+    """Navigate to the physical servers page and verify that servers are displayed
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_servers_view = navigate_to(physical_server_collection, 'All')
     assert physical_servers_view.is_displayed
 
 
 def test_physical_servers_view_dropdowns(physical_server_collection):
-    """Navigate to the physical servers page and verify that the dropdown menus are present"""
+    """Navigate to the physical servers page and verify that the dropdown menus are present
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_servers_view = navigate_to(physical_server_collection, 'All')
 
     toolbar = physical_servers_view.toolbar

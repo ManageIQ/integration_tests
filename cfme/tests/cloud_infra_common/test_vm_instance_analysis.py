@@ -524,6 +524,11 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 
     Metadata:
         test_flag: vm_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/2h
     """
     template_name = vm_analysis_provisioning_data['image']
     template_collection = appliance.provider_based_collection(provider=provider,
@@ -564,6 +569,11 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
 
     Metadata:
         test_flag: vm_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/3h
     """
     ssa_vm.smartstate_scan(wait_for_task_result=True)
     task = appliance.collections.tasks.instantiate(
@@ -599,6 +609,12 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
 
     Metadata:
         test_flag: vm_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        caseimportance: critical
+        initialEstimate: 1/2h
     """
     # Check release and quadicon
     quadicon_os_icon = ssa_vm.find_quadicon().data['os']
@@ -631,6 +647,11 @@ def test_ssa_vm(ssa_vm, soft_assert, vm_system_type):
 
     Metadata:
         test_flag: vm_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/2h
     """
     ssa_vm.smartstate_scan(wait_for_task_result=True)
     # Check release and quadricon
@@ -662,6 +683,12 @@ def test_ssa_users(ssa_vm):
 
     Metadata:
         test_flag: vm_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/2h
+        testtype: integration
     """
 
     username = fauxfactory.gen_alphanumeric()
@@ -701,6 +728,11 @@ def test_ssa_groups(ssa_vm):
 
     Metadata:
         test_flag: vm_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/2h
     """
 
     group = fauxfactory.gen_alphanumeric()
@@ -739,6 +771,11 @@ def test_ssa_packages(ssa_vm):
 
     Metadata:
         test_flag: vm_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/2h
     """
 
     if ssa_vm.system_type == WINDOWS:
@@ -779,7 +816,13 @@ def test_ssa_packages(ssa_vm):
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.long_running
 def test_ssa_files(ssa_vm):
-    """Tests that instances can be scanned for specific file."""
+    """Tests that instances can be scanned for specific file.
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/3h
+    """
 
     if ssa_vm.system_type == WINDOWS:
         pytest.skip("We cannot verify Windows files yet")
@@ -808,6 +851,11 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
 
     Metadata:
         test_flag: vm_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/3h
     """
 
     ssa_vm.load_details()
@@ -883,6 +931,11 @@ def test_ssa_multiple_vms(ssa_multiple_vms, soft_assert, appliance, compare_linu
 
     Metadata:
         test_flag: vm_analysis
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: smartst
+        initialEstimate: 1/2h
     """
 
     view = navigate_to(ssa_multiple_vms[0], 'AllForProvider')

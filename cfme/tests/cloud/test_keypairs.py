@@ -19,6 +19,10 @@ def test_keypair_crud(appliance, provider):
         * Provide Keypair name.
         * Select Cloud Provider.
         * Also delete it.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     try:
         keypair = appliance.collections.cloud_keypairs.create(name=fauxfactory.gen_alphanumeric(),
@@ -42,6 +46,10 @@ def test_keypair_crud_with_key(openstack_provider, appliance):
         * Provide Keypair name.
         * Select Cloud Provider.
         * Also delete it.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     key = RSA.generate(1024)
     public_key = key.publickey().exportKey('OpenSSH')
@@ -68,6 +76,10 @@ def test_keypair_create_cancel(openstack_provider, appliance):
         * Provide Keypair name.
         * Select Cloud Provider.
         * Also delete it.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     keypair = appliance.collections.cloud_keypairs.create(name="",
                                                           provider=openstack_provider,
@@ -86,6 +98,10 @@ def test_keypair_add_and_remove_tag(openstack_provider, appliance):
         * Add tag to Keypair.
         * Remove tag from Keypair
         * Also delete it.
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     try:
         keypair = appliance.collections.cloud_keypairs.create(name=fauxfactory.gen_alphanumeric(),

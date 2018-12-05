@@ -82,6 +82,11 @@ def test_custom_button_display(request, display, setup_obj, button_group):
         * List: All page of the entity
         * Single and list: Both All and Details page of the entity
         * Check for button group and button
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: critical
+        initialEstimate: 1/4h
     """
 
     group, obj_type = button_group
@@ -134,6 +139,10 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
 
     Bugzillas:
         * 1628224
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     group, obj_type = button_group
@@ -218,6 +227,10 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
 
     Bugzillas:
         * 1635797, 1555331, 1574403, 1640592
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     group, obj_type = button_group
@@ -278,6 +291,10 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
         * Navigate to object Detail page
         * Check: button should not enable/visible without tag
         * Check: button should enable/visible with tag
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     group, obj_type = button_group

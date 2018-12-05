@@ -7,10 +7,20 @@ timelines_reports = ('hosts', 'vm_operation', 'policy_events', 'policy_events2')
 @pytest.mark.manual
 @pytest.mark.parametrize('report', timelines_reports)
 def test_default_reports_with_timelines(report):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     pass
 
 
 @pytest.mark.manual
 @pytest.mark.parametrize('report', timelines_reports)
 def test_custom_reports_with_timelines(report):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     pass

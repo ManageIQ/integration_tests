@@ -19,6 +19,11 @@ def host_collection(appliance):
 
 @pytest.mark.regression
 def test_host_configuration(host_collection, provider, soft_assert, appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hosts = host_collection.all()
     assert hosts
     for host in hosts:
@@ -35,6 +40,11 @@ def test_host_configuration(host_collection, provider, soft_assert, appliance):
 
 @pytest.mark.regression
 def test_host_cpu_resources(host_collection, provider, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hosts = host_collection.all()
     assert hosts
     for host in hosts:
@@ -48,6 +58,11 @@ def test_host_cpu_resources(host_collection, provider, soft_assert):
 
 @pytest.mark.regression
 def test_host_auth(host_collection, provider, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hosts = host_collection.all()
     assert hosts
     for host in hosts:
@@ -60,6 +75,11 @@ def test_host_auth(host_collection, provider, soft_assert):
 
 @pytest.mark.regression
 def test_host_devices(host_collection, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hosts = host_collection.all()
     assert hosts
     for host in hosts:
@@ -70,6 +90,11 @@ def test_host_devices(host_collection, provider):
 
 @pytest.mark.regression
 def test_host_hostname(host_collection, provider, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hosts = host_collection.all()
     assert hosts
     for host in hosts:
@@ -80,6 +105,11 @@ def test_host_hostname(host_collection, provider, soft_assert):
 
 @pytest.mark.regression
 def test_host_memory(host_collection, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hosts = host_collection.all()
     assert hosts
     for host in hosts:
@@ -90,6 +120,11 @@ def test_host_memory(host_collection, provider):
 
 @pytest.mark.regression
 def test_host_security(host_collection, provider, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hosts = host_collection.all()
     assert hosts
     for host in hosts:
@@ -105,7 +140,12 @@ def test_host_security(host_collection, provider, soft_assert):
 
 @pytest.mark.regression
 def test_host_smbios_data(host_collection, provider, soft_assert):
-    """Checks that Manufacturer/Model values are shown for each infra node"""
+    """Checks that Manufacturer/Model values are shown for each infra node
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hosts = host_collection.all()
     assert hosts
     for host in hosts:
@@ -117,6 +157,11 @@ def test_host_smbios_data(host_collection, provider, soft_assert):
 
 @pytest.mark.regression
 def test_host_zones_assigned(host_collection, provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hosts = host_collection.all()
     assert hosts
     for host in hosts:
@@ -127,6 +172,11 @@ def test_host_zones_assigned(host_collection, provider):
 
 @pytest.mark.rfe
 def test_hypervisor_hostname(host_collection, provider, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hvisors = provider.mgmt.list_hosts()
     hosts = host_collection.all()
     for host in hosts:
@@ -139,6 +189,11 @@ def test_hypervisor_hostname(host_collection, provider, soft_assert):
 @pytest.mark.rfe
 @pytest.mark.parametrize("view_type", VIEWS)
 def test_hypervisor_hostname_views(host_collection, provider, view_type, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hvisors = provider.mgmt.list_hosts()
     view = navigate_to(host_collection, 'All')
     view.toolbar.view_selector.select(view_type)
@@ -151,6 +206,11 @@ def test_hypervisor_hostname_views(host_collection, provider, view_type, soft_as
 
 @pytest.mark.rfe
 def test_host_networks(provider, host_collection, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hosts = host_collection.all()
     nodes = provider.mgmt.nodes
     networks = {node.name: provider.mgmt.api.servers.ips(server=node) for node in nodes}
@@ -166,6 +226,11 @@ def test_host_networks(provider, host_collection, soft_assert):
 
 @pytest.mark.rfe
 def test_host_subnets(provider, appliance, host_collection, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     hosts = host_collection.all()
     net_collection = appliance.collections.cloud_networks
 

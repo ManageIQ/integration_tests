@@ -63,6 +63,12 @@ def get_custom_report(appliance, custom_report_values):
 @pytest.mark.meta(blockers=[BZ(1531600, forced_streams=["5.9"])])
 @test_requirements.report
 def test_custom_report_crud(custom_report_values, appliance):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        initialEstimate: 1/16h
+    """
     custom_report = appliance.collections.reports.create(**custom_report_values)
     with update(custom_report):
         custom_report.title += fauxfactory.gen_alphanumeric()
@@ -77,6 +83,12 @@ def test_custom_report_crud(custom_report_values, appliance):
 @pytest.mark.meta(blockers=[1202412])
 @test_requirements.report
 def test_schedule_crud(schedule_data, appliance):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        initialEstimate: 1/16h
+    """
     schedule = appliance.collections.schedules.create(**schedule_data)
     with update(schedule):
         schedule.description = "badger badger badger"
@@ -89,6 +101,12 @@ def test_schedule_crud(schedule_data, appliance):
 @pytest.mark.tier(3)
 @test_requirements.report
 def test_reports_disable_enable_schedule(schedule_data, appliance):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        initialEstimate: None
+    """
     schedules = appliance.collections.schedules
     schedule = schedules.create(**schedule_data)
     schedules.disable_schedules(schedule)
@@ -101,6 +119,12 @@ def test_reports_disable_enable_schedule(schedule_data, appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 def test_menuwidget_crud(appliance):
+    """
+    Polarion:
+        assignee: jhenner
+        casecomponent: report
+        initialEstimate: 1/12h
+    """
     w = appliance.collections.dashboard_report_widgets.create(
         appliance.collections.dashboard_report_widgets.MENU,
         fauxfactory.gen_alphanumeric(),
@@ -122,6 +146,12 @@ def test_menuwidget_crud(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 def test_reportwidget_crud(appliance):
+    """
+    Polarion:
+        assignee: jhenner
+        casecomponent: report
+        initialEstimate: 1/12h
+    """
     w = appliance.collections.dashboard_report_widgets.create(
         appliance.collections.dashboard_report_widgets.REPORT,
         fauxfactory.gen_alphanumeric(),
@@ -143,6 +173,12 @@ def test_reportwidget_crud(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 def test_chartwidget_crud(appliance):
+    """
+    Polarion:
+        assignee: jhenner
+        casecomponent: report
+        initialEstimate: 1/12h
+    """
     w = appliance.collections.dashboard_report_widgets.create(
         appliance.collections.dashboard_report_widgets.CHART,
         fauxfactory.gen_alphanumeric(),
@@ -162,6 +198,12 @@ def test_chartwidget_crud(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 def test_rssfeedwidget_crud(appliance):
+    """
+    Polarion:
+        assignee: jhenner
+        casecomponent: report
+        initialEstimate: 1/12h
+    """
     w = appliance.collections.dashboard_report_widgets.create(
         appliance.collections.dashboard_report_widgets.RSS,
         fauxfactory.gen_alphanumeric(),
@@ -192,6 +234,12 @@ def test_rssfeedwidget_crud(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 def test_dashboard_crud(appliance):
+    """
+    Polarion:
+        assignee: jhenner
+        casecomponent: report
+        initialEstimate: 1/12h
+    """
     d = appliance.collections.report_dashboards.create(
         fauxfactory.gen_alphanumeric(),
         "EvmGroup-administrator",
@@ -211,6 +259,13 @@ def test_dashboard_crud(appliance):
 @pytest.mark.tier(2)
 @test_requirements.report
 def test_run_report(appliance):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/16h
+    """
     report = appliance.rest_api.collections.reports.get(name='VM Disk Usage')
     response = report.action.run()
     assert_response(appliance)
@@ -229,6 +284,13 @@ def test_run_report(appliance):
 @pytest.mark.tier(3)
 @test_requirements.report
 def test_import_report(appliance):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/16h
+    """
     menu_name = 'test_report_{}'.format(fauxfactory.gen_alphanumeric())
     data = {
         'report': {
@@ -257,6 +319,11 @@ def test_import_report(appliance):
 @pytest.mark.tier(3)
 def test_reports_delete_saved_report(appliance, request):
     """The test case selects reports from the Saved Reports list and deletes them.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        initialEstimate: 1/16h
     """
     report = appliance.collections.reports.instantiate(
         type="Configuration Management",
@@ -273,7 +340,14 @@ def test_reports_delete_saved_report(appliance, request):
     assert not report.exists
 
 
+@pytest.mark.tier(1)
 def test_reports_crud_schedule_for_base_report_once(appliance, request):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        initialEstimate: None
+    """
     report = appliance.collections.reports.instantiate(
         type="Configuration Management",
         subtype="Virtual Machines",
@@ -301,6 +375,10 @@ def test_crud_custom_report_schedule(
 ):
     """This test case creates a schedule for custom reports and tests if it was created
     successfully.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     schedule_data["filter"] = (
         "My Company (All Groups)",

@@ -19,7 +19,12 @@ pytestmark = [
 
 @pytest.mark.rhel_testing
 def test_add_cancelled_validation(request, appliance):
-    """Tests that the flash message is correct when add is cancelled."""
+    """Tests that the flash message is correct when add is cancelled.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     collection = appliance.collections.network_providers
     try:
         prov = collection.create(prov_class=NuageProvider, name=None, cancel=True,
@@ -38,6 +43,10 @@ def test_network_provider_add_with_bad_credentials(provider):
 
     Metadata:
         test_flag: crud
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     default_credentials = provider.default_endpoint.credentials
 
@@ -56,6 +65,10 @@ def test_network_provider_crud(provider, has_no_networks_providers):
 
     Metadata:
         test_flag: crud
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     provider.create()
     provider.validate_stats(ui=True)

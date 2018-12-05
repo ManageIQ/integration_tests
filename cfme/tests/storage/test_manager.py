@@ -37,6 +37,11 @@ def manager(request, openstack_provider, appliance):
 
 
 def test_manager_navigation(manager):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(manager.parent, 'All')
     assert view.is_displayed
 
@@ -56,6 +61,10 @@ def test_storage_manager_edit_tag(manager):
     Steps:
         * Add tag and check
         * Remove tag and check
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     # add tag with category Department and tag communication
@@ -80,6 +89,10 @@ def test_storage_manager_delete(manager, provider_cleanup):
         * Delete storage manager from inventory
         * Assert flash message
         * Check storage manager exists or not
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     manager.delete()
     view = manager.create_view(StorageManagerDetailsView)

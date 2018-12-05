@@ -32,6 +32,10 @@ def test_service_catalog_crud_ssui(appliance, setup_provider,
 
     Metadata:
         test_flag: ssui
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: None
     """
 
     catalog_item = order_service

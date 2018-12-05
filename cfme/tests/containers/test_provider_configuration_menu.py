@@ -26,6 +26,12 @@ def check_buttons_status(view, pause_option, resume_option):
 
 
 def test_edit_selected_containers_provider(provider):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     '''Testing Configuration -> Edit... button functionality
     Step:
         In Providers summary page - click configuration
@@ -44,6 +50,11 @@ def test_ocp_operator_out_of_the_box(appliance):
      1. Navigate to  Administration | EVM (on the right upper corner)--> Configuration
      2. In the new page on the left menu select Access Control --> roles
      3. Search for container operator role
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
 
     # Navigate to all roles page
@@ -72,6 +83,11 @@ def test_pause_and_resume_provider(provider):
         7. Validate button status
         8. Validate the provider marked as running
     The test based on BZ1516292
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
 
     view = navigate_to(provider, "Details")

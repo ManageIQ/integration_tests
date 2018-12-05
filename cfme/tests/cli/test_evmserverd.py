@@ -31,6 +31,11 @@ def test_evmserverd_stop(appliance, request):
         * Periodically check output of ``service evmserverd status`` that all servers are stopped.
         * For 5.5+: Really call ``service evmserverd status`` and check that the mentions of
             stopping the service are present.
+
+    Polarion:
+        assignee: amavinag
+        caseimportance: medium
+        initialEstimate: 1/4h
     """
 
     server_name_key = 'Server'

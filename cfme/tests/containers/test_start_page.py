@@ -44,6 +44,12 @@ data_sets = (
 
 def test_start_page(appliance, soft_assert):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     for data_set in data_sets:
         appliance.user.my_settings.visual.login_page = data_set.page_name
         login_page = navigate_to(appliance.server, 'LoginScreen')

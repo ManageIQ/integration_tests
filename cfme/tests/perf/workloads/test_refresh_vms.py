@@ -20,7 +20,12 @@ roles_refresh_vms = ['automate', 'database_operations', 'ems_inventory', 'ems_op
 @pytest.mark.parametrize('scenario', get_refresh_vms_scenarios())
 def test_refresh_vms(appliance, request, scenario):
     """Refreshes all vm's then waits for a specific amount of time. Memory Monitor creates
-    graphs and summary at the end of the scenario."""
+    graphs and summary at the end of the scenario.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     from_ts = int(time.time() * 1000)
     logger.debug('Scenario: {}'.format(scenario['name']))
 

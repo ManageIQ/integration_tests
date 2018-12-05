@@ -34,6 +34,10 @@ def test_security_group_crud(sec_group):
         * Provide Security groups Description.
         * Select Cloud Tenant.
         * Also delete it.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     # TODO: Update need to be done in future.
     assert sec_group.exists
@@ -51,6 +55,10 @@ def test_security_group_create_cancel(appliance, provider):
         * Provide Security groups Description.
         * Select Cloud Tenant.
         * Cancel it.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     security_group = appliance.collections.security_groups
     sec_group = security_group.create(name=fauxfactory.gen_alphanumeric(),

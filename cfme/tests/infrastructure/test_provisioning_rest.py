@@ -97,6 +97,10 @@ def test_provision(request, appliance, provider, provision_data):
         * Query the request by its id until the state turns to ``finished`` or ``provisioned``.
     Metadata:
         test_flag: rest, provision
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/3h
     """
     vm_name = provision_data['vm_fields']['vm_name']
     request.addfinalizer(lambda: clean_vm(appliance, provider, vm_name))
@@ -129,6 +133,10 @@ def test_provision_vlan(request, appliance, provision_data, vnic_profile, provid
         * Check the VM's vNic profile is as expected.
     Metadata:
         test_flag: rest, provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     vm_name = provision_data['vm_fields']['vm_name']
     profile_name = provider.data["provisioning"]["vlan"]
@@ -175,6 +183,10 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
 
     Metadata:
         test_flag: rest, provision
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     def check_one_approval_mail_received():
         return len(smtp_test.get_emails(subject_like=VersionPicker({
@@ -211,6 +223,10 @@ def test_create_pending_provision_requests(request, appliance, provider, small_t
 
     Metadata:
         test_flag: rest, provision
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     provision_data = get_provision_data(
         appliance.rest_api, provider, small_template.name, auto_approve=False)
@@ -245,6 +261,10 @@ def test_provision_attributes(appliance, provider, small_template, soft_assert):
 
     Metadata:
         test_flag: rest, provision
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     provision_data = get_provision_data(
         appliance.rest_api, provider, small_template.name, auto_approve=False)

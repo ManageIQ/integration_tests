@@ -26,6 +26,10 @@ def test_topology_search(request, elements_collection):
 
     Metadata:
         test_flag: sdn
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     elements = elements_collection.all()
     logger.info(str(elements))
@@ -52,6 +56,10 @@ def test_topology_toggle_display(elements_collection):
 
     Metadata:
         test_flag: sdn
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     vis_terms = {True: 'Visible', False: 'Hidden'}
     for state in (True, False):

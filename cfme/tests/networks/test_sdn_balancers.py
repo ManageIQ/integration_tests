@@ -37,6 +37,10 @@ def test_sdn_prov_balancers_number(network_prov_with_load_balancers):
 
     Metadata:
         test_flag: sdn
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
     """
     for prov, sum_all in network_prov_with_load_balancers:
         view = navigate_to(prov, 'Details')
@@ -49,6 +53,10 @@ def test_sdn_balancers_detail(provider, network_prov_with_load_balancers):
 
     Metadata:
         test_flag: sdn
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
     """
     for prov, _ in network_prov_with_load_balancers:
         for balancer in prov.balancers.all():
@@ -73,6 +81,10 @@ def test_sdn_balancers_tagvis(check_item_visibility, visibility, network_prov_wi
 
     Metadata:
         test_flag: tag, sdn
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
     """
     network_prov = random.choice(network_prov_with_load_balancers)[0]
     balancers_for_provider = network_prov.balancers.all()

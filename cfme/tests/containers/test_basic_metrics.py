@@ -63,7 +63,12 @@ def test_basic_metrics(provider):
     """ Basic Metrics availability test
         This test checks that the Metrics service is up
         Curls the hawkular status page and checks if it's up
-        """
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     try:
         router = [router for router in provider.mgmt.list_route()
                   if router.metadata.name == 'hawkular-metrics' or
@@ -81,6 +86,12 @@ def test_basic_metrics(provider):
 def test_validate_metrics_collection_db(provider,
                                         enable_capacity_and_utilization,
                                         reduce_metrics_collection_threshold):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     assert provider.wait_for_collected_metrics(
         timeout=WAIT_FOR_METRICS_CAPTURE_THRESHOLD_IN_MINUTES)
 
@@ -90,6 +101,12 @@ def test_validate_metrics_collection_provider_gui(appliance, provider,
                                                   reduce_metrics_collection_threshold,
                                                   wait_for_metrics_rollup, soft_assert):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     view = navigate_to(provider, "Details")
     # Wait for the Utilization drop down to become enabled
     wait_for(lambda: view.toolbar.monitoring.item_enabled('Utilization'),
@@ -104,6 +121,12 @@ def test_validate_metrics_collection_provider_gui(appliance, provider,
 
 
 def test_flash_msg_not_contains_html_tags(provider):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     edit_view = navigate_to(provider, 'Edit')
     metrics_view = getattr(provider.endpoints_form(edit_view), "metrics")
     metrics_view.validate.click()
@@ -125,6 +148,11 @@ def test_flash_msg_not_contains_html_tags(provider):
 def test_typo_in_metrics_endpoint_type(provider):
     """
     This test based on bz1538948
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
 
     view = navigate_to(provider, "Details")

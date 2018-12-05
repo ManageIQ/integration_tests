@@ -270,6 +270,12 @@ def abstract_test_chargeback_cost(
 @pytest.mark.uncollectif(lambda rate_type: rate_type == 'variable')
 def test_chargeback_rate_fixed_1(
         rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     abstract_test_chargeback_cost(
         'Fixed1', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
 
@@ -277,18 +283,36 @@ def test_chargeback_rate_fixed_1(
 @pytest.mark.uncollectif(lambda rate_type: rate_type == 'variable')
 def test_chargeback_rate_fixed_2(
         rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     abstract_test_chargeback_cost(
         'Fixed2', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
 
 
 def test_chargeback_rate_cpu_cores(
         rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     abstract_test_chargeback_cost(
         'CpuCores', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
 
 
 def test_chargeback_rate_memory_used(
         rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     abstract_test_chargeback_cost(
         'Memory', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
 
@@ -298,5 +322,11 @@ def test_chargeback_rate_memory_used(
 @pytest.mark.uncollectif(lambda rate_type: rate_type == 'variable')
 def test_chargeback_rate_network_io(
         rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     abstract_test_chargeback_cost(
         'Network', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)

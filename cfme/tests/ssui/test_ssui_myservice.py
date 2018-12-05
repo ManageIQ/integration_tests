@@ -39,6 +39,10 @@ def test_myservice_crud(appliance, setup_provider, context, order_service):
 
     Metadata:
         test_flag: ssui, services
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: 1/4h
     """
     catalog_item = order_service
     with appliance.context.use(context):
@@ -56,6 +60,10 @@ def test_retire_service_ssui(appliance, setup_provider,
 
     Metadata:
         test_flag: ssui, services
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: None
     """
     catalog_item = order_service
     with appliance.context.use(context):
@@ -75,6 +83,10 @@ def test_service_start(appliance, setup_provider, context,
 
     Metadata:
         test_flag: ssui, services
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: None
     """
     catalog_item = order_service
     with appliance.context.use(context):
@@ -112,6 +124,12 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
 
     Metadata:
         test_flag: ssui
+
+    Polarion:
+        assignee: apagac
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/2h
     """
     if (provider.one_of(VMwareProvider) and provider.version >= 6.5 or
             'html5_console' in provider.data.get('excluded_test_flags', [])):

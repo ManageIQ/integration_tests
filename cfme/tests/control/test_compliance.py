@@ -134,7 +134,12 @@ def analysis_profile(appliance):
 def test_check_package_presence(request, compliance_vm, analysis_profile, policy_collection,
         policy_profile_collection, condition_collection):
     """This test checks compliance by presence of a certain "kernel" package which is expected
-    to be present on the full_template."""
+    to be present on the full_template.
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/4h
+    """
     condition = condition_collection.create(
         VMCondition,
         "Compliance testing condition {}".format(fauxfactory.gen_alphanumeric(8)),
@@ -164,6 +169,10 @@ def test_check_files(request, compliance_vm, analysis_profile, condition_collect
         policy_collection, policy_profile_collection):
     """This test checks presence and contents of a certain file. Due to caching, an existing file
     is checked.
+
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/4h
     """
     check_file_name = "/etc/hosts"
     check_file_contents = "127.0.0.1"
@@ -198,6 +207,11 @@ def test_check_files(request, compliance_vm, analysis_profile, condition_collect
 
 
 def test_compliance_with_unconditional_policy(host, assign_policy_for_testing):
+    """
+    Polarion:
+        assignee: dmisharo
+        initialEstimate: 1/6h
+    """
     assign_policy_for_testing.assign_actions_to_event(
         "Host Compliance Check",
         {"Mark as Non-Compliant": True}

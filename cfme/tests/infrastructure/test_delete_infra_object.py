@@ -20,6 +20,11 @@ def test_delete_cluster_appear_after_refresh(provider, appliance):
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: infra
+        initialEstimate: 1/10h
     """
     cluster_col = appliance.collections.clusters.filter({'provider': provider})
     test_cluster = cluster_col.all()[0]
@@ -33,6 +38,10 @@ def test_delete_host_appear_after_refresh(appliance, provider):
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: mkourim
+        initialEstimate: None
     """
     host_collection = appliance.collections.hosts
     host_name = provider.data['remove_test']['host']
@@ -48,6 +57,10 @@ def test_delete_vm_appear_after_refresh(provider):
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     vm = provider.data['remove_test']['vm']
     test_vm = provider.appliance.collections.infra_vms.instantiate(vm, provider)
@@ -62,6 +75,10 @@ def test_delete_template_appear_after_refresh(provider):
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     template = provider.data['remove_test']['template']
     test_template = provider.appliance.collections.infra_templates.instantiate(template, provider)
@@ -76,6 +93,10 @@ def test_delete_resource_pool_appear_after_refresh(provider, appliance):
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     resourcepool_name = provider.data['remove_test']['resource_pool']
     test_resourcepool = appliance.collections.resource_pools.instantiate(
@@ -92,6 +113,10 @@ def test_delete_datastore_appear_after_refresh(provider, appliance):
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     datastore_collection = appliance.collections.datastores
     data_store = provider.data['remove_test']['datastore']
@@ -122,6 +147,10 @@ def test_delete_cluster_from_table(provider, appliance):
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: None
     """
     cluster_col = appliance.collections.clusters.filter({"provider": provider})
     cluster1 = cluster_col.all()[0]

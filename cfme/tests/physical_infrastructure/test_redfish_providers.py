@@ -12,7 +12,12 @@ pytestmark = [
 
 
 def test_redfish_provider_crud(provider, has_no_physical_providers):
-    """Tests provider add with good credentials"""
+    """Tests provider add with good credentials
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     provider.create()
 
     provider.validate_stats(ui=True)

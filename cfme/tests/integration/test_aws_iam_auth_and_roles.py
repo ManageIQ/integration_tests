@@ -53,6 +53,12 @@ def test_group_roles(appliance, setup_aws_auth_provider, group_name, role_access
     AWS IAM groups
 
     NOTE: Only tests vertical navigation tree at the moment, not accordions within the page
+
+    Polarion:
+        assignee: apagac
+        caseimportance: medium
+        initialEstimate: 1/4h
+        tags: rbac
     """
     group_access = role_access[group_name]
 

@@ -38,7 +38,12 @@ def get_migrated_vm_obj(src_vm_obj, target_provider):
 )
 def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, conversion_tags,
                               form_data_vm_obj_single_datastore, soft_assert):
-    """Test policy to prevent source VM from starting if migration is complete"""
+    """Test policy to prevent source VM from starting if migration is complete
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
 

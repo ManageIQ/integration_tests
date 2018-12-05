@@ -19,5 +19,10 @@ def testing_vm_without_dvd(provider, small_template):
 @pytest.mark.meta(blockers=[1178961])
 @pytest.mark.provider([SCVMMProvider], scope="module")
 def test_no_dvd_ruins_refresh(provider, testing_vm_without_dvd):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     provider.refresh_provider_relationships()
     testing_vm_without_dvd.wait_to_appear()

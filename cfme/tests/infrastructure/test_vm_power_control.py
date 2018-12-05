@@ -155,6 +155,10 @@ class TestControlOnQuadicons(object):
 
         Metadata:
             test_flag: power_control, provision
+
+        Polarion:
+            assignee: bsquizza
+            initialEstimate: 1/10h
         """
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=720)
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=True)
@@ -172,6 +176,10 @@ class TestControlOnQuadicons(object):
 
         Metadata:
             test_flag: power_control, provision
+
+        Polarion:
+            assignee: ghubale
+            initialEstimate: 1/6h
         """
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=720)
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=False)
@@ -191,6 +199,10 @@ class TestControlOnQuadicons(object):
 
         Metadata:
             test_flag: power_control, provision
+
+        Polarion:
+            assignee: ghubale
+            initialEstimate: 1/4h
         """
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=720)
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=True)
@@ -207,6 +219,10 @@ class TestControlOnQuadicons(object):
 
         Metadata:
             test_flag: power_control, provision
+
+        Polarion:
+            assignee: ghubale
+            initialEstimate: 1/6h
         """
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=720)
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False)
@@ -229,6 +245,10 @@ class TestVmDetailsPowerControlPerProvider(object):
 
         Metadata:
             test_flag: power_control, provision
+
+        Polarion:
+            assignee: ghubale
+            initialEstimate: 1/6h
         """
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
@@ -256,6 +276,10 @@ class TestVmDetailsPowerControlPerProvider(object):
 
         Metadata:
             test_flag: power_control, provision
+
+        Polarion:
+            assignee: ghubale
+            initialEstimate: 1/6h
         """
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
@@ -276,6 +300,10 @@ class TestVmDetailsPowerControlPerProvider(object):
 
         Metadata:
             test_flag: power_control, provision
+
+        Polarion:
+            assignee: ghubale
+            initialEstimate: 1/6h
         """
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
@@ -310,6 +338,10 @@ class TestVmDetailsPowerControlPerProvider(object):
 
         Metadata:
             test_flag: power_control, provision
+
+        Polarion:
+            assignee: ghubale
+            initialEstimate: 1/6h
         """
         try:
             testing_vm.provider.refresh_provider_relationships()
@@ -352,6 +384,10 @@ def test_no_template_power_control(provider, soft_assert):
 
     Metadata:
         test_flag: power_control
+
+    Polarion:
+        assignee: bsquizza
+        initialEstimate: 1/10h
     """
     view = navigate_to(provider, 'ProviderTemplates')
     view.toolbar.view_selector.select('Grid View')
@@ -395,6 +431,10 @@ def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
         * Verify the Power toolbar button is not visible
     Metadata:
         test_flag: power_control
+
+    Polarion:
+        assignee: bsquizza
+        initialEstimate: 1/10h
     """
     view = navigate_to(testing_vm, 'AnyProviderDetails', use_resetter=False)
     soft_assert(not view.toolbar.power.is_displayed, "Power displayed in archived VM's details!")
@@ -410,6 +450,10 @@ def test_archived_vm_status(testing_vm, archived_vm):
 
     Metadata:
         test_flag: inventory
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/10h
     """
     vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
     assert (vm_state == 'archived')
@@ -421,6 +465,10 @@ def test_orphaned_vm_status(testing_vm, orphaned_vm):
 
     Metadata:
         test_flag: inventory
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/10h
     """
     vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
     assert (vm_state == 'orphaned')
@@ -432,6 +480,10 @@ def test_vm_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_r
 
     Metadata:
         test_flag: power_control
+
+    Polarion:
+        assignee: bsquizza
+        initialEstimate: None
     """
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
@@ -444,6 +496,10 @@ def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_
 
     Metadata:
         test_flag: power_control
+
+    Polarion:
+        assignee: bsquizza
+        initialEstimate: None
     """
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
@@ -458,6 +514,10 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
 
     Metadata:
         test_flag: power_control
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/6h
     """
     wait_for_vm_tools(testing_vm_tools)
     view = navigate_to(testing_vm_tools, "Details")
@@ -484,6 +544,10 @@ def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_
 
     Metadata:
         test_flag: power_control
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/6h
     """
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)

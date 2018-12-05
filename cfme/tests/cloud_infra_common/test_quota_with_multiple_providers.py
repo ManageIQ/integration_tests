@@ -28,6 +28,10 @@ def test_show_quota_used_on_tenant_screen(request, appliance, v2v_providers):
         3. Navigate to 'Details' page of 'My Company' tenant.
         4. Go to tenant quota table.
         5. Check whether number of VMs are equal to number of VMs in 'in use' column.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     v2v_providers.vmware_provider.refresh_provider_relationships
     v2v_providers.rhv_provider.refresh_provider_relationships

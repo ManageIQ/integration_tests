@@ -56,11 +56,23 @@ def random_image_instance(appliance):
 
 @pytest.mark.polarion('10030')
 def test_manage_policies_navigation(random_image_instance):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     random_image_instance.assign_policy_profiles('OpenSCAP profile')
 
 
 @pytest.mark.polarion('10031')
 def test_check_compliance(random_image_instance):
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     random_image_instance.assign_policy_profiles('OpenSCAP profile')
     random_image_instance.check_compliance()
 
@@ -79,6 +91,12 @@ def test_containers_smartstate_analysis(provider, test_item, soft_assert,
                                         delete_all_container_tasks,
                                         random_image_instance):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     if test_item.is_openscap:
         random_image_instance.assign_policy_profiles('OpenSCAP profile')
     else:
@@ -118,6 +136,11 @@ def test_containers_smartstate_analysis_api(provider, test_item, soft_assert,
        entity class.
 
        RFE: BZ 1486362
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
 
     if test_item.is_openscap:

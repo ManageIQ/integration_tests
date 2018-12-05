@@ -151,6 +151,11 @@ def test_cve_location_update_value(provider, soft_assert, delete_all_container_t
     """This test checks RFE BZ 1459189, Allow to specify per Provider the location of
      OpenSCAP CVEs.
      In order to verify the above setup, run a smart state analysis on container image.
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     # Perform SSA Scan then check compliance with last know configuration
     openscap_assigned_rand_image.perform_smartstate_analysis(wait_for_finish=True, timeout='20M')
@@ -166,6 +171,11 @@ def test_image_inspector_registry_update_value(provider, soft_assert, delete_all
     """This test checks RFE BZ 1459189, Allow to specify per Provider
      The image inspector registry url.
      In order to verify the above setup, run a smart state analysis on container image.
+
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     # Perform SSA Scan then check compliance with last know configuration
     openscap_assigned_rand_image.perform_smartstate_analysis(wait_for_finish=True, timeout='20M')

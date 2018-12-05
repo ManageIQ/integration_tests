@@ -47,6 +47,11 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
         * Check graph displayed or not
         * Check legends hide and display properly or not
         * Check data for legends collected or not
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        initialEstimate: None
     """
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate('cu-24x7', provider)
@@ -105,6 +110,11 @@ def test_graph_screen(provider, interval, graph_type, enable_candu):
         * Check graph displayed or not
         * Zoom graph
         * Compare data of Table and Graph
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        initialEstimate: None
     """
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate('cu-24x7', provider)

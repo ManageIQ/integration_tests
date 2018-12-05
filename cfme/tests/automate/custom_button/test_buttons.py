@@ -93,6 +93,11 @@ def test_button_group_crud(request, appliance, obj_type):
         * Change the hover text, ensure the text is changed on details page
         * Delete the button group
         * Assert that the button group no longer exists.
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: critical
+        initialEstimate: 1/6h
     """
     # 1) Create it
     collection = appliance.collections.button_groups
@@ -152,6 +157,11 @@ def test_button_crud(appliance, dialog, request, buttongroup, obj_type):
 
     Bugzillas:
         * 1143019, 1205235
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: critical
+        initialEstimate: 1/6h
     """
     button_gp = buttongroup(obj_type)
     button = button_gp.buttons.create(
@@ -183,6 +193,11 @@ def test_button_avp_displayed(appliance, dialog, request):
     Steps:
         * Open a dialog to create a button.
         * Locate the section with attribute/value pairs.
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: automate
+        initialEstimate: 1/12h
     """
     # This is optional, our nav tree does not have unassigned button
     buttongroup = appliance.collections.button_groups.create(
@@ -210,6 +225,10 @@ def test_button_required(appliance, field):
     Steps:
         * Try to add custom button without icon/request
         * Assert flash message.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     unassigned_gp = appliance.collections.button_groups.instantiate(
         text="[Unassigned Buttons]", hover="Unassigned Buttons", type="Provider"
@@ -252,6 +271,10 @@ def test_open_url_availability(appliance):
     Steps:
         * Create a Button with other than Single display options
         * Assert flash message.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     unassigned_gp = appliance.collections.button_groups.instantiate(

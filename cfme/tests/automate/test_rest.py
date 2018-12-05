@@ -7,6 +7,12 @@ pytestmark = [test_requirements.rest]
 
 
 def test_rest_search_automate(appliance):
+    """
+    Polarion:
+        assignee: mkourim
+        caseimportance: low
+        initialEstimate: 1/3h
+    """
     rest_api = appliance.rest_api
 
     def _do_query(**kwargs):

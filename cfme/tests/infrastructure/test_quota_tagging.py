@@ -62,6 +62,11 @@ def prov_data(provider, vm_name, template_name):
 
 @pytest.fixture(scope='module')
 def test_domain(appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     domain = appliance.collections.domains.create('test_{}'.format(fauxfactory.gen_alphanumeric()),
                                                   'description_{}'.format(
                                                       fauxfactory.gen_alphanumeric()),
@@ -168,6 +173,12 @@ def set_entity_quota_tag(request, entities, appliance):
 def test_quota_tagging_infra_via_lifecycle(request, appliance, provider, setup_provider,
                                            set_entity_quota_tag, custom_prov_data,
                                            vm_name, template_name, prov_data):
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: infra
+        initialEstimate: 1/6h
+    """
     recursive_update(prov_data, custom_prov_data)
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
                        provisioning_data=prov_data, wait=False, request=None)
@@ -199,7 +210,13 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider, setup_p
 def test_quota_tagging_infra_via_services(request, appliance, provider, setup_provider, admin_email,
                                           context, set_entity_quota_tag, custom_prov_data,
                                           prov_data, catalog_item):
-    """This test case verifies the quota tagging is working correctly for the infra providers."""
+    """This test case verifies the quota tagging is working correctly for the infra providers.
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: infra
+        initialEstimate: 1/6h
+    """
 
     prov_data.update(custom_prov_data)
     with appliance.context.use(context):
@@ -270,6 +287,10 @@ def test_quota_vm_reconfigure(
         1. Assign Quota to group and user individually
         2. Reconfigure the VM above the assigned Quota
         3. Check whether VM  reconfiguration 'Denied' with Exceeded Quota or not
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     original_config = small_vm.configuration.copy()
     new_config = small_vm.configuration.copy()
@@ -319,6 +340,10 @@ def test_quota_infra(request, appliance, provider, setup_provider, admin_email, 
         3. Change 'quota_source_type' to 'user' or 'group'
         4. Test quota by provisioning VMs over quota limit via UI or SSUI for user and group
         5. Check whether quota is exceeded or not
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     prov_data.update(custom_prov_data)
     with appliance.context.use(context):
@@ -365,6 +390,10 @@ def test_quota_catalog_bundle_infra(request, appliance, provider, setup_provider
            SSUI for user and group
         5. Add more than one catalog to catalog bundle and order catalog bundle
         6. Check whether quota is exceeded or not
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     prov_data.update(custom_prov_data)
     with appliance.context.use(context):

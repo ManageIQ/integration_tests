@@ -197,6 +197,10 @@ def test_quadicon_terminate_cancel(provider, testing_instance, ensure_vm_running
 
     Metadata:
         test_flag: power_control, provision
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
     """
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE,
                                              cancel=True,
@@ -209,6 +213,10 @@ def test_quadicon_terminate(appliance, provider, testing_instance, ensure_vm_run
 
     Metadata:
         test_flag: power_control, provision
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE, from_details=False)
@@ -230,6 +238,10 @@ def test_stop(appliance, provider, testing_instance, ensure_vm_running, soft_ass
 
     Metadata:
         test_flag: power_control, provision
+
+    Polarion:
+        assignee: bsquizza
+        initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.STOP)
@@ -246,6 +258,10 @@ def test_start(appliance, provider, testing_instance, ensure_vm_stopped, soft_as
 
     Metadata:
         test_flag: power_control, provision
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_OFF,
                                                     timeout=900)
@@ -264,6 +280,10 @@ def test_soft_reboot(appliance, provider, testing_instance, ensure_vm_running, s
 
     Metadata:
         test_flag: power_control, provision
+
+    Polarion:
+        assignee: bsquizza
+        initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     view = navigate_to(testing_instance, 'Details')
@@ -293,6 +313,10 @@ def test_power_on_or_off_multiple(provider, testing_instance, testing_instance2,
 
     Metadata:
         test_flag: power_control, provision
+
+    Polarion:
+        assignee: bsquizza
+        initialEstimate: 1/8h
     """
     # The instances *should* be on after provisioning... but we'll make sure here...
     testing_instance.mgmt.ensure_state(VmState.RUNNING)
@@ -329,6 +353,10 @@ def test_hard_reboot(appliance, provider, testing_instance, ensure_vm_running, s
 
     Metadata:
         test_flag: power_control, provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     view = navigate_to(testing_instance, 'Details')
@@ -349,6 +377,10 @@ def test_hard_reboot_unsupported(appliance, testing_instance):
 
     Metadata:
         test_flag: power_control, provision
+
+    Polarion:
+        assignee: bsquizza
+        initialEstimate: 1/8h
     """
     testing_instance.power_control_from_cfme(option=testing_instance.HARD_REBOOT,
                                              from_details=False)
@@ -367,6 +399,10 @@ def test_suspend(appliance, provider, testing_instance, ensure_vm_running, soft_
 
     Metadata:
         test_flag: power_control, provision
+
+    Polarion:
+        assignee: bsquizza
+        initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.SUSPEND)
@@ -385,6 +421,10 @@ def test_unpause(appliance, provider, testing_instance, ensure_vm_paused, soft_a
 
     Metadata:
         test_flag: power_control, provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_PAUSED)
     testing_instance.power_control_from_cfme(option=testing_instance.START)
@@ -401,6 +441,10 @@ def test_resume(appliance, provider, testing_instance, ensure_vm_suspended, soft
 
     Metadata:
         test_flag: power_control, provision
+
+    Polarion:
+        assignee: bsquizza
+        initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_SUSPENDED)
     testing_instance.power_control_from_cfme(option=testing_instance.START)
@@ -416,6 +460,10 @@ def test_terminate(provider, testing_instance, ensure_vm_running, soft_assert, a
 
     Metadata:
         test_flag: power_control, provision
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE)
@@ -432,6 +480,11 @@ def test_instance_power_options_from_on(provider, testing_instance, ensure_vm_ru
 
     Metadata:
         test_flag: power_control
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: cloud
+        initialEstimate: 1/10h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     check_power_options(soft_assert, testing_instance, 'on')
@@ -443,6 +496,11 @@ def test_instance_power_options_from_off(provider, testing_instance,
 
     Metadata:
         test_flag: power_control
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: cloud
+        initialEstimate: 1/10h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_OFF,
                                                     timeout=1200)
@@ -475,6 +533,10 @@ class TestInstanceRESTAPI(object):
 
         Metadata:
             test_flag: power_control, provision, rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.get_vm_via_rest()
@@ -492,6 +554,10 @@ class TestInstanceRESTAPI(object):
 
         Metadata:
             test_flag: power_control, provision, rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(
             desired_state=testing_instance.STATE_OFF, timeout=1200)
@@ -510,6 +576,10 @@ class TestInstanceRESTAPI(object):
 
         Metadata:
             test_flag: power_control, provision, rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.get_vm_via_rest()
@@ -538,6 +608,10 @@ class TestInstanceRESTAPI(object):
 
         Metadata:
             test_flag: power_control, provision, rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.get_vm_via_rest()
@@ -558,6 +632,10 @@ class TestInstanceRESTAPI(object):
 
         Metadata:
             test_flag: power_control, provision, rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.get_vm_via_rest()
@@ -584,6 +662,10 @@ class TestInstanceRESTAPI(object):
 
         Metadata:
             test_flag: power_control, provision, rest
+
+        Polarion:
+            assignee: None
+            initialEstimate: None
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.get_vm_via_rest()
@@ -609,6 +691,10 @@ class TestInstanceRESTAPI(object):
 
         Metadata:
             test_flag: power_control, provision, rest
+
+        Polarion:
+            assignee: pvala
+            initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.get_vm_via_rest()

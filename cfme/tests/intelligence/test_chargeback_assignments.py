@@ -15,6 +15,11 @@ pytestmark = [
 
 @pytest.mark.meta(blockers=[1273654])
 def test_assign_compute_enterprise(appliance, virtualcenter_provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(appliance.server, 'Chargeback')
 
     enterprise = cb.ComputeAssign(
@@ -32,6 +37,11 @@ def test_assign_compute_enterprise(appliance, virtualcenter_provider):
 
 
 def test_assign_compute_provider(appliance, virtualcenter_provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(appliance.server, 'Chargeback')
 
     compute_provider = cb.ComputeAssign(
@@ -48,6 +58,13 @@ def test_assign_compute_provider(appliance, virtualcenter_provider):
 
 
 def test_assign_compute_cluster(appliance, virtualcenter_provider):
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     view = navigate_to(appliance.server, 'Chargeback')
 
     cluster_name = "{}/{}".format(virtualcenter_provider.name,
@@ -68,6 +85,13 @@ def test_assign_compute_cluster(appliance, virtualcenter_provider):
 
 
 def test_assign_compute_taggedvm(appliance, virtualcenter_provider):
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     view = navigate_to(appliance.server, 'Chargeback')
 
     tagged_vm = cb.ComputeAssign(
@@ -86,6 +110,13 @@ def test_assign_compute_taggedvm(appliance, virtualcenter_provider):
 
 @pytest.mark.meta(blockers=[1273654])
 def test_assign_storage_enterprise(appliance, virtualcenter_provider):
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     view = navigate_to(appliance.server, 'Chargeback')
 
     enterprise = cb.StorageAssign(
@@ -103,6 +134,11 @@ def test_assign_storage_enterprise(appliance, virtualcenter_provider):
 
 
 def test_assign_storage_datastores(appliance, virtualcenter_provider):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(appliance.server, 'Chargeback')
 
     datastore = random.choice(virtualcenter_provider.data["datastores"])["name"]
@@ -121,6 +157,13 @@ def test_assign_storage_datastores(appliance, virtualcenter_provider):
 
 
 def test_assign_storage_tagged_datastores(appliance, virtualcenter_provider):
+    """
+    Polarion:
+        assignee: nachandr
+        casecomponent: candu
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     view = navigate_to(appliance.server, 'Chargeback')
 
     tagged_datastore = cb.StorageAssign(

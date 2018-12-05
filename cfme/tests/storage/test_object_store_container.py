@@ -22,6 +22,11 @@ def containers(appliance, provider):
 
 @pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 def test_add_remove_tag(containers):
+    """
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
+    """
     container = random.choice(containers)
 
     # add tag with category Department and tag communication

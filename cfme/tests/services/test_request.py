@@ -17,7 +17,12 @@ pytestmark = [
 
 
 def test_copy_request_bz1194479(appliance, provider, catalog_item, request):
-    """Automate BZ 1194479"""
+    """Automate BZ 1194479
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     vm_name = catalog_item.prov_data["catalog"]["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(

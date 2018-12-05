@@ -55,6 +55,10 @@ def test_dropdownlist_required_dialog_element(appliance, catalog_item):
     """Tests service dropdownlist dialog required element.
 
     Testing BZ 1512398.
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     view = navigate_to(service_catalogs, 'Order')

@@ -126,6 +126,10 @@ def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, r
 
     Metadata:
         test_flag: pxe, provision
+
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/4h
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(

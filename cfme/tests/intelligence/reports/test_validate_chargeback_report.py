@@ -496,6 +496,11 @@ def new_compute_rate():
 def test_validate_default_rate_cpu_usage_cost(chargeback_costs_default, chargeback_report_default):
     """Test to validate CPU usage cost.
        Calculation is based on default Chargeback rate.
+
+    Polarion:
+        assignee: tpapaioa
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
     for groups in chargeback_report_default:
         if groups["CPU Used Cost"]:
@@ -515,6 +520,11 @@ def test_validate_default_rate_memory_usage_cost(chargeback_costs_default,
     """Test to validate memory usage cost.
        Calculation is based on default Chargeback rate.
 
+
+    Polarion:
+        assignee: tpapaioa
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
     for groups in chargeback_report_default:
         if groups["Memory Used Cost"]:
@@ -533,6 +543,11 @@ def test_validate_default_rate_network_usage_cost(chargeback_costs_default,
     """Test to validate network usage cost.
        Calculation is based on default Chargeback rate.
 
+
+    Polarion:
+        assignee: tpapaioa
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
     for groups in chargeback_report_default:
         if groups["Network I/O Used Cost"]:
@@ -550,6 +565,10 @@ def test_validate_default_rate_disk_usage_cost(chargeback_costs_default, chargeb
     """Test to validate disk usage cost.
        Calculation is based on default Chargeback rate.
 
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: 1/12h
     """
     for groups in chargeback_report_default:
         if groups["Disk I/O Used Cost"]:
@@ -567,6 +586,10 @@ def test_validate_default_rate_storage_usage_cost(chargeback_costs_default,
         chargeback_report_default):
     """Test to validate stoarge usage cost.
        Calculation is based on default Chargeback rate.
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: 1/12h
     """
     for groups in chargeback_report_default:
         if groups["Storage Used Cost"]:
@@ -585,6 +608,11 @@ def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback
     """Test to validate CPU usage cost.
        Calculation is based on custom Chargeback rate.
 
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
     for groups in chargeback_report_custom:
         if groups["CPU Used Cost"]:
@@ -603,6 +631,10 @@ def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeb
     """Test to validate memory usage cost.
        Calculation is based on custom Chargeback rate.
 
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: 1/12h
     """
     for groups in chargeback_report_custom:
         if groups["Memory Used Cost"]:
@@ -620,6 +652,10 @@ def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, charge
     """Test to validate network usage cost.
        Calculation is based on custom Chargeback rate.
 
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: 1/12h
     """
     for groups in chargeback_report_custom:
         if groups["Network I/O Used Cost"]:
@@ -637,6 +673,10 @@ def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargebac
     """Test to validate disk usage cost.
        Calculation is based on custom Chargeback rate.
 
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: None
     """
     for groups in chargeback_report_custom:
         if groups["Disk I/O Used Cost"]:
@@ -653,6 +693,11 @@ def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargebac
 def test_validate_custom_rate_storage_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate stoarge usage cost.
        Calculation is based on custom Chargeback rate.
+
+    Polarion:
+        assignee: tpapaioa
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
     for groups in chargeback_report_custom:
         if groups["Storage Used Cost"]:

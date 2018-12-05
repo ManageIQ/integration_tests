@@ -112,7 +112,12 @@ def router_with_gw(provider, appliance, ext_subnet):
 
 @pytest.mark.regression
 def test_create_network(network, provider):
-    """Creates private cloud network and verifies it's relationships"""
+    """Creates private cloud network and verifies it's relationships
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert network.exists
     assert network.parent_provider.name == provider.name
     assert network.cloud_tenant == provider.data.get('provisioning').get('cloud_tenant')
@@ -120,7 +125,12 @@ def test_create_network(network, provider):
 
 @pytest.mark.regression
 def test_edit_network(network):
-    """Edits private cloud network's name"""
+    """Edits private cloud network's name
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     network.edit(name=fauxfactory.gen_alpha())
     wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
@@ -131,7 +141,12 @@ def test_edit_network(network):
 
 @pytest.mark.regression
 def test_delete_network(network):
-    """Deletes private cloud network"""
+    """Deletes private cloud network
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     network.delete()
     wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
@@ -142,7 +157,12 @@ def test_delete_network(network):
 
 @pytest.mark.regression
 def test_create_subnet(subnet, provider):
-    """Creates private subnet and verifies it's relationships"""
+    """Creates private subnet and verifies it's relationships
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert subnet.exists
     assert subnet.parent_provider.name == provider.name
     assert subnet.cloud_tenant == provider.data.get('provisioning').get('cloud_tenant')
@@ -153,7 +173,12 @@ def test_create_subnet(subnet, provider):
 
 @pytest.mark.regression
 def test_edit_subnet(subnet):
-    """Edits private subnet's name"""
+    """Edits private subnet's name
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     subnet.edit(new_name=fauxfactory.gen_alpha())
     wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
@@ -163,7 +188,12 @@ def test_edit_subnet(subnet):
 
 @pytest.mark.regression
 def test_delete_subnet(subnet):
-    """Deletes private subnet"""
+    """Deletes private subnet
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     subnet.delete()
     wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=800,
              delay=30)
@@ -174,14 +204,24 @@ def test_delete_subnet(subnet):
 
 @pytest.mark.regression
 def test_create_router(router, provider):
-    """Create router without gateway"""
+    """Create router without gateway
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert router.exists
     assert router.cloud_tenant == provider.data.get('provisioning').get('cloud_tenant')
 
 
 @pytest.mark.regression
 def test_create_router_with_gateway(router_with_gw, provider):
-    """Creates router with gateway (external network)"""
+    """Creates router with gateway (external network)
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert router_with_gw.exists
     assert router_with_gw.cloud_tenant == provider.data.get('provisioning').get('cloud_tenant')
     assert router_with_gw.cloud_network == router_with_gw.ext_network
@@ -189,7 +229,12 @@ def test_create_router_with_gateway(router_with_gw, provider):
 
 @pytest.mark.regression
 def test_edit_router(router):
-    """Edits router's name"""
+    """Edits router's name
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     router.edit(name=fauxfactory.gen_alpha())
     wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
@@ -200,7 +245,12 @@ def test_edit_router(router):
 
 @pytest.mark.regression
 def test_delete_router(router, appliance):
-    """Deletes router"""
+    """Deletes router
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     router.delete()
     wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=800,
              delay=30)
@@ -212,7 +262,12 @@ def test_delete_router(router, appliance):
 
 @pytest.mark.regression
 def test_clear_router_gateway(router_with_gw):
-    """Deletes a gateway from the router"""
+    """Deletes a gateway from the router
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     router_with_gw.edit(change_external_gw=False)
     wait_for(router_with_gw.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10),
              timeout=600, delay=10)
@@ -225,7 +280,12 @@ def test_clear_router_gateway(router_with_gw):
 
 @pytest.mark.regression
 def test_add_gateway_to_router(router, ext_subnet):
-    """Adds gateway to the router"""
+    """Adds gateway to the router
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     router.edit(change_external_gw=True, ext_network=ext_subnet.network,
                 ext_network_subnet=ext_subnet.name)
     wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
@@ -237,7 +297,12 @@ def test_add_gateway_to_router(router, ext_subnet):
 
 @pytest.mark.regression
 def test_add_interface_to_router(router, subnet):
-    """Adds interface (subnet) to router"""
+    """Adds interface (subnet) to router
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     view = navigate_to(router, 'Details')
     subnets_count_before_adding = int(view.entities.relationships.get_text_of('Cloud Subnets'))
     router.add_interface(subnet.name)
@@ -254,6 +319,11 @@ def test_add_interface_to_router(router, subnet):
 
 @pytest.mark.regression
 def test_list_networks(provider, appliance):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     networks = [n.label for n in provider.mgmt.api.networks.list()]
     displayed_networks = [n.name for n in appliance.collections.cloud_networks.all()]
     for n in networks:

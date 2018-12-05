@@ -15,6 +15,12 @@ TEST_DEST = ('All', 'Details')
 @pytest.mark.provider([ContainersProvider])
 def test_nodes_navigate(soft_assert, appliance):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     for dest in TEST_DEST:
 
         if dest == 'All':

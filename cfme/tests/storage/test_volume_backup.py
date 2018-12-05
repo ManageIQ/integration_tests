@@ -47,6 +47,11 @@ def backup(appliance, provider):
 
 @pytest.mark.tier(3)
 def test_storage_volume_backup_create(backup):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     assert backup.exists
     assert backup.size == STORAGE_SIZE
 
@@ -54,6 +59,11 @@ def test_storage_volume_backup_create(backup):
 @pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 @pytest.mark.tier(3)
 def test_storage_volume_backup_edit_tag_from_detail(backup):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     # add tag with category Department and tag communication
     added_tag = backup.add_tag()
     tag_available = backup.get_tags()
@@ -69,7 +79,12 @@ def test_storage_volume_backup_edit_tag_from_detail(backup):
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 def test_storage_volume_backup_delete(backup):
-    """ Volume backup deletion method not support by 5.8 """
+    """ Volume backup deletion method not support by 5.8
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
 
     backup.parent.delete(backup)
     assert not backup.exists

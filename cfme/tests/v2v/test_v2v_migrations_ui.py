@@ -34,6 +34,14 @@ pytestmark = [
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
 def test_infra_mapping_ui_assertions(appliance, v2v_providers, form_data_single_datastore,
                                     host_creds, conversion_tags, soft_assert):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     # TODO: This test case does not support update
     # as update is not a supported feature for mapping.
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
@@ -78,7 +86,15 @@ def test_infra_mapping_ui_assertions(appliance, v2v_providers, form_data_single_
 
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
 def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_assert):
-    """Perform UI Validations on Infra_Mappings Wizard."""
+    """Perform UI Validations on Infra_Mappings Wizard.
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
 
     view = navigate_to(infrastructure_mapping_collection, 'Add')
@@ -161,6 +177,14 @@ def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_
 
 
 def test_v2v_ui_no_providers(appliance, v2v_providers, soft_assert):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     view = navigate_to(infrastructure_mapping_collection, 'All')
     soft_assert(view.create_infrastructure_mapping.is_displayed)
@@ -182,6 +206,14 @@ def test_v2v_ui_no_providers(appliance, v2v_providers, soft_assert):
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
 def test_v2v_mapping_with_special_chars(appliance, v2v_providers, form_data_single_datastore,
                                         soft_assert):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     # Test mapping can be created with non-alphanumeric name e.g '!@#$%^&*()_+)=-,./,''[][]]':
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     form_data_single_datastore['general']['name'] = fauxfactory.gen_special(length=10)
@@ -201,6 +233,14 @@ def test_v2v_mapping_with_special_chars(appliance, v2v_providers, form_data_sing
 
 @pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
 def test_v2v_ui_set2(request, appliance, v2v_providers, form_data_single_datastore, soft_assert):
+    """
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
     # Test migration plan name 24 chars and description 128 chars max length
     # Test earlier infra mapping can be viewed in migration plan wizard
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
@@ -278,6 +318,11 @@ def test_v2v_ui_set2(request, appliance, v2v_providers, form_data_single_datasto
     [small_template, small_template]]], indirect=True)
 def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, conversion_tags,
         form_data_multiple_vm_obj_single_datastore, soft_assert):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     migration_plan_collection = appliance.collections.v2v_plans
 
@@ -347,7 +392,16 @@ def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, con
 
 
 def test_migration_rbac(appliance, new_credential, v2v_providers):
-    """Test migration with role-based access control"""
+    """Test migration with role-based access control
+
+    Polarion:
+        assignee: ytale
+        casecomponent: V2V
+        customerscenario: true
+        initialEstimate: 1/8h
+        subcomponent: RHV
+        upstream: yes
+    """
     role = new_role(appliance=appliance,
                     product_features=[(['Everything'], True)])
     group = new_group(appliance=appliance, role=role.name)

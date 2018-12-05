@@ -96,6 +96,10 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
 
     Metadata:
         test_flag: host_provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     # Add host before provisioning

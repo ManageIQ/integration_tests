@@ -52,6 +52,10 @@ def test_storage_volume_create_cancelled_validation(appliance, provider):
         * Navigate to storage add volume page
         * Click Cancel button
         * Assert flash message
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     volume_collection = appliance.collections.volumes
     manager_name = '{} Cinder Manager'.format(provider.name)
@@ -76,6 +80,10 @@ def test_storage_volume_crud(appliance, provider):
     Steps:
         * Crate new volume
         * Delete volume
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     # create volume
     volume_collection = appliance.collections.volumes
@@ -111,6 +119,10 @@ def test_storage_volume_edit_tag(volume):
     Steps:
         * Add tag and check
         * Remove tag and check
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     # add tag with category Department and tag communication
@@ -127,7 +139,12 @@ def test_storage_volume_edit_tag(volume):
 
 @pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 def test_multiple_cloud_volumes_tag_edit(appliance, soft_assert):
-    """Test tag can be added to multiple volumes at once"""
+    """Test tag can be added to multiple volumes at once
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: 1/12h
+    """
     all_volumes = appliance.collections.volumes.all()
     volumes = all_volumes[:3] if len(all_volumes) > 4 else all_volumes
     assigned_tag = appliance.collections.volumes.add_tag(volumes)

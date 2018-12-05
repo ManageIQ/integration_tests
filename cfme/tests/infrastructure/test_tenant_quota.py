@@ -139,6 +139,11 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
 
     Metadata:
         test_flag: quota
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: infra
+        initialEstimate: 1/8h
     """
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
@@ -180,6 +185,11 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, provider, se
 
     Metadata:
         test_flag: quota
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: infra
+        initialEstimate: 1/8h
     """
     with appliance.context.use(context):
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
@@ -220,6 +230,11 @@ def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_ro
 
     Metadata:
         test_flag: quota
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: infra
+        initialEstimate: 1/6h
     """
     original_config = small_vm.configuration.copy()
     new_config = small_vm.configuration.copy()
@@ -241,6 +256,12 @@ def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_ro
 )
 def test_setting_child_quota_more_than_parent(appliance, tenants_setup, parent_quota, child_quota,
                                               flash_text):
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: prov
+        initialEstimate: 1/12h
+    """
     test_parent, test_child = tenants_setup
     view = navigate_to(test_parent, 'ManageQuotas')
     view.form.fill({'{}_cb'.format(parent_quota[0]): True,
@@ -286,6 +307,11 @@ def test_vm_migration_after_assigning_tenant_quota(appliance, setup_provider, sm
     3. Migrate VM
     4. Check whether migration is successfully done
 
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: infra
+        initialEstimate: 1/6h
     """
 
     migrate_to = check_hosts(small_vm, provider)

@@ -41,6 +41,13 @@ def klass(request, namespace):
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_method_crud(klass):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: critical
+        initialEstimate: 1/16h
+    """
     method = klass.methods.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
@@ -63,6 +70,12 @@ def test_method_crud(klass):
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 def test_automate_method_inputs_crud(klass):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/8h
+    """
     method = klass.methods.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
@@ -95,6 +108,13 @@ def test_automate_method_inputs_crud(klass):
 
 @pytest.mark.tier(2)
 def test_duplicate_method_disallowed(request, klass):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseposneg: negative
+        initialEstimate: 1/10h
+    """
     name = fauxfactory.gen_alpha()
     klass.methods.create(
         name=name,

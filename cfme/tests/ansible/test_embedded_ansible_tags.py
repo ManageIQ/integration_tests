@@ -98,36 +98,66 @@ def check_tag_place(soft_assert):
 
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_ansible_repository(repository, tag_place, check_tag_place):
-    """ Test for cloud items tagging action from list and details pages """
+    """ Test for cloud items tagging action from list and details pages
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
+    """
     check_tag_place(repository, tag_place)
 
 
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_ansible_credential(credential, tag_place, check_tag_place):
-    """ Test for cloud items tagging action from list and details pages """
+    """ Test for cloud items tagging action from list and details pages
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
+    """
     check_tag_place(credential, tag_place)
 
 
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_ansible_playbook(playbook, tag_place, check_tag_place):
-    """ Test for cloud items tagging action from list and details pages """
+    """ Test for cloud items tagging action from list and details pages
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
+    """
     check_tag_place(playbook, tag_place)
 
 
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_tagvis_ansible_repository(repository, check_item_visibility, visibility):
-    """ Test for cloud items tagging action from list and details pages """
+    """ Test for cloud items tagging action from list and details pages
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
+    """
     check_item_visibility(repository, visibility)
 
 
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_tagvis_ansible_credential(credential, check_item_visibility, visibility):
-    """ Test for cloud items tagging action from list and details pages """
+    """ Test for cloud items tagging action from list and details pages
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
+    """
     check_item_visibility(credential, visibility)
 
 
 @pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_tagvis_playbook(playbook, check_item_visibility, visibility):
-    """ Test for cloud items tagging action from list and details pages """
+    """ Test for cloud items tagging action from list and details pages
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: None
+    """
     check_item_visibility(playbook, visibility)

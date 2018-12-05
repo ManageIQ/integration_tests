@@ -96,6 +96,13 @@ def _navigation(params, appliance):
 
 
 def test_advanced_search_button_displayed(params, appliance):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/30h
+    """
     view = _navigation(params, appliance)
     if not view.search.is_advanced_search_possible:
         pytest.fail(
@@ -105,6 +112,13 @@ def test_advanced_search_button_displayed(params, appliance):
 
 
 def test_can_open_advanced_search(params, appliance):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/30h
+    """
     view = _navigation(params, appliance)
     view.search.open_advanced_search()
     if not view.search.is_advanced_search_opened:

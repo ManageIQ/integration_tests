@@ -53,6 +53,10 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: None
     """
     outcome = query_resource_attributes(provider_rest)
     for failure in outcome.failed:
@@ -82,6 +86,10 @@ def test_provider_options(appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     options = appliance.rest_api.options(appliance.rest_api.collections.providers._href)
     assert 'provider_settings' in options['data']
@@ -93,6 +101,10 @@ def test_create_provider(provider_rest):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     assert "ManageIQ::Providers::" in provider_rest.type
 
@@ -103,6 +115,10 @@ def test_provider_refresh(provider_rest, appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     # initiate refresh
     def _refresh_success():
@@ -134,6 +150,10 @@ def test_provider_edit(request, provider_rest, appliance):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     new_name = fauxfactory.gen_alphanumeric()
     old_name = provider_rest.name
@@ -153,6 +173,10 @@ def test_provider_delete_from_detail(provider_rest, method):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     delete_resources_from_detail([provider_rest], method=method, num_sec=50)
 
@@ -165,5 +189,9 @@ def test_provider_delete_from_collection(provider_rest):
 
     Metadata:
         test_flag: rest
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     delete_resources_from_collection([provider_rest], num_sec=50)

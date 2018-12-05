@@ -30,6 +30,12 @@ TEST_ITEMS = [
                          ids=[ti.pretty_id() for ti in TEST_ITEMS])
 def test_tables_sort(test_item, soft_assert, appliance):
 
+    """
+    Polarion:
+        assignee: juwatts
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
     view = navigate_to((test_item.obj if test_item.obj is ContainersProvider
         else getattr(appliance.collections, test_item.collection_name)), 'All')
     view.toolbar.view_selector.select('List View')

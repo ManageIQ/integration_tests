@@ -8,13 +8,23 @@ pytestmark = [pytest.mark.tier(3), pytest.mark.provider([LenovoProvider], scope=
 
 
 def test_physical_switches_view_displayed(appliance):
-    """Navigate to the physical switches page and verify that switches are displayed"""
+    """Navigate to the physical switches page and verify that switches are displayed
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_switches_view = navigate_to(appliance.collections.physical_switches, 'All')
     assert physical_switches_view.is_displayed
 
 
 def test_physical_switches_view_dropdowns(appliance):
-    """Navigate to the physical switches page and verify that the dropdown menus are present"""
+    """Navigate to the physical switches page and verify that the dropdown menus are present
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_switches_view = navigate_to(appliance.collections.physical_switches, 'All')
 
     toolbar = physical_switches_view.toolbar

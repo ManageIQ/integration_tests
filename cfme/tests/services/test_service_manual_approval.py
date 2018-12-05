@@ -65,6 +65,10 @@ def test_service_manual_approval(appliance, provider, modify_instance,
     """Tests order catalog item
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: 1/4h
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(

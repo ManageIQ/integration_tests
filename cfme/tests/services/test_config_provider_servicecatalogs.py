@@ -69,6 +69,10 @@ def test_order_tower_catalog_item(appliance, catalog_item, request):
     """Tests order catalog item
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
@@ -88,6 +92,12 @@ def test_retire_ansible_service(appliance, catalog_item, request):
     """Tests order catalog item
     Metadata:
         test_flag: provision
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: services
+        caseimportance: low
+        initialEstimate: 1/4h
     """
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()

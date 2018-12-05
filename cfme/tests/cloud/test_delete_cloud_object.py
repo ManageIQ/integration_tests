@@ -28,6 +28,10 @@ def test_delete_instance_appear_after_refresh(appliance, provider):
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
     """
     instance_name = provider.data['remove_test']['instance']
     test_instance = appliance.collections.cloud_instances.instantiate(instance_name, provider)
@@ -42,6 +46,12 @@ def test_delete_image_appear_after_refresh(appliance, provider, set_grid, reques
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     image_name = provider.data['remove_test']['image']
     test_image = appliance.collections.cloud_images.instantiate(image_name, provider)
@@ -57,6 +67,10 @@ def test_delete_stack_appear_after_refresh(appliance, provider, provisioning,
 
     Metadata:
         test_flag: delete_object
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
     """
 
     stack = appliance.collections.cloud_stacks.instantiate(name=provisioning['stacks'][0],

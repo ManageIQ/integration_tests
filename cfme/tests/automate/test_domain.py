@@ -14,6 +14,13 @@ pytestmark = [test_requirements.automate]
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('enabled', [True, False], ids=['enabled', 'disabled'])
 def test_domain_crud(request, enabled, appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: critical
+        initialEstimate: 1/30h
+    """
     domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha(),
@@ -39,6 +46,12 @@ def test_domain_crud(request, enabled, appliance):
 
 @pytest.mark.tier(1)
 def test_domain_edit_enabled(request, appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/16h
+    """
     domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha(),
@@ -55,6 +68,13 @@ def test_domain_edit_enabled(request, appliance):
 
 @pytest.mark.tier(2)
 def test_domain_lock_disabled(request, appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: medium
+        initialEstimate: 1/16h
+    """
     domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha(),
@@ -68,6 +88,13 @@ def test_domain_lock_disabled(request, appliance):
 
 @pytest.mark.tier(1)
 def test_domain_delete_from_table(request, appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: low
+        initialEstimate: 1/30h
+    """
     generated = []
     for _ in range(3):
         domain = appliance.collections.domains.create(
@@ -84,6 +111,13 @@ def test_domain_delete_from_table(request, appliance):
 
 @pytest.mark.tier(2)
 def test_duplicate_domain_disallowed(request, appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseposneg: negative
+        initialEstimate: 1/60h
+    """
     domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha(),
@@ -99,6 +133,14 @@ def test_duplicate_domain_disallowed(request, appliance):
 @pytest.mark.tier(2)
 @pytest.mark.polarion('RHCF3-11228')
 def test_domain_cannot_delete_builtin(appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: critical
+        caseposneg: negative
+        initialEstimate: 1/16h
+    """
     manageiq_domain = appliance.collections.domains.instantiate(name='ManageIQ')
     details_view = navigate_to(manageiq_domain, 'Details')
     if appliance.version < '5.7':
@@ -111,6 +153,14 @@ def test_domain_cannot_delete_builtin(appliance):
 @pytest.mark.tier(2)
 @pytest.mark.polarion('RHCF3-11227')
 def test_domain_cannot_edit_builtin(appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: critical
+        caseposneg: negative
+        initialEstimate: 1/16h
+    """
     manageiq_domain = appliance.collections.domains.instantiate(name='ManageIQ')
     details_view = navigate_to(manageiq_domain, 'Details')
     if appliance.version < '5.7':
@@ -122,12 +172,26 @@ def test_domain_cannot_edit_builtin(appliance):
 
 @pytest.mark.tier(2)
 def test_domain_name_wrong(appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/60h
+    """
     with pytest.raises(Exception, match='Name may contain only'):
         appliance.collections.domains.create(name='with space')
 
 
 @pytest.mark.tier(2)
 def test_domain_lock_unlock(request, appliance):
+    """
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/16h
+    """
     domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha(),
@@ -188,8 +252,15 @@ def test_domain_lock_unlock(request, appliance):
         ('https://github.com/RedHatQE/ManageIQ-automate-git.git', 'tag', '0.1', False)
     ])
 @pytest.mark.meta(server_roles=['+git_owner'])
+@pytest.mark.tier(1)
 def test_domain_import_git(request, appliance, url, param_type, param_value, verify_ssl):
-    """Verifies that a domain can be imported from git."""
+    """Verifies that a domain can be imported from git.
+
+    Polarion:
+        assignee: dmisharo
+        casecomponent: automate
+        initialEstimate: 1/20h
+    """
     repo = AutomateGitRepository(url=url, verify_ssl=verify_ssl, appliance=appliance)
     domain = repo.import_domain_from(**{param_type: param_value})
     request.addfinalizer(domain.delete_if_exists)

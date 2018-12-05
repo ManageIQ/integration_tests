@@ -39,6 +39,11 @@ def test_report_view(report, view_mode):
 
     Metadata:
         test_flag: report
+
+    Polarion:
+        assignee: pvala
+        casecomponent: report
+        initialEstimate: 1/6h
     """
     view = navigate_to(report, 'Details')
     view.view_selector.select(view_mode)

@@ -63,6 +63,10 @@ def test_host_most_recent_hour_graph_screen(graph_type, provider, host, enable_c
         * Check graph displayed or not
         * Check legends hide and display properly or not
         * Check data for legends collected or not
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     host.wait_candu_data_available(timeout=1200)
@@ -117,6 +121,11 @@ def test_graph_screen(provider, interval, graph_type, host, enable_candu):
         * Select interval(Hourly or Daily)
         * Zoom graph to get Table
         * Compare table and graph data
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        initialEstimate: None
     """
     wait_for(
         host.capture_historical_data,
@@ -192,6 +201,10 @@ def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_can
 
     Bugzillas:
         * 1367560
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     # Capture historical data for cu-24x7 and its host
     candu_tag_vm.capture_historical_data()

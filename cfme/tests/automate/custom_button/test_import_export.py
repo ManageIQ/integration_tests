@@ -95,6 +95,10 @@ def test_custom_button_import_export(appliance, setup_groups_buttons):
             `rake evm:import:custom_buttons -- --source /tmp/custom_buttons`
         * Check for custom buttons and groups which was exported comes back to UI or not
         * Check for custom buttons in respective implementation location
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
 
     # Check all buttons, groups and respective display at respective locations

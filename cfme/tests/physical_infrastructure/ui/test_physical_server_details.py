@@ -15,13 +15,23 @@ def physical_server(appliance, provider, setup_provider_modscope):
 
 
 def test_physical_server_details(physical_server):
-    """Navigate to the physical server details page and verify that the page is displayed"""
+    """Navigate to the physical server details page and verify that the page is displayed
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server_view = navigate_to(physical_server, 'Details')
     assert physical_server_view.is_displayed
 
 
 def test_physical_server_details_dropdowns(physical_server):
-    """Navigate to the physical server details page and verify that the menus are present"""
+    """Navigate to the physical server details page and verify that the menus are present
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server_view = navigate_to(physical_server, 'Details')
 
     configuration_items = physical_server_view.toolbar.configuration.items
@@ -53,7 +63,12 @@ def test_physical_server_details_dropdowns(physical_server):
 
 
 def test_network_devices(physical_server):
-    """Navigate to the Network Devices page and verify that the page is displayed"""
+    """Navigate to the Network Devices page and verify that the page is displayed
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
 
     num_network_devices = physical_server.num_network_devices()
     network_device_view = navigate_to(physical_server, 'NetworkDevices')
@@ -63,7 +78,12 @@ def test_network_devices(physical_server):
 
 
 def test_storage_devices(physical_server):
-    """Navigate to the Storage Devices page and verify that the page is displayed"""
+    """Navigate to the Storage Devices page and verify that the page is displayed
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
 
     num_storage_devices = physical_server.num_storage_devices()
     storage_device_view = navigate_to(physical_server, 'StorageDevices')
@@ -73,5 +93,10 @@ def test_storage_devices(physical_server):
 
 
 def test_physical_server_details_stats(physical_server):
-    """Navigate to the physical server details page and verify that the stats match"""
+    """Navigate to the physical server details page and verify that the stats match
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     physical_server.validate_stats(ui=True)

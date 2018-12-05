@@ -127,6 +127,11 @@ def test_child_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, set
 
     Metadata:
         test_flag: quota
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: infra
+        initialEstimate: 1/6h
     """
     with new_user:
         recursive_update(prov_data, custom_prov_data)

@@ -21,6 +21,10 @@ def test_sdn_api_inventory_networks(provider, appliance):
 
     Metadata:
         test_flag: sdn, inventory
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: 1/10h
     """
     prov_networks = sorted(provider.mgmt.list_network())
     cfme_networks = sorted([nt.name for nt in appliance.collections.cloud_networks.all()])
@@ -46,6 +50,10 @@ def test_sdn_api_inventory_routers(provider, appliance):
 
     Metadata:
         test_flag: sdn, inventory
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: 1/10h
     """
     prov_routers = sorted(provider.mgmt.list_router())
     cfme_routers = sorted([rt.name for rt in appliance.collections.network_routers.all()])
@@ -60,6 +68,10 @@ def test_sdn_api_inventory_subnets(provider, appliance):
 
     Metadata:
         test_flag: sdn, inventory
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: 1/10h
     """
     prov_subnets = []
     cfme_subnets = [sb.name for sb in appliance.collections.network_subnets.all()]
@@ -82,6 +94,10 @@ def test_sdn_api_inventory_security_groups(provider, appliance):
 
     Metadata:
         test_flag: sdn, inventory
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: 1/10h
     """
     prov_sec_gp = sorted(provider.mgmt.list_security_group())
     cfme_sec_gp = sorted([sec.name for sec in appliance.collections.network_security_groups.all()])
@@ -97,6 +113,10 @@ def test_sdn_api_inventory_loadbalancers(provider, appliance):
 
     Metadata:
         test_flag: sdn, inventory
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: 1/10h
     """
     prov_load_balancers = sorted(provider.mgmt.list_load_balancer())
     cfme_load_balancers = sorted([lb.name for lb in appliance.collections.balancers.all()])
@@ -126,6 +146,10 @@ def test_sdn_nsg_firewall_rules(provider, appliance, secgroup_with_rule):
 
     Metadata:
         test_flag: sdn, inventory
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: None
     """
 
     # Navigate to network provider.

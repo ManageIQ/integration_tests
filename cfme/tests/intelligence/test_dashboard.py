@@ -33,6 +33,13 @@ def widgets(dashboards):
 
 @pytest.mark.meta(blockers=[BZ(1533792, forced_streams=['5.9'])])
 def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
+    """
+    Polarion:
+        assignee: jhenner
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     # We need to make sure the widgets have some data.
     wait_for(
         lambda: all(not widget.blank for widget in widgets),
@@ -60,7 +67,14 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
 @pytest.mark.rhel_testing
 @pytest.mark.parametrize("number_dashboards", range(1, 4))
 def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, appliance):
-    """Create some custom dashboards and check their presence. Then check their contents."""
+    """Create some custom dashboards and check their presence. Then check their contents.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
     # Very useful construct. List is mutable, so we can prepare the generic delete finalizer.
     # Then we add everything that succeeded with creation. Simple as that :)
     dashboards_to_delete = []
@@ -99,6 +113,10 @@ def test_verify_rss_links_from_dashboards(dashboards):
         * Loop through all RSS widgets
         * Loop through all the links in a widget
         * Try making a request on the provided URLs, should make sense
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
     """
     wait_for(
         lambda: not any(widget.blank for widget in dashboards.default.collections.widgets.all()),
@@ -124,6 +142,12 @@ def test_widgets_reorder(dashboards, soft_assert, request):
         * Go to the Dashboard
         * Reorder first two widgets in the first column using drag&drop
         * Assert that the widgets order is changed
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: report
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
     request.addfinalizer(dashboards.default.collections.widgets.reset)
     previous_state = dashboards.default.collections.widgets.all()

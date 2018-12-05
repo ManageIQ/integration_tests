@@ -77,6 +77,11 @@ def created_template(appliance, template_type):
 
 
 def test_orchestration_template_crud(appliance, template_type):
+    """
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     method = METHOD_TORSO.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     collection = appliance.collections.orchestration_templates
     template = collection.create(template_group=templates.get(template_type)[1],
@@ -92,7 +97,12 @@ def test_orchestration_template_crud(appliance, template_type):
 
 
 def test_copy_template(created_template):
-    """Tests Orchestration template copy"""
+    """Tests Orchestration template copy
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     copied_method = METHOD_TORSO_copied.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     template = created_template
     template_copy = template.copy_template("{}_copied".format(template.template_name),
@@ -102,7 +112,12 @@ def test_copy_template(created_template):
 
 
 def test_name_required_error_validation_orch_template(appliance, template_type):
-    """Tests error validation if Name wasn't specified during template creation"""
+    """Tests error validation if Name wasn't specified during template creation
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     flash_msg = \
         "Error during 'Orchestration Template creation': Validation failed: Name can't be blank"
     copied_method = METHOD_TORSO_copied.replace('CloudFormation', fauxfactory.gen_alphanumeric())
@@ -116,7 +131,12 @@ def test_name_required_error_validation_orch_template(appliance, template_type):
 
 
 def test_empty_all_fields_error_validation(appliance, template_type):
-    """Tests error validation if we try to create template with all empty fields"""
+    """Tests error validation if we try to create template with all empty fields
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     flash_msg = \
         "Error during Orchestration Template creation: new template content cannot be empty"
     collection = appliance.collections.orchestration_templates
@@ -129,7 +149,12 @@ def test_empty_all_fields_error_validation(appliance, template_type):
 
 
 def test_empty_content_error_validation(appliance, template_type):
-    """Tests error validation if content wasn't added during template creation"""
+    """Tests error validation if content wasn't added during template creation
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     flash_msg = \
         "Error during Orchestration Template creation: new template content cannot be empty"
     collection = appliance.collections.orchestration_templates
@@ -144,6 +169,12 @@ def test_empty_content_error_validation(appliance, template_type):
 def test_tag_orchestration_template(tag, created_template):
     """Tests template tagging. Verifies that tag was added, confirms in template details,
     removes tag
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/15h
     """
     navigate_to(created_template, 'Details')
     created_template.add_tag(tag=tag)
@@ -156,7 +187,12 @@ def test_tag_orchestration_template(tag, created_template):
 @pytest.mark.parametrize("action", ["copy", "create"], ids=["copy", "create"])
 def test_duplicated_content_error_validation(appliance, created_template, template_type,
                                              action):
-    """Tests that we are not allowed to have duplicated content in different templates"""
+    """Tests that we are not allowed to have duplicated content in different templates
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     collection = appliance.collections.orchestration_templates
     if action == "copy":
         copy_name = "{}_copied".format(created_template.template_name)
@@ -179,7 +215,12 @@ def test_duplicated_content_error_validation(appliance, created_template, templa
 @pytest.mark.uncollectif(lambda template_type: template_type == "vApp" or template_type == "VNF",
                          reason="vApp requires valid vCloud provider and template for this test")
 def test_service_dialog_creation_from_customization_template(request, created_template):
-    """Tests Service Dialog creation  from customization template """
+    """Tests Service Dialog creation  from customization template
+
+    Polarion:
+        assignee: None
+        initialEstimate: None
+    """
     dialog_name = created_template.template_name
     service_dialog = created_template.create_service_dialog_from_template(dialog_name)
     request.addfinalizer(service_dialog.delete_if_exists)

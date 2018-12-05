@@ -68,6 +68,11 @@ def test_graph_screen(provider, cluster, host, graph_type, interval, enable_cand
         * Select interval Hourly/Daily
         * Zoom graph to get Table
         * Compare table and graph data
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        initialEstimate: None
     """
     host.capture_historical_data()
     cluster.wait_candu_data_available(timeout=1200)

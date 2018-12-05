@@ -36,6 +36,12 @@ def test_timezone_setting(appliance, set_timezone):
 
     Metadata:
         test_flag: visuals
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: low
+        initialEstimate: 1/30h
     """
     view = navigate_to(appliance.server, 'DiagnosticsDetails')
     assert test_timezone.machine in view.summary.started_on.text, 'Timezone settings Failed'
