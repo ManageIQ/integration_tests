@@ -424,3 +424,24 @@ def test_migration_rbac(appliance, new_credential, v2v_providers):
         # Checks migration option is enabled in navigation
         assert 'Migration' in nav_tree['Compute'], ('Migration not found in nav tree, '
                                                     'rbac should allow this')
+
+
+@pytest.mark.ignore_stream("5.9")
+@pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
+def test_edit_mapping_description(appliance, v2v_providers, form_data_single_datastore,
+                                    host_creds, conversion_tags, soft_assert):
+    infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
+    edited_form_data = {
+        'general': {
+            'description': "my edited description"},
+        'cluster': {},
+        'datastore': {},
+        'network': {}
+    }
+    mapping.update(edited_form_data)
+
+    view = navigate_to(infrastructure_mapping_collection, 'All')
+    infrastructure_mapping_collection.find_mapping(mapping)
+    mapping_list = view.infra_mapping_list
+    soft_assert(str(mapping_list.get_map_description(mapping.name)) == "my edited description")
