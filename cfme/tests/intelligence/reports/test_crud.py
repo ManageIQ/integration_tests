@@ -4,6 +4,7 @@ import pytest
 import yaml
 
 from cfme import test_requirements
+from cfme.intelligence.reports.schedules import NewScheduleView
 from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -309,3 +310,14 @@ def test_crud_custom_report_schedule(
     custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
     assert custom_report_schedule.exists
     custom_report_schedule.delete(cancel=False)
+
+
+@pytest.mark.ignore_stream('5.9')
+def test_report_schedules_invalid_email(appliance, schedule_data):
+    schedule_data["emails"] = (fauxfactory.gen_alpha(), fauxfactory.gen_alpha())
+    schedule_data["from_email"] = fauxfactory.gen_alpha()
+    with pytest.raises(AssertionError):
+        appliance.collections.schedules.create(**schedule_data)
+    view = appliance.collections.schedules.create_view(NewScheduleView)
+    view.flash.assert_message("One of e-mail addresses 'To' is not valid")
+    view.flash.assert_message("E-mail address 'From' is not valid")
