@@ -8,7 +8,7 @@ from selenium.webdriver.common.keys import Keys
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, Table, Text, Image, FileInput
 from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView,
-                                  SummaryFormItem, WaitTab)
+                                  SummaryFormItem, SummaryTable, WaitTab)
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown, DatePicker,
                                     FlashMessages, BootstrapSelect, CheckableBootstrapTreeview)
 
@@ -625,6 +625,7 @@ class ServerDatabaseView(ConfigurationView):
 
 
 class DatabaseSummaryView(ServerDatabaseView):
+    properties = SummaryTable(title='Properties')
 
     @property
     def is_displayed(self):
