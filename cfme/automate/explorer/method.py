@@ -472,8 +472,8 @@ class MethodCollection(BaseCollection):
             validate = False
         if validate and not BZ(1499881, forced_streams=['5.9']).blocks:
             add_page.validate_button.click()
-            add_page.flash.assert_no_error()
             add_page.wait_displayed()
+            add_page.flash.assert_no_error()
             add_page.flash.assert_message('Data validated successfully')
         if cancel:
             add_page.cancel_button.click()
