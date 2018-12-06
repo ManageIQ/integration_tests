@@ -488,9 +488,8 @@ class CatalogItemsCollection(BaseCollection):
         view.fill(cat_item.fill_dict)
         view.add.click()
         view = self.create_view(AllCatalogItemView)
-        # TODO move this assertion to tests
-        # view.flash.assert_success_message('Catalog Item "{}" was added'.format(
-        #     cat_item.name), partial=True)
+        view.flash.assert_success_message('Catalog Item "{}" was added'.format(
+            cat_item.name), partial=True)
         assert view.is_displayed
         view.flash.assert_no_error()
         return cat_item
