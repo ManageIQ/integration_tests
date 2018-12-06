@@ -678,7 +678,6 @@ class InfrastructureMapping(BaseEntity, Updateable):
 
     def update(self, updates):
         view = navigate_to(self, 'Edit', wait_for_view=20)
-        assert view.wait_displayed()
         view.form.fill(updates)
 
 
@@ -839,8 +838,10 @@ class EditInfrastructureMapping(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
-        self.prerequisite_view.infra_mapping_list.edit_mapping(
-            self.obj.name)
+        try:
+            self.prerequisite_view.infra_mapping_list.edit_mapping(self.obj.name)
+        except NoSuchElementException:
+            raise ItemNotFound("Mapping {} not found".format(self.obj.name))
 
 
 @navigator.register(MigrationPlanCollection, 'All')
