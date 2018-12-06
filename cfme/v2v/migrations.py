@@ -174,9 +174,8 @@ class InfraMappingWizardDatastoresView(View):
                 self.target_datastores.fill(mapping['target'])
                 self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
-        self.cancel_btn.wait_displayed()
-        if self.next_btn.is_displayed:
-            self.next_btn.click()
+        self.next_btn.wait_displayed()
+        self.next_btn.click()
         return was_change
 
 
@@ -219,6 +218,8 @@ class InfraMappingWizardNetworksView(View):
                 self.target_networks.fill(mapping['target'])
                 self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
+        # Cancel button is the common button on all pages so
+        # waiting for footer buttons to display
         self.cancel_btn.wait_displayed()
         if self.next_btn.is_displayed:
             self.next_btn.click()
