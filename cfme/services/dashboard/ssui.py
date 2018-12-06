@@ -70,8 +70,7 @@ def results(self):
     view = self.create_view(MyServicesView)
     result = view.results.text
     int_result = re.search(r'\d+', result).group()
-    if self.appliance.version >= "5.8":
-        assert int_result == self.num_of_rows()
+    assert int_result == self.num_of_rows()
     return int_result
 
 
