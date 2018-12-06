@@ -514,6 +514,7 @@ def nfs_samba_share_vm(utility_vm):
     }
     nfs_smb = SSHClient(**connect_kwargs)
     setup = (
+        # Common setup.
         dedent(''' \
         cat > /etc/yum.repos.d/rhel.repo <<EOF
         [rhel]
@@ -524,9 +525,8 @@ def nfs_samba_share_vm(utility_vm):
         skip_if_unavailable=False
         EOF
         ''').format(baseurl=cfme_data['basic_info']['rhel7_updates_url']),
-
-        # Common setup.
         'yum install -y nfs-utils samba',
+        'setenforce 0',
 
         # NFS setup
         'mkdir -p /srv/export',
@@ -542,6 +542,8 @@ def nfs_samba_share_vm(utility_vm):
         'exportfs -ra',
 
         # SMB setup
+        'adduser backuper',
+        #'smbpasswd -a backuper', # TODO(jhenner) set the password!
         'mkdir -p /srv/samba',
         'chmod a=rwx /srv/samba',
         'firewall-cmd --add-port=139/tcp --permanent',
@@ -561,7 +563,6 @@ def nfs_samba_share_vm(utility_vm):
         'systemctl enable smb',
         'systemctl start smb',
     )
-    import ipdb; ipdb.set_trace()
     for line in setup:
         assert nfs_smb.run_command(line).success
     return {'hostname': utility_vm['ip'],
@@ -604,6 +605,7 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
     interaction.send('4')
     interaction.expect('Choose the restore database file: |1| ')
     interaction.send('2')
+    import ipdb; ipdb.set_trace()
     interaction.expect('Enter the location of the remote backup file\n.*db.backup: ')
     interaction.send(nfs_dump)
     interaction.expect('Are you sure you would like to restore the database\? \(Y/N\): ')
@@ -661,6 +663,7 @@ def test_appliance_console_restore_db_samba(request, get_appliances_with_provide
     interaction.send('')
     interaction.expect('Are you sure you would like to restore the database\? \(Y/N\): ')
     interaction.send('y')
+    import ipdb; ipdb.set_trace()
     interaction.expect('Restoring the database\.\.\.')
     interaction.expect('Database restore succeed.*Press any key to continue.', timeout=20)
 
