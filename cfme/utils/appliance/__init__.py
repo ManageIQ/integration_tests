@@ -2048,6 +2048,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         return "{} Region: Region {} [{}]".format(
             self.product_name, r, r)
 
+    def region(self):
+        return "Region {}".format(self.server.zone.region.number)
+
     @cached_property
     def company_name(self):
         return self.advanced_settings["server"]["company"]

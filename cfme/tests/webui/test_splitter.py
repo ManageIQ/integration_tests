@@ -1,6 +1,7 @@
 from xml.sax.saxutils import quoteattr, unescape
 
 import pytest
+from wait_for import TimedOutError
 
 # from cfme.cloud.instance import Instance
 # from cfme.infrastructure.config_management import ConfigManager
@@ -52,7 +53,7 @@ pytestmark = [
 def test_pull_splitter_persistence(request, appliance, model_object, destination):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: anikifor
         caseimportance: low
         initialEstimate: 1/20h
     """
@@ -72,9 +73,10 @@ def test_pull_splitter_persistence(request, appliance, model_object, destination
     navigate_to(appliance.server, 'Dashboard')
     try:
         navigate_to(model_object, destination)
-    except (TypeError, CannotScrollException):
+    except (TypeError, CannotScrollException, TimedOutError):
         # this exception is expected here since
         # some navigation commands try to use accordion when it is hidden by splitter
+        # and accordion is often part of is_displayed check
         pass
 
     # Then we check hidden position splitter

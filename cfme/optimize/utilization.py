@@ -22,6 +22,15 @@ class UtilizationView(BaseLoggedInPage):
             "Utilization",
         ]
 
+    @property
+    def is_displayed(self):
+        # region = CFME Region: Region 0 [0]'
+        region = self.extra.appliance.region()
+        return (
+            self.in_utilization and
+            self.title.text == 'Region "{}" Utilization Trend Summary'.format(region)
+        )
+
 
 @attr.s
 class Utilization(BaseEntity):
