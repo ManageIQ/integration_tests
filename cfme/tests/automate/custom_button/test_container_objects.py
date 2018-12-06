@@ -5,7 +5,7 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.containers.provider import ContainersProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.tests.automate.custom_button import log_request_check, TextInputDialogView
+from cfme.tests.automate.custom_button import log_request_check, OBJ_TYPE_59, TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import TimedOutError, wait_for
@@ -27,8 +27,6 @@ CONTAINER_OBJECTS = [
     "CONTAINER_TEMPLATES",
     "CONTAINER_VOLUMES",
 ]
-
-OBJ_TYPE_59 = ["PROVIDER", "CONTAINER_NODES", "CONTAINER_PROJECTS"]
 
 DISPLAY_NAV = {
     "Single entity": ["Details"],
