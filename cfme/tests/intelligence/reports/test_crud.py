@@ -145,6 +145,7 @@ def test_menuwidget_crud(appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[BZ(1656413, forced_streams=['5.10'])])
 def test_reportwidget_crud(appliance):
     """
     Polarion:
@@ -165,8 +166,9 @@ def test_reportwidget_crud(appliance):
     )
     view = w.create_view(AllDashboardWidgetsView)
     view.flash.assert_message('Widget "{}" was saved'.format(w.title))
-    with update(w):
-        w.active = False
+    if not BZ(1653796, forced_streams=['5.9']).blocks:
+        with update(w):
+            w.active = False
     w.delete()
 
 

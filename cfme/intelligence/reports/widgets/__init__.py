@@ -210,7 +210,7 @@ class BaseEditDashboardWidgetView(DashboardWidgetsView):
     def is_displayed(self):
         return (
             self.in_dashboard_widgets and
-            self.title_text == 'Editing Widget "{}"'.format(self.context["object"]) and
+            self.title.text == 'Editing Widget "{}"'.format(self.context["object"].title) and
             self.dashboard_widgets.tree.currently_selected == [
                 "All Widgets",
                 self.context["object"].TYPE,
