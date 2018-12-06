@@ -172,7 +172,7 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
     description = "edited_{}".format(fauxfactory.gen_alpha())
     repository = repositories.create(
         name,
-        cfme_data.ansible_links.repositories.console_db,
+        cfme_data.ansible_links.playbook_repositories.console_db,
         description=description)
     view = navigate_to(repository, "Details")
     refresh = view.toolbar.refresh.click

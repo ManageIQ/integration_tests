@@ -45,7 +45,7 @@ def ansible_repository(appliance):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
         name=fauxfactory.gen_alpha(),
-        url=cfme_data.ansible_links.repositories.v2v,
+        url=cfme_data.ansible_links.playbook_repositories.v2v,
         description=fauxfactory.gen_alpha()
     )
     view = navigate_to(repository, "Details")

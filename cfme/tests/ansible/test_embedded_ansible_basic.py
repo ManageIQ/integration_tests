@@ -115,8 +115,8 @@ CREDENTIALS = [
 ]
 
 REPOSITORIES = [
-    cfme_data.ansible_links.repositories.embedded_ansible,
-    cfme_data.ansible_links.repositories.embedded_tower
+    cfme_data.ansible_links.playbook_repositories.embedded_ansible,
+    cfme_data.ansible_links.playbook_repositories.embedded_tower
 ]
 
 

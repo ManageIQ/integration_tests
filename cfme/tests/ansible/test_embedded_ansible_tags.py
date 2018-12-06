@@ -29,7 +29,7 @@ def repository(enabled_embedded_ansible, appliance):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
         name=fauxfactory.gen_alpha(),
-        url=cfme_data.ansible_links.repositories.embedded_ansible,
+        url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
         description=fauxfactory.gen_alpha())
     view = navigate_to(repository, "Details")
     if appliance.version < "5.9":

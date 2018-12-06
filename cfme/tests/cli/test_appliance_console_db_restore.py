@@ -286,7 +286,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
         'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
     repositories = appl1.collections.ansible_repositories
     repository = repositories.create(
-        'example', cfme_data.ansible_links.repositories.console_db, description='example')
+        'example', cfme_data.ansible_links.playbook_repositories.console_db, description='example')
     view = navigate_to(repository, "Details")
     refresh = view.toolbar.refresh.click
     wait_for(
