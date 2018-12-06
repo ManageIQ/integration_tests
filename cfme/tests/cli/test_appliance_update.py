@@ -170,10 +170,13 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
     repositories = enabled_embedded_appliance.collections.ansible_repositories
     name = "example_{}".format(fauxfactory.gen_alpha())
     description = "edited_{}".format(fauxfactory.gen_alpha())
-    repository = repositories.create(
-        name,
-        cfme_data.ansible_links.playbook_repositories.console_db,
-        description=description)
+    try:
+        repository = repositories.create(
+            name=name,
+            url=cfme_data.ansible_links.playbook_repositories.console_db,
+            description=description)
+    except KeyError:
+        pytest.skip("Skipping since no such key found in yaml")
     view = navigate_to(repository, "Details")
     refresh = view.toolbar.refresh.click
     wait_for(

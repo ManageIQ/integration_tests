@@ -342,11 +342,14 @@ def appliance_with_providers(appliance_preupdate):
 @pytest.fixture(scope="module")
 def ansible_repository(appliance):
     repositories = appliance.collections.ansible_repositories
-    repository = repositories.create(
-        name=fauxfactory.gen_alpha(),
-        url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
-        description=fauxfactory.gen_alpha()
-    )
+    try:
+        repository = repositories.create(
+            name=fauxfactory.gen_alpha(),
+            url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
+            description=fauxfactory.gen_alpha()
+        )
+    except KeyError:
+        pytest.skip("Skipping since no such key found in yaml")
     view = navigate_to(repository, "Details")
     refresh = view.toolbar.refresh.click
     wait_for(

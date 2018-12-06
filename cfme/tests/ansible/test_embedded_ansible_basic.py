@@ -114,11 +114,6 @@ CREDENTIALS = [
     )
 ]
 
-REPOSITORIES = [
-    cfme_data.ansible_links.playbook_repositories.embedded_ansible,
-    cfme_data.ansible_links.playbook_repositories.embedded_tower
-]
-
 
 @pytest.fixture(scope="module")
 def wait_for_ansible(appliance):
@@ -139,8 +134,8 @@ def credentials_collection(appliance):
 def ansible_repository(appliance):
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
-        fauxfactory.gen_alpha(),
-        REPOSITORIES[0],
+        name=fauxfactory.gen_alpha(),
+        url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
         description=fauxfactory.gen_alpha())
     view = navigate_to(repository, "Details")
     if appliance.version < "5.9":
@@ -255,6 +250,10 @@ def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
     """
     "Tests if playbooks list changed after playbooks repo removing"
     playbooks = []
+    REPOSITORIES = [
+        cfme_data.ansible_links.playbook_repositories.embedded_ansible,
+        cfme_data.ansible_links.playbook_repositories.embedded_tower
+    ]
     repositories_collection = appliance.collections.ansible_repositories
     for repo_url in REPOSITORIES:
         repository = repositories_collection.create(

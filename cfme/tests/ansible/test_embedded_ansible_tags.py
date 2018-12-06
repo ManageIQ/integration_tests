@@ -27,10 +27,13 @@ def enabled_embedded_ansible(appliance):
 @pytest.fixture(scope='module')
 def repository(enabled_embedded_ansible, appliance):
     repositories = appliance.collections.ansible_repositories
-    repository = repositories.create(
-        name=fauxfactory.gen_alpha(),
-        url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
-        description=fauxfactory.gen_alpha())
+    try:
+        repository = repositories.create(
+            name=fauxfactory.gen_alpha(),
+            url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
+            description=fauxfactory.gen_alpha())
+    except KeyError:
+        pytest.skip("Skipping since no such key found in yaml")
     view = navigate_to(repository, "Details")
     if appliance.version < "5.9":
         refresh = view.browser.refresh

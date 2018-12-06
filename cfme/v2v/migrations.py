@@ -381,12 +381,12 @@ class MigrationDashboardView(BaseLoggedInPage):
                 except NoSuchElementException:
                     new_msg = "playbook is executing.."
                     pass
-                msg = "For plan {plan_name}, is plan in progress: {visibility}, {message}".format(
-                    plan_name=plan_name,
-                    visibility=is_plan_visible,
-                    message=new_msg
+                self.logger.info(
+                    "For plan {plan_name}, is plan in progress: {visibility}, {message}".format(
+                        plan_name=plan_name,
+                        visibility=is_plan_visible,
+                        message=new_msg)
                 )
-                self.logger.info(msg)
             # return False if plan visible under "In Progress Plans"
             return not is_plan_visible
         except StaleElementReferenceException:
@@ -742,7 +742,7 @@ class MigrationPlanCollection(BaseCollection):
     ENTITY = MigrationPlan
 
     def create(self, name, infra_map, vm_list, description=None, csv_import=False,
-               pre_playbook=False, post_playbook=False, start_migration=False):
+               pre_playbook=None, post_playbook=None, start_migration=False):
         """Create new migration plan in UI
         Args:
             name: (string) plan name

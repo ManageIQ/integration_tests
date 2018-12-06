@@ -43,26 +43,31 @@ def ansible_repository(appliance):
     """Fixture to add ansible repository"""
     appliance.wait_for_embedded_ansible()
     repositories = appliance.collections.ansible_repositories
-    repository = repositories.create(
-        name=fauxfactory.gen_alpha(),
-        url=cfme_data.ansible_links.playbook_repositories.v2v,
-        description=fauxfactory.gen_alpha()
-    )
+    try:
+        repository = repositories.create(
+            name=fauxfactory.gen_alpha(),
+            url=cfme_data.ansible_links.playbook_repositories.v2v,
+            description=fauxfactory.gen_alpha()
+        )
+    except KeyError:
+        pytest.skip("Skipping since no such key found in yaml")
     view = navigate_to(repository, "Details")
-    refresh = view.toolbar.refresh.click
     wait_for(lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
              delay=10,
              timeout=60,
-             fail_func=refresh)
-    return repository
+             fail_func=view.toolbar.refresh.click)
+    yield repository
+
+    if repository.exists:
+        repository.delete()
 
 
 def catalog_item(request, appliance, machine_credential, ansible_repository, playbook_type):
     """Add provisioning and retire ansible catalog item"""
     cat_item = appliance.collections.catalog_items.create(
-        appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
-        fauxfactory.gen_alphanumeric(),
-        fauxfactory.gen_alphanumeric(),
+        catalog_item_class=appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
         provisioning={
             "repository": ansible_repository.name,
             "playbook": "{}.yml".format(playbook_type),

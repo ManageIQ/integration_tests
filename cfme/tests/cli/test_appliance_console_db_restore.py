@@ -285,8 +285,13 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     appl1.ssh_client.run_command(
         'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
     repositories = appl1.collections.ansible_repositories
-    repository = repositories.create(
-        'example', cfme_data.ansible_links.playbook_repositories.console_db, description='example')
+    try:
+        repository = repositories.create(
+            name='example',
+            url=cfme_data.ansible_links.playbook_repositories.console_db,
+            description='example')
+    except KeyError:
+        pytest.skip("Skipping since no such key found in yaml")
     view = navigate_to(repository, "Details")
     refresh = view.toolbar.refresh.click
     wait_for(
