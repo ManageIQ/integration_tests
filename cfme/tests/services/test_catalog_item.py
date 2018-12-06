@@ -5,6 +5,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 import cfme.tests.configure.test_access_control as tac
 from cfme import test_requirements
+from cfme.services.catalogs.catalog_items import AllCatalogItemView
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -22,6 +23,10 @@ def catalog_item(appliance, dialog, catalog):
         description="my catalog item", display_in=True,
         catalog=catalog, dialog=dialog
     )
+    view = cat_item.create_view(AllCatalogItemView)
+    assert view.is_displayed
+    view.flash.assert_success_message('Service Catalog Item "{}" was added'.format(
+        cat_item.name))
     yield cat_item
 
     # fixture cleanup
