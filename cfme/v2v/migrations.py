@@ -838,9 +838,7 @@ class EditInfrastructureMapping(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
-        try:
-            self.prerequisite_view.infra_mapping_list.edit_mapping(self.obj.name)
-        except NoSuchElementException:
+        if not self.prerequisite_view.infra_mapping_list.edit_mapping(self.obj.name):
             raise ItemNotFound("Mapping {} not found".format(self.obj.name))
 
 
