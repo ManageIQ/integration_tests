@@ -445,6 +445,7 @@ class MethodCollection(BaseCollection):
         add_page = navigate_to(self, 'Add')
         add_page.fill({'location': location})
         if location == 'inline':
+            add_page.wait_displayed()
             add_page.fill({
                 'inline_name': name,
                 'inline_display_name': display_name,
@@ -471,6 +472,7 @@ class MethodCollection(BaseCollection):
             validate = False
         if validate and not BZ(1499881, forced_streams=['5.9']).blocks:
             add_page.validate_button.click()
+            add_page.wait_displayed()
             add_page.flash.assert_no_error()
             add_page.flash.assert_message('Data validated successfully')
         if cancel:
