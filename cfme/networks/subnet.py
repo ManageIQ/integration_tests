@@ -6,6 +6,7 @@ from widgetastic.exceptions import NoSuchElementException
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
+from cfme.exceptions import DestinationNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.modeling.base import parent_of_type
@@ -14,6 +15,7 @@ from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.views import SubnetAddView
 from cfme.networks.views import SubnetDetailsView
 from cfme.networks.views import SubnetEditView
+from cfme.networks.views import SubnetNetworkPortView
 from cfme.networks.views import SubnetView
 from cfme.utils import providers
 from cfme.utils import version
@@ -221,3 +223,17 @@ class EditSubnet(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Cloud Subnet')
+
+
+@navigator.register(Subnet, 'NetworkPorts')
+class NetworkPorts(CFMENavigateStep):
+    VIEW = SubnetNetworkPortView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        item = 'Network Ports'
+        if not int(self.prerequisite_view.entities.relationships.get_text_of(item)):
+            raise DestinationNotFound(
+                'Cloud Subnet {} has a 0 count for {} relationships'.format(self.obj, item))
+
+        self.prerequisite_view.entities.relationships.click_at(item)

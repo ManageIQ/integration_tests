@@ -3,11 +3,14 @@ from navmazing import NavigateToAttribute
 
 from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
+from cfme.exceptions import DestinationNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.modeling.base import parent_of_type
 from cfme.networks.views import NetworkPortDetailsView
 from cfme.networks.views import NetworkPortView
+from cfme.networks import ValidateStatsMixin
+
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -15,7 +18,7 @@ from cfme.utils.appliance.implementations.ui import navigator
 
 
 @attr.s
-class NetworkPort(Taggable, BaseEntity):
+class NetworkPort(Taggable, BaseEntity, ValidateStatsMixin):
     """Class representing network ports in sdn"""
     in_version = ('5.8', version.LATEST)
     category = "networks"
@@ -101,8 +104,19 @@ class All(CFMENavigateStep):
 
 @navigator.register(NetworkPort, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = NetworkPortDetailsView
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
+
+
+@navigator.register(NetworkPort, 'DetailsFromParent')
+class DetailsFromParent(Details):
+    def prerequisite(self, *args, **kwargs):
+        is_filtered = isinstance(self.obj.parent, BaseCollection) and self.obj.parent.filters
+        filtered = (self.obj.parent.filters.get('parent') if is_filtered else None)
+        if is_filtered:
+            return navigate_to(filtered, 'NetworkPorts')
+        else:
+            raise DestinationNotFound("Parent filter missing on object {obj}".format(obj=self.obj))

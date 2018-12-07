@@ -374,6 +374,18 @@ class NetworkPortView(BaseLoggedInPage):
         tree = ManageIQTree()
 
 
+class SubnetNetworkPortView(NetworkPortView):
+    """ Represents a Subnet network with port view"""
+    title = Text('//div[@id="main-content"]//h1')
+
+    @property
+    def is_displayed(self):
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Subnets'] and
+                self.title.text == '{name} (All Network Ports)'.format(
+                    name=self.context['object'].name))
+
+
 class NetworkPortDetailsView(BaseLoggedInPage):
     """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')

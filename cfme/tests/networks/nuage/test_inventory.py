@@ -82,3 +82,101 @@ def test_network_router_details(setup_provider_modscope, provider, with_nuage_sa
         ('relationships', 'Cloud Subnets'): '1',
         ('relationships', 'Security Groups'): '1',
     })
+
+
+def test_network_port_vm(setup_provider_modscope, provider, with_nuage_sandbox_modscope):
+    """
+    Ensure vm network port details displays expected info.
+
+    L3 subnets are always connected to routers, hence we navigate to network ports as
+      Tenant > Router > Subnet > Network Port
+    """
+    sandbox = with_nuage_sandbox_modscope
+    tenant_name = sandbox['enterprise'].name
+    subnet_name = sandbox['subnet'].name
+    router_name = sandbox['domain'].name
+    vport_name = sandbox['vm_vport'].name
+    tenant = provider.collections.cloud_tenants.instantiate(name=tenant_name, provider=provider)
+    router = tenant.collections.routers.instantiate(name=router_name)
+    subnet = router.collections.subnets.instantiate(name=subnet_name)
+    network_port = subnet.collections.network_ports.instantiate(name=vport_name)
+
+    network_port.validate_stats({
+        ('properties', 'Name'): vport_name,
+        ('properties', 'Type'): 'ManageIQ/Providers/Nuage/Network Manager/Network Port/Vm',
+        ('relationships', 'Cloud tenant'): tenant_name,
+        ('relationships', 'Cloud subnets'): '1',
+    })
+
+
+def test_network_port_container(setup_provider_modscope, provider, with_nuage_sandbox_modscope):
+    """
+    Ensure container network port details displays expected info.
+
+    L3 subnets are always connected to routers, hence we navigate to network ports as
+      Tenant > Router > Subnet > Network Port
+    """
+    sandbox = with_nuage_sandbox_modscope
+    tenant_name = sandbox['enterprise'].name
+    subnet_name = sandbox['subnet'].name
+    router_name = sandbox['domain'].name
+    vport_name = sandbox['cont_vport'].name
+    tenant = provider.collections.cloud_tenants.instantiate(name=tenant_name, provider=provider)
+    router = tenant.collections.routers.instantiate(name=router_name)
+    subnet = router.collections.subnets.instantiate(name=subnet_name)
+    network_port = subnet.collections.network_ports.instantiate(name=vport_name)
+
+    network_port.validate_stats({
+        ('properties', 'Name'): vport_name,
+        ('properties', 'Type'): 'ManageIQ/Providers/Nuage/Network Manager/Network Port/Container',
+        ('relationships', 'Cloud tenant'): tenant_name,
+        ('relationships', 'Cloud subnets'): '1',
+    })
+
+
+def test_network_port_l2_vm(setup_provider_modscope, provider, with_nuage_sandbox_modscope):
+    """
+    Ensure vm network port details displays expected info.
+
+    L2 subnets act as standalone and are thus not connected to any router.
+    We navigate to network ports as
+      Tenant > Subnet > Network Port
+    """
+    sandbox = with_nuage_sandbox_modscope
+    tenant_name = sandbox['enterprise'].name
+    subnet_name = sandbox['l2_domain'].name
+    vport_name = sandbox['l2_vm_vport'].name
+    tenant = provider.collections.cloud_tenants.instantiate(name=tenant_name, provider=provider)
+    subnet = tenant.collections.subnets.instantiate(name=subnet_name)
+    network_port = subnet.collections.network_ports.instantiate(name=vport_name)
+
+    network_port.validate_stats({
+        ('properties', 'Name'): vport_name,
+        ('properties', 'Type'): 'ManageIQ/Providers/Nuage/Network Manager/Network Port/Vm',
+        ('relationships', 'Cloud tenant'): tenant_name,
+        ('relationships', 'Cloud subnets'): '1',
+    })
+
+
+def test_network_port_l2_container(setup_provider_modscope, provider, with_nuage_sandbox_modscope):
+    """
+    Ensure container network port details displays expected info.
+
+    L2 subnets act as standalone and are thus not connected to any router.
+    We navigate to network ports as
+      Tenant > Subnet > Network Port
+    """
+    sandbox = with_nuage_sandbox_modscope
+    tenant_name = sandbox['enterprise'].name
+    subnet_name = sandbox['l2_domain'].name
+    vport_name = sandbox['l2_cont_vport'].name
+    tenant = provider.collections.cloud_tenants.instantiate(name=tenant_name, provider=provider)
+    subnet = tenant.collections.subnets.instantiate(name=subnet_name)
+    network_port = subnet.collections.network_ports.instantiate(name=vport_name)
+
+    network_port.validate_stats({
+        ('properties', 'Name'): vport_name,
+        ('properties', 'Type'): 'ManageIQ/Providers/Nuage/Network Manager/Network Port/Container',
+        ('relationships', 'Cloud tenant'): tenant_name,
+        ('relationships', 'Cloud subnets'): '1',
+    })
