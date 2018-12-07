@@ -47,7 +47,7 @@ class ServiceCatalogsDefaultView(ServicesCatalogsView):
     @property
     def is_displayed(self):
         return (
-            self.in_explorer and
+            self.in_service_catalogs and
             self.title.text == 'All Services' and
             self.service_catalogs.is_opened)
 
