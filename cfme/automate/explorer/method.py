@@ -474,11 +474,12 @@ class MethodCollection(BaseCollection):
             add_page.validate_button.click()
             add_page.wait_displayed()
             add_page.flash.assert_no_error()
-            add_page.flash.assert_message('Data validated successfully')
+            add_page.flash.assert_message('Data validated successfully', wait=3)
         if cancel:
             add_page.cancel_button.click()
             add_page.flash.assert_no_error()
-            add_page.flash.assert_message('Add of new Automate Method was cancelled by the user')
+            add_page.flash.assert_message('Add of new Automate Method was cancelled by the user',
+                                          wait=3)
             return None
         else:
             add_page.add_button.click()
