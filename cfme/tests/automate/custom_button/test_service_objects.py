@@ -160,7 +160,7 @@ def test_custom_button_display(request, appliance, context, display, objects, bu
 
 
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
-@pytest.mark.parametrize("submit", SUBMIT, ids=["_".join(item.split()) for item in SUBMIT])
+@pytest.mark.parametrize("submit", SUBMIT, ids=[item.replace(" ", "_") for item in SUBMIT])
 @pytest.mark.uncollectif(
     lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group
 )
@@ -217,8 +217,13 @@ def test_custom_button_automate(request, appliance, context, submit, objects, bu
             # `Details` means a single entity.
 
             if destination == "All":
+                try:
+                    paginator = view.paginator
+                except AttributeError:
+                    paginator = view.entities.paginator
+
                 entity_count = min(
-                    view.entities.paginator.items_amount, view.entities.paginator.items_per_page
+                    paginator.items_amount, paginator.items_per_page
                 )
                 view.entities.paginator.check_all()
             else:
