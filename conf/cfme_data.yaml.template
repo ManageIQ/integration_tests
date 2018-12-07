@@ -2,6 +2,9 @@ basic_info:
     app_version: 5.2.0
     cfme_images_url:
         downstream-59z: http://some-host.com/builds/
+ansible_links:
+  playbook_repositories:
+    v2v: https://github.com/v2v-test/ansible_playbooks.git
 management_systems:
     vsphere5:
         name: vsphere 5

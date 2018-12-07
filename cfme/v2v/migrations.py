@@ -363,7 +363,6 @@ class MigrationDashboardView(BaseLoggedInPage):
         try:
             try:
                 is_plan_visible = self.progress_card.is_plan_visible(plan_name)
-                plan_time_elapsed = self.progress_card.get_clock(plan_name)
             except ItemNotFound:
                 # This will end the wait_for loop and check the plan under completed_plans section
                 return True
@@ -376,10 +375,18 @@ class MigrationDashboardView(BaseLoggedInPage):
                 # logger.info("For plan %s, current migrated VMs are %s out of total VMs %s",
                 #     migration_plan.name, view.progress_card.migrated_vms(migration_plan.name),
                 #     view.progress_card.total_vm_to_be_migrated(migration_plan.name))
-                self.logger.info("For plan %s, is plan in progress: %s,"
-                    "time elapsed for migration: %s",
-                    plan_name, is_plan_visible,
-                    plan_time_elapsed)
+                try:
+                    plan_time_elapsed = self.progress_card.get_clock(plan_name)
+                    new_msg = "time elapsed for migration: {time}".format(time=plan_time_elapsed)
+                except NoSuchElementException:
+                    new_msg = "playbook is executing.."
+                    pass
+                self.logger.info(
+                    "For plan {plan_name}, is plan in progress: {visibility}, {message}".format(
+                        plan_name=plan_name,
+                        visibility=is_plan_visible,
+                        message=new_msg)
+                )
             # return False if plan visible under "In Progress Plans"
             return not is_plan_visible
         except StaleElementReferenceException:
@@ -541,6 +548,13 @@ class AddMigrationPlanView(View):
                     row.select.fill(True)
                     vms_selected.append(row.read()['VM Name'])
             return vms_selected
+
+    @View.nested
+    class advanced(View):  # noqa
+        pre_playbook = BootstrapSelect('preMigrationPlaybook')
+        post_playbook = BootstrapSelect('postMigrationPlaybook')
+        pre_checkbox = Text(locator='.//input[contains(@id, "pre_migration_select_all")]')
+        post_checkbox = Text(locator='.//input[contains(@id, "post_migration_select_all")]')
 
     @View.nested
     class options(View):  # noqa
@@ -728,7 +742,7 @@ class MigrationPlanCollection(BaseCollection):
     ENTITY = MigrationPlan
 
     def create(self, name, infra_map, vm_list, description=None, csv_import=False,
-               start_migration=False):
+               pre_playbook=None, post_playbook=None, start_migration=False):
         """Create new migration plan in UI
         Args:
             name: (string) plan name
@@ -736,6 +750,8 @@ class MigrationPlanCollection(BaseCollection):
             infra_map: (object) infra map object name
             vm_list: (list) list of vm objects
             csv_import: (bool) flag for importing vms
+            pre_playbook: (string) pre-migration playbook name
+            post_playbook: (string) post-migration playbook name
             start_migration: (bool) flag for start migration
         """
         view = navigate_to(self, 'Add')
@@ -767,6 +783,15 @@ class MigrationPlanCollection(BaseCollection):
                     row[0].fill(True)
             view.vms.clear_filters.click()
         view.next_btn.click()
+
+        if pre_playbook:
+            view.advanced.pre_playbook.wait_displayed("5s")
+            view.advanced.pre_playbook.fill(pre_playbook)
+            view.advanced.pre_checkbox.click()
+        if post_playbook:
+            view.advanced.post_playbook.wait_displayed("5s")
+            view.advanced.post_playbook.fill(post_playbook)
+            view.advanced.post_checkbox.click()
         view.next_btn.click()
 
         if start_migration:

@@ -4,6 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -26,10 +27,13 @@ def enabled_embedded_ansible(appliance):
 @pytest.fixture(scope='module')
 def repository(enabled_embedded_ansible, appliance):
     repositories = appliance.collections.ansible_repositories
-    repository = repositories.create(
-        name=fauxfactory.gen_alpha(),
-        url="https://github.com/quarckster/ansible_playbooks",
-        description=fauxfactory.gen_alpha())
+    try:
+        repository = repositories.create(
+            name=fauxfactory.gen_alpha(),
+            url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
+            description=fauxfactory.gen_alpha())
+    except KeyError:
+        pytest.skip("Skipping since no such key found in yaml")
     view = navigate_to(repository, "Details")
     if appliance.version < "5.9":
         refresh = view.browser.refresh

@@ -19,7 +19,6 @@ from cfme.utils.providers import list_providers_by_class
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 
-REPOSITORIES = ["https://github.com/lcouzens/ansible_playbooks"]
 TimedCommand = namedtuple("TimedCommand", ["command", "timeout"])
 
 
@@ -343,9 +342,14 @@ def appliance_with_providers(appliance_preupdate):
 @pytest.fixture(scope="module")
 def ansible_repository(appliance):
     repositories = appliance.collections.ansible_repositories
-    repository = repositories.create(
-        fauxfactory.gen_alpha(), REPOSITORIES[0], description=fauxfactory.gen_alpha()
-    )
+    try:
+        repository = repositories.create(
+            name=fauxfactory.gen_alpha(),
+            url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
+            description=fauxfactory.gen_alpha()
+        )
+    except KeyError:
+        pytest.skip("Skipping since no such key found in yaml")
     view = navigate_to(repository, "Details")
     refresh = view.toolbar.refresh.click
     wait_for(
