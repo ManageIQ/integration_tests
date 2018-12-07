@@ -7,7 +7,6 @@ from cfme.utils.log_validator import LogValidator
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 def test_configure_vmdb_last_start_time(appliance):
     """
         Go to Settings -> Configure -> Database
@@ -23,12 +22,13 @@ def test_configure_vmdb_last_start_time(appliance):
 
     view = navigate_to(appliance.server, 'DatabaseSummary')
 
-    for item in view.summary('Properties').get_text_of('Data Directory').split('/'):
+    for item in view.properties.get_text_of('Data Directory').split('/'):
         if 'rh-postgresql' in item:
             logs_last_start_time = appliance.ssh_client.run_command(
                 "journalctl -u {}-postgresql.service  --boot=0 | sed '4!d'".format(item))
+            break
 
-    ui_last_start_time = parser.parse(view.summary('Properties').get_text_of('Last Start Time'))
+    ui_last_start_time = parser.parse(view.properties.get_text_of('Last Start Time'))
     # timedatectl is used here as we will get full timezone name, like 'US/Eastern',
     #  which is easier and safer(to omit UnknownTimeZoneError) to use later
     tz = pytz.timezone(appliance.ssh_client.run_command("timedatectl | grep 'Time zone'")
