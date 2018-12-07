@@ -2,17 +2,20 @@
 import fauxfactory
 import pytest
 from riggerlib import recursive_update
-from widgetastic.utils import partial_match
+
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.generators import random_vm_name
 
+from widgetastic.utils import partial_match
+
 
 pytestmark = [
     test_requirements.quota,
     pytest.mark.long_running,
+    pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider(
         [AzureProvider, OpenStackProvider],
         required_fields=[["provisioning", "image"]],
@@ -34,11 +37,6 @@ def vm_name():
 @pytest.fixture
 def template_name(provisioning):
     return provisioning["image"]["name"]
-
-
-@pytest.fixture(scope="module")
-def roottenant(appliance):
-    return appliance.collections.tenants.get_root_tenant()
 
 
 @pytest.fixture
@@ -91,7 +89,7 @@ def new_tenant(appliance):
     """This fixture creates new tenant under root tenant(My Company)"""
     collection = appliance.collections.tenants
     tenant = collection.create(
-        name="tenant{}".format(fauxfactory.gen_alphanumeric()),
+        name="tenant_{}".format(fauxfactory.gen_alphanumeric()),
         description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
         parent=collection.get_root_tenant(),
     )
@@ -105,7 +103,7 @@ def new_child(appliance, new_tenant):
     """The fixture creates new child tenant"""
     collection = appliance.collections.tenants
     child_tenant = collection.create(
-        name="tenant{}".format(fauxfactory.gen_alphanumeric()),
+        name="tenant_{}".format(fauxfactory.gen_alphanumeric()),
         description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
         parent=new_tenant,
     )
@@ -121,7 +119,7 @@ def new_group_child(appliance, new_child, new_tenant):
     group = collection.create(
         description="group_{}".format(fauxfactory.gen_alphanumeric()),
         role="EvmRole-super_administrator",
-        tenant="My Company/{}/{}".format(new_tenant.name, new_child.name),
+        tenant="My Company/{parent}/{child}".format(parent=new_tenant.name, child=new_child.name),
     )
     yield group
     if group.exists:
@@ -150,7 +148,7 @@ def new_project(appliance):
     """This fixture creates new project"""
     collection = appliance.collections.projects
     project = collection.create(
-        name="project{}".format(fauxfactory.gen_alphanumeric()),
+        name="project_{}".format(fauxfactory.gen_alphanumeric()),
         description="project_des{}".format(fauxfactory.gen_alphanumeric()),
         parent=collection.get_root_tenant(),
     )
@@ -166,7 +164,7 @@ def new_group_project(appliance, new_project):
     group = collection.create(
         description="group_{}".format(fauxfactory.gen_alphanumeric()),
         role="EvmRole-super_administrator",
-        tenant="My Company/{}".format(new_project.name),
+        tenant="My Company/{project}".format(project=new_project.name),
     )
     yield group
     if group.exists:
@@ -209,7 +207,6 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
     request,
     appliance,
     provider,
-    setup_provider,
     new_user_child,
     set_child_tenant_quota,
     extra_msg,
@@ -227,17 +224,20 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
         4. Check whether quota is exceeded or not
     """
     with new_user_child:
-        # Without below line, service_order only works here via admin, not via user
+        # Without below line, login only works here via admin, not via new user
         # TODO: Remove below line when this behavior gets fixed
         appliance.server.login(new_user_child)
         recursive_update(prov_data, custom_prov_data)
         recursive_update(
             prov_data,
-            {"request": {"email": "test_{}@example.com".format(fauxfactory.gen_alphanumeric()),
-                "first_name": fauxfactory.gen_alphanumeric(),
-                "last_name": fauxfactory.gen_alphanumeric(),
-                "manager_name": '{} {}'.format(fauxfactory.gen_alphanumeric(),
-                    fauxfactory.gen_alphanumeric())}}
+            {
+                "request": {
+                    "email": "test_{}@example.com".format(fauxfactory.gen_alphanumeric()),
+                    "first_name": fauxfactory.gen_alphanumeric(),
+                    "last_name": fauxfactory.gen_alphanumeric(),
+                    "manager_name": "{name}".format(name=fauxfactory.gen_alphanumeric()),
+                }
+            },
         )
         prov_data.update({"template_name": template_name})
         request_description = "Provision from [{template}] to [{vm}{msg}]".format(
@@ -276,7 +276,6 @@ def test_project_quota_enforce_via_lifecycle_cloud(
     request,
     appliance,
     provider,
-    setup_provider,
     new_user_project,
     set_project_quota,
     extra_msg,
@@ -294,17 +293,20 @@ def test_project_quota_enforce_via_lifecycle_cloud(
         4. Check whether quota is exceeded or not
     """
     with new_user_project:
-        # Without below line, service_order only works here via admin, not via user
+        # Without below line, login only works here via admin, not via new user
         # TODO: Remove below line when this behavior gets fixed
         appliance.server.login(new_user_project)
         recursive_update(prov_data, custom_prov_data)
         recursive_update(
             prov_data,
-            {"request": {"email": "test_{}@example.com".format(fauxfactory.gen_alphanumeric()),
-                "first_name": fauxfactory.gen_alphanumeric(),
-                "last_name": fauxfactory.gen_alphanumeric(),
-                "manager_name": '{} {}'.format(fauxfactory.gen_alphanumeric(),
-                    fauxfactory.gen_alphanumeric())}}
+            {
+                "request": {
+                    "email": "test_{}@example.com".format(fauxfactory.gen_alphanumeric()),
+                    "first_name": fauxfactory.gen_alphanumeric(),
+                    "last_name": fauxfactory.gen_alphanumeric(),
+                    "manager_name": "{name}".format(name=fauxfactory.gen_alphanumeric()),
+                }
+            },
         )
         prov_data.update({"template_name": template_name})
         request_description = "Provision from [{template}] to [{vm}{msg}]".format(
