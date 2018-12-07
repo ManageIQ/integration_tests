@@ -17,12 +17,23 @@ pytestmark = [
 
 
 @pytest.fixture
-def set_default(request):
-    value = request.param
-    if value:
-        return True
+def set_default(provider, request):
+    """This fixture is used to return paths for provisioning_entry_point, reconfigure_entry_point
+       and retirement_entry_point. These values are required while creating new catalog item in
+       'test_service_cloud_tenant_quota_with_default_entry_point' test. But other tests does not
+       require these values since those tests takes default values. Hence in this file, this fixture
+       must be used in all tests of quota which are related to services where catalog item needs to
+       be created.
+    """
+    reconfigure_entry_point = None
+    retirement_entry_point = None
+    if request.param:
+        provisioning_entry_point = ("/ManageIQ (Locked)/" + provider.string_name +
+                                 "/VM/Provisioning/StateMachines/ProvisionRequestApproval/Default")
+
     else:
-        return False
+        provisioning_entry_point = None
+    return provisioning_entry_point, reconfigure_entry_point, retirement_entry_point
 
 
 @pytest.fixture
@@ -71,6 +82,7 @@ def set_roottenant_quota(request, roottenant, appliance):
 @pytest.fixture
 def catalog_item(appliance, provider, provisioning, template_name, dialog, catalog, prov_data,
                  set_default):
+    provisioning_entry_point, reconfigure_entry_point, retirement_entry_point = set_default
     collection = appliance.collections.catalog_items
     yield collection.create(provider.catalog_item_type,
                             name='test_{}'.format(fauxfactory.gen_alphanumeric()),
@@ -79,8 +91,9 @@ def catalog_item(appliance, provider, provisioning, template_name, dialog, catal
                             catalog=catalog,
                             dialog=dialog,
                             prov_data=prov_data,
-                            provider=provider,
-                            field_entry_point=set_default
+                            provisioning_entry_point=provisioning_entry_point,
+                            reconfigure_entry_point=reconfigure_entry_point,
+                            retirement_entry_point=retirement_entry_point
                             )
 
 

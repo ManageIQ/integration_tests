@@ -34,6 +34,7 @@ class BasicInfoForm(ServicesCatalogView):
     subtype = BootstrapSelect('generic_subtype')
     field_entry_point = Input(name='fqname')
     retirement_entry_point = Input(name='retire_fqname')
+    reconfigure_entry_point = Input(name='reconfigure_fqname')
     select_resource = BootstrapSelect('resource_id')
 
     @View.nested
@@ -499,33 +500,26 @@ class CatalogItemsCollection(BaseCollection):
         Returns:
             An instance of catalog_item_class
         """
-        if kwargs:
-            provider = kwargs.get("provider", None)
-            field_entry_point = kwargs.get("field_entry_point", None)
-            if provider and field_entry_point:
-                """kwargs should not contain value of 'provider' and 'field_entry_point'
-                    while instantiating cat_item. Hence released 'provider' and 'field_entry_point'
-                    elements from kwargs.
-                """
-                kwargs.pop("provider")
-                kwargs.pop("field_entry_point")
+        provisioning_entry_point = kwargs.get("provisioning_entry_point", None)
+        reconfigure_entry_point = kwargs.get("reconfigure_entry_point", None)
+        retirement_entry_point = kwargs.get("retirement_entry_point", None)
+        kwargs.pop("provisioning_entry_point")
+        kwargs.pop("reconfigure_entry_point")
+        kwargs.pop("retirement_entry_point")
         cat_item = self.instantiate(catalog_item_class, *args, **kwargs)
         view = navigate_to(cat_item, "Add")
-        if field_entry_point:
-            prov_type = "Cloud" if provider.category == "cloud" else "Infrastructure"
-            view.basic_info.field_entry_point.fill("")
-            view.basic_info.modal.tree.click_path(
-                "Datastore",
-                "ManageIQ (Locked)",
-                prov_type,
-                "VM",
-                "Provisioning",
-                "StateMachines",
-                "ProvisionRequestApproval",
-                "Default",
-            )
-            view.basic_info.modal.include_domain.fill(True)
-            view.basic_info.modal.apply.click()
+        if provisioning_entry_point:
+            view.basic_info.field_entry_point.fill(provisioning_entry_point)
+            view.basic_info.modal.cancel.click()
+
+        if reconfigure_entry_point:
+            view.basic_info.reconfigure_entry_point.fill(reconfigure_entry_point)
+            view.basic_info.modal.cancel.click()
+
+        if retirement_entry_point:
+            view.basic_info.retirement_entry_point.fill(retirement_entry_point)
+            view.basic_info.modal.cancel.click()
+
         view.fill(cat_item.fill_dict)
         view.add.click()
         view = self.create_view(AllCatalogItemView)
