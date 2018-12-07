@@ -67,3 +67,18 @@ def test_l2_subnet_details(setup_provider_modscope, provider, with_nuage_sandbox
         ('relationships', 'Network Ports'): '2',
         ('relationships', 'Security Groups'): '1',
     })
+
+
+def test_network_router_details(setup_provider_modscope, provider, with_nuage_sandbox_modscope):
+    sandbox = with_nuage_sandbox_modscope
+    tenant_name = sandbox['enterprise'].name
+    router_name = sandbox['domain'].name
+    tenant = provider.collections.cloud_tenants.instantiate(name=tenant_name, provider=provider)
+    router = tenant.collections.routers.instantiate(name=router_name)
+
+    router.validate_stats({
+        ('properties', 'Name'): router_name,
+        ('properties', 'Type'): 'ManageIQ/Providers/Nuage/Network Manager/Network Router',
+        ('relationships', 'Cloud Subnets'): '1',
+        ('relationships', 'Security Groups'): '1',
+    })
