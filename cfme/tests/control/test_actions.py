@@ -111,7 +111,10 @@ def vddk_url(provider):
     # cf. BZ 1651702 vddk_version 6_7 does not currently work with CFME, so use v6_5
     if BZ(1651702, forced_streams=['5.9','5.10']).blocks:
         vddk_version = "v6_5"
-    url = cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
+    try:
+        url = conf.cfme_data.basic_info.vddk_url.get(vddk_version)
+    except (KeyError, AttributeError):
+        pytest.skip('VDDK URL/Version not found in cfme_data.basic_info')
     if url is None:
         pytest.skip("There is no vddk url for this VMware provider version")
     else:
