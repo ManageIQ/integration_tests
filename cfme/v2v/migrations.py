@@ -98,7 +98,6 @@ class InfraMappingWizardGeneralView(InfraMappingForm):
     description = TextInput(name='description')
     name_help_text = Text(locator='.//div[contains(@id,"name")]/span')
     description_help_text = Text(locator='.//div[contains(@id,"description")]/span')
-    include_buttons = View.include(InfraMappingForm)
 
     def after_fill(self, was_change):
         if was_change:
@@ -110,7 +109,6 @@ class InfraMappingWizardGeneralView(InfraMappingForm):
 
 
 class InfraMappingWizardClustersView(InfraMappingForm):
-    include_buttons_set1 = View.include(InfraMappingForm)
     include_buttons_set2 = View.include(InfraMappingWizardCommon)
     source_clusters = MultiSelectList('source_clusters')
     target_clusters = MultiSelectList('target_clusters')
@@ -145,7 +143,6 @@ class InfraMappingWizardClustersView(InfraMappingForm):
 
 
 class InfraMappingWizardDatastoresView(InfraMappingForm):
-    include_buttons_set1 = View.include(InfraMappingForm)
     include_buttons_set2 = View.include(InfraMappingWizardCommon)
     source_datastores = MultiSelectList('source_datastores')
     target_datastores = MultiSelectList('target_datastores')
@@ -187,7 +184,6 @@ class InfraMappingWizardDatastoresView(InfraMappingForm):
 
 
 class InfraMappingWizardNetworksView(InfraMappingForm):
-    include_buttons_set1 = View.include(InfraMappingForm)
     include_buttons_set2 = View.include(InfraMappingWizardCommon)
     source_networks = MultiSelectList('source_networks')
     target_networks = MultiSelectList('target_networks')
