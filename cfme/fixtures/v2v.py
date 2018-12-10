@@ -165,7 +165,7 @@ def get_vm(request, appliance, second_provider, template, datastore='nfs'):
     request.addfinalizer(lambda: vm_obj.cleanup_on_provider())
     return vm_obj
 
-
+@pytest.fixture(scope='function')
 def _form_data(second_provider, provider):
     form_data = {
         'general': {
@@ -251,6 +251,28 @@ def form_data_single_network(request, second_provider, provider):
         }
     })
     return form_data
+
+
+@pytest.fixture(scope='function')
+def edited_form_data(second_provider, provider):
+    edited_form_data = {
+        'general': {
+            'description': "my edited description"},
+        'cluster': {},
+        'datastore': {
+            'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                'mappings': [_form_data_mapping('datastores', second_provider, provider,
+                                                'iscsi', 'iscsi')]
+            }
+        },
+        'network': {
+            'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                'mappings': [_form_data_mapping('vlans', second_provider, provider,
+                                                'DPortGroup', 'Storage - VLAN 33')]
+            }
+        }
+    }
+    return edited_form_data
 
 
 @pytest.fixture(scope='function')
