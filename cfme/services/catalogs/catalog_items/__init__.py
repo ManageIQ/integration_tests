@@ -123,6 +123,14 @@ class AddCatalogItemView(BasicInfoForm):
     add = Button('Add')
     cancel = Button('Cancel')
 
+    def fill(self, values):
+        provider = values.pop('select_provider', None)
+        changed = super(AddCatalogItemView, self).fill(values)
+        # for orchestration catalog item
+        # where provider appears with some timeout after template has been chosen
+        changed_prov = super(AddCatalogItemView, self).fill({'select_provider': provider})
+        return changed or changed_prov
+
     @property
     def is_displayed(self):
         return (
@@ -180,11 +188,18 @@ class TabbedEditCatalogItemView(ServicesCatalogView):
     reset = Button('Reset')
     cancel = Button('Cancel')
 
+    def fill(self, values):
+        provider = values.pop('select_provider', None)
+        changed = super(TabbedEditCatalogItemView, self).fill(values)
+        # for orchestration catalog item
+        # where provider appears with some timeout after template has been chosen
+        changed_prov = super(TabbedEditCatalogItemView, self).fill({'select_provider': provider})
+        return changed or changed_prov
+
     @View.nested
     class basic_info(WaitTab):  # noqa
         TAB_NAME = 'Basic Info'
         included_form = View.include(BasicInfoForm)
-
 
     class request_info(WaitTab):  # noqa
         TAB_NAME = 'Request Info'
