@@ -87,23 +87,6 @@ def test_log_multiple_servers_uncofigured():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_chrony_conf():
-    """
-    check that iburst exists within /etc/chrony.conf.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1308606
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware65_test_vm_migration_with_rhel_75_last_time_74():
     """
     OSP: vmware65-Test VM migration with RHEL 7.5 (last time 7.4)
@@ -489,21 +472,6 @@ def test_embed_tower_playbook_links():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_evm_start():
-    """
-    test starting the evm server process
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
 def test_childtenant_cloud_memory_quota_by_enforce():
@@ -821,21 +789,6 @@ def test_appliance_terminates_unresponsive_worker_process():
 
 
 @pytest.mark.manual
-@test_requirements.rep
-def test_replication_powertoggle():
-    """
-    power toggle from global to remote
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: infra
-        caseimportance: critical
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
 def test_childtenant_cloud_vm_quota_by_enforce():
@@ -1024,27 +977,6 @@ def test_cmqe_delete_existing_resource_quota():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_haproxy():
-    """
-    Test HA setup with HAproxy load balancing.
-    https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.5/h
-    tml/high_availability_guide/configuring_haproxy
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup: setup HA following https://mojo.redhat.com/docs/DOC-1097888
-               setup HAProxy using keepalived and haproxy packages (waiting on
-               official documentation)
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware60_test_vm_migration_with_really_long_name_upto_64_chars_worked_not_65_char():
     """
     OSP: vmware60-Test VM migration with really long name(Upto 64 chars
@@ -1183,20 +1115,6 @@ def test_rhi_appliance():
         casecomponent: smartst
         initialEstimate: 1/2h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rep
-def test_replication_central_admin_vm_retirement():
-    """
-    retire a vm via CA
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: infra
-        initialEstimate: 1/12h
     """
     pass
 
@@ -3954,18 +3872,6 @@ def test_log_collect_all_server_server_setup():
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_replication_central_admin_service_provisioning():
-    """
-    Polarion:
-        assignee: tpapaioa
-        caseimportance: medium
-        initialEstimate: 1/4h
     """
     pass
 
@@ -7248,23 +7154,6 @@ def test_sui_order_and_request_should_be_sorted_by_time():
 
 
 @pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(2)
-def test_replication_appliance_add_single_subscription():
-    """
-    Add one remote subscription to global region
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: critical
-        initialEstimate: 1/12h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(2)
 def test_notification_show_notification_when_tenant_quota_is_reached():
@@ -9685,22 +9574,6 @@ def test_distributed_delete_offline_worker_appliance():
 
 
 @pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(3)
-def test_replication_delete_remote_from_global():
-    """
-    Delete remote subscription from global region
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: infra
-        caseimportance: critical
-        initialEstimate: 1/5h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(2)
 def test_playbook_with_already_existing_dialogs_name():
@@ -9839,19 +9712,6 @@ def test_pg_stat_activity_view_in_postgres_should_show_worker_information():
         initialEstimate: 1/10h
         startsin: 5.7
         title: pg_stat_activity view in postgres should show worker information
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_replication_low_bandwidth():
-    """
-    ~5MB/s up/down
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: infra
-        initialEstimate: None
     """
     pass
 
@@ -11389,21 +11249,6 @@ def test_quota_for_simultaneous_service_catalog_request_with_different_users():
 
 
 @pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(3)
-def test_replication_re_add_deleted_remote():
-    """
-    Re-add deleted remote region
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: infra
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.snapshot
 @pytest.mark.tier(2)
 def test_ssui_test_snapshot_vm_memory_checkbox_when_creating_snapshot_for_powered_off_vm():
@@ -12202,21 +12047,6 @@ def test_textbox_value_should_update_with_automate_method():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_replication_central_admin_ansible_playbook_service_from_global():
-    """
-    Playbook service is ordered from the master region catalog.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: ansible
-        caseimportance: medium
-        initialEstimate: 1/3h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware65_test_vm_with_multiple_nics_with_single_ip_ipv6_to_first_nic_and_ipv4_to_():
     """
     OSP: vmware65-Test VM with multiple NICs with single IP (IPv6 to first
@@ -12793,24 +12623,6 @@ def test_osp_test_user_can_download_post_migration_ansible_playbook_log():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test user can download post migration ansible playbook log
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(1)
-def test_replication_remote_to_global_by_ip_pglogical():
-    """
-    Test replication from remote region to global using any data type
-    (provider,event,etc)
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: infra
-        caseimportance: critical
-        initialEstimate: 1/4h
-        startsin: 5.6
     """
     pass
 
@@ -14823,24 +14635,6 @@ def test_ldap_user_group():
 
 
 @pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(1)
-def test_replication_appliance_set_type_global_ui():
-    """
-    Set appliance replication type to "Global" and add subscription in the
-    UI
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: infra
-        caseimportance: critical
-        initialEstimate: 1/6h
-        testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_automate_git_import_without_master():
     """
@@ -16092,22 +15886,6 @@ def test_service_dialog_elements_with_regex_validation_should_be_validated():
 
 
 @pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(2)
-def test_replication_appliance_add_multi_subscription():
-    """
-    add two or more subscriptions to global
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        initialEstimate: 1/4h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_verify_smart_mgmt_orchest_template():
     """
@@ -16415,23 +16193,6 @@ def test_show_tag_info_for_playbook_services():
 
 
 @pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(1)
-def test_replication_appliance_set_type_remote_ui():
-    """
-    Can the appliance be set to the "remote" type in the ui
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: infra
-        caseimportance: critical
-        initialEstimate: 1/12h
-        testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.reconfigure
 @pytest.mark.tier(1)
 def test_vm_reconfig_resize_disk_hot_vsphere67_nested_independent_persistent_thin():
@@ -16677,19 +16438,6 @@ def test_appliance_console_ha_dc_failover():
                network connectivity between DC1 and DC2 manually kill DC1 current
                primary if its in a split brain scenario.
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_replication_network_dropped_packets():
-    """
-    10% dropped packets
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: infra
-        initialEstimate: None
     """
     pass
 
@@ -17112,21 +16860,6 @@ def test_retire_ansible_stack():
 
 
 @pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(1)
-def test_replication_global_region_dashboard():
-    """
-    Global dashboard show remote data
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(3)
 def test_azone_group_by_tag_ec2():
@@ -17483,22 +17216,6 @@ def test_osp_vmware67_test_vm_with_mutliple_nics_with_single_ip_ipv6_to_first_ni
         subcomponent: OSP
         title: OSP: vmware67-Test VM with mutliple NICs with single IP
                (IPv6 to first NIC and IPv4 to second)
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(1)
-def test_replication_global_to_remote_new_vm_from_template():
-    """
-    Create a new VM from template in remote region from global region
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: prov
-        caseimportance: critical
-        initialEstimate: 1/6h
     """
     pass
 
@@ -20460,20 +20177,6 @@ def test_service_cloud_tenant_quota_storage_default_entry_point():
 
 
 @pytest.mark.manual
-@test_requirements.rep
-def test_replication_central_admin_vm_reconfigure():
-    """
-    reconfigure a VM via CA
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: infra
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 def test_orphaned_vms_get_excluded_from_used_quota_counts():
     """
@@ -21503,18 +21206,6 @@ def test_power_controls_on_archived_vm():
         caseposneg: negative
         initialEstimate: 1/10h
         startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_replication_central_admin_adhoc_provision_template():
-    """
-    Polarion:
-        assignee: tpapaioa
-        caseimportance: medium
-        initialEstimate: 1/6h
     """
     pass
 
@@ -25540,27 +25231,6 @@ def test_distributed_diagnostics_servers_view():
         casecomponent: infra
         caseimportance: medium
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_replication_subscription_revalidation_pglogical():
-    """
-    Subscription validation passes for replication subscriptions which
-    have been validated and successfully saved.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: medium
-        initialEstimate: 1/12h
-        testSteps:
-            1. Attempt to validate the subscription
-        expectedResults:
-            1. Validation succeeds as this subscription was successfully
-               saved and is currently replicating
     """
     pass
 

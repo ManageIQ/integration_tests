@@ -272,3 +272,35 @@ def test_appliance_console_packages(appliance):
         initialEstimate: None
     """
     assert appliance.ssh_client.run_command('scl --list | grep -v rh-ruby').success
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_chrony_conf():
+    """
+    check that iburst exists within /etc/chrony.conf.
+    https://bugzilla.redhat.com/show_bug.cgi?id=1308606
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_evm_start():
+    """
+    test starting the evm server process
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
+    pass
