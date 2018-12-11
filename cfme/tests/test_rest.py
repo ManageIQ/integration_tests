@@ -164,13 +164,35 @@ COLLECTIONS_IN_59 = {
     "zones",
 }
 
+COLLECTIONS_NEWER_THAN_59 = {
+    "cloud_object_store_containers",
+    "cloud_templates",
+    "cloud_volume_types",
+    "configuration_scripts",
+    "container_groups",
+    "container_images",
+    "container_templates",
+    "container_volumes",
+    "conversion_hosts",
+    "customization_scripts",
+    "enterprises",
+    "physical_chassis",
+    "physical_racks",
+    "physical_storages",
+    "physical_switches",
+    "search_filters",
+    "service_offerings",
+    "service_parameters_sets",
+    "switches"
+}
+
 
 COLLECTIONS_IN_UPSTREAM = COLLECTIONS_IN_59
-COLLECTIONS_IN_510 = COLLECTIONS_IN_59
+COLLECTIONS_IN_510 = COLLECTIONS_IN_59 | COLLECTIONS_NEWER_THAN_59
 COLLECTIONS_IN_58 = (COLLECTIONS_IN_59 | COLLECTIONS_OBSOLETED_IN_59) - COLLECTIONS_NEWER_THAN_58
-COLLECTIONS_ALL = COLLECTIONS_IN_59 | COLLECTIONS_IN_58
+COLLECTIONS_ALL = COLLECTIONS_IN_59 | COLLECTIONS_IN_58 | COLLECTIONS_IN_510
 # non-typical collections without "id" and "resources", or additional parameters are required
-COLLECTIONS_OMMITED = {"automate_workspaces", "metric_rollups", "settings"}
+COLLECTIONS_OMITTED = {"automate_workspaces", "metric_rollups", "settings"}
 
 
 def _collection_not_in_this_version(appliance, collection_name):
@@ -188,7 +210,7 @@ def _collection_not_in_this_version(appliance, collection_name):
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda appliance, collection_name:
-        collection_name in COLLECTIONS_OMMITED or
+        collection_name in COLLECTIONS_OMITTED or
         _collection_not_in_this_version(appliance, collection_name)
 )
 def test_query_simple_collections(appliance, collection_name):
@@ -213,7 +235,7 @@ def test_query_simple_collections(appliance, collection_name):
 @pytest.mark.parametrize('collection_name', COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda appliance, collection_name:
-        collection_name in COLLECTIONS_OMMITED or
+        collection_name in COLLECTIONS_OMITTED or
         _collection_not_in_this_version(appliance, collection_name)
 )
 def test_collections_actions(appliance, collection_name):
@@ -245,7 +267,7 @@ def test_collections_actions(appliance, collection_name):
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda appliance, collection_name:
-        collection_name in COLLECTIONS_OMMITED or
+        collection_name in COLLECTIONS_OMITTED or
         _collection_not_in_this_version(appliance, collection_name)
 )
 def test_query_with_api_version(api_version, collection_name):

@@ -191,7 +191,7 @@ class ImageAllForProvider(CFMENavigateStep):
     def step(self, *args, **kwargs):
         """Navigate to provider filtered collection
         Raises:
-            CollectionFilterngError: When the collection has not yet been filtered
+            CollectionFilteringError: When the collection has not yet been filtered
         """
         if isinstance(self.obj, ImageCollection) and self.obj.filters.get('provider'):
             # the collection is navigation target, use its filter value
