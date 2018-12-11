@@ -92,7 +92,8 @@ def test_update_yum(appliance_preupdate, appliance):
     """Tests appliance update between versions
 
     Polarion:
-        assignee: lcouzens
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: 1/4h
     """
     appliance_preupdate.evmserverd.stop()
@@ -111,7 +112,8 @@ def test_update_webui(appliance_with_providers, appliance, request, old_version)
         provisioning continues to function correctly after the update has completed
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     update_appliance(appliance_with_providers)
@@ -131,7 +133,8 @@ def test_update_scap_webui(appliance_with_providers, appliance, request, old_ver
         provisioning continues to function correctly after the update has completed
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     appliance_with_providers.appliance_console.scap_harden_appliance()
@@ -157,7 +160,8 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
         role continues to function correctly after the update has completed
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     update_appliance(enabled_embedded_appliance)
@@ -193,7 +197,8 @@ def test_update_distributed_webui(ext_appliances_with_providers, appliance, requ
             provisioning continues to function correctly after the update has completed
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     update_appliance(ext_appliances_with_providers[0])
@@ -219,7 +224,8 @@ def test_update_replicated_webui(replicated_appliances_with_providers, appliance
             provisioning continues to function correctly after the update has completed
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     providers_before_upgrade = set(replicated_appliances_with_providers[0].managed_provider_names)
@@ -252,7 +258,8 @@ def test_update_ha_webui(ha_appliances_with_providers, appliance, request, old_v
             provisioning continues to function correctly after the update has completed
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     update_appliance(ha_appliances_with_providers[2])

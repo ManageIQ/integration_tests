@@ -74,8 +74,8 @@ def test_appliance_console_set_hostname(configured_appliance):
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         casecomponent: appl
-        caseimportance: medium
         initialEstimate: 1/6h
     """
 
@@ -107,6 +107,7 @@ def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modsc
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         casecomponent: config
         initialEstimate: 1/6h
     """
@@ -123,6 +124,7 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         casecomponent: config
         initialEstimate: 1/6h
     """
@@ -179,8 +181,8 @@ def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope)
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         casecomponent: config
-        caseimportance: medium
         initialEstimate: 1/4h
     """
 
@@ -209,6 +211,7 @@ def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         casecomponent: appl
         initialEstimate: 1/3h
         testtype: structural
@@ -258,6 +261,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         casecomponent: config
         initialEstimate: 1h
         testtype: structural
@@ -366,6 +370,7 @@ def test_appliance_console_external_db_create(
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         casecomponent: appl
         initialEstimate: 1/3h
     """
@@ -412,7 +417,8 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
     4. '' finish.
 
     Polarion:
-        assignee: mpusater
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
 
@@ -445,7 +451,8 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
     5. '4' apply changes.
 
     Polarion:
-        assignee: mpusater
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     # TODO this depends on the auth_type options being disabled when the test is run
@@ -482,7 +489,8 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
     5. '4' apply changes.
 
     Polarion:
-        assignee: mpusater
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
 
@@ -647,7 +655,8 @@ def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
     11. 'y' apply static configuration.
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     command_set = ('ap', '', '1', '3', '1::1', '', '1::f', '', '', '', 'y')

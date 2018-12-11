@@ -15,7 +15,8 @@ def test_appliance_version(appliance):
     So we check whether the UI version starts with SSH version
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     ssh_version = str(appliance.version)

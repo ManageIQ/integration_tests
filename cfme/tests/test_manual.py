@@ -2635,7 +2635,6 @@ def test_provision_bad_password():
     """
     This test verifies that an acceptable password is entered when
     provisioning an Azure VM from an Azure image.  "test" won"t work.
-    Dog8Code8Dog will work.
 
     Polarion:
         assignee: jhenner
