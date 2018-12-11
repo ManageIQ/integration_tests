@@ -1510,21 +1510,6 @@ def test_ssa_groups_ec2_fedora():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_console_check_default_ip():
-    """
-    test ip settings, checking all the defaults are what is expected.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.retirement
 @pytest.mark.tier(2)
 def test_retire_infra_vms_folder():
@@ -2454,23 +2439,6 @@ def test_reports_should_generate_with_no_errors_in_logs():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_provision_bad_password():
-    """
-    This test verifies that an acceptable password is entered when
-    provisioning an Azure VM from an Azure image.  "test" won"t work.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(3)
 def test_verify_change_update_in_ldap_server_takes_effect_in_the_cfme_authentication():
@@ -3011,22 +2979,6 @@ def test_osp_test_flavors_can_be_selected_creating_migration_plan():
 
 
 @pytest.mark.manual
-@test_requirements.dashboard
-@pytest.mark.tier(3)
-def test_dashboard_layouts_match():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1518766
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: web_ui
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_cmqe_modify_existing_resource_quota():
     """
     Modify Existing Quota
@@ -3076,23 +3028,6 @@ def test_user_cloud_memory_quota_by_lifecycle():
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_executing_script():
-    """
-    check that a script from /var/www/miq/vmdb/tools/ runs correctly as
-    expected.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.9
     """
     pass
 
@@ -3416,24 +3351,6 @@ def test_vm_mac_scvmm():
         caseimportance: low
         initialEstimate: 1/20h
         setup: https://bugzilla.redhat.com/show_bug.cgi?id=1514461
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_provision_market_place_image_azure():
-    """
-    1.Enable Marketplace images in Advanced settings
-    2.Provision a VM using one
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: cloud
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.9
-        tags: provision
     """
     pass
 
@@ -5680,61 +5597,6 @@ def test_automate_simulate_retry():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_log_rotate_postgres():
-    """
-    [root@host-192-168-55-133 ~]# cd /var/opt/rh/rh-
-    postgresql95/lib/pgsql/data/pg_log
-    [root@host-192-168-55-133 pg_log]# ll
-    total 204
-    -rw-------. 1 postgres postgres 108218 Nov 10 14:39 postgresql.log
-    -rw-------. 1 postgres postgres  10776 Nov  3 03:34
-    postgresql.log-20161103.gz
-    -rw-------. 1 postgres postgres   8095 Nov  4 03:26
-    postgresql.log-20161104.gz
-    -rw-------. 1 postgres postgres   7544 Nov  5 03:20
-    postgresql.log-20161105.gz
-    -rw-------. 1 postgres postgres   8385 Nov  6 03:22
-    postgresql.log-20161106.gz
-    -rw-------. 1 postgres postgres   7637 Nov  7 03:26
-    postgresql.log-20161107.gz
-    -rw-------. 1 postgres postgres   8621 Nov  8 03:09
-    postgresql.log-20161108.gz
-    -rw-------. 1 postgres postgres  13083 Nov  9 03:28
-    postgresql.log-20161109.gz
-    -rw-------. 1 postgres postgres  14880 Nov 10 03:05
-    postgresql.log-20161110.gz
-    # are the log files being compressed and archived each day ( like
-    appliance_console.log-20161109.gz )
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        initialEstimate: 1/12h
-        startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_log_rotate_evm():
-    """
-    [root@host-192-168-55-133 pg_log]# vmdb
-    [root@host-192-168-55-133 vmdb]# cd log
-    # are the log files being compressed and archived each day ( like
-    appliance_console.log-20161109.gz )
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        initialEstimate: 1/12h
-        startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_diagnostic_timelines():
     """
     None
@@ -6147,21 +6009,6 @@ def test_ssui_myservice_myrequests_and_service_catalog_filter_links():
         initialEstimate: 1/8h
         startsin: 5.5
         title: SSUI : MyService, MyRequests and Service Catalog - Filter Links
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_restart():
-    """
-    test restarting the appliance
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/6h
     """
     pass
 
@@ -6878,23 +6725,6 @@ def test_provider_specific_vm():
         casecomponent: infra
         caseimportance: medium
         initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.provision
-@pytest.mark.tier(2)
-def test_provision_request_approved_msg():
-    """
-    Test the flash message content on denial; should contain "approved"
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.5
     """
     pass
 
@@ -8677,41 +8507,6 @@ def test_service_ansible_playbook_with_already_existing_catalog_item_name():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_ha_setup_dc():
-    """
-    Test configuring a high availability setup over multiple data centers.
-    Primary + standby in DC1 and standby in DC2
-    In order for the slave in DC2 to be promoted to primary, it would need
-    to have visibility to > 50% of the nodes. In this
-    case, that slave node has visibility to only 1 node, itself, because
-    of the network outage. It would need visibility to at
-    least 2 nodes in order to be eligible to be promoted. Therefore, it
-    cannot be promoted so, it would just be cut off
-    from the primary until network connectivity is restored. This is
-    specifically the reason for having the extra node on the
-    segment with the primary, to ensure that node always has the voting
-    majority.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        initialEstimate: 1/2h
-        setup: provision 3 appliances
-               setup HA following https://mojo.redhat.com/docs/DOC-1097888
-               (https://mojo.redhat.com/docs/DOC-1168738)
-               check setup is working be accessing webui
-        startsin: 5.8
-        testSteps:
-            1. Setup HA
-        expectedResults:
-            1. Confirm primary database server, application server is
-               running and it can access the webui
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_external_auth_details_updated_in_appliance_console_ipa_():
@@ -8824,29 +8619,6 @@ def test_osp_test_if_no_password_is_exposed_in_logs_during_migration():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_screen():
-    """
-    Test new screen package added to appliances. Should be able to run a
-    task and switch terminal/screen within ssh to run other tasks
-    simultaneously.
-    Just type "screen" after logging in to ssh to start using it. Once you
-    have screen running, "ctrl-a" intiates screen command "c" creates new
-    screen, "n" switch to next screen., "p" for previous screen, "d"
-    detach from screens (this takes you back to standard terminal) and run
-    screen -r to resume using screen.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: medium
-        initialEstimate: 1/12h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ssui
 @pytest.mark.tier(3)
 def test_sui_test_all_language_translations():
@@ -8878,22 +8650,6 @@ def test_service_ansible_verbosity():
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.dashboard
-@pytest.mark.tier(3)
-def test_dashboard_widgets_fullscreen():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1518901
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: web_ui
-        caseimportance: low
-        initialEstimate: 1/12h
     """
     pass
 
@@ -9108,22 +8864,6 @@ def test_ec2_targeted_refresh_network_port():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_service_provision_azure():
-    """
-    Azure service provsioning
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: cloud
-        initialEstimate: 1/8h
-        startsin: 5.6
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_automate_git_import_multiple_domains():
     """
@@ -9299,27 +9039,6 @@ def test_osp_test_delete_infra_mapping():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test delete infra mapping
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_none_public_ip_provision_azure():
-    """
-    Testing provision w/o public IP - to cover -
-    https://bugzilla.redhat.com/show_bug.cgi?id=1497202
-    1.Provision VM
-    2.Verify we don"t have public IP
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: prov
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/6h
-        startsin: 5.9
-        tags: provision
     """
     pass
 
@@ -9605,27 +9324,6 @@ def test_notification_banner_service_event_should_be_shown_in_notification_bell(
         casecomponent: services
         initialEstimate: 1/4h
         title: Notification Banner : Service event should be shown in notification bell
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_ha_dc_re_establish():
-    """
-    Test that upon re-connection of networks the repmgr process continues
-    to replicate correctly to the disconnected node within DC2
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        initialEstimate: 1/2h
-        setup: Restore network connectivity between DC1 and DC2
-        startsin: 5.8
-        testSteps:
-            1. Restore network connectivity between DC1 and DC2
-        expectedResults:
-            1. Confirm replication is working correctly
     """
     pass
 
@@ -10791,21 +10489,6 @@ def test_pod_appliance_config_upgrade():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_evm_stop():
-    """
-    test stopping the evm server process
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.storage
 def test_storage_object_store_container_edit_tag_openstack():
     """
@@ -10843,26 +10526,6 @@ def test_storage_ebs_volume_detach():
         assignee: mmojzis
         initialEstimate: 1/6h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.provision
-@pytest.mark.tier(2)
-def test_template_list_of_provider():
-    """
-    test case to cover BZ 1427477 - check list of templates available
-    during provision from particular provider view
-    expected result: only provider specific templates should be available
-    Bug 1427477 - [RFE] In UI, VM provision, in scope of specific
-    provider, should not suggest all the providers templates.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: prov
-        caseimportance: low
-        initialEstimate: 1/12h
     """
     pass
 
@@ -10937,26 +10600,6 @@ def test_osp_test_associated_tags_before_and_after_migration_department_accounti
         subcomponent: OSP
         title: OSP: Test associated tags before and after migration
                (Department:Accounting kind)
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.provision
-@pytest.mark.tier(2)
-def test_vmware_default_placement_vmware():
-    """
-    Test host autoplacement provisioning on VMware. now we are able to get
-    DRS property of the Cluster from VC and specify if selected Cluster
-    requires pre-selected Host Name or not
-    CFME: Cluster properties -  DRS = True
-    VC: Cluster / Manage / Settings / vSphere DRS
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: prov
-        initialEstimate: 1/6h
-        startsin: 5.7
     """
     pass
 
@@ -11085,22 +10728,6 @@ def test_default_reports_with_timelines_policy_events2():
     Polarion:
         assignee: None
         initialEstimate: None
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_ssl():
-    """
-    Test ssl connections to postgres database from other appliances.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1482697
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/3h
     """
     pass
 
@@ -11634,33 +11261,6 @@ def test_saved_chargeback_report():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_restore_ha_standby_node():
-    """
-    Test backup and restore with a HA setup
-    So this should work if you stop the repmgrd service on each of the
-    standby nodes before doing the restore and start it after.
-    Should be just `systemctl stop rh-postgresql95-repmgr` then `systemctl
-    start rh-postgresql95-repmgr` after the restore is finished.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup: provision 3 appliances
-               setup HA following https://mojo.redhat.com/docs/DOC-1097888
-               backup database server
-               make changes to database
-               stop database
-               restore backup
-               check changes are restored and HA continues to work correctly
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_create_migration_plan_create_and_read():
     """
     OSP: Test create migration plan - Create and Read
@@ -11692,22 +11292,6 @@ def test_report_menus_moving_reports():
         assignee: anikifor
         casecomponent: report
         caseimportance: low
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_cancel():
-    """
-    Test option to navigate back from all submenus in appliance_console
-    https://bugzilla.redhat.com/show_bug.cgi?id=1438844
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
         initialEstimate: 1/12h
     """
     pass
@@ -11881,21 +11465,6 @@ def test_storage_object_store_object_edit_tag_openstack():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_console_network_conf():
-    """
-    test network configuration
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -12542,42 +12111,6 @@ def test_reconfigure_service_for_dialogs_with_timeout_values():
         caseimportance: low
         initialEstimate: 1/4h
         title: Test reconfigure service for dialogs with timeout values
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.provision
-@pytest.mark.tier(2)
-def test_provision_with_storage_profile_vsphere():
-    """
-    Starting from vc 55 we may use Storage Profiles(Policies) in CFME
-    Prerequisite - VC with configured Storage Policies/VM with assigned
-    St.Policy
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: prov
-        initialEstimate: 1/6h
-        startsin: 5.7
-        tags: provision, vmware
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_log_crond():
-    """
-    check that CROND service does not get stopped after appliance has been
-    running.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/12h
     """
     pass
 
@@ -13283,31 +12816,6 @@ def test_set_ownership_back_to_default():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Set Ownership back to default
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.provision
-@pytest.mark.tier(2)
-def test_vm_placement_with_duplicated_folder_name_vmware():
-    """
-    This testcase is related to -
-    https://bugzilla.redhat.com/show_bug.cgi?id=1414136
-    Description of problem:
-    Duplicate folder names between host & vm/templates causes placement
-    issues
-    Hosts & Clusters shared a common folder name with a folder that also
-    resides in vm & templates inside of VMWare which will cause CloudForms
-    to attempt to place a vm inside of the Host & Clusters folder.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: prov
-        caseimportance: low
-        initialEstimate: 1/4h
-        startsin: 5.7
-        testtype: nonfunctional
     """
     pass
 
@@ -14765,22 +14273,6 @@ def test_ec2_targeted_refresh_volume():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_console_network_conf_negative():
-    """
-    test network configuration error with invalid settings
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware67_test_vm_migration_from_nfs_storage_in_vmware_to_iscsi_on_osp():
     """
     OSP: vmware67-Test VM migration from NFS Storage in VMware to iSCSI on
@@ -14904,23 +14396,6 @@ def test_bundle_stack_deployment():
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_console_vmdb_httpd():
-    """
-    check that httpd starts after restarting vmdb
-    https://bugzilla.redhat.com/show_bug.cgi?id=1337525
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/12h
     """
     pass
 
@@ -15097,28 +14572,6 @@ def test_osp_test_vm_owner_before_and_after_migration_remains_same():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test VM owner before and after migration remains same
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_multiple_vm_provision_with_public_ip_azure():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1531275
-    Wait for BZ to get resolved first. Design solution still wasn"t made
-    "This isn"t a dup of the other ticket, as the distinction is single vs
-    multiple VM"s. So, what we need to do is alter the UI to allow two
-    options when provisioning multiple VM"s - public or private."
-    1.Provision multiple VMs w/ or w/o Public IP
-    Currently we are not able to select any Public IP option when we
-    provision multiple VMs - all VMs will get new Public IP
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: cloud
-        caseimportance: medium
-        initialEstimate: 1/6h
     """
     pass
 
@@ -15723,21 +15176,6 @@ def test_tagvis_provision_fields():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_shutdown():
-    """
-    test shutting down the appliance
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_tags_mapping():
     """
     Requirement: Have an ec2 provider
@@ -15775,22 +15213,6 @@ def test_instance_quota_reconfigure_with_flavors():
         casecomponent: cloud
         initialEstimate: 1/6h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_console_static_ip_negative():
-    """
-    test error on invalid static ip
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/6h
     """
     pass
 
@@ -16422,27 +15844,6 @@ def test_vmware_topology_status():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_ha_dc_failover():
-    """
-    Test failing over from DC1 primary to DC1 standby then drop the
-    connection between DC1/2. This should create a split brain scenario,
-    upon re-establishing connections we need to manually kill/shutdown DC1
-    current primary.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        initialEstimate: 1/2h
-        setup: Failover to DC1 standby node, drop connections between DC"s, restore
-               network connectivity between DC1 and DC2 manually kill DC1 current
-               primary if its in a split brain scenario.
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware65_test_vm_migration_with_windows_2012_server():
     """
     OSP: vmware65-Test VM migration with Windows 2012 server
@@ -16480,28 +15881,6 @@ def test_automate_method_copy():
         initialEstimate: 1/8h
         startsin: 5.9
         upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_logfile():
-    """
-    Test configuring new log file disk volume.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: -provision new appliance with additional disk
-               -ssh to appliance
-               -run appliance_console
-               -select option "Logfile Configuration"
-               -configure disk
-               -confirm new logfile disk is configured correctly
-        startsin: 5.7
     """
     pass
 
@@ -16718,22 +16097,6 @@ def test_vm_tempate_ownership_nogroup():
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_restore_db_network_negative():
-    """
-    test restoring database with invalid connection settings
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/3h
     """
     pass
 
@@ -17769,23 +17132,6 @@ def test_automation_executed_on_field_refresh_are_called_twice_in_self_service_d
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_packages():
-    """
-    Check that we no long use scl packages in cfme. We should not have an
-    rh-ruby packages.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        initialEstimate: 1/12h
-        startsin: 5.10
-        testtype: structural
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rep
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_smartstate_analysis():
@@ -17848,23 +17194,6 @@ def test_multiple_stack_deployment():
         initialEstimate: 1/8h
         startsin: 5.5
         title: Multiple Stack deployment
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.dashboard
-@pytest.mark.tier(3)
-def test_identical_dashboard_widgets():
-    """
-    test_identical_dashboard_widgets
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: report
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/12h
     """
     pass
 
@@ -18083,24 +17412,6 @@ def test_remove_catalog_items_from_catalog_bundle_resource_list():
         casecomponent: services
         initialEstimate: None
         title: remove catalog items from Catalog Bundle resource list
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.dashboard
-@pytest.mark.tier(3)
-def test_dashboard_chart_widgets_size_in_modal():
-    """
-    Test whether dashboard chart widgets have correct size in modal
-    window.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: report
-        caseimportance: low
-        initialEstimate: 1/6h
-        testtype: nonfunctional
     """
     pass
 
@@ -18325,24 +17636,6 @@ def test_custom_button_state_disabled():
 
 
 @pytest.mark.manual
-@test_requirements.provision
-@pytest.mark.tier(2)
-def test_provision_request_info():
-    """
-    1)Create provisioning request
-    2)Open Request info
-    3)Check if Request Info is filled (mainly Environment tab etc)
-    all - preselected options should be mentioned here
-
-    Polarion:
-        assignee: jhenner
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rep
 @pytest.mark.tier(1)
 def test_distributed_field_zone_name_long():
@@ -18355,25 +17648,6 @@ def test_distributed_field_zone_name_long():
         casecomponent: appl
         caseimportance: medium
         initialEstimate: 1/30h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_cli_rh_registration():
-    """
-    Test RHSM registration through cli and check if changes are made
-    within the ui
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: medium
-        initialEstimate: 1/12h
-        setup: Provision appliace
-               ssh to it and run "subscription-manager register"
-               check changes within the ui
     """
     pass
 
@@ -18711,22 +17985,6 @@ def test_check_disk_allocation_size_scvmm():
         caseimportance: medium
         initialEstimate: 1/2h
         title: Check disk allocation size [SCVMM]
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_console_extend_storage_negative():
-    """
-    test extending storage with no additional partition
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/12h
     """
     pass
 
@@ -19093,25 +18351,6 @@ def test_provider_discover_error_azure():
         endsin: 5.8
         initialEstimate: 1/8h
         startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_provision_image_managed_azure():
-    """
-    Azure as of this test case date allows for provisioning from Managed
-    Images.
-    See RFE - https://bugzilla.redhat.com/show_bug.cgi?id=1452227
-    See Create Manage Image - https://docs.microsoft.com/en-us/azure
-    /virtual-machines/windows/capture-image-resource Section 1
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: cloud
-        initialEstimate: 1/4h
-        upstream: yes
     """
     pass
 
@@ -19786,26 +19025,6 @@ def test_ssa_vm_files_unicode():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_exec_scripts():
-    """
-    check that scripts in /var/www/miq/vmdb/tools have the executable
-    section added to the files.
-    #!/usr/bin/env ruby # finds ruby
-    require File.expand_path("../config/environment", __dir__) # loads
-    rails, only needed if the script needs it
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.log_depot
 @pytest.mark.tier(2)
 def test_log_scvmm_rollover_scvmm():
@@ -20113,35 +19332,6 @@ def test_edit_catalog_bundle():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_db_maintenance_periodic_unconfigure():
-    """
-    Test unconfiguring full vacums
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        endsin: 5.8
-        initialEstimate: 1/6h
-        setup: -ssh to appliance
-               -run appliance_console
-               -select option "configure database maintenance"
-               -say yes to "unconfigure Periodic Database Maintance"
-               -wait for the set time
-               -check that full vacums have stopped by checking log in
-               "vmdb/log/hourly.........log" (all timescales are stored in the hourly
-               log file)
-        startsin: 5.7
-        testSteps:
-            1. unconfigure periodic maintenance
-        expectedResults:
-            1. full vacuums stop running
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_duplicate_groups_when_setting_ownership_to_multiple_items():
     """
     https://bugzilla.redhat.com/show_bug.cgi?id=1589009
@@ -20369,23 +19559,6 @@ def test_timeout():
         assignee: anikifor
         caseimportance: medium
         initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_provision_from_private_image_azure():
-    """
-    1.Provision a VM using one private images
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: prov
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.9
-        tags: provision
     """
     pass
 
@@ -20764,21 +19937,6 @@ def test_verify_database_user_login_fails_with_external_auth_configured():
 
 
 @pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(1)
-def test_appliance_replicate_database_disconnection_with_backlog():
-    """
-    Test replication re-connect with backlog
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_invalid_user_login_fails():
@@ -21104,22 +20262,6 @@ def test_refresh_azure_provider_with_empty_ipv6_config_on_vm():
 
 
 @pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(1)
-def test_appliance_replicate_sync_role_change_with_backlog():
-    """
-    Replicate role change w/ a replication backlog
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        endsin: 5.6
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_active_tasks_get_timed_out_when_they_run_too_long():
     """
@@ -21282,21 +20424,6 @@ def test_gap_collection_hourly_graph_vsphere6():
         casecomponent: candu
         caseimportance: medium
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(1)
-def test_appliance_replicate_database_disconnection():
-    """
-    test replication re-connection w/ no backlog
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        initialEstimate: 1/2h
     """
     pass
 
@@ -21476,23 +20603,6 @@ def test_vm_volume_specchar1_scvmm():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_console_static_dns():
-    """
-    test setting secondary dns and check it"s saved as the new default
-    https://bugzilla.redhat.com/show_bug.cgi?id=1439348
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_evmgroup_self_service_user_can_access_the_self_service_ui():
@@ -21552,40 +20662,6 @@ def test_able_to_access_openstack_instance_console_from_self_service_portal():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_service_provision_managed_image_azure():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1470491
-    1. Provision Service using azure managed disk/image
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: cloud
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.provision
-@pytest.mark.tier(2)
-def test_admin_username_azure():
-    """
-    Create provision request with username = "admin" - UI warning should
-    appear
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: infra
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/10h
-        testtype: nonfunctional
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_user_can_run_pre_migration_ansible_playbook():
     """
     OSP: Test user can run pre migration ansible playbook
@@ -21640,22 +20716,6 @@ def test_automate_import_namespace_attributes_updated():
         casecomponent: automate
         caseimportance: low
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_apache_reload_log_rotate():
-    """
-    Check that apache is not reloaded twice after log rotations.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        initialEstimate: 1/12h
-        startsin: 5.10
-        testtype: structural
     """
     pass
 
@@ -24407,23 +23467,6 @@ def test_add_cloud_provider_screen():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_log_error():
-    """
-    check logs for errors such as
-    https://bugzilla.redhat.com/show_bug.cgi?id=1392087
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_automate_user_has_groups():
     """
@@ -24688,31 +23731,6 @@ def test_distributed_zone_failover_notifier_singleton():
         casecomponent: appl
         caseimportance: medium
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_db_maintenance_hourly_unconfigure():
-    """
-    Test unconfiguring db maintenance for Hourly re-indexing of tables
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        endsin: 5.8
-        initialEstimate: 1/6h
-        setup: -ssh to appliance
-               -run appliance_console
-               -select option "configure database maintenance"
-               -say yes to unconfigure hourly database maintenance (requires hourly
-               db maintenance to already be configured)
-               -wait 1 hour
-               -check that maintenance is has stopped correctly by checking log in
-               "vmdb/log/hourly.........log"
-        startsin: 5.7
     """
     pass
 
@@ -24986,22 +24004,6 @@ def test_creating_second_snapshot_on_suspended_vm():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_console_datetime_negative():
-    """
-    test setting invalid date/time
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_security_group_can_be_selected_while_creating_migration_plan():
     """
     OSP: Test security group can be selected while creating migration plan
@@ -25013,24 +24015,6 @@ def test_osp_test_security_group_can_be_selected_while_creating_migration_plan()
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test security group can be selected while creating migration plan
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_provision_fileshare_scvmm():
-    """
-    With 5.7.3 and 5.8.1 you can deploy templates onto scvmm registered
-    File Shares.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: cloud
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.7
-        upstream: yes
     """
     pass
 
@@ -25236,31 +24220,6 @@ def test_distributed_diagnostics_servers_view():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_create_provisioning_dialog_without_dialog_type():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1344080
-    Create provision dialog without selecting dialog type
-    Automate - Customization - Provisioning dialog
-    Configuration - Add a new dialog
-    Provide name and description.
-    Save
-    Error should appear
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: prov
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/4h
-        startsin: 5.5
-        title: create provisioning dialog without dialog type
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.log_depot
 @pytest.mark.tier(1)
 def test_log_collect_current_zone_zone_setup():
@@ -25418,36 +24377,6 @@ def test_osp_test_migration_plan_delete():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test migration plan delete
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.provision
-@pytest.mark.tier(2)
-def test_auto_placement_provision_to_dvswitch_vlan_vmware():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1467399
-    Description of problem: issue appeared after 1458363
-    Auto_placement provision into DVS vlan fails with Error "Destination
-    placement_ds_name not provided]" if provider Network with the same
-    name exists
-    Version-Release number of selected component (if applicable):5.8.1
-    Virtualcenter: 6.5
-    How reproducible:100%
-    Steps to Reproduce:
-    1.Configure environment networks (check attachment)
-    2.Provision VM with auto_placement
-    3.Select DVS vlan
-    Actual results:Provision fails
-    Expected results: Provision should succeed and VM should be in
-    selected vlan
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: prov
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -25939,25 +24868,6 @@ def test_custom_group_on_catalog_item():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_provision_host_maintenancemode_scvmm():
-    """
-    In scvmm, set qeblade26 into maintenance mode
-    Refresh provider
-    Attempt to provision to that host using auto placement.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: cloud
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_verify_page_landing_cloud_subnets():
     """
@@ -26077,22 +24987,6 @@ def test_black_console_ext_auth_options_skip():
             6. check changes in ui
             7. check changes in ui
             8. check changes in ui
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_console_key_fetch_negative():
-    """
-    test fetching key from fake remote host
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/6h
     """
     pass
 
@@ -31162,23 +30056,6 @@ def test_edit_log_collection_spinner_present():
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_console_negative():
-    """
-    test launching appliance_console without a network attached
-    https://bugzilla.redhat.com/show_bug.cgi?id=1439345
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/6h
     """
     pass
 

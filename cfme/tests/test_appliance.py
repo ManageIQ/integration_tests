@@ -4,6 +4,7 @@
 import os
 import pytest
 
+from cfme import test_requirements
 from cfme.utils import conf
 
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
@@ -293,14 +294,171 @@ def test_appliance_chrony_conf():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_appliance_console_evm_start():
+def test_appliance_executing_script():
     """
-    test starting the evm server process
+    check that a script from /var/www/miq/vmdb/tools/ runs correctly as
+    expected.
 
     Polarion:
         assignee: jhenner
         casecomponent: config
         caseimportance: medium
+        initialEstimate: 1/6h
+        startsin: 5.9
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_log_rotate_postgres():
+    """
+    [root@host-192-168-55-133 ~]# cd /var/opt/rh/rh-
+    postgresql95/lib/pgsql/data/pg_log
+    [root@host-192-168-55-133 pg_log]# ll
+    total 204
+    -rw-------. 1 postgres postgres 108218 Nov 10 14:39 postgresql.log
+    -rw-------. 1 postgres postgres  10776 Nov  3 03:34
+    postgresql.log-20161103.gz
+    -rw-------. 1 postgres postgres   8095 Nov  4 03:26
+    postgresql.log-20161104.gz
+    -rw-------. 1 postgres postgres   7544 Nov  5 03:20
+    postgresql.log-20161105.gz
+    -rw-------. 1 postgres postgres   8385 Nov  6 03:22
+    postgresql.log-20161106.gz
+    -rw-------. 1 postgres postgres   7637 Nov  7 03:26
+    postgresql.log-20161107.gz
+    -rw-------. 1 postgres postgres   8621 Nov  8 03:09
+    postgresql.log-20161108.gz
+    -rw-------. 1 postgres postgres  13083 Nov  9 03:28
+    postgresql.log-20161109.gz
+    -rw-------. 1 postgres postgres  14880 Nov 10 03:05
+    postgresql.log-20161110.gz
+    # are the log files being compressed and archived each day ( like
+    appliance_console.log-20161109.gz )
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
         initialEstimate: 1/12h
+        startsin: 5.6
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_log_rotate_evm():
+    """
+    [root@host-192-168-55-133 pg_log]# vmdb
+    [root@host-192-168-55-133 vmdb]# cd log
+    # are the log files being compressed and archived each day ( like
+    appliance_console.log-20161109.gz )
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        initialEstimate: 1/12h
+        startsin: 5.6
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_log_crond():
+    """
+    check that CROND service does not get stopped after appliance has been
+    running.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_exec_scripts():
+    """
+    check that scripts in /var/www/miq/vmdb/tools have the executable
+    section added to the files.
+    #!/usr/bin/env ruby # finds ruby
+    require File.expand_path("../config/environment", __dir__) # loads
+    rails, only needed if the script needs it
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+        startsin: 5.9
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rep
+@pytest.mark.tier(1)
+def test_appliance_replicate_database_disconnection_with_backlog():
+    """
+    Test replication re-connect with backlog
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        initialEstimate: 1/2h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rep
+@pytest.mark.tier(1)
+def test_appliance_replicate_sync_role_change_with_backlog():
+    """
+    Replicate role change w/ a replication backlog
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        endsin: 5.6
+        initialEstimate: 1/2h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rep
+@pytest.mark.tier(1)
+def test_appliance_replicate_database_disconnection():
+    """
+    test replication re-connection w/ no backlog
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        initialEstimate: 1/2h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_log_error():
+    """
+    check logs for errors such as
+    https://bugzilla.redhat.com/show_bug.cgi?id=1392087
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/2h
     """
     pass

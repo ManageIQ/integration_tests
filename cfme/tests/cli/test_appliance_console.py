@@ -670,3 +670,548 @@ def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
         "ip -6 a show dev eth0 | grep 'inet6 1::1.*scope global'"))
     soft_assert(unconfigured_appliance.ssh_client.run_command(
         "ip -6 r show dev eth0 | grep 'default via 1::f'"))
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_haproxy():
+    """
+    Test HA setup with HAproxy load balancing.
+    https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.5/h
+    tml/high_availability_guide/configuring_haproxy
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/2h
+        setup: setup HA following https://mojo.redhat.com/docs/DOC-1097888
+               setup HAProxy using keepalived and haproxy packages (waiting on
+               official documentation)
+        startsin: 5.7
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_ha_setup_dc():
+    """
+    Test configuring a high availability setup over multiple data centers.
+    Primary + standby in DC1 and standby in DC2
+    In order for the slave in DC2 to be promoted to primary, it would need
+    to have visibility to > 50% of the nodes. In this
+    case, that slave node has visibility to only 1 node, itself, because
+    of the network outage. It would need visibility to at
+    least 2 nodes in order to be eligible to be promoted. Therefore, it
+    cannot be promoted so, it would just be cut off
+    from the primary until network connectivity is restored. This is
+    specifically the reason for having the extra node on the
+    segment with the primary, to ensure that node always has the voting
+    majority.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        initialEstimate: 1/2h
+        setup: provision 3 appliances
+               setup HA following https://mojo.redhat.com/docs/DOC-1097888
+               (https://mojo.redhat.com/docs/DOC-1168738)
+               check setup is working be accessing webui
+        startsin: 5.8
+        testSteps:
+            1. Setup HA
+        expectedResults:
+            1. Confirm primary database server, application server is
+               running and it can access the webui
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_screen():
+    """
+    Test new screen package added to appliances. Should be able to run a
+    task and switch terminal/screen within ssh to run other tasks
+    simultaneously.
+    Just type "screen" after logging in to ssh to start using it. Once you
+    have screen running, "ctrl-a" intiates screen command "c" creates new
+    screen, "n" switch to next screen., "p" for previous screen, "d"
+    detach from screens (this takes you back to standard terminal) and run
+    screen -r to resume using screen.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        caseimportance: medium
+        initialEstimate: 1/12h
+        startsin: 5.9
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_restart():
+    """
+    test restarting the appliance
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_ha_dc_re_establish():
+    """
+    Test that upon re-connection of networks the repmgr process continues
+    to replicate correctly to the disconnected node within DC2
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        initialEstimate: 1/2h
+        setup: Restore network connectivity between DC1 and DC2
+        startsin: 5.8
+        testSteps:
+            1. Restore network connectivity between DC1 and DC2
+        expectedResults:
+            1. Confirm replication is working correctly
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_evm_stop():
+    """
+    test stopping the evm server process
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_evm_start():
+    """
+    test starting the evm server process
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_console_check_default_ip():
+    """
+    test ip settings, checking all the defaults are what is expected.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_ssl():
+    """
+    Test ssl connections to postgres database from other appliances.
+    https://bugzilla.redhat.com/show_bug.cgi?id=1482697
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/3h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_restore_ha_standby_node():
+    """
+    Test backup and restore with a HA setup
+    So this should work if you stop the repmgrd service on each of the
+    standby nodes before doing the restore and start it after.
+    Should be just `systemctl stop rh-postgresql95-repmgr` then `systemctl
+    start rh-postgresql95-repmgr` after the restore is finished.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/2h
+        setup: provision 3 appliances
+               setup HA following https://mojo.redhat.com/docs/DOC-1097888
+               backup database server
+               make changes to database
+               stop database
+               restore backup
+               check changes are restored and HA continues to work correctly
+        startsin: 5.7
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_cancel():
+    """
+    Test option to navigate back from all submenus in appliance_console
+    https://bugzilla.redhat.com/show_bug.cgi?id=1438844
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_console_network_conf():
+    """
+    test network configuration
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_console_network_conf_negative():
+    """
+    test network configuration error with invalid settings
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/6h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_console_vmdb_httpd():
+    """
+    check that httpd starts after restarting vmdb
+    https://bugzilla.redhat.com/show_bug.cgi?id=1337525
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_shutdown():
+    """
+    test shutting down the appliance
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_console_static_ip_negative():
+    """
+    test error on invalid static ip
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/6h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_ha_dc_failover():
+    """
+    Test failing over from DC1 primary to DC1 standby then drop the
+    connection between DC1/2. This should create a split brain scenario,
+    upon re-establishing connections we need to manually kill/shutdown DC1
+    current primary.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        initialEstimate: 1/2h
+        setup: Failover to DC1 standby node, drop connections between DC"s, restore
+               network connectivity between DC1 and DC2 manually kill DC1 current
+               primary if its in a split brain scenario.
+        startsin: 5.8
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_logfile():
+    """
+    Test configuring new log file disk volume.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+        setup: -provision new appliance with additional disk
+               -ssh to appliance
+               -run appliance_console
+               -select option "Logfile Configuration"
+               -configure disk
+               -confirm new logfile disk is configured correctly
+        startsin: 5.7
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_restore_db_network_negative():
+    """
+    test restoring database with invalid connection settings
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/3h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_packages():
+    """
+    Check that we no long use scl packages in cfme. We should not have an
+    rh-ruby packages.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        initialEstimate: 1/12h
+        startsin: 5.10
+        testtype: structural
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_cli_rh_registration():
+    """
+    Test RHSM registration through cli and check if changes are made
+    within the ui
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        caseimportance: medium
+        initialEstimate: 1/12h
+        setup: Provision appliace
+               ssh to it and run "subscription-manager register"
+               check changes within the ui
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_console_extend_storage_negative():
+    """
+    test extending storage with no additional partition
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_db_maintenance_periodic_unconfigure():
+    """
+    Test unconfiguring full vacums
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        endsin: 5.8
+        initialEstimate: 1/6h
+        setup: -ssh to appliance
+               -run appliance_console
+               -select option "configure database maintenance"
+               -say yes to "unconfigure Periodic Database Maintance"
+               -wait for the set time
+               -check that full vacums have stopped by checking log in
+               "vmdb/log/hourly.........log" (all timescales are stored in the hourly
+               log file)
+        startsin: 5.7
+        testSteps:
+            1. unconfigure periodic maintenance
+        expectedResults:
+            1. full vacuums stop running
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_console_static_dns():
+    """
+    test setting secondary dns and check it"s saved as the new default
+    https://bugzilla.redhat.com/show_bug.cgi?id=1439348
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/6h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_apache_reload_log_rotate():
+    """
+    Check that apache is not reloaded twice after log rotations.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        initialEstimate: 1/12h
+        startsin: 5.10
+        testtype: structural
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_appliance_console_db_maintenance_hourly_unconfigure():
+    """
+    Test unconfiguring db maintenance for Hourly re-indexing of tables
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        endsin: 5.8
+        initialEstimate: 1/6h
+        setup: -ssh to appliance
+               -run appliance_console
+               -select option "configure database maintenance"
+               -say yes to unconfigure hourly database maintenance (requires hourly
+               db maintenance to already be configured)
+               -wait 1 hour
+               -check that maintenance is has stopped correctly by checking log in
+               "vmdb/log/hourly.........log"
+        startsin: 5.7
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_console_datetime_negative():
+    """
+    test setting invalid date/time
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/6h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_console_key_fetch_negative():
+    """
+    test fetching key from fake remote host
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/6h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_appliance_console_negative():
+    """
+    test launching appliance_console without a network attached
+    https://bugzilla.redhat.com/show_bug.cgi?id=1439345
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: appl
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/6h
+    """
+    pass

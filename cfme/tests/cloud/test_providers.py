@@ -626,7 +626,7 @@ def test_azure_instance_password_requirements(appliance, request,
         5. Error message should be displayed.
 
     Polarion:
-        assignee: None
+        assignee: jhenner
         initialEstimate: None
     """
     view = navigate_to(appliance.collections.cloud_instances, 'Provision')
