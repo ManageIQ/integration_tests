@@ -30,34 +30,31 @@ def new_credential():
 
 
 @pytest.fixture
-def vm_name():
-    return random_vm_name(context="quota")
-
-
-@pytest.fixture
 def template_name(provisioning):
     return provisioning["image"]["name"]
 
 
 @pytest.fixture
-def prov_data(appliance, provider, provisioning, vm_name):
-    if provider.one_of(OpenStackProvider):
-        return {
-            "catalog": {"vm_name": vm_name},
-            "environment": {"automatic_placement": True},
-            "properties": {"instance_type": partial_match("m1.large")},
-        }
+def prov_data(appliance, provider, provisioning):
+    data = {
+        "catalog": {"vm_name": random_vm_name(context="quota")},
+        "environment": {"automatic_placement": True},
+        "properties": {"instance_type": partial_match("m1.large")},
+    }
     if provider.one_of(AzureProvider):
         instance_type = "d2s_v3" if appliance.version < "5.10" else "D2s_v3"
-        return {
-            "catalog": {"vm_name": vm_name},
-            "environment": {"automatic_placement": True},
-            "properties": {"instance_type": partial_match(instance_type)},
-            "customize": {
-                "admin_username": provisioning["customize_username"],
-                "root_password": provisioning["customize_password"],
+        recursive_update(
+            data,
+            {
+                "properties": {"instance_type": partial_match(instance_type)},
+                "customize": {
+                    "admin_username": provisioning["customize_username"],
+                    "root_password": provisioning["customize_password"],
+                },
             },
-        }
+        )
+
+    return data
 
 
 @pytest.fixture
@@ -66,9 +63,7 @@ def set_child_tenant_quota(request, appliance, new_child):
     field, value = request.param
     new_child.set_quota(**{"{}_cb".format(field): True, field: value})
     yield
-    # will refresh page as navigation to configuration is blocked if alerts are on the page
     appliance.server.login_admin()
-    appliance.server.browser.refresh()
     new_child.set_quota(**{"{}_cb".format(field): False})
 
 
@@ -78,9 +73,7 @@ def set_project_quota(request, appliance, new_project):
     field, value = request.param
     new_project.set_quota(**{"{}_cb".format(field): True, field: value})
     yield
-    # will refresh page as navigation to configuration is blocked if alerts are on the page
     appliance.server.login_admin()
-    appliance.server.browser.refresh()
     new_project.set_quota(**{"{}_cb".format(field): False})
 
 
@@ -101,8 +94,7 @@ def new_tenant(appliance):
 @pytest.fixture(scope="module")
 def new_child(appliance, new_tenant):
     """The fixture creates new child tenant"""
-    collection = appliance.collections.tenants
-    child_tenant = collection.create(
+    child_tenant = appliance.collections.tenants.create(
         name="tenant_{}".format(fauxfactory.gen_alphanumeric()),
         description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
         parent=new_tenant,
@@ -115,8 +107,7 @@ def new_child(appliance, new_tenant):
 @pytest.fixture(scope="module")
 def new_group_child(appliance, new_child, new_tenant):
     """This fixture creates new group assigned by new child tenant"""
-    collection = appliance.collections.groups
-    group = collection.create(
+    group = appliance.collections.groups.create(
         description="group_{}".format(fauxfactory.gen_alphanumeric()),
         role="EvmRole-super_administrator",
         tenant="My Company/{parent}/{child}".format(parent=new_tenant.name, child=new_child.name),
@@ -129,8 +120,7 @@ def new_group_child(appliance, new_child, new_tenant):
 @pytest.fixture(scope="module")
 def new_user_child(appliance, new_group_child):
     """This fixture creates new user which assigned to new child tenant"""
-    collection = appliance.collections.users
-    user = collection.create(
+    user = appliance.collections.users.create(
         name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
         credential=new_credential(),
         email="child_user@redhat.com",
@@ -160,8 +150,7 @@ def new_project(appliance):
 @pytest.fixture(scope="module")
 def new_group_project(appliance, new_project):
     """This fixture creates new group and assigned by new peoject"""
-    collection = appliance.collections.groups
-    group = collection.create(
+    group = appliance.collections.groups.create(
         description="group_{}".format(fauxfactory.gen_alphanumeric()),
         role="EvmRole-super_administrator",
         tenant="My Company/{project}".format(project=new_project.name),
@@ -174,8 +163,7 @@ def new_group_project(appliance, new_project):
 @pytest.fixture(scope="module")
 def new_user_project(appliance, new_group_project):
     """This fixture creates new user which is assigned to new group and project"""
-    collection = appliance.collections.users
-    user = collection.create(
+    user = appliance.collections.users.create(
         name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
         credential=new_credential(),
         email="project_user@redhat.com",
@@ -213,7 +201,6 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
     approve,
     custom_prov_data,
     prov_data,
-    vm_name,
     template_name,
 ):
     """Test Child Quota in UI
@@ -224,9 +211,6 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
         4. Check whether quota is exceeded or not
     """
     with new_user_child:
-        # Without below line, login only works here via admin, not via new user
-        # TODO: Remove below line when this behavior gets fixed
-        appliance.server.login(new_user_child)
         recursive_update(prov_data, custom_prov_data)
         recursive_update(
             prov_data,
@@ -241,10 +225,10 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
         )
         prov_data.update({"template_name": template_name})
         request_description = "Provision from [{template}] to [{vm}{msg}]".format(
-            template=template_name, vm=vm_name, msg=extra_msg
+            template=template_name, vm=prov_data['catalog']['vm_name'], msg=extra_msg
         )
         appliance.collections.cloud_instances.create(
-            vm_name,
+            prov_data['catalog']['vm_name'],
             provider,
             prov_data,
             auto_approve=approve,
@@ -282,7 +266,6 @@ def test_project_quota_enforce_via_lifecycle_cloud(
     approve,
     custom_prov_data,
     prov_data,
-    vm_name,
     template_name,
 ):
     """Test Project Quota in UI
@@ -293,9 +276,6 @@ def test_project_quota_enforce_via_lifecycle_cloud(
         4. Check whether quota is exceeded or not
     """
     with new_user_project:
-        # Without below line, login only works here via admin, not via new user
-        # TODO: Remove below line when this behavior gets fixed
-        appliance.server.login(new_user_project)
         recursive_update(prov_data, custom_prov_data)
         recursive_update(
             prov_data,
@@ -310,10 +290,10 @@ def test_project_quota_enforce_via_lifecycle_cloud(
         )
         prov_data.update({"template_name": template_name})
         request_description = "Provision from [{template}] to [{vm}{msg}]".format(
-            template=template_name, vm=vm_name, msg=extra_msg
+            template=template_name, vm=prov_data['catalog']['vm_name'], msg=extra_msg
         )
         appliance.collections.cloud_instances.create(
-            vm_name,
+            prov_data['catalog']['vm_name'],
             provider,
             prov_data,
             auto_approve=approve,
