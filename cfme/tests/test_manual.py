@@ -120,32 +120,6 @@ def test_osp_vmware65_test_vm_migration_with_rhel_75_last_time_74():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_rh_rhsm_sat6_cred_save_crud():
-    """
-    Switch between rhsm and sat6 setup
-    https://bugzilla.redhat.com/show_bug.cgi?id=1463389
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/12h
-        setup: Provision appliance
-               navigate to Configuration-settings-region-redhat updates
-               Click edit subscription
-               Setup rhsm subscription
-               Save (validate and save if fails)
-               edit subscription
-               setup sat6
-               click save
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_refresh_with_stack_without_parameters():
     """
     1) Add cloudformation stack without parameters(https://s3-us-
@@ -261,28 +235,6 @@ def test_embed_tower_exec_play_against_vmware():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_single_inplace_postgres():
-    """
-    Upgrading a single appliance and upgrade postgres to 9.5
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: critical
-        endsin: 5.8
-        initialEstimate: 1/2h
-        setup: Run inplace upgrade and postgres upgrade
-               Migration docs at (https://mojo.redhat.com/docs/DOC-1058772)
-               Check new postgress is running correctly
-        startsin: 5.7
-        testtype: upgrade
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(2)
 def test_check_service_link_from_vm_detail_page():
@@ -328,26 +280,6 @@ def test_dialogs_should_only_run_once():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Dialogs should only run once
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_schedule_for_all_clusters_vms():
-    """
-    Navigate to add new schedule page(Configuration->Region->Schedules)
-    Fill all required fields
-    Select all vms for clusters in filter
-    Set timer
-    Save changes
-    Result: Task run successfully for selected filter
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/8h
     """
     pass
 
@@ -1028,32 +960,6 @@ def test_export_all_existing_dialogs_almost_100_dialogs():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Export all existing dialogs (almost 100 dialogs
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_dedicated_db_migration_local():
-    """
-    Test that you can locally migrate a dedicated database after upgrade.
-    Previously it was missing the database.yml during setup with would
-    case the rake task to fail.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1478986
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/3h
-        startsin: 5.8
-        testSteps:
-            1. Upgrade appliances
-            2. Check failover
-        expectedResults:
-            1. Confirm upgrade completes successfully
-            2. Confirm failover continues to work
     """
     pass
 
@@ -3528,34 +3434,6 @@ def test_log_collect_all_zone_unconfigured():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_rubyrep_to_pglogical():
-    """
-    Test upgrading appliances in ruby replication and change it over to
-    pglogical
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        endsin: 5.9
-        initialEstimate: 1h
-        setup: provision 2 appliances
-               setup rubyrep between them
-               test replication is working
-               stop replication
-               upgrade appliances following version dependent docs found here
-               https://mojo.redhat.com/docs/DOC-1058772
-               configure pglogical replication
-               confirm replication is working correctly
-        startsin: 5.6
-        testtype: upgrade
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rest
 def test_cloud_volume_types():
     """
@@ -5733,44 +5611,6 @@ def test_embed_tower_exec_play_stdout():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_multi_ext_inplace():
-    """
-    test_upgrade_multi_ext_inplace
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1h
-        setup: 2 appliances:
-               - Appliance A: internal DB, region 0
-               - Appliance B: external DB, pointed at A, region 0
-               - Setup LDAP on one of the appliances
-               - Login as LDAP user A
-               - Setup a provider
-               - Provision a VM
-        testtype: upgrade
-        testSteps:
-            1. Run upgrade according to the migration guide (version-dependent)
-            2. Start the appliances back up
-            3. Login as LDAP user B
-            4. Add another provider
-            5. Provision another VM using the new provider
-            6. Visit provider/host/vm summary pages
-        expectedResults:
-            1. Upgrade is successful, so is migration and related tasks (fix_auth)
-            2. Appliances are running
-            3. Login is successful
-            4. Provider added
-            5. VM provisioned
-            6. Summary pages can be loaded and show correct information
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware_65_test_vm_name_with_punycode_characters():
     """
     OSP: vmware 65- Test VM name with Punycode characters
@@ -6387,26 +6227,6 @@ def test_tenant_visibility_service_template_catalogs_all_parents():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_schedule_for_all_host_vms():
-    """
-    Navigate to add new schedule page(Configuration->Region->Schedules)
-    Fill all required fields
-    Select all vms for host in filter
-    Set timer
-    Save changes
-    Result: Task run successfully for selected filter
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ssui
 @pytest.mark.tier(2)
 def test_ssui_myservice_myrequests_and_service_catalog_filter_links():
@@ -6745,32 +6565,6 @@ def test_ec2_targeted_refresh_floating_ip():
         casecomponent: cloud
         caseimportance: medium
         initialEstimate: 1 1/2h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_single_inplace_ipv6():
-    """
-    Upgrading a single appliance on ipv6 only env
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: medium
-        initialEstimate: 1/3h
-        setup: provision appliance
-               add provider
-               add repo file to /etc/yum.repos.d/
-               run "yum update"
-               run "rake db:migrate"
-               run "rake evm:automate:reset"
-               run "systemctl start evmserverd"
-               check webui is available
-               add additional provider/provision vms
         startsin: 5.9
     """
     pass
@@ -7449,32 +7243,6 @@ def test_sui_order_and_request_should_be_sorted_by_time():
         initialEstimate: 1/8h
         startsin: 5.8
         title: SUI : Order and Request should be sorted by time
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_update_custom_widgets():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1375313
-    Upgrade appliance with custom widgets added
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: medium
-        initialEstimate: 1/3h
-        setup: provision appliance
-               add custom widgets
-               add repo file to /etc/yum.repos.d/
-               add RHSM details
-               check for updates
-               update using webui
-               check webui is available
-               check widgets still work correctly
-        startsin: 5.9
     """
     pass
 
@@ -9190,31 +8958,6 @@ def test_appliance_console_screen():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_rh_registration_rhsm_proxy_on_ipv6():
-    """
-    Test RHSM registration with IPV6 proxy settings
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: medium
-        initialEstimate: 1/12h
-        setup: Provision appliace
-               Connect to webui
-               Nav to Configuration-Settings-Region-Red Hat Updates
-               Edit Registration
-               The following settings that work for internal testing
-               can be found here https://mojo.redhat.com/docs/DOC-1123648
-               Save settings
-               Select appliance and click register
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ssui
 @pytest.mark.tier(3)
 def test_sui_test_all_language_translations():
@@ -9570,26 +9313,6 @@ def test_snapshot_timeline_new_vm():
             1. vm created
             2. timelines page displayed
             3. no timeline visible, warning "No records found for this timeline" displayed
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_schedule_for_all_providers_vms():
-    """
-    Navigate to add new schedule page(Configuration->Region->Schedules)
-    Fill all required fields
-    Select all vms for provider in filter
-    Set timer
-    Save changes
-    Result: Task run successfully for selected filter
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/8h
     """
     pass
 
@@ -10253,29 +9976,6 @@ def test_automate_relationship_trailing_spaces():
         expectedResults:
             1.
             2. Logs contain no resolution errors
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_rh_registration_ui_proxy():
-    """
-    Check proxy settings are show in the list of info after saving
-    subscription using proxy settings (RFE)
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/12h
-        setup: Provision appliance
-               navigate to Configuration-settings-region-redhat updates
-               Click edit subscription
-               Setup subscription with proxy
-               validate and save
-               check proxy settings areshown in ui
     """
     pass
 
@@ -11077,31 +10777,6 @@ def test_log_collect_current_zone_all_unconfigured():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_update_webui_custom_css():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1553841
-    Test css customization"s function correctly after webui update.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: provision appliance
-               add custom css file
-               add repo file to /etc/yum.repos.d/
-               add RHSM settings
-               update through webui
-               check webui is available
-               check customization"s still work
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rest
 @pytest.mark.tier(3)
 def test_api_edit_user_no_groups():
@@ -11438,27 +11113,6 @@ def test_default_view_settings_should_apply_for_service_catalogs():
         initialEstimate: 1/4h
         startsin: 5.9
         title: Default view settings should apply for service catalogs
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_single_negative_v2_key_fix_auth():
-    """
-    test migration without fetching v2_key also requires fix_auth
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/3h
-        setup: restore a backup without using its v2_key
-               run "fix_auth --invalid <password>"
-               this will allow evm to start without credential errors
-        testtype: upgrade
     """
     pass
 
@@ -13162,33 +12816,6 @@ def test_replication_remote_to_global_by_ip_pglogical():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_rh_registration_proxy_crud():
-    """
-    Check proxy settings get added and removed from /etc/rhsm/rhsm.conf
-    https://bugzilla.redhat.com/show_bug.cgi?id=1463289
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/12h
-        setup: Provision appliance
-               navigate to Configuration-settings-region-redhat updates
-               Click edit subscription
-               Setup subscription with proxy
-               validate and save
-               check proxy settings are added to rhsm.conf
-               edit subscription again
-               remove proxy settings
-               validate and save
-               check proxy settings are removed from rhsm.conf
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_requests_in_ui_and_api():
     """
@@ -13808,31 +13435,6 @@ def test_cloud_icons_instances():
         casecomponent: web_ui
         caseimportance: medium
         initialEstimate: 1/20h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_rh_unregistration_ui():
-    """
-    Check that you can unregister an appliance from subscriptions through
-    the ui.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1464387
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/12h
-        setup: Provision appliance
-               navigate to Configuration-settings-region-redhat updates
-               Click edit subscription
-               Setup subscription
-               validate and save
-               Register appliance
-               Try to unregister
     """
     pass
 
@@ -15337,26 +14939,6 @@ def test_default_views_can_save_or_reset():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_schedule_global_filters():
-    """
-    Navigate to add new schedule page(Configuration->Region->Schedules)
-    Fill all required fields
-    Select some global filter
-    Set timer
-    Save changes
-    Result: Task run successfully for selected filter
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_disabling_dashboard_under_service_ui_for_a_role_shall_disable_the_dashboard():
     """
     https://bugzilla.redhat.com/show_bug.cgi?id=1589409
@@ -15400,44 +14982,6 @@ def test_appliance_console_network_conf_negative():
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_multi_replication_inplace():
-    """
-    test_upgrade_multi_replication_inplace
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1h
-        setup: 2 appliances:
-               - Appliance A: internal DB, region 0
-               - Appliance B: external DB, pointed at A, region 0
-               - Setup LDAP on one of the appliances
-               - Login as LDAP user A
-               - Setup a provider
-               - Provision a VM
-        testtype: upgrade
-        testSteps:
-            1. Run upgrade according to the migration guide (version-dependent)
-            2. Start the appliances back up
-            3. Login as LDAP user B
-            4. Add another provider
-            5. Provision another VM using the new provider
-            6. Visit provider/host/vm summary pages
-        expectedResults:
-            1. Upgrade is successful, so is migration and related tasks (fix_auth)
-            2. Appliances are running
-            3. Login is successful
-            4. Provider added
-            5. VM provisioned
-            6. Summary pages can be loaded and show correct information
     """
     pass
 
@@ -17999,33 +17543,6 @@ def test_check_my_company_all_evm_groups_filter_from_reports_schedule():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_update_webui_ipv6():
-    """
-    Test updating the appliance to release version from prior version.
-    (i.e 5.5.x to 5.5.x+) IPV6 only env
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: medium
-        initialEstimate: 1/3h
-        setup: -Provision configured appliance
-               -Register it with RHSM using web UI
-               -Create /etc/yum.repos.d/update.repo
-               -populate file with repos from
-               https://mojo.redhat.com/docs/DOC-1058772
-               -check for update in web UI
-               -apply update
-               -appliance should shutdown update and start back up
-               -confirm you can login afterwards
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_targeted_refresh_load_balancer():
     """
     #AWS naming is ELB
@@ -20412,27 +19929,6 @@ def test_misclicking_checkbox_vms():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_check_repo_names():
-    """
-    Checks default rpm repos on a upgraded appliance
-    https://bugzilla.redhat.com/show_bug.cgi?id=1411890
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/12h
-        setup: Provision appliance
-               navigate to Configuration-settings-region-redhat updates
-               Click edit subscription
-               Check repo name
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_sui_while_ordering_service_catalog_the_dynamic_drop_down_dialogs_fields_should_auto_r():
     """
     https://bugzilla.redhat.com/show_bug.cgi?id=1568342
@@ -20568,25 +20064,6 @@ def test_ssa_vm_files_unicode():
         caseposneg: negative
         initialEstimate: 1/2h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_upgrade_appliance_console_scap():
-    """
-    "ap" launches appliance_console, "" clears info screen, "14/17"
-    Hardens appliance using SCAP configuration, "" complete.
-    apply scap rules upgrade appliance and re-apply scap rules
-    Test Source
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/3h
-        startsin: 5.8
     """
     pass
 
@@ -20948,30 +20425,6 @@ def test_appliance_console_db_maintenance_periodic_unconfigure():
 
 
 @pytest.mark.manual
-@test_requirements.report
-def test_schedules_send_multiple_recipients():
-    """
-    Using scripts/smtp_collectior.py
-    Pre-requirements:
-    Set CFME Notifier role ON
-    CFME set up to use external SMTP using your local pc ip (port 1025)
-    Allow 1025 on local machine (firewall-cmd --add-port 1025/tcp)
-    Turn on smtp_collector in cfme_tests env
-    Set up schedule to send to 10 contacts.
-    1)Send schedule mail using default From address
-    2)Change From address and resend schedule mail
-    Check http://localhost:1026/messages.html for both sets of mail
-    present.
-
-    Polarion:
-        assignee: None
-        caseimportance: medium
-        initialEstimate: None
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_duplicate_groups_when_setting_ownership_to_multiple_items():
     """
     https://bugzilla.redhat.com/show_bug.cgi?id=1589009
@@ -21185,30 +20638,6 @@ def test_authentication_user_not_in_ldap_but_in_db():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_multi_ha_inplace():
-    """
-    Test upgrading HA setup to latest build and confirm it continues to
-    work as expected.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1h
-        startsin: 5.8
-        testSteps:
-            1. Upgrade appliances
-            2. Check failover
-        expectedResults:
-            1. Confirm upgrade completes successfully
-            2. Confirm failover continues to work
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_service_ui_should_take_user_default_language():
     """
     Polarion:
@@ -21271,42 +20700,6 @@ def test_osp_vmware67_test_vm_migration_with_rhel_69():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware67-Test VM migration with RHEL 6.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_multi_replication_inplace_55():
-    """
-    test upgrading replicated appliances to latest version
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        endsin: 5.9
-        initialEstimate: 1h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_multi_replication_inplace_56():
-    """
-    test upgrading replicated appliances to latest version
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        endsin: 5.10
-        initialEstimate: 1h
-        startsin: 5.9
     """
     pass
 
@@ -22572,31 +21965,6 @@ def test_appliance_console_apache_reload_log_rotate():
         initialEstimate: 1/12h
         startsin: 5.10
         testtype: structural
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_update_webui_ha():
-    """
-    Test webui update from minor versions with HA active
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup: provision 3 appliances
-               setup HA following https://mojo.redhat.com/docs/DOC-1097888
-               check setup is working by accessing webui
-               add repos for new build
-               login to RHSM
-               check for updates
-               update appliances
-               confirm HA continues to work as expected after update
-        startsin: 5.7
     """
     pass
 
@@ -25760,33 +25128,6 @@ def test_self_service_ui_should_honor_some_service_dialog_settings():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_custom_css():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1553841
-    Test css customization"s function correctly after upgrades.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: provision appliance
-               add custom css file
-               add repo file to /etc/yum.repos.d/
-               run "yum update"
-               run "rake db:migrate"
-               run "rake evm:automate:reset"
-               run "systemctl start evmserverd"
-               check webui is available
-               check customization"s still work
-        startsin: 5.10
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ssui
 @pytest.mark.tier(3)
 def test_sui_service_explorer_will_also_show_child_services():
@@ -25999,35 +25340,6 @@ def test_provision_fileshare_scvmm():
         initialEstimate: 1/4h
         startsin: 5.7
         upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_rh_rhsm_reregistering():
-    """
-    Switch between rhsm and sat6 registration
-    https://bugzilla.redhat.com/show_bug.cgi?id=1461716
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/12h
-        setup: Provision appliance
-               navigate to Configuration-settings-region-redhat updates
-               Click edit subscription
-               Setup sat6 subscription
-               validate and save
-               register
-               unregister (requires ssh commands)
-               edit subscription
-               setup rhsm
-               validate and save
-               register
     """
     pass
 
@@ -27860,32 +27172,6 @@ def test_custom_button_edit_via_rest_patch():
         assignee: ndhandre
         initialEstimate: None
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_update_webui_replication():
-    """
-    Test webui update with replicated env
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: medium
-        initialEstimate: 1h
-        setup: Provision two appliances of the previous minor build
-               setup replication between the two
-               add update.repo file to /etc/yum.repos.d/
-               populate file with correct repos from
-               https://mojo.redhat.com/docs/DOC-1058772
-               register with RHSM in webui
-               check for updates
-               apply update
-               check replication/providers/vms
-        testtype: upgrade
     """
     pass
 
@@ -32211,26 +31497,6 @@ def test_edit_log_collection_spinner_present():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_schedule_compliance_check():
-    """
-    Navigate to add new schedule page(Configuration->Region->Schedules)
-    Fill all required fields
-    Select compliance check in filter
-    Set timer
-    Save changes
-    Result: Task run successfully
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: config
-        caseimportance: medium
-        initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_appliance_console_negative():
     """
@@ -32588,33 +31854,6 @@ def test_search_field_at_the_top_of_a_dynamic_drop_down_dialog_element_should_di
         initialEstimate: 1/4h
         startsin: 5.9
         title: search field at the top of a dynamic drop-down dialog element should display
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_custom_widgets():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1375313
-    Upgrade appliance with custom widgets added
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: appl
-        caseimportance: medium
-        initialEstimate: 1/3h
-        setup: provision appliance
-               add custom widgets
-               add repo file to /etc/yum.repos.d/
-               run "yum update"
-               run "rake db:migrate"
-               run "rake evm:automate:reset"
-               run "systemctl start evmserverd"
-               check webui is available
-               check widgets still work correctly
-        startsin: 5.9
     """
     pass
 
