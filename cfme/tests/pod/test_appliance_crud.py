@@ -107,7 +107,10 @@ def template(appliance):
 
 @pytest.fixture
 def template_tags(template):
-    return template['custom_data']['TAGS']
+    try:
+        return template['custom_data']['TAGS']
+    except (KeyError, AttributeError) as e:
+        pytest.fail("Can't retrieve template tags: {}".format(e.message))
 
 
 @pytest.fixture
