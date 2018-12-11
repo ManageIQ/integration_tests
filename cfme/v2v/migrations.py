@@ -338,7 +338,7 @@ class MigrationDashboardView(BaseLoggedInPage):
         # TODO: Remove next line, after fix for https://github.com/ManageIQ/manageiq-v2v/issues/726
         # has been backported to downstream 510z
         return ((self.navigation.currently_selected == ['Compute', 'Migration'] or
-            self.navigation.currently_selected == ['Compute', 'Migration', 'Overview']) and
+            self.navigation.currently_selected == ['Compute', 'Migration', 'Migration Plans']) and
             (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
             (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0) and
             len(self.browser.elements(".//div[contains(@class,'pficon-warning-triangle-o')]")) < 1)
@@ -436,7 +436,7 @@ class InfrastructureMappingView(BaseLoggedInPage):
     def is_displayed(self):
         # TODO: Resmove 1st condition, once /manageiq-v2v/issues/768 fix is backported to 510z
         return ((self.navigation.currently_selected ==
-            ['Compute', 'Migration', 'Overview'] or self.navigation.currently_selected ==
+            ['Compute', 'Migration', 'Migration Plans'] or self.navigation.currently_selected ==
             ['Compute', 'Migration', 'Infrastructure Mappings']) and
             len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0 and
             (self.create_infrastructure_mapping.is_displayed or
@@ -879,7 +879,7 @@ class All(CFMENavigateStep):
         if self.obj.appliance.version < '5.10':
             self.prerequisite_view.navigation.select('Compute', 'Migration')
         else:
-            self.prerequisite_view.navigation.select('Compute', 'Migration', 'Overview')
+            self.prerequisite_view.navigation.select('Compute', 'Migration', 'Migration Plans')
 
 
 @navigator.register(MigrationPlanCollection, 'Add')
