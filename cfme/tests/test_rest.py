@@ -52,38 +52,6 @@ def wait_for_requests(requests):
     wait_for(_finished, num_sec=45, delay=5, message="requests finished")
 
 
-COLLECTIONS_NEWER_THAN_58 = {
-    "alert_definition_profiles",
-    "automate_workspaces",
-    "cloud_subnets",
-    "cloud_tenants",
-    "cloud_volumes",
-    "container_nodes",
-    "container_projects",
-    "custom_button_sets",
-    "custom_buttons",
-    "event_streams",
-    "firmwares",
-    "floating_ips",
-    "generic_object_definitions",
-    "generic_objects",
-    "guest_devices",
-    "metric_rollups",
-    "network_routers",
-    "physical_servers",
-    "regions",
-}
-
-
-COLLECTIONS_OBSOLETED_IN_59 = {
-    "arbitration_profiles",
-    "arbitration_rules",
-    "arbitration_settings",
-    "blueprints",
-    "virtual_templates",
-}
-
-
 COLLECTIONS_IN_59 = {
     "actions",
     "alert_definition_profiles",
@@ -108,6 +76,7 @@ COLLECTIONS_IN_59 = {
     "container_deployments",
     "container_nodes",
     "container_projects",
+    "containers",
     "currencies",
     "custom_button_sets",
     "custom_buttons",
@@ -124,11 +93,13 @@ COLLECTIONS_IN_59 = {
     "guest_devices",
     "hosts",
     "instances",
+    "lans",
     "load_balancers",
     "measures",
     "metric_rollups",
     "network_routers",
     "notifications",
+    "orchestration_stacks",
     "orchestration_templates",
     "physical_servers",
     "pictures",
@@ -159,10 +130,12 @@ COLLECTIONS_IN_59 = {
     "tasks",
     "templates",
     "tenants",
+    "transformation_mappings",
     "users",
     "vms",
     "zones",
 }
+
 
 COLLECTIONS_NEWER_THAN_59 = {
     "cloud_object_store_containers",
@@ -189,8 +162,7 @@ COLLECTIONS_NEWER_THAN_59 = {
 
 COLLECTIONS_IN_UPSTREAM = COLLECTIONS_IN_59
 COLLECTIONS_IN_510 = COLLECTIONS_IN_59 | COLLECTIONS_NEWER_THAN_59
-COLLECTIONS_IN_58 = (COLLECTIONS_IN_59 | COLLECTIONS_OBSOLETED_IN_59) - COLLECTIONS_NEWER_THAN_58
-COLLECTIONS_ALL = COLLECTIONS_IN_59 | COLLECTIONS_IN_58 | COLLECTIONS_IN_510
+COLLECTIONS_ALL = COLLECTIONS_IN_59 | COLLECTIONS_IN_510
 # non-typical collections without "id" and "resources", or additional parameters are required
 COLLECTIONS_OMITTED = {"automate_workspaces", "metric_rollups", "settings"}
 
@@ -200,8 +172,7 @@ def _collection_not_in_this_version(appliance, collection_name):
         (collection_name not in COLLECTIONS_IN_UPSTREAM and appliance.version.is_in_series(
             'upstream')) or
         (collection_name not in COLLECTIONS_IN_510 and appliance.version.is_in_series('5.10')) or
-        (collection_name not in COLLECTIONS_IN_59 and appliance.version.is_in_series('5.9')) or
-        (collection_name not in COLLECTIONS_IN_58 and appliance.version.is_in_series('5.8'))
+        (collection_name not in COLLECTIONS_IN_59 and appliance.version.is_in_series('5.9'))
     )
 
 
@@ -288,10 +259,6 @@ def test_query_with_api_version(api_version, collection_name):
     list(collection)
 
 
-# collections affected by BZ 1437201 in versions < 5.9
-COLLECTIONS_BUGGY_ATTRS = {"results", "service_catalogs", "automate", "categories", "roles"}
-
-
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
@@ -310,8 +277,6 @@ def test_select_attributes(appliance, collection_name):
         assignee: pvala
         initialEstimate: 1/8h
     """
-    if collection_name in COLLECTIONS_BUGGY_ATTRS and appliance.version < '5.9':
-        pytest.skip("Affected by BZ 1437201, cannot test.")
     collection = getattr(appliance.rest_api.collections, collection_name)
     response = appliance.rest_api.get(
         '{}{}'.format(collection._href, '?expand=resources&attributes=id'))
@@ -605,7 +570,6 @@ PAGING_DATA = [
 ]
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 @pytest.mark.parametrize(
     'paging', PAGING_DATA, ids=['{},{}'.format(d[0], d[1]) for d in PAGING_DATA])
 def test_rest_paging(appliance, paging):
@@ -654,17 +618,12 @@ def test_rest_paging(appliance, paging):
     assert 'limit={}&offset={}'.format(limit, expected_last_offset) in links['last']
 
 
-# BZ 1485310 was not fixed for versions < 5.9
-COLLECTIONS_BUGGY_HREF_SLUG_IN_58 = {'policy_actions', 'automate_domains'}
-
-
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda appliance, collection_name:
         collection_name == 'automate' or  # doesn't have 'href'
         collection_name == 'metric_rollups' or  # needs additional parameters
-        (collection_name in COLLECTIONS_BUGGY_HREF_SLUG_IN_58 and appliance.version < '5.9') or
         _collection_not_in_this_version(appliance, collection_name)
 )
 @pytest.mark.meta(blockers=[
@@ -675,12 +634,12 @@ COLLECTIONS_BUGGY_HREF_SLUG_IN_58 = {'policy_actions', 'automate_domains'}
     ),
     BZ(
         1503852,
-        forced_streams=['5.8', '5.9', 'upstream'],
+        forced_streams=['5.9', 'upstream'],
         unblock=lambda collection_name: collection_name not in {'requests', 'service_requests'}
     ),
     BZ(
         1510238,
-        forced_streams=['5.8', '5.9', 'upstream'],
+        forced_streams=['5.9', 'upstream'],
         unblock=lambda collection_name: collection_name != 'vms'
     )])
 def test_attributes_present(appliance, collection_name):
@@ -750,7 +709,7 @@ def test_collection_class_invalid(appliance, provider):
             collection_class='ManageIQ::Providers::Nonexistent::Vm')
 
 
-@pytest.mark.meta(blockers=[BZ(1504693, forced_streams=['5.8', '5.9', 'upstream'])])
+@pytest.mark.meta(blockers=[BZ(1504693, forced_streams=['5.9', 'upstream'])])
 def test_bulk_delete(request, appliance):
     """Tests bulk delete from collection.
 
@@ -783,7 +742,6 @@ def test_bulk_delete(request, appliance):
     assert results[1]['success'] is True
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 def test_rest_ping(appliance):
     """Tests /api/ping.
 
@@ -1214,10 +1172,6 @@ class TestNotificationsRESTAPI(object):
             assignee: pvala
             initialEstimate: 1/4h
         """
-        # BZ 1420872 was fixed for >= 5.9 only
-        if method == 'delete' and appliance.version < '5.9':
-            pytest.skip("Affected by BZ1420872, cannot test.")
-
         notifications = appliance.rest_api.collections.notifications.all[-3:]
         delete_resources_from_detail(notifications, method=method)
 
@@ -1247,7 +1201,6 @@ class TestEventStreamsRESTAPI(object):
         # remove vm event
         vm.delete()
 
-    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
     def test_query_event_attributes(self, appliance, gen_events, soft_assert):
         """Tests access to event attributes.
 
@@ -1262,7 +1215,6 @@ class TestEventStreamsRESTAPI(object):
         collection.reload()
         query_resource_attributes(collection[-1], soft_assert=soft_assert)
 
-    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
     def test_find_created_events(self, appliance, vm_obj, gen_events, provider, soft_assert):
         """Tests find_by and get functions of event_streams collection
 
