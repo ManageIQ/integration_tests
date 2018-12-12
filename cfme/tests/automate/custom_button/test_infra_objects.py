@@ -1,8 +1,10 @@
 import pytest
 import fauxfactory
+from textwrap import dedent
 
 from widgetastic_patternfly import Dropdown
 
+from cfme.automate.explorer.domain import DomainCollection
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import log_request_check, TextInputDialogView
@@ -26,6 +28,45 @@ DISPLAY_NAV = {
 }
 
 SUBMIT = ["Submit all", "One by one"]
+
+
+@pytest.fixture(scope="module")
+def cls(appliance):
+    domain = appliance.collections.domains.create(
+        name="domain_{}".format(fauxfactory.gen_alphanumeric(4)), enabled=True
+    )
+    original_class = (
+        domain.parent.instantiate(name="ManageIQ")
+        .namespaces.instantiate(name="System")
+        .classes.instantiate(name="Request")
+    )
+    original_class.copy_to(domain=domain)
+    yield domain.namespaces.instantiate(name="System").classes.instantiate(name="Request")
+    if domain.exists:
+        domain.delete()
+
+
+@pytest.fixture(scope="module")
+def method(cls):
+    meth = cls.methods.create(
+        name="meth_{}".format(fauxfactory.gen_alphanumeric(4)),
+        script=dedent(
+            """
+        # add google url to open
+        vm = $evm.root['vm']
+        $evm.log(:info, "Opening google url")
+        vm.remote_console_url = "https://google.com"
+        """
+        ),
+    )
+
+    instance = cls.instances.create(
+        name="inst_{}".format(fauxfactory.gen_alphanumeric(4)),
+        fields={"meth1": {"value": meth.name}},
+    )
+    yield meth
+    meth.delete_if_exists()
+    instance.delete_if_exists()
 
 
 @pytest.fixture(
@@ -339,3 +380,55 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
             assert not custom_button_group.is_displayed
             setup_obj.add_tag(tag)
             assert custom_button_group.is_displayed
+
+
+@pytest.mark.uncollectif(lambda button_group: "VM_INSTANCE" not in button_group)
+def test_open_url(appliance, request, setup_obj, button_group, method):
+    """ Test Open url functionality of custom button.
+
+    prerequisites:
+        * Appliance with Infra provider
+
+    Steps:
+        * Create ruby method for url functionality
+        * Create custom button group with the Object type
+        * Create a custom button with open_url option and respective method
+        * Navigate to object Detail page
+        * Execute custom button
+        * Check new tab open or not with respective url
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/2
+
+    """
+    group, obj_type = button_group
+    button = group.buttons.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        open_url=True,
+        display_for="Single entity",
+        system="Request",
+        request="open_url",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    view = navigate_to(setup_obj, "Details")
+    custom_button_group = Dropdown(view, group.hover)
+    assert custom_button_group.has_item(button.text)
+
+    initial_count = len(view.browser.selenium.window_handles)
+    main_window = view.browser.selenium.current_window_handle
+    custom_button_group.item_select(button.text)
+
+    wait_for(
+        lambda: len(view.browser.selenium.window_handles) > initial_count,
+        timeout=120,
+        message="Check for window open",
+    )
+    open_url_window = set(view.browser.selenium.window_handles) ^ {main_window}
+
+    view.browser.selenium.switch_to_window(open_url_window.pop())
+    assert "google.com" in view.browser.url
+    view.browser.selenium.close()
+    view.browser.selenium.switch_to_window(main_window)
