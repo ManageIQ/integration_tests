@@ -401,16 +401,15 @@ def generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_cust
         3.Validate the costs reported in the chargeback report.The costs in the report should
           be approximately equal to the cost estimated in the resource_cost fixture.
     """
-    for groups in chargeback_report_custom:
-        if not groups[column]:
-            pytest.skip('missing column in report')
-        else:
-            estimated_resource_alloc_cost = chargeback_costs_custom[resource_alloc_cost]
-            cost_from_report = groups[column]
-            cost = cost_from_report.replace('$', '').replace(',', '')
-            soft_assert(estimated_resource_alloc_cost - COST_DEVIATION <=
-                float(cost) <= estimated_resource_alloc_cost + COST_DEVIATION,
-                'Estimated cost and report cost do not match')
+    if not chargeback_report_custom[0][column]:
+        pytest.skip('missing column in report')
+    else:
+        estimated_resource_alloc_cost = chargeback_costs_custom[resource_alloc_cost]
+        cost_from_report = chargeback_report_custom[0][column]
+        cost = cost_from_report.replace('$', '').replace(',', '')
+        soft_assert(estimated_resource_alloc_cost - COST_DEVIATION <=
+            float(cost) <= estimated_resource_alloc_cost + COST_DEVIATION,
+            'Estimated cost and report cost do not match')
 
 
 def generic_test_resource_alloc(resource_alloc, chargeback_report_custom, column,
@@ -424,18 +423,17 @@ def generic_test_resource_alloc(resource_alloc, chargeback_report_custom, column
         3.Verify that the resource allocation values reported in the chargeback report
           match the values fetched through REST API.
     """
-    for groups in chargeback_report_custom:
-        if not groups[column]:
-            pytest.skip('missing column in report')
-        else:
-            allocated_resource = resource_alloc[resource]
-            if 'GB' in groups[column] and column == 'Memory Allocated over Time Period':
-                allocated_resource = allocated_resource * math.pow(2, -10)
-            resource_from_report = groups[column].replace('MB', '').replace('GB', ''). \
-                replace(' ', '')
-            soft_assert(allocated_resource - RESOURCE_ALLOC_DEVIATION <=
-                float(resource_from_report) <= allocated_resource + RESOURCE_ALLOC_DEVIATION,
-                'Estimated resource allocation and report resource allocation do not match')
+    if not chargeback_report_custom[0][column]:
+        pytest.skip('missing column in report')
+    else:
+        allocated_resource = resource_alloc[resource]
+        if 'GB' in chargeback_report_custom[0][column] and column == 'Memory Allocated over Time Period':
+            allocated_resource = allocated_resource * math.pow(2, -10)
+        resource_from_report = chargeback_report_custom[0][column].replace('MB', '').replace('GB', ''). \
+            replace(' ', '')
+        soft_assert(allocated_resource - RESOURCE_ALLOC_DEVIATION <=
+            float(resource_from_report) <= allocated_resource + RESOURCE_ALLOC_DEVIATION,
+            'Estimated resource allocation and report resource allocation do not match')
 
 
 def test_verify_alloc_memory(resource_alloc, chargeback_report_custom, soft_assert):
