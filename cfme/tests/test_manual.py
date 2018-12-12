@@ -24877,7 +24877,7 @@ def test_verify_page_landing_cloud_subnets():
     3. Check properly land on page or not.
 
     Polarion:
-        assignee: jhenner
+        assignee: mmojzis
         casecomponent: cloud
         caseimportance: low
         initialEstimate: 1/10h
