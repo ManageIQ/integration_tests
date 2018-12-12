@@ -47,7 +47,7 @@ def test_appliance_console(appliance):
     """'ap | tee /tmp/opt.txt)' saves stdout to file, 'ap' launch appliance_console.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: critical
         initialEstimate: 1/12h
@@ -73,7 +73,7 @@ def test_appliance_console_set_hostname(configured_appliance):
     5. 'hostname' sets new hostname.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         caseimportance: high
         casecomponent: appl
         initialEstimate: 1/6h
@@ -106,7 +106,7 @@ def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modsc
     7. '' finish.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         caseimportance: high
         casecomponent: config
         initialEstimate: 1/6h
@@ -123,7 +123,7 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     """Grab fresh appliance and set time and date through appliance_console and check result
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         caseimportance: high
         casecomponent: config
         initialEstimate: 1/6h
@@ -155,7 +155,7 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
     12. '' finish.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: critical
         initialEstimate: 1/4h
@@ -180,7 +180,7 @@ def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope)
     7. '' continue
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         caseimportance: high
         casecomponent: config
         initialEstimate: 1/4h
@@ -210,7 +210,7 @@ def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
     11. '' finish.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         caseimportance: high
         casecomponent: appl
         initialEstimate: 1/3h
@@ -260,7 +260,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
 
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         caseimportance: high
         casecomponent: config
         initialEstimate: 1h
@@ -332,7 +332,7 @@ def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_cr
     15. '' finish.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: critical
         initialEstimate: 1/2h
@@ -369,7 +369,7 @@ def test_appliance_console_external_db_create(
     15. '' finish.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         caseimportance: high
         casecomponent: appl
         initialEstimate: 1/3h
@@ -395,7 +395,7 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
     6. '' complete.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: critical
         initialEstimate: 1/4h
@@ -417,7 +417,7 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
     4. '' finish.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         caseimportance: high
         initialEstimate: None
     """
@@ -451,7 +451,7 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
     5. '4' apply changes.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         caseimportance: high
         initialEstimate: None
     """
@@ -489,7 +489,7 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
     5. '4' apply changes.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         caseimportance: high
         initialEstimate: None
     """
@@ -530,7 +530,7 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     4. '' complete.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: critical
         initialEstimate: 1/3h
@@ -588,7 +588,7 @@ def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
     6. 'y' IPv6 configuration.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: critical
         initialEstimate: 1/6h
@@ -622,7 +622,7 @@ def test_appliance_console_static_ipv4(unconfigured_appliance, soft_assert):
     11. 'y' apply static configuration.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: critical
         initialEstimate: 1/6h
@@ -655,7 +655,7 @@ def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
     11. 'y' apply static configuration.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         caseimportance: high
         initialEstimate: None
     """
@@ -681,7 +681,7 @@ def test_appliance_console_haproxy():
     tml/high_availability_guide/configuring_haproxy
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/2h
@@ -711,7 +711,7 @@ def test_appliance_console_ha_setup_dc():
     majority.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         initialEstimate: 1/2h
         setup: provision 3 appliances
@@ -742,7 +742,7 @@ def test_appliance_console_screen():
     screen -r to resume using screen.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: appl
         caseimportance: medium
         initialEstimate: 1/12h
@@ -758,7 +758,7 @@ def test_appliance_console_restart():
     test restarting the appliance
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/6h
@@ -774,7 +774,7 @@ def test_appliance_console_ha_dc_re_establish():
     to replicate correctly to the disconnected node within DC2
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         initialEstimate: 1/2h
         setup: Restore network connectivity between DC1 and DC2
@@ -794,7 +794,7 @@ def test_appliance_console_evm_stop():
     test stopping the evm server process
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/12h
@@ -809,7 +809,7 @@ def test_appliance_console_evm_start():
     test starting the evm server process
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/12h
@@ -824,7 +824,7 @@ def test_appliance_console_check_default_ip():
     test ip settings, checking all the defaults are what is expected.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/6h
@@ -840,7 +840,7 @@ def test_appliance_ssl():
     https://bugzilla.redhat.com/show_bug.cgi?id=1482697
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/3h
@@ -859,7 +859,7 @@ def test_appliance_console_restore_ha_standby_node():
     start rh-postgresql95-repmgr` after the restore is finished.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/2h
@@ -883,7 +883,7 @@ def test_appliance_console_cancel():
     https://bugzilla.redhat.com/show_bug.cgi?id=1438844
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/12h
@@ -898,7 +898,7 @@ def test_appliance_console_network_conf():
     test network configuration
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/12h
@@ -913,7 +913,7 @@ def test_appliance_console_network_conf_negative():
     test network configuration error with invalid settings
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         caseposneg: negative
@@ -930,7 +930,7 @@ def test_appliance_console_vmdb_httpd():
     https://bugzilla.redhat.com/show_bug.cgi?id=1337525
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: appl
         caseimportance: low
         caseposneg: negative
@@ -946,7 +946,7 @@ def test_appliance_console_shutdown():
     test shutting down the appliance
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/6h
@@ -961,7 +961,7 @@ def test_appliance_console_static_ip_negative():
     test error on invalid static ip
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         caseposneg: negative
@@ -980,7 +980,7 @@ def test_appliance_console_ha_dc_failover():
     current primary.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         initialEstimate: 1/2h
         setup: Failover to DC1 standby node, drop connections between DC"s, restore
@@ -998,7 +998,7 @@ def test_appliance_console_logfile():
     Test configuring new log file disk volume.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/6h
@@ -1020,7 +1020,7 @@ def test_appliance_console_restore_db_network_negative():
     test restoring database with invalid connection settings
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         caseposneg: negative
@@ -1037,7 +1037,7 @@ def test_appliance_console_packages():
     rh-ruby packages.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: appl
         initialEstimate: 1/12h
         startsin: 5.10
@@ -1054,7 +1054,7 @@ def test_appliance_console_cli_rh_registration():
     within the ui
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: appl
         caseimportance: medium
         initialEstimate: 1/12h
@@ -1072,7 +1072,7 @@ def test_appliance_console_extend_storage_negative():
     test extending storage with no additional partition
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         caseposneg: negative
@@ -1088,7 +1088,7 @@ def test_appliance_console_db_maintenance_periodic_unconfigure():
     Test unconfiguring full vacums
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         endsin: 5.8
@@ -1118,7 +1118,7 @@ def test_appliance_console_static_dns():
     https://bugzilla.redhat.com/show_bug.cgi?id=1439348
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: appl
         caseimportance: low
         caseposneg: negative
@@ -1134,7 +1134,7 @@ def test_appliance_console_apache_reload_log_rotate():
     Check that apache is not reloaded twice after log rotations.
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: appl
         initialEstimate: 1/12h
         startsin: 5.10
@@ -1150,7 +1150,7 @@ def test_appliance_console_db_maintenance_hourly_unconfigure():
     Test unconfiguring db maintenance for Hourly re-indexing of tables
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         endsin: 5.8
@@ -1175,7 +1175,7 @@ def test_appliance_console_datetime_negative():
     test setting invalid date/time
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         caseposneg: negative
@@ -1191,7 +1191,7 @@ def test_appliance_console_key_fetch_negative():
     test fetching key from fake remote host
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: config
         caseimportance: medium
         caseposneg: negative
@@ -1208,7 +1208,7 @@ def test_appliance_console_negative():
     https://bugzilla.redhat.com/show_bug.cgi?id=1439345
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
         casecomponent: appl
         caseimportance: low
         caseposneg: negative
