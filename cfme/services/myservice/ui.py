@@ -8,9 +8,9 @@ from cfme.common import TagPageView
 from cfme.common.vm_views import VMDetailsEntities
 from cfme.exceptions import displayed_not_implemented
 from cfme.services.myservice import MyService
-from cfme.services.requests import RequestsView
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
                                   BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector,
@@ -179,10 +179,15 @@ class ReconfigureServiceView(SetOwnershipForm):
 
     @property
     def is_displayed(self):
+        name = self.context['object'].name
+        if BZ(1658906, forced_streams=['5.9', '5.10']).blocks:
+            # there is shorten name in view title due to above BZ
+            name = self.context['object'].name.split('-')[0]
+
         return (
             self.in_myservices and
             self.myservice.is_opened and
-            self.title.text == 'Reconfigure Service "{}"'.format(self.context['object'].name)
+            self.title.text == 'Reconfigure Service "{}"'.format(name)
         )
 
 
@@ -256,7 +261,7 @@ def update(self, updates):
             'Edit of Service "{}" was cancelled by the user'.format(
                 updates.get('description', self.description)))
     view = self.create_view(MyServiceDetailView, override=updates)
-    assert view.is_displayed
+    view.wait_displayed(timeout='5s')
 
 
 @MiqImplementationContext.external_for(MyService.exists.getter, ViaUI)
@@ -278,7 +283,7 @@ def delete(self):
     view.toolbar.configuration.item_select(remove_str, handle_alert=True)
     view = self.create_view(MyServicesView)
     view.flash.assert_no_error()
-    assert view.is_displayed
+    view.wait_displayed(timeout='5s')
     view.flash.assert_success_message(
         'Service "{}": Delete successful'.format(self.name))
 
@@ -290,7 +295,7 @@ def set_ownership(self, owner, group):
                'select_group': group})
     view.save_button.click()
     view = self.create_view(MyServiceDetailView)
-    assert view.is_displayed
+    view.wait_displayed(timeout='5s')
     view.flash.assert_no_error()
     view.flash.assert_success_message('Ownership saved for selected Service')
 
@@ -302,7 +307,7 @@ def edit_tags(self, tag, value):
                'select_value': value})
     view.save_button.click()
     view = self.create_view(MyServiceDetailView)
-    assert view.is_displayed
+    view.wait_displayed(timeout='5s')
     view.flash.assert_no_error()
     view.flash.assert_success_message('Tag edits were successfully saved')
 
@@ -327,8 +332,8 @@ def reconfigure_service(self):
     view = navigate_to(self, 'Reconfigure')
     view.submit_button.click()
     view.flash.assert_no_error()
-    view = self.create_view(RequestsView)
-    assert view.is_displayed
+    view = self.create_view(MyServiceDetailView)
+    view.wait_displayed(timeout='5s')
 
 
 @navigator.register(MyService, 'All')
