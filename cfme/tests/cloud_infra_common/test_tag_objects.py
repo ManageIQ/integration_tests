@@ -2,11 +2,9 @@
 """This module tests tagging of objects in different locations."""
 import pytest
 
-from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
-from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.tier(2),
@@ -98,7 +96,6 @@ def tagging_check(tag, request):
     return _tagging_check
 
 
-@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.provider([CloudProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_cloud_objects(tagging_check, cloud_test_item, tag_place):
@@ -132,7 +129,6 @@ def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
     request.addfinalizer(lambda: tag_cleanup(cloud_test_item, tag))
 
 
-@pytest.mark.meta(blockers=[BZ(1648658, forced_streams=["5.9"])])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
