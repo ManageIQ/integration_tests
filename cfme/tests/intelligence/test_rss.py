@@ -9,7 +9,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 def test_verify_rss_links(appliance):
     """
     Polarion:
-        assignee: None
+        assignee: jhenner
         initialEstimate: None
     """
     view = navigate_to(appliance.server, 'RSS')

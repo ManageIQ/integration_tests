@@ -80,7 +80,7 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
 def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
     """
     Polarion:
-        assignee: None
+        assignee: jhenner
         initialEstimate: None
     """
     app = temp_appliance_extended_db
@@ -135,7 +135,7 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
 def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance_global_region):
     """
     Polarion:
-        assignee: None
+        assignee: jhenner
         initialEstimate: None
     """
     app = temp_appliance_remote
