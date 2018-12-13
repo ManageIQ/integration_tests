@@ -19,6 +19,7 @@ from cfme.configure.configuration.diagnostics_settings import CollectLogsBase
 from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
+from cfme.utils.blockers import BZ
 from cfme.utils.ftp import FTPClient
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
@@ -160,7 +161,7 @@ def configured_depot(log_depot, depot_machine_ip, appliance):
     server_log_depot.clear()
 
 
-def check_ftp(ftp, server_name, server_zone_id, check_ansible_logs=False):
+def check_ftp(appliance, ftp, server_name, server_zone_id, check_ansible_logs=False):
     server_string = server_name + "_" + str(server_zone_id)
     with ftp:
         # Files must have been created after start with server string in it (for ex. EVM_1)
@@ -168,6 +169,17 @@ def check_ftp(ftp, server_name, server_zone_id, check_ansible_logs=False):
         zip_files = ftp.filesystem.search(re.compile(
             r"^.*{}{}[.]zip$".format(server_string, date_group)), directories=False)
         assert zip_files, "No logs found!"
+        # Collection of Models and Dialogs introduced in 5.10
+        if appliance.version >= '5.10' and not BZ(1656318, forced_streams=["5.10"]).blocks:
+            models_files = ftp.filesystem.search(re.compile(
+                r"^Models_.*{}[.]zip$".format(server_string)), directories=False
+            )
+            assert models_files, 'No models files found'
+            dialogs_files = ftp.filesystem.search(re.compile(
+                r"^Dialogs_.*{}[.]zip$".format(server_string)), directories=False
+            )
+            assert dialogs_files, 'No dialogs files found'
+
     # Check the times of the files by names
     datetimes = []
     for zip_file in zip_files:
@@ -181,15 +193,17 @@ def check_ftp(ftp, server_name, server_zone_id, check_ansible_logs=False):
             date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
             date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
             # if the file is correct, check ansible logs (~/ROOT/var/log/tower/setup-*) are there
+            logs_ansible = "ROOT/var/log/tower/setup" if zip_file.name.startswith("Current") \
+                else "log/ansible_tower"
             if ftp.login != 'anonymous' and check_ansible_logs:  # can't login as anon using SSH
                 with SSHClient(hostname=ftp.host,
                                username=ftp.login,
                                password=ftp.password) as log_ssh:
                     result = log_ssh.run_command(
-                        "unzip -l ~{} | grep ROOT/var/log/tower/setup".format(zip_file.path),
+                        "unzip -l ~{} | grep {}".format(zip_file.path, logs_ansible),
                         ensure_user=True)
                     assert '.log' in result.output
-                    log_file_size, log_date, log_time, log_path = result.output.split()
+                    log_file_size = result.output.split()[0]
                     assert int(log_file_size) > 0, "Log file is empty!"
 
         except ValueError:
@@ -318,7 +332,7 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
     configured_depot.collect_all()
     # Check it on FTP
     if log_depot.protocol != 'dropbox':
-        check_ftp(ftp=log_depot.ftp, server_name=appliance.server.name,
+        check_ftp(appliance=appliance, ftp=log_depot.ftp, server_name=appliance.server.name,
                   server_zone_id=appliance.server.zone.id, check_ansible_logs=True)
     elif appliance.is_downstream:  # check for logs on dropbox, not applicable for upstream
         try:
@@ -433,12 +447,12 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
     first_slave_server = slave_servers[0] if slave_servers else None
 
     if from_slave and zone_collect:
-        check_ftp(log_depot.ftp, first_slave_server.name, first_slave_server.sid)
-        check_ftp(log_depot.ftp, appliance.server.name, appliance.server.zone.id)
+        check_ftp(appliance, log_depot.ftp, first_slave_server.name, first_slave_server.sid)
+        check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id)
     elif from_slave:
-        check_ftp(log_depot.ftp, first_slave_server.name, first_slave_server.sid)
+        check_ftp(appliance, log_depot.ftp, first_slave_server.name, first_slave_server.sid)
     else:
-        check_ftp(log_depot.ftp, appliance.server.name, appliance.server.zone.id)
+        check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id)
 
 
 @pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
@@ -482,4 +496,4 @@ def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request,
     else:
         collect_logs.collect_current()
 
-    check_ftp(log_depot.ftp, appliance.server.name, appliance.server.zone.id)
+    check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id)
