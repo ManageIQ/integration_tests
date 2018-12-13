@@ -2,8 +2,10 @@
 import fauxfactory
 import pytest
 
+from widgetastic_patternfly import Dropdown
+
 from cfme import test_requirements
-from cfme.tests.automate.custom_button import OBJ_TYPE, OBJ_TYPE_59
+from cfme.tests.automate.custom_button import OBJ_TYPE, OBJ_TYPE_59, TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -257,3 +259,61 @@ def test_open_url_availability(appliance):
         view.add_button.click()
         view.flash.assert_message("URL can be opened only by buttons for a single entity")
     view.cancel_button.click()
+
+
+def test_custom_button_quotes(appliance, dialog, request):
+    """ Test custom button and group allows quotes or not
+
+    Prerequisites:
+        * Appliance
+        * Simple TextInput service dialog
+
+    Steps:
+        * Create custom button group with single quote in name like "Group's"
+        * Create a custom button with quote in name like "button's"
+        * Navigate to object Details page
+        * Check for button group and button
+        * Select/execute button from group dropdown for selected entities
+        * Fill dialog and submit
+        * Check for the proper flash message related to button execution
+
+    Bugzillas:
+        * 1646905
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: medium
+        initialEstimate: 1/4
+    """
+
+    collection = appliance.collections.button_groups
+    group = collection.create(
+        text="Group's",
+        hover="Group's Hover",
+        type=getattr(collection, "USER"),
+    )
+    request.addfinalizer(group.delete_if_exists)
+
+    button = group.buttons.create(
+        text="Button's",
+        hover="Button's Hover",
+        dialog=dialog,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    admin = appliance.collections.users.instantiate(name="Administrator")
+
+    view = navigate_to(admin, "Details")
+    custom_button_group = Dropdown(view, group.hover)
+    assert custom_button_group.has_item(button.text)
+    custom_button_group.item_select(button.text)
+
+    dialog_view = view.browser.create_view(TextInputDialogView)
+    dialog_view.wait_displayed()
+    dialog_view.service_name.fill("Custom Button Execute")
+
+    dialog_view.submit.click()
+    view.wait_displayed("60s")
+    view.flash.assert_message("Order Request was Submitted")
