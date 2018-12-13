@@ -51,7 +51,10 @@ def test_network_provider_add_with_bad_credentials(provider):
     default_credentials = provider.default_endpoint.credentials
 
     # default settings
-    flash = 'Login failed due to a bad username or password.'
+    if provider.appliance.version < '5.10':
+        flash = 'Login failed due to a bad username or password.'
+    else:
+        flash = 'Login failed due to a bad username, password or unsupported API version.'
     default_credentials.principal = "bad"
     default_credentials.secret = 'notyourday'
 
