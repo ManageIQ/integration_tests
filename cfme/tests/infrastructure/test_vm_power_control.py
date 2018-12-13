@@ -421,7 +421,7 @@ def test_no_template_power_control(provider, soft_assert):
 @pytest.mark.meta(blockers=[BZ(1520489, forced_streams=['5.9'],
                                unblock=lambda provider: not provider.one_of(SCVMMProvider)),
                             BZ(1633727, forced_streams=['5.10'])])
-def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
+def test_no_power_controls_on_archived_vm(appliance, testing_vm, archived_vm, soft_assert):
     """ Ensures that no power button is displayed from details view of archived vm
 
     Prerequisities:
@@ -437,7 +437,12 @@ def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
         initialEstimate: 1/10h
     """
     view = navigate_to(testing_vm, 'AnyProviderDetails', use_resetter=False)
-    soft_assert(not view.toolbar.power.is_displayed, "Power displayed in archived VM's details!")
+    if appliance.version < "5.10":
+        status = getattr(view.toolbar.power, "is_displayed")
+    else:
+        status = getattr(view.toolbar.power, "is_enabled")
+
+    assert not status, "Power displayed in archived VM's details!"
 
 
 @pytest.mark.rhv3
