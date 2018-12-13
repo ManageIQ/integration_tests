@@ -17889,33 +17889,6 @@ def test_verify_session_timeout_works_fine_for_external_auth():
 
 
 @pytest.mark.manual
-@test_requirements.tag
-@pytest.mark.tier(2)
-def test_tag_mapping_azure_instances():
-    """
-    Requirement: Have an azure provider
-    1) Create an instance and tag it with test:testing
-    2) Go to Configuration -> CFME Region -> Map Tags
-    3) Add a tag:
-    Entity: Instance (Microsoft Azure)
-    Label: test
-    Category: Testing
-    4) Refresh provider
-    5) Go to summary of that instance
-    6) In Smart Management field should be:
-    My Company Tags testing: Testing
-    7) Delete that instance
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: cloud
-        initialEstimate: 1/2h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.cfme_tenancy
 @pytest.mark.tier(2)
 def test_tenant_visibility_vms_all_childs():
