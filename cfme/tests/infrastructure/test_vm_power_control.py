@@ -397,12 +397,12 @@ def test_no_power_controls_on_archived_vm(appliance, testing_vm, archived_vm, so
         test_flag: power_control
     """
     view = navigate_to(testing_vm, 'AnyProviderDetails', use_resetter=False)
-    status = (
-        getattr(view.toolbar.power, "is_displayed")
-        if appliance.version < "5.10"
-        else getattr(view.toolbar.power, "is_enabled")
-    )
-    soft_assert(not status, "Power displayed in archived VM's details!")
+    if appliance.version < "5.10":
+        status = getattr(view.toolbar.power, "is_displayed")
+    else:
+        status = getattr(view.toolbar.power, "is_enabled")
+
+    assert not status, "Power displayed in archived VM's details!"
 
 
 @pytest.mark.rhv3
