@@ -427,21 +427,22 @@ def test_migration_rbac(appliance, new_credential, v2v_providers):
 
 
 @pytest.mark.ignore_stream("5.9")
-@pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
-def test_edit_mapping_description(appliance, v2v_providers, form_data_single_datastore,
-                                    host_creds, conversion_tags, soft_assert):
+def test_edit_mapping_fields(appliance, v2v_providers, edited_form_data,
+                             host_creds, conversion_tags, soft_assert):
+    _form_data, edited_form_data = edited_form_data
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
-    edited_form_data = {
-        'general': {
-            'description': "my edited description"},
-        'cluster': {},
-        'datastore': {},
-        'network': {}
-    }
+    mapping = infrastructure_mapping_collection.create(_form_data)
     mapping.update(edited_form_data)
 
     view = navigate_to(infrastructure_mapping_collection, 'All')
     infrastructure_mapping_collection.find_mapping(mapping)
     mapping_list = view.infra_mapping_list
     soft_assert(str(mapping_list.get_map_description(mapping.name)) == "my edited description")
+    soft_assert(edited_form_data['datastore'].values()[0]['mappings'][0]['sources'][0].format() in
+                mapping_list.get_map_source_datastores(mapping.name)[1])
+    soft_assert(edited_form_data['datastore'].values()[0]['mappings'][0]['target'][0].format() in
+                mapping_list.get_map_target_datastores(mapping.name)[1])
+    soft_assert(edited_form_data['network'].values()[0]['mappings'][0]['sources'][0].format() in
+                mapping_list.get_map_source_networks(mapping.name)[1])
+    soft_assert(edited_form_data['network'].values()[0]['mappings'][0]['target'][0].format() in
+                mapping_list.get_map_target_networks(mapping.name)[1])

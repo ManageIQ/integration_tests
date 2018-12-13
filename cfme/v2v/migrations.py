@@ -66,17 +66,8 @@ class v2vPaginatorPane(View):
     items_on_page = v2vPaginationDropup('id', 'pagination-row-dropdown')
     paginator = v2vPaginator()
 
+
 # Views
-
-
-class InfraMappingFormControlButtons(View):
-    # common footer buttons for first 3 pages
-    back_btn = Button('Back')
-    next_btn = Button('Next')
-    save = Button('Save')
-    cancel_btn = Button('Cancel')
-
-
 class InfraMappingWizardCommon(View):
 
     add_mapping = Button('Add Mapping')
@@ -85,12 +76,28 @@ class InfraMappingWizardCommon(View):
     mappings_tree = InfraMappingTreeView(tree_class='treeview')
 
 
-class InfraMappingWizardGeneralView(View):
+class InfraMappingForm(View):
+    # common footer buttons for first 3 pages
+    back_btn = Button('Back')
+    next_btn = Button('Next')
+    save = Button('Save')
+    cancel_btn = Button('Cancel')
+
+    def after_fill(self, was_change):
+        # Cancel button is the common button on all pages so
+        # waiting for footer buttons to display
+        self.cancel_btn.wait_displayed()
+        if self.next_btn.is_displayed:
+            self.next_btn.click()
+        elif self.save.is_displayed:
+            self.save.click()
+
+
+class InfraMappingWizardGeneralView(InfraMappingForm):
     name = TextInput(name='name')
     description = TextInput(name='description')
     name_help_text = Text(locator='.//div[contains(@id,"name")]/span')
     description_help_text = Text(locator='.//div[contains(@id,"description")]/span')
-    include_buttons = View.include(InfraMappingFormControlButtons)
 
     def after_fill(self, was_change):
         if was_change:
@@ -101,8 +108,7 @@ class InfraMappingWizardGeneralView(View):
         return self.name.is_displayed and self.description.is_displayed
 
 
-class InfraMappingWizardClustersView(View):
-    include_buttons_set1 = View.include(InfraMappingFormControlButtons)
+class InfraMappingWizardClustersView(InfraMappingForm):
     include_buttons_set2 = View.include(InfraMappingWizardCommon)
     source_clusters = MultiSelectList('source_clusters')
     target_clusters = MultiSelectList('target_clusters')
@@ -132,12 +138,11 @@ class InfraMappingWizardClustersView(View):
             self.target_clusters.fill(mapping['target'])
             self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
-        self.next_btn.click()
+        self.after_fill(was_change)
         return was_change
 
 
-class InfraMappingWizardDatastoresView(View):
-    include_buttons_set1 = View.include(InfraMappingFormControlButtons)
+class InfraMappingWizardDatastoresView(InfraMappingForm):
     include_buttons_set2 = View.include(InfraMappingWizardCommon)
     source_datastores = MultiSelectList('source_datastores')
     target_datastores = MultiSelectList('target_datastores')
@@ -174,13 +179,11 @@ class InfraMappingWizardDatastoresView(View):
                 self.target_datastores.fill(mapping['target'])
                 self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
-        self.next_btn.wait_displayed()
-        self.next_btn.click()
+        self.after_fill(was_change)
         return was_change
 
 
-class InfraMappingWizardNetworksView(View):
-    include_buttons_set1 = View.include(InfraMappingFormControlButtons)
+class InfraMappingWizardNetworksView(InfraMappingForm):
     include_buttons_set2 = View.include(InfraMappingWizardCommon)
     source_networks = MultiSelectList('source_networks')
     target_networks = MultiSelectList('target_networks')
@@ -218,13 +221,7 @@ class InfraMappingWizardNetworksView(View):
                 self.target_networks.fill(mapping['target'])
                 self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
-        # Cancel button is the common button on all pages so
-        # waiting for footer buttons to display
-        self.cancel_btn.wait_displayed()
-        if self.next_btn.is_displayed:
-            self.next_btn.click()
-        elif self.save.is_displayed:
-            self.save.click()
+        self.after_fill(was_change)
         return was_change
 
 

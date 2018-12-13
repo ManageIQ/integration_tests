@@ -254,6 +254,29 @@ def form_data_single_network(request, second_provider, provider):
 
 
 @pytest.fixture(scope='function')
+def edited_form_data(second_provider, provider):
+    form_data = _form_data(second_provider, provider)
+    edited_form_data = {
+        'general': {
+            'description': "my edited description"},
+        'cluster': {},
+        'datastore': {
+            'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                'mappings': [_form_data_mapping('datastores', second_provider, provider,
+                                                'iscsi', 'iscsi')]
+            }
+        },
+        'network': {
+            'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                'mappings': [_form_data_mapping('vlans', second_provider, provider,
+                                                'DPortGroup', 'Storage - VLAN 33')]
+            }
+        }
+    }
+    return form_data, edited_form_data
+
+
+@pytest.fixture(scope='function')
 def form_data_dual_vm_obj_dual_datastore(request, appliance, second_provider, provider):
     vmware_nw = second_provider.data.get('vlans', [None])[0]
     rhvm_nw = provider.data.get('vlans', [None])[0]
