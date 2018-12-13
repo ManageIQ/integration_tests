@@ -427,8 +427,9 @@ def test_migration_rbac(appliance, new_credential, v2v_providers):
 
 
 @pytest.mark.ignore_stream("5.9")
-def test_edit_mapping_fields(appliance, v2v_providers, _form_data,
-                             edited_form_data, host_creds, conversion_tags, soft_assert):
+def test_edit_mapping_fields(appliance, v2v_providers, edited_form_data,
+                             host_creds, conversion_tags, soft_assert):
+    _form_data, edited_form_data = edited_form_data
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(_form_data)
     mapping.update(edited_form_data)

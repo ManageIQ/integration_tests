@@ -165,7 +165,7 @@ def get_vm(request, appliance, second_provider, template, datastore='nfs'):
     request.addfinalizer(lambda: vm_obj.cleanup_on_provider())
     return vm_obj
 
-@pytest.fixture(scope='function')
+
 def _form_data(second_provider, provider):
     form_data = {
         'general': {
@@ -255,6 +255,7 @@ def form_data_single_network(request, second_provider, provider):
 
 @pytest.fixture(scope='function')
 def edited_form_data(second_provider, provider):
+    form_data = _form_data(second_provider, provider)
     edited_form_data = {
         'general': {
             'description': "my edited description"},
@@ -272,7 +273,7 @@ def edited_form_data(second_provider, provider):
             }
         }
     }
-    return edited_form_data
+    return form_data, edited_form_data
 
 
 @pytest.fixture(scope='function')

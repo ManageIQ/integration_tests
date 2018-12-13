@@ -83,7 +83,7 @@ class InfraMappingForm(View):
     save = Button('Save')
     cancel_btn = Button('Cancel')
 
-    def after_fill(self):
+    def after_fill(self, was_change):
         # Cancel button is the common button on all pages so
         # waiting for footer buttons to display
         self.cancel_btn.wait_displayed()
@@ -138,7 +138,7 @@ class InfraMappingWizardClustersView(InfraMappingForm):
             self.target_clusters.fill(mapping['target'])
             self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
-        self.after_fill()
+        self.after_fill(was_change)
         return was_change
 
 
@@ -179,7 +179,7 @@ class InfraMappingWizardDatastoresView(InfraMappingForm):
                 self.target_datastores.fill(mapping['target'])
                 self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
-        self.after_fill()
+        self.after_fill(was_change)
         return was_change
 
 
@@ -221,7 +221,7 @@ class InfraMappingWizardNetworksView(InfraMappingForm):
                 self.target_networks.fill(mapping['target'])
                 self.add_mapping.click()
         was_change = not self.mappings_tree.is_empty
-        self.after_fill()
+        self.after_fill(was_change)
         return was_change
 
 
