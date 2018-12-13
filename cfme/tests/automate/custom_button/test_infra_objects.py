@@ -409,7 +409,7 @@ def test_open_url(appliance, request, setup_obj, button_group, method):
         open_url=True,
         display_for="Single entity",
         system="Request",
-        request="open_url",
+        request=method.name,
     )
     request.addfinalizer(button.delete_if_exists)
 
@@ -417,6 +417,7 @@ def test_open_url(appliance, request, setup_obj, button_group, method):
     custom_button_group = Dropdown(view, group.hover)
     assert custom_button_group.has_item(button.text)
 
+    # To-Do: Move windows handling functionality to browser
     initial_count = len(view.browser.selenium.window_handles)
     main_window = view.browser.selenium.current_window_handle
     custom_button_group.item_select(button.text)
