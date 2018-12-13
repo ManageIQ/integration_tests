@@ -1,5 +1,6 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.exceptions import ItemNotFound
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
@@ -41,20 +42,24 @@ def refresh_provider(provider):
     return True
 
 
+@test_requirements.tag
 def test_tag_mapping_azure_instances(vm, map_tags, refresh_provider):
     """"
-    1. Find Instance that tagged with test:testing in Azure (cu-24x7)
-    2. Create tag mapping for Azure instances
-    3. Refresh Provider
-    4. Go to Summary of the Instance
-    Expected result: In Smart Management field should be:
-    My Company Tags Testing: testing
-
     Polarion:
         assignee: anikifor
         casecomponent: cloud
         caseimportance: high
         initialEstimate: 1/12h
+        testSteps:
+            1. Find Instance that tagged with test:testing in Azure (cu-24x7)
+            2. Create tag mapping for Azure instances
+            3. Refresh Provider
+            4. Go to Summary of the Instance and read Smart Management field
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Field value reads "My Company Tags Testing: testing"
     """
     view = navigate_to(vm, 'Details')
 
