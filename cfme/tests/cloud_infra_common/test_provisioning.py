@@ -94,7 +94,8 @@ def test_provision_from_template(provider, provisioned_instance):
         test_flag: provision
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     assert provisioned_instance.exists_on_provider, "Instance wasn't provisioned successfully"
@@ -107,6 +108,7 @@ def test_gce_preemptible_provision(appliance, provider, instance_args, soft_asse
     """
     Polarion:
         assignee: jhenner
+        caseimportance: high
         initialEstimate: 1/6h
     """
     vm_name, inst_args = instance_args
@@ -151,6 +153,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         initialEstimate: 1/8h
     """
     # generate_tests makes sure these have values
@@ -337,7 +340,8 @@ def test_cloud_provision_from_template_with_attached_disks(
         test_flag: provision
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     vm_name, inst_args = instance_args
@@ -389,7 +393,8 @@ def test_provision_with_boot_volume(request, instance_args, provider, soft_asser
         test_flag: provision, volumes
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     vm_name, inst_args = instance_args
@@ -457,7 +462,8 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
         test_flag: provision, volumes
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     vm_name, inst_args = instance_args

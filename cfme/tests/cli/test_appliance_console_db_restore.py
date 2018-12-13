@@ -398,6 +398,7 @@ def test_appliance_console_restore_db_replicated(
     """
     Polarion:
         assignee: jhenner
+        caseimportance: high
         casecomponent: config
         initialEstimate: 1h
     """
@@ -445,7 +446,8 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
     Confirm that ha failover continues to work correctly and providers still exist.
 
     Polarion:
-        assignee: lcouzens
+        assignee: jhenner
+        caseimportance: high
         casecomponent: appl
         initialEstimate: None
     """

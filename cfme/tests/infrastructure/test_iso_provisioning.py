@@ -89,7 +89,8 @@ def test_iso_provision_from_template(appliance, provider, vm_name, datastore_ini
         suite: infra_provisioning
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     # generate_tests makes sure these have values

@@ -36,8 +36,8 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
     """
     Polarion:
         assignee: jhenner
+        caseimportance: high
         casecomponent: report
-        caseimportance: medium
         initialEstimate: 1/12h
     """
     # We need to make sure the widgets have some data.
@@ -71,8 +71,8 @@ def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, 
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         casecomponent: report
-        caseimportance: medium
         initialEstimate: 1/12h
     """
     # Very useful construct. List is mutable, so we can prepare the generic delete finalizer.
@@ -115,7 +115,8 @@ def test_verify_rss_links_from_dashboards(dashboards):
         * Try making a request on the provided URLs, should make sense
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     wait_for(
@@ -145,8 +146,8 @@ def test_widgets_reorder(dashboards, soft_assert, request):
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         casecomponent: report
-        caseimportance: medium
         initialEstimate: 1/12h
     """
     request.addfinalizer(dashboards.default.collections.widgets.reset)
@@ -160,3 +161,70 @@ def test_widgets_reorder(dashboards, soft_assert, request):
     assert previous_names[2:] == new_names[2:]
     assert previous_names[0] == new_names[1]
     assert previous_names[1] == new_names[0]
+
+
+@pytest.mark.manual
+@test_requirements.dashboard
+@pytest.mark.tier(3)
+def test_dashboard_layouts_match():
+    """
+    https://bugzilla.redhat.com/show_bug.cgi?id=1518766
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: web_ui
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.dashboard
+@pytest.mark.tier(3)
+def test_dashboard_widgets_fullscreen():
+    """
+    https://bugzilla.redhat.com/show_bug.cgi?id=1518901
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: web_ui
+        caseimportance: low
+        initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.dashboard
+@pytest.mark.tier(3)
+def test_identical_dashboard_widgets():
+    """
+    test_identical_dashboard_widgets
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: report
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.dashboard
+@pytest.mark.tier(3)
+def test_dashboard_chart_widgets_size_in_modal():
+    """
+    Test whether dashboard chart widgets have correct size in modal
+    window.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: report
+        caseimportance: low
+        initialEstimate: 1/6h
+        testtype: nonfunctional
+    """
+    pass

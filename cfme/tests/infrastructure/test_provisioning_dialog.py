@@ -131,6 +131,7 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         initialEstimate: 1/6h
     """
     prov_data['catalog']["vm_name"] = vm_name
@@ -187,6 +188,7 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         initialEstimate: 1/6h
     """
 
@@ -231,6 +233,7 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         initialEstimate: 1/4h
     """
     prov_data['catalog']['vm_name'] = vm_name
@@ -298,6 +301,7 @@ def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
 
     Polarion:
         assignee: jhenner
+        caseimportance: high
         initialEstimate: 1/4h
     """
     now = datetime.utcnow()
@@ -344,7 +348,8 @@ def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, v
         test_flag: provision
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     prov_data['catalog']['vm_name'] = vm_name
@@ -389,7 +394,8 @@ def test_provision_vm_with_2_nics(provisioner, provisioning, prov_data, vm_name)
         test_flag: provision
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     template_name = provisioning.get('template_2_nics', None)
@@ -417,7 +423,8 @@ def test_vmware_default_placement(provisioner, prov_data, provider, setup_provid
         test_flag: provision
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     template_name = provider.data['provisioning']['template']

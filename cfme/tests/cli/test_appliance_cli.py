@@ -35,9 +35,9 @@ def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
     """Grab fresh appliance and set time and date through appliance_console_cli and check result
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
+        caseimportance: high
         casecomponent: config
-        caseimportance: medium
         initialEstimate: 1/6h
     """
     app = temp_appliance_preconfig_funcscope
@@ -56,7 +56,8 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
     """Set and check timezones are set correctly through appliance conosle cli
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
+        caseimportance: high
         casecomponent: appl
         initialEstimate: 1/12h
     """
@@ -70,7 +71,8 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
 def test_appliance_console_cli_set_hostname(configured_appliance):
     """
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
+        caseimportance: high
         casecomponent: appl
         initialEstimate: 1/12h
     """
@@ -86,9 +88,9 @@ def test_appliance_console_cli_set_hostname(configured_appliance):
 def test_appliance_console_cli_internal_fetch_key(app_creds, unconfigured_appliance, appliance):
     """
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
+        caseimportance: high
         casecomponent: appl
-        caseimportance: medium
         initialEstimate: 1/3h
     """
     fetch_key_ip = appliance.hostname
@@ -105,9 +107,9 @@ def test_appliance_console_cli_external_join(app_creds, appliance,
                                              temp_appliance_unconfig_funcscope):
     """
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
+        caseimportance: high
         casecomponent: appl
-        caseimportance: medium
         initialEstimate: 1/4h
     """
     appliance_ip = appliance.hostname
@@ -124,7 +126,8 @@ def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance
                                                unconfigured_appliance_secondary):
     """
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
+        caseimportance: high
         casecomponent: config
         initialEstimate: 1/3h
     """
@@ -141,7 +144,8 @@ def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance
 def test_appliance_console_cli_external_auth(auth_type, ipa_crud, app_creds, configured_appliance):
     """
     Polarion:
-        assignee: mpusater
+        assignee: sbulage
+        caseimportance: high
         initialEstimate: None
     """
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
@@ -176,7 +180,8 @@ def no_ipa_config(configured_appliance):
 def test_appliance_console_cli_ipa(ipa_crud, configured_appliance, no_ipa_config):
     """
     Polarion:
-        assignee: mpusater
+        assignee: sbulage
+        caseimportance: high
         initialEstimate: None
     """
     ipa_args = ipa_crud.as_external_value()
@@ -191,7 +196,8 @@ def test_appliance_console_cli_ipa(ipa_crud, configured_appliance, no_ipa_config
 def test_appliance_console_cli_extend_storage(unconfigured_appliance):
     """
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
+        caseimportance: high
         casecomponent: config
         initialEstimate: 1/6h
     """
@@ -207,9 +213,9 @@ def test_appliance_console_cli_extend_storage(unconfigured_appliance):
 def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
     """
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
+        caseimportance: high
         casecomponent: config
-        caseimportance: medium
         initialEstimate: 1/6h
     """
     unconfigured_appliance.ssh_client.run_command('appliance_console_cli -l auto')
@@ -225,7 +231,8 @@ def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
 def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, app_creds):
     """
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
+        caseimportance: high
         casecomponent: config
         initialEstimate: 1/6h
     """
@@ -242,7 +249,8 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     """Tests the configuration of HA with three appliances including failover to standby node
 
     Polarion:
-        assignee: jhenner
+        assignee: sbulage
+        caseimportance: high
         casecomponent: appl
         initialEstimate: 1h
     """

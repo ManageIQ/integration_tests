@@ -162,7 +162,8 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip, applia
     """ Test scheduled one-type backup on given machines using smb/nfs
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
 

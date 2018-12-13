@@ -3,6 +3,7 @@ import pytest
 import pytz
 from dateutil import parser, relativedelta
 
+from cfme.utils import conf
 from cfme.base.ui import BaseLoggedInPage
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
@@ -54,9 +55,10 @@ def round_min(value, base=5):
 def test_schedule_crud(appliance, current_server_time):
     """
     Polarion:
-        assignee: pvala
+        assignee: jhenner
         casecomponent: report
         initialEstimate: 1/16h
+        caseimportance: high
     """
     current_time, _ = current_server_time
     start_date = current_time + relativedelta.relativedelta(days=2)
@@ -91,7 +93,8 @@ def test_schedule_crud(appliance, current_server_time):
 def test_schedule_analysis_in_the_past(appliance, current_server_time, request):
     """
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     current_time, _ = current_server_time
@@ -118,7 +121,8 @@ def test_schedule_analysis_in_the_past(appliance, current_server_time, request):
 def test_create_multiple_schedules_in_one_timezone(appliance, request):
     """
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     schedule_list = []
@@ -138,7 +142,8 @@ def test_create_multiple_schedules_in_one_timezone(appliance, request):
 def test_inactive_schedule(appliance, current_server_time):
     """
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     current_time, _ = current_server_time
@@ -162,7 +167,8 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, request, cu
 
     """
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     run_time, time_diff, time_num = run_types
@@ -193,6 +199,7 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, request, cu
         start_minute=start_date_minute,
 
     )
+
 
     @request.addfinalizer
     def _finalize():

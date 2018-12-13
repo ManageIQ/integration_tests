@@ -91,7 +91,8 @@ def test_rh_creds_validation(reg_method, reg_data, proxy_url, proxy_creds):
     """ Tests whether credentials are validated correctly for RHSM and SAT6
 
     Polarion:
-        assignee: lcouzens
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: 1/12h
     """
     repo = reg_data.get('enable_repo')
@@ -131,7 +132,8 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
     """ Tests whether an appliance can be registered against RHSM and SAT6
 
     Polarion:
-        assignee: lcouzens
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: 1/12h
     """
     repo = reg_data.get('enable_repo')
@@ -193,7 +195,8 @@ def test_rhsm_registration_check_repo_names(
     """ Checks default rpm repos on a fresh appliance
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
     ver = temp_appliance_preconfig_funcscope.version.series()
@@ -222,7 +225,8 @@ def test_rh_updates(appliance_preupdate, appliance):
     """ Tests whether the update button in the webui functions correctly
 
     Polarion:
-        assignee: None
+        assignee: jhenner
+        caseimportance: high
         initialEstimate: None
     """
 
