@@ -7,17 +7,14 @@ import sentaku
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
-from cfme.utils.version import LATEST
 
 
 @attr.s
 class Server(BaseEntity, sentaku.modeling.ElementMixin):
     _param_name = ParamClassName('name')
 
-    name = attr.ib()
     sid = attr.ib(default=1)
 
     address = sentaku.ContextualMethod()
@@ -33,6 +30,18 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
 
     # zone = sentaku.ContextualProperty()
     # slave_servers = sentaku.ContextualProperty()
+
+    @property
+    def name(self):
+        """Fetch the name from the master server api entity
+
+        Returns:
+            string if entity has the name attribute
+            None if its missing
+        """
+        collect = self.appliance.rest_api.collections.servers
+        servers = collect.all if self.appliance.is_dev else collect.find_by(is_master=True)
+        return getattr(servers[0], 'name', None)
 
     @property
     def settings(self):
@@ -120,28 +129,19 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
         return servers
 
     def get_master(self):
-        server_collection = self.appliance.rest_api.collections.servers
-        if self.appliance.is_dev:
-            server = server_collection.all[0]
-        else:
-            server = server_collection.find_by(is_master=True)[0]
+        """Look for the master server through REST entity, use its ID to instantiate Server
 
-        # TODO This entire hack needs to be removed once we are able to edit the server name again
-        try:
-            name = server.name
-        except AttributeError:
-            logger.error('The EVM has no name, setting it to EVM')
-            if (self.appliance.version == LATEST or
-                    self.appliance.is_pod or
-                    BZ(1635178, forced_streams=['5.10']).blocks or
-                    BZ(1639364, forced_streams=['5.9']).blocks):
-                name = 'EVM'
-            else:
-                name = server.name
-            server = self.instantiate(name=name, sid=server.id)
-            server.update_advanced_settings({'server': {'name': "EVM"}})
-            return server
-        return self.instantiate(name=name, sid=server.id)
+        Returns:
+            :py:class:`cfme.base.Server` entity
+        """
+        collect = self.appliance.rest_api.collections.servers
+        servers = collect.all if self.appliance.is_dev else collect.find_by(is_master=True)
+        server = servers[0]
+
+        if not hasattr(server, 'name'):
+            logger.warning('rest_api server object has no name attribute')
+
+        return self.instantiate(sid=server.id)
 
 
 @attr.s

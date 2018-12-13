@@ -508,7 +508,7 @@ class ServerView(ConfigurationView):
             self.accordions.settings.tree.currently_selected == selected_list)
 
 
-@navigator.register(Server)
+@navigator.register(Server, 'Details')
 class Details(CFMENavigateStep):
     VIEW = ServerView
     prerequisite = NavigateToSibling('Configuration')
@@ -532,8 +532,8 @@ class ServerDetails(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and
-            self.prerequisite_view.is_displayed and
-            self.view.server.is_active)
+            self.view.server.is_active
+        )
 
     def step(self):
         self.prerequisite_view.server.select()
