@@ -9,8 +9,6 @@ from cfme.services.requests import RequestsView
 from cfme.services.service_catalogs import ServiceCatalogs, BaseOrderForm
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
-from cfme.utils.blockers import BZ
-from cfme.utils.version import VersionPicker, LOWEST
 
 
 class ServicesCatalogsView(BaseLoggedInPage):
@@ -88,13 +86,10 @@ def order(self):
         view.fill(self.dialog_values)
     if self.ansible_dialog_values:
         view.fill(self.ansible_dialog_values)
-    msg = "Order Request was Submitted"
-    msg_type = "success"
     view.submit_button.click()
     view = self.create_view(RequestsView)
     view.flash.assert_no_error()
-    if not BZ(1605102, forced_streams=['5.10']).blocks:
-        view.flash.assert_message(msg, msg_type)
+    view.flash.assert_success_message("Order Request was Submitted")
     return self.appliance.collections.requests.instantiate(self.name, partial_check=True)
 
 
