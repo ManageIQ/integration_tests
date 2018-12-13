@@ -312,22 +312,16 @@ class StackCollection(BaseCollection):
 
         for stack in stacks:
             try:
-                row = view.paginator.find_row_on_pages(view.table, name=stack.name)
-                row[0].check()
+                view.table.row(name=stack.name)[0].check()
                 checked_stack_names.add(stack.name)
             except NoSuchElementException:
                 break
 
         if stack_names == checked_stack_names:
-            if self.appliance.version < '5.9':
-                view.toolbar.configuration.item_select(
-                    'Remove Orchestration Stacks', handle_alert=True)
-            else:
-                view.toolbar.configuration.item_select(
+            view.toolbar.configuration.item_select(
                     'Remove Orchestration Stacks from Inventory', handle_alert=True)
             view.flash.assert_no_error()
-            flash_msg = \
-                'Delete initiated for {} Orchestration Stacks from the CFME Database'.format(
+            flash_msg = 'Delete initiated for {} Orchestration Stacks from the CFME Database'.format(
                     len(stacks))
             view.flash.assert_success_message(flash_msg)
 
