@@ -5,6 +5,9 @@ import pytest
 from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import OBJ_TYPE, OBJ_TYPE_59, TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -261,8 +264,15 @@ def test_open_url_availability(appliance):
     view.cancel_button.click()
 
 
-def test_custom_button_quotes(appliance, dialog, request):
+@pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE_PER_TYPE)
+@pytest.mark.uncollectif(
+    lambda appliance: appliance.version < "5.10",
+    reason="BZ-1646905 still not backported to lower version",
+)
+def test_custom_button_quotes(appliance, provider, setup_provider, dialog, request):
     """ Test custom button and group allows quotes or not
+
+    To-Do: collect test for 5.9; If developer backport BZ-1646905
 
     Prerequisites:
         * Appliance
@@ -288,9 +298,7 @@ def test_custom_button_quotes(appliance, dialog, request):
 
     collection = appliance.collections.button_groups
     group = collection.create(
-        text="Group's",
-        hover="Group's Hover",
-        type=getattr(collection, "USER"),
+        text="Group's", hover="Group's Hover", type=getattr(collection, "PROVIDER")
     )
     request.addfinalizer(group.delete_if_exists)
 
@@ -303,17 +311,14 @@ def test_custom_button_quotes(appliance, dialog, request):
     )
     request.addfinalizer(button.delete_if_exists)
 
-    admin = appliance.collections.users.instantiate(name="Administrator")
-
-    view = navigate_to(admin, "Details")
+    view = navigate_to(provider, "Details")
     custom_button_group = Dropdown(view, group.hover)
     assert custom_button_group.has_item(button.text)
     custom_button_group.item_select(button.text)
 
     dialog_view = view.browser.create_view(TextInputDialogView)
-    dialog_view.wait_displayed()
+    dialog_view.wait_displayed("60s")
     dialog_view.service_name.fill("Custom Button Execute")
 
     dialog_view.submit.click()
-    view.wait_displayed("60s")
     view.flash.assert_message("Order Request was Submitted")
