@@ -847,11 +847,13 @@ class GroupCollection(BaseCollection):
                 not having appropriate permissions OR delete is not allowed
                 for currently selected user
         """
-        if self.appliance.version < "5.8":
-            flash_blocked_msg = ("Description has already been taken")
+        if description:
+            flash_blocked_msg = (
+                "Description is not unique within region {}".format(
+                    self.appliance.server.zone.region.number)
+            )
         else:
-            flash_blocked_msg = "Description is not unique within region {}".format(
-                self.appliance.server.zone.region.number)
+            flash_blocked_msg = "Description can't be blank"
 
         view = navigate_to(self, 'Add')
 
