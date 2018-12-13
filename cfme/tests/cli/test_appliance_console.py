@@ -1083,6 +1083,7 @@ def test_appliance_console_extend_storage_negative():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
+@pytest.mark.ignore_stream('5.9', '5.10')
 def test_appliance_console_db_maintenance_periodic_unconfigure():
     """
     Test unconfiguring full vacums
@@ -1145,6 +1146,7 @@ def test_appliance_console_apache_reload_log_rotate():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
+@pytest.mark.ignore_stream('5.9', '5.10')
 def test_appliance_console_db_maintenance_hourly_unconfigure():
     """
     Test unconfiguring db maintenance for Hourly re-indexing of tables

@@ -419,6 +419,7 @@ def test_appliance_replicate_database_disconnection_with_backlog():
 @pytest.mark.manual
 @test_requirements.rep
 @pytest.mark.tier(1)
+@pytest.mark.ignore_stream('5.7', '5.8', '5.9', '5.10')
 def test_appliance_replicate_sync_role_change_with_backlog():
     """
     Replicate role change w/ a replication backlog

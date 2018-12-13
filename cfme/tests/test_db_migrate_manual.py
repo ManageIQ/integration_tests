@@ -5,6 +5,7 @@ from cfme import test_requirements
 @pytest.mark.manual
 @test_requirements.upgrade
 @pytest.mark.tier(2)
+@pytest.mark.ignore_stream('5.9', '5.10')
 def test_upgrade_single_inplace_postgres():
     """
     Upgrading a single appliance and upgrade postgres to 9.5
@@ -180,6 +181,7 @@ def test_rh_rhsm_sat6_cred_save_crud():
 @pytest.mark.manual
 @test_requirements.upgrade
 @pytest.mark.tier(2)
+@pytest.mark.ignore_stream('5.10')
 def test_upgrade_rubyrep_to_pglogical():
     """
     Test upgrading appliances in ruby replication and change it over to
@@ -526,6 +528,7 @@ def test_upgrade_multi_ha_inplace():
 @pytest.mark.manual
 @test_requirements.upgrade
 @pytest.mark.tier(2)
+@pytest.mark.ignore_stream('5.10')
 def test_upgrade_multi_replication_inplace_55():
     """
     test upgrading replicated appliances to latest version
@@ -544,6 +547,7 @@ def test_upgrade_multi_replication_inplace_55():
 @pytest.mark.manual
 @test_requirements.upgrade
 @pytest.mark.tier(2)
+@pytest.mark.ignore_stream('5.11')
 def test_upgrade_multi_replication_inplace_56():
     """
     test upgrading replicated appliances to latest version
