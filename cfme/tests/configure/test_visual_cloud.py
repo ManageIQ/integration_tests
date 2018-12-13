@@ -27,7 +27,7 @@ landing_pages = {
 }
 
 
-@pytest.fixture(scope='module', params=['10', '20', '50', '100', '200', '500', '1000'])
+@pytest.fixture(scope='module', params=['5', '10', '20', '50', '100', '200', '500', '1000'])
 def value(request):
     return request.param
 
@@ -105,6 +105,10 @@ def test_cloud_grid_page_per_item(appliance, request, page, value, set_grid):
     view.toolbar.view_selector.select('Grid View')
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
+    items_per_page = view.entities.paginator.items_per_page
+
+    assert int(items_per_page) == int(limit)
+
     if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), 'Gridview Failed for page {}!'.format(page)
     assert int(max_item) <= int(item_amt)
@@ -132,6 +136,10 @@ def test_cloud_tile_page_per_item(appliance, request, page, value, set_tile):
     view.toolbar.view_selector.select('Tile View')
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
+    items_per_page = view.entities.paginator.items_per_page
+
+    assert int(items_per_page) == int(limit)
+
     if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), 'Tileview Failed for page {}!'.format(page)
     assert int(max_item) <= int(item_amt)
@@ -159,6 +167,10 @@ def test_cloud_list_page_per_item(appliance, request, page, value, set_list):
     view.toolbar.view_selector.select('List View')
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
+    items_per_page = view.entities.paginator.items_per_page
+
+    assert int(items_per_page) == int(limit)
+
     if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), 'Listview Failed for page {}!'.format(page)
     assert int(max_item) <= int(item_amt)

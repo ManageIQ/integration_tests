@@ -10,6 +10,7 @@ from cfme.infrastructure.datastore import DatastoreCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 
+
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
               pytest.mark.usefixtures('infra_provider')]
@@ -23,7 +24,7 @@ def page(request):
     return request.param
 
 
-@pytest.fixture(scope='module', params=['10', '20', '50', '100', '200', '500', '1000'])
+@pytest.fixture(scope='module', params=['5', '10', '20', '50', '100', '200', '500', '1000'])
 def value(request):
     return request.param
 
@@ -154,12 +155,15 @@ def test_infra_grid_page_per_item(appliance, request, page, value, set_grid):
     view.toolbar.view_selector.select('Grid View')
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
+    items_per_page = view.entities.paginator.items_per_page
+
+    assert int(items_per_page) == int(limit)
+
     if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), 'Gridview Failed for page {}!'.format(page)
     assert int(max_item) <= int(item_amt)
 
 
-@pytest.mark.meta(blockers=[1267148])
 def test_infra_tile_page_per_item(appliance, request, page, value, set_tile):
     """ Tests tile items per page
 
@@ -182,12 +186,15 @@ def test_infra_tile_page_per_item(appliance, request, page, value, set_tile):
     view.toolbar.view_selector.select('Tile View')
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
+    items_per_page = view.entities.paginator.items_per_page
+
+    assert int(items_per_page) == int(limit)
+
     if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), 'Tileview Failed for page {}!'.format(page)
     assert int(max_item) <= int(item_amt)
 
 
-@pytest.mark.meta(blockers=[1267148])
 def test_infra_list_page_per_item(appliance, request, page, value, set_list):
     """ Tests list items per page
 
@@ -210,12 +217,16 @@ def test_infra_list_page_per_item(appliance, request, page, value, set_list):
     view.toolbar.view_selector.select('List View')
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
+    items_per_page = view.entities.paginator.items_per_page
+
+    assert int(items_per_page) == int(limit)
+
     if int(item_amt) >= int(limit):
         assert int(max_item) == int(limit), 'Listview Failed for page {}!'.format(page)
     assert int(max_item) <= int(item_amt)
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < "5.10.0.20")
+@pytest.mark.ignore_stream("5.9")
 def test_infra_report_page_per_item(appliance, value, set_report, get_report):
     """ Tests report items per page
 
