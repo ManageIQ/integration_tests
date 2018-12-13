@@ -938,7 +938,7 @@ class TestArbitrationSettingsRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         query_resource_attributes(arbitration_settings[0], soft_assert=soft_assert)
@@ -950,7 +950,7 @@ class TestArbitrationSettingsRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         for setting in arbitration_settings:
@@ -965,7 +965,7 @@ class TestArbitrationSettingsRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         delete_resources_from_detail(arbitration_settings, method=method)
@@ -977,7 +977,7 @@ class TestArbitrationSettingsRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         delete_resources_from_collection(arbitration_settings)
@@ -992,7 +992,7 @@ class TestArbitrationSettingsRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         num_settings = len(arbitration_settings)
@@ -1033,7 +1033,7 @@ class TestArbitrationRulesRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         query_resource_attributes(arbitration_rules[0], soft_assert=soft_assert)
@@ -1045,7 +1045,7 @@ class TestArbitrationRulesRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         for rule in arbitration_rules:
@@ -1060,7 +1060,7 @@ class TestArbitrationRulesRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         delete_resources_from_detail(arbitration_rules, method='POST')
@@ -1072,7 +1072,7 @@ class TestArbitrationRulesRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         delete_resources_from_collection(arbitration_rules)
@@ -1087,7 +1087,7 @@ class TestArbitrationRulesRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         num_rules = len(arbitration_rules)

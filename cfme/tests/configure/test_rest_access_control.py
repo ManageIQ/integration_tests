@@ -570,7 +570,7 @@ class TestUsersViaREST(object):
             test_flag: rest
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']

@@ -377,7 +377,7 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
     successfully.
 
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     schedule_data["filter"] = (

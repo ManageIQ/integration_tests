@@ -135,7 +135,7 @@ def test_provision_vlan(request, appliance, provision_data, vnic_profile, provid
         test_flag: rest, provision
 
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     vm_name = provision_data['vm_fields']['vm_name']

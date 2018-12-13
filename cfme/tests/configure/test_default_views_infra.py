@@ -72,7 +72,7 @@ def test_default_view_infra_reset(appliance):
         * Check Reset Button is enabled
 
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     view = navigate_to(appliance.user.my_settings, "DefaultViews")
@@ -90,7 +90,7 @@ def test_infra_default_view(appliance, group_name, view):
     """This test case changes the default view of an infra related page and asserts the change.
 
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     page = _get_page(gtl_params[group_name], appliance)
@@ -112,7 +112,7 @@ def test_infra_compare_view(appliance, expected_view):
     and asserts the change.
 
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     if expected_view in ['Expanded View', 'Compressed View']:

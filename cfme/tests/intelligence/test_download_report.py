@@ -18,7 +18,7 @@ def test_download_report(infra_provider, report, filetype):
     """Download the report as a file.
 
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     report.download(filetype)

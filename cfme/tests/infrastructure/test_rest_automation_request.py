@@ -176,7 +176,7 @@ class TestAutomationRequestsRESTAPI(object):
             test_flag: rest, requests
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         create_requests(collection, appliance.rest_api, automation_requests_data, multiple)
@@ -189,7 +189,7 @@ class TestAutomationRequestsRESTAPI(object):
             test_flag: rest, requests
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         create_pending_requests(collection, appliance.rest_api, requests_pending)
@@ -205,7 +205,7 @@ class TestAutomationRequestsRESTAPI(object):
             test_flag: rest, requests
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         approve_requests(collection, appliance.rest_api, requests_pending, from_detail)
@@ -221,7 +221,7 @@ class TestAutomationRequestsRESTAPI(object):
             test_flag: rest, requests
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         deny_requests(collection, appliance.rest_api, requests_pending, from_detail)
@@ -240,7 +240,7 @@ class TestAutomationRequestsRESTAPI(object):
             test_flag: rest, requests
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         # testing BZ 1418338
@@ -287,7 +287,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
             test_flag: rest, requests
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         create_requests(collection, appliance.rest_api, automation_requests_data, multiple)
@@ -300,7 +300,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
             test_flag: rest, requests
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         create_pending_requests(collection, appliance.rest_api, requests_pending)
@@ -316,7 +316,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
             test_flag: rest, requests
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         approve_requests(collection, appliance.rest_api, requests_pending, from_detail)
@@ -332,7 +332,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
             test_flag: rest, requests
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         deny_requests(collection, appliance.rest_api, requests_pending, from_detail)
@@ -348,7 +348,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
             test_flag: rest, requests
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         edit_requests(collection, appliance.rest_api, requests_pending, from_detail)
@@ -360,7 +360,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
             test_flag: rest, requests
 
         Polarion:
-            assignee: None
+            assignee: pvala
             initialEstimate: None
         """
         output = mp.Queue()

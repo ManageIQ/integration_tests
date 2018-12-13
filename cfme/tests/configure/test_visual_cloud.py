@@ -199,7 +199,7 @@ def test_cloud_start_page(request, appliance, start_page):
 def test_cloudprovider_noquads(request, set_cloud_provider_quad):
     """
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     view = navigate_to(CloudProvider, 'All')

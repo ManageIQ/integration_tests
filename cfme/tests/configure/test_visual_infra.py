@@ -265,7 +265,7 @@ def test_infra_start_page(visual, request, appliance, start_page):
         test_flag: visuals
 
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     request.addfinalizer(set_default_page)
@@ -288,7 +288,7 @@ def test_infraprovider_noquads(request, set_infra_provider_quad):
         Visual Tab under "Show Infrastructure Provider Quadrants" option works properly.
 
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     view = navigate_to(InfraProvider, 'All')
@@ -303,7 +303,7 @@ def test_host_noquads(appliance, request, set_host_quad):
         Visual Tab under "Show Host Quadrants" option works properly.
 
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     host_collection = appliance.collections.hosts
@@ -319,7 +319,7 @@ def test_datastore_noquads(request, set_datastore_quad, appliance):
         Visual Tab under "Show Datastores Quadrants" option works properly.
 
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     dc = DatastoreCollection(appliance)
@@ -335,7 +335,7 @@ def test_vm_noquads(appliance, request, set_vm_quad):
         Visual Tab under "Show VM Quadrants" option works properly.
 
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
@@ -351,7 +351,7 @@ def test_template_noquads(appliance, set_template_quad):
         Visual Tab under "Show Template Quadrants" option works properly.
 
     Polarion:
-        assignee: None
+        assignee: pvala
         initialEstimate: None
     """
     view = navigate_to(appliance.collections.infra_templates, 'TemplatesOnly')
