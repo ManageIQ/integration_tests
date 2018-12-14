@@ -1139,6 +1139,11 @@ class SSUIDropdown(Dropdown):
         Widget.__init__(self, parent, logger=logger)
         self.text = text
 
+    @property
+    def selected_option(self):
+        """Returns the currently selected item text."""
+        return self.browser.text(self.BUTTON_LOCATOR, parent=self)
+
 
 class SSUIAppendToBodyDropdown(Dropdown):
     """This is a special dropdown where the dropdown options

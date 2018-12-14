@@ -13,7 +13,13 @@ from cfme.utils.appliance.implementations.ssui import (
 )
 from cfme.utils.version import VersionPicker, LATEST
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (SSUIlist, SSUIDropdown, Notification, SSUIAppendToBodyDropdown)
+from widgetastic_manageiq import (
+    Notification,
+    SSUIAppendToBodyDropdown,
+    SSUIDropdown,
+    SSUIlist,
+    SSUIPaginationPane,
+)
 from . import MyService
 
 
@@ -21,6 +27,7 @@ class MyServicesView(SSUIBaseLoggedInPage):
     title = Text(locator='//li[@class="active"]')
     service = SSUIlist()
     notification = Notification()
+    paginator = SSUIPaginationPane()
 
     @property
     def in_myservices(self):

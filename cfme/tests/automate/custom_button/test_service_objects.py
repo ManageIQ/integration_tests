@@ -4,10 +4,12 @@ import fauxfactory
 from widgetastic_patternfly import Dropdown
 
 from cfme.services.myservice import MyService
+from cfme.tests.automate.custom_button import log_request_check
 from cfme.utils.appliance import ViaREST, ViaUI, ViaSSUI
 from cfme.utils.appliance.implementations.ui import navigate_to as ui_nav
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
 from cfme.utils.blockers import BZ
+from cfme.utils.wait import TimedOutError, wait_for
 
 
 pytestmark = [pytest.mark.tier(2)]
@@ -19,6 +21,8 @@ DISPLAY_NAV = {
     "List": ["All"],
     "Single and list": ["All", "Details"],
 }
+
+SUBMIT = ["Submit all", "One by one"]
 
 
 @pytest.fixture(scope="module")
@@ -153,3 +157,106 @@ def test_custom_button_display(request, appliance, context, display, objects, bu
             custom_button_group = Dropdown(view, group.text)
             assert custom_button_group.is_displayed
             assert custom_button_group.has_item(button.text)
+
+
+@pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
+@pytest.mark.parametrize("submit", SUBMIT, ids=[item.replace(" ", "_") for item in SUBMIT])
+@pytest.mark.uncollectif(
+    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group
+)
+def test_custom_button_automate(request, appliance, context, submit, objects, button_group):
+    """ Test custom button for automate and requests count as per submit
+
+    prerequisites:
+        * Appliance with service and generic object
+
+    Steps:
+        * Create custom button group with the Object type
+        * Create a custom button with specific submit option and Single and list display
+        * Navigate to object type pages (All and Details)
+        * Check for button group and button
+        * Select/execute button from group dropdown for selected entities
+        * Check for the proper flash message related to button execution
+        * Check automation log requests. Submitted as per selected submit option or not.
+        * Submit all: single request for all entities execution
+        * One by one: separate requests for all entities execution
+
+    Bugzillas:
+        * 1650066
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: high
+        initialEstimate: 1/4h
+    """
+
+    group, obj_type = button_group
+    with appliance.context.use(ViaUI):
+        button = group.buttons.create(
+            text=fauxfactory.gen_alphanumeric(),
+            hover=fauxfactory.gen_alphanumeric(),
+            display_for="Single and list",
+            submit=submit,
+            system="Request",
+            request="InspectMe",
+        )
+        request.addfinalizer(button.delete_if_exists)
+
+    with appliance.context.use(context):
+        navigate_to = ssui_nav if context is ViaSSUI else ui_nav
+
+        # BZ-1650066: no custom button on All page
+        destinations = (
+            ["Details"]
+            if context == ViaSSUI and BZ(1650066, forced_streams=["5.9", "5.10"]).blocks
+            else ["All", "Details"]
+        )
+        for destination in destinations:
+            obj = objects[obj_type][destination][0]
+            dest_name = objects[obj_type][destination][1]
+            view = navigate_to(obj, dest_name)
+            custom_button_group = Dropdown(view, group.text)
+            assert custom_button_group.has_item(button.text)
+
+            # Entity count depends on the destination for `All` available entities and
+            # `Details` means a single entity.
+
+            if destination == "All":
+                try:
+                    paginator = view.paginator
+                except AttributeError:
+                    paginator = view.entities.paginator
+
+                entity_count = min(
+                    paginator.items_amount, paginator.items_per_page
+                )
+                view.entities.paginator.check_all()
+            else:
+                entity_count = 1
+
+            # Clear the automation log
+            assert appliance.ssh_client.run_command(
+                'echo -n "" > /var/www/miq/vmdb/log/automation.log'
+            )
+
+            custom_button_group.item_select(button.text)
+
+            # SSUI not support flash messages
+            if context is ViaUI:
+                view.flash.assert_message('"{button}" was executed'.format(button=button.text))
+
+            # Submit all: single request for all entity execution
+            # One by one: separate requests for all entity execution
+            expected_count = 1 if submit == "Submit all" else entity_count
+            try:
+                wait_for(
+                    log_request_check,
+                    [appliance, expected_count],
+                    timeout=600,
+                    message="Check for expected request count",
+                    delay=20,
+                )
+            except TimedOutError:
+                assert False, "Expected {count} requests not found in automation log".format(
+                    count=str(expected_count)
+                )
