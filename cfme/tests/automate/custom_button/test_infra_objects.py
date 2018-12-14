@@ -64,7 +64,7 @@ def method(cls):
         name="inst_{}".format(fauxfactory.gen_alphanumeric(4)),
         fields={"meth1": {"value": meth.name}},
     )
-    yield meth
+    yield instance
     meth.delete_if_exists()
     instance.delete_if_exists()
 
