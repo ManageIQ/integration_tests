@@ -97,8 +97,9 @@ def test_custom_button_import_export(appliance, setup_groups_buttons):
         * Check for custom buttons in respective implementation location
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ndhandre
+        caseimportance: critical
+        initialEstimate: 1/2h
     """
 
     # Check all buttons, groups and respective display at respective locations

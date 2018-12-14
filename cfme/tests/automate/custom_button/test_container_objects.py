@@ -136,8 +136,9 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
         * Check request in automation log
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ndhandre
+        caseimportance: high
+        initialEstimate: 1/4h
     """
 
     group, obj_type = button_group
@@ -188,8 +189,10 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
 @pytest.mark.parametrize("expression", ["enablement", "visibility"])
 def test_custom_button_expression(appliance, request, setup_obj, button_group, expression):
     """ Test custom button as per expression enablement/visibility.
-    prerequisites:
+
+    Prerequisites:
         * Appliance with Infra provider
+
     Steps:
         * Create custom button group with the Object type
         * Create a custom button with expression (Tag)
@@ -200,8 +203,9 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
         * Check: button should enable/visible with tag
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ndhandre
+        caseimportance: high
+        initialEstimate: 1/4h
     """
 
     group, obj_type = button_group
