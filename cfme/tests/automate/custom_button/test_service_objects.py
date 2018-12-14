@@ -183,6 +183,11 @@ def test_custom_button_automate(request, appliance, context, submit, objects, bu
 
     Bugzillas:
         * 1650066
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: high
+        initialEstimate: 1/4h
     """
 
     group, obj_type = button_group
@@ -235,7 +240,9 @@ def test_custom_button_automate(request, appliance, context, submit, objects, bu
             )
 
             custom_button_group.item_select(button.text)
-            if context != ViaSSUI:
+
+            # SSUI not support flash messages
+            if context is ViaUI:
                 view.flash.assert_message('"{button}" was executed'.format(button=button.text))
 
             # Submit all: single request for all entity execution
