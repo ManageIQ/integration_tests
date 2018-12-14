@@ -127,8 +127,9 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
         * 1628224, 1642939
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ndhandre
+        caseimportance: high
+        initialEstimate: 1/4h
     """
 
     group, obj_type = button_group
@@ -200,8 +201,9 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
         * Check request in automation log
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ndhandre
+        caseimportance: high
+        initialEstimate: 1/4h
     """
 
     group, obj_type = button_group
@@ -265,8 +267,9 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
         * Check: button should enable/visible with tag
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ndhandre
+        caseimportance: high
+        initialEstimate: 1/4h
     """
 
     group, obj_type = button_group

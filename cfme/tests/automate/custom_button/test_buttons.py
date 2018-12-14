@@ -183,8 +183,9 @@ def test_button_required(appliance, field):
         * Assert flash message.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ndhandre
+        caseimportance: mediun
+        initialEstimate: 1/6h
     """
     unassigned_gp = appliance.collections.button_groups.instantiate(
         text="[Unassigned Buttons]", hover="Unassigned Buttons", type="Provider"
@@ -229,8 +230,9 @@ def test_open_url_availability(appliance):
         * Assert flash message.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ndhandre
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
 
     unassigned_gp = appliance.collections.button_groups.instantiate(
