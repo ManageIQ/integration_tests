@@ -736,6 +736,17 @@ def test_migration_long_name(request, appliance, v2v_providers, host_creds, conv
 def test_migration_with_edited_mapping(request, appliance, v2v_providers, edited_form_data,
                                        form_data_vm_obj_single_datastore,
                                        host_creds, conversion_tags, soft_assert):
+    """
+        Test migration with edited infrastructure mapping.
+        Steps:
+          * create mapping , edit mapping
+          * Migrate vm
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: medium
+            initialEstimate: 1/4h
+        """
     _form_data, edited_form_data = edited_form_data
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
