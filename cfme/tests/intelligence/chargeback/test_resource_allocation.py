@@ -401,6 +401,9 @@ def generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_cust
         3.Validate the costs reported in the chargeback report.The costs in the report should
           be approximately equal to the cost estimated in the resource_cost fixture.
     """
+    # The report generated through this automation contains only one row with chargeback costs(since we only have C&U data
+    # for an hour and daily chargeback reports have one row per hour).
+    # The second row contains the VM name only.Hence, we are using index 0 to fetch the costs from the first row.
     if not chargeback_report_custom[0][column]:
         pytest.skip('missing column in report')
     else:
@@ -423,6 +426,9 @@ def generic_test_resource_alloc(resource_alloc, chargeback_report_custom, column
         3.Verify that the resource allocation values reported in the chargeback report
           match the values fetched through REST API.
     """
+    # The report generated through this automation contains only one row with chargeback costs(since we only have C&U data
+    # for an hour and daily chargeback reports have one row per hour).
+    # The second row contains the VM name only.Hence, we are using index 0 to fetch the costs from the first row.
     if not chargeback_report_custom[0][column]:
         pytest.skip('missing column in report')
     else:
