@@ -75,28 +75,32 @@ def check_catalog_visibility(user_restricted, tag):
     return _check_catalog_visibility
 
 
-@pytest.mark.skip('Catalog items are converted to collections. Refactoring is required')
-def test_create_catalog_item(catalog_item):
+def test_catalog_item_crud(appliance, dialog, catalog):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: services
-        caseimportance: medium
+        caseimportance: high
         initialEstimate: 1/8h
     """
-    catalog_item.create()
-
-
-def test_update_catalog_item(catalog_item):
-    """
-    Polarion:
-        assignee: sshveta
-        casecomponent: services
-        caseimportance: medium
-        initialEstimate: 1/8h
-    """
-    with update(catalog_item):
-        catalog_item.description = "my edited item description"
+    cat_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name="test_item_{}".format(fauxfactory.gen_alphanumeric()),
+        description="my catalog item",
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog
+    )
+    view = cat_item.create_view(AllCatalogItemView)
+    assert view.is_displayed
+    view.flash.assert_success_message('Service Catalog Item "{}" was added'.format(cat_item.name))
+    assert cat_item.exists
+    with update(cat_item):
+        cat_item.description = "my edited description"
+    assert cat_item.description == "my edited description"
+    cat_item.delete()
+    view.flash.assert_message("The selected Catalog Item was deleted")
+    assert not cat_item.exists
 
 
 def test_add_button_group(catalog_item, appliance):
