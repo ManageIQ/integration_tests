@@ -732,7 +732,7 @@ def test_migration_long_name(request, appliance, v2v_providers, host_creds, conv
 
 
 @pytest.mark.ignore_stream("5.9")
-@pytest.mark.parametrize('form_data_vm_obj_single_datastore', ['nfs', 'nfs', rhel7_minimal], indirect=True)
+@pytest.mark.parametrize('form_data_vm_obj_single_datastore', [['nfs', 'nfs', rhel7_minimal]], indirect=True)
 def test_migration_with_edited_mapping(request, appliance, v2v_providers, edited_form_data,
                                        form_data_vm_obj_single_datastore,
                                        host_creds, conversion_tags, soft_assert):
