@@ -512,7 +512,7 @@ def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True, scope='function')
-@pytest.mark.meta(blockers=[BZ(1571830, forced_streams=['5.8', '5.9', '5.10'],
+@pytest.mark.meta(blockers=[BZ(1571830, forced_streams=['5.9', '5.10'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
@@ -541,7 +541,7 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
     soft_assert(testing_vm_tools.mgmt.is_running, "vm not running")
 
 
-@pytest.mark.meta(blockers=[BZ(1571895, forced_streams=['5.8', '5.9', '5.10'],
+@pytest.mark.meta(blockers=[BZ(1571895, forced_streams=['5.9', '5.10'],
                                unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True)
 def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
