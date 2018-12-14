@@ -5,8 +5,9 @@ from riggerlib import recursive_update
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.utils.generators import random_vm_name
 
 from widgetastic.utils import partial_match
@@ -16,22 +17,15 @@ pytestmark = [
     test_requirements.quota,
     pytest.mark.long_running,
     pytest.mark.usefixtures("setup_provider"),
-    pytest.mark.provider(
-        [AzureProvider, OpenStackProvider],
-        required_fields=[["provisioning", "image"]],
-        scope="function",
-    ),
+    pytest.mark.provider([CloudProvider], scope='function',
+                         required_fields=[["provisioning", "image"]]),
+
 ]
 
 
 def new_credential():
     return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
                       secret='redhat')
-
-
-@pytest.fixture
-def template_name(provisioning):
-    return provisioning["image"]["name"]
 
 
 @pytest.fixture
@@ -53,7 +47,11 @@ def prov_data(appliance, provider, provisioning):
                 },
             },
         )
-
+    if provider.one_of(EC2Provider):
+        recursive_update(
+            data,
+            {"properties": {"guest_keypair": provisioning.get('guest_keypair', None)}}
+        )
     return data
 
 
@@ -123,7 +121,7 @@ def new_user_child(appliance, new_group_child):
     user = appliance.collections.users.create(
         name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
         credential=new_credential(),
-        email="child_user@redhat.com",
+        email=fauxfactory.gen_email(),
         groups=new_group_child,
         cost_center="Workload",
         value_assign="Database",
@@ -166,7 +164,7 @@ def new_user_project(appliance, new_group_project):
     user = appliance.collections.users.create(
         name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
         credential=new_credential(),
-        email="project_user@redhat.com",
+        email=fauxfactory.gen_email(),
         groups=new_group_project,
         cost_center="Workload",
         value_assign="Database",
@@ -201,7 +199,7 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
     approve,
     custom_prov_data,
     prov_data,
-    template_name,
+    provisioning,
 ):
     """Test Child Quota in UI
      Steps:
@@ -216,17 +214,17 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
             prov_data,
             {
                 "request": {
-                    "email": "test_{}@example.com".format(fauxfactory.gen_alphanumeric()),
+                    "email": fauxfactory.gen_email(),
                     "first_name": fauxfactory.gen_alphanumeric(),
                     "last_name": fauxfactory.gen_alphanumeric(),
                     "manager_name": "{name}".format(name=fauxfactory.gen_alphanumeric()),
                 }
             },
         )
-        prov_data.update({"template_name": template_name})
+        prov_data.update({"template_name": provisioning["image"]["name"]})
         request_description = "Provision from [{template}] to [{vm}{msg}]".format(
-            template=template_name, vm=prov_data['catalog']['vm_name'], msg=extra_msg
-        )
+            template=provisioning["image"]["name"], vm=prov_data['catalog']['vm_name'],
+            msg=extra_msg)
         appliance.collections.cloud_instances.create(
             prov_data['catalog']['vm_name'],
             provider,
@@ -266,7 +264,7 @@ def test_project_quota_enforce_via_lifecycle_cloud(
     approve,
     custom_prov_data,
     prov_data,
-    template_name,
+    provisioning,
 ):
     """Test Project Quota in UI
     Steps:
@@ -281,17 +279,17 @@ def test_project_quota_enforce_via_lifecycle_cloud(
             prov_data,
             {
                 "request": {
-                    "email": "test_{}@example.com".format(fauxfactory.gen_alphanumeric()),
+                    "email": fauxfactory.gen_email(),
                     "first_name": fauxfactory.gen_alphanumeric(),
                     "last_name": fauxfactory.gen_alphanumeric(),
                     "manager_name": "{name}".format(name=fauxfactory.gen_alphanumeric()),
                 }
             },
         )
-        prov_data.update({"template_name": template_name})
+        prov_data.update({"template_name": provisioning["image"]["name"]})
         request_description = "Provision from [{template}] to [{vm}{msg}]".format(
-            template=template_name, vm=prov_data['catalog']['vm_name'], msg=extra_msg
-        )
+            template=provisioning["image"]["name"], vm=prov_data['catalog']['vm_name'],
+            msg=extra_msg)
         appliance.collections.cloud_instances.create(
             prov_data['catalog']['vm_name'],
             provider,

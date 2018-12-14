@@ -317,6 +317,7 @@ class ProvisionView(BaseLoggedInPage):
     title = Text('#explorer_title_text')
     breadcrumb = BreadCrumb()
     image_table = Table('//div[@id="pre_prov_div"]//table')
+    paginator = PaginationPane()
 
     @View.nested
     class sidebar(View):  # noqa
@@ -334,6 +335,7 @@ class ProvisionView(BaseLoggedInPage):
 
         def _select_template(self, template_name, provider_name):
             try:
+                self.parent.paginator.set_items_per_page(1000)
                 row = self.parent.image_table.row(name=template_name, provider=provider_name)
                 row.click()
             except IndexError:
