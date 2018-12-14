@@ -1,0 +1,95 @@
+default_fields:
+    assignee: ""
+    caseautomation: automated
+    casecomponent: "-"
+    caseimportance: high
+    caselevel: component
+    caseposneg: positive
+    customerscenario: ""
+    description: ""
+    endsin: ""
+    expectedResults: ""
+    initialEstimate: ""
+    linkedWorkItems: ""
+    setup: ""
+    startsin: ""
+    subcomponent: ""
+    subtype1: "-"
+    subtype2: "-"
+    tags: ""
+    teardown: ""
+    testSteps: ""
+    testtype: functional
+    title: ""
+    upstream: ""
+    work_item_id: ""
+
+docstrings:
+    required_fields:
+        - assignee
+        - initialEstimate
+
+    marker_fields:
+        caselevel: "@pytest.mark.tier"
+        caseautomation: "@pytest.mark.manual"
+        linkedWorkItems: "@pytest.mark.requirements"
+
+    ignored_fields:
+        description: "use test docstring instead"
+
+    custom_fields:
+        - caseautomation
+        - casecomponent
+        - caseimportance
+        - caselevel
+        - caseposneg
+        - setup
+        - subtype1
+        - subtype2
+        - tags
+        - teardown
+        - testtype
+        - upstream
+
+    valid_values:
+        caseimportance:
+            - critical
+            - high
+            - medium
+            - low
+        caseposneg:
+            - positive
+            - negative
+        testtype:
+            - functional
+            - nonfunctional
+            - structural
+            - integration
+            - upgrade
+        caseautomation:
+            - automated
+            - manualonly
+            - notautomated
+        caselevel:
+            - component
+            - integration
+            - system
+            - acceptance
+        casecomponent:
+            - V2V
+            - ansible
+            - appl
+            - automate
+            - candu
+            - cloud
+            - config
+            - control
+            - infra
+            - optimize
+            - prov
+            - report
+            - services
+            - smartst
+            - ssui
+            - stack
+            - web_ui
