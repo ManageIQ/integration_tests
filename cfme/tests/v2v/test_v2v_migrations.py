@@ -729,3 +729,64 @@ def test_migration_long_name(request, appliance, v2v_providers, host_creds, conv
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
     migrated_vm = get_migrated_vm_obj(vm_obj, v2v_providers.rhv_provider)
     assert vm_obj.mac_address == migrated_vm.mac_address
+
+
+@pytest.mark.ignore_stream("5.9")
+@pytest.mark.parametrize('form_data_vm_obj_single_datastore', [['nfs', 'nfs', rhel7_minimal]], indirect=True)
+def test_migration_with_edited_mapping(request, appliance, v2v_providers, edited_form_data,
+                                       form_data_vm_obj_single_datastore,
+                                       host_creds, conversion_tags, soft_assert):
+    """
+        Test migration with edited infrastructure mapping.
+        Steps:
+          * create mapping , edit mapping
+          * Migrate vm
+
+        Polarion:
+            assignee: sshveta
+            caseimportance: medium
+            initialEstimate: 1/4h
+        """
+    _form_data, edited_form_data = edited_form_data
+    infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+
+    # vm_obj is a list, with only 1 VM object, hence [0]
+    src_vm_obj = form_data_vm_obj_single_datastore.vm_list[0]
+
+    mapping.update(edited_form_data)
+
+    migration_plan_collection = appliance.collections.v2v_plans
+    migration_plan = migration_plan_collection.create(
+        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        infra_map=mapping.name,
+        vm_list=form_data_vm_obj_single_datastore.vm_list,
+        start_migration=True)
+
+    # explicit wait for spinner of in-progress status card
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
+    wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
+             message="migration plan is starting, be patient please", delay=5, num_sec=150,
+             handle_exception=True)
+
+    # wait until plan is in progress
+    wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
+             message="migration plan is in progress, be patient please",
+             delay=5, num_sec=1800)
+    view.switch_to("Completed Plans")
+    view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan)
+    logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
+                migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
+            migration_plan.name), view.migration_plans_completed_list.get_clock(
+            migration_plan.name))
+    # validate MAC address matches between source and target VMs
+    assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
+    migrated_vm = get_migrated_vm_obj(src_vm_obj, v2v_providers.rhv_provider)
+    assert src_vm_obj.mac_address == migrated_vm.mac_address
