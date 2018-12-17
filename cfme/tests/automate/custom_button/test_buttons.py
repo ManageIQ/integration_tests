@@ -5,7 +5,6 @@ import pytest
 from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
-from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import OBJ_TYPE, OBJ_TYPE_59, TextInputDialogView
@@ -274,19 +273,6 @@ def test_custom_button_quotes(appliance, provider, setup_provider, dialog, reque
 
     To-Do: collect test for 5.9; If developer backport BZ-1646905
 
-    Prerequisites:
-        * Appliance
-        * Simple TextInput service dialog
-
-    Steps:
-        * Create custom button group with single quote in name like "Group's"
-        * Create a custom button with quote in name like "button's"
-        * Navigate to object Details page
-        * Check for button group and button
-        * Select/execute button from group dropdown for selected entities
-        * Fill dialog and submit
-        * Check for the proper flash message related to button execution
-
     Bugzillas:
         * 1646905
 
@@ -294,6 +280,19 @@ def test_custom_button_quotes(appliance, provider, setup_provider, dialog, reque
         assignee: ndhandre
         caseimportance: medium
         initialEstimate: 1/4
+        testSteps:
+            Prerequisites:
+                * Appliance
+                * Simple TextInput service dialog
+
+            Steps:
+                * Create custom button group with single quote in name like "Group's"
+                * Create a custom button with quote in name like "button's"
+                * Navigate to object Details page
+                * Check for button group and button
+                * Select/execute button from group dropdown for selected entities
+                * Fill dialog and submit
+                * Check for the proper flash message related to button execution
     """
 
     collection = appliance.collections.button_groups
