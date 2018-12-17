@@ -506,6 +506,7 @@ class CatalogItemsCollection(BaseCollection):
         # TODO move this assertion to tests
         # view.flash.assert_success_message('Catalog Item "{}" was added'.format(
         #     cat_item.name), partial=True)
+        view.wait_displayed()
         assert view.is_displayed
         view.flash.assert_no_error()
         return cat_item
