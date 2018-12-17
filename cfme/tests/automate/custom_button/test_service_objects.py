@@ -24,6 +24,11 @@ DISPLAY_NAV = {
 
 SUBMIT = ["Submit all", "One by one"]
 
+TEXT_DISPLAY = {
+    "group": {"group_display": False, "btn_display": True},
+    "button": {"group_display": True, "btn_display": False},
+}
+
 
 @pytest.fixture(scope="module")
 def service(appliance):
@@ -92,6 +97,30 @@ def button_group(appliance, request):
         )
         yield button_gp, request.param
         button_gp.delete_if_exists()
+
+
+@pytest.fixture(params=TEXT_DISPLAY, scope="module")
+def button_group(appliance, request):
+
+    with appliance.context.use(ViaUI):
+        collection = appliance.collections.button_groups
+        button_gp = collection.create(
+            text="group_{}".format(fauxfactory.gen_numeric_string(3)),
+            hover="hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+            display=TEXT_DISPLAY[request.param]["group_display"],
+            type=getattr(collection, "SERVICE"),
+        )
+
+        button = button_gp.buttons.create(
+            text="btn_{}".format(fauxfactory.gen_numeric_string(3)),
+            hover="hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+            display=TEXT_DISPLAY[request.param]["btn_display"],
+            system="Request",
+            request="InspectMe",
+        )
+        yield button_group, button
+        button_gp.delete_if_exists()
+        button.delete_if_exists()
 
 
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
@@ -260,3 +289,37 @@ def test_custom_button_automate(request, appliance, context, submit, objects, bu
                 assert False, "Expected {count} requests not found in automation log".format(
                     count=str(expected_count)
                 )
+
+
+@pytest.mark.meta(blockers=[BZ(1659452, forced_streams=["5.9", "5.10"],unblock=lambda button_group: "group" not in button_group)])
+@pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
+def test_custom_button_text_display(appliance, context, button_group, service):
+    """ Test custom button text display on option
+
+    Bugzilla:
+        * 1650066
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: medium
+        initialEstimate: 1/6h
+        testSteps:
+            Prerequisites:
+                * Appliance with Service
+            Steps:
+                * Create custom button `Group` or `Button` without display option
+                * Check Group/Button text display or not on UI and SSUI.
+    """
+
+    my_service = MyService(appliance, name=service.name)
+    button, group = button_group
+
+    with appliance.context.use(context):
+        navigate_to = ssui_nav if context is ViaSSUI else ui_nav
+        for destination in ["All", "Details"]:
+            view = navigate_to(my_service, destination)
+            custom_button_group = Dropdown(view, group.hover)
+            if group.display is True:
+                assert "" in custom_button_group.items
+            else:
+                assert custom_button_group.read() == ""
