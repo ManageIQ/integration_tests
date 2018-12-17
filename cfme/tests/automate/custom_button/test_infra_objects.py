@@ -386,22 +386,23 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
 def test_open_url(appliance, request, setup_obj, button_group, method):
     """ Test Open url functionality of custom button.
 
-    prerequisites:
-        * Appliance with Infra provider
-
-    Steps:
-        * Create ruby method for url functionality
-        * Create custom button group with the Object type
-        * Create a custom button with open_url option and respective method
-        * Navigate to object Detail page
-        * Execute custom button
-        * Check new tab open or not with respective url
-
     Polarion:
         assignee: ndhandre
         initialEstimate: 1/2
+        caseimportance: high
+        testSteps:
+            prerequisites:
+                * Appliance with Infra provider
 
+            Steps:
+                * Create ruby method for url functionality
+                * Create custom button group with the Object type
+                * Create a custom button with open_url option and respective method
+                * Navigate to object Detail page
+                * Execute custom button
+                * Check new tab open or not with respective url
     """
+
     group, obj_type = button_group
     button = group.buttons.create(
         text=fauxfactory.gen_alphanumeric(),
