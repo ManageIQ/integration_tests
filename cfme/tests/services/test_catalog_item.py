@@ -5,7 +5,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 import cfme.tests.configure.test_access_control as tac
 from cfme import test_requirements
-from cfme.services.catalogs.catalog_items import AllCatalogItemView
+from cfme.services.catalogs.catalog_items import AllCatalogItemView, AddCatalogItemView
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -147,35 +147,64 @@ def test_edit_tags(catalog_item):
     catalog_item.remove_tag(tag)
 
 
-@pytest.mark.skip('Catalog items are converted to collections. Refactoring is required')
-@pytest.mark.meta(blockers=[BZ(1531512, forced_streams=["5.8", "5.9", "upstream"])])
-def test_catalog_item_duplicate_name(catalog_item):
+@pytest.mark.meta(blockers=[BZ(1531512, forced_streams=["5.9", "5.10", "upstream"])])
+def test_catalog_item_duplicate_name(appliance, dialog, catalog):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: services
         caseimportance: medium
         initialEstimate: 1/8h
     """
-    catalog_item.create()
-    with pytest.raises(Exception, match="Name has already been taken"):
-        catalog_item.create()
+    cat_item_name = fauxfactory.gen_alphanumeric()
+    cat_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=cat_item_name,
+        description="my catalog item",
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog
+    )
+    view = cat_item.create_view(AllCatalogItemView)
+    view.wait_displayed()
+    view.flash.assert_success_message('Service Catalog Item "{}" was added'.format(cat_item.name))
+    with pytest.raises(AssertionError):
+        appliance.collections.catalog_items.create(
+            appliance.collections.catalog_items.GENERIC,
+            name=cat_item_name,
+            description="my catalog item",
+            display_in=True,
+            catalog=catalog,
+            dialog=dialog
+        )
+    view = cat_item.create_view(AddCatalogItemView)
+    view.wait_displayed()
+    view.flash.assert_message('Name has already been taken')
 
 
-@pytest.mark.skip('Catalog items are converted to collections. Refactoring is required')
-@pytest.mark.meta(blockers=[BZ(1460891, forced_streams=["5.8", "upstream"])])
-def test_permissions_catalog_item_add(catalog_item):
+def test_permissions_catalog_item_add(appliance, catalog, dialog, request):
     """Test that a catalog can be added only with the right permissions.
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: services
-        caseimportance: low
+        caseimportance: high
         initialEstimate: 1/8h
     """
-    tac.single_task_permission_test([['Everything', 'Services', 'Catalogs Explorer',
-                                      'Catalog Items']],
-                                    {'Add Catalog Item': catalog_item.create})
+
+    def _create_catalog(appliance):
+        cat_item = appliance.collections.catalog_items.create(
+            appliance.collections.catalog_items.GENERIC,
+            name='test_item_{}'.format(fauxfactory.gen_alphanumeric()),
+            description="my catalog item",
+            display_in=True,
+            catalog=catalog,
+            dialog=dialog
+        )
+        request.addfinalizer(lambda: cat_item.delete())
+    test_product_features = [['Everything', 'Services', 'Catalogs Explorer', 'Catalog Items']]
+    test_actions = {'Add Catalog Item': _create_catalog}
+    tac.single_task_permission_test(appliance, test_product_features, test_actions)
 
 
 def test_tagvis_catalog_items(check_catalog_visibility, catalog_item):
