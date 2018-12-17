@@ -307,6 +307,11 @@ def resource_usage(vm_ownership, appliance, provider):
             "average_storage_used": average_storage_used,
             "consumed_hours": consumed_hours}
 
+    yield
+
+    appliance.server.settings.enable_server_roles(
+        'ems_metrics_coordinator', 'ems_metrics_collector')
+
 
 def resource_cost(appliance, provider, metric_description, usage, description, rate_type,
         consumed_hours):
