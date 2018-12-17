@@ -5,6 +5,7 @@ import re
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [
@@ -185,6 +186,9 @@ def test_tag_orchestration_template(tag, created_template):
 
 
 @pytest.mark.parametrize("action", ["copy", "create"], ids=["copy", "create"])
+@pytest.mark.meta(
+    blockers=[BZ(1659947, forced_streams=['5.9', '5.10'],
+                 unblock=lambda action: action != "create")])
 def test_duplicated_content_error_validation(appliance, created_template, template_type,
                                              action):
     """Tests that we are not allowed to have duplicated content in different templates
