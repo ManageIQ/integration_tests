@@ -329,7 +329,15 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateExplorer')
 
     def step(self):
+        # Because click is performed on the middle of the element and at the middle there is a
+        # chevron button for expanding tree (if there are instances inside class), this navigation
+        # then fails to navigate to details. We make use of the splitter to make explorer
+        # larger, so chevron button is not exactly at the middle
+        self.prerequisite_view.datastore.splitter.pull_right()
         self.prerequisite_view.datastore.tree.click_path(*self.obj.tree_path)
+
+    def resetter(self, *args, **kwargs):
+        self.prerequisite_view.datastore.splitter.reset()
 
 
 @navigator.register(Class)
