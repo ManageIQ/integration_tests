@@ -556,23 +556,25 @@ def blueprints(request, rest_api, num=2):
     return _creating_skeleton(request, rest_api, 'blueprints', data)
 
 
-def conditions(request, rest_api, num=2):
+def conditions(appliance, request, num=2):
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
-        data.append({
+        data_dict = {
             'name': 'test_condition_{}'.format(uniq),
             'description': 'Test Condition {}'.format(uniq),
             'expression': {'=': {'field': 'ContainerImage-architecture', 'value': 'dsa'}},
-            'towhat': 'ExtManagementSystem',
-            'modifier': 'allow'
-        })
+            'towhat': 'ExtManagementSystem'
+        }
+        if appliance.version < '5.10':
+            data_dict["modifier"] = "allow"
+        data.append(data_dict)
 
-    return _creating_skeleton(request, rest_api, 'conditions', data)
+    return _creating_skeleton(request, appliance.rest_api, 'conditions', data)
 
 
-def policies(request, rest_api, num=2):
-    conditions_response = conditions(request, rest_api, num=2)
+def policies(appliance, request, num=2):
+    conditions_response = conditions(appliance, request, num=2)
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
@@ -588,7 +590,7 @@ def policies(request, rest_api, num=2):
             }]
         })
 
-    return _creating_skeleton(request, rest_api, 'policies', data)
+    return _creating_skeleton(request, appliance.rest_api, 'policies', data)
 
 
 def get_dialog_service_name(appliance, service_request, *item_names):

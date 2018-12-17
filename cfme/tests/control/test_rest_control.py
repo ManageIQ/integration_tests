@@ -6,6 +6,7 @@ import fauxfactory
 from cfme import test_requirements
 from cfme.rest.gen_data import conditions as _conditions
 from cfme.rest.gen_data import policies as _policies
+from cfme.utils.blockers import BZ
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
@@ -24,7 +25,7 @@ class TestConditionsRESTAPI(object):
     @pytest.fixture(scope='function')
     def conditions(self, request, appliance):
         num_conditions = 2
-        response = _conditions(request, appliance.rest_api, num=num_conditions)
+        response = _conditions(appliance, request, num=num_conditions)
         assert_response(appliance)
         assert len(response) == num_conditions
         return response
@@ -123,11 +124,12 @@ class TestConditionsRESTAPI(object):
             assert condition.description == edited[index].description == record[0].description
 
 
+@pytest.mark.meta(blockers=[BZ('1659899', forced_streams=["5.10"])])
 class TestPoliciesRESTAPI(object):
     @pytest.fixture(scope='function')
     def policies(self, request, appliance):
         num_policies = 2
-        response = _policies(request, appliance.rest_api, num=num_policies)
+        response = _policies(appliance, request, num=num_policies)
         assert_response(appliance)
         assert len(response) == num_policies
         return response
