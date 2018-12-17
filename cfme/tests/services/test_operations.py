@@ -16,7 +16,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.meta(server_roles="-automate"),  # To prevent the provisioning itself.
     test_requirements.service,
-    pytest.mark.provider(classes=[InfraProvider], selector=ONE),
+    pytest.mark.provider(classes=[InfraProvider], scope="module", selector=ONE),
     pytest.mark.usefixtures('setup_provider')
 ]
 
@@ -54,7 +54,7 @@ def generated_request(appliance, provider, provisioning, template_name, vm_name)
     vm = appliance.collections.infra_vms.instantiate(name=vm_name,
                                                      provider=provider,
                                                      template_name=template_name)
-    view = navigate_to(vm, 'Provision')
+    view = navigate_to(vm.parent, 'Provision')
 
     provisioning_data = {
         'request': {
@@ -125,7 +125,8 @@ def test_copy_request(request, generated_request, vm_name, template_name):
         assignee: None
         initialEstimate: None
     """
-    modifications = {'catalog': {'vm_name': vm_name}}
+    new_vm_name = '{}-xx'.format(vm_name)
+    modifications = {'catalog': {'vm_name': new_vm_name}}
     new_request = generated_request.copy_request(values=modifications)
     request.addfinalizer(new_request.remove_request)
     assert navigate_to(new_request, 'Details')
