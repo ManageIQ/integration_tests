@@ -78,7 +78,6 @@ class CopyTemplateView(CopyTemplateForm):
     @property
     def is_displayed(self):
         return (
-            self.is_displayed and
             self.title.text == "Copying {}".format(self.context['object'].template_name) and
             self.orchestration_templates.is_opened
         )
@@ -178,6 +177,7 @@ class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
                    'description': description
                    })
         view.add_button.click()
+        view.wait_displayed('15s')
         view.flash.assert_no_error()
         # TODO - Move assertions to tests
         return self.parent.instantiate(template_group=self.template_group,
