@@ -258,6 +258,7 @@ class DefaultButton(BaseButton):
     hover = attr.ib()
     image = attr.ib()
     dialog = attr.ib()
+    display = attr.ib(default=None)
     system = attr.ib(default=None)
     request = attr.ib(default=None)
     open_url = attr.ib(default=None)
@@ -274,6 +275,7 @@ class AnsiblePlaybookButton(BaseButton):
     image = attr.ib()
     playbook_cat_item = attr.ib()
     inventory = attr.ib()
+    display = attr.ib(default=None)
     hosts = attr.ib(default=None)
     system = attr.ib(default=None)
     request = attr.ib(default=None)
@@ -294,6 +296,7 @@ class ButtonCollection(BaseCollection):
         text,
         hover,
         type="Default",
+        display=None,
         dialog=None,
         display_for=None,
         submit=None,
@@ -318,10 +321,10 @@ class ButtonCollection(BaseCollection):
         }
         if type == "Default":
             button_class = DefaultButton
-            args = [group, text, hover, image, dialog]
+            args = [group, text, display, hover, image, dialog]
         elif type == "Ansible Playbook":
             button_class = AnsiblePlaybookButton
-            args = [group, text, hover, image, playbook_cat_item, inventory, hosts]
+            args = [group, text, display, hover, image, playbook_cat_item, inventory, hosts]
         return button_class.from_collection(self, *args, **kwargs)
 
     def create(
@@ -330,6 +333,7 @@ class ButtonCollection(BaseCollection):
         hover,
         type="Default",
         image="fa-user",
+        display=None,
         group=None,
         dialog=None,
         display_for=None,
@@ -352,6 +356,7 @@ class ButtonCollection(BaseCollection):
             {
                 "options": {
                     "text": text,
+                    "display":display,
                     "hover": hover,
                     "image": image,
                     "open_url": open_url,
@@ -419,6 +424,7 @@ class ButtonCollection(BaseCollection):
             text,
             hover,
             type,
+            display=display,
             dialog=dialog,
             display_for=display_for,
             submit=submit,
