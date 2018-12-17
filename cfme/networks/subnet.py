@@ -5,6 +5,8 @@ from widgetastic.exceptions import NoSuchElementException
 from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
+from cfme.networks import ValidateStatsMixin
+from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.views import SubnetDetailsView, SubnetView, SubnetAddView, SubnetEditView
 from cfme.utils import providers, version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -12,7 +14,7 @@ from cfme.utils.wait import wait_for
 
 
 @attr.s
-class Subnet(Taggable, BaseEntity):
+class Subnet(Taggable, BaseEntity, ValidateStatsMixin):
     """Class representing subnets in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
@@ -23,6 +25,10 @@ class Subnet(Taggable, BaseEntity):
     name = attr.ib()
     provider_obj = attr.ib(default=None)
     network = attr.ib(default=None)
+
+    _collections = {
+        'network_ports': NetworkPortCollection,
+    }
 
     @property
     def exists(self):
@@ -175,7 +181,15 @@ class All(CFMENavigateStep):
 @navigator.register(Subnet, 'Details')
 class OpenCloudNetworks(CFMENavigateStep):
     VIEW = SubnetDetailsView
-    prerequisite = NavigateToAttribute('parent', 'All')
+
+    def prerequisite(self, *args, **kwargs):
+        """Navigate through filter parent if it exists else navigate through parent object"""
+        is_filtered = isinstance(self.obj.parent, BaseCollection) and self.obj.parent.filters
+        filter = (self.obj.parent.filters.get('parent') if is_filtered else None)
+        if is_filtered:
+            return navigate_to(filter, 'CloudSubnets')
+        else:
+            return navigate_to(self.obj.parent, 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()

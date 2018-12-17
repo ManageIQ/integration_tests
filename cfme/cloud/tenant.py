@@ -11,6 +11,9 @@ from cfme.common import Taggable
 from cfme.exceptions import TenantNotFound, DestinationNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.networks import ValidateStatsMixin
+from cfme.networks.network_router import NetworkRouterCollection
+from cfme.networks.subnet import SubnetCollection
+from cfme.networks.views import NetworkEntitySubnetView, OneTenantNetworkRouterView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
@@ -208,7 +211,13 @@ class Tenant(BaseEntity, Taggable, ValidateStatsMixin):
     """Tenant Class
 
     """
+    string_name = 'Tenant'
     _param_name = 'Tenant'
+
+    _collections = {
+        'subnets': SubnetCollection,
+        'routers': NetworkRouterCollection
+    }
 
     name = attr.ib()
     provider = attr.ib()
@@ -430,3 +439,31 @@ class TenantEdit(CFMENavigateStep):
             self.prerequisite_view.toolbar.configuration.item_select('Edit Cloud Tenant')
         else:
             raise DestinationNotFound('Cannot edit Cloud Tenants in CFME < 5.7')
+
+
+@navigator.register(Tenant, 'CloudSubnets')
+class CloudSubnets(CFMENavigateStep):
+    VIEW = NetworkEntitySubnetView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        item = 'Cloud Subnets'
+        if not int(self.prerequisite_view.entities.relationships.get_text_of(item)):
+            raise DestinationNotFound(
+                'Cloud Tenant {} has a 0 count for {} relationships'.format(self.obj, item))
+
+        self.prerequisite_view.entities.relationships.click_at(item)
+
+
+@navigator.register(Tenant, 'NetworkRouters')
+class NetworkRouters(CFMENavigateStep):
+    VIEW = OneTenantNetworkRouterView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        item = 'Network Routers'
+        if not int(self.prerequisite_view.entities.relationships.get_text_of(item)):
+            raise DestinationNotFound(
+                'Cloud Tenant {} has a 0 count for {} relationships'.format(self.obj, item))
+
+        self.prerequisite_view.entities.relationships.click_at(item)
