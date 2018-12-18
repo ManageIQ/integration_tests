@@ -36,6 +36,7 @@ VALID_LABELS = [
     u"infra-related",
     u"issue-bug",
     u"issue-rfe",
+    u"manual",
     u"new-test-or-feature",
     u"Nuage",
     u"other",
