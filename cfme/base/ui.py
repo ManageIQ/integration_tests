@@ -514,14 +514,16 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('Configuration')
 
     def step(self):
-        self.prerequisite_view.accordions.settings.tree.click_path(
+        path = (
             self.obj.zone.region.settings_string,
             "Zones",
             "Zone: {} (current)".format(self.obj.appliance.server.zone.description),
             "Server: {name} [{sid}]{current}".format(
                 name=self.obj.appliance.server.name,
                 sid=self.obj.sid,
-                current='' if self.obj in self.obj.slave_servers else ' (current)'))
+                current='' if self.obj in self.obj.slave_servers else ' (current)')
+        )
+        self.prerequisite_view.accordions.settings.tree.click_path(*path)
 
 
 @navigator.register(Server, 'Server')

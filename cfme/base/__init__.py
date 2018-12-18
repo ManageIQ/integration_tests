@@ -41,7 +41,7 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
         """
         collect = self.appliance.rest_api.collections.servers
         servers = collect.all if self.appliance.is_dev else collect.find_by(is_master=True)
-        return getattr(servers[0], 'name', None)
+        return getattr(servers[0], 'name', '')  # empty string default for string building w/o None
 
     @property
     def settings(self):
@@ -124,7 +124,7 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
                 continue
             if slave_only and server.is_master:
                 continue
-            servers.append(self.instantiate(name=server.name, sid=server.id))
+            servers.append(self.instantiate(sid=server.id))
         # TODO: This code needs a refactor once the attributes can be loaded from the collection
         return servers
 
