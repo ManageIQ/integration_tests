@@ -179,7 +179,6 @@ def test_proxy_override(appliance, proxy_ssh, prepare_proxy_specific, provider):
     )
 
 
-@pytest.mark.meta(blockers=[BZ(1623550, forced_streams=['5.9', '5.10'])])
 def test_proxy_invalid(appliance, prepare_proxy_invalid, provider):
     """ Check whether invalid default and invalid specific provider proxy settings
      results in provider refresh not working.
@@ -202,7 +201,8 @@ def test_proxy_invalid(appliance, prepare_proxy_invalid, provider):
 
     def last_refresh_failed():
         view.toolbar.reload.click()
-        return 'Timed out connecting to server' in (
-            view.entities.summary('Status').get_text_of('Last Refresh'))
+        status = view.entities.summary('Status').get_text_of('Last Refresh')
+        return any(('Timed out connecting to server' in status,
+                   'execution expired' in status))
 
     wait_for(last_refresh_failed, fail_condition=False, num_sec=240, delay=5)
