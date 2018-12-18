@@ -306,12 +306,14 @@ def resource_usage(vm_ownership, appliance, provider):
     # Convert storage used in bytes to GB
     average_storage_used = average_storage_used * math.pow(2, -30)
 
-    return {"average_cpu_used_in_mhz": average_cpu_used_in_mhz,
+    yield {"average_cpu_used_in_mhz": average_cpu_used_in_mhz,
             "average_memory_used_in_mb": average_memory_used_in_mb,
             "average_network_io": average_network_io,
             "average_disk_io": average_disk_io,
             "average_storage_used": average_storage_used,
             "consumed_hours": consumed_hours}
+    appliance.server.settings.enable_server_roles(
+        'ems_metrics_coordinator', 'ems_metrics_collector')
 
 
 def resource_cost(appliance, provider, metric_description, usage, description, rate_type,
