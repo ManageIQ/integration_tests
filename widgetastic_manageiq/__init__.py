@@ -2007,7 +2007,31 @@ class RadioGroup(Widget):
         return self.select(name)
 
 
-class ItemsToolBarViewSelector(View):
+class ViewSelector(View):
+    """Base implementation for view selectors"""
+
+    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
+
+    def select(self, title):
+        if self.selected != title:
+            for button in self._view_buttons:
+                if button.title == title:
+                    return button.click()
+            else:
+                raise ValueError("The view with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        if self.is_displayed:
+            return next(btn.title for btn in self._view_buttons if btn.active)
+        else:
+            return None
+
+    def read(self):
+        return self.selected
+
+
+class ItemsToolBarViewSelector(ViewSelector):
     """ represents toolbar's view selector control
         it is present on pages with items like Infra or Cloud Providers pages
 
@@ -2019,7 +2043,6 @@ class ItemsToolBarViewSelector(View):
         view_selector.selected
     """
 
-    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
     grid_button = Button(title="Grid View")
     tile_button = Button(title="Tile View")
     list_button = Button(title="List View")
@@ -2030,29 +2053,12 @@ class ItemsToolBarViewSelector(View):
         yield self.tile_button
         yield self.list_button
 
-    def select(self, title):
-        for button in self._view_buttons:
-            if button.title == title:
-                return button.click()
-        else:
-            raise ValueError("The view with title {title} isn't present".format(title=title))
-
-    @property
-    def selected(self):
-        if self.is_displayed:
-            return next(btn.title for btn in self._view_buttons if btn.active)
-        else:
-            return None
-
-    def read(self):
-        return self.selected
-
     @property
     def is_displayed(self):
         return self.grid_button.is_displayed
 
 
-class DetailsToolBarViewSelector(View):
+class DetailsToolBarViewSelector(ViewSelector):
     """ represents toolbar's view selector control
         it is present on pages like Infra Providers Details page
 
@@ -2064,7 +2070,6 @@ class DetailsToolBarViewSelector(View):
         view_selector.selected
     """
 
-    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
     summary_button = Button(title="Summary View")
     dashboard_button = Button(title="Dashboard View")
 
@@ -2073,28 +2078,11 @@ class DetailsToolBarViewSelector(View):
         yield self.dashboard_button
         yield self.summary_button
 
-    def select(self, title):
-        for button in self._view_buttons:
-            if button.title == title:
-                return button.click()
-        else:
-            raise ValueError("The view with title {title} isn't present".format(title=title))
-
-    @property
-    def selected(self):
-        if self.is_displayed:
-            return next(btn.title for btn in self._view_buttons if btn.active)
-        else:
-            return None
-
     @property
     def is_displayed(self):
         # cloud provider detail page has empty view selector.
         # so, default is_displayed works wrong in such case
         return self.summary_button.is_displayed
-
-    def read(self):
-        return self.selected
 
 
 class CompareToolBarMixin(View):
@@ -3097,7 +3085,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         if self.browser.product_version < "5.9":
             # todo: fix this ugly hack somehow else
             view_selector = getattr(self.parent.parent.toolbar, "view_selector", None)
-            if view_selector and view_selector.selected != "List View":
+            if view_selector:
                 view_selector.select("List View")
 
             if type(self).__name__ in ("GridView", "TileView"):

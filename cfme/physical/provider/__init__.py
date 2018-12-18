@@ -137,9 +137,7 @@ class Details(CFMENavigateStep):
 
     def resetter(self):
         """Reset view and selection"""
-        view_selector = self.view.toolbar.view_selector
-        if view_selector.selected != 'Summary View':
-            view_selector.select('Summary View')
+        self.view.toolbar.view_selector.select('Summary View')
 
 
 @navigator.register(PhysicalProvider, 'Edit')

@@ -411,9 +411,7 @@ class All(CFMENavigateStep):
         """
         # Reset view and selection
         self.view.sidebar.datastores.tree.click_path('All Datastores')
-        tb = self.view.toolbar
-        if tb.view_selector.is_displayed and 'Grid View' not in tb.view_selector.selected:
-            tb.view_selector.select("Grid View")
+        self.view.toolbar.view_selector.select("Grid View")
         self.view.entities.paginator.reset_selection()
 
 
