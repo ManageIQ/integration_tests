@@ -196,6 +196,7 @@ def test_domain_lock_unlock(request, appliance):
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha(),
         enabled=True)
+
     request.addfinalizer(domain.delete)
     ns1 = domain.namespaces.create(name='ns1')
     ns2 = ns1.namespaces.create(name='ns2')
@@ -214,16 +215,25 @@ def test_domain_lock_unlock(request, appliance):
     assert not details.configuration.is_displayed
     # class
     details = navigate_to(cls, 'Details')
-    assert details.configuration.items == ['Copy selected Instances']
-    assert not details.configuration.item_enabled('Copy selected Instances')
+    if appliance.version < '5.10':
+        assert details.configuration.items == ['Copy selected Instances']
+        assert not details.configuration.item_enabled('Copy selected Instances')
+    else:
+        assert not details.configuration.is_enabled
     details.schema.select()
     assert not details.configuration.is_displayed
     # instance
     details = navigate_to(inst, 'Details')
-    assert details.configuration.items == ['Copy this Instance']
+    if appliance.version < '5.10':
+        assert details.configuration.items == ['Copy this Instance']
+    else:
+        assert not details.configuration.is_enabled
     # method
     details = navigate_to(meth, 'Details')
-    assert details.configuration.items == ['Copy this Method']
+    if appliance.version < '5.10':
+        assert details.configuration.items == ['Copy this Method']
+    else:
+        assert not details.configuration.is_enabled
     # Unlock it
     domain.unlock()
     # Check that it is editable
