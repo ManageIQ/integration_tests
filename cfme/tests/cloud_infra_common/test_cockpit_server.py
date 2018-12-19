@@ -43,13 +43,12 @@ def test_cockpit_server_role(appliance, provider, setup_provider, new_vm, enable
     if enable:
         appliance.server.settings.enable_server_roles('cockpit_ws')
         wait_for(lambda: appliance.server_roles['cockpit_ws'] is True, delay=20, timeout=300)
-    if not enable:
-        appliance.server.settings.disable_server_roles('cockpit_ws')
-        wait_for(lambda: appliance.server_roles['cockpit_ws'] is False, delay=20, timeout=300)
-
-    view = navigate_to(new_vm, 'Details')
-    if enable:
+        view = navigate_to(new_vm, 'Details')
         assert view.toolbar.access.item_enabled('Web Console')
         appliance.server.settings.disable_server_roles('cockpit_ws')
     else:
-        assert not view.toolbar.access.item_enabled('Web Console')
+        appliance.server.settings.disable_server_roles('cockpit_ws')
+        wait_for(lambda: appliance.server_roles['cockpit_ws'] is False, delay=20, timeout=300)
+        view = navigate_to(new_vm, 'Details')
+        access = view.toolbar.access
+        assert not access.is_enabled or not access.item_enabled('Web Console')
