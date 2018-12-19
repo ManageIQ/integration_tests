@@ -1,5 +1,5 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import Parameter
+from widgetastic.utils import Parameter, ParametrizedLocator
 from widgetastic.widget import ParametrizedView, Table, Text, View
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound
 
@@ -33,6 +33,22 @@ class MyServicesView(BaseLoggedInPage):
     toolbar = View.nested(MyServiceToolbar)
     search = View.nested(Search)
     including_entities = View.include(BaseEntitiesView, use_parent=True)
+
+    @ParametrizedView.nested
+    class download_file(ParametrizedView):  # noqa
+        PARAMETERS = ("format", )
+        ALL_LINKS = ".//a[starts-with(@name, 'download_choice__render_report_')]"
+        download_button = Button(title="Download")
+        link = Text(ParametrizedLocator(".//a[normalize-space()={format|quote}]"))
+
+        def __init__(self, *args, **kwargs):
+            ParametrizedView.__init__(self, *args, **kwargs)
+            self.download_button.click()
+            self.link.click()
+
+        @classmethod
+        def all(cls, browser):
+            return [(browser.text(e), ) for e in browser.elements(cls.ALL_LINKS)]
 
     @property
     def in_myservices(self):
@@ -321,9 +337,12 @@ def check_vm_add(self, add_vm_name):
 
 @MiqImplementationContext.external_for(MyService.download_file, ViaUI)
 def download_file(self, extension):
+    extensions_mapping = {"txt": "Text", "csv": "CSV", "pdf": "PDF"}
     view = navigate_to(self, 'All')
-    view.toolbar.download.item_select('Download as {}'.format(extension))
-    view.flash.assert_no_error()
+    if self.appliance.version >= '5.10' and extension == "pdf":
+        view.download_file("Print or export as {}".format(extensions_mapping[extension]))
+    else:
+        view.download_file("Download as {}".format(extensions_mapping[extension]))
 
 
 @MiqImplementationContext.external_for(MyService.reconfigure_service, ViaUI)

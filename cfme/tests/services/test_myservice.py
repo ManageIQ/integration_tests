@@ -118,10 +118,10 @@ def test_crud_set_ownership_and_edit_tags(appliance, context, myservice):
 
 
 @pytest.mark.parametrize('context', [ViaUI])
-@pytest.mark.parametrize("filetype", ["Text", "CSV", "PDF"])
+@pytest.mark.parametrize("filetype", ["txt", "csv", "pdf"])
 # PDF not present on upstream
-@pytest.mark.uncollectif(lambda filetype: filetype == 'PDF' and not appliance_is_downstream())
-def test_download_file(appliance, context, needs_firefox, myservice, filetype):
+@pytest.mark.uncollectif(lambda filetype: filetype == 'pdf' and not appliance_is_downstream())
+def test_download_file(appliance, context, myservice, filetype):
     """Tests my service download files
 
     Metadata:
