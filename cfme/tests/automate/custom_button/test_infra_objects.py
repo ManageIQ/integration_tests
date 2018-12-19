@@ -52,11 +52,11 @@ def method(cls):
         name="meth_{}".format(fauxfactory.gen_alphanumeric(4)),
         script=dedent(
             """
-        # add google url to open
-        vm = $evm.root['vm']
-        $evm.log(:info, "Opening google url")
-        vm.remote_console_url = "https://google.com"
-        """
+            # add google url to open
+            vm = $evm.root['vm']
+            $evm.log(:info, "Opening url")
+            vm.remote_console_url = "http://example.com"
+            """
         ),
     )
 
@@ -383,7 +383,7 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
 
 
 @pytest.mark.uncollectif(lambda button_group: "VM_INSTANCE" not in button_group)
-def test_open_url(appliance, request, setup_obj, button_group, method):
+def test_open_url(request, setup_obj, button_group, method):
     """ Test Open url functionality of custom button.
 
     Polarion:
@@ -418,7 +418,7 @@ def test_open_url(appliance, request, setup_obj, button_group, method):
     custom_button_group = Dropdown(view, group.hover)
     assert custom_button_group.has_item(button.text)
 
-    # To-Do: Move windows handling functionality to browser
+    # TODO: Move windows handling functionality to browser
     initial_count = len(view.browser.selenium.window_handles)
     main_window = view.browser.selenium.current_window_handle
     custom_button_group.item_select(button.text)
@@ -431,6 +431,6 @@ def test_open_url(appliance, request, setup_obj, button_group, method):
     open_url_window = set(view.browser.selenium.window_handles) ^ {main_window}
 
     view.browser.selenium.switch_to_window(open_url_window.pop())
-    assert "google.com" in view.browser.url
+    assert "example.com" in view.browser.url
     view.browser.selenium.close()
     view.browser.selenium.switch_to_window(main_window)
