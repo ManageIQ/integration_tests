@@ -2,8 +2,12 @@
 import fauxfactory
 import pytest
 
+from widgetastic_patternfly import Dropdown
+
 from cfme import test_requirements
-from cfme.tests.automate.custom_button import OBJ_TYPE, OBJ_TYPE_59
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.tests.automate.custom_button import OBJ_TYPE, OBJ_TYPE_59, TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -259,3 +263,63 @@ def test_open_url_availability(appliance):
         view.add_button.click()
         view.flash.assert_message("URL can be opened only by buttons for a single entity")
     view.cancel_button.click()
+
+
+@pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE_PER_TYPE)
+@pytest.mark.uncollectif(
+    lambda appliance: appliance.version < "5.10",
+    reason="BZ-1646905 still not backported to lower version",
+)
+def test_custom_button_quotes(appliance, provider, setup_provider, dialog, request):
+    """ Test custom button and group allows quotes or not
+
+    To-Do: collect test for 5.9; If developer backport BZ-1646905
+
+    Bugzillas:
+        * 1646905
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: medium
+        initialEstimate: 1/4
+        testSteps:
+            Prerequisites:
+                * Appliance
+                * Simple TextInput service dialog
+
+            Steps:
+                * Create custom button group with single quote in name like "Group's"
+                * Create a custom button with quote in name like "button's"
+                * Navigate to object Details page
+                * Check for button group and button
+                * Select/execute button from group dropdown for selected entities
+                * Fill dialog and submit
+                * Check for the proper flash message related to button execution
+    """
+
+    collection = appliance.collections.button_groups
+    group = collection.create(
+        text="Group's", hover="Group's Hover", type=getattr(collection, "PROVIDER")
+    )
+    request.addfinalizer(group.delete_if_exists)
+
+    button = group.buttons.create(
+        text="Button's",
+        hover="Button's Hover",
+        dialog=dialog,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    view = navigate_to(provider, "Details")
+    custom_button_group = Dropdown(view, group.hover)
+    assert custom_button_group.has_item(button.text)
+    custom_button_group.item_select(button.text)
+
+    dialog_view = view.browser.create_view(TextInputDialogView)
+    dialog_view.wait_displayed("60s")
+    dialog_view.service_name.fill("Custom Button Execute")
+
+    dialog_view.submit.click()
+    view.flash.assert_message("Order Request was Submitted")
