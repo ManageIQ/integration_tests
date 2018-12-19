@@ -12,7 +12,6 @@ from widgetastic_patternfly import (
 )
 
 from cfme.services.catalogs import ServicesCatalogView
-from cfme.exceptions import displayed_not_implemented
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from . import BaseCatalogItem
 
@@ -69,10 +68,10 @@ class AnsibleExtraVariables(View):
         self.tab = tab
 
     def _values_to_remove(self, values):
-        return list(set(self.all_vars) - set(values))
+        return map(tuple, set(self.all_vars) - set(values))
 
     def _values_to_add(self, values):
-        return list(set(values) - set(self.all_vars))
+        return map(tuple, set(values) - set(self.all_vars))
 
     def fill(self, values):
         """
@@ -151,7 +150,7 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         max_ttl = Input("retirement_execution_ttl")
         escalate_privilege = BootstrapSwitch("retirement_become_enabled")
         verbosity = BootstrapSelect("retirement_verbosity")
-        remove_resources = BootstrapSelect("vm.vm.catalogItemModel.retirement_remove_resources")
+        remove_resources = BootstrapSelect("retirement_remove_resources")
         extra_vars = AnsibleExtraVariables(tab="retirement")
 
     cancel = Button("Cancel")
@@ -173,7 +172,13 @@ class EditAnsibleCatalogItemView(AnsibleCatalogItemForm):
     save = Button("Save")
     reset = Button("Reset")
 
-    is_displayed = displayed_not_implemented
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and
+            self.title.text == 'Editing Service Catalog Item "{}"'.format(
+                self.context["object"].name) and self.provisioning.repository.is_displayed
+        )
 
 
 class DetailsEntitiesAnsibleCatalogItemView(View):

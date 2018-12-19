@@ -18,11 +18,8 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,
-    pytest.mark.ignore_stream("upstream", '5.7'),
+    pytest.mark.ignore_stream("upstream"),
     test_requirements.ansible,
-    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
-                            reason="5.8 pod appliance doesn't support embedded ansible"),
-    pytest.mark.meta(blockers=[BZ(1640533, forced_streams=["5.10"])])
 ]
 
 
@@ -34,41 +31,7 @@ SERVICE_CATALOG_VALUES = [
 
 
 @pytest.fixture(scope="module")
-def wait_for_ansible(appliance):
-    appliance.server.settings.enable_server_roles("embedded_ansible")
-    appliance.wait_for_embedded_ansible()
-    yield
-    appliance.server.settings.disable_server_roles("embedded_ansible")
-
-
-@pytest.fixture(scope="module")
-def ansible_repository(appliance, wait_for_ansible):
-    repositories = appliance.collections.ansible_repositories
-    try:
-        repository = repositories.create(
-            name=fauxfactory.gen_alpha(),
-            url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
-            description=fauxfactory.gen_alpha())
-    except KeyError:
-        pytest.skip("Skipping since no such key found in yaml")
-    view = navigate_to(repository, "Details")
-    if appliance.version < "5.9":
-        refresh = view.browser.refresh
-    else:
-        refresh = view.toolbar.refresh.click
-    wait_for(
-        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
-        timeout=60,
-        fail_func=refresh
-    )
-    yield repository
-
-    if repository.exists:
-        repository.delete()
-
-
-@pytest.fixture(scope="module")
-def ansible_credential(appliance, ansible_repository):
+def ansible_credential(appliance):
     credential = appliance.collections.ansible_credentials.create(
         fauxfactory.gen_alpha(),
         "Machine",
@@ -82,7 +45,7 @@ def ansible_credential(appliance, ansible_repository):
 
 
 @pytest.fixture
-def ansible_amazon_credential(appliance, provider, ansible_repository):
+def ansible_amazon_credential(appliance, provider):
     creds = provider.get_credentials_from_config(provider.data["credentials"])
     credential = appliance.collections.ansible_credentials.create(
         fauxfactory.gen_alpha(),
@@ -150,8 +113,8 @@ def service_request(appliance, ansible_catalog_item):
     yield service_request_
 
     if service_request_.exists():
-        service_request_.remove_request()
-
+        service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+        appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
 
 @pytest.fixture
 def service(appliance, ansible_catalog_item):
@@ -181,26 +144,28 @@ def custom_service_button(appliance, ansible_catalog_item):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
 def test_service_ansible_playbook_available(appliance):
     """
     Polarion:
         assignee: sbulage
         casecomponent: Ansible
+        caseimportance: high
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     view = navigate_to(appliance.collections.catalog_items, "Choose Type")
     assert "Ansible Playbook" in [option.text for option in view.select_item_type.all_options]
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
 def test_service_ansible_playbook_crud(appliance, ansible_repository):
     """
     Polarion:
         assignee: sbulage
         casecomponent: Ansible
+        caseimportance: critical
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
@@ -228,20 +193,20 @@ def test_service_ansible_playbook_crud(appliance, ansible_repository):
     assert not cat_item.exists
 
 
-@pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
 def test_service_ansible_playbook_tagging(ansible_catalog_item):
     """ Tests ansible_playbook tag addition, check added tag and removal
-
-    Steps:
-        1. Login as a admin
-        2. Add tag for ansible_playbook
-        3. Check added tag
-        4. Remove the given tag
 
     Polarion:
         assignee: sbulage
         casecomponent: Ansible
+        caseimportance: high
         initialEstimate: 1/2h
+        tags: ansible_embed
+        testSteps:
+            1. Login as a admin
+            2. Add tag for ansible_playbook
+            3. Check added tag
+            4. Remove the given tag
     """
     added_tag = ansible_catalog_item.add_tag()
     assert any(tag.category.display_name == added_tag.category.display_name and
@@ -253,14 +218,15 @@ def test_service_ansible_playbook_tagging(ansible_catalog_item):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
 def test_service_ansible_playbook_negative(appliance):
     """
     Polarion:
         assignee: sbulage
         casecomponent: Ansible
+        caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     collection = appliance.collections.catalog_items
     cat_item = collection.instantiate(collection.ANSIBLE_PLAYBOOK, "", "", {})
@@ -270,10 +236,10 @@ def test_service_ansible_playbook_negative(appliance):
         "description": fauxfactory.gen_alphanumeric()
     })
     assert not view.add.active
+    view.browser.refresh()
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
 def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
     """Ansible playbooks are not designed to be part of a cloudforms service bundle.
 
@@ -283,17 +249,15 @@ def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     view = navigate_to(appliance.collections.catalog_bundles, "Add")
     options = view.resources.select_resource.all_options
     assert ansible_catalog_item.name not in [o.text for o in options]
+    view.browser.refresh()
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[
-    BZ(1519275, forced_streams=['5.9']),
-    BZ(1515841, forced_streams=['5.9'])
-])
 def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catalog_item,
                                                         service_catalog, request):
     """Tests if ansible playbook service provisioning is shown in service requests.
@@ -303,18 +267,20 @@ def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catal
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     service_catalog.order()
     cat_item_name = ansible_catalog_item.name
     request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
     service_request = appliance.collections.requests.instantiate(description=request_descr)
+    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
 
     @request.addfinalizer
     def _finalize():
         _service = MyService(appliance, cat_item_name)
         if service_request.exists():
             service_request.wait_for_request()
-            service_request.remove_request()
+            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
         if _service.exists:
             _service.delete()
 
@@ -322,7 +288,6 @@ def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catal
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1515841, forced_streams=['5.9'])])
 def test_service_ansible_playbook_confirm(appliance, soft_assert):
     """Tests after selecting playbook additional widgets appear and are pre-populated where
     possible.
@@ -332,6 +297,7 @@ def test_service_ansible_playbook_confirm(appliance, soft_assert):
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     collection = appliance.collections.catalog_items
     cat_item = collection.instantiate(collection.ANSIBLE_PLAYBOOK, "", "", {})
@@ -341,20 +307,13 @@ def test_service_ansible_playbook_confirm(appliance, soft_assert):
     soft_assert(view.provisioning.repository.is_displayed)
     soft_assert(view.provisioning.verbosity.is_displayed)
     soft_assert(view.provisioning.verbosity.selected_option == "0 (Normal)")
-    if appliance.version < "5.9":
-        soft_assert(view.provisioning.hosts.is_displayed)
-        soft_assert(view.provisioning.hosts.value == "localhost")
-        soft_assert(view.retirement.hosts.is_displayed)
-        soft_assert(view.retirement.hosts.value == "localhost")
-        soft_assert(view.retirement.remove_resources.selected_option == "Yes")
-    else:
-        soft_assert(view.provisioning.localhost.is_displayed)
-        soft_assert(view.provisioning.specify_host_values.is_displayed)
-        soft_assert(view.provisioning.logging_output.is_displayed)
-        soft_assert(view.retirement.localhost.is_displayed)
-        soft_assert(view.retirement.specify_host_values.is_displayed)
-        soft_assert(view.retirement.logging_output.is_displayed)
-        soft_assert(view.retirement.remove_resources.selected_option == "")
+    soft_assert(view.provisioning.localhost.is_displayed)
+    soft_assert(view.provisioning.specify_host_values.is_displayed)
+    soft_assert(view.provisioning.logging_output.is_displayed)
+    soft_assert(view.retirement.localhost.is_displayed)
+    soft_assert(view.retirement.specify_host_values.is_displayed)
+    soft_assert(view.retirement.logging_output.is_displayed)
+    soft_assert(view.retirement.remove_resources.selected_option == "Yes")
     soft_assert(view.retirement.repository.is_displayed)
     soft_assert(view.retirement.verbosity.is_displayed)
     soft_assert(view.retirement.remove_resources.is_displayed)
@@ -367,10 +326,6 @@ def test_service_ansible_playbook_confirm(appliance, soft_assert):
 @pytest.mark.parametrize("host_type,order_value,result", SERVICE_CATALOG_VALUES, ids=[
     value[0] for value in SERVICE_CATALOG_VALUES])
 @pytest.mark.parametrize("action", ["provisioning", "retirement"])
-@pytest.mark.meta(blockers=[
-    BZ(1519275, forced_streams=['5.9']),
-    BZ(1515841, forced_streams=['5.9'])
-])
 def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item, service_catalog,
         service_request, service, host_type, order_value, result, action):
     """Test ordering and retiring ansible playbook service against default host, blank field and
@@ -379,6 +334,9 @@ def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item, 
     Polarion:
         assignee: sbulage
         initialEstimate: 1/4h
+        casecomponent: Ansible
+        caseimportance: medium
+        tags: ansible_embed
     """
     service_catalog.ansible_dialog_values = {"hosts": order_value}
     service_catalog.order()
@@ -389,7 +347,6 @@ def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item, 
     assert result == view.provisioning.details.get_text_of("Hosts")
 
 
-@pytest.mark.meta(blockers=[BZ(1519275, forced_streams=['5.9'])])
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_plays_table(service_catalog, service_request, service,
         soft_assert):
@@ -400,6 +357,7 @@ def test_service_ansible_playbook_plays_table(service_catalog, service_request, 
         casecomponent: Ansible
         caseimportance: low
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     service_catalog.order()
     service_request.wait_for_request()
@@ -420,6 +378,7 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
@@ -440,7 +399,10 @@ def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_reque
 
     Polarion:
         assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: medium
         initialEstimate: 1/4h
+        tags: ansible_embed
     """
     service_catalog.order()
     service_request.wait_for_request()
@@ -472,6 +434,7 @@ def test_service_ansible_execution_ttl(request, service_catalog, ansible_catalog
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 2h
+        tags: ansible_embed
     """
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
@@ -494,10 +457,6 @@ def test_service_ansible_execution_ttl(request, service_catalog, ansible_catalog
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[
-    BZ(1519275, forced_streams=['5.9']),
-    BZ(1515841, forced_streams=['5.9'])
-])
 def test_custom_button_ansible_credential_list(custom_service_button, service_catalog, service,
         service_request, appliance):
     """Test if credential list matches when the Ansible Playbook Service Dialog is invoked from a
@@ -509,6 +468,7 @@ def test_custom_button_ansible_credential_list(custom_service_button, service_ca
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/3h
+        tags: ansible_embed
     """
     service_catalog.order()
     service_request.wait_for_request()
@@ -535,6 +495,7 @@ def test_ansible_group_id_in_payload(service_catalog, service_request, service):
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     service_catalog.order()
     service_request.wait_for_request()
@@ -557,7 +518,10 @@ def test_embed_tower_exec_play_against_amazon(request, provider, setup_provider,
     """
     Polarion:
         assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: medium
         initialEstimate: 1/4h
+        tags: ansible_embed
     """
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
