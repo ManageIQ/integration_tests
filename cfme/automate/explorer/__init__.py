@@ -8,7 +8,7 @@ from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import automate_menu_name
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
-from widgetastic_manageiq import Accordion, ManageIQTree
+from widgetastic_manageiq import Accordion, ManageIQTree, Splitter
 
 
 class AutomateExplorerView(BaseLoggedInPage):
@@ -26,6 +26,7 @@ class AutomateExplorerView(BaseLoggedInPage):
     @View.nested
     class datastore(Accordion):  # noqa
         tree = ManageIQTree()
+        splitter = Splitter()
 
     configuration = Dropdown('Configuration')
 
