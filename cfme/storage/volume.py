@@ -3,7 +3,7 @@ import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import TextInput
-from widgetastic_patternfly import BreadCrumb, Button, Dropdown
+from widgetastic_patternfly import BreadCrumb, Button, Dropdown, Input
 from widgetastic_manageiq import Search
 
 from widgetastic.widget import View, Text, NoSuchElementException
@@ -165,6 +165,50 @@ class VolumeSnapshotView(VolumeView):
     cancel = Button('Cancel')
 
 
+class VolumeAttachInstanceEntities(View):
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+
+
+class AttachInstanceView(VolumeView):
+    @property
+    def is_displayed(self):
+        expected_title = 'Attach Cloud Volume "{name}"'.format(name=self.context['object'].name)
+        return (
+                self.in_volume and
+                self.entities.title.text == expected_title and
+                self.entities.breadcrumb.active_location == expected_title)
+
+    instance = BootstrapSelect('vm_id')
+    mountpoint = Input(name='device_path')
+    attach = Button('Attach')
+    cancel = Button('Cancel')
+    reset = Button('Reset')
+
+    entities = View.nested(VolumeAttachInstanceEntities)
+
+
+class VolumeDetachInstanceEntities(View):
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+
+
+class DetachInstanceView(VolumeView):
+    @property
+    def is_displayed(self):
+        expected_title = 'Detach Cloud Volume "{name}"'.format(name=self.context['object'].name)
+        return (
+                self.in_volume and
+                self.entities.title.text == expected_title and
+                self.entities.breadcrumb.active_location == expected_title)
+
+    instance = BootstrapSelect(name='vm_id')
+    detach = Button('Detach')
+    cancel = Button('Cancel')
+
+    entities = View.nested(VolumeDetachInstanceEntities)
+
+
 @attr.s
 class Volume(BaseEntity, Updateable, Taggable):
     name = attr.ib()
@@ -243,6 +287,40 @@ class Volume(BaseEntity, Updateable, Taggable):
                 view.save.click()
                 return snapshot_collection.instantiate(name, self.provider)
 
+    def attach_instance(self, name, mountpoint=None, cancel=False, reset=False):
+        view = navigate_to(self, 'AttachInstance')
+
+        # Reset and Attach buttons are only active when view is changed
+        changed = view.fill({'instance': name, 'mountpoint': mountpoint})
+
+        if cancel or not changed:
+            if not changed:
+                logger.info("attach_instance: the form was unchanged")
+            self.click.cancel()
+
+        elif changed:
+            if reset:
+                view.reset.click()
+            else:
+                view.attach.click()
+                view = self.create_view(VolumeDetailsView)
+                view.flash.assert_no_error()
+
+    def detach_instance(self, name, cancel=False):
+        view = navigate_to(self, 'DetachInstance')
+
+        # Detach button is only active when view is changed
+        changed = view.instance.fill(name)
+
+        if cancel or not changed:
+            if not changed:
+                logger.info("detach_instance: the form was unchanged")
+            self.click.cancel()
+        elif changed:
+            view.detach.click()
+            view = self.create_view(VolumeDetailsView)
+            view.flash.assert_no_error()
+
     @property
     def exists(self):
         try:
@@ -303,6 +381,16 @@ class Volume(BaseEntity, Updateable, Taggable):
         """
         view = navigate_to(self, 'Details')
         return int(view.entities.relationships.get_text_of('Cloud Volume Snapshots'))
+
+    @property
+    def instance_count(self):
+        """ number of instances attached to volume.
+
+        Returns:
+            :py:class:`int` instance count.
+        """
+        view = navigate_to(self, 'Details')
+        return int(view.entities.relationships.get_text_of('Instances'))
 
 
 @attr.s
@@ -463,3 +551,23 @@ class VolumeDetailEditTag(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+
+
+@navigator.register(Volume, 'AttachInstance')
+class AttachInstance(CFMENavigateStep):
+    VIEW = AttachInstanceView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Attach this Cloud Volume to an '
+                                                                 'Instance')
+
+
+@navigator.register(Volume, 'DetachInstance')
+class DetachInstance(CFMENavigateStep):
+    VIEW = DetachInstanceView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Detach this Cloud Volume from an '
+                                                                 'Instance')
