@@ -112,6 +112,7 @@ def test_copy_template(created_template):
     template_copy.delete()
 
 
+@pytest.mark.meta(blockers=[BZ(1659947, forced_streams=["5.9", "5.10"])])
 def test_name_required_error_validation_orch_template(appliance, template_type):
     """Tests error validation if Name wasn't specified during template creation
 
