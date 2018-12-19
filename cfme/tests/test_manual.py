@@ -295,20 +295,6 @@ def test_error_message_azure():
 
 
 @pytest.mark.manual
-def test_crud_pod_appliance_custom_config():
-    """
-    overriding default values in template and deploys pod appliance
-    checks that it is alive
-    deletes pod appliance
-
-    Polarion:
-        assignee: izapolsk
-        initialEstimate: None
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(3)
 def test_rbac_assigning_multiple_tags_from_same_category_to_catalog_item():
@@ -8407,19 +8393,6 @@ def test_host_credentials_default():
 
 
 @pytest.mark.manual
-def test_aws_smartstate_pod():
-    """
-    deploy aws smartstate pod and that it works
-
-    Polarion:
-        assignee: izapolsk
-        caseimportance: medium
-        initialEstimate: None
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 def test_embed_tower_repo_tag():
     """
@@ -9663,20 +9636,6 @@ def test_osp_test_migration_plan_can_be_unscheduled():
 
 
 @pytest.mark.manual
-def test_crud_pod_appliance_ansible_deployment():
-    """
-    deploys pod appliance
-    checks that it is alive
-    deletes pod appliance
-
-    Polarion:
-        assignee: izapolsk
-        initialEstimate: None
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ssui
 @pytest.mark.tier(3)
 def test_ssui_dynamic_dropdown_values_are_not_loaded_in_dropdown_unless_refresh_button_is_pres():
@@ -10271,18 +10230,6 @@ def test_osp_vmware67_test_vm_migration_with_rhel_7x():
 
 
 @pytest.mark.manual
-def test_pod_appliance_start_stop():
-    """
-    appliance should start w/o issues
-
-    Polarion:
-        assignee: izapolsk
-        initialEstimate: None
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_credentials_change_password_trailing_whitespace():
@@ -10471,19 +10418,6 @@ def test_attribute_override():
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_pod_appliance_config_upgrade():
-    """
-    appliance config update should cause appliance re-deployment
-
-    Polarion:
-        assignee: izapolsk
-        caseimportance: medium
-        initialEstimate: None
     """
     pass
 
@@ -12198,20 +12132,6 @@ def test_childtenant_cloud_cpu_quota_by_enforce():
 
 
 @pytest.mark.manual
-def test_crud_pod_appliance_ext_db():
-    """
-    deploys pod appliance
-    checks that it is alive
-    deletes pod appliance
-
-    Polarion:
-        assignee: izapolsk
-        initialEstimate: None
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_add_ec2_provider_with_instance_without_name():
     """
     1) Add an ec2 provider with instance without name
@@ -12257,19 +12177,6 @@ def test_automate_check_quota_regression():
         casecomponent: automate
         caseimportance: medium
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_pod_appliance_db_upgrade():
-    """
-    db scheme/version has been changed
-
-    Polarion:
-        assignee: izapolsk
-        caseimportance: medium
-        initialEstimate: None
     """
     pass
 
@@ -15766,18 +15673,6 @@ def test_sui_rbac_see_catalogs_and_orders_as_user_with_permissions():
 
 
 @pytest.mark.manual
-def test_pod_appliance_db_backup_restore():
-    """
-    database has been saved and recovered
-
-    Polarion:
-        assignee: izapolsk
-        initialEstimate: None
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(3)
 def test_dialog_dropdown_ui_values_in_the_dropdown_should_be_visible_in_edit_mode():
@@ -18404,18 +18299,6 @@ def test_custom_button_language():
         startsin: 5.9
         testtype: nonfunctional
         upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_pod_appliance_basic_ipa_auth():
-    """
-    auth from ipa server should work
-
-    Polarion:
-        assignee: izapolsk
-        initialEstimate: None
     """
     pass
 
@@ -23867,20 +23750,6 @@ def test_verify_user_authentication_works_fine_if_default_evm_groups_are_already
 
 
 @pytest.mark.manual
-def test_crud_pod_appliance():
-    """
-    deploys pod appliance
-    checks that it is alive
-    deletes pod appliance
-
-    Polarion:
-        assignee: izapolsk
-        initialEstimate: None
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.cfme_tenancy
 @pytest.mark.tier(2)
 def test_tenant_visibility_miq_ae_namespaces_all_parents():
@@ -24458,18 +24327,6 @@ def test_copying_customization_dialog():
         casecomponent: automate
         caseimportance: medium
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_pod_appliance_scale():
-    """
-    appliance should work correctly after scale up/down
-
-    Polarion:
-        assignee: izapolsk
-        initialEstimate: None
     """
     pass
 
@@ -25602,20 +25459,6 @@ def test_embed_tower_logs():
         casecomponent: ansible
         initialEstimate: 1/4h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_pod_appliance_image_upgrade():
-    """
-    one of appliance images has been changed. it should cause pod re-
-    deployment
-
-    Polarion:
-        assignee: izapolsk
-        caseimportance: medium
-        initialEstimate: None
     """
     pass
 

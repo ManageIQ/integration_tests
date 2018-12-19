@@ -7,7 +7,7 @@ def test_pod_appliance_basic_ipa_auth():
     auth from ipa server should work
 
     Polarion:
-        assignee: None
+        assignee: izapolsk
         initialEstimate: None
     """
     pass
