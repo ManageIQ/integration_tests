@@ -8,7 +8,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.log import logger
 from cfme.utils.rest import create_resource
-from cfme.utils.version import VersionPicker, Version
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 
@@ -593,7 +592,10 @@ def policies(request, rest_api, num=2):
 
 
 def get_dialog_service_name(appliance, service_request, *item_names):
-    """Helper to DRY this VersionPicker when tests need to determine a dialog service name
+    """Note: VersionPicker has currently been removed,
+    since None value is returned in the service_request options.
+
+    Helper to DRY this VersionPicker when tests need to determine a dialog service name
 
     In gaprindashvili+ its available in the service_request options
     In earlier versions it has to be parsed from the message
@@ -608,7 +610,4 @@ def get_dialog_service_name(appliance, service_request, *item_names):
         else:
             raise ValueError('Could not match name from items in given service request message')
 
-    return VersionPicker({
-        Version.lowest(): lambda: _regex_parse_name(item_names, service_request.message),
-        '5.10': lambda: service_request.options.get('dialog', {}).get('dialog_service_name', '')
-    }).pick(appliance.version)()  # run lambda after picking
+    return _regex_parse_name(item_names, service_request.message)
