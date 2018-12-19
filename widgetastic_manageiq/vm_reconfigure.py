@@ -29,7 +29,7 @@ class DisksTable(VanillaTable):
         "Size": Input(id="dvcSize"),
         "ControllerType": BootstrapSelect(id="Controller"),
         "Unit": BootstrapSelect(id="hdUnit"),
-        "Dependent":BootstrapSwitch(name="vm.cb_dependent"),
+        "Dependent": BootstrapSwitch(name="vm.cb_dependent"),
         "Delete Backing": BootstrapSwitch(name="cb_deletebacking"),
         "Actions": Button(),
         9: Button(),
