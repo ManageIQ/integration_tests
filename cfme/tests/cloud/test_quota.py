@@ -5,9 +5,7 @@ from riggerlib import recursive_update
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.utils.generators import random_vm_name
 
 from widgetastic.utils import partial_match
@@ -17,7 +15,7 @@ pytestmark = [
     test_requirements.quota,
     pytest.mark.long_running,
     pytest.mark.usefixtures("setup_provider"),
-    pytest.mark.provider([CloudProvider], scope='function',
+    pytest.mark.provider([AzureProvider], scope='function',
                          required_fields=[["provisioning", "image"]]),
 
 ]
@@ -29,30 +27,17 @@ def new_credential():
 
 
 @pytest.fixture
-def prov_data(appliance, provider, provisioning):
-    data = {
+def prov_data(appliance, provisioning):
+    instance_type = "d2s_v3" if appliance.version < "5.10" else "D2s_v3"
+    return {
         "catalog": {"vm_name": random_vm_name(context="quota")},
         "environment": {"automatic_placement": True},
-        "properties": {"instance_type": partial_match("m1.large")},
+        "properties": {"instance_type": partial_match(instance_type)},
+        "customize": {
+            "admin_username": provisioning["customize_username"],
+            "root_password": provisioning["customize_password"],
+        },
     }
-    if provider.one_of(AzureProvider):
-        instance_type = "d2s_v3" if appliance.version < "5.10" else "D2s_v3"
-        recursive_update(
-            data,
-            {
-                "properties": {"instance_type": partial_match(instance_type)},
-                "customize": {
-                    "admin_username": provisioning["customize_username"],
-                    "root_password": provisioning["customize_password"],
-                },
-            },
-        )
-    if provider.one_of(EC2Provider):
-        recursive_update(
-            data,
-            {"properties": {"guest_keypair": provisioning.get('guest_keypair', None)}}
-        )
-    return data
 
 
 @pytest.fixture
