@@ -391,16 +391,13 @@ def test_open_url(request, setup_obj, button_group, method):
         initialEstimate: 1/2
         caseimportance: high
         testSteps:
-            prerequisites:
-                * Appliance with Infra provider
-
-            Steps:
-                * Create ruby method for url functionality
-                * Create custom button group with the Object type
-                * Create a custom button with open_url option and respective method
-                * Navigate to object Detail page
-                * Execute custom button
-                * Check new tab open or not with respective url
+            1. Appliance with Infra provider
+            2. Create ruby method for url functionality
+            3. Create custom button group with the Object type
+            4. Create a custom button with open_url option and respective method
+            5. Navigate to object Detail page
+            6. Execute custom button
+            7. Check new tab open or not with respective url
     """
 
     group, obj_type = button_group
@@ -431,6 +428,11 @@ def test_open_url(request, setup_obj, button_group, method):
     open_url_window = set(view.browser.selenium.window_handles) ^ {main_window}
 
     view.browser.selenium.switch_to_window(open_url_window.pop())
+
+    @request.addfinalizer
+    def _reset_window():
+        if view.browser.selenium.current_window_handle != main_window:
+            view.browser.selenium.close()
+            view.browser.selenium.switch_to_window(main_window)
+
     assert "example.com" in view.browser.url
-    view.browser.selenium.close()
-    view.browser.selenium.switch_to_window(main_window)
