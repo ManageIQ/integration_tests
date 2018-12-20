@@ -1398,3 +1398,409 @@ def test_superadmin_tenant_admin_crud(appliance, group_collection):
         user.name = "{}_edited".format(user.name)
     user.delete()
     assert not user.exists
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+def test_tenant_unique_catalog():
+    """
+    Catalog name is unique per tenant. Every tenant can have catalog with
+    name "catalog" defined.
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        caseposneg: negative
+        initialEstimate: 1/2h
+        startsin: 5.5
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.tier(2)
+def test_tenant_visibility_service_template_catalogs_all_parents():
+    """
+    Members of child tenants can see service templates which are visible
+    in parent tenants.
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/2h
+        startsin: 5.5
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.tier(2)
+def test_tenant_visibility_services_all_childs():
+    """
+    Members of parent tenant can see services of all child tenants.
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1h
+        startsin: 5.5
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+def test_tenant_osp_mapping_refresh():
+    """
+    There is new feature in 5.7, mapping of Openstack tenants to CFME
+    tenants.
+
+    Polarion:
+        assignee: mnadeem
+        caseimportance: medium
+        initialEstimate: 1/4h
+        startsin: 5.7
+        testSteps:
+            1. Switch "Tenant Mapping Enabled" checkbox to Yes when adding RHOS
+            cloud provider
+            2. Create new test tenant in RHOS
+            3. Perform refresh of RHOS provider in CFME UI
+            4. New tenants are created automatically
+
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.tier(2)
+def test_tenant_visibility_providers_all_parents():
+    """
+    Child tenants can see providers which were defined in parent tenants.
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
+        startsin: 5.5
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.tier(2)
+def test_tenant_visibility_miq_requests_all_childs():
+    """
+    Tenant members can see MIQ requests of this tenant and its children.
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/2h
+        startsin: 5.5
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+def test_tenant_osp_mapping_delete():
+    """
+    Tenants created by tenant mapping cannot be deleted.
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/4h
+        startsin: 5.7
+        testSteps:
+            1. Add rhos which has at least one tenant enabled and perform refresh
+            2. Navigate to Configuration -> Access Control -> tenants
+            3. Try to delete any of the tenants created by tenant mapping process
+            4. This is not possible until RHOS provider is removed from VMDB
+            5. Try this again after provider is removed
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+def test_tenant_ssui_users_can_see_their_services():
+    """
+    Self Service UI - users can see their services
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/4h
+        startsin: 5.5
+        testSteps:
+            1. Configure LDAP authentication on CFME
+            2. Create 2 different parent parent-tenants
+                - marketing
+                - finance
+            3. Create groups marketing and finance (these are defined in LDAP) and
+            group names in LDAP and CFME must match, assign these groups to corresponding
+            tenants and assign them EvmRole-SuperAdministrator roles
+            4. In LDAP we have 3 users:
+                - bill -> member of marketing group
+                - jim -> member of finance group
+                - mike -> is member of both groups
+            5. Add rhos/amazon providers and refresh them
+                - BUG: if provider with the same IP is added to CFME already it is not
+                seen in Cloud - Providers and it cannot be added again. Therefore you have
+                to add 2 different providers as a workaround.
+                - Providers must be added under corresponding tenants!!!
+            6. Login as bill and create new catalog with  - finance_catalog and
+            catalog item
+                - catalog items cannot contain fields which requires input from users, known
+                limitation based on information from Brad"s presentation, this is for froms
+                that have dynamic dialogs items
+            7. Login as jim and create new catalog with EC2 item
+            8. Login as jim or bill, you should see catalog items of parent-tenants and for tenant
+            they are in, mike user should see items from marketing or finance catalog based on which
+            group is active in Classic UI
+                - this does not work well - in SSUI - My Services and My requests does not show any
+                items (correct) but number of services/requests is calculated also from services not
+                relevant to actual tenant - this is fixed in next RC
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+def test_tenant_unique_automation_domain_name_on_parent_level():
+    """
+    Automation domain name is unique across parent tenants and cannot be
+    used twice.
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        caseposneg: negative
+        initialEstimate: 1/2h
+        startsin: 5.5
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+def test_tenantadmin_user_crud():
+    """
+    As a Tenant Admin I want to be able to create users in my tenant
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        initialEstimate: 1/4h
+        startsin: 5.5
+        testSteps:
+            1. Login as super admin and create new tenant
+            2. Create new role by copying EvmRole-tenant_administrator
+            3. Create new group and choose role created in previous step and your
+            tenant
+            4. Create new tenant admin user and assign him into group created in
+            previous step
+            5. login as tenant admin
+            6. Perform crud operations
+
+            Note: BZ 1278484 - tenant admin role has no permissions to create new roles,
+            Workaround is to add modify permissions to tenant_administrator role or Roles
+            must be created by superadministrator. In 5.5.0.13 after giving additional permissions
+            to tenant_admin,able to create new roles
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+def test_tenant_automation_domains():
+    """
+    Tenants can see Automation domains owned by tenant or parent tenants
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        initialEstimate: 1/4h
+        startsin: 5.5
+        testSteps:
+            1. Configure LDAP authentication on CFME
+            2. Create 2 different parent parent-tenants
+                - marketing
+                - finance
+            3. Create groups marketing and finance (these are defined in LDAP) and
+            group names in LDAP and CFME must match, assign these groups to corresponding
+            tenants and assign them EvmRole-SuperAdministrator roles
+            4. In LDAP we have 3 users:
+                - bill -> member of marketing group
+                - jim -> member of finance group
+                - mike -> is member of both groups
+            5. In each tenant create new Automation domain and copy
+            ManageIQ/System/Request/InspectMe instance and
+            ManageIQ/System/Request/new_method method to new domain
+            6. User can see only domains (locked) from his parent tenants and can
+            create his own which are visible only to his tenant
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+def test_superadmin_child_tenant_delete_parent_catalog():
+    """
+    Child superadmin tenant should able to delete catalog belonging to
+    superadmin in parent tenant. This is by design tenancy has not been
+    split any further and at this point is not expected to be changed
+    Note: As per below BZ#1375713,  Child superadmin tenant should not
+    delete catalog belonging to superadmin in parent tenant. However as
+    per the current code base this is by design: "ServiceTemplate"
+    => :ancestor_ids,
+    https://github.com/ManageIQ/manageiq/blob/2a66cb59e26816c7296896620b5b
+    7731b350943d/lib/rbac/filterer.rb#L114
+    You"re able to see Catalog items of parent and ancestor tenants.  If
+    your role has permission to modify catalog items / delete them, and
+    you can to see ones from ancestor tenants, then you can delete them.
+    https://bugzilla.redhat.com/show_bug.cgi?id=1375713
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        initialEstimate: 1/2h
+        startsin: 5.5
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.tier(1)
+def test_verify_groups_for_tenant_user():
+    """
+    verify if only 1 group displayed when login as tenant user ()that one
+    where user belongs to)
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.tier(2)
+def test_tenant_visibility_service_template_items_all_parents():
+    """
+    Child tenants can see all service template items defined in parent
+    tenants.
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/2h
+        startsin: 5.5
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+def test_tenantadmin_group_crud():
+    """
+    As a Tenant Admin I want to be able to create groups related to the
+    roles in my tenant and assign roles
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        initialEstimate: 1/4h
+        startsin: 5.5
+        testSteps:
+            1. Login as tenant admin
+            2. Navigate to Configure - Configuration - Access Control - Groups
+            3. Configuration - Add a new group
+            4. Assign Group name, role and Project/tenant and click Add
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.tier(2)
+def test_tenant_visibility_vms_all_childs():
+    """
+    Members of parent tenant can see all VMs/instances created by users in
+    child tenants.
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1h
+        startsin: 5.5
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+def test_tenant_ldap_group_switch_between_tenants():
+    """
+    User who is member of 2 or more LDAP groups can switch between tenants
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        initialEstimate: 1/4h
+        startsin: 5.5
+        testSteps:
+            1. Configure LDAP authentication on CFME
+            2. Create 2 different parent parent-tenants
+                - marketing
+                - finance
+            3. Create groups marketing and finance (these are defined in LDAP) and
+            group names in LDAP and CFME must match, assign these groups to corresponding
+            tenants and assign them EvmRole-SuperAdministrator roles
+            4. In LDAP we have 3 users:
+                - bill -> member of marketing group
+                - jim -> member of finance group
+                - mike -> is member of both groups
+            5. Login as mike user who is member of 2 different tenants
+            6. User is able switch between groups - switching is done in a way
+            that current current group which is chosen is writtent into DB as
+            active group. Therefore user who is assigned to more groups must login
+            to Classic UI and switch to desired group. Afterthat he is able login
+            via Self Service UI to desired tenant
+
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.tier(2)
+def test_tenant_visibility_miq_ae_namespaces_all_parents():
+    """
+    Child tenants can see MIQ AE namespaces of parent tenants.
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/4h
+        startsin: 5.5
+    """
+    pass
