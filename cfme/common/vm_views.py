@@ -335,10 +335,9 @@ class ProvisionView(BaseLoggedInPage):
 
         def _select_template(self, template_name, provider_name):
             try:
-                self.parent.paginator.find_row_on_pages(self.parent.image_table,
-                                                        name=template_name,
-                                                        provider=provider_name).click()
-            # image was not found, therefore raise an exception
+                self.parent.paginator.set_items_per_page(1000)
+                row = self.parent.image_table.row(name=template_name, provider=provider_name)
+                row.click()
             except IndexError:
                 raise TemplateNotFound('Cannot find template "{}" for provider "{}"'
                                        .format(template_name, provider_name))
