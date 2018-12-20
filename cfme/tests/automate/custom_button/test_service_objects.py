@@ -100,7 +100,7 @@ def button_group(appliance, request):
 
 
 @pytest.fixture(params=TEXT_DISPLAY, scope="module")
-def button_group(appliance, request):
+def serv_button_group(appliance, request):
 
     with appliance.context.use(ViaUI):
         collection = appliance.collections.button_groups
@@ -115,10 +115,11 @@ def button_group(appliance, request):
             text="btn_{}".format(fauxfactory.gen_numeric_string(3)),
             hover="hover_{}".format(fauxfactory.gen_alphanumeric(3)),
             display=TEXT_DISPLAY[request.param]["btn_display"],
+            display_for="Single and list",
             system="Request",
             request="InspectMe",
         )
-        yield button_group, button
+        yield button, button_gp
         button_gp.delete_if_exists()
         button.delete_if_exists()
 
@@ -256,9 +257,7 @@ def test_custom_button_automate(request, appliance, context, submit, objects, bu
                 except AttributeError:
                     paginator = view.entities.paginator
 
-                entity_count = min(
-                    paginator.items_amount, paginator.items_per_page
-                )
+                entity_count = min(paginator.items_amount, paginator.items_per_page)
                 view.entities.paginator.check_all()
             else:
                 entity_count = 1
@@ -291,9 +290,17 @@ def test_custom_button_automate(request, appliance, context, submit, objects, bu
                 )
 
 
-@pytest.mark.meta(blockers=[BZ(1659452, forced_streams=["5.9", "5.10"],unblock=lambda button_group: "group" not in button_group)])
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1659452,
+            forced_streams=["5.9", "5.10"],
+            unblock=lambda serv_button_group: "group" not in serv_button_group,
+        )
+    ]
+)
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
-def test_custom_button_text_display(appliance, context, button_group, service):
+def test_custom_button_text_display(appliance, context, serv_button_group, service):
     """ Test custom button text display on option
 
     Bugzilla:
@@ -304,21 +311,24 @@ def test_custom_button_text_display(appliance, context, button_group, service):
         caseimportance: medium
         initialEstimate: 1/6h
         testSteps:
-            Prerequisites:
-                * Appliance with Service
-            Steps:
-                * Create custom button `Group` or `Button` without display option
-                * Check Group/Button text display or not on UI and SSUI.
+                1. Appliance with Service
+                2. Create custom button `Group` or `Button` without display option
+                3. Check Group/Button text display or not on UI and SSUI.
     """
 
     my_service = MyService(appliance, name=service.name)
-    button, group = button_group
+    button, group = serv_button_group
 
     with appliance.context.use(context):
         navigate_to = ssui_nav if context is ViaSSUI else ui_nav
-        for destination in ["All", "Details"]:
+        destinations = (
+            ["Details"]
+            if (BZ(1650066, forced_streams=["5.9", "5.10"]).blocks and context is ViaSSUI)
+            else ["All", "Details"]
+        )
+        for destination in destinations:
             view = navigate_to(my_service, destination)
-            custom_button_group = Dropdown(view, group.hover)
+            custom_button_group = Dropdown(view, group.text)
             if group.display is True:
                 assert "" in custom_button_group.items
             else:
