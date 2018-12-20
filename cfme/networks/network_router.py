@@ -3,10 +3,12 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import Taggable
-from cfme.exceptions import ItemNotFound
+from cfme.exceptions import ItemNotFound, DestinationNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
+from cfme.networks.subnet import SubnetCollection
 from cfme.networks.views import (NetworkRouterDetailsView, NetworkRouterView, NetworkRouterAddView,
-                                 NetworkRouterEditView, NetworkRouterAddInterfaceView)
+                                 NetworkRouterEditView, NetworkRouterAddInterfaceView,
+                                 NetworkEntitySubnetView)
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.wait import wait_for
@@ -24,6 +26,10 @@ class NetworkRouter(Taggable, BaseEntity):
     name = attr.ib()
     provider_obj = attr.ib(default=None)
     ext_network = attr.ib(default=None)
+
+    _collections = {
+        'subnets': SubnetCollection,
+    }
 
     def add_interface(self, subnet_name):
         """Adds subnet as an interface to current router
@@ -177,8 +183,16 @@ class All(CFMENavigateStep):
 
 @navigator.register(NetworkRouter, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = NetworkRouterDetailsView
+
+    def prerequisite(self, *args, **kwargs):
+        """Navigate through filter parent if it exists else navigate through parent object"""
+        is_filtered = isinstance(self.obj.parent, BaseCollection) and self.obj.parent.filters
+        filter = (self.obj.parent.filters.get('parent') if is_filtered else None)
+        if is_filtered:
+            return navigate_to(filter, 'NetworkRouters')
+        else:
+            return navigate_to(self.obj.parent, 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
@@ -209,3 +223,16 @@ class AddInterface(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select('Add Interface to this Router')
+
+
+@navigator.register(NetworkRouter, 'CloudSubnets')
+class CloudSubnets(CFMENavigateStep):
+    VIEW = NetworkEntitySubnetView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        item = 'Cloud Subnets'
+        if not int(self.prerequisite_view.entities.relationships.get_text_of(item)):
+            raise DestinationNotFound("This Network router doesn't have {item}".format(item=item))
+
+        self.prerequisite_view.entities.relationships.click_at(item)

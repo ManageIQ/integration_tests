@@ -646,6 +646,33 @@ class SubnetDetailsView(BaseLoggedInPage):
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
 
 
+class NetworkEntitySubnetView(BaseLoggedInPage):
+    """
+    Represents a view for use with a network entity that
+    includes SubnetCollection in its _collections
+    """
+    title = Text('//div[@id="main-content"]//h1')
+    toolbar = View.nested(SubnetToolBar)
+    sidebar = View.nested(SubnetSideBar)
+    including_entities = View.include(SubnetEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        obj = self.context['object']
+        matched_title = ('{name} (All Cloud Subnets)'.format(
+            name=self.context['object'].name) == self.entities.title.text
+        )
+        if obj.string_name == 'Tenant':
+            matched_navigation = self.navigation.currently_selected == ['Compute', 'Clouds',
+                                                                        'Tenants']
+        elif obj.string_name == 'NetworkRouter':
+            matched_navigation = self.navigation.currently_selected == ['Networks',
+                                                                        'Network Routers']
+        else:
+            matched_navigation = False
+        return super(BaseLoggedInPage, self).is_displayed and matched_navigation and matched_title
+
+
 class OneProviderComponentsToolbar(View):
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
@@ -720,6 +747,20 @@ class OneProviderNetworkRouterView(BaseLoggedInPage):
         title = '{name} (All Network Routers)'.format(name=self.context['object'].name)
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.entities.title.text == title)
+
+
+class OneTenantNetworkRouterView(BaseLoggedInPage):
+    """ Represents whole All Subnets page """
+    toolbar = View.nested(NetworkRouterToolBar)
+    sidebar = View.nested(NetworkRouterSideBar)
+    including_entities = View.include(NetworkRouterEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Network Routers)'.format(name=self.context['object'].name)
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Compute', 'Clouds', 'Tenants'] and
                 self.entities.title.text == title)
 
 
