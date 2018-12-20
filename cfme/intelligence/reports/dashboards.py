@@ -85,7 +85,7 @@ class EditDefaultDashboardView(EditDashboardView):
     def is_displayed(self):
         return (
             self.in_intel_reports and
-            self.title.text == "Editing Dashboard {}".format(self.context["object"].name) and
+            self.title.text == 'Editing Dashboard "{}"'.format(self.context["object"].name) and
             self.dashboards.is_opened and
             self.dashboards.tree.currently_selected == [
                 "All Dashboards",
