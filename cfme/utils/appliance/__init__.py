@@ -35,7 +35,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import hidden
 from cfme.utils.datafile import load_data_file
 from cfme.utils.log import logger, create_sublogger, logger_wrap
-from cfme.utils.net import net_check
+from cfme.utils.net import net_check, resolve_hostname
 from cfme.utils.path import data_path, patches_path, scripts_path, conf_path
 from cfme.utils.ssh import SSHTail
 from cfme.utils.version import Version, get_stream, VersionPicker
@@ -2637,7 +2637,8 @@ class Appliance(IPAppliance):
                     else:
                         vm = provider.mgmt.get_vm(vm_name)
                         ip = vm.ip
-                    return ip or False  # get_ip_address might return None
+                    # get_ip_address might return None
+                    return ip if ip and resolve_hostname(ip) else False
                 except (AttributeError, VMInstanceNotFound):
                     return False
             ec, tc = wait_for(is_ip_available,

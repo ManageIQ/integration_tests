@@ -36,6 +36,7 @@ from sprout.log import create_logger
 
 from cfme.utils import conf
 from cfme.utils.appliance import Appliance as CFMEAppliance
+from cfme.utils.net import resolve_hostname
 from cfme.utils.path import project_path
 from cfme.utils.timeutil import parsetime
 from cfme.utils.trackerbot import api, depaginate
@@ -1165,7 +1166,8 @@ def appliance_power_on(self, appliance_id):
                 except Exception:
                     current_ip = None
             else:
-                current_ip = appliance.vm_mgmt.ip
+                ip = appliance.vm_mgmt.ip
+                current_ip = ip if ip and resolve_hostname(ip) else None
             if current_ip is not None:
                 # IP present
                 Appliance.objects.get(id=appliance_id).set_status("Appliance was powered on.")
@@ -1362,7 +1364,8 @@ def retrieve_appliance_ip(self, appliance_id):
         if appliance.is_openshift:
             ip_address = appliance.provider_api.current_ip_address(appliance.name)
         else:
-            ip_address = appliance.vm_mgmt.ip
+            ip = appliance.vm_mgmt.ip
+            ip_address = ip if ip and resolve_hostname(ip) else None
         if ip_address is None:
             self.retry(args=(appliance_id,), countdown=30, max_retries=20)
         with transaction.atomic():
@@ -1406,7 +1409,8 @@ def refresh_appliances_provider(self, provider_id):
             vm = uuid_vms[appliance.uuid]
             # Using the UUID and change the name if it changed
             appliance.name = vm.name
-            appliance.ip_address = vm.ip
+
+            appliance.ip_address = vm.ip if vm.ip and resolve_hostname(vm.ip) else None
             appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
                 vm.state, Appliance.Power.UNKNOWN))
             appliance.save()
@@ -1414,7 +1418,7 @@ def refresh_appliances_provider(self, provider_id):
             vm = dict_vms[appliance.name]
             # Using the name, and then retrieve uuid
             appliance.uuid = vm.uuid
-            appliance.ip_address = vm.ip
+            appliance.ip_address = vm.ip if vm.ip and resolve_hostname(vm.ip) else None
             appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
                 vm.state, Appliance.Power.UNKNOWN))
             appliance.save()
