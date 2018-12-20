@@ -34,7 +34,9 @@ def test_default_view_cloud_reset(appliance):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: cloud
+        caseimportance: high
+        initialEstimate: 1/20h
     """
     view = navigate_to(appliance.user.my_settings, "DefaultViews")
     assert view.tabs.default_views.reset.disabled
@@ -52,7 +54,9 @@ def test_cloud_default_view(appliance, group_name, expected_view):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: cloud
+        caseimportance: high
+        initialEstimate: 1/10h
     """
     page = gtl_params[group_name]
     default_views = appliance.user.my_settings.default_views
@@ -73,7 +77,9 @@ def test_cloud_compare_view(appliance, expected_view):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: cloud
+        caseimportance: high
+        initialEstimate: 1/10h
     """
 
     if expected_view in ['Expanded View', 'Compressed View']:

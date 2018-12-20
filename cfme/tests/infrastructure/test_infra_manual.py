@@ -51,6 +51,7 @@ def test_infrastructure_providers_rhevm_edit_provider_no_default_port():
 
 
 @pytest.mark.manual
+@pytest.mark.tier(1)
 @test_requirements.discovery
 def test_add_infra_provider_screen():
     """

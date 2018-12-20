@@ -716,6 +716,8 @@ class TestServiceDialogsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         query_resource_attributes(service_dialogs[0], soft_assert=soft_assert)
@@ -815,6 +817,8 @@ class TestServiceTemplateRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         query_resource_attributes(service_templates[0], soft_assert=soft_assert)
@@ -977,6 +981,8 @@ class TestServiceCatalogsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         outcome = query_resource_attributes(service_catalogs[0])
@@ -1282,6 +1288,8 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         query_resource_attributes(pending_request, soft_assert=soft_assert)
@@ -1294,6 +1302,8 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         # Wait a bit to check that it will not get auto-approved
@@ -1315,6 +1325,8 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         delete_resources_from_detail([pending_request], method=method)
@@ -1327,6 +1339,8 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         delete_resources_from_collection([pending_request])
@@ -1339,6 +1353,8 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         pending_request.action.approve(reason='I said so.')
@@ -1367,6 +1383,8 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         pending_request.action.deny(reason='I said so.')
@@ -1476,6 +1494,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         query_resource_attributes(orchestration_templates[0], soft_assert=soft_assert)
@@ -1489,6 +1509,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         for template in orchestration_templates:
@@ -1506,6 +1528,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         delete_resources_from_collection(orchestration_templates, not_found=True)
@@ -1520,6 +1544,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         delete_resources_from_detail(orchestration_templates, method='POST')
@@ -1533,6 +1559,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         delete_resources_from_detail(orchestration_templates, method='DELETE')
@@ -1549,6 +1577,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         response_len = len(orchestration_templates)
@@ -1584,6 +1614,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         num_orch_templates = len(orchestration_templates)
@@ -1631,6 +1663,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         num_orch_templates = len(orchestration_templates)
@@ -1662,6 +1696,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         uniq = fauxfactory.gen_alphanumeric(5)
@@ -1699,6 +1735,8 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         query_resource_attributes(cart, soft_assert=soft_assert)

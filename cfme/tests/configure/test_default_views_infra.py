@@ -73,7 +73,9 @@ def test_default_view_infra_reset(appliance):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: infra
+        caseimportance: high
+        initialEstimate: 1/20h
     """
     view = navigate_to(appliance.user.my_settings, "DefaultViews")
     assert view.tabs.default_views.reset.disabled
@@ -91,7 +93,9 @@ def test_infra_default_view(appliance, group_name, view):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: infra
+        caseimportance: high
+        initialEstimate: 1/10h
     """
     page = _get_page(gtl_params[group_name], appliance)
     default_views = appliance.user.my_settings.default_views
@@ -113,7 +117,9 @@ def test_infra_compare_view(appliance, expected_view):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: infra
+        caseimportance: high
+        initialEstimate: 1/10h
     """
     if expected_view in ['Expanded View', 'Compressed View']:
         group_name, selector_type = 'Compare', 'views_selector'

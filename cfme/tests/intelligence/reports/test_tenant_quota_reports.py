@@ -50,7 +50,9 @@ def test_queue_tenant_quota_reports(appliance, request, set_and_get_tenant_quota
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: report
+        caseimportance: high
+        initialEstimate: 1/20h
     """
     tenant_report = appliance.collections.reports.instantiate(
         type="Tenants", subtype="Tenant Quotas", menu_name="Tenant Quotas"

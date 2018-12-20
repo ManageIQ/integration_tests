@@ -194,6 +194,8 @@ def test_query_simple_collections(appliance, collection_name):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: high
         initialEstimate: 1/3h
     """
     collection = getattr(appliance.rest_api.collections, collection_name)
@@ -222,6 +224,8 @@ def test_collections_actions(appliance, collection_name):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: high
         initialEstimate: 1/4h
     """
     collection_href = '{}/{}'.format(appliance.rest_api._entry_point, collection_name)
@@ -251,6 +255,8 @@ def test_query_with_api_version(api_version, collection_name):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: high
         initialEstimate: 1/4h
     """
     collection = getattr(api_version.collections, collection_name)
@@ -275,6 +281,8 @@ def test_select_attributes(appliance, collection_name):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: high
         initialEstimate: 1/8h
     """
     collection = getattr(appliance.rest_api.collections, collection_name)
@@ -297,6 +305,8 @@ def test_http_options(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/3h
     """
     assert 'boot_time' in appliance.rest_api.collections.vms.options()['attributes']
@@ -312,6 +322,8 @@ def test_http_options_node_types(appliance, collection_name):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     collection = getattr(appliance.rest_api.collections, collection_name)
@@ -327,6 +339,8 @@ def test_http_options_subcollections(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: high
         initialEstimate: 1/4h
     """
     assert 'tags' in appliance.rest_api.collections.vms.options()['subcollections']
@@ -341,6 +355,8 @@ def test_server_info(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/3h
     """
     assert all(item in appliance.rest_api.server_info for item in ('appliance', 'build', 'version'))
@@ -354,6 +370,8 @@ def test_server_info_href(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     items = ('server_href', 'zone_href', 'region_href')
@@ -370,6 +388,8 @@ def test_default_region(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     reg = appliance.rest_api.collections.regions[0]
@@ -399,6 +419,8 @@ def test_settings_collection(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     # the "settings" collection is untypical as it doesn't have "resources" and
@@ -415,6 +437,8 @@ def test_identity(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/3h
     """
     assert all(item in appliance.rest_api.identity for item in
@@ -429,6 +453,8 @@ def test_user_settings(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/3h
     """
     assert isinstance(appliance.rest_api.settings, dict)
@@ -442,6 +468,8 @@ def test_datetime_filtering(appliance, provider):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     collection = appliance.rest_api.collections.vms
@@ -482,6 +510,8 @@ def test_date_filtering(appliance, provider):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     collection = appliance.rest_api.collections.vms
@@ -518,6 +548,8 @@ def test_resources_hiding(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/8h
     """
     roles = appliance.rest_api.collections.roles
@@ -539,6 +571,8 @@ def test_sorting_by_attributes(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     url_string = '{}{}'.format(
@@ -580,6 +614,8 @@ def test_rest_paging(appliance, paging):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     limit, offset = paging
@@ -650,6 +686,8 @@ def test_attributes_present(appliance, collection_name):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: None
     """
     attrs = 'href,id,href_slug'
@@ -675,6 +713,8 @@ def test_collection_class_valid(appliance, provider, vendor):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     collection = appliance.rest_api.collections.vms
@@ -702,6 +742,8 @@ def test_collection_class_invalid(appliance, provider):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     with pytest.raises(Exception, match='Invalid collection_class'):
@@ -722,6 +764,8 @@ def test_bulk_delete(request, appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     collection = appliance.rest_api.collections.services
@@ -750,6 +794,8 @@ def test_rest_ping(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     ping_addr = '{}/ping'.format(appliance.rest_api._entry_point)
@@ -773,6 +819,8 @@ class TestPicturesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         picture = self.create_picture(appliance)
@@ -793,6 +841,8 @@ class TestPicturesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.pictures
@@ -811,6 +861,8 @@ class TestPicturesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.pictures
@@ -832,6 +884,8 @@ class TestPicturesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.pictures
@@ -854,6 +908,8 @@ class TestBulkQueryRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.events
@@ -874,6 +930,8 @@ class TestBulkQueryRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         data = appliance.rest_api.collections.users[0]._data
@@ -891,6 +949,8 @@ class TestBulkQueryRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.roles
@@ -909,6 +969,8 @@ class TestBulkQueryRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.groups
@@ -937,6 +999,8 @@ class TestNotificationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.notifications
@@ -954,6 +1018,8 @@ class TestNotificationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         unseen = appliance.rest_api.collections.notifications.find_by(seen=False)
@@ -982,6 +1048,8 @@ class TestNotificationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         notifications = appliance.rest_api.collections.notifications.all[-3:]
@@ -995,6 +1063,8 @@ class TestNotificationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         notifications = appliance.rest_api.collections.notifications.all[-3:]
@@ -1021,6 +1091,8 @@ class TestEventStreamsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.event_streams
@@ -1035,6 +1107,8 @@ class TestEventStreamsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         vm_name = vm_obj

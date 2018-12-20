@@ -21,8 +21,9 @@ def test_cloud_volume_types():
 
     Polarion:
         assignee: pvala
-        casecomponent: rest
-        initialEstimate: None
+        casecomponent: None
+        caseimportance: high
+        initialEstimate: 1/30h
         startsin: 5.10
     """
     pass
@@ -36,7 +37,7 @@ def test_rest_metric_rollups():
 
     Polarion:
         assignee: pvala
-        casecomponent: rest
+        casecomponent: None
         caseimportance: medium
         initialEstimate: 1/10h
     """

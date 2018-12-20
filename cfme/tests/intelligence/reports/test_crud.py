@@ -67,6 +67,7 @@ def test_custom_report_crud(custom_report_values, appliance):
     Polarion:
         assignee: pvala
         casecomponent: report
+        caseimportance: high
         initialEstimate: 1/16h
     """
     custom_report = appliance.collections.reports.create(**custom_report_values)
@@ -87,6 +88,7 @@ def test_schedule_crud(schedule_data, appliance):
     Polarion:
         assignee: pvala
         casecomponent: report
+        caseimportance: high
         initialEstimate: 1/16h
     """
     schedule = appliance.collections.schedules.create(**schedule_data)
@@ -105,6 +107,7 @@ def test_reports_disable_enable_schedule(schedule_data, appliance):
     Polarion:
         assignee: pvala
         casecomponent: report
+        caseimportance: high
         initialEstimate: None
     """
     schedules = appliance.collections.schedules
@@ -325,6 +328,7 @@ def test_reports_delete_saved_report(appliance, request):
     Polarion:
         assignee: pvala
         casecomponent: report
+        caseimportance: high
         initialEstimate: 1/16h
     """
     report = appliance.collections.reports.instantiate(
@@ -348,7 +352,8 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
     Polarion:
         assignee: pvala
         casecomponent: report
-        initialEstimate: None
+        caseimportance: high
+        initialEstimate: 1/16h
     """
     report = appliance.collections.reports.instantiate(
         type="Configuration Management",
@@ -378,6 +383,8 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
 
     Polarion:
         assignee: pvala
+        casecomponent: report
+        caseimportance: high
         initialEstimate: None
     """
     schedule_data["filter"] = (

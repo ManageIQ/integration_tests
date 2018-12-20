@@ -100,6 +100,8 @@ def test_provision(request, appliance, provider, provision_data):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/3h
     """
     vm_name = provision_data['vm_fields']['vm_name']
@@ -136,7 +138,9 @@ def test_provision_vlan(request, appliance, provision_data, vnic_profile, provid
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: None
+        caseimportance: medium
+        initialEstimate: 1/4h
     """
     vm_name = provision_data['vm_fields']['vm_name']
     profile_name = provider.data["provisioning"]["vlan"]
@@ -186,6 +190,8 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     def check_one_approval_mail_received():
@@ -226,6 +232,8 @@ def test_create_pending_provision_requests(request, appliance, provider, small_t
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     provision_data = get_provision_data(
@@ -264,6 +272,8 @@ def test_provision_attributes(appliance, provider, small_template, soft_assert):
 
     Polarion:
         assignee: pvala
+        casecomponent: None
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     provision_data = get_provision_data(

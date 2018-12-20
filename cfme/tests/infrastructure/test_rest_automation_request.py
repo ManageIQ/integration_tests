@@ -177,7 +177,9 @@ class TestAutomationRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: medium
+            initialEstimate: 1/5h
         """
         create_requests(collection, appliance.rest_api, automation_requests_data, multiple)
 
@@ -190,7 +192,9 @@ class TestAutomationRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: medium
+            initialEstimate: 1/5h
         """
         create_pending_requests(collection, appliance.rest_api, requests_pending)
 
@@ -206,7 +210,9 @@ class TestAutomationRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: medium
+            initialEstimate: 1/5h
         """
         approve_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
@@ -222,7 +228,9 @@ class TestAutomationRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: medium
+            initialEstimate: 1/5h
         """
         deny_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
@@ -241,7 +249,9 @@ class TestAutomationRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: medium
+            initialEstimate: 1/6h
         """
         # testing BZ 1418338
         edit_requests(collection, appliance.rest_api, requests_pending, from_detail)
@@ -272,7 +282,9 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: medium
+            initialEstimate: 1/6h
         """
         query_resource_attributes(requests_pending[0], soft_assert=soft_assert)
 
@@ -288,7 +300,9 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: medium
+            initialEstimate: 1/6h
         """
         create_requests(collection, appliance.rest_api, automation_requests_data, multiple)
 
@@ -301,7 +315,9 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: medium
+            initialEstimate: 1/6h
         """
         create_pending_requests(collection, appliance.rest_api, requests_pending)
 
@@ -317,7 +333,9 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: medium
+            initialEstimate: 1/6h
         """
         approve_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
@@ -333,7 +351,9 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: medium
+            initialEstimate: 1/6h
         """
         deny_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
@@ -349,7 +369,9 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: medium
+            initialEstimate: 1/6h
         """
         edit_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
@@ -361,7 +383,9 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: medium
+            initialEstimate: 1/6h
         """
         output = mp.Queue()
         entry_point = appliance.rest_api._entry_point

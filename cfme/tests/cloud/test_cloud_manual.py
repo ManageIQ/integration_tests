@@ -10,6 +10,7 @@ pytestmark = [pytest.mark.ignore_stream("5.9", "5.10", "upstream")]
 
 
 @pytest.mark.manual
+@pytest.mark.tier(1)
 @test_requirements.discovery
 def test_add_cloud_provider_screen():
     """

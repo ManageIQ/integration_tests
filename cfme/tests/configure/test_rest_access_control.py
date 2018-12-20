@@ -42,6 +42,8 @@ class TestTenantsViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         query_resource_attributes(tenants[0], soft_assert=soft_assert)
@@ -55,6 +57,7 @@ class TestTenantsViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -73,6 +76,7 @@ class TestTenantsViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -113,6 +117,7 @@ class TestTenantsViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -127,6 +132,7 @@ class TestTenantsViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -151,6 +157,8 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: low
             initialEstimate: 1/4h
         """
         query_resource_attributes(roles[0], soft_assert=soft_assert)
@@ -164,6 +172,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -182,6 +191,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -222,6 +232,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -236,6 +247,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -250,6 +262,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -279,6 +292,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -322,6 +336,8 @@ class TestGroupsViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: low
             initialEstimate: 1/4h
         """
         query_resource_attributes(groups[0], soft_assert=soft_assert)
@@ -335,6 +351,7 @@ class TestGroupsViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -353,6 +370,7 @@ class TestGroupsViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -393,6 +411,7 @@ class TestGroupsViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -407,6 +426,7 @@ class TestGroupsViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -441,6 +461,8 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: low
             initialEstimate: 1/4h
         """
         query_resource_attributes(users[0], soft_assert=soft_assert)
@@ -454,6 +476,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -480,6 +503,8 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: low
             initialEstimate: 1/4h
         """
         uniq = fauxfactory.gen_alphanumeric(4).upper()
@@ -505,6 +530,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -525,6 +551,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -571,7 +598,9 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: low
+            initialEstimate: 1/3h
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
         groups = [appliance.rest_api.collections.groups.get(description=desc)
@@ -597,6 +626,8 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: low
             initialEstimate: 1/4h
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
@@ -653,7 +684,9 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
         groups = [appliance.rest_api.collections.groups.get(description=desc)
@@ -684,7 +717,9 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: None
+            caseimportance: low
+            initialEstimate: 1/4h
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
         groups = [appliance.rest_api.collections.groups.get(description=desc)
@@ -713,6 +748,8 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
@@ -743,6 +780,8 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
@@ -769,6 +808,8 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         new_password = fauxfactory.gen_alphanumeric()
@@ -794,6 +835,8 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         new_email = 'new@example.com'
@@ -816,6 +859,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -830,6 +874,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: None
             caseimportance: low
             initialEstimate: 1/4h
         """

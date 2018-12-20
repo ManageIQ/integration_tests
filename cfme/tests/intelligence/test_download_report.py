@@ -19,6 +19,8 @@ def test_download_report(infra_provider, report, filetype):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: report
+        caseimportance: high
+        initialEstimate: 1/20h
     """
     report.download(filetype)

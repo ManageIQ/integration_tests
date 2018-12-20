@@ -186,6 +186,7 @@ def test_cloud_start_page(request, appliance, start_page):
     Polarion:
         assignee: pvala
         casecomponent: config
+        caseimportance: medium
         initialEstimate: 1/6h
     """
     request.addfinalizer(lambda: set_default_page(appliance))
@@ -200,7 +201,9 @@ def test_cloudprovider_noquads(request, set_cloud_provider_quad):
     """
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     view = navigate_to(CloudProvider, 'All')
     view.toolbar.view_selector.select('Grid View')

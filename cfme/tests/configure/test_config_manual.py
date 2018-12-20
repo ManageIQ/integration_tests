@@ -10,22 +10,6 @@ pytestmark = [pytest.mark.ignore_stream("5.9", "5.10", "upstream")]
 
 
 @pytest.mark.manual
-def test_default_views_can_save_or_reset():
-    """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1389225
-    1) Go to My Settings -> Default views
-    2) Change something and try to reset configuration
-    3) Change something and try to save it
-
-    Polarion:
-        assignee: pvala
-        casecomponent: config
-        initialEstimate: 1/20h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.settings
 @pytest.mark.tier(3)
 def test_validate_landing_pages_for_rbac():

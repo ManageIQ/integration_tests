@@ -32,23 +32,6 @@ def test_calculating_the_sum_of_a_value_in_a_consolidated_report():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.report
-def test_create_simple_aggregated_custom_report():
-    """
-    Create aggregate custom report.
-    Eg: consolidate and aggregate data points into maximum, minimum,
-    average, and total.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Create simple aggregated custom report
-    """
-    pass
-
 
 @pytest.mark.manual
 @test_requirements.report
@@ -119,29 +102,6 @@ def test_create_and_run_custom_report_using_rbac():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_reports_custom_tags():
-    """
-    Add custom tags to report
-    1)add custom tags to appliance using black console
-    ssh to appliance, vmdb; rails c
-    use following commands
-    cat = Classification.create_category!(name: "rocat1", description:
-    "read_only cat 1", read_only: true)
-    cat.add_entry(name: "roent1", description: "read_only entry
-    1")2)Create new or Edit existing report and look for the tag category
-    in list of columns.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.report
 @pytest.mark.tier(1)
 def test_reports_generate_custom_conditional_filter_report():
@@ -162,27 +122,6 @@ def test_reports_generate_custom_conditional_filter_report():
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-def test_the_columns_for_the_custom_attribute_should_have_their_values_in_report():
-    """
-    Steps to Reproduce:
-    1. set a custom attribute on a VM with a space in the name
-    2. set a custom attribute on a VM with a colon in the name
-    3. Create a report with the VM name and the two custom attributes
-    4. run the report
-    https://bugzilla.redhat.com/show_bug.cgi?id=1553750
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: The columns for the custom attribute should have their values in report
     """
     pass
 
@@ -251,29 +190,6 @@ def test_import_duplicate_report():
 def test_reports_create_schedule_for_base_report_one_time_a_day():
     """
     Create schedule that runs report daily. Check it was ran successfully
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/16h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_copy_generate_report_provisioning_activity():
-    """
-    1.Copied the report "Provisioning Activity - by Requester" to
-    "Provisioning Activity - by Requester-2"
-    2.Executing the copied report, one can se the vaule "Administrator"
-    for the field "Provision.Request : Approved By".
-    If one later configures the Styling to:
-    Style: if: Red Background = Administrador Light Background Starts With
-    A
-    https://bugzilla.redhat.com/show_bug.cgi?id=1402547
 
     Polarion:
         assignee: pvala
@@ -374,28 +290,6 @@ def test_report_fullscreen_enabled():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.report
-def test_check_my_company_all_evm_groups_filter_from_reports_schedule():
-    """
-    Steps to Reproduce:
-    1.Navigate to Cloud Intel → Reports.
-    2.Click the Schedules accordion
-    3.Add a New Schedule
-    4.Under Report Selection →
-    Try to select custom report In Filter drop downs that you want to
-    schedule
-    https://bugzilla.redhat.com/show_bug.cgi?id=1559323
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        initialEstimate: 1/16h
-        startsin: 5.9
-        title: Check My Company(All EVM Groups) filter from reports schedule
-    """
-    pass
-
 
 @pytest.mark.manual
 @test_requirements.report
@@ -475,23 +369,6 @@ def test_report_secondary_display_filter_should_be_editable():
         caseimportance: medium
         initialEstimate: 1/6h
         title: Report secondary (display) filter should be editable
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_edit_chargeback_for_projects_report():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1485006
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.3
     """
     pass
 
@@ -613,152 +490,5 @@ def test_reports_manage_report_menu_accordion_with_users():
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_generate_reports_after_upgrade():
-    """
-    Test generate reports after updating the appliance to release version
-    from prior version.
-    BZ LInk: 1464154
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.3
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_queue_tenant_quotas_report():
-    """
-    Test multiple possible Tenant Quota Report configurations
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        initialEstimate: 1/4h
-        setup: Create or Identify appliance with one or more synced providers
-        title: Queue Tenant Quotas Report
-        testSteps:
-            1. Sign in to appliance
-            2. Navigate to Settings > Access control > Tenants > My Tenant > Manage quotas
-            3. Turn on Allocated Virtual CPUs and set it up to 10
-            4. Save new quota configuration
-            5. Navigate to Cloud Intel > Reports > Reports > Tentant Quotas
-            6. Queue Tenant Quotas report
-            7. //Wait ~1 minute
-            8.
-            9.
-            10. Navigate to Settings > Access control > Tenants > My Tenant > Manage quotas
-            11. Turn off Allocated Virtual CPUs, turn on Allocated Memory in
-                GB and set it up to 100
-            12. Save new quota configuration
-            13. Navigate to Cloud Intel > Reports > Reports > Tentant Quotas
-            14. Queue Tenant Quotas report
-            15. //Wait ~1 minute
-            16.
-            17.
-            18. Navigate to Settings > Access control > Tenants > My Tenant > Manage quotas
-            19. Turn on Allocated Virtual CPUs and set it up to 10, turn on
-                Allocated Memory in GB and set it up to 100
-            20. Save new quota configuration
-            21. Navigate to Cloud Intel > Reports > Reports > Tentant Quotas
-            22. Queue Tenant Quotas report
-            23. //Wait ~1 minute
-            24.
-            25.
-            26. Navigate to Settings > Access control > Tenants > My Tenant > Manage quotas
-            27. Turn on all quotas and set them up adequate numbers
-            28. Save new quota configuration
-            29. Navigate to Cloud Intel > Reports > Reports > Tentant Quotas
-            30. Queue Tenant Quotas report
-            31. //Wait ~1 minute
-            32.
-            33.
-            34. Sign out
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Verify that flash message "Quotas for Tenant were saved" is shown
-            5.
-            6.
-            7. Verify that only Allocated Virtual CPUs row is present in report
-            8. Verify that Count is unit in the report
-            9. Verify that following columns are shown in report:
-               Tenant Name         Quota Name         Total Quota
-               In Use         Allocated         Available
-            10.
-            11.
-            12. Verify that flash message "Quotas for Tenant were saved" is shown
-            13.
-            14.
-            15. Verify that only Allocated Memory in GB row is present in report
-            16. Verify that GB is unit in the report
-            17. Verify that following columns are shown in report:
-                Tenant Name         Quota Name         Total Quota
-                In Use         Allocated         Available
-            18.
-            19.
-            20. Verify that flash message "Quotas for Tenant were saved" is shown
-            21.
-            22.
-            23. Verify that Allocated Virtual CPUs and Allocated Memory in
-                GB rows are present in report
-            24. Verify that both Count and GB units are used in the report
-            25. Verify that following columns are shown in report:
-                Tenant Name         Quota Name         Total Quota
-                In Use         Allocated         Available
-            26.
-            27.
-            28. Verify that flash message "Quotas for Tenant were saved" is shown
-            29.
-            30.
-            31. Verify that all quotas are present in report
-            32. Verify that both Count and GB units are used in the report
-            33. Verify that following columns are shown in report:
-                Tenant Name         Quota Name         Total Quota
-                In Use         Allocated         Available
-            34.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_generate_custom_storage_fields():
-    """
-    Steps to Reproduce:
-    1. Add cloud provider (Openstack) -> Go to Compute-> Clouds->
-    Configuration-> Add new cloud provider.
-    2. Generate Report -> Go to cloud intel -> Reports-> Configuration->
-    Add new report.
-    3. Report filters -> Configure Report Columns:
-    Base the report on: Cloud Volumes
-    Selected Fields:
-    -- Cloud Tenant: Name
-    --  VMs: Name
-    --  VMs: Used Storage
-    --  VMs  RAM Size
-    --  Vms: Disk 1
-    https://bugzilla.redhat.com/show_bug.cgi?id=1499553
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.3
     """
     pass
