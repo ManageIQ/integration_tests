@@ -152,3 +152,39 @@ def is_pingable(ip_addr):
     except Exception as e:
         logger.exception(e)
         return False
+
+
+def is_ipv4(ip_addr):
+    """verifies whether address is ipv4.
+
+    Args:
+        ip_addr: ip_address to verify.
+    returns: return True if ip_address is ipv4 else returns False.
+    """
+    try:
+        socket.inet_pton(socket.AF_INET, ip_addr)
+    except AttributeError:
+        try:
+            socket.inet_aton(ip_addr)
+        except socket.error:
+            return False
+        return ip_addr.count('.') == 3
+    except socket.error:
+        return False
+
+    return True
+
+
+def is_ipv6(ip_addr):
+    """verifies whether address is ipv6.
+
+    Args:
+        ip_addr: ip_address to verify.
+    returns: return True if ip_address is ipv6 else returns False.
+    """
+    try:
+        socket.inet_pton(socket.AF_INET6, ip_addr)
+    except socket.error:
+        return False
+
+    return True
