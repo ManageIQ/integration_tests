@@ -8,6 +8,7 @@ from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import HostCompliancePolicy, VMCompliancePolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from . import do_scan
 
@@ -78,9 +79,9 @@ def vddk_url(provider):
         minor = "0"
     vddk_version = "v{}_{}".format(major, minor)
     # cf. BZ 1651702 vddk_version 6_7 does not currently work with CFME, so use v6_5
-    if BZ(1651702, forced_streams=['5.9','5.10']).blocks:
+    if BZ(1651702, forced_streams=['5.9', '5.10']).blocks:
         vddk_version = "v6_5"
-    url = cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
+    url = conf.cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
     if url is None:
         pytest.skip("There is no vddk url for this VMware provider version")
     else:
