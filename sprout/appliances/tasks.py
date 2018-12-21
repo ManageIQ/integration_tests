@@ -9,6 +9,8 @@ import random
 import re
 import command
 import yaml
+
+from collections import namedtuple
 from contextlib import closing
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
@@ -1400,7 +1402,20 @@ def refresh_appliances_provider(self, provider_id):
     vms = provider.api.list_vms()
     dict_vms = {}
     uuid_vms = {}
+    FakeVm = namedtuple('FakeVm', ['ip', 'name', 'uuid', 'state'])
+
     for vm in vms:
+        if provider.provider_type == 'openshift':
+            try:
+                ocp_vm = FakeVm(ip=None, name=None, uuid=None, state=None)
+                ocp_vm.name = vm
+                ocp_vm.state = provider.api.vm_status(vm)
+                ocp_vm.ip = provider.api.get_appliance_url(vm)
+                vm = ocp_vm
+            except Exception as e:
+                self.logger.error("Couldn't refresh vm {} because of {}".format(vm, e.message))
+                continue
+
         dict_vms[vm.name] = vm
         if vm.uuid:
             uuid_vms[vm.uuid] = vm
