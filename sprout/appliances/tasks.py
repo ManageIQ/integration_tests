@@ -1406,12 +1406,15 @@ def refresh_appliances_provider(self, provider_id):
 
     for vm in vms:
         if provider.provider_type == 'openshift':
+            if not provider.api.is_appliance(vm):
+                # there are some service projects in openshift which we need to skip here
+                continue
             try:
-                ocp_vm = FakeVm(ip=None, name=None, uuid=None, state=None)
-                ocp_vm.name = vm
-                ocp_vm.state = provider.api.vm_status(vm)
-                ocp_vm.ip = provider.api.get_appliance_url(vm)
-                vm = ocp_vm
+                vm_data = dict(ip=provider.api.get_appliance_url(vm),
+                               name=vm,
+                               uuid=provider.api.get_appliance_uuid(vm),
+                               state=provider.api.vm_status(vm))
+                vm = FakeVm(**vm_data)
             except Exception as e:
                 self.logger.error("Couldn't refresh vm {} because of {}".format(vm, e.message))
                 continue

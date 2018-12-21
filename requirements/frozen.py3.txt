@@ -307,7 +307,8 @@ Werkzeug==0.14.1
 widgetastic.core==0.30.3
 widgetastic.patternfly==0.0.40
 widgetsnbextension==3.4.2
-wrapanapi==3.0.34
+#wrapanapi==3.0.34
+git+git://github.com/izapolsk/wrapanapi.git@sprout_methods#wrapanapi
 wrapt==1.10.11
 xmltodict==0.11.0
 yaycl==0.3.0
