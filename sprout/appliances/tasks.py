@@ -1405,23 +1405,25 @@ def refresh_appliances_provider(self, provider_id):
     FakeVm = namedtuple('FakeVm', ['ip', 'name', 'uuid', 'state'])
 
     for vm in vms:
-        if provider.provider_type == 'openshift':
-            if not provider.api.is_appliance(vm):
-                # there are some service projects in openshift which we need to skip here
-                continue
-            try:
+        try:
+            if provider.provider_type == 'openshift':
+                if not provider.api.is_appliance(vm):
+                    # there are some service projects in openshift which we need to skip here
+                    continue
+
                 vm_data = dict(ip=provider.api.get_appliance_url(vm),
                                name=vm,
                                uuid=provider.api.get_appliance_uuid(vm),
                                state=provider.api.vm_status(vm))
                 vm = FakeVm(**vm_data)
-            except Exception as e:
-                self.logger.error("Couldn't refresh vm {} because of {}".format(vm, e.message))
-                continue
 
-        dict_vms[vm.name] = vm
-        if vm.uuid:
-            uuid_vms[vm.uuid] = vm
+                dict_vms[vm.name] = vm
+                if vm.uuid:
+                    uuid_vms[vm.uuid] = vm
+        except Exception as e:
+            self.logger.error("Couldn't refresh vm {} because of {}".format(vm.name, e.message))
+            continue
+
     for appliance in Appliance.objects.filter(template__provider=provider):
         if appliance.uuid is not None and appliance.uuid in uuid_vms:
             vm = uuid_vms[appliance.uuid]
