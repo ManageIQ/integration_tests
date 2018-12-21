@@ -96,7 +96,7 @@ class PolicyProfile(BaseEntity, Updateable, Pretty):
         else:
             view.cancel_button.click()
         view = self.create_view(PolicyProfileDetailsView, override=updates)
-        assert view.is_displayed
+        view.wait_displayed()
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
