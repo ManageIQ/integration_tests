@@ -9,6 +9,8 @@ import random
 import re
 import command
 import yaml
+
+from collections import namedtuple
 from contextlib import closing
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
@@ -36,6 +38,7 @@ from sprout.log import create_logger
 
 from cfme.utils import conf
 from cfme.utils.appliance import Appliance as CFMEAppliance
+from cfme.utils.net import resolve_hostname
 from cfme.utils.path import project_path
 from cfme.utils.timeutil import parsetime
 from cfme.utils.trackerbot import api, depaginate
@@ -1165,7 +1168,8 @@ def appliance_power_on(self, appliance_id):
                 except Exception:
                     current_ip = None
             else:
-                current_ip = appliance.vm_mgmt.ip
+                ip = appliance.vm_mgmt.ip
+                current_ip = ip if ip and resolve_hostname(ip) else None
             if current_ip is not None:
                 # IP present
                 Appliance.objects.get(id=appliance_id).set_status("Appliance was powered on.")
@@ -1362,7 +1366,8 @@ def retrieve_appliance_ip(self, appliance_id):
         if appliance.is_openshift:
             ip_address = appliance.provider_api.current_ip_address(appliance.name)
         else:
-            ip_address = appliance.vm_mgmt.ip
+            ip = appliance.vm_mgmt.ip
+            ip_address = ip if ip and resolve_hostname(ip) else None
         if ip_address is None:
             self.retry(args=(appliance_id,), countdown=30, max_retries=20)
         with transaction.atomic():
@@ -1397,16 +1402,35 @@ def refresh_appliances_provider(self, provider_id):
     vms = provider.api.list_vms()
     dict_vms = {}
     uuid_vms = {}
+    FakeVm = namedtuple('FakeVm', ['ip', 'name', 'uuid', 'state'])
+
     for vm in vms:
-        dict_vms[vm.name] = vm
-        if vm.uuid:
-            uuid_vms[vm.uuid] = vm
+        try:
+            if provider.provider_type == 'openshift':
+                if not provider.api.is_appliance(vm):
+                    # there are some service projects in openshift which we need to skip here
+                    continue
+
+                vm_data = dict(ip=provider.api.get_appliance_url(vm),
+                               name=vm,
+                               uuid=provider.api.get_appliance_uuid(vm),
+                               state=provider.api.vm_status(vm))
+                vm = FakeVm(**vm_data)
+
+                dict_vms[vm.name] = vm
+                if vm.uuid:
+                    uuid_vms[vm.uuid] = vm
+        except Exception as e:
+            self.logger.error("Couldn't refresh vm {} because of {}".format(vm.name, e.message))
+            continue
+
     for appliance in Appliance.objects.filter(template__provider=provider):
         if appliance.uuid is not None and appliance.uuid in uuid_vms:
             vm = uuid_vms[appliance.uuid]
             # Using the UUID and change the name if it changed
             appliance.name = vm.name
-            appliance.ip_address = vm.ip
+
+            appliance.ip_address = vm.ip if vm.ip and resolve_hostname(vm.ip) else None
             appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
                 vm.state, Appliance.Power.UNKNOWN))
             appliance.save()
@@ -1414,7 +1438,7 @@ def refresh_appliances_provider(self, provider_id):
             vm = dict_vms[appliance.name]
             # Using the name, and then retrieve uuid
             appliance.uuid = vm.uuid
-            appliance.ip_address = vm.ip
+            appliance.ip_address = vm.ip if vm.ip and resolve_hostname(vm.ip) else None
             appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
                 vm.state, Appliance.Power.UNKNOWN))
             appliance.save()
