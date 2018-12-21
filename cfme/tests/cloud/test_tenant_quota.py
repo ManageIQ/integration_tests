@@ -12,8 +12,7 @@ from cfme.utils.generators import random_vm_name
 pytestmark = [
     test_requirements.quota,
     pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
-                         scope="module")
-]
+                         scope="module")]
 
 
 @pytest.fixture
@@ -21,18 +20,20 @@ def set_default(provider, request):
     """This fixture is used to return paths for provisioning_entry_point, reconfigure_entry_point
        and retirement_entry_point. These values are required while creating new catalog item in
        'test_service_cloud_tenant_quota_with_default_entry_point' test. But other tests does not
-       require these values since those tests takes default values. Hence in this file, this fixture
+       require these values since those tests takes default values hence providing None values.
+       So in this file, this fixture - 'set_default'
        must be used in all tests of quota which are related to services where catalog item needs to
-       be created.
+       be created with specific values for these entries.
     """
+
+    provisioning_entry_point = None
     reconfigure_entry_point = None
     retirement_entry_point = None
     if request.param:
-        provisioning_entry_point = ("/ManageIQ (Locked)/" + provider.string_name +
-                                 "/VM/Provisioning/StateMachines/ProvisionRequestApproval/Default")
+        provisioning_entry_point = ("/ManageIQ (Locked)/" + provider.string_name
+                                + "/VM/Provisioning/StateMachines/ProvisionRequestApproval/Default")
+        retirement_entry_point = "/Service/Retirement/StateMachines/ServiceRetirement/Default"
 
-    else:
-        provisioning_entry_point = None
     return provisioning_entry_point, reconfigure_entry_point, retirement_entry_point
 
 
@@ -184,7 +185,12 @@ def test_tenant_quota_enforce_via_service_cloud(request, appliance, provider, se
         catalog_item.delete()
 
 
+# Args of parametrize is the list of navigation parameters to order catalog item.
 @pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
+# first arg of parametrize is the list of fixtures or parameters,
+# second arg is a list of lists, with each one a test is to be generated,
+# sequence is important here.
+# indirect is the list where we define which fixtures are to be passed values indirectly.
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data', 'extra_msg', 'set_default'],
     [
@@ -196,23 +202,30 @@ def test_tenant_quota_enforce_via_service_cloud(request, appliance, provider, se
     indirect=['set_roottenant_quota', 'custom_prov_data', 'set_default'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
-def test_service_cloud_tenant_quota_with_default_entry_point(request, appliance, provider,
-                                                             setup_provider, context,
+def test_service_cloud_tenant_quota_with_default_entry_point(request, appliance, context,
                                                              set_roottenant_quota, set_default,
                                                              custom_prov_data, extra_msg,
-                                                             template_name, catalog_item):
-    """Test Tenant Quota in UI and SSUI by selecting default entry point.
-       Quota has to be checked if its working with default entry point also.
+                                                             catalog_item):
+    """Test Tenant Quota in UI and SSUI by selecting field entry points.
+       Quota has to be checked if it is working with field entry points also.
 
-    Steps:
-    1. Add cloud provider
-    2. Set quota for root tenant - 'My Company'
-    3. Navigate to services > catalogs
-    4. Create catalog item with selecting 'default' as a 'field entry point'
-    5. Add other information required in catalog
-    6. Order the catalog item via UI and SSUI individually
+    Polarion:
+        assignee: ghubale
+        casecomponent: cloud
+        caseimportance: medium
+        initialEstimate: 1/12h
+        testSteps:
+            1. Add cloud provider
+            2. Set quota for root tenant - 'My Company'
+            3. Navigate to services > catalogs
+            4. Create catalog item with selecting following field entry points:
+                a.provisioning_entry_point = /ManageIQ (Locked)/Cloud/VM/Provisioning
+                /StateMachines/ProvisionRequestApproval/Default
+                b.retirement_entry_point = /Service/Retirement/StateMachines/ServiceRetirement
+                /Default
+            5. Add other information required in catalog for provisioning VM
+            6. Order the catalog item via UI and SSUI individually
     """
-
     with appliance.context.use(context):
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
         if context is ViaSSUI:
@@ -223,9 +236,9 @@ def test_service_cloud_tenant_quota_with_default_entry_point(request, appliance,
         name=catalog_item.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
-    assert provision_request.row.reason.text == "Quota Exceeded"
 
     @request.addfinalizer
     def delete():
         provision_request.remove_request()
         catalog_item.delete()
+    assert provision_request.row.reason.text == "Quota Exceeded"

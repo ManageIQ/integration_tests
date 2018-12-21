@@ -18,6 +18,23 @@ from cfme.utils.version import LOWEST, VersionPicker
 from cfme.utils.wait import wait_for
 
 
+class EntryPoint(Input):
+    def fill(self, value):
+        current_value = self.value
+        if value == current_value:
+            return False
+        # Clear and type everything
+        self.browser.click(self)
+        self.browser.clear(self)
+        self.browser.send_keys(value, self)
+        self.parent_view.modal.cancel.click()
+        # After changing default path values of 'retirement_entry_point', 'reconfigure_entry_point'
+        # or 'provisioning_entry_point'; 'Select Entry Point Instance'(pop up) occures which also
+        # helps to select these paths using tree structure. Here we have already filled these values
+        # through text input. So to ignore this pop up clicking on cancel button is required.
+        return True
+
+
 # Views
 class BasicInfoForm(ServicesCatalogView):
     title = Text('#explorer_title_text')
@@ -32,9 +49,9 @@ class BasicInfoForm(ServicesCatalogView):
     select_config_template = BootstrapSelect('template_id')
     select_provider = BootstrapSelect('manager_id')
     subtype = BootstrapSelect('generic_subtype')
-    field_entry_point = Input(name='fqname')
-    retirement_entry_point = Input(name='retire_fqname')
-    reconfigure_entry_point = Input(name='reconfigure_fqname')
+    provisioning_entry_point = EntryPoint(name='fqname')
+    retirement_entry_point = EntryPoint(name='retire_fqname')
+    reconfigure_entry_point = EntryPoint(name='reconfigure_fqname')
     select_resource = BootstrapSelect('resource_id')
 
     @View.nested
@@ -174,8 +191,8 @@ class EditCatalogItemView(BasicInfoForm):
         return (
             self.in_explorer and
             self.catalog_items.is_opened and
-            self.title.text == 'Editing Service Catalog Item "{}"'
-                .format(self.context['object'].name)
+            self.title.text
+            == 'Editing Service Catalog Item "{}"'.format(self.context["object"].name)
         )
 
     def after_fill(self, was_change):
@@ -211,8 +228,8 @@ class TabbedEditCatalogItemView(ServicesCatalogView):
         return (
             self.in_explorer and
             self.catalog_items.is_opened and
-            self.title.text == 'Editing Service Catalog Item "{}"'
-                .format(self.context['object'].name)
+            self.title.text
+            == 'Editing Service Catalog Item "{}"'.format(self.context['object'].name)
         )
 
 
@@ -500,25 +517,19 @@ class CatalogItemsCollection(BaseCollection):
         Returns:
             An instance of catalog_item_class
         """
-        provisioning_entry_point = kwargs.get("provisioning_entry_point", None)
-        reconfigure_entry_point = kwargs.get("reconfigure_entry_point", None)
-        retirement_entry_point = kwargs.get("retirement_entry_point", None)
-        kwargs.pop("provisioning_entry_point")
-        kwargs.pop("reconfigure_entry_point")
-        kwargs.pop("retirement_entry_point")
+        provisioning_entry_point = kwargs.pop("provisioning_entry_point", None)
+        reconfigure_entry_point = kwargs.pop("reconfigure_entry_point", None)
+        retirement_entry_point = kwargs.pop("retirement_entry_point", None)
         cat_item = self.instantiate(catalog_item_class, *args, **kwargs)
         view = navigate_to(cat_item, "Add")
         if provisioning_entry_point:
-            view.basic_info.field_entry_point.fill(provisioning_entry_point)
-            view.basic_info.modal.cancel.click()
+            view.basic_info.provisioning_entry_point.fill(provisioning_entry_point)
 
         if reconfigure_entry_point:
             view.basic_info.reconfigure_entry_point.fill(reconfigure_entry_point)
-            view.basic_info.modal.cancel.click()
 
         if retirement_entry_point:
             view.basic_info.retirement_entry_point.fill(retirement_entry_point)
-            view.basic_info.modal.cancel.click()
 
         view.fill(cat_item.fill_dict)
         view.add.click()
