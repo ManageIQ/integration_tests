@@ -177,6 +177,7 @@ class Action(BaseEntity, Updateable, Pretty):
         else:
             view.cancel_button.click()
         view = self.create_view(ActionDetailsView, override=updates)
+        view.wait_displayed('15s')
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
