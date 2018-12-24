@@ -2349,7 +2349,14 @@ def sync_appliance_hw(self, appliance_id):
 
 @singleton_task()
 def sync_provider_hw(self, provider_id):
-    Provider.objects.get(id=provider_id, working=True, disabled=False).perf_sync()
+    self.logger.info("Syncing provider %s hw", provider_id)
+    try:
+        provider = Provider.objects.get(id=provider_id, working=True, disabled=False)
+    except ObjectDoesNotExist:
+        self.logger.warning("Provider %s doesn't exist or disabled", provider_id)
+        return
+
+    provider.perf_sync()
 
 
 @singleton_task()
