@@ -217,7 +217,18 @@ def kill_lost_appliances_per_provider(self, provider_id):
     self.logger.info("obtaining list of vms on provider {}".format(provider.id))
     try:
         vms = provider.api.list_vms()
-        vm_names = vms if provider.provider_type == 'openshift' else [vm.name for vm in vms]
+        if provider.provider_type == 'openshift':
+            vm_names = vms
+        else:
+            vm_names = []
+            for vm in vms:
+                try:
+                    vm_names.append(vm.name)
+                except Exception as e:
+                    self.logger.exception("Couldn't get one prov's vm: {p} "
+                                          "because of exception {e}".format(p=provider_id,
+                                                                            e=e))
+                    continue
         # skipping appliances present in sprout db. those will be handled by another task
         vm_names = [name for name in vm_names
                     if not Appliance.objects.filter(name=name, template__provider=provider)]
@@ -1417,9 +1428,9 @@ def refresh_appliances_provider(self, provider_id):
                                state=provider.api.vm_status(vm))
                 vm = FakeVm(**vm_data)
 
-                dict_vms[vm.name] = vm
-                if vm.uuid:
-                    uuid_vms[vm.uuid] = vm
+            dict_vms[vm.name] = vm
+            if vm.uuid:
+                uuid_vms[vm.uuid] = vm
         except Exception as e:
             self.logger.error("Couldn't refresh vm {} because of {}".format(vm.name, e.message))
             continue
