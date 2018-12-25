@@ -70,6 +70,17 @@ class ExpressionEditor(View, Pretty):
         value = Input(name="chosen_value")
         user_input = Checkbox(name="user_input")
 
+        def fill(self, values):
+            # todo: replace with FillWaitDisplayed mixin
+            updated = []
+            for widget_name in self.widget_names:
+                if widget_name in values:
+                    widget = getattr(self, widget_name)
+                    value = values[widget_name]
+                    widget.wait_displayed('2s')
+                    updated.append(widget.fill(value))
+            return any(updated)
+
     @View.nested
     class tag_form_view(View):  # noqa
         type = BootstrapSelect("chosen_typ")
