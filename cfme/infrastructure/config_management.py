@@ -306,6 +306,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             view.entities.cancel.click()
             view.flash.assert_success_message('Add of Provider was cancelled by the user')
         else:
+            view.entities.add.wait_displayed('2s')
             view.entities.add.click()
             success_message = '{} Provider "{}" was added'.format(self.type, self.name)
             view.flash.assert_success_message(success_message)
