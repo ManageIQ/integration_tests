@@ -86,8 +86,9 @@ def order(self):
         view.fill(self.dialog_values)
     if self.ansible_dialog_values:
         view.fill(self.ansible_dialog_values)
+    view.submit_button.wait_displayed()
     view.submit_button.click()
-    view = self.create_view(RequestsView)
+    view = self.create_view(RequestsView, wait='10s')
     view.flash.assert_no_error()
     view.flash.assert_success_message("Order Request was Submitted")
     return self.appliance.collections.requests.instantiate(self.name, partial_check=True)

@@ -9,6 +9,7 @@ from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.update import Updateable
+from cfme.utils.wait import TimedOutError
 
 
 class ServiceCatalogs(Navigatable, Taggable, Updateable, sentaku.modeling.ElementMixin):
@@ -57,16 +58,13 @@ class BaseOrderForm(View):
 
         @property
         def visible_widget(self):
-            if self.browser.wait_for_element(self.input.locator, exception=False):
-                return self.input
-            elif self.browser.wait_for_element(self.dropdown.locator, exception=False):
-                return self.dropdown
-            elif self.browser.wait_for_element(self.param_input.locator, exception=False):
-                return self.param_input
-            elif self.browser.wait_for_element(self.param_dropdown.locator, exception=False):
-                return self.param_dropdown
-            elif self.browser.wait_for_element(self.select.locator, exception=False):
-                return self.select
+            for widget in (self.input, self.dropdown, self.param_input,
+                           self.param_dropdown, self.select):
+                try:
+                    widget.wait_displayed('2s')
+                    return widget
+                except TimedOutError:
+                    pass
             else:
                 raise ItemNotFound("Visible widget is not found")
 
