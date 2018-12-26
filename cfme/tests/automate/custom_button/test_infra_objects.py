@@ -425,7 +425,7 @@ def test_open_url(request, setup_obj, button_group, method):
         timeout=120,
         message="Check for window open",
     )
-    open_url_window = set(view.browser.selenium.window_handles) ^ {main_window}
+    open_url_window = set(view.browser.selenium.window_handles) - {main_window}
 
     view.browser.selenium.switch_to_window(open_url_window.pop())
 
