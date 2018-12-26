@@ -337,7 +337,7 @@ class Details(CFMENavigateStep):
         self.prerequisite_view.datastore.tree.click_path(*self.obj.tree_path)
 
     def resetter(self, *args, **kwargs):
-        self.prerequisite_view.datastore.splitter.reset()
+        self.view.datastore.splitter.reset()
 
 
 @navigator.register(Class)
