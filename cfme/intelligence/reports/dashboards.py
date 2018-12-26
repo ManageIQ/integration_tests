@@ -48,6 +48,10 @@ class NewDashboardView(DashboardFormCommon):
 
     @property
     def is_displayed(self):
+        try:
+            group = self.context['object'].group
+        except AttributeError:
+            group = self.group_names
         return (
             self.in_intel_reports and
             self.title.text == "Adding a new dashboard" and
@@ -55,7 +59,7 @@ class NewDashboardView(DashboardFormCommon):
             self.dashboards.tree.currently_selected == [
                 "All Dashboards",
                 "All Groups",
-                self.context["object"].group
+                group
             ]
         )
 
@@ -220,6 +224,7 @@ class DashboardsCollection(BaseCollection):
             "locked": dashboard.locked,
             "widget_picker": dashboard.widgets
         })
+        view.wait_dispayed()
         view.add_button.click()
         view = dashboard.create_view(DashboardAllGroupsView)
         assert view.is_displayed
