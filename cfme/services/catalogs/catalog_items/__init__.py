@@ -255,6 +255,7 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         else:
             view.cancel.click()
         view = self.create_view(DetailsCatalogItemView, override=updates)
+        view.wait_displayed()
         assert view.is_displayed
         view.flash.assert_no_error()
         # TODO move these assertions to tests
