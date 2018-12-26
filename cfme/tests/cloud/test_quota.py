@@ -21,11 +21,6 @@ pytestmark = [
 ]
 
 
-def new_credential():
-    return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
-                      secret='redhat')
-
-
 @pytest.fixture
 def prov_data(appliance, provisioning):
     instance_type = "d2s_v3" if appliance.version < "5.10" else "D2s_v3"
@@ -105,7 +100,8 @@ def new_user_child(appliance, new_group_child):
     """This fixture creates new user which assigned to new child tenant"""
     user = appliance.collections.users.create(
         name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
-        credential=new_credential(),
+        credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
+                              secret='{password}'.format(password=fauxfactory.gen_alphanumeric(4))),
         email=fauxfactory.gen_email(),
         groups=new_group_child,
         cost_center="Workload",
@@ -132,7 +128,7 @@ def new_project(appliance):
 
 @pytest.fixture(scope="module")
 def new_group_project(appliance, new_project):
-    """This fixture creates new group and assigned by new peoject"""
+    """This fixture creates new group and assigned by new project"""
     group = appliance.collections.groups.create(
         description="group_{}".format(fauxfactory.gen_alphanumeric()),
         role="EvmRole-super_administrator",
@@ -148,7 +144,8 @@ def new_user_project(appliance, new_group_project):
     """This fixture creates new user which is assigned to new group and project"""
     user = appliance.collections.users.create(
         name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
-        credential=new_credential(),
+        credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
+                              secret='{password}'.format(password=fauxfactory.gen_alphanumeric(4))),
         email=fauxfactory.gen_email(),
         groups=new_group_project,
         cost_center="Workload",
