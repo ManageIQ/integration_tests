@@ -73,7 +73,6 @@ def host_creds(request, v2v_providers):
             host.update_credentials_rest(credentials=host_data['credentials'])
 
         rhv_hosts = rhv_provider.hosts.all()
-        rhv_hosts = rhv_hosts if getattr(request, 'param', '') == 'multi-host' else rhv_hosts[0:1]
         for host in rhv_hosts:
             host_data, = [data for data in rhv_provider.data['hosts'] if data['name'] == host.name]
             host.update_credentials_rest(credentials=host_data['credentials'])
