@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.utils.blockers import BZ
 from cfme.automate.provisioning_dialogs import ProvisioningDialogsCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
@@ -59,6 +60,8 @@ for name in ProvisioningDialogsCollection.ALLOWED_TYPES:
 @test_requirements.general_ui
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(("name", "by", "order"), sort_by_params)
+@pytest.mark.meta(
+    blockers=[BZ(1662219, forced_streams=['5.10'], unblock=lambda name: name != "Host Provision")])
 def test_provisioning_dialogs_sorting(appliance, name, by, order):
     """
     Polarion:
