@@ -35,9 +35,15 @@ def test_embedded_ansible_enable(enabled_embedded_appliance):
     assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running, num_sec=30)
     assert wait_for(func=lambda: enabled_embedded_appliance.is_rabbitmq_running, num_sec=30)
     assert wait_for(func=lambda: enabled_embedded_appliance.is_nginx_running, num_sec=30)
-    endpoint = 'api' if enabled_embedded_appliance.is_pod else 'ansibleapi'
+    if not enabled_embedded_appliance.is_pod:
+        endpoint = 'ansibleapi'
+        imprint = 'Ansible Tower'
+    else:
+        endpoint = 'api'
+        imprint = 'AWX'
+
     assert enabled_embedded_appliance.ssh_client.run_command(
-        'curl -kL https://localhost/{endp} | grep "Ansible Tower REST API"'.format(endp=endpoint),
+        'curl -kL https://localhost/{endp} | grep "{p} REST API"'.format(endp=endpoint, p=imprint),
         container=enabled_embedded_appliance._ansible_pod_name)
 
 

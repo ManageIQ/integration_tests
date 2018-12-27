@@ -1787,11 +1787,10 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         Args:
             timeout: Number of seconds to wait until timeout (default ``1200``)
         """
-        if self.is_pod and BZ(1576744, forced_streams=['5.9']).blocks:
-            # TODO: to remove this when BZ is fixed
+        if self.is_pod:
             # openshift's ansible pod gets ready very long first time.
             # it even gets restarted once or twice
-            timeout *= 3
+            timeout *= 2
 
         wait_for(
             func=lambda: self.is_embedded_ansible_running,
