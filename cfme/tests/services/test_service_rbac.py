@@ -10,6 +10,7 @@ pytestmark = [
 ]
 
 
+# todo: turn all below methods into fixtures with teardown steps
 def new_role(appliance, product_features):
     collection = appliance.collections.roles
     return collection.create(name='role_{}'.format(fauxfactory.gen_alphanumeric()),
@@ -39,6 +40,14 @@ def role_user_group(appliance, new_credential):
     group = new_group(appliance=appliance, role=role.name)
     user = new_user(appliance=appliance, group=group, credential=new_credential)
     yield role, user
+    if user.exists:
+        user.delete(cancel=False)
+
+    if group.exists:
+        group.delete(cancel=False)
+
+    if role.exists:
+        role.delete(cancel=False)
 
 
 def test_service_rbac_no_permission(appliance, role_user_group):
@@ -52,10 +61,11 @@ def test_service_rbac_no_permission(appliance, role_user_group):
     error_message = ("The user's role is not authorized for any access, "
                      "please contact the administrator!")
     with pytest.raises(Exception, match=error_message):
-        appliance.server.login(user)
+        with user:
+            appliance.server.login(user)
 
 
-def test_service_rbac_catalog(role_user_group, catalog):
+def test_service_rbac_catalog(appliance, role_user_group, catalog):
     """ Test service rbac with catalog
 
     Polarion:
@@ -68,6 +78,7 @@ def test_service_rbac_catalog(role_user_group, catalog):
                              for k in ['Catalogs']])
     role.update({'product_features': product_features})
     with user:
+        appliance.server.login(user)
         assert catalog.exists
 
 
@@ -89,16 +100,17 @@ def test_service_rbac_service_catalog(appliance, role_user_group, catalog, catal
     role.update({'product_features': product_features})
     # Without below line, service_order only works here via admin, not via user
     # TODO: Remove below line when this behavior gets fixed
-    appliance.server.login(user)
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
-    service_catalogs.order()
-    service_request = appliance.collections.requests.instantiate(catalog_item.name,
-                                                                 partial_check=True)
-    service_request.wait_for_request()
-    assert service_request.is_succeeded()
+    with user:
+        appliance.server.login(user)
+        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+        service_catalogs.order()
+        service_request = appliance.collections.requests.instantiate(catalog_item.name,
+                                                                     partial_check=True)
+        service_request.wait_for_request()
+        assert service_request.is_succeeded()
 
 
-def test_service_rbac_catalog_item(role_user_group, catalog_item):
+def test_service_rbac_catalog_item(request, appliance, role_user_group, catalog_item):
     """ Test service rbac with catalog item
 
     Polarion:
@@ -111,6 +123,7 @@ def test_service_rbac_catalog_item(role_user_group, catalog_item):
                              for k in ['Catalog Items']])
     role.update({'product_features': product_features})
     with user:
+        appliance.server.login(user)
         assert catalog_item.exists
 
 
@@ -127,6 +140,7 @@ def test_service_rbac_orchestration(appliance, role_user_group):
                              for k in ['Orchestration Templates']])
     role.update({'product_features': product_features})
     with user:
+        appliance.server.login(user)
         collection = appliance.collections.orchestration_templates
         template = collection.create(
             template_name=fauxfactory.gen_alphanumeric(),
