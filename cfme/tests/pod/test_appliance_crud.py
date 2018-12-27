@@ -108,7 +108,7 @@ def template(appliance):
 @pytest.fixture
 def template_tags(template):
     try:
-        return template['custom_data']['TAGS']
+        return yaml.safe_load(template['custom_data'])['TAGS']
     except (KeyError, AttributeError) as e:
         pytest.fail("Can't retrieve template tags: {}".format(e.message))
 
