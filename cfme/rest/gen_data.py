@@ -592,13 +592,13 @@ def policies(request, rest_api, num=2):
 
 
 def get_dialog_service_name(appliance, service_request, *item_names):
-    """Note: VersionPicker has currently been removed,
-    since None value is returned in the service_request options.
+    """
+    Helper function, when tests need to determine a dialog service name.
+    Service name is obtained by parsing it from the service request message.
 
-    Helper to DRY this VersionPicker when tests need to determine a dialog service name
-
-    In gaprindashvili+ its available in the service_request options
-    In earlier versions it has to be parsed from the message
+    TODO: In gaprindashvili+ dialog service name is available in the service_request options,
+    but currently no value is returned in the response.
+    Use service_request options once it correctly returns the dialog service name.
     """
     def _regex_parse_name(items, message):
         for item in items:
