@@ -18,12 +18,23 @@ def wait_for_ansible(appliance):
 
 
 @pytest.fixture(scope="module")
-def ansible_repository(appliance, wait_for_ansible):
+def ansible_repository(request, appliance, wait_for_ansible):
+    """
+    By default cfme_data.ansible_links.playbook_repositories.embedded_ansible is set for the url,
+    but you can specify it explicitly with @pytest.mark.parametrize decorator on your test function.
+
+    Example:
+    @pytest.mark.parametrize('ansible_repository', ['nuage'], indirect=True)
+    def test_function(ansible_repository):
+        ...
+    """
     repositories = appliance.collections.ansible_repositories
+    playbooks = cfme_data.ansible_links.playbook_repositories
     try:
+        playbook = getattr(request, 'param', 'embedded_ansible')
         repository = repositories.create(
             name=fauxfactory.gen_alpha(),
-            url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
+            url=getattr(playbooks, playbook),
             description=fauxfactory.gen_alpha())
     except KeyError:
         pytest.skip("Skipping since no such key found in yaml")

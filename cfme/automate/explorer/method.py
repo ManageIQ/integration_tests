@@ -243,6 +243,7 @@ class MethodAddView(AutomateExplorerView):
     machine_credential = PlaybookBootstrapSelect('provisioning_machine_credential_id')
     hosts = Input('provisioning_inventory')
     max_ttl = Input('provisioning_execution_ttl')
+    logging_output = PlaybookBootstrapSelect('provisioning_log_output')
     escalate_privilege = BootstrapSwitch('provisioning_become_enabled')
     verbosity = PlaybookBootstrapSelect('provisioning_verbosity')
     playbook_input_parameters = PlaybookInputParameters()
@@ -280,6 +281,7 @@ class MethodEditView(AutomateExplorerView):
     machine_credential = PlaybookBootstrapSelect('provisioning_machine_credential_id')
     hosts = Input('provisioning_inventory')
     max_ttl = Input('provisioning_execution_ttl')
+    logging_output = PlaybookBootstrapSelect('provisioning_log_output')
     escalate_privilege = BootstrapSwitch('provisioning_become_enabled')
     verbosity = PlaybookBootstrapSelect('provisioning_verbosity')
     playbook_input_parameters = PlaybookInputParameters()
@@ -312,7 +314,7 @@ class Method(BaseEntity, Copiable):
 
     def __init__(self, collection, name=None, display_name=None, location='inline', script=None,
                  data=None, repository=None, playbook=None, machine_credential=None, hosts=None,
-                 max_ttl=None, escalate_privilege=None, verbosity=None,
+                 max_ttl=None, logging_output=None, escalate_privilege=None, verbosity=None,
                  playbook_input_parameters=None, cancel=False, validate=True, inputs=None):
         super(Method, self).__init__(collection)
 
@@ -327,6 +329,7 @@ class Method(BaseEntity, Copiable):
         self.machine_credential = machine_credential
         self.hosts = hosts
         self.max_ttl = max_ttl
+        self.logging_output = logging_output
         self.escalate_privilege = escalate_privilege
         self.verbosity = verbosity
         self.playbook_input_parameters = playbook_input_parameters
@@ -433,7 +436,7 @@ class MethodCollection(BaseCollection):
     def create(
             self, name=None, display_name=None, location='inline', script=None, data=None,
             cancel=False, validate=True, repository=None, playbook=None, machine_credential=None,
-            hosts=None, max_ttl=None, escalate_privilege=None, verbosity=None,
+            hosts=None, max_ttl=None, logging_output=None, escalate_privilege=None, verbosity=None,
             playbook_input_parameters=None, inputs=None):
         add_page = navigate_to(self, 'Add')
         add_page.fill({'location': location})
@@ -458,6 +461,7 @@ class MethodCollection(BaseCollection):
                 'machine_credential': machine_credential,
                 'hosts': hosts,
                 'max_ttl': max_ttl,
+                'logging_output': logging_output,
                 'escalate_privilege': escalate_privilege,
                 'verbosity': verbosity,
                 'playbook_input_parameters': playbook_input_parameters
@@ -488,6 +492,7 @@ class MethodCollection(BaseCollection):
                 machine_credential=machine_credential,
                 hosts=hosts,
                 max_ttl=max_ttl,
+                logging_output=logging_output,
                 escalate_privilege=escalate_privilege,
                 verbosity=verbosity,
                 playbook_input_parameters=playbook_input_parameters,

@@ -53,6 +53,7 @@ pytest_plugins = (
     'cfme.fixtures.prov_filter',
 
     'cfme.fixtures.appliance',
+    'cfme.fixtures.embedded_ansible',
     'cfme.fixtures.single_appliance_sprout',
     'cfme.fixtures.dev_branch',
     'cfme.fixtures.events',
