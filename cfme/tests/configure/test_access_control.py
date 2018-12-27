@@ -1374,3 +1374,27 @@ def test_copied_user_password_inheritance(appliance, group_collection, request):
     view = user.create_view(AddUserView)
     assert view.password_txt.value == '' and view.password_verify_txt.value == ''
     view.cancel_button.click()
+
+
+@pytest.mark.tier(2)
+def test_superadmin_tenant_admin_crud(appliance, group_collection):
+    """
+    Super admin is able to create new tenant administrator
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: config
+        initialEstimate: 1/4h
+        startsin: 5.5
+        testSteps:
+            1. Create new tenant admin user and assign him into group EvmGroup-tenant_administrator
+            2. Update the user details and delete the user.
+    """
+    group_name = 'EvmGroup-tenant_administrator'
+    group = group_collection.instantiate(description=group_name)
+    user = new_user(appliance, [group])
+    assert user.exists
+    with update(user):
+        user.name = "{}_edited".format(user.name)
+    user.delete()
+    assert not user.exists
