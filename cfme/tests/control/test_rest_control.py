@@ -25,7 +25,7 @@ class TestConditionsRESTAPI(object):
     @pytest.fixture(scope='function')
     def conditions(self, request, appliance):
         num_conditions = 2
-        response = _conditions(appliance, request, num=num_conditions)
+        response = _conditions(request, appliance, num=num_conditions)
         assert_response(appliance)
         assert len(response) == num_conditions
         return response
@@ -129,7 +129,7 @@ class TestPoliciesRESTAPI(object):
     @pytest.fixture(scope='function')
     def policies(self, request, appliance):
         num_policies = 2
-        response = _policies(appliance, request, num=num_policies)
+        response = _policies(request, appliance, num=num_policies)
         assert_response(appliance)
         assert len(response) == num_policies
         return response

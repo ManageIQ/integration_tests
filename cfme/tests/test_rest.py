@@ -38,7 +38,7 @@ def api_version(appliance):
 
 @pytest.fixture(scope="function")
 def vm_obj(request, provider, appliance):
-    return _vm(request, provider, appliance.rest_api)
+    return _vm(request, provider, appliance)
 
 
 def wait_for_requests(requests):
@@ -926,7 +926,7 @@ class TestArbitrationSettingsRESTAPI(object):
     @pytest.fixture(scope='function')
     def arbitration_settings(self, request, appliance):
         num_settings = 2
-        response = _arbitration_settings(request, appliance.rest_api, num=num_settings)
+        response = _arbitration_settings(request, appliance, num=num_settings)
         assert_response(appliance)
         assert len(response) == num_settings
         return response
@@ -1021,7 +1021,7 @@ class TestArbitrationRulesRESTAPI(object):
     @pytest.fixture(scope='function')
     def arbitration_rules(self, request, appliance):
         num_rules = 2
-        response = _arbitration_rules(request, appliance.rest_api, num=num_rules)
+        response = _arbitration_rules(request, appliance, num=num_rules)
         assert_response(appliance)
         assert len(response) == num_rules
         return response

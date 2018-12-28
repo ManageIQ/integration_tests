@@ -40,7 +40,7 @@ def test_category_crud(appliance, soft_assert):
 class TestCategoriesViaREST(object):
     @pytest.fixture(scope="function")
     def categories(self, request, appliance):
-        response = _categories(request, appliance.rest_api, num=5)
+        response = _categories(request, appliance, num=5)
         assert_response(appliance)
         assert len(response) == 5
         return response

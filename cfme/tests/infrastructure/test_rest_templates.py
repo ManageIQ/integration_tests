@@ -23,12 +23,12 @@ pytestmark = [
 
 @pytest.fixture(scope="function")
 def vm(request, provider, appliance):
-    return _vm(request, provider, appliance.rest_api)
+    return _vm(request, provider, appliance)
 
 
 @pytest.fixture(scope="function")
 def template(request, appliance, provider, vm):
-    template = mark_vm_as_template(appliance.rest_api, provider=provider, vm_name=vm)
+    template = mark_vm_as_template(appliance, provider=provider, vm_name=vm)
 
     @request.addfinalizer
     def _finished():

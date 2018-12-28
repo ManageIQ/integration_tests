@@ -19,7 +19,7 @@ pytestmark = [
 
 @pytest.fixture(scope="function")
 def vm(request, provider, appliance):
-    return _vm(request, provider, appliance.rest_api)
+    return _vm(request, provider, appliance)
 
 
 @pytest.mark.tier(3)

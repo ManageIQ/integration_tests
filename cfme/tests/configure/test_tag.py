@@ -91,11 +91,11 @@ class TestTagsViaREST(object):
 
     @pytest.fixture(scope="function")
     def categories(self, request, appliance, num=3):
-        return _categories(request, appliance.rest_api, num)
+        return _categories(request, appliance, num)
 
     @pytest.fixture(scope="function")
     def tags(self, request, appliance, categories):
-        return _tags(request, appliance.rest_api, categories)
+        return _tags(request, appliance, categories)
 
     @pytest.fixture(scope="module")
     def services_mod(self, request, appliance):
@@ -103,15 +103,15 @@ class TestTagsViaREST(object):
 
     @pytest.fixture(scope="module")
     def categories_mod(self, request, appliance, num=3):
-        return _categories(request, appliance.rest_api, num)
+        return _categories(request, appliance, num)
 
     @pytest.fixture(scope="module")
     def tags_mod(self, request, appliance, categories_mod):
-        return _tags(request, appliance.rest_api, categories_mod)
+        return _tags(request, appliance, categories_mod)
 
     @pytest.fixture(scope="module")
     def tenants(self, request, appliance):
-        return _tenants(request, appliance.rest_api, num=1)
+        return _tenants(request, appliance, num=1)
 
     @pytest.fixture(scope="module")
     def service_templates(self, request, appliance):
@@ -119,7 +119,7 @@ class TestTagsViaREST(object):
 
     @pytest.fixture(scope="module")
     def vm(self, request, provider, appliance):
-        return _vm(request, provider, appliance.rest_api)
+        return _vm(request, provider, appliance)
 
     @pytest.mark.tier(2)
     def test_edit_tags_rest(self, appliance, tags):
