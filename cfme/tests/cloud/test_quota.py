@@ -3,12 +3,12 @@ import fauxfactory
 import pytest
 from riggerlib import recursive_update
 
+from widgetastic.utils import partial_match
+
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.utils.generators import random_vm_name
-
-from widgetastic.utils import partial_match
 
 
 pytestmark = [
@@ -16,9 +16,7 @@ pytestmark = [
     pytest.mark.long_running,
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([AzureProvider], scope='function',
-                         required_fields=[["provisioning", "image"]]),
-
-]
+                         required_fields=[["provisioning", "image"]])]
 
 
 @pytest.fixture
@@ -184,11 +182,17 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
     provisioning,
 ):
     """Test Child Quota in UI
-     Steps:
-        1. Create a child tenant
-        2. Assign quota to child tenant
-        3. Provision instance over the assigned child's quota
-        4. Check whether quota is exceeded or not
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: cloud
+        caseimportance: high
+        initialEstimate: 1/8h
+        testSteps:
+            1. Create a child tenant
+            2. Assign quota to child tenant
+            3. Provision instance over the assigned child's quota
+            4. Check whether quota is exceeded or not
     """
     with new_user_child:
         recursive_update(prov_data, custom_prov_data)
@@ -249,11 +253,17 @@ def test_project_quota_enforce_via_lifecycle_cloud(
     provisioning,
 ):
     """Test Project Quota in UI
-    Steps:
-        1. Create a project
-        2. Assign quota to project
-        3. Provision instance over the assigned project's quota
-        4. Check whether quota is exceeded or not
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: cloud
+        caseimportance: high
+        initialEstimate: 1/8h
+        testSteps:
+            1. Create a project
+            2. Assign quota to project
+            3. Provision instance over the assigned project's quota
+            4. Check whether quota is exceeded or not
     """
     with new_user_project:
         recursive_update(prov_data, custom_prov_data)
