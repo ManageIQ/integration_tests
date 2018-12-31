@@ -5,6 +5,7 @@ from widgetastic.exceptions import NoSuchElementException
 from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound, DestinationNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
+from cfme.networks import ValidateStatsMixin
 from cfme.networks.subnet import SubnetCollection
 from cfme.networks.views import (NetworkRouterDetailsView, NetworkRouterView, NetworkRouterAddView,
                                  NetworkRouterEditView, NetworkRouterAddInterfaceView,
@@ -15,7 +16,7 @@ from cfme.utils.wait import wait_for
 
 
 @attr.s
-class NetworkRouter(Taggable, BaseEntity):
+class NetworkRouter(Taggable, BaseEntity, ValidateStatsMixin):
     """ Class representing network ports in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
