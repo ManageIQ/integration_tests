@@ -10,8 +10,6 @@ from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
-from cfme.rest.gen_data import arbitration_rules as _arbitration_rules
-from cfme.rest.gen_data import arbitration_settings as _arbitration_settings
 from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.blockers import BZ

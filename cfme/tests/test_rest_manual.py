@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# pylint: skip-file
 """Manual tests"""
 
 import pytest
@@ -11,6 +10,7 @@ pytestmark = [pytest.mark.ignore_stream("5.9", "5.10", "upstream")]
 
 @pytest.mark.manual
 @test_requirements.rest
+@pytest.mark.tier(3)
 def test_cloud_volume_types():
     """
     Test CloudVolumeType endpoint. Add a cloud provider and check if it
@@ -31,6 +31,7 @@ def test_cloud_volume_types():
 
 @pytest.mark.manual
 @test_requirements.rest
+@pytest.mark.tier(3)
 def test_rest_metric_rollups():
     """
     This test checks that the we get a correct reply for our query.

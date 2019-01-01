@@ -26,7 +26,6 @@ def test_automate_git_domain_import_top_level_directory():
     pass
 
 
-
 @pytest.mark.manual
 def test_osp_vmware65_test_vm_migration_with_rhel_75_last_time_74():
     """

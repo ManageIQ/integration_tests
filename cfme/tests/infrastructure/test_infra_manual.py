@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# pylint: skip-file
 """Manual tests"""
 
 import pytest
@@ -14,7 +13,8 @@ pytestmark = [pytest.mark.ignore_stream("5.9", "5.10", "upstream")]
 @pytest.mark.tier(1)
 def test_domain_id_required_validation():
     """
-    Steps:1. Try to add OpenStack provider
+    Steps:
+    1. Try to add OpenStack provider
     2. Select Keystone V3 as for it only we need to set domain id
     3. don"t fill domain id
     4. Verify

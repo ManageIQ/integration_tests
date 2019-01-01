@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# pylint: skip-file
 """Manual tests"""
 
 import pytest
@@ -24,8 +23,9 @@ def test_validate_landing_pages_for_rbac():
         title: test validate landing pages for rbac
         testSteps:
             1.create a new role by selecting few product features.
-              2.create a group base on the above role and the create a new
-              user with this group 3.Login with the new user and navigate
+            2.create a group base on the above role and the create a new
+              user with this group
+            3.Login with the new user and navigate
               to my settings->visuals and check the start page entries in
               show at login drop down list
         expectedResults:
