@@ -43,7 +43,7 @@ def service_catalogs(request, appliance, num=5):
 
 def service_catalog_obj(request, appliance):
     """Return service catalog object."""
-    rest_catalog = service_catalogs(request, appliance.rest_api, num=1)[0]
+    rest_catalog = service_catalogs(request, appliance, num=1)[0]
     return appliance.collections.catalogs.instantiate(name=rest_catalog.name,
                                                       description=rest_catalog.description)
 
@@ -123,7 +123,7 @@ def dialog_rest(request, appliance):
 
 def dialog(request, appliance):
     """Returns service dialog object."""
-    rest_resource = dialog_rest(request, appliance.rest_api)
+    rest_resource = dialog_rest(request, appliance)
     service_dialogs = appliance.collections.service_dialogs
     service_dialog = service_dialogs.instantiate(
         label=rest_resource.label,
@@ -321,7 +321,7 @@ def service_templates_rest(request, appliance, service_dialog=None, service_cata
             }
         })
 
-    return _creating_skeleton(request, appliance.rest_api, "service_templates", data)
+    return _creating_skeleton(request, appliance, "service_templates", data)
 
 
 def service_templates(request, appliance, service_dialog=None, service_catalog=None, num=4):
@@ -473,7 +473,7 @@ def mark_vm_as_template(appliance, provider, vm_name):
     """
         Function marks vm as template via mgmt and returns template Entity
         Usage:
-            mark_vm_as_template(appliance.rest_api, provider, vm_name)
+            mark_vm_as_template(appliance, provider, vm_name)
     """
     t_vm = appliance.rest_api.collections.vms.get(name=vm_name)
     t_vm.action.stop()
