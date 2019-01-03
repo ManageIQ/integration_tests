@@ -5087,25 +5087,20 @@ class MigrationDashboardStatusCard(AggregateStatusCard):
     TITLE_ANCHOR = ".//h2"
 
 
-class AlertItem(View):
+class AlertItem(ParametrizedView):
     """ Represents an item in the list-view of fired alerts """
 
+    PARAMETERS = ("index",)
     ROOT = ParametrizedLocator(
-        './/div[contains(@class,"list-group-item alert") and position()={@index}]'
+        './/div[contains(@class,"list-group-item alert") and position()={index}]'
     )
     DESCRIPTION_LOCATOR = './/span[contains(@class,"description-column")]'
     EXPAND_LOCATOR = './/span[contains(@class,"{}")]'.format(PFIcon.icons.ANGLE_RIGHT)
     COLLAPSE_LOCATOR = './/span[contains(@class,"{}")]'.format(PFIcon.icons.ANGLE_DOWN)
     PROVIDER_LOCATOR = './/a[@href="#"]/span[@class="no-wrap ng-binding"]'
 
-    def __init__(self, parent, index=None, locator=None, logger=None):
-        View.__init__(self, parent, logger=logger)
-        if locator is None:
-            # use the ParametrizedLocator defined above
-            self.index = index
-        else:
-            # overwrite ROOT when we explicitly input a locator
-            self.ROOT = locator
+    # note that this has 1-based indexing
+    index = Parameter("index")
 
     # properties
     @property
@@ -5160,59 +5155,3 @@ class AlertItem(View):
             if not self.is_displayed:
                 self.parent_view.open()
             return self.history_table.read()
-
-
-class AllAlertsList(View):
-    """Represents the list of fired alerts on the Monitor->All Alerts page"""
-
-    ROOT = ParametrizedLocator(".//div[contains(@class,{@list_class|quote})]")
-    ITEMS = './/div[contains(@class,"list-group-item alert")]'
-    # TODO: generalize this? way to make this less specific?
-    header_mapping = {
-        "provider": '[.//a[@href="#"]/span[@class="no-wrap ng-binding" and uib-tooltip="{}"]]',
-        "description": '[.//span[contains(@class,"description-column") '
-        'and contains(text(), "{}")]]',
-        "assignee": '[.//span[contains(@class, "assignee") and contains(text(), "{}")]]',
-    }
-
-    def __init__(self, parent, list_class, assoc_column=None, logger=None):
-        View.__init__(self, parent, logger=logger)
-        self.list_class = list_class
-        self.assoc_column = assoc_column
-
-    def __getitem__(self, item):
-        # TODO: Update this to work with assoc_column like in Table
-        # This will be difficult since this list-view is not a table and doesn't have
-        # headers defined at specific horizontal indices like in a Table
-        """ allows the ability to directly select AlertItem by description with
-            item = view.alerts_list['<alert_description>']
-        """
-        item_loc = self._get_loc_by_attribute(item)
-        return self._filtered_items(self, locator=item_loc)
-
-    # properties
-    @property
-    def items(self):
-        return self._all_items()
-
-    @property
-    def item_count(self):
-        """Returns how many rows are currently in the table."""
-        return len(self.browser.elements(self.ITEMS, parent=self))
-
-    # methods
-    def _all_items(self):
-        for item_pos in range(1, self.item_count + 1):
-            yield AlertItem(self, index=item_pos)
-
-    def _filtered_items(self, item_loc):
-        """ returns a list of all items matching the item_loc"""
-        # items = self.browser.elements(item_loc, parent=self)
-        pass
-
-    def _get_loc_by_attribute(self, item):
-
-        if self.assoc_column is None:
-            raise TypeError("You cannot use string indices when no assoc_column specified!")
-        else:
-            return self.ITEMS + self.header_mapping[self.assoc_column].format(item)

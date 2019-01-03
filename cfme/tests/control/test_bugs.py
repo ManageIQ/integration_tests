@@ -396,6 +396,12 @@ def test_alert_nav_from_monitor_goes_to_infra_provider(alert_collection, virtual
     """Test coverage for BZ 1637609, this test tries to navigate to the infra provider page
     from the Monitor->Alerts->All Alerts page. This requires an appliance that has fired alerts
     on it. If the appliance does not have fired alerts on it, then we inject one into the DB.
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/12h
     """
     if current_version() < '5.10':
         pytest.skip('The fix for BZ 1637609 is not backported to CFME 5.9, so skipping test.')
@@ -406,8 +412,8 @@ def test_alert_nav_from_monitor_goes_to_infra_provider(alert_collection, virtual
     if BZ(1507011, forced_streams=['5.9','5.10']).blocks:
         wait_for(lambda: view.is_displayed, timeout=10, delay=5.0)
     try:
-        view.alerts_list[description].click_provider()
-    except ItemNotFound:
+        next(view.alerts_list[description]).click_provider()
+    except StopIteration:
         logger.exception(
             'No alerts from provider {} '
             'fired on this appliance.'.format(virtualcenter_provider.name)
