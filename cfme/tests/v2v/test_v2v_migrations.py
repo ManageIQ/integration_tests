@@ -528,9 +528,8 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
     assert 'Never' not in vm_obj.retirement_date
 
 
-@pytest.mark.parametrize('host_creds, form_data_multiple_vm_obj_single_datastore', [['multi-host',
-    ['nfs', 'nfs', [rhel7_minimal, ubuntu16_template, rhel69_template, win7_template]]]],
-    indirect=True)
+@pytest.mark.parametrize('form_data_multiple_vm_obj_single_datastore', [['nfs', 'nfs',
+        [rhel7_minimal, ubuntu16_template, rhel69_template, win7_template]]], indirect=True)
 def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_creds,
                                     conversion_tags, soft_assert,
                                     form_data_multiple_vm_obj_single_datastore):
