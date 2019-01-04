@@ -27,7 +27,7 @@ jobs:
       python: '3.6'
       env:
       install:
-      - pip install pre-commit
+      - pip install pre-commit flake8
       - pre-commit install-hooks
       script:
       - pre-commit run --all-files
