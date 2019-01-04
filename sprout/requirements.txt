@@ -1,5 +1,5 @@
 Command
-Django<1.10
+Django>1.10.7,<1.11
 -e git+git://github.com/izapolsk/django-json-field.git#egg=json_field
 celery[redis]<3.2
 django-object-actions
@@ -9,4 +9,4 @@ gunicorn
 pika
 python-memcached
 
-miq-version==0.1.7
+miq-version==0.1.8
