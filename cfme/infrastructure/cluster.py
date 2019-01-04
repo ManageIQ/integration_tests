@@ -4,7 +4,7 @@
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
-from widgetastic_patternfly import BreadCrumb, Button, Dropdown
+from widgetastic_patternfly import BootstrapNav, BreadCrumb, Button, Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin, Taggable
@@ -90,6 +90,13 @@ class ClusterAllView(ClusterView):
     toolbar = View.nested(ClusterToolbar)
     search = View.nested(Search)
     including_entities = View.include(BaseEntitiesView, use_parent=True)
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class ProviderAllClustersView(ClusterAllView):

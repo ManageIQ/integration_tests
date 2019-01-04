@@ -9,6 +9,7 @@ from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.version import Version, VersionPicker
 
 
 class TowerExplorerAccordion(View):
@@ -24,7 +25,7 @@ class TowerExplorerAccordion(View):
 
     @View.nested
     class job_templates(Accordion):  # noqa
-        ACCORDION_NAME = 'Job Templates'
+        ACCORDION_NAME = VersionPicker({Version.lowest(): 'Job Templates', '5.10': 'Templates'})
         tree = ManageIQTree()
 
 
@@ -85,7 +86,9 @@ class TowerExplorerJobTemplatesAllView(TowerExplorerView):
     def is_displayed(self):
         return (
             self.in_tower_explorer and
-            self.title.text == 'All Ansible Tower Job Templates' and
+            self.title.text == VersionPicker({Version.lowest(): 'All Ansible Tower Job Templates',
+                                       '5.10': 'All Ansible Tower Templates'}).pick(
+                self.appliance.version) and
             self.sidebar.tower_explorer_job_templates.is_opened
         )
 
@@ -153,4 +156,6 @@ class TowerExplorerJobTemplatesAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'AnsibleTowerExplorer')
 
     def step(self, *args, **kwargs):
-        self.view.sidebar.job_templates.tree.click_path('All Ansible Tower Job Templates')
+        self.view.sidebar.job_templates.tree.click_path(VersionPicker({Version.lowest():
+            'All Ansible Tower Job Templates', '5.10': 'All Ansible Tower Templates'}).pick(
+            self.appliance.version))

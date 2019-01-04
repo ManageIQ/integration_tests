@@ -177,6 +177,13 @@ class HostsView(ComputeInfrastructureHostsView):
         navigation = BootstrapNav('.//div/ul')
         tree = ManageIQTree()
 
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
+
     default_filter_btn = Button(title="Set the current filter as my default")
     paginator = PaginationPane()
     search = View.nested(Search)

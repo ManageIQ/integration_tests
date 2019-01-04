@@ -3,10 +3,11 @@
 import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic_patternfly import (BootstrapSelect, BootstrapSwitch, BreadCrumb, Button,
-                                    Dropdown, TextInput, View)
 
-from widgetastic.widget import Text, Select
+from widgetastic_patternfly import (BootstrapNav, BootstrapSelect, BootstrapSwitch, BreadCrumb,
+                                    Button, Dropdown, TextInput, View)
+from widgetastic.widget import Select
+
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable, TaggableCollection
@@ -69,6 +70,13 @@ class FlavorAllView(FlavorView):
     paginator = PaginationPane()
     search = View.nested(Search)
     including_entities = View.include(FlavorEntities, use_parent=True)
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
     @property
     def is_displayed(self):

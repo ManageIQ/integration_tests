@@ -3,7 +3,7 @@
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
-from widgetastic_patternfly import Dropdown, Button, BreadCrumb
+from widgetastic_patternfly import BootstrapNav, Dropdown, Button, BreadCrumb
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
@@ -81,6 +81,13 @@ class AvailabilityZoneAllView(AvailabilityZoneView):
     search = View.nested(Search)
     toolbar = View.nested(AvailabilityZoneToolBar)
     including_entities = View.include(AvailabilityZoneEntities, use_parent=True)
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class ProviderAvailabilityZoneAllView(AvailabilityZoneAllView):

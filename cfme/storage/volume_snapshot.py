@@ -2,7 +2,7 @@
 import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View, Text, NoSuchElementException
-from widgetastic_patternfly import BreadCrumb, Button, Dropdown
+from widgetastic_patternfly import BootstrapNav, BreadCrumb, Button, Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, Taggable
@@ -77,6 +77,13 @@ class VolumeSnapshotAllView(VolumeSnapshotView):
         return (
             self.in_volume_snapshots and
             self.entities.title.text == 'Cloud Volume Snapshots')
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class VolumeSnapshotDetailsView(VolumeSnapshotView):

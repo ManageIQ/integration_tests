@@ -13,7 +13,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Accordion, ItemsToolBarViewSelector, PaginationPane, SummaryTable, Table, BaseEntitiesView,
-    Search)
+    Search, ManageIQTree)
 
 class StackToolbar(View):
     """The toolbar on the stacks page"""
@@ -123,6 +123,13 @@ class StackAllView(StackView):
     search = View.nested(Search)
     including_entities = View.include(StackEntities, use_parent=True)
     paginator = PaginationPane()
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
     @property
     def is_displayed(self):

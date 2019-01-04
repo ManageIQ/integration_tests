@@ -2,8 +2,8 @@ import attr
 
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text, View
-from widgetastic_patternfly import Dropdown
-from widgetastic_manageiq import Search, ItemsToolBarViewSelector
+from widgetastic_patternfly import BootstrapNav, Dropdown
+from widgetastic_manageiq import Accordion, ManageIQTree, Search, ItemsToolBarViewSelector
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -26,6 +26,13 @@ class HostAggregatesView(BaseLoggedInPage):
     def in_host_aggregates(self):
         return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Host Aggregates'])
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class HostAggregatesDefaultView(HostAggregatesView):
