@@ -1156,6 +1156,13 @@ class Role(Updateable, Pretty, BaseEntity):
         else:
             return False
 
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except CandidateNotFound:
+            return False
 
 @attr.s
 class RoleCollection(BaseCollection):
