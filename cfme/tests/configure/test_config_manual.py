@@ -5,8 +5,6 @@ import pytest
 
 from cfme import test_requirements
 
-pytestmark = [pytest.mark.ignore_stream("5.9", "5.10", "upstream")]
-
 
 @pytest.mark.manual
 @test_requirements.settings
@@ -21,14 +19,16 @@ def test_validate_landing_pages_for_rbac():
         caseimportance: medium
         initialEstimate: 1/5h
         title: test validate landing pages for rbac
+        setup:
+            1. Create a new role by selecting a few product features.
+            2. Create a group with the new role.
+            3. Create a new user with the new group.
+            4. Logout.
+            5. Login back with the new user.
+            6. Navigate to My Settings > Visual.
         testSteps:
-            1.create a new role by selecting few product features.
-            2.create a group base on the above role and the create a new
-              user with this group
-            3.Login with the new user and navigate
-              to my settings->visuals and check the start page entries in
-              show at login drop down list
+            1.Check the start page entries in `Show at login` dropdown list
         expectedResults:
-            1. Display landing pages for which the user has access to
+            1. Landing pages which user has access to must be present in the dropdown list.
     """
     pass

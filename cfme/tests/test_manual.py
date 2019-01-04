@@ -10082,27 +10082,6 @@ def test_osp_test_create_migration_plan_create_and_read():
 
 
 @pytest.mark.manual
-@test_requirements.report
-def test_report_menus_moving_reports():
-    """
-    Go to Cloud Intel -> Reports -> Edit reports menuSelect EvmGroup
-    Administrator -> Configuration Management -> Virtual MachinesSelect
-    Virtual Machines folder
-    Select 5 Reports and move them to the left.
-    All 5 reports should be moved.
-    Then reset it and select all reports and move them to the left.
-    All reports should be moved.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: low
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(3)
 def test_it_should_add_new_service_catalog_item_when_display_in_catalog_selected_and_no_catalo():

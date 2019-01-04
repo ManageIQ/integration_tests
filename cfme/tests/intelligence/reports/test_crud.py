@@ -108,7 +108,7 @@ def test_reports_disable_enable_schedule(schedule_data, appliance):
         assignee: pvala
         casecomponent: report
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/10h
     """
     schedules = appliance.collections.schedules
     schedule = schedules.create(**schedule_data)
@@ -385,7 +385,7 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
         assignee: pvala
         casecomponent: report
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/10h
     """
     schedule_data["filter"] = (
         "My Company (All Groups)",

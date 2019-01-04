@@ -37,6 +37,8 @@ def test_query_vm_attributes(vm, soft_assert):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     outcome = query_resource_attributes(vm)
@@ -58,6 +60,8 @@ def test_vm_scan(appliance, vm, from_detail):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/3h
     """
     if from_detail:
@@ -88,6 +92,8 @@ def test_edit_vm(request, vm, appliance, from_detail):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     request.addfinalizer(vm.action.delete)

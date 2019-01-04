@@ -52,7 +52,7 @@ def test_queue_tenant_quota_reports(appliance, request, set_and_get_tenant_quota
         assignee: pvala
         casecomponent: report
         caseimportance: high
-        initialEstimate: 1/20h
+        initialEstimate: 1/10h
     """
     tenant_report = appliance.collections.reports.instantiate(
         type="Tenants", subtype="Tenant Quotas", menu_name="Tenant Quotas"

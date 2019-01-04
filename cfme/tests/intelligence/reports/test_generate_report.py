@@ -48,6 +48,7 @@ def test_reports_generate_report(request, path, appliance):
     Polarion:
         assignee: pvala
         casecomponent: report
+        caseimportance: high
         initialEstimate: 1/16h
     """
     report = appliance.collections.reports.instantiate(

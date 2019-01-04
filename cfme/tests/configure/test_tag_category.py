@@ -54,6 +54,7 @@ class TestCategoriesViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -74,6 +75,7 @@ class TestCategoriesViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -113,6 +115,7 @@ class TestCategoriesViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -127,6 +130,7 @@ class TestCategoriesViaREST(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/4h
         """

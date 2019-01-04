@@ -5,8 +5,6 @@ import pytest
 
 from cfme import test_requirements
 
-pytestmark = [pytest.mark.ignore_stream("5.9", "5.10", "upstream")]
-
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
@@ -18,80 +16,72 @@ def test_add_cloud_provider_screen():
         casecomponent: cloud
         caseimportance: medium
         initialEstimate: 3h
+        setup:
+            1. Navigate to Compute > Clouds > Providers.
+            2. Click on `Configuration` and select `Add a new Cloud provider`.
         testSteps:
-            Add cloud provider using Add Provider screen:
-            1.Open Stack:
-                -test Name
-                -test incorrect format of Name
-                (all combinations of following)
-                -test Hostname
-                -test incorrect format of Hostname
-                -test incorrect Hostname
-                -test Security Protocol
-                -test incorrect Security Protocol
-                -test Validate
-                -test switching Security Protocol
-                Events > AMQP
-                (all combinations of following)
-                -test Hostname
-                -test incorrect format of Hostname
-                -test incorrect Hostname
-                -test API Port
-                -test incorrect format of API Port
-                -test incorrect API Port
-                -test Security Protocol
-                -test incorrect Security Protocol
-                -test Username
-                -test incorrect format of Username
-                -test incorrect Username
-                -test Password
-                -test incorrect format of Password
-                -test incorrect Password
-                -test Validate
-                -test switching Security Protocol
-            2. Amazon EC2:
-                -test Name
-                -test incorrect format of Name
-                (all combinations of following)
-                -test Region
-                -test incorrect Region
-                -test Access Key ID
-                -test incorrect format of Access Key ID
-                -test incorrect Access Key ID
-                -test Secret Access Key
-                -test incorrect format of Secret Access Key
-                -test incorrect Secret Access Key
-                -test Confirm Secret Access Key
-                -test incorrect format of Confirm Secret Access Key
-                -test incorrect Confirm Secret Access Key
-                -test Validate
-            3. Azure:
-                -test Name
-                -test incorrect format of Name
-                (all combinations of following)
-                -test Region
-                -test incorrect Region
-                -test Tenant ID
-                -test incorrect format of Tenant ID
-                -test incorrect Tenant ID
-                -test Subscription ID
-                -test incorrect format of Subscription ID
-                -test incorrect Subscription ID
-                (all combinations of following)
-                -test Validate
-            4. Google Compute Engine
-                -test Name
-                -test incorrect format of Name
-                (all combinations of following)
-                -test Region
-                -test incorrect Region
-                -test Project
-                -test incorrect format of Project
-                -test incorrect Project
-                -test Service Account JSON
-                -test incorrect format of Service Account JSON
-                -test incorrect Service Account JSON
-                -test Validate
+            1. Open Stack: test incorrect format of Hostname
+            2. Open Stack: test incorrect Hostname
+            3. Open Stack: test incorrect Security Protocol
+            4. Open Stack: test switching Security Protocol
+            5. Open Stack AMQP Event: test Hostname
+            6. Open Stack AMQP Event: test incorrect format of Hostname
+            7. Open Stack AMQP Event: test incorrect Hostname
+            8. Open Stack AMQP Event: test API Port
+            9. Open Stack AMQP Event: test incorrect format of API Port
+            10. Open Stack AMQP Event: test incorrect API Port
+            11. Open Stack AMQP Event: test Security Protocol
+            12. Open Stack AMQP Event: test incorrect Security Protocol
+            13. Open Stack AMQP Event: test Username
+            14. Open Stack AMQP Event: test incorrect format of Username
+            15. Open Stack AMQP Event: test incorrect Username
+            16. Open Stack AMQP Event: test Password
+            17. Open Stack AMQP Event: test incorrect format of Password
+            18. Open Stack AMQP Event: test incorrect Password
+            19. Open Stack AMQP Event: test Validate
+            20. Open Stack AMQP Event: test switching Security Protocol
+            21. Amazon EC2: test incorrect Region
+            22. Amazon EC2: test incorrect format of Access Key ID
+            23. Amazon EC2: test incorrect Access Key ID
+            24. Amazon EC2: test incorrect format of Secret Access Key
+            25. Amazon EC2: test incorrect Secret Access Key
+            26. Azure: test incorrect Region
+            27. Azure: test incorrect format of Tenant ID
+            28. Azure: test incorrect Tenant ID
+            29. Azure: test incorrect format of Subscription ID
+            30. Azure: test incorrect Subscription ID
+        expectedResults:
+            1. Validation Error must be raised and provider must not be added.
+            2. Validation Error must be raised and provider must not be added.
+            3. Validation Error must be raised and provider must not be added.
+            4. Validation Error must be raised and provider must not be added.
+            5. Validation Error must be raised and provider must not be added.
+            6. Validation Error must be raised and provider must not be added.
+            7. Validation Error must be raised and provider must not be added.
+            8. Validation Error must be raised and provider must not be added.
+            9. Validation Error must be raised and provider must not be added.
+            10. Validation Error must be raised and provider must not be added.
+            11. Validation Error must be raised and provider must not be added.
+            12. Validation Error must be raised and provider must not be added.
+            13. Validation Error must be raised and provider must not be added.
+            14. Validation Error must be raised and provider must not be added.
+            15. Validation Error must be raised and provider must not be added.
+            16. Validation Error must be raised and provider must not be added.
+            17. Validation Error must be raised and provider must not be added.
+            18. Validation Error must be raised and provider must not be added.
+            19. Validation Error must be raised and provider must not be added.
+            20. Validation Error must be raised and provider must not be added.
+            21. Validation Error must be raised and provider must not be added.
+            22. Validation Error must be raised and provider must not be added.
+            22. Validation Error must be raised and provider must not be added.
+            23. Validation Error must be raised and provider must not be added.
+            24. Validation Error must be raised and provider must not be added.
+            25. Validation Error must be raised and provider must not be added.
+            26. Validation Error must be raised and provider must not be added.
+            27. Validation Error must be raised and provider must not be added.
+            28. Validation Error must be raised and provider must not be added.
+            29. Validation Error must be raised and provider must not be added.
+            30. Validation Error must be raised and provider must not be added.
 
     """
     pass

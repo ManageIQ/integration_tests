@@ -37,6 +37,7 @@ def test_providers_summary(appliance, soft_assert):
     Polarion:
         assignee: pvala
         casecomponent: report
+        caseimportance: high
         initialEstimate: 1/6h
     """
     report = appliance.collections.reports.instantiate(
@@ -78,6 +79,7 @@ def test_cluster_relationships(appliance, soft_assert):
     Polarion:
         assignee: pvala
         casecomponent: report
+        caseimportance: high
         initialEstimate: 1/6h
     """
 
@@ -140,6 +142,7 @@ def test_operations_vm_on(soft_assert, appliance, request):
     Polarion:
         assignee: pvala
         casecomponent: report
+        caseimportance: high
         initialEstimate: 1/6h
     """
 
@@ -197,6 +200,7 @@ def test_datastores_summary(soft_assert, appliance, request):
     Polarion:
         assignee: pvala
         casecomponent: report
+        caseimportance: high
         initialEstimate: 1/6h
     """
     adb = appliance.db.client

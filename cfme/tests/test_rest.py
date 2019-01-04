@@ -192,7 +192,7 @@ def test_query_simple_collections(appliance, collection_name):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: high
         initialEstimate: 1/3h
     """
@@ -222,7 +222,7 @@ def test_collections_actions(appliance, collection_name):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -253,7 +253,7 @@ def test_query_with_api_version(api_version, collection_name):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -279,7 +279,7 @@ def test_select_attributes(appliance, collection_name):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: high
         initialEstimate: 1/8h
     """
@@ -303,7 +303,7 @@ def test_http_options(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -320,7 +320,7 @@ def test_http_options_node_types(appliance, collection_name):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -337,7 +337,7 @@ def test_http_options_subcollections(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -353,7 +353,7 @@ def test_server_info(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -368,7 +368,7 @@ def test_server_info_href(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -386,7 +386,7 @@ def test_default_region(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -417,7 +417,7 @@ def test_settings_collection(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -435,7 +435,7 @@ def test_identity(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -451,7 +451,7 @@ def test_user_settings(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -466,7 +466,7 @@ def test_datetime_filtering(appliance, provider):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -508,7 +508,7 @@ def test_date_filtering(appliance, provider):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -546,7 +546,7 @@ def test_resources_hiding(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -569,7 +569,7 @@ def test_sorting_by_attributes(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -612,7 +612,7 @@ def test_rest_paging(appliance, paging):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -684,9 +684,9 @@ def test_attributes_present(appliance, collection_name):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/5h
     """
     attrs = 'href,id,href_slug'
     collection = getattr(appliance.rest_api.collections, collection_name)
@@ -711,7 +711,7 @@ def test_collection_class_valid(appliance, provider, vendor):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -740,7 +740,7 @@ def test_collection_class_invalid(appliance, provider):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -762,7 +762,7 @@ def test_bulk_delete(request, appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -792,7 +792,7 @@ def test_rest_ping(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: None
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -817,7 +817,7 @@ class TestPicturesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -839,7 +839,7 @@ class TestPicturesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -859,7 +859,7 @@ class TestPicturesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -882,7 +882,7 @@ class TestPicturesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -906,7 +906,7 @@ class TestBulkQueryRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -928,7 +928,7 @@ class TestBulkQueryRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -947,7 +947,7 @@ class TestBulkQueryRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -967,7 +967,7 @@ class TestBulkQueryRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -997,7 +997,7 @@ class TestNotificationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1016,7 +1016,7 @@ class TestNotificationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1046,7 +1046,7 @@ class TestNotificationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1061,7 +1061,7 @@ class TestNotificationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1089,7 +1089,7 @@ class TestEventStreamsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1105,7 +1105,7 @@ class TestEventStreamsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """

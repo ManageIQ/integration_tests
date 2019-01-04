@@ -177,7 +177,7 @@ class TestAutomationRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/5h
         """
@@ -192,7 +192,7 @@ class TestAutomationRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/5h
         """
@@ -210,7 +210,7 @@ class TestAutomationRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/5h
         """
@@ -228,7 +228,7 @@ class TestAutomationRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/5h
         """
@@ -249,7 +249,7 @@ class TestAutomationRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/6h
         """
@@ -282,7 +282,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/6h
         """
@@ -300,7 +300,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/6h
         """
@@ -315,7 +315,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/6h
         """
@@ -333,7 +333,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/6h
         """
@@ -351,7 +351,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/6h
         """
@@ -369,7 +369,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/6h
         """
@@ -383,7 +383,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: None
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/6h
         """

@@ -88,6 +88,8 @@ def test_stop_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from_de
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     rest_api = appliance.rest_api
@@ -123,6 +125,8 @@ def test_start_vm_rest(appliance, vm_obj, ensure_vm_stopped, soft_assert, from_d
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     rest_api = appliance.rest_api
@@ -158,6 +162,8 @@ def test_suspend_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     rest_api = appliance.rest_api
@@ -200,6 +206,8 @@ def test_reset_vm_rest(vm_obj, ensure_vm_running, from_detail, appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     rest_api = appliance.rest_api
