@@ -27,9 +27,9 @@ def test_rpms_present(appliance, package):
     """Verifies nfs-util rpms are in place needed for pxe & nfs operations
 
     Polarion:
-        assignee: amavinag
+        assignee: mshriver
         initialEstimate: 1/4h
-        testtype: sanity
+        testtype: functional
     """
     result = appliance.ssh_client.run_command('rpm -q {}'.format(package))
     assert 'is not installed' not in result.output
@@ -41,9 +41,9 @@ def test_selinux_enabled(appliance):
     """Verifies selinux is enabled
 
     Polarion:
-        assignee: amavinag
+        assignee: mshriver
         initialEstimate: 1/11h
-        testtype: sanity
+        testtype: functional
     """
     result = appliance.ssh_client.run_command('getenforce').output
     assert 'Enforcing' in result
@@ -54,7 +54,7 @@ def test_firewalld_running(appliance):
     """Verifies iptables service is running on the appliance
 
     Polarion:
-        assignee: amavinag
+        assignee: mshriver
         initialEstimate: 1/4h
     """
     result = appliance.ssh_client.run_command('systemctl status firewalld').output
@@ -66,10 +66,10 @@ def test_evm_running(appliance):
     """Verifies overall evm service is running on the appliance
 
     Polarion:
-        assignee: amavinag
+        assignee: mshriver
         caseimportance: critical
         initialEstimate: 1/4h
-        testtype: sanity
+        testtype: functional
     """
     result = appliance.ssh_client.run_command('systemctl status evmserverd').output
     assert 'active (running)' in result
@@ -87,10 +87,10 @@ def test_service_enabled(appliance, service):
     """Verifies if key services are configured to start on boot up
 
     Polarion:
-        assignee: amavinag
+        assignee: mshriver
         caseimportance: critical
         initialEstimate: 1/6h
-        testtype: sanity
+        testtype: functional
     """
     if service == 'postgresql':
         service = '{}-postgresql'.format(appliance.db.postgres_version)
@@ -113,9 +113,9 @@ def test_iptables_rules(appliance, proto, port):
     """Verifies key iptable rules are in place
 
     Polarion:
-        assignee: amavinag
+        assignee: mshriver
         initialEstimate: 1/4h
-        testtype: sanity
+        testtype: functional
         upstream: no
     """
     # get the current iptables state, nicely formatted for us by iptables-save
@@ -141,9 +141,9 @@ def test_memory_total(appliance):
     """Verifies that the total memory on the box is >= 6GB
 
     Polarion:
-        assignee: amavinag
+        assignee: mshriver
         initialEstimate: 1/4h
-        testtype: sanity
+        testtype: functional
     """
     result = appliance.ssh_client.run_command(
         'free -g | grep Mem: | awk \'{ print $2 }\'').output
@@ -155,9 +155,9 @@ def test_cpu_total(appliance):
     """Verifies that the total number of cpus is >= 4
 
     Polarion:
-        assignee: amavinag
+        assignee: mshriver
         initialEstimate: 1/4h
-        testtype: sanity
+        testtype: functional
     """
     result = appliance.ssh_client.run_command(
         'lscpu | grep ^CPU\(s\): | awk \'{ print $2 }\'').output
@@ -169,9 +169,9 @@ def test_certificates_present(appliance, soft_assert):
     """Test whether the required product certificates are present.
 
     Polarion:
-        assignee: amavinag
+        assignee: mshriver
         initialEstimate: 1/4h
-        testtype: sanity
+        testtype: functional
         upstream: no
     """
 
@@ -229,9 +229,9 @@ def test_db_connection(appliance):
     on an appliance with a working database and UI
 
     Polarion:
-        assignee: amavinag
+        assignee: mshriver
         initialEstimate: 1/4h
-        testtype: sanity
+        testtype: functional
     """
     databases = appliance.db.client.session.query(appliance.db.client['miq_databases']).all()
     assert len(databases) > 0
@@ -240,9 +240,9 @@ def test_db_connection(appliance):
 def test_asset_precompiled(appliance):
     """
     Polarion:
-        assignee: amavinag
+        assignee: mshriver
         initialEstimate: 1/4h
-        testtype: sanity
+        testtype: functional
     """
     assert appliance.ssh_client.run_command("test -d /var/www/miq/vmdb/public/assets").success, (
         "Assets not precompiled")
@@ -252,9 +252,9 @@ def test_asset_precompiled(appliance):
 def test_keys_included(appliance, soft_assert):
     """
     Polarion:
-        assignee: amavinag
+        assignee: mshriver
         initialEstimate: 1/4h
-        testtype: sanity
+        testtype: functional
         upstream: no
     """
     keys = ['v0_key', 'v1_key', 'v2_key']

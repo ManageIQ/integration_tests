@@ -34,6 +34,15 @@ repos:
   - id: flake8
     language_version: python3.6
     <<: *exclude
+# separately flake via system for polarion docstrings plugins
+- repo: local
+  hooks:
+    - id: system-flake8
+      name: flake8-plugins
+      description: flake8 integration_tests plugins
+      entry: python -m flake8.__main__ --select P --ignore P665
+      files: \.py$
+      language: system
 - repo: https://github.com/asottile/pyupgrade
   rev: v1.10.1
   hooks:
