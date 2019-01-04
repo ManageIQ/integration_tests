@@ -558,7 +558,7 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
         '{rules}'.format(rules=rules), '/tmp/scap_rules.yml')    # Get the scap rules
 
     with open('/tmp/scap_rules.yml') as f:
-        yml = yaml.load(f.read())
+        yml = yaml.safe_load(f.read())
         rules = yml['rules']
 
     tree = lxml.etree.parse('/tmp/scap-results.xccdf.xml')

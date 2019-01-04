@@ -12,7 +12,7 @@ def default_alerts(appliance):
     alerts = {}
     if os.path.exists(file_name):
         with open(file_name,'r') as f:
-            all_alerts = yaml.load(f)
+            all_alerts = yaml.safe_load(f)
             alerts = (
                 all_alerts.get('v5.10') if appliance.version >= '5.10'
                 else all_alerts.get('v5.9')

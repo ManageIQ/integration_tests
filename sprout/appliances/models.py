@@ -93,7 +93,7 @@ class MetadataMixin(models.Model):
 
     @property
     def metadata(self):
-        return yaml.load(self.object_meta_data)
+        return yaml.safe_load(self.object_meta_data)
 
     @metadata.setter
     def metadata(self, value):

@@ -116,7 +116,7 @@ class GoogleDocstring(docstring.GoogleDocstring):
     def _parse_metadata_section(self, section):
         lines = self._consume_metadata_section()
         if lines:
-            self.metadata = yaml.load("\n".join(lines))
+            self.metadata = yaml.safe_load("\n".join(lines))
         return ['']
 
 

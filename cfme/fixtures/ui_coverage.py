@@ -336,7 +336,7 @@ class UiCoveragePlugin(object):
 # so I'm commenting it out instead of outright deleting it :)
 #         try:
 #             global ui_coverage_percent
-#             last_run = json.load(log_path.join('coverage', 'merged', '.last_run.json').open())
+#             last_run = json.safe_load(log_path.join('coverage', 'merged', '.last_run.json').open())
 #             ui_coverage_percent = last_run['result']['covered_percent']
 #             style = {'bold': True}
 #             if ui_coverage_percent > 40:

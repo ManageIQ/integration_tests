@@ -22,7 +22,7 @@ def schedule_files():
                 ids=[schedule.split(".")[0] for schedule in schedule_files()])
 def schedule_data(request):
     with schedules_report_dir.join(request.param).open(mode="r") as rep_yaml:
-        return yaml.load(rep_yaml)
+        return yaml.safe_load(rep_yaml)
 
 
 @pytest.fixture(scope='function')

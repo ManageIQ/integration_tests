@@ -18,7 +18,7 @@ more complex example:
 .. code-block:: python
 
     def add_cmp(_, y):
-        data = yaml.load(y)
+        data = yaml.safe_load(y)
         return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Accepted' and \
             data['subStatus']['value'] == 'Created'
 
@@ -30,7 +30,7 @@ more complex example:
                    event_type='networkSecurityGroups_write_EndRequest')
 
     def rm_cmp(_, y):
-        data = yaml.load(y)
+        data = yaml.safe_load(y)
         return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Succeeded' \
             and len(data['subStatus']['value']) == 0
 
