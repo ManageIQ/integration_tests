@@ -301,8 +301,7 @@ class MethodEditView(AutomateExplorerView):
         return (
             self.in_explorer and
             self.datastore.is_opened and
-            self.title.text == 'Editing Automate Method "{}"'.format(
-                self.context['object'].name) and
+            'Automate Method [{}'.format(self.context['object'].name) in self.title.text and
             check_tree_path(
                 self.datastore.tree.currently_selected,
                 self.context['object'].tree_path))
