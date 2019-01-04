@@ -128,9 +128,9 @@ docker-py==1.10.6
 docker-pycreds==0.3.0
 docutils==0.14
 dogpile.cache==0.6.7
-dump2polarion==0.33
-polarion-docstrings==0.10
-pytest-polarion-collect==0.9
+dump2polarion==0.36
+polarion-docstrings==0.13
+pytest-polarion-collect==0.10
 entrypoints==0.2.3
 fauxfactory==3.0.2
 flufl.enum==4.1.1

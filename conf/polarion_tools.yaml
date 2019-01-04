@@ -1,5 +1,7 @@
 default_fields:
+    arch: ""
     assignee: ""
+    automation_script: ""
     caseautomation: automated
     casecomponent: "-"
     caseimportance: high
@@ -10,7 +12,10 @@ default_fields:
     endsin: ""
     expectedResults: ""
     initialEstimate: ""
+    legacytest: ""
     linkedWorkItems: ""
+    multiproduct: ""
+    reqverify: ""
     setup: ""
     startsin: ""
     subcomponent: ""
@@ -19,10 +24,35 @@ default_fields:
     tags: ""
     teardown: ""
     testSteps: ""
+    testtier: ""
     testtype: functional
     title: ""
     upstream: ""
     work_item_id: ""
+
+custom_fields:
+    - arch
+    - automation_script
+    - caseautomation
+    - casecomponent
+    - caseimportance
+    - caselevel
+    - caseposneg
+    - customerscenario
+    - endsin
+    - legacytest
+    - multiproduct
+    - reqverify
+    - setup
+    - startsin
+    - subcomponent
+    - subtype1
+    - subtype2
+    - tags
+    - teardown
+    - testtier
+    - testtype
+    - upstream
 
 docstrings:
     required_fields:
@@ -36,20 +66,6 @@ docstrings:
 
     ignored_fields:
         description: "use test docstring instead"
-
-    custom_fields:
-        - caseautomation
-        - casecomponent
-        - caseimportance
-        - caselevel
-        - caseposneg
-        - setup
-        - subtype1
-        - subtype2
-        - tags
-        - teardown
-        - testtype
-        - upstream
 
     valid_values:
         caseimportance:
@@ -76,7 +92,6 @@ docstrings:
             - system
             - acceptance
         casecomponent:
-            - V2V
             - ansible
             - appl
             - automate
@@ -92,4 +107,5 @@ docstrings:
             - smartst
             - ssui
             - stack
+            - V2V
             - web_ui
