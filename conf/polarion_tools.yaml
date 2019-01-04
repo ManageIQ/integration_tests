@@ -1,0 +1,111 @@
+default_fields:
+    arch: ""
+    assignee: ""
+    automation_script: ""
+    caseautomation: automated
+    casecomponent: "-"
+    caseimportance: high
+    caselevel: component
+    caseposneg: positive
+    customerscenario: ""
+    description: ""
+    endsin: ""
+    expectedResults: ""
+    initialEstimate: ""
+    legacytest: ""
+    linkedWorkItems: ""
+    multiproduct: ""
+    reqverify: ""
+    setup: ""
+    startsin: ""
+    subcomponent: ""
+    subtype1: "-"
+    subtype2: "-"
+    tags: ""
+    teardown: ""
+    testSteps: ""
+    testtier: ""
+    testtype: functional
+    title: ""
+    upstream: ""
+    work_item_id: ""
+
+custom_fields:
+    - arch
+    - automation_script
+    - caseautomation
+    - casecomponent
+    - caseimportance
+    - caselevel
+    - caseposneg
+    - customerscenario
+    - endsin
+    - legacytest
+    - multiproduct
+    - reqverify
+    - setup
+    - startsin
+    - subcomponent
+    - subtype1
+    - subtype2
+    - tags
+    - teardown
+    - testtier
+    - testtype
+    - upstream
+
+docstrings:
+    required_fields:
+        - assignee
+        - initialEstimate
+
+    marker_fields:
+        caselevel: "@pytest.mark.tier"
+        caseautomation: "@pytest.mark.manual"
+        linkedWorkItems: "@pytest.mark.requirements"
+
+    ignored_fields:
+        description: "use test docstring instead"
+
+    valid_values:
+        caseimportance:
+            - critical
+            - high
+            - medium
+            - low
+        caseposneg:
+            - positive
+            - negative
+        testtype:
+            - functional
+            - nonfunctional
+            - structural
+            - integration
+            - upgrade
+        caseautomation:
+            - automated
+            - manualonly
+            - notautomated
+        caselevel:
+            - component
+            - integration
+            - system
+            - acceptance
+        casecomponent:
+            - ansible
+            - appl
+            - automate
+            - candu
+            - cloud
+            - config
+            - control
+            - infra
+            - optimize
+            - prov
+            - report
+            - services
+            - smartst
+            - ssui
+            - stack
+            - V2V
+            - web_ui
