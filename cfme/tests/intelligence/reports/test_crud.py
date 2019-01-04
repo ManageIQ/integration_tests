@@ -41,13 +41,13 @@ def crud_files_schedules():
 @pytest.fixture(params=crud_files_reports())
 def custom_report_values(request):
     with report_crud_dir.join(request.param).open(mode="r") as rep_yaml:
-        return yaml.load(rep_yaml)
+        return yaml.safe_load(rep_yaml)
 
 
 @pytest.fixture(params=crud_files_schedules())
 def schedule_data(request):
     with schedules_crud_dir.join(request.param).open(mode="r") as rep_yaml:
-        return yaml.load(rep_yaml)
+        return yaml.safe_load(rep_yaml)
 
 
 @pytest.fixture(scope="function")

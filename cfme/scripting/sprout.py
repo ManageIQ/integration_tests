@@ -104,7 +104,7 @@ def populate_config_from_appliances(appliance_data):
     file_name = conf_path.join('env.local.yaml').strpath
     if os.path.exists(file_name):
         with open(file_name) as f:
-            y_data = yaml.load(f)
+            y_data = yaml.safe_load(f)
         if not y_data:
             y_data = {}
     else:

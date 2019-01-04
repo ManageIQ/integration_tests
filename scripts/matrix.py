@@ -49,7 +49,7 @@ with open(os.path.join(data_path.strpath, 'suite.yaml')) as f:
 
 
 with open('doc_data.yaml') as f:
-    doc_data = yaml.load(f)
+    doc_data = yaml.safe_load(f)
 
 tree = ET.parse('junit-report.xml')
 elem = tree.getroot()

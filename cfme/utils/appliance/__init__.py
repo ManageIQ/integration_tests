@@ -164,7 +164,7 @@ class ApplianceConsole(object):
             '{rules}'.format(rules=rules), '/tmp/scap_rules.yml')  # Get the scap rules
 
         with open('/tmp/scap_rules.yml') as f:
-            yml = yaml.load(f.read())
+            yml = yaml.safe_load(f.read())
             rules = yml['rules']
 
         tree = lxml.etree.parse('/tmp/scap-results.xccdf.xml')
@@ -2099,7 +2099,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 logger.error(base_data.output)
                 raise Exception('Error obtaining config')
             try:
-                return yaml.load(base_data.output)
+                return yaml.safe_load(base_data.output)
             except Exception:
                 logger.debug(base_data.output)
                 raise
