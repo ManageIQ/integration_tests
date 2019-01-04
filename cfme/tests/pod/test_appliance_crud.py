@@ -4,9 +4,11 @@ import pytest
 import tempfile
 import yaml
 
+from pytest import config
 
 from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.fixtures.appliance import sprout_appliances
+from cfme.test_framework.appliance import PLUGIN_KEY
 from cfme.utils import ssh, trackerbot, conf
 from cfme.utils.appliance import stack, IPAppliance
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -133,6 +135,10 @@ def temp_pod_appliance(appliance, provider, appliance_data, pytestconfig):
             appliance.openshift_creds = appliance_data['openshift_creds']
             appliance.is_pod = True
             stack.push(appliance)
+            # framework will try work with default appliance if browser restarts w/o this
+            # workaround
+            holder = config.pluginmanager.get_plugin(PLUGIN_KEY)
+            holder.held_appliance = appliance
             yield appliance
             stack.pop()
 
@@ -192,6 +198,10 @@ def temp_pod_ansible_appliance(provider, appliance_data, template_tags):
             params['hostname'] = provider.mgmt.get_appliance_url(project)
             # create instance of appliance
             with IPAppliance(**params) as appliance:
+                # framework will try work with default appliance if browser restarts w/o this
+                # workaround
+                holder = config.pluginmanager.get_plugin(PLUGIN_KEY)
+                holder.held_appliance = appliance
                 yield appliance
     finally:
         if provider.mgmt.does_vm_exist(project):
