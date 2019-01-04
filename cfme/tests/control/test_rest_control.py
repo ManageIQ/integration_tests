@@ -124,7 +124,6 @@ class TestConditionsRESTAPI(object):
             assert condition.description == edited[index].description == record[0].description
 
 
-@pytest.mark.meta(blockers=[BZ('1659899', forced_streams=["5.10"])])
 class TestPoliciesRESTAPI(object):
     @pytest.fixture(scope='function')
     def policies(self, request, appliance):

@@ -582,7 +582,7 @@ def policies(request, appliance, num=2):
             'name': 'test_policy_{}'.format(uniq),
             'description': 'Test Policy {}'.format(uniq),
             'mode': 'compliance',
-            'towhat': 'ManageIQ::Providers::Redhat::InfraManager',
+            'towhat': 'ExtManagementSystem',
             'conditions_ids': [conditions_response[0].id, conditions_response[1].id],
             'policy_contents': [{
                 'event_id': 2,
