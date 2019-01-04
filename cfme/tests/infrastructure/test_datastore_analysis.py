@@ -61,8 +61,10 @@ def datastores_hosts_setup(provider, datastore):
     hosts = datastore.hosts.all()
     assert hosts, "No hosts attached to this datastore found"
     for host in hosts:
-        host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
-        host.update_credentials_rest(credentials=host_data['credentials'])
+        host_data = [data for data in provider.data['hosts'] if data['name'] == host.name]
+        if not host_data:
+            pytest.skip("No host data")
+        host.update_credentials_rest(credentials=host_data[0]['credentials'])
     yield
     for host in hosts:
         host.remove_credentials_rest()
