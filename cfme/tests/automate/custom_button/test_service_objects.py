@@ -30,6 +30,15 @@ TEXT_DISPLAY = {
 }
 
 
+
+class CustomButtonSSUIDropdwon(Dropdown):
+    def item_enabled(self, item):
+        """This is workaround for custom button Dropdwon SSUI item_enabled method"""
+        self._verify_enabled()
+        el = self.item_element(item)
+        return 'disabled' not in self.browser.classes(el)
+
+
 @pytest.fixture(scope="module")
 def service(appliance):
     service_name = "service_{}".format(fauxfactory.gen_numeric_string(3))
@@ -333,3 +342,84 @@ def test_custom_button_text_display(appliance, context, serv_button_group, servi
                 assert "" in custom_button_group.items
             else:
                 assert custom_button_group.read() == ""
+
+
+@pytest.fixture(params=["enablement", "visibility"], scope="module")
+def vis_enb_button(request, appliance, button_group):
+    """Create custom button with enablement/visibility expression"""
+    group, _ = button_group
+    exp = {request.param: {"tag": "My Company Tags : Department", "value": "Engineering"}}
+
+    with appliance.context.use(ViaUI):
+        button = group.buttons.create(
+            text=fauxfactory.gen_alphanumeric(),
+            hover=fauxfactory.gen_alphanumeric(),
+            display_for="Single entity",
+            system="Request",
+            request="InspectMe",
+            **exp
+        )
+    yield button, request.param
+    button.delete_if_exists()
+
+
+@pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
+@pytest.mark.uncollectif(lambda context, button_group: "GENERIC" in button_group)
+def test_custom_button_expression(appliance, context, objects, button_group, vis_enb_button):
+    """ Test custom button as per expression enablement/visibility.
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/4h
+        caseimportance: medium
+        testSteps:
+            1. Create custom button group with the Object type
+            2. Create a custom button with expression (Tag)
+                a. Enablement Expression
+                b. Visibility Expression
+            3. Navigate to object Detail page
+            4. Check: button should not enable/visible without tag
+            5. Check: button should enable/visible with tag
+    """
+    # ToDo: Add support for Generic Object by adding tagging ability from All page.
+    group, obj_type = button_group
+    button, expression = vis_enb_button
+    obj = objects[obj_type]["Details"][0]
+    dest_name = objects[obj_type]["Details"][1]
+    navigate_to = ssui_nav if context is ViaSSUI else ui_nav
+    tag_cat = appliance.collections.categories.instantiate(
+        name="department", display_name="Department"
+    )
+    tag = tag_cat.collections.tags.instantiate(name="engineering", display_name="Engineering")
+
+    # Check without tag
+    with appliance.context.use(ViaUI):
+        if tag.display_name in [item.display_name for item in obj.get_tags()]:
+            obj.remove_tag(tag)
+
+    with appliance.context.use(context):
+        view = navigate_to(obj, dest_name)
+        custom_button_group = CustomButtonSSUIDropdwon(view, group.text)
+
+        if expression == "enablement":
+            # Note: SSUI still fallow enablement behaviour like 5.9
+            if appliance.version < "5.10" or (context is ViaSSUI):
+                assert not custom_button_group.item_enabled(button.text)
+            else:
+                assert not custom_button_group.is_enabled
+        elif expression == "visibility":
+            assert not custom_button_group.is_displayed
+
+    # Check with tag
+    with appliance.context.use(ViaUI):
+        if tag.display_name not in [item.display_name for item in obj.get_tags()]:
+            obj.add_tag(tag)
+
+    with appliance.context.use(context):
+        view = navigate_to(obj, dest_name)
+        custom_button_group = CustomButtonSSUIDropdwon(view, group.text)
+
+        if expression == "enablement":
+            assert custom_button_group.item_enabled(button.text)
+        elif expression == "visibility":
+            assert custom_button_group.is_displayed
