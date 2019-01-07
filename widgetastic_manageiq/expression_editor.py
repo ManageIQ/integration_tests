@@ -77,7 +77,7 @@ class ExpressionEditor(View, Pretty):
                 if widget_name in values:
                     widget = getattr(self, widget_name)
                     value = values[widget_name]
-                    widget.wait_displayed('2s')
+                    widget.wait_displayed("2s")
                     updated.append(widget.fill(value))
             return any(updated)
 
