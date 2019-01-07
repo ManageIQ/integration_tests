@@ -16,7 +16,9 @@ from cfme.control.explorer import alert_profiles, conditions, policies
 from cfme.control.explorer.alert_profiles import AlertProfileDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
 from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,
@@ -406,6 +408,42 @@ def policy_and_condition(request, policy_collection, condition_collection, appli
     policy.delete()
     condition.delete()
 
+@pytest.fixture
+def setup_for_monitor_alerts(appliance):
+    """ Insert a fired alert into the db if none is present. This is done
+        for tests involving the Monitor->Alerts pages.
+    """
+    query_str = "SELECT * FROM miq_alert_statuses"
+    delete_str = "DELETE FROM miq_alert_statuses"
+
+    # first we get rid of all fired alerts that may still be on an appliance
+    if appliance.db.client.engine.execute(query_str).rowcount > 0:
+        logger.info('Deleting all fired alerts from the appliance.')
+        appliance.db.engine.execute(delete_str)
+
+    # first get the ems_id for the provider
+    table = appliance.db.client['ems_clusters']
+    ems_id_column = getattr(table, 'ems_id')
+    ems_id = appliance.db.client.session.query(ems_id_column)[0].ems_id
+
+    logger.info('Injecting a fired alert into the appliance DB.')
+
+    description = 'a fake fired alert'
+
+    insert_str = (
+        "INSERT INTO miq_alert_statuses "
+        "(id, miq_alert_id, resource_id, resource_type, result, description, ems_id)"
+        " VALUES ('100', '1', '1', 'VmOrTemplate', 'f', '{}', '{}')"
+    ).format(description, int(ems_id))
+    delete_str += " WHERE id='100'"
+
+    # create the fired alert
+    appliance.db.client.engine.execute(insert_str)
+    yield description
+    # delete at end of test
+    logger.info('Deleting fired alert from appliance DB.')
+    appliance.db.client.engine.execute(delete_str)
+
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
@@ -694,3 +732,27 @@ def test_control_is_ansible_playbook_available_in_actions_dropdown(action_collec
     """
     view = navigate_to(action_collection, "Add")
     assert "Run Ansible Playbook" in [option.text for option in view.action_type.all_options]
+
+
+@pytest.mark.tier(2)
+def test_alerts_monitor_overview_page(alert_collection, virtualcenter_provider,
+        setup_for_monitor_alerts):
+    """
+    Polarion:
+        assignee: jdupuy
+        casecomponent: control
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
+
+    view = navigate_to(alert_collection, 'MonitorOverview')
+
+    # 1) assert that the status card displays the correct information
+    status_card = view.status_card(virtualcenter_provider.name)
+    wait_for(
+        func=lambda: int(status_card.notifications[0].text) == 1, num_sec=20, handle_exception=True
+    )
+
+    # 2) assert that clicking the status card navigates to the correct place
+    status_card.click()
+    assert view.navigation.currently_selected == ['Monitor', 'Alerts', 'All Alerts']

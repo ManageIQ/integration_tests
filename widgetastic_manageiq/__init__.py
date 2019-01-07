@@ -5084,3 +5084,46 @@ class MigrationDashboardStatusCard(AggregateStatusCard):
         ' h2[contains(@class,"card-pf-title")  and contains(.,{@name|quote})]]'
     )
     TITLE_ANCHOR = ".//h2"
+
+
+class MonitorStatusCard(ParametrizedView):
+
+    PARAMETERS = ("name",)
+
+    class MonitorCard(AggregateStatusCard):
+        """ MonitorCard class to overwrite defaults of AggregateStatusCard """
+
+        ROOT = ParametrizedLocator(
+            './/div[contains(@class, "card-pf-aggregate-status") '
+            'and not(contains(@class, "card-pf-aggregate-status-mini")) '
+            "and contains(.//span, {@name|quote})]"
+        )
+        TITLE = './/span[contains(@class, "h2 card-pf-title")]'
+        TITLE_ANCHOR = ".//a"
+
+    _card = MonitorCard(name=Parameter("name"))
+
+    # define all the properties and methods of the AggregateStatusCard
+    @property
+    def count(self):
+        return self._card.count
+
+    @property
+    def icon(self):
+        return self._card.icon
+
+    @property
+    def notifications(self):
+        return self._card.notifications
+
+    def read(self):
+        return self._card.read()
+
+    def click_title(self):
+        return self._card.click_title()
+
+    def click_body_action(self):
+        return self._card.click_body_action()
+
+    def click(self):
+        return self.click_title()
