@@ -372,9 +372,7 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
     assert not schedule.exists
 
 
-def test_crud_custom_report_schedule(
-    appliance, request, get_custom_report, schedule_data
-):
+def test_crud_custom_report_schedule(appliance, request, get_custom_report, schedule_data):
     """This test case creates a schedule for custom reports and tests if it was created
     successfully.
 
@@ -394,6 +392,12 @@ def test_crud_custom_report_schedule(
 
 @pytest.mark.ignore_stream('5.9')
 def test_report_schedules_invalid_email(appliance, schedule_data):
+    """
+        Polarion:
+            assignee: pvala
+            casecomponent: report
+            initialEstimate: 1/12h
+    """
     schedule_data["emails"] = (fauxfactory.gen_alpha(), fauxfactory.gen_alpha())
     schedule_data["from_email"] = fauxfactory.gen_alpha()
     with pytest.raises(AssertionError):

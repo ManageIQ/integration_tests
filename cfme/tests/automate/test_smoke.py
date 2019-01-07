@@ -30,7 +30,7 @@ def test_domain_present(domain_name, soft_assert, appliance):
         casecomponent: automate
         caseimportance: critical
         initialEstimate: 1/60h
-        testtype: sanity
+        testtype: functional
     """
     dc = DomainCollection(appliance)
     domain = dc.instantiate(name=domain_name)

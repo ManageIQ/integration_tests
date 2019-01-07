@@ -188,7 +188,7 @@ def test_button_required(appliance, field):
 
     Polarion:
         assignee: ndhandre
-        caseimportance: mediun
+        caseimportance: medium
         initialEstimate: 1/6h
     """
     unassigned_gp = appliance.collections.button_groups.instantiate(
