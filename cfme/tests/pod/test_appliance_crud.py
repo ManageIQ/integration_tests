@@ -110,7 +110,7 @@ def template(appliance):
 @pytest.fixture
 def template_tags(template):
     try:
-        return template['custom_data']['TAGS']
+        return yaml.safe_load(template['custom_data'])['TAGS']
     except (KeyError, AttributeError) as e:
         pytest.fail("Can't retrieve template tags: {}".format(e.message))
 
@@ -405,8 +405,19 @@ def test_pod_appliance_db_backup_restore(temp_pod_appliance, provider, setup_pro
     # run backup
     # oc create -f miq-backup-job.yaml
     output = read_host_file(appliance, os.path.join(template_folder, 'cfme-backup-job.yaml'))
-    is_successful = provider.mgmt.run_job(appliance.project, body=yaml.safe_load(output))
-    assert is_successful, " backup job hasn't finished in time"
+    backup_job_data = yaml.safe_load(output)
+    is_successful = provider.mgmt.run_job(appliance.project, body=backup_job_data)
+    backup_pod = provider.mgmt.find_job_pods(namespace=appliance.project,
+                                             name=backup_job_data['metadata']['name'])[0]
+    pod_name = backup_pod.metadata.name
+
+    if not is_successful:
+        backup_log = provider.mgmt.read_pod_log(namespace=appliance.project,
+                                                name=pod_name)
+        logger.error(backup_log)
+        pytest.fail(" backup job hasn't finished in time")
+    else:
+        provider.mgmt.delete_pod(namespace=appliance.project, name=pod_name)
 
     # restore procedure
     # scale down pods
@@ -415,8 +426,18 @@ def test_pod_appliance_db_backup_restore(temp_pod_appliance, provider, setup_pro
     # run restore job
     # oc create -f miq-restore-job.yaml
     output = read_host_file(appliance, os.path.join(template_folder, 'cfme-restore-job.yaml'))
-    is_successful = provider.mgmt.run_job(appliance.project, body=yaml.safe_load(output))
-    assert is_successful, " restore job hasn't finished in time"
+    restore_job_data = yaml.safe_load(output)
+    is_successful = provider.mgmt.run_job(appliance.project, body=restore_job_data)
+    restore_pod = provider.mgmt.find_job_pods(namespace=appliance.project,
+                                              name=restore_job_data['metadata']['name'])[0]
+    pod_name = restore_pod.metadata.name
+    if not is_successful:
+        restore_log = provider.mgmt.read_pod_log(namespace=appliance.project,
+                                                 name=pod_name)
+        logger.error(restore_log)
+        pytest.fail("restore job hasn't finished in time")
+    else:
+        provider.mgmt.delete_pod(namespace=appliance.project, name=pod_name)
 
     # check restore job results
     # scale up pods
