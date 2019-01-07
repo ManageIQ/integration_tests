@@ -427,7 +427,7 @@ class ButtonCollection(BaseCollection):
                 tag = "EVM {obj_type}.{tag}".format(
                     obj_type=self.group.type, tag=visibility["tag"]
                 )
-            elif self.group.type in ["Tenant", "Container Volume"]:
+            elif self.group.type in ["Tenant", "Container Volume", "Generic Object"]:
                 tag = "{obj_type}.Build.{tag}".format(
                     obj_type=self.group.type, tag=visibility["tag"]
                 )
@@ -444,7 +444,7 @@ class ButtonCollection(BaseCollection):
                 tag = "EVM {obj_type}.{tag}".format(
                     obj_type=self.group.type, tag=enablement["tag"]
                 )
-            elif self.group.type in ["Tenant", "Container Volume"]:
+            elif self.group.type in ["Tenant", "Container Volume", "Generic Object"]:
                 tag = "{obj_type}.Build.{tag}".format(
                     obj_type=self.group.type, tag=enablement["tag"]
                 )
