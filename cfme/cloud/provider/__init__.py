@@ -8,6 +8,7 @@ from widgetastic_patternfly import Dropdown, BreadCrumb
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.instance.image import Image
+from cfme.cloud.tenant import ProviderTenantAllView
 from cfme.common import TagPageView, PolicyProfileAssignable, Taggable
 from cfme.common.provider import BaseProvider, provider_types, CloudInfraProviderMixin
 from cfme.common.provider_views import (
@@ -316,3 +317,12 @@ class Images(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary("Relationships").click_at('Images')
+
+
+@navigator.register(CloudProvider, 'CloudTenants')
+class CloudTenants(CFMENavigateStep):
+    VIEW = ProviderTenantAllView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary("Relationships").click_at('Cloud Tenants')
