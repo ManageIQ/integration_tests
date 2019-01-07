@@ -278,23 +278,28 @@ def test_custom_button_quotes(appliance, provider, setup_provider, dialog, reque
     Bugzillas:
         * 1646905
 
+    Prerequisites:
+        * Appliance
+        * Simple TextInput service dialog
+
     Polarion:
         assignee: ndhandre
         caseimportance: medium
         initialEstimate: 1/4
         testSteps:
-            Prerequisites:
-                * Appliance
-                * Simple TextInput service dialog
-
-            Steps:
-                * Create custom button group with single quote in name like "Group's"
-                * Create a custom button with quote in name like "button's"
-                * Navigate to object Details page
-                * Check for button group and button
-                * Select/execute button from group dropdown for selected entities
-                * Fill dialog and submit
-                * Check for the proper flash message related to button execution
+            1. Create custom button group with single quote in name like "Group's"
+            2. Create a custom button with quote in name like "button's"
+            3. Navigate to object Details page
+            4. Check for button group and button
+            5. Select/execute button from group dropdown for selected entities
+            6. Fill dialog and submit
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6. Check for the proper flash message related to button execution
     """
 
     collection = appliance.collections.button_groups
