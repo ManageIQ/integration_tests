@@ -1,6 +1,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -219,3 +220,224 @@ def test_infrastructure_filter_20k_vms(appliance, create_20k_vms):
         'fill_field(Virtual Machine : Vendor, =, vmware)', 'vmware', apply_filter=True)
     items_amount = int(view.entities.paginator.items_amount)
     assert items_amount >= 20000, 'Vms count is less than should be filtered'
+
+
+@pytest.mark.manual
+@test_requirements.general_ui
+@pytest.mark.tier(1)
+def test_ui_pinning_after_relog():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        caseautomation: notautomated
+        caseposneg: negative
+        initialEstimate: 1/12h
+        testSteps:
+            1. Go to Automate -> Explorer
+            2. Pin this menu
+            3. Logout
+            4. Log in
+            5. No menu should be pinned
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.general_ui
+def test_ui_notification_icon():
+    """
+    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1489798
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: low
+        caseautomation: manualonly
+        initialEstimate: 1/6h
+        startsin: 5.9
+        testSTeps:
+            1. Go to rails console and type:
+            Notification.create(:type => :automate_user_error, :initiator =>
+            User.first, :options => { :message => "test" })
+            2. Check in UI whether notification icon was displayed
+            3. Go to rails console and type:
+            Notification.create(:type => :automate_global_error, :initiator =>
+            User.first, :options => { :message => "test" })
+            4. Check in UI whether notification icon was displayed
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.general_ui
+@pytest.mark.tier(1)
+def test_containers_topology_display_names():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: low
+        caseautomation: notautomated
+        initialEstimate: 1/30h
+        startsin: 5.6
+        testSteps:
+            1. Navigate to Compute -> Containers -> Topology.
+            2. Check whether the "Display Name" box is displayed correctly.
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.configuration
+@pytest.mark.tier(1)
+def test_configuration_icons_trusted_forest_settings():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: low
+        caseautomation: notautomated
+        initialEstimate: 1/20h
+        testSteps:
+            1. Go to Configuration -> Authentication
+            2. Select Mode LDAP
+            3. Check Get User Groups from LDAP
+            4. Now there should be green plus icon in Trusted Forest Settings
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_cloud_icons_instances():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/20h
+        testSteps:
+            1. Have a cloud provider added.Navigate to Compute -> Cloud -> Instances
+            2. Mark off any instance.
+            3. Go through all select bars and everything on this page and check for missing icons.
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.general_ui
+@pytest.mark.tier(1)
+def test_key_pairs_quadicon():
+    """
+    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1352914
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: low
+        caseautomation: notautomated
+        initialEstimate: 1/20h
+        testSteps:
+            1. Have a cloud provider with at least one key pair
+            2. Go to Compute -> Cloud -> Key Pairs
+            3. Set View to Grid
+            4. Cloud with two keys icon should be displayed(auth_key_pair.png)
+            5. Same in Key Pairs summary.
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.filter
+@pytest.mark.tier(2)
+def test_search_is_displayed_myservices():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/30h
+        testSteps:
+            1. Go to Services -> My Services
+            2. Check whether Search Bar and Advanced Search button are displayed
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_misclicking_checkbox_vms():
+    """
+    BZ1627387
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: infra
+        caseimportance: low
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+        setup: https://bugzilla.redhat.com/show_bug.cgi?id=1627387
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.general_ui
+def test_timeout():
+    """
+    Polarion:
+        assignee: anikifor
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/4h
+        testSteps:
+            1. Set timeout to 5 minutes.
+            2. Wait 6 minutes.
+            3. Click on anything.
+            4. There should be redirection to login view.
+            5. Log in.
+            6. There should be redirection to dashboard view.
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.configuration
+@pytest.mark.tier(1)
+def test_my_settings_default_views_alignment():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/20h
+        testSteps:
+            1. Go to My Settings -> Default Views
+            2. See that all icons are aligned correctly
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.configuration
+@pytest.mark.tier(1)
+def test_configure_icons_roles_by_server():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: low
+        caseautomation: notautomated
+        initialEstimate: 1/15h
+        testSteps:
+            1. Go to Settings -> Configuration and enable all Server Roles.
+            2.Navigate to Settings -> Configuration -> Diagnostics -> CFME Region ->
+            Roles by Servers.
+            3. Click through all Roles and look for missing icons.
+    """
+    pass

@@ -2,6 +2,7 @@
 """This module tests tagging of objects in different locations."""
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
@@ -159,3 +160,345 @@ def test_tagvis_infra_object(infra_test_item, check_item_visibility, visibility,
     """
     check_item_visibility(infra_test_item, visibility)
     request.addfinalizer(lambda: tag_cleanup(infra_test_item, tag))
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_tag_host_vm_combination():
+    """
+    Combine My Company tag tab restriction, with Clusters&Host tab and
+    VM&templates
+    User should be restricted to see tagged host and vm, template
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_config_manager_provider():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+        startsin: 5.9
+        testSteps:
+            1. Add Configuration Manager Provider
+            2. Add tag
+            3. Check item as restricted user
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_storage_provider_children():
+    """
+    Providers children should not be visible for
+    restricted user
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+        testSteps:
+            1. Tag provider
+            2. Login as restricted user
+            3. Check Providers children visibility
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.tag
+@pytest.mark.tier(2)
+def test_tagvis_cluster_change():
+    """
+    Enable / Disable a Cluster in the group and check its visibility
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.tag
+@pytest.mark.tier(2)
+def test_tagvis_vm_and_template_modified():
+    """
+    Enable / Disable a VM's and Template's in the group and check its
+    visibility
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.tag
+@pytest.mark.tier(2)
+def test_tagvis_host_change():
+    """
+    Enable / Disable a host in the group and check its visibility
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_tag_and_cluster_combination():
+    """
+    Combine My Company tag tab restriction, with Clusters&Host tab
+    Visible cluster should match both tab restrictions
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_tag_cluster_vm_combination():
+    """
+    Combine My Company tag, Cluster and VM/Template
+    All restriction should be applied for vm and template
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.tag
+@pytest.mark.tier(2)
+def test_tagvis_cluster_and_vm_combination():
+    """
+    Combine Host&Cluster with VM&Templates
+    Check restricted user can see Cluster and only VMs and Templates from
+    this cluster
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_tag_and_host_combination():
+    """
+    Combine My Company tag tab restriction, with Clusters&Host tab
+    Visible host should match both tab restrictions
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_tag_and_vm_combination():
+    """
+    Combine My Company tag restriction tab with VM&Tepmlates restriction
+    tab
+    Vm , template should match both tab restrictions
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.tag
+@pytest.mark.tier(2)
+def test_tagvis_ldap_group_host():
+    """
+    Add LDAP group, assign a host permission and check for the visibility
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_cloud_host_aggregates():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        initialEstimate: 1/8h
+        testSteps:
+            1. Create group with tag, use this group for user creation
+            2. Add tag(used in group) for cloud host aggregate via detail page
+            3. Remove tag for cloud host aggregate via detail page
+            4. Add tag for cloud host aggregate via list
+            5. Check cloud host aggregate is visible for restricted user
+            6. Remove tag for cloud host aggregate via list
+            7 . Check cloud host aggregate isn"t visible for restricted user
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_storage_managers():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+        testSteps:
+            1. Create group with tag, use this group for user creation
+            2. Add tag(used in group) for storage manager via detail page
+            3. Remove tag for storage manager via detail page
+            4. Add tag for storage manager via list
+            5. Check storage manager is visible for restricted user
+            6. Remove tag for storage manager via list
+            7 . Check storage manager isn"t visible for restricted user
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_configuration_management_configured_system():
+    """
+    Tag a configuration management's configured system and check for its
+    visibility
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_group_filter_network_provider():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+        testSteps:
+            1. Add cloud provider
+            2. Create group and select cloud network provider in "Cluster&Hosts"
+            filter
+            3. Create user assigned to group from step 1
+            4. As restricted user, login and navigate to Network Provider
+            User should see network provider + all its children
+            5.Repeat this case with tag filter
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_infra_networking_switch():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: infra
+        caseimportance: low
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+        testSteps:
+            1. Create group with tag, use this group for user creation
+            2. Add tag(used in group) for infra networking switch via detail page
+            3. Remove tag for infra networking switch via detail page
+            4. Add tag for infra networking switch via list
+            5. Check infra networking switch is visible for restricted user
+            6. Remove tag for infra networking switch via list
+            7 . Check infra networking switch isn"t visible for restricted user
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_performance_reports():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/3h
+        testSteps:
+            1. Create role with group and user restriction
+            2. Create groups with tag
+            3. Create user with selected group
+            4. Set the group ownership and tag for one of VMs
+            5. Generate performance report
+            6. As user add widget to dashboard
+            7. Check widget content -> User should see only one vm with set
+            ownership and tag
+    """
+    pass

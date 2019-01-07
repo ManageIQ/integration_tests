@@ -271,3 +271,39 @@ def test_tag_expression_not_or_condition(
     first_vm.add_tag(service_level_tag)
     request.addfinalizer(lambda: first_vm.remove_tag(service_level_tag))
     check_vm_visibility(group, first_vm, True)
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tag_expression_and_with_or_with_not():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+        startsin: 5.9
+        testSteps:
+            1. Combine tags with AND and NOT and OR conditions
+            2. Check item visibility
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tag_expression_and_with_or():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+        startsin: 5.9
+        testSteps:
+            1. Combine tags with AND and OR conditions
+            2. Check item visibility
+    """
+    pass

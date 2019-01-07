@@ -339,6 +339,52 @@ def test_region_required_validation(request, soft_assert, appliance):
         soft_assert(view.region.help_block == "Required")
 
 
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_regions_all_azure():
+    """
+    Need to validate the list of regions we show in the UI compared with
+    regions.rb  Recent additions include UK South
+    These really don"t change much, but you can use this test case id
+    inside bugzilla to set qe_test flag.
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/12h
+        startsin: 5.6
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_regions_disable_azure():
+    """
+    https://bugzilla.redhat.com/show_bug.cgi?id=1412355
+    CloudForms should be able to enable/disable unusable regions in Azure,
+    like the Government one for example.
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/10h
+        testSteps:
+            1. Go into advanced settings and add or remove items from the following section.
+               :ems_azure:
+               :disabled_regions:
+               - usgovarizona
+               - usgoviowa
+               - usgovtexas
+               - usgovvirginia
+    """
+    pass
+
+
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_host_name_required_validation_cloud(request, appliance):
@@ -498,8 +544,13 @@ def test_azure_subscription_required(request, provider):
         test_flag: crud
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        casecomponent: cloud
+        caseposneg: negative
+        initialEstimate: 1/10h
+        testSteps:
+            1.Add Azure Provider w/0 subscription
+            2.Validate
     """
     provider.subscription_id = ''
     request.addfinalizer(provider.delete_if_exists)
@@ -563,10 +614,13 @@ def test_openstack_provider_has_api_version(appliance):
 @pytest.mark.ignore_stream('5.9')
 def test_openstack_provider_has_dashboard(appliance, openstack_provider):
     """Check whether dashboard view is available for Openstack provider
+    https://bugzilla.redhat.com/show_bug.cgi?id=1487142
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        casecomponent: cloud
+        initialEstimate: 1/12h
+        startsin: 5.10
     """
     view = navigate_to(openstack_provider, 'Details', use_resetter=False)
     view.toolbar.view_selector.select('Dashboard View')
@@ -919,8 +973,9 @@ def test_tagvis_provision_fields(setup_provider, request, appliance, user_restri
     """Test for network environment fields for restricted user
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        caseimportance: medium
+        initialEstimate: 1/3h
     """
     image = appliance.collections.cloud_images.all()[0]
     image.add_tag(tag)
@@ -968,3 +1023,202 @@ def test_domain_id_validation(request, provider):
 
     # ToDo: Assert proper flash message after BZ-1545520 fix.
     assert view.flash.messages[0].type == 'error'
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_public_ip_without_nic_azure():
+    """
+    Relates to https://bugzilla.redhat.com/show_bug.cgi?id=1531099  -
+    Update testcase after BZ gets resolved
+    Update: we are not filtering PIPs but we can use PIPs which are not
+    associated to any NIC
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/6h
+        testSteps:
+            1. Have a Puplic IP on Azure which is not assigned to any Network
+            Interface - such Public IPs should be reused property
+            2. Provision Azure Instance - select public IP from 1.
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_sdn_nsg_arrays_refresh_azure():
+    """
+    https://bugzilla.redhat.com/show_bug.cgi?id=1520196
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        caseautomation: manualonly
+        initialEstimate: 1/6h
+        testSteps:
+            1. Add Network Security group on Azure with coma separated port ranges
+            `1023,1025` rule inbound/outbound ( ATM this feature is not allowed in
+            East US region of Azure - try West/Central)
+            2. Add such Azure Region into CFME
+            3. Refresh provider
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_provider_flavors_azure():
+    """
+    Verify that the vm flavors in Azure are of the correct sizes and that
+    the size display in CFME is accurate.  This test checks a regression
+    of https://bugzilla.redhat.com/show_bug.cgi?id=1357086
+    Low priority as it is unlikely to change once set.  Will want to check
+    when azure adds new sizes.  Only need to spot check a few values.
+    For current size values, you can check here:
+    https://azure.microsoft.com/en-us/documentation/articles/virtual-
+    machines-windows-sizes/
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: low
+        caseautomation: manualonly
+        initialEstimate: 1/8h
+        startsin: 5.6
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_market_place_images_azure():
+    """
+    https://bugzilla.redhat.com/show_bug.cgi?id=1491330
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/6h
+        testSteps:
+            1.Enable market place images
+            2.Verify the list of images
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_upload_azure_image_to_azure():
+    """
+    Upload image copied from RHCF3-11271 to azure using powershell
+    similiar the script in the setup section.
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/2h
+        setup: # Video Demo Script - Upload VHD to Azure
+               # You have to log in via Login-AzureRmAccount
+               Get-AzureRmSubscription -SubscriptionId "9ee63d8e-aee7-4121-861c-
+               d67a5b8d231e" -TenantId "2e64678d-2fa8-40ed-8922-c9b8e2c3f100" |
+               Select-AzureRmSubscription
+               $ResourceGroupName = "CFMEQE-Main"
+               $BlobLocation = "https://cfmeqestore.blob.core.windows.net/"
+               $BlobContainer = "templates"
+               $BlobName = "tmpl-osDisk.vhd"
+               $BlobDestination = $BlobLocation + $BlobContainer + "/" + $BlobName
+               $LocalFilePath = "C:\tmp\"
+               $LocalFileName = "cfme-azure-5.6.0.13-1.x86_64.vhd"
+               $LocalFile = $LocalFilePath + $LocalFileName
+               Add-AzureRmVhd -ResourceGroupName $ResourceGroupName -Destination
+               $BlobDestination -LocalFilePath $LocalFile -NumberOfUploaderThreads 8
+        startsin: 5.6
+        title: Upload Azure image to Azure
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_create_azure_vm_from_azure_image():
+    """
+    CFME image must be uploaded to Azure
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: high
+        caseautomation: notautomated
+        initialEstimate: 1/2h
+        setup: # Virtual Machine Name - as it appears in Azure
+               $VMName = "myVmName"
+               $ResourceGroupName = "CFMEQE-Main"
+               Break
+               # Existing Azure Deployment Values - Video with instructions
+               forthcoming.
+               $AvailabilitySetName = "cfmeqe-as-free"
+               $AzureLocation = "East US"
+               $VMDeploymentSize= "Standard_A1"
+               $StorageAccountName = "cfmeqestore"
+               $BlobContainerName = "templates"
+               $VHDName = "cfme-azure-56013.vhd"
+               $VirtualNetworkName = "cfmeqe"
+               $NetworkSecurityGroupName = "cfmeqe-nsg"
+               $VirtualNetworkSubnetName = "default"
+               $VirtualNetworkAddressPrefix = "10.0.0.0/16"
+               $VirtualNetworkSubnetAddressPrefix = "10.0.0.0/24"
+               # Create VM Components
+               $StorageAccount = Get-AzureRmStorageAccount -ResourceGroupName
+               $ResourceGroupName -Name $StorageAccountName
+               $InterfaceName = $VMName
+               $NetworkSecurityGroupID = Get-AzureRmNetworkSecurityGroup -Name
+               $NetworkSecurityGroupName -ResourceGroupName $ResourceGroupName
+               $PIp = New-AzureRmPublicIpAddress -Name $InterfaceName
+               -ResourceGroupName $ResourceGroupName -Location $AzureLocation
+               -AllocationMethod Dynamic -Force
+               $SubnetConfig = New-AzureRmVirtualNetworkSubnetConfig -Name
+               $VirtualNetworkSubnetName -AddressPrefix
+               $VirtualNetworkSubnetAddressPrefix
+               $VNet = New-AzureRmVirtualNetwork -Name $VirtualNetworkName
+               -ResourceGroupName $ResourceGroupName -Location $AzureLocation
+               -AddressPrefix $VirtualNetworkAddressPrefix -Subnet $SubnetConfig
+               -Force
+               $Interface = New-AzureRmNetworkInterface -Name $InterfaceName
+               -ResourceGroupName $ResourceGroupName -Location $AzureLocation
+               -SubnetId $VNet.Subnets[0].Id -PublicIpAddressId $PIp.Id -Force
+               $AvailabilitySet = Get-AzureRmAvailabilitySet -ResourceGroupName
+               $ResourceGroupName -Name $AvailabilitySetName
+               $VirtualMachine = New-AzureRmVMConfig -VMName $VMName -VMSize
+               $VMDeploymentSize -AvailabilitySetID $AvailabilitySet.Id
+               $VirtualMachine = Add-AzureRmVMNetworkInterface -VM $VirtualMachine
+               -Id $Interface.Id
+               $OSDiskUri = $StorageAccount.PrimaryEndpoints.Blob.ToString() +
+               $BlobContainerName + "/" + $VHDName
+               $VirtualMachine = Set-AzureRmVMOSDisk -VM $VirtualMachine -Name
+               $VMName -VhdUri $OSDiskUri -CreateOption attach -Linux
+               # Create the Virtual Machine
+               New-AzureRmVM -ResourceGroupName $ResourceGroupName -Location
+               $AzureLocation -VM $VirtualMachine
+        testSteps:
+            1. Make the VM
+            2. Config SSH support
+            3. Config DNS is desired.
+            4. SSH into new VM with Azure Public IP address and verify it has booted
+            correctly.
+            5. Use HTTP to DNS into the appliance web ui and make sure
+            you can log in.
+        startsin: 5.6
+        teardown: When you"re done, delete everything.  Make sure at a minimum that the
+                  VM is completely Stopped in Azure.
+        title: Create Azure VM from Azure image
+    """
+    pass
