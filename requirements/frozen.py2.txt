@@ -138,6 +138,7 @@ pytest-polarion-collect==0.10
 entrypoints==0.2.3
 enum34==1.1.6
 fauxfactory==3.0.2
+flake8==3.6.0
 flufl.enum==4.1.1
 funcsigs==1.0.2
 functools32==3.2.3.post2
