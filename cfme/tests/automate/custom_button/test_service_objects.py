@@ -24,6 +24,11 @@ DISPLAY_NAV = {
 
 SUBMIT = ["Submit all", "One by one"]
 
+TEXT_DISPLAY = {
+    "group": {"group_display": False, "btn_display": True},
+    "button": {"group_display": True, "btn_display": False},
+}
+
 
 @pytest.fixture(scope="module")
 def service(appliance):
@@ -92,6 +97,31 @@ def button_group(appliance, request):
         )
         yield button_gp, request.param
         button_gp.delete_if_exists()
+
+
+@pytest.fixture(params=TEXT_DISPLAY, scope="module")
+def serv_button_group(appliance, request):
+
+    with appliance.context.use(ViaUI):
+        collection = appliance.collections.button_groups
+        button_gp = collection.create(
+            text="group_{}".format(fauxfactory.gen_numeric_string(3)),
+            hover="hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+            display=TEXT_DISPLAY[request.param]["group_display"],
+            type=getattr(collection, "SERVICE"),
+        )
+
+        button = button_gp.buttons.create(
+            text="btn_{}".format(fauxfactory.gen_numeric_string(3)),
+            hover="hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+            display=TEXT_DISPLAY[request.param]["btn_display"],
+            display_for="Single and list",
+            system="Request",
+            request="InspectMe",
+        )
+        yield button, button_gp
+        button_gp.delete_if_exists()
+        button.delete_if_exists()
 
 
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
@@ -227,9 +257,7 @@ def test_custom_button_automate(request, appliance, context, submit, objects, bu
                 except AttributeError:
                     paginator = view.entities.paginator
 
-                entity_count = min(
-                    paginator.items_amount, paginator.items_per_page
-                )
+                entity_count = min(paginator.items_amount, paginator.items_per_page)
                 view.entities.paginator.check_all()
             else:
                 entity_count = 1
@@ -260,3 +288,48 @@ def test_custom_button_automate(request, appliance, context, submit, objects, bu
                 assert False, "Expected {count} requests not found in automation log".format(
                     count=str(expected_count)
                 )
+
+
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1659452,
+            forced_streams=["5.9", "5.10"],
+            unblock=lambda serv_button_group: "group" not in serv_button_group,
+        )
+    ]
+)
+@pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
+def test_custom_button_text_display(appliance, context, serv_button_group, service):
+    """ Test custom button text display on option
+
+    Bugzilla:
+        * 1650066
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: medium
+        initialEstimate: 1/6h
+        testSteps:
+                1. Appliance with Service
+                2. Create custom button `Group` or `Button` without display option
+                3. Check Group/Button text display or not on UI and SSUI.
+    """
+
+    my_service = MyService(appliance, name=service.name)
+    button, group = serv_button_group
+
+    with appliance.context.use(context):
+        navigate_to = ssui_nav if context is ViaSSUI else ui_nav
+        destinations = (
+            ["Details"]
+            if (BZ(1650066, forced_streams=["5.9", "5.10"]).blocks and context is ViaSSUI)
+            else ["All", "Details"]
+        )
+        for destination in destinations:
+            view = navigate_to(my_service, destination)
+            custom_button_group = Dropdown(view, group.text)
+            if group.display is True:
+                assert "" in custom_button_group.items
+            else:
+                assert custom_button_group.read() == ""
