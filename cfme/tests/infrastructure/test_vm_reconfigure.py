@@ -84,7 +84,6 @@ def ensure_vm_running(small_vm):
 
 @pytest.mark.rhel_testing
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[BZ(1632782, forced_streams=['5.10'])])
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
 def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, change_type):
     """
