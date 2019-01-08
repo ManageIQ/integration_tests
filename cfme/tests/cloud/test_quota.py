@@ -21,7 +21,10 @@ pytestmark = [
 
 @pytest.fixture
 def prov_data(appliance, provisioning):
-    instance_type = "d2s_v3" if appliance.version < "5.10" else "D2s_v3"
+    """Keeping it as a fixture because we need to call 'provisioning' from this fixture as well as
+       using this same fixture in various tests.
+    """
+    instance_type = "d2s_v3" if appliance.version < "5.10" else "d2s_v3".capitalize()
     return {
         "catalog": {"vm_name": random_vm_name(context="quota")},
         "environment": {"automatic_placement": True},
@@ -221,8 +224,8 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
         )
         provision_request = appliance.collections.requests.instantiate(request_description)
         provision_request.wait_for_request(method="ui")
-        assert provision_request.row.reason.text == "Quota Exceeded"
         request.addfinalizer(provision_request.remove_request)
+        assert provision_request.row.reason.text == "Quota Exceeded"
 
 
 # first arg of parametrize is the list of fixtures or parameters,
@@ -292,5 +295,5 @@ def test_project_quota_enforce_via_lifecycle_cloud(
         )
         provision_request = appliance.collections.requests.instantiate(request_description)
         provision_request.wait_for_request(method="ui")
-        assert provision_request.row.reason.text == "Quota Exceeded"
         request.addfinalizer(provision_request.remove_request)
+        assert provision_request.row.reason.text == "Quota Exceeded"
