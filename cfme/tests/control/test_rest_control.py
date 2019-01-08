@@ -14,6 +14,7 @@ from cfme.utils.rest import (
 )
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
+from manageiq_client.api import APIException
 
 pytestmark = [
     test_requirements.rest
@@ -241,3 +242,33 @@ class TestPoliciesRESTAPI(object):
             )
             policy.reload()
             assert policy.description == edited[index].description == record[0].description
+
+    def test_create_invalid_policies(self, appliance):
+        """
+        This test case checks policy creation with invalid data.
+        Testing BZ 1435780
+
+        Metadata:
+            test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            component: Rest
+            caseimportance: High
+            initialEstimate: 1/30h
+        """
+        policy_name = fauxfactory.gen_alphanumeric(5)
+        data = {
+            "name": "test_policy_{}".format(policy_name),
+            "description": "Test Policy {}".format(policy_name),
+            "mode": "bar",
+            "towhat": "baz",
+            "conditions_ids": [2000, 3000],
+            "policy_contents": [{
+                "event_id": 2,
+                "actions": [{"action_id": 1, "opts": {"qualifier": "failure"}}]
+            }],
+        }
+
+        with pytest.raises(APIException, match="Api::BadRequestError"):
+            appliance.rest_api.collections.policies.action.create(data)
