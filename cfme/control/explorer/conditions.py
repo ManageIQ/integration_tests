@@ -197,6 +197,7 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
         """
         view = navigate_to(self, "Edit")
         view.fill(updates)
+        view.wait_displayed()
         view.save_button.click()
         view = self.create_view(ConditionDetailsView, override=updates)
         view.wait_displayed()

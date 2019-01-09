@@ -33,12 +33,17 @@ class BootstrapSelect(VanillaBootstrapSelect):
         # should wait until it appears and only then we can fill it.
         self.logger.info("FILLING WIDGET %s", str(self))
         self.wait_displayed()
+        super(BootstrapSelect, self).fill(value)
         # BZ 1649057 documents that a loading screen appears twice when a scope or expression
         # element is selected. Between loads, the page is displayed and we make a selection, which
         # is then overwritten in the next load. This work-around will wait for both loads.
-        if BZ(1649057, forced_streams=["5.9", "5.10"]).blocks:
+        # BZ 1664886 and BZ 1664852 are similar but for different fields in the Expression Editor.
+        if (
+            BZ(1649057, forced_streams=["5.9", "5.10"]).blocks
+            or BZ(1664886, forced_streams=["5.9", "5.10"]).blocks
+            or BZ(1664852, forced_streams=["5.9", "5.10"]).blocks
+        ):
             time.sleep(1)
-        super(BootstrapSelect, self).fill(value)
 
 
 class ExpressionEditor(View, Pretty):
