@@ -11,7 +11,7 @@ from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ssui import (
     navigator, SSUINavigateStep, navigate_to, ViaSSUI
 )
-from cfme.utils.version import VersionPicker, LATEST
+from cfme.utils.version import VersionPicker, LOWEST
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Notification,
@@ -57,7 +57,7 @@ class DetailsMyServiceView(MyServicesView):
     notification = Notification()
     policy = SSUIDropdown('Policy')
     power_operations = VersionPicker(
-        {LATEST: SSUIDropdown("Power Operations"), "5.10": Kebab()}
+        {LOWEST: SSUIDropdown("Power Operations"), "5.10": Kebab()}
     )
     access_dropdown = SSUIAppendToBodyDropdown('Access')
     remove_service = Button("Remove Service")
