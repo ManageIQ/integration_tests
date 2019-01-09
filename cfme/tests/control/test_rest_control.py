@@ -3,6 +3,8 @@
 import pytest
 import fauxfactory
 
+from manageiq_client.api import APIException
+
 from cfme import test_requirements
 from cfme.rest.gen_data import conditions as _conditions
 from cfme.rest.gen_data import policies as _policies
@@ -14,7 +16,6 @@ from cfme.utils.rest import (
 )
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
-from manageiq_client.api import APIException
 
 pytestmark = [
     test_requirements.rest
@@ -253,7 +254,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            component: Rest
+            casecomponent: Rest
             caseimportance: High
             initialEstimate: 1/30h
         """
