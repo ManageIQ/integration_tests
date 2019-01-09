@@ -100,13 +100,13 @@ def dialog(request, appliance):
 
 @pytest.fixture(scope="function")
 def service_dialogs(request, appliance, num=3):
-    service_dialogs = [_dialog_rest(request, appliance.rest_api) for __ in range(num)]
+    service_dialogs = [_dialog_rest(request, appliance) for __ in range(num)]
     return service_dialogs
 
 
 @pytest.fixture(scope="function")
 def service_catalogs(request, appliance):
-    response = _service_catalogs(request, appliance.rest_api)
+    response = _service_catalogs(request, appliance)
     assert_response(appliance)
     return response
 
@@ -179,7 +179,7 @@ def vm_service(request, appliance, provider):
 
 @pytest.fixture(scope="function")
 def vm(request, provider, appliance):
-    return _vm(request, provider, appliance.rest_api)
+    return _vm(request, provider, appliance)
 
 
 @pytest.fixture(scope="function")
@@ -734,7 +734,7 @@ class TestServiceDialogsRESTAPI(object):
             assignee: sshveta
             initialEstimate: 1/4h
         """
-        _dialog_rest(request, appliance.rest_api)
+        _dialog_rest(request, appliance)
         assert_response(appliance)
         self.check_returned_dialog(appliance)
 
@@ -1389,7 +1389,7 @@ class TestPendingRequestsRESTAPI(object):
 class TestServiceRequests(object):
     @pytest.fixture(scope='class')
     def new_role(self, appliance):
-        role = copy_role(appliance.rest_api, 'EvmRole-user_self_service')
+        role = copy_role(appliance, 'EvmRole-user_self_service')
         # allow role to access all Services, VMs, and Templates
         role.action.edit(settings=None)
         yield role
@@ -1398,7 +1398,7 @@ class TestServiceRequests(object):
     @pytest.fixture(scope='class')
     def new_group(self, request, appliance, new_role):
         tenant = appliance.rest_api.collections.tenants.get(name='My Company')
-        return groups(request, appliance.rest_api, new_role, tenant, num=1)
+        return groups(request, appliance, new_role, tenant, num=1)
 
     @pytest.fixture(scope='class')
     def user_auth(self, request, appliance, new_group):
@@ -1410,7 +1410,7 @@ class TestServiceRequests(object):
             "group": {"id": new_group.id}
         }]
 
-        user = _creating_skeleton(request, appliance.rest_api, 'users', data)
+        user = _creating_skeleton(request, appliance, 'users', data)
         user = user[0]
         return user.userid, password
 
@@ -1469,7 +1469,7 @@ class TestBlueprintsRESTAPI(object):
     @pytest.fixture(scope="function")
     def blueprints(self, request, appliance):
         num = 2
-        response = _blueprints(request, appliance.rest_api, num=num)
+        response = _blueprints(request, appliance, num=num)
         assert_response(appliance)
         assert len(response) == num
         return response
@@ -1577,7 +1577,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
     @pytest.fixture(scope='function')
     def orchestration_templates(self, request, appliance):
         num = 2
-        response = _orchestration_templates(request, appliance.rest_api, num=num)
+        response = _orchestration_templates(request, appliance, num=num)
         assert_response(appliance)
         assert len(response) == num
         return response

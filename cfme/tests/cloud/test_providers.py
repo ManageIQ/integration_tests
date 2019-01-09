@@ -710,7 +710,7 @@ class TestProvidersRESTAPI(object):
     def arbitration_profiles(self, request, appliance, cloud_provider):
         num_profiles = 2
         response = _arbitration_profiles(
-            request, appliance.rest_api, cloud_provider, num=num_profiles)
+            request, appliance, cloud_provider, num=num_profiles)
         assert_response(appliance)
         assert len(response) == num_profiles
 
@@ -877,7 +877,7 @@ class TestProvidersRESTAPI(object):
                 'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
             })
 
-        response = creating_skeleton(request, appliance.rest_api, 'arbitration_rules', data)
+        response = creating_skeleton(request, appliance, 'arbitration_rules', data)
         assert_response(appliance)
         assert len(response) == num_rules
         for rule in response:
@@ -906,7 +906,7 @@ class TestProvidersRESTAPI(object):
             'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
         }]
 
-        response = creating_skeleton(request, appliance.rest_api, 'arbitration_rules', data)
+        response = creating_skeleton(request, appliance, 'arbitration_rules', data)
         # this will fail once BZ 1433477 is fixed - change and expand the test accordingly
         assert_response(appliance)
         for rule in response:

@@ -28,7 +28,7 @@ TEMPLATE_TORSO = """{
 """
 
 
-def service_catalogs(request, rest_api, num=5):
+def service_catalogs(request, appliance, num=5):
     """Create service catalogs using REST API."""
     scls_data = []
     for _ in range(num):
@@ -38,17 +38,17 @@ def service_catalogs(request, rest_api, num=5):
             'service_templates': []
         })
 
-    return _creating_skeleton(request, rest_api, 'service_catalogs', scls_data, col_action='add')
+    return _creating_skeleton(request, appliance, 'service_catalogs', scls_data, col_action='add')
 
 
 def service_catalog_obj(request, appliance):
     """Return service catalog object."""
-    rest_catalog = service_catalogs(request, appliance.rest_api, num=1)[0]
+    rest_catalog = service_catalogs(request, appliance, num=1)[0]
     return appliance.collections.catalogs.instantiate(name=rest_catalog.name,
                                                       description=rest_catalog.description)
 
 
-def categories(request, rest_api, num=1):
+def categories(request, appliance, num=1):
     ctg_data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric().lower()
@@ -57,10 +57,10 @@ def categories(request, rest_api, num=1):
             'description': 'test_category_{}'.format(uniq)
         })
 
-    return _creating_skeleton(request, rest_api, 'categories', ctg_data)
+    return _creating_skeleton(request, appliance, 'categories', ctg_data)
 
 
-def tags(request, rest_api, categories):
+def tags(request, appliance, categories):
     # Category id, href or name needs to be specified for creating a new tag resource
     tags = []
     for index, ctg in enumerate(categories):
@@ -72,10 +72,10 @@ def tags(request, rest_api, categories):
             'category': refs[index % 3]
         })
 
-    return _creating_skeleton(request, rest_api, 'tags', tags, substr_search=True)
+    return _creating_skeleton(request, appliance, 'tags', tags, substr_search=True)
 
 
-def dialog_rest(request, rest_api):
+def dialog_rest(request, appliance):
     """Creates service dialog using REST API."""
     uid = fauxfactory.gen_alphanumeric()
     data = {
@@ -117,13 +117,13 @@ def dialog_rest(request, rest_api):
         }]
     }
 
-    service_dialog = _creating_skeleton(request, rest_api, "service_dialogs", [data])
+    service_dialog = _creating_skeleton(request, appliance, "service_dialogs", [data])
     return service_dialog[0]
 
 
 def dialog(request, appliance):
     """Returns service dialog object."""
-    rest_resource = dialog_rest(request, appliance.rest_api)
+    rest_resource = dialog_rest(request, appliance)
     service_dialogs = appliance.collections.service_dialogs
     service_dialog = service_dialogs.instantiate(
         label=rest_resource.label,
@@ -182,8 +182,8 @@ def services(request, appliance, provider, service_dialog=None, service_catalog=
     return [provisioned_service]
 
 
-def rates(request, rest_api, num=3):
-    chargeback = rest_api.collections.chargebacks.get(rate_type='Compute')
+def rates(request, appliance, num=3):
+    chargeback = appliance.rest_api.collections.chargebacks.get(rate_type='Compute')
     data = []
     for _ in range(num):
         req = {'description': 'test_rate_{}'.format(fauxfactory.gen_alphanumeric()),
@@ -195,11 +195,11 @@ def rates(request, rest_api, num=3):
                'chargeable_field_id': chargeback.id}
         data.append(req)
 
-    return _creating_skeleton(request, rest_api, 'rates', data)
+    return _creating_skeleton(request, appliance, 'rates', data)
 
 
-def vm(request, provider, rest_api):
-    provider_rest = rest_api.collections.providers.get(name=provider.name)
+def vm(request, provider, appliance):
+    provider_rest = appliance.rest_api.collections.providers.get(name=provider.name)
     vm = deploy_template(
         provider.key,
         'test_rest_vm_{}'.format(fauxfactory.gen_alphanumeric(length=4))
@@ -216,7 +216,7 @@ def vm(request, provider, rest_api):
 
     provider_rest.action.refresh()
     wait_for(
-        lambda: rest_api.collections.vms.find_by(name=vm_name) or False,
+        lambda: appliance.rest_api.collections.vms.find_by(name=vm_name) or False,
         num_sec=600, delay=5)
     return vm_name
 
@@ -321,7 +321,7 @@ def service_templates_rest(request, appliance, service_dialog=None, service_cata
             }
         })
 
-    return _creating_skeleton(request, appliance.rest_api, "service_templates", data)
+    return _creating_skeleton(request, appliance, "service_templates", data)
 
 
 def service_templates(request, appliance, service_dialog=None, service_catalog=None, num=4):
@@ -369,7 +369,7 @@ def automation_requests_data(vm, requests_collection=False, approve=True, num=4)
     return [data for _ in range(num)]
 
 
-def groups(request, rest_api, role, tenant, num=1):
+def groups(request, appliance, role, tenant, num=1):
     data = []
     for _ in range(num):
         data.append({
@@ -378,25 +378,25 @@ def groups(request, rest_api, role, tenant, num=1):
             "tenant": {"href": tenant.href}
         })
 
-    groups = _creating_skeleton(request, rest_api, "groups", data)
+    groups = _creating_skeleton(request, appliance, "groups", data)
     if num == 1:
         return groups.pop()
     return groups
 
 
-def roles(request, rest_api, num=1):
+def roles(request, appliance, num=1):
     data = []
     for _ in range(num):
         data.append({"name": "role_name_{}".format(fauxfactory.gen_alphanumeric())})
 
-    roles = _creating_skeleton(request, rest_api, "roles", data)
+    roles = _creating_skeleton(request, appliance, "roles", data)
     if num == 1:
         return roles.pop()
     return roles
 
 
-def copy_role(rest_api, orig_name, new_name=None):
-    orig_role = rest_api.collections.roles.get(name=orig_name)
+def copy_role(appliance, orig_name, new_name=None):
+    orig_role = appliance.rest_api.collections.roles.get(name=orig_name)
     orig_features = orig_role._data.get('features')
     orig_settings = orig_role._data.get('settings')
     if not orig_features and hasattr(orig_role, 'features'):
@@ -405,7 +405,7 @@ def copy_role(rest_api, orig_name, new_name=None):
         orig_features = features_subcol._data.get('resources')
     if not orig_features:
         raise NotImplementedError('Role copy is not implemented for this version.')
-    new_role = rest_api.collections.roles.action.create(
+    new_role = appliance.rest_api.collections.roles.action.create(
         name=new_name or 'EvmRole-{}'.format(fauxfactory.gen_alphanumeric()),
         features=orig_features,
         settings=orig_settings
@@ -413,8 +413,8 @@ def copy_role(rest_api, orig_name, new_name=None):
     return new_role[0]
 
 
-def tenants(request, rest_api, num=1):
-    parent = rest_api.collections.tenants.get(name='My Company')
+def tenants(request, appliance, num=1):
+    parent = appliance.rest_api.collections.tenants.get(name='My Company')
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric()
@@ -426,13 +426,13 @@ def tenants(request, rest_api, num=1):
             'parent': {'href': parent.href}
         })
 
-    tenants = _creating_skeleton(request, rest_api, 'tenants', data)
+    tenants = _creating_skeleton(request, appliance, 'tenants', data)
     if num == 1:
         return tenants.pop()
     return tenants
 
 
-def users(request, rest_api, num=1):
+def users(request, appliance, num=1):
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(4).lower()
@@ -444,22 +444,22 @@ def users(request, rest_api, num=1):
             "group": {"description": "EvmGroup-user_self_service"}
         })
 
-    resources = _creating_skeleton(request, rest_api, "users", data)
+    resources = _creating_skeleton(request, appliance, "users", data)
     return resources, data
 
 
-def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create',
+def _creating_skeleton(request, appliance, col_name, col_data, col_action='create',
         substr_search=False):
 
     entities = create_resource(
-        rest_api, col_name, col_data, col_action=col_action, substr_search=substr_search)
+        appliance.rest_api, col_name, col_data, col_action=col_action, substr_search=substr_search)
 
     # make sure the original list of `entities` is preserved for cleanup
     original_entities = list(entities)
 
     @request.addfinalizer
     def _finished():
-        collection = getattr(rest_api.collections, col_name)
+        collection = getattr(appliance.rest_api.collections, col_name)
         collection.reload()
         ids = [e.id for e in original_entities]
         delete_entities = [e for e in collection if e.id in ids]
@@ -469,25 +469,25 @@ def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create
     return entities
 
 
-def mark_vm_as_template(rest_api, provider, vm_name):
+def mark_vm_as_template(appliance, provider, vm_name):
     """
         Function marks vm as template via mgmt and returns template Entity
         Usage:
-            mark_vm_as_template(rest_api, provider, vm_name)
+            mark_vm_as_template(appliance, provider, vm_name)
     """
-    t_vm = rest_api.collections.vms.get(name=vm_name)
+    t_vm = appliance.rest_api.collections.vms.get(name=vm_name)
     t_vm.action.stop()
     vm_mgmt = provider.mgmt.get_vm(vm_name)
     vm_mgmt.ensure_state(VmState.STOPPED, timeout=1000)
     vm_mgmt.mark_as_template()
 
     wait_for(
-        lambda: rest_api.collections.templates.find_by(name=vm_name).subcount != 0,
+        lambda: appliance.rest_api.collections.templates.find_by(name=vm_name).subcount != 0,
         num_sec=700, delay=15)
-    return rest_api.collections.templates.get(name=vm_name)
+    return appliance.rest_api.collections.templates.get(name=vm_name)
 
 
-def arbitration_settings(request, rest_api, num=2):
+def arbitration_settings(request, appliance, num=2):
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
@@ -495,10 +495,10 @@ def arbitration_settings(request, rest_api, num=2):
             'name': 'test_settings_{}'.format(uniq),
             'display_name': 'Test Settings {}'.format(uniq)})
 
-    return _creating_skeleton(request, rest_api, 'arbitration_settings', data)
+    return _creating_skeleton(request, appliance, 'arbitration_settings', data)
 
 
-def orchestration_templates(request, rest_api, num=2):
+def orchestration_templates(request, appliance, num=2):
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
@@ -510,11 +510,11 @@ def orchestration_templates(request, rest_api, num=2):
             'draft': False,
             'content': TEMPLATE_TORSO.replace('CloudFormation', uniq)})
 
-    return _creating_skeleton(request, rest_api, 'orchestration_templates', data)
+    return _creating_skeleton(request, appliance, 'orchestration_templates', data)
 
 
-def arbitration_profiles(request, rest_api, provider, num=2):
-    r_provider = rest_api.collections.providers.get(name=provider.name)
+def arbitration_profiles(request, appliance, provider, num=2):
+    r_provider = appliance.rest_api.collections.providers.get(name=provider.name)
     data = []
     providers = [{'id': r_provider.id}, {'href': r_provider.href}]
     for index in range(num):
@@ -523,10 +523,10 @@ def arbitration_profiles(request, rest_api, provider, num=2):
             'provider': providers[index % 2]
         })
 
-    return _creating_skeleton(request, rest_api, 'arbitration_profiles', data)
+    return _creating_skeleton(request, appliance, 'arbitration_profiles', data)
 
 
-def arbitration_rules(request, rest_api, num=2):
+def arbitration_rules(request, appliance, num=2):
     data = []
     for _ in range(num):
         data.append({
@@ -535,10 +535,10 @@ def arbitration_rules(request, rest_api, num=2):
             'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
         })
 
-    return _creating_skeleton(request, rest_api, 'arbitration_rules', data)
+    return _creating_skeleton(request, appliance, 'arbitration_rules', data)
 
 
-def blueprints(request, rest_api, num=2):
+def blueprints(request, appliance, num=2):
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
@@ -553,26 +553,28 @@ def blueprints(request, rest_api, num=2):
             }
         })
 
-    return _creating_skeleton(request, rest_api, 'blueprints', data)
+    return _creating_skeleton(request, appliance, 'blueprints', data)
 
 
-def conditions(request, rest_api, num=2):
+def conditions(request, appliance, num=2):
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
-        data.append({
+        data_dict = {
             'name': 'test_condition_{}'.format(uniq),
             'description': 'Test Condition {}'.format(uniq),
             'expression': {'=': {'field': 'ContainerImage-architecture', 'value': 'dsa'}},
-            'towhat': 'ExtManagementSystem',
-            'modifier': 'allow'
-        })
+            'towhat': 'ExtManagementSystem'
+        }
+        if appliance.version < '5.10':
+            data_dict["modifier"] = "allow"
+        data.append(data_dict)
 
-    return _creating_skeleton(request, rest_api, 'conditions', data)
+    return _creating_skeleton(request, appliance, 'conditions', data)
 
 
-def policies(request, rest_api, num=2):
-    conditions_response = conditions(request, rest_api, num=2)
+def policies(request, appliance, num=2):
+    conditions_response = conditions(request, appliance, num=2)
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
@@ -580,7 +582,7 @@ def policies(request, rest_api, num=2):
             'name': 'test_policy_{}'.format(uniq),
             'description': 'Test Policy {}'.format(uniq),
             'mode': 'compliance',
-            'towhat': 'ManageIQ::Providers::Redhat::InfraManager',
+            'towhat': 'ExtManagementSystem',
             'conditions_ids': [conditions_response[0].id, conditions_response[1].id],
             'policy_contents': [{
                 'event_id': 2,
@@ -588,7 +590,7 @@ def policies(request, rest_api, num=2):
             }]
         })
 
-    return _creating_skeleton(request, rest_api, 'policies', data)
+    return _creating_skeleton(request, appliance, 'policies', data)
 
 
 def get_dialog_service_name(appliance, service_request, *item_names):

@@ -28,7 +28,7 @@ class TestTenantsViaREST(object):
     @pytest.fixture(scope="function")
     def tenants(self, request, appliance):
         num_tenants = 3
-        response = _tenants(request, appliance.rest_api, num=num_tenants)
+        response = _tenants(request, appliance, num=num_tenants)
         assert_response(appliance)
         assert len(response) == num_tenants
         return response
@@ -137,7 +137,7 @@ class TestRolesViaREST(object):
     @pytest.fixture(scope="function")
     def roles(self, request, appliance):
         num_roles = 3
-        response = _roles(request, appliance.rest_api, num=num_roles)
+        response = _roles(request, appliance, num=num_roles)
         assert_response(appliance)
         assert len(response) == num_roles
         return response
@@ -299,16 +299,16 @@ class TestRolesViaREST(object):
 class TestGroupsViaREST(object):
     @pytest.fixture(scope="function")
     def tenants(self, request, appliance):
-        return _tenants(request, appliance.rest_api, num=1)
+        return _tenants(request, appliance, num=1)
 
     @pytest.fixture(scope="function")
     def roles(self, request, appliance):
-        return _roles(request, appliance.rest_api, num=1)
+        return _roles(request, appliance, num=1)
 
     @pytest.fixture(scope="function")
     def groups(self, request, appliance, roles, tenants):
         num_groups = 3
-        response = _groups(request, appliance.rest_api, roles, tenants, num=num_groups)
+        response = _groups(request, appliance, roles, tenants, num=num_groups)
         assert_response(appliance)
         assert len(response) == num_groups
         return response
@@ -417,7 +417,7 @@ class TestUsersViaREST(object):
     @pytest.fixture(scope="function")
     def users_data(self, request, appliance, num=3):
         num_users = num
-        response, prov_data = _users(request, appliance.rest_api, num=num_users)
+        response, prov_data = _users(request, appliance, num=num_users)
         assert_response(appliance)
         assert len(response) == num
         return response, prov_data
@@ -491,7 +491,7 @@ class TestUsersViaREST(object):
             "group": {"description": "EvmGroup-user_self_service"}
         }
 
-        user = _creating_skeleton(request, appliance.rest_api, 'users', [data])[0]
+        user = _creating_skeleton(request, appliance, 'users', [data])[0]
         assert_response(appliance)
         user_auth = (user.userid, data['password'])
         assert appliance.new_rest_api_instance(auth=user_auth)

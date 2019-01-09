@@ -22,7 +22,7 @@ pytestmark = [
 class TestVmOwnershipRESTAPI(object):
     @pytest.fixture(scope="function")
     def vm(self, request, provider, appliance):
-        return _vm(request, provider, appliance.rest_api)
+        return _vm(request, provider, appliance)
 
     @pytest.mark.tier(3)
     def test_vm_set_ownership(self, appliance, vm):

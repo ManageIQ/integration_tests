@@ -170,7 +170,7 @@ def test_delete_dialog_before_parent_item(appliance, catalog_item):
 class TestServiceCatalogViaREST(object):
     @pytest.fixture(scope="function")
     def service_catalogs(self, request, appliance):
-        return _service_catalogs(request, appliance.rest_api)
+        return _service_catalogs(request, appliance)
 
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
     def test_delete_service_catalog(self, service_catalogs, method):

@@ -142,7 +142,7 @@ def test_chargeback_rate(rate_resource, rate_type, rate_action, request):
 class TestRatesViaREST(object):
     @pytest.fixture(scope="function")
     def rates(self, request, appliance):
-        response = _rates(request, appliance.rest_api)
+        response = _rates(request, appliance)
         assert_response(appliance)
         return response
 

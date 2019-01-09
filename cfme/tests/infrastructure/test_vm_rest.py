@@ -24,7 +24,7 @@ pytestmark = [
 
 @pytest.fixture(scope='function')
 def vm(request, provider, appliance):
-    vm_name = _vm(request, provider, appliance.rest_api)
+    vm_name = _vm(request, provider, appliance)
     return appliance.rest_api.collections.vms.get(name=vm_name)
 
 
