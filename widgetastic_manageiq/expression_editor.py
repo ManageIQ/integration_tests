@@ -339,6 +339,7 @@ class ExpressionEditor(View, Pretty):
                 cvalue=cvalue,
             )
         )
+        view.wait_displayed()
         self.click_commit()
 
     def fill_field(self, field=None, key=None, value=None):
