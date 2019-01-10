@@ -164,3 +164,65 @@ def test_tagvis_playbook(playbook, check_item_visibility, visibility):
         initialEstimate: None
     """
     check_item_visibility(playbook, visibility)
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_tag_and_configuration_management_ansible_tower_job_templates():
+    """
+    Combination of My Company tag and ansible tower job template
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_ansible_tower_tag_configured_system():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: ansible
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/8h
+        testSteps:
+            1. Create group with tag, use this group for user creation
+            2. Add tag(used in group) for Ansible Tower configured_system via
+            detail page
+            3. Remove tag for Ansible Tower configured_system via detail page
+            4. Add tag for Ansible Tower configured_system via list
+            5. Check Ansible Tower configured_system is visible for restricted
+            user
+            6. Remove tag for Ansible Tower configured_system via list
+            7 . Check ansible tower configured_system isn"t visible for restricted
+            user
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_tagvis_ansible_tower_job():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: ansible
+        caseimportance: medium
+        initialEstimate: 1/8h
+        testSteps:
+            1. Create group with tag, use this group for user creation
+            2. Add tag(used in group) for Ansible Tower job via detail page
+            3. Remove tag for Ansible Tower job via detail page
+            4. Add tag for Ansible Tower job via list
+            5. Check Ansible Tower job is visible for restricted user
+            6. Remove tag for Ansible Tower job via list
+            7. Check ansible tower job isn"t visible for restricted user
+    """
+    pass

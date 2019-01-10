@@ -341,3 +341,26 @@ def test_mandatory_entry_point_with_dynamic_element(appliance):
     view_cls = navigator.get_class(sd.parent, 'Add').VIEW
     view = appliance.browser.create_view(view_cls)
     assert view.save.disabled
+
+
+@pytest.mark.manual
+@test_requirements.general_ui
+@pytest.mark.tier(1)
+def test_copying_customization_dialog():
+    """
+    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1342260
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: automate
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/12h
+        testSteps:
+            1. Automate -> Customization -> Check checkbox for at least one dialog
+            2. Select another dialog by clicking on it
+            3. Select in Toolbar Configuration -> Copy this dialog
+            4. Selected dialog should be copied and not the first checked dialog
+            in alphanumerical sort
+    """
+    pass

@@ -21,9 +21,19 @@ def test_empty_region_description(appliance):
 def test_description_change(appliance, request):
     """Test changing region description
 
+    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1350808
+
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/20h
+        testSteps:
+            1. Go to Settings
+            -> Configure -> Settings
+            2. Details -> Region
+            3. Change region description
+            4. Check whether description was changed
     """
     view = navigate_to(appliance.server.zone.region, 'ChangeRegionName')
 

@@ -82,3 +82,24 @@ def test_download_pdf_summary(appliance, collection_type, provider):
         download_summary(random_obj)
     else:
         pytest.skip('{} entities not available'.format(collection_type))
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_pdf_summary_infra_provider():
+    """
+    https://bugzilla.redhat.com/show_bug.cgi?id=1651194
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: web_ui
+        caseimportance: medium
+        caseautomation: manualonly
+        initialEstimate: 1/8h
+        testSteps:
+            1. Add an Infrastructure Provider (tested with VMware)
+            2. Open the summary page of the provider
+            3. In the toolbar click "Print or export summary"
+            = Quadicon is shown correctly, exactly as in the UI
+    """
+    pass

@@ -59,7 +59,7 @@ def test_tag_mapping_azure_instances(vm, map_tags, refresh_provider):
             1.
             2.
             3.
-            4. Field value reads "My Company Tags Testing: testing"
+            4. Field value is "My Company Tags Testing: testing"
     """
     view = navigate_to(vm, 'Details')
 
@@ -72,3 +72,78 @@ def test_tag_mapping_azure_instances(vm, map_tags, refresh_provider):
         fail_func=view.toolbar.reload.click
     )
     assert view.tag.get_text_of('My Company Tags')[0] == 'Testing: testing'
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_ec2_tags_mapping():
+    """
+    Requirement: Have an ec2 provider
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/5h
+        startsin: 5.8
+        testSteps:
+            1. Create an instance and tag it with test:testing
+            2. Go to Configuration -> CFME Region -> Map Tags
+            3. Add a tag:
+            Entity: Instance (Amazon)
+            Label: test
+            Category: Testing
+            4. Refresh provider
+            5. Go to summary of that instance
+            6. In Smart Management field should be:
+            My Company Tags testing: Testing
+            7. Delete that instance
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_ec2_tags_instances():
+    """
+    Requirement: Have an ec2 provider
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/6h
+        startsin: 5.8
+        testSteps:
+            1. Create an instance with tag test:testing
+            2. Refresh provider
+            3. Go to summary of this instance and check whether there is
+            test:testing in Labels field
+            4. Delete that instance
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_ec2_tags_images():
+    """
+    Requirement: Have an ec2 provider
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/6h
+        startsin: 5.8
+        testSteps:
+            1. Select an AMI in AWS console and tag it with test:testing
+            2. Refresh provider
+            3. Go to summary of this image  and check whether there is
+            test:testing in Labels field
+            4. Delete that tag
+    """
+    pass

@@ -305,3 +305,19 @@ def test_provider_refresh_relationship(provider, setup_provider):
     """
     provider.refresh_provider_relationships(method='ui')
     wait_for_relationship_refresh(provider)
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_inventory_refresh_westindia_azure():
+    """
+    https://bugzilla.redhat.com/show_bug.cgi?id=1473619
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/12h
+    """
+    pass

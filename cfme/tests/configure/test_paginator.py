@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 from widgetastic.exceptions import NoSuchElementException
 
+from cfme import test_requirements
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -149,3 +150,21 @@ def test_paginator_details_page(appliance, place_info, schedule):
         if place_navigation == 'Details':
             table[0].click()
     assert check_paginator_for_page(view) == paginator_expected_result
+
+
+@pytest.mark.manual
+@test_requirements.configuration
+@pytest.mark.tier(1)
+def test_configure_diagnostics_pages_cfme_region():
+    """
+    Go to Settings -> Configuration -> Diagnostics -> CFME Region
+    and check whether all sub pages are showing.
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        caseautomation: notautomated
+        initialEstimate: 1/15h
+    """
+    pass
