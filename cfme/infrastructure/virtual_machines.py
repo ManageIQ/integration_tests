@@ -931,35 +931,27 @@ class InfraVm(VM):
                 else:
                     mode = disk.mode
                     dependent = True
+
                 row = vm_recfg.disks_table.click_add_disk()
                 row.type.fill(disk.type)
-                # Unit first, then size (otherwise JS would try to recalculate the size...)
-                from cfme.infrastructure.provider.rhevm import RHEVMProvider
-                if self.provider.one_of(RHEVMProvider):
-                    # TODO: Workaround necessary until BZ 1524960 is resolved
-                    # -- block start --
-                    row[3].fill(disk.size_unit)
-                else:
-                    if self.appliance.version < '5.9':
-                        unit_column = 4
-                    else:
-                        unit_column = 5
-                    # -- block end --
-                    row[unit_column].fill(disk.size_unit)
-                    row.mode.fill(mode)
-                    row.dependent.fill(dependent)
+                row.mode.fill(mode)
                 row.size.fill(disk.size)
+                row.unit.fill(disk.size_unit)
+                row.dependent.fill(dependent)
                 row.actions.widget.click()
                 disk_message = 'Add Disks'
             elif action == 'delete':
                 row = vm_recfg.disks_table.row(name=disk.filename)
                 # `delete_backing` removes disk from the env
                 row.delete_backing.fill(True)
-                row.actions.widget.click()
+                # second action button, delete, is column 9 on colspan
+                # https://github.com/RedHatQE/widgetastic.core/issues/95
+                row[9].widget.click()
                 disk_message = 'Remove Disks'
             else:
                 raise ValueError("Unknown disk change action; must be one of: add, delete")
         message = ", ".join(filter(None, [ram_message, cpu_message, disk_message]))
+
         if cancel:
             vm_recfg.cancel_button.click()
             view = self.appliance.browser.create_view(InfraVmDetailsView)

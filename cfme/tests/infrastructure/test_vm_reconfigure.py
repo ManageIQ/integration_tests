@@ -2,7 +2,7 @@ import pytest
 
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.blockers import BZ, GH
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 from cfme.utils.generators import random_vm_name
 
@@ -104,7 +104,6 @@ def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, c
 
 @pytest.mark.rhel_testing
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6996')])
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
     'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
@@ -136,6 +135,7 @@ def test_vm_reconfig_add_remove_disk_cold(
         message="confirm that disk was added")
     msg = "Disk wasn't added to VM config"
     assert small_vm.configuration.num_disks == new_config.num_disks, msg
+
     remove_disk_request = small_vm.reconfigure(orig_config)
     # Remove disk request verification
     wait_for(remove_disk_request.is_succeeded, timeout=360, delay=45,
@@ -150,14 +150,13 @@ def test_vm_reconfig_add_remove_disk_cold(
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:6996')])
 def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
     """ Cancel reconfiguration changes
 
     Polarion:
         assignee: nansari
         casecomponent: infra
-        initialEstimate: None
+        initialEstimate: 1/3h
     """
     config_vm = small_vm.configuration.copy()
 

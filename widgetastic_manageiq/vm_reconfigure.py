@@ -1,4 +1,3 @@
-from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import Table as VanillaTable
 from widgetastic.xpath import quote
 from widgetastic_patternfly import BootstrapSelect, BootstrapSwitch, Button, Input
@@ -19,8 +18,7 @@ class DisksButton(Button):
 
 
 class DisksTable(VanillaTable):
-    """Table to add and remove Disks (in VM Reconfigure form)
-    """
+    """Table to add and remove Disks (in VM Reconfigure form)"""
 
     BASELOC = "//div/table[./../h3[normalize-space(text())={}]//button]"
     add_disk_btn = DisksButton("contains", "Add Disk", classes=[Button.PRIMARY])
@@ -30,18 +28,13 @@ class DisksTable(VanillaTable):
         "Mode": BootstrapSelect(id="hdMode"),
         "Size": Input(id="dvcSize"),
         "ControllerType": BootstrapSelect(id="Controller"),
-        # TODO: Workaround necessary until BZ 1524960 is resolved
-        5: BootstrapSelect(id="hdUnit"),  # for VMware in 5.9
-        4: BootstrapSelect(id="hdUnit"),  # for VMware in 5.8
-        3: BootstrapSelect(id="hdUnit"),  # for RHEVM in 5.9
-        "Dependent": VersionPick(
-            {
-                Version.lowest(): BootstrapSwitch(name="cb_dependent"),
-                "5.9": BootstrapSwitch(name="vm.cb_dependent"),
-            }
-        ),
+        "Unit": BootstrapSelect(id="hdUnit"),
+        "Dependent": BootstrapSwitch(name="vm.cb_dependent"),
         "Delete Backing": BootstrapSwitch(name="cb_deletebacking"),
         "Actions": Button(),
+        # second action button, 'Cancel Add' or 'Delete' depending on context of row
+        # https://github.com/RedHatQE/widgetastic.core/issues/95
+        9: Button(),
     }
 
     def __init__(self, parent, *args, **kwargs):
@@ -49,12 +42,10 @@ class DisksTable(VanillaTable):
         VanillaTable.__init__(self, parent, self.BASELOC.format(quote("Disks")), *args, **kwargs)
 
     def click_add_disk(self):
-        """Clicks the Add Disk button attached to the table and returns the new editable row
-        """
+        """Clicks the Add Disk button attached to the table and returns the new editable row"""
         self.add_disk_btn.click()
         return self[0]
 
     def click_cancel_add(self):
-        """Clicks the Cancel Add button to cancel adding a new row
-        """
+        """Clicks the Cancel Add button to cancel adding a new row"""
         self.cancel_add_btn.click()
