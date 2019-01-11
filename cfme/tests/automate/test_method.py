@@ -40,7 +40,7 @@ def klass(request, namespace):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_method_crud(klass):
+def test_method_crud(appliance, klass):
     """
     Polarion:
         assignee: ghubale
@@ -61,6 +61,9 @@ def test_method_crud(klass):
         method.name = fauxfactory.gen_alphanumeric(8)
         method.script = "bar"
     assert method.exists
+    navigate_to(appliance.server, 'Dashboard')
+    # Navigation to 'Dashboard' is required to navigate to details page of method.
+    # So that 'Edit this Method' option from configuration will be selected from details page.
     with update(method):
         method.name = origname
     assert method.exists
@@ -70,7 +73,7 @@ def test_method_crud(klass):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_automate_method_inputs_crud(klass):
+def test_automate_method_inputs_crud(appliance, klass):
     """
     Polarion:
         assignee: ghubale
@@ -102,6 +105,9 @@ def test_automate_method_inputs_crud(klass):
     assert view.inputs.read() == {
         'different': {'Data Type': 'string', 'Default Value': 'value'},
     }
+    navigate_to(appliance.server, 'Dashboard')
+    # Navigation to 'Dashboard' is required to navigate on details page of method.
+    # So that 'Edit this Method' option from configuration will be selected from details page.
     with update(method):
         method.inputs = {}
     view = navigate_to(method, 'Details')

@@ -75,7 +75,7 @@ class Inputs(View, ClickableMixin):
 
     add_field = Text(VersionPicker({
         Version.lowest(): '//img[@alt="Equal green"]',
-        '5.10': '//div[@id="class_fields_div"]//i[contains(@class, "fa-plus")]'
+        '5.10': '//*[@id="inputs_div"]//i[contains(@class, "fa-plus")]'
     }))
     name = Input(locator='.//td/input[contains(@id, "field_name")]')
     data_type = Select(locator='.//td/select[contains(@id, "field_datatype")]')
@@ -101,6 +101,7 @@ class Inputs(View, ClickableMixin):
             if key not in present:
                 new_value = value.pop(key)
                 new_value['name'] = key
+                self.add_field.wait_displayed()
                 self.add_field.click()
                 super(Inputs, self).fill(new_value)
                 self.finish_add_field.click()
@@ -301,8 +302,8 @@ class MethodEditView(AutomateExplorerView):
         return (
             self.in_explorer and
             self.datastore.is_opened and
-            'Automate Method [{}'.format(self.context['object'].name) in self.title.text and
-            check_tree_path(
+            'Editing Automate Method "{}"'.format(self.context['object'].name) in self.title.text
+            and check_tree_path(
                 self.datastore.tree.currently_selected,
                 self.context['object'].tree_path))
 

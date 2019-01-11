@@ -120,6 +120,7 @@ def test_duplicate_domain_disallowed(request, appliance):
     Polarion:
         assignee: ghubale
         casecomponent: Automate
+        caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/60h
         tags: automate
@@ -150,11 +151,7 @@ def test_domain_cannot_delete_builtin(appliance):
     """
     manageiq_domain = appliance.collections.domains.instantiate(name='ManageIQ')
     details_view = navigate_to(manageiq_domain, 'Details')
-    if appliance.version < '5.7':
-        assert details_view.configuration.is_displayed
-        assert 'Remove this Domain' not in details_view.configuration.items
-    else:
-        assert not details_view.configuration.is_displayed
+    assert not details_view.configuration.is_displayed
 
 
 @pytest.mark.tier(2)
@@ -171,11 +168,7 @@ def test_domain_cannot_edit_builtin(appliance):
     """
     manageiq_domain = appliance.collections.domains.instantiate(name='ManageIQ')
     details_view = navigate_to(manageiq_domain, 'Details')
-    if appliance.version < '5.7':
-        assert details_view.configuration.is_displayed
-        assert not details_view.configuration.item_enabled('Edit this Domain')
-    else:
-        assert not details_view.configuration.is_displayed
+    assert not details_view.configuration.is_displayed
 
 
 @pytest.mark.tier(2)
