@@ -248,6 +248,15 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
             )
 
 
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1641669,
+            forced_streams=["5.9"],
+            unblock=lambda button_group: "DATASTORES" not in button_group,
+        )
+    ]
+)
 def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_group):
     """ Test custom button with dialog and InspectMe method
 
@@ -265,7 +274,7 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
         * Check for the proper flash message related to button execution
 
     Bugzillas:
-        * 1635797, 1555331, 1574403, 1640592
+        * 1635797, 1555331, 1574403, 1640592, 1641669
 
     Polarion:
         assignee: ndhandre
