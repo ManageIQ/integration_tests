@@ -20,19 +20,15 @@ from cfme.utils.wait import wait_for
 
 class EntryPoint(Input):
     def fill(self, value):
-        current_value = self.value
-        if value == current_value:
-            return False
-        # Clear and type everything
-        self.browser.click(self)
-        self.browser.clear(self)
-        self.browser.send_keys(value, self)
-        self.parent_view.modal.cancel.click()
-        # After changing default path values of 'retirement_entry_point', 'reconfigure_entry_point'
-        # or 'provisioning_entry_point'; 'Select Entry Point Instance'(pop up) occures which also
-        # helps to select these paths using tree structure. Here we have already filled these values
-        # through text input. So to ignore this pop up clicking on cancel button is required.
-        return True
+        if super(EntryPoint, self).fill(value):
+            self.parent_view.modal.cancel.click()
+            # After changing default path values of 'retirement_entry_point',
+            # 'reconfigure_entry_point' or 'provisioning_entry_point';
+            # 'Select Entry Point Instance'(pop up) occures which also helps to select these paths
+            # using tree structure. Here we have already filled these values through text input.
+            # So to ignore this pop up clicking on cancel button is required.
+            return True
+        return False
 
 
 # Views
