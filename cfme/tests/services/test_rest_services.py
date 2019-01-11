@@ -221,7 +221,6 @@ def unassign_templates(templates):
 
 
 class TestServiceRESTAPI(object):
-    # testing BZ1539741
     def test_query_service_attributes(self, services, soft_assert):
         """Tests access to service attributes.
 
@@ -230,15 +229,12 @@ class TestServiceRESTAPI(object):
 
         Polarion:
             assignee: nansari
-            initialEstimate: None
+            initialEstimate: 1/30h
         """
         outcome = query_resource_attributes(services[0])
         for failure in outcome.failed:
-            if failure.name == 'configuration_script' and BZ(
-                    1540250, forced_streams=['5.9', 'upstream']).blocks:
-                continue
-            if failure.name == 'metric_rollups' and BZ(
-                    1540254, forced_streams=['5.9', 'upstream']).blocks:
+            if failure.name == "reconfigure_dialog"and BZ(
+                    1663972, forced_streams=["5.9", "5.10", "upstream"]).blocks:
                 continue
             soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))

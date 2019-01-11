@@ -228,6 +228,13 @@ def query_resource_attributes(resource, soft_assert=None):
 
     for subcol in subcolls_to_check:
         try:
+            if subcol == 'metric_rollups':
+                response = rest_api.get(
+                    "{}/{}?capture_interval=hourly&start_date=2019-01-01".format(
+                        service_href, subcol))
+                assert rest_api.response, "Failed response"
+                continue
+
             subcol_rest = getattr(resource, subcol)
             subcol_rest.reload()
         except Exception as err:

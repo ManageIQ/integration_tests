@@ -44,9 +44,6 @@ def test_query_vm_attributes(vm, soft_assert):
         if failure.type == 'attribute' and failure.name == 'policy_events' and BZ(
                 1546995, forced_streams=['5.8', '5.9', 'upstream']).blocks:
             continue
-        # this one is expected because additional arguments are needed
-        if failure.type == 'subcollection' and failure.name == 'metric_rollups':
-            continue
         soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
             failure.type, failure.name, failure.response.status_code, failure.error))
 
