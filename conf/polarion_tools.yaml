@@ -103,6 +103,7 @@ docstrings:
             - optimize
             - prov
             - report
+            - Rest
             - services
             - smartst
             - ssui
