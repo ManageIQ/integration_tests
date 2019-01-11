@@ -8,8 +8,12 @@ from widgetastic_patternfly import Button, Input
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.wait import TimedOutError
+
+from selenium.common.exceptions import StaleElementReferenceException
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from . import ControlExplorerView
 
@@ -119,6 +123,7 @@ class EditConditionView(ConditionFormCommon):
     title = Text("#explorer_title_text")
 
     save_button = Button("Save")
+    cancel_button = Button("Cancel")
     reset_button = Button("Reset")
 
     @property
@@ -193,15 +198,22 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
 
         Args:
             updates: Provided by update() context manager.
-            cancel: Whether to cancel the update (default False).
         """
         view = navigate_to(self, "Edit")
-        view.fill(updates)
-        view.save_button.click()
-        view = self.create_view(ConditionDetailsView, override=updates)
-        view.wait_displayed()
-        view.flash.assert_success_message(
+        try:
+            view.fill(updates)
+            view.wait_displayed()
+            view.save_button.click()
+            view = self.create_view(ConditionDetailsView, override=updates)
+            view.wait_displayed()
+            view.flash.assert_success_message(
             'Condition "{}" was saved'.format(updates.get("description", self.description)))
+        except (TimedOutError, StaleElementReferenceException):
+            logger.exception('Updating the condition failed waiting for view, canceling update.')
+            view.cancel_button.click()
+            view = navigate_to(self, "Details")
+            view.wait_displayed()
+
 
     def delete(self, cancel=False):
         """Delete this Condition in UI.
