@@ -944,6 +944,8 @@ class InfraVm(VM):
                 row = vm_recfg.disks_table.row(name=disk.filename)
                 # `delete_backing` removes disk from the env
                 row.delete_backing.fill(True)
+                # second action button, delete, is column 9 on colspan
+                # https://github.com/RedHatQE/widgetastic.core/issues/95
                 row[9].widget.click()
                 disk_message = 'Remove Disks'
             else:

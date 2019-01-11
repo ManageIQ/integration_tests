@@ -32,6 +32,8 @@ class DisksTable(VanillaTable):
         "Dependent": BootstrapSwitch(name="vm.cb_dependent"),
         "Delete Backing": BootstrapSwitch(name="cb_deletebacking"),
         "Actions": Button(),
+        # second action button, 'Cancel Add' or 'Delete' depending on context of row
+        # https://github.com/RedHatQE/widgetastic.core/issues/95
         9: Button(),
     }
 
