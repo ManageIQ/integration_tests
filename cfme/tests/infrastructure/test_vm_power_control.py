@@ -367,9 +367,10 @@ class TestVmDetailsPowerControlPerProvider(object):
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1496383, forced_streams=['5.9', '5.10', 'upstream'])])
+@pytest.mark.meta(blockers=[BZ(1634713, forced_streams=['5.9', '5.10', 'upstream'])])
 def test_no_template_power_control(provider, soft_assert):
     """ Ensures that no power button is displayed for templates.
+    See BZ1496383 and BZ1634713
 
     Prerequisities:
         * An infra provider that has some templates.
@@ -391,10 +392,7 @@ def test_no_template_power_control(provider, soft_assert):
     """
     view = navigate_to(provider, 'ProviderTemplates')
     view.toolbar.view_selector.select('Grid View')
-    if provider.appliance.version < '5.10':
-        soft_assert(not view.toolbar.power.is_enabled, "Power enabled in template grid view!")
-    else:
-        soft_assert(not view.toolbar.power.is_displayed, "Power displayed in template grid view!")
+    soft_assert(not view.toolbar.power.is_displayed, "Power displayed in template grid view!")
 
     # Ensure selecting a template doesn't cause power menu to appear
     templates = view.entities.all_entity_names
