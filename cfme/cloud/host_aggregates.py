@@ -18,7 +18,7 @@ class HostAggregatesToolbar(View):
 
 
 class HostAggregatesView(BaseLoggedInPage):
-    title = Text("#explorer_title_text")
+    title = Text('//div[@id="main-content"]//h1')
     search = View.nested(Search)
     toolbar = View.nested(HostAggregatesToolbar)
 
@@ -36,14 +36,11 @@ class HostAggregatesView(BaseLoggedInPage):
 
 
 class HostAggregatesDefaultView(HostAggregatesView):
-    title = Text("#explorer_title_text")
+    title = Text('//div[@id="main-content"]//h1')
 
     @property
     def is_displayed(self):
-        return (
-            self.in_host_aggregates and
-            self.title.text == 'Host Aggregates'
-        )
+        return self.in_host_aggregates and self.title.is_displayed
 
 
 @attr.s

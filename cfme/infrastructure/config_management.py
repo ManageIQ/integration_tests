@@ -168,7 +168,8 @@ class ConfigSystemAllView(ConfigManagementAllView):
 
     @property
     def is_displayed(self):
-        if self.context['object'].type == 'Ansible Tower':
+        if hasattr(self.context['object'], 'type') and self.context['object'].type == \
+                'Ansible Tower':
             title_text = 'All Ansible Tower Configured Systems'
         else:
             title_text = 'All Configured Systems'
@@ -681,14 +682,13 @@ class SysAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        nav_select = self.prerequisite_view.navigation.select
-        sidebar_path = self.view.sidebar.configured_systems.tree.click_path
-        if self.obj.type == 'Ansible Tower':
-            nav_select(['Automation', 'Ansible Tower', 'Explorer'])
-            sidebar_path('All Ansible Tower Configured Systems')
+        if hasattr(self.obj, 'type') and self.obj.type == 'Ansible Tower':
+            self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
+            self.view.sidebar.configured_systems.tree.click_path(
+                'All Ansible Tower Configured Systems')
         else:
-            nav_select('Configuration', 'Management')
-            sidebar_path('All Configured Systems')
+            self.prerequisite_view.navigation.select('Configuration', 'Management')
+            self.view.sidebar.configured_systems.tree.click_path("All Configured Systems")
 
 
 @navigator.register(ConfigSystem, 'EditTags')

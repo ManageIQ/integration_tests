@@ -63,7 +63,7 @@ class TowerExplorerProvidersAllView(TowerExplorerView):
         return (
             self.in_tower_explorer and
             self.title.text == 'All Ansible Tower Providers' and
-            self.sidebar.tower_explorer_providers.is_opened
+            self.sidebar.providers.is_opened
         )
 
 
@@ -75,7 +75,7 @@ class TowerExplorerSystemsAllView(TowerExplorerView):
         return (
             self.in_tower_explorer and
             self.title.text == 'All Ansible Tower Configured Systems' and
-            self.sidebar.tower_explorer_systems.is_opened
+            self.sidebar.configured_systems.is_opened
         )
 
 
@@ -87,9 +87,8 @@ class TowerExplorerJobTemplatesAllView(TowerExplorerView):
         return (
             self.in_tower_explorer and
             self.title.text == VersionPicker({Version.lowest(): 'All Ansible Tower Job Templates',
-                                       '5.10': 'All Ansible Tower Templates'}).pick(
-                self.appliance.version) and
-            self.sidebar.tower_explorer_job_templates.is_opened
+                '5.10': 'All Ansible Tower Templates'}).pick(self.browser.product_version) and
+            self.sidebar.job_templates.is_opened
         )
 
 
@@ -158,4 +157,4 @@ class TowerExplorerJobTemplatesAll(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.view.sidebar.job_templates.tree.click_path(VersionPicker({Version.lowest():
             'All Ansible Tower Job Templates', '5.10': 'All Ansible Tower Templates'}).pick(
-            self.appliance.version))
+            self.browser.product_version))
