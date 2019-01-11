@@ -79,11 +79,22 @@ class NewAlertView(AlertFormCommon):
 
     @property
     def is_displayed(self):
+        # NewAlertView is used for adding and copying alerts. But selected trees gets changes.
+        # So need to add if-else block for getting correct currently selected tree.
+        if self.description.value:
+            # This tree gets selected whenever we are going to copy old alert.
+            # Here we can able to get description value of old alert.
+            currently_selected_tree = ["All Alerts", self.context['object'].description]
+        else:
+            # This tree gets selected whenever we are going to create new alert.
+            # So we can not get any description value available there.
+            currently_selected_tree = ["All Alerts"]
+
         return (
             self.in_control_explorer and
             self.title.text == "Adding a new Alert" and
             self.alerts.is_opened and
-            self.alerts.tree.currently_selected == ["All Alerts"]
+            self.alerts.tree.currently_selected == currently_selected_tree
         )
 
 
@@ -233,7 +244,7 @@ class Alert(BaseEntity, Updateable, Pretty):
         for attrib, value in updates.items():
             setattr(new_alert, attrib, value)
         view = new_alert.create_view(AlertDetailsView)
-        assert view.is_displayed
+        view.wait_displayed()
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
@@ -310,7 +321,7 @@ class AlertCollection(BaseCollection):
             >>> alert = appliance.collections.alerts.create('my_alert_description')
             >>> alert.delete()
         """
-        view = navigate_to(self,"Add")
+        view = navigate_to(self, "Add")
         if driving_event is None and evaluate is None:
             driving_event = view.driving_event.all_options[1].text
         # instantiate the alert
@@ -327,18 +338,18 @@ class AlertCollection(BaseCollection):
 
     def all(self):
         # get alerts via reading 'All Alerts table'
-        view  = navigate_to(self.appliance.collections.alerts,'All')
+        view = navigate_to(self.appliance.collections.alerts, 'All')
         try:
             alerts = [
                 self.instantiate(
-                      description=alert.get('Description'),
-                      active=alert.get('Active'),
-                      based_on=alert.get('Based On'),
-                      evaluate=alert.get('What is evaluated'),
-                      emails=alert.get('Email'),
-                      snmp_trap=alert.get('SNMP'),
-                      timeline_event=alert.get('Event on Timeline'),
-                      mgmt_event=alert.get('Management Event Raised')
+                    description=alert.get('Description'),
+                    active=alert.get('Active'),
+                    based_on=alert.get('Based On'),
+                    evaluate=alert.get('What is evaluated'),
+                    emails=alert.get('Email'),
+                    snmp_trap=alert.get('SNMP'),
+                    timeline_event=alert.get('Event on Timeline'),
+                    mgmt_event=alert.get('Management Event Raised')
                 )
                 for alert in view.table.read()
             ]
