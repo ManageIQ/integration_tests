@@ -7,7 +7,6 @@ from widgetastic.widget import Text
 
 from cfme import test_requirements
 from cfme.control.explorer import ControlExplorerView
-from cfme.control.explorer.alerts import AlertDetailsView
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
 from cfme.exceptions import CFMEExceptionOccured

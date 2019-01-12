@@ -8,15 +8,54 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, Text, View
-from widgetastic_manageiq import AlertEmail, SNMPForm, SummaryForm, Table
-from widgetastic_patternfly import BootstrapSelect, Button, Input
+from widgetastic_manageiq import AlertEmail, MonitorStatusCard, SNMPForm, SummaryForm, Table
+from widgetastic_patternfly import BootstrapSelect, Button, Input, SelectorDropdown
 
 from . import ControlExplorerView
+from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+
+
+class MonitorOverviewView(BaseLoggedInPage):
+    """ Provide a view for the Monitor->Alerts->Overview page """
+    # since the status_card depends on the provider of the fired alert, it must be instantiated as:
+    # status_card = view.status_card(<provider_name>)
+    status_card = MonitorStatusCard
+    # Used for Ascending/Descending sort
+    sort_order = Text(".//button[./span[contains(@class,'sort-direction')]]")
+    # Used to select filter_by items like 'Name', 'Severity'
+    filter_by_dropdown = SelectorDropdown('uib-tooltip', 'Filter by')
+    # Used to select sort by options like 'Name', 'Number of Associated Plans'
+    sort_by_dropdown = SelectorDropdown('class', 'btn btn-default ng-binding dropdown-toggle')
+    # Used to set group by
+    group_by = BootstrapSelect(
+        locator=(
+            './/div[contains(@class, "bootstrap-select")] '
+            '/button[normalize-space(@title)="Environment"]/..'
+        )
+    )
+    # Used to set display
+    display = BootstrapSelect(
+        locator=(
+            './/div[contains(@class, "bootstrap-select")] '
+            '/button[normalize-space(@title)="providers"]/..'
+        )
+    )
+
+    @property
+    def in_monitor_alerts_overview(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Monitor', 'Alerts', 'Overview']
+        )
+
+    @property
+    def is_displayed(self):
+        return self.in_monitor_alerts_overview
 
 
 class AlertsAllView(ControlExplorerView):
@@ -402,3 +441,12 @@ class AlertCopy(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.configuration.item_select("Copy this Alert", handle_alert=True)
+
+
+@navigator.register(AlertCollection)
+class MonitorOverview(CFMENavigateStep):
+    VIEW = MonitorOverviewView
+    prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
+
+    def step(self):
+        self.prerequisite_view.navigation.select("Monitor","Alerts","Overview")
