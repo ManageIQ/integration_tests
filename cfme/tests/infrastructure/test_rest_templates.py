@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from wrapanapi.exceptions import NotFoundError, MultipleItemsError
+
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import mark_vm_as_template
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
 from cfme.utils.rest import (
     assert_response,
     delete_resources_from_collection,
@@ -32,8 +35,23 @@ def template(request, appliance, provider, vm):
 
     @request.addfinalizer
     def _finished():
-        if template.id in appliance.rest_api.collections.templates:
-            appliance.rest_api.collections.templates.action.delete(*template)
+        appliance.rest_api.collections.templates.action.delete(*[template])
+        try:
+            provider.mgmt.get_template(template.name).delete()
+        except NotFoundError:
+            logger.error(
+                "Failed to delete template. No template found with name {}".format(
+                    template.name
+                )
+            )
+        except MultipleItemsError:
+            logger.error(
+                "Failed to delete template. Multiple templates found with name {}".format(
+                    template.name
+                )
+            )
+        except Exception as e:
+            logger.error("Failed to delete template. {}".format(e))
 
     return template
 
