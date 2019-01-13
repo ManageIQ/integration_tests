@@ -84,6 +84,16 @@ def clean_vm(appliance, provider, vm_name):
     appliance.collections.infra_vms.instantiate(vm_name, provider).cleanup_on_provider()
 
 
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1662638,
+            forced_streams=["5.9", "5.10", "upstream"],
+            unblock=lambda provider: provider.one_of(VMwareProvider)
+            and provider.version == "6.5",
+        )
+    ]
+)
 @pytest.mark.rhv2
 # Here also available the ability to create multiple provision request, but used the save
 # href and method, so it doesn't make any sense actually
@@ -174,6 +184,16 @@ def test_provision_vlan(request, appliance, provision_data, vnic_profile, provid
             format(profile_via_provider.name, profile_name)
 
 
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1662638,
+            forced_streams=["5.9", "5.10", "upstream"],
+            unblock=lambda provider: provider.one_of(VMwareProvider)
+            and provider.version == "6.5",
+        )
+    ]
+)
 @pytest.mark.rhv3
 @pytest.mark.meta(server_roles="+notifier")
 def test_provision_emails(request, provision_data, provider, appliance, smtp_test):
