@@ -352,6 +352,12 @@ class CloudInfraCatalogItem(BaseCatalogItem):
     domain = attr.ib(default='ManageIQ (Locked)')
     provider = attr.ib(default=None)
     item_type = None
+    provisioning_entry_point = attr.ib(default=(
+        "/Service/Provisioning/StateMachines/ServiceProvision_Template/CatalogItemInitialization"))
+    retirement_entry_point = attr.ib(
+        default="/Service/Retirement/StateMachines/ServiceRetirement/Default"
+    )
+    reconfigure_entry_point = attr.ib(default=None)
 
     @property
     def fill_dict(self):
@@ -361,7 +367,10 @@ class CloudInfraCatalogItem(BaseCatalogItem):
                 'description': self.description,
                 'display': self.display_in,
                 'select_catalog': self.catalog_name,
-                'select_dialog': self.dialog
+                'select_dialog': self.dialog,
+                'provisioning_entry_point': self.provisioning_entry_point,
+                'retirement_entry_point': self.retirement_entry_point,
+                'reconfigure_entry_point': self.reconfigure_entry_point
             },
             'request_info': {'provisioning': self.prov_data}
         }
@@ -513,20 +522,8 @@ class CatalogItemsCollection(BaseCollection):
         Returns:
             An instance of catalog_item_class
         """
-        provisioning_entry_point = kwargs.pop("provisioning_entry_point", None)
-        reconfigure_entry_point = kwargs.pop("reconfigure_entry_point", None)
-        retirement_entry_point = kwargs.pop("retirement_entry_point", None)
         cat_item = self.instantiate(catalog_item_class, *args, **kwargs)
         view = navigate_to(cat_item, "Add")
-        if provisioning_entry_point:
-            view.basic_info.provisioning_entry_point.fill(provisioning_entry_point)
-
-        if reconfigure_entry_point:
-            view.basic_info.reconfigure_entry_point.fill(reconfigure_entry_point)
-
-        if retirement_entry_point:
-            view.basic_info.retirement_entry_point.fill(retirement_entry_point)
-
         view.fill(cat_item.fill_dict)
         view.add.click()
         view = self.create_view(AllCatalogItemView)
