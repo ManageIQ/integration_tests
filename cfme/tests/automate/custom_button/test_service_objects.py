@@ -431,3 +431,160 @@ def test_custom_button_expression(appliance, context, objects, button_group, vis
             assert custom_button_group.item_enabled(button.text)
         elif expression == "visibility":
                 assert button.text in custom_button_group.items
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@pytest.mark.parametrize("context", [ViaSSUI])
+def test_custom_button_on_vm_resource_detail(context):
+    """ Test custom button on SSUI vm resource detail page
+
+    Bugzilla:
+        * 1427430
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/2h
+        caseimportance: high
+        caselevel: integration
+        caseposneg: positive
+        caseautomation: Not Automated
+        testtype: functional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Add custom button for VM/Instance object from automation
+            2. In normal UI - OPS, Provision test service using any infra provider
+            (nvc55 recommended)
+            3. In SSUI, Check custom button on VM resource details page
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
+def test_custom_button_role_access_service(context):
+    """
+    Test custom button for role access of SSUI
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/4h
+        caseimportance: medium
+        caselevel: integration
+        caseposneg: positive
+        caseautomation: Not Automated
+        testtype: functional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Create role by copying EvmRole-user_self_service
+            2. Create Group and respective user for role
+            3. Create custom button group
+            4. Create custom button with role
+            5. Check use able to access custom button or not
+    """
+    pass
+
+
+@pytest.mark.manual
+def test_custom_group_on_catalog_item():
+    """
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/8h
+        caseimportance: medium
+        caselevel: component
+        caseposneg: positive
+        caseautomation: Not Automated
+        testtype: functional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Add catalog_item
+            2. Goto catalog detail page and select `add group` from toolbar
+            3. Fill info and save button
+    """
+    pass
+
+
+@pytest.mark.manual
+def test_custom_button_on_catalog_item():
+    """
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/8h
+        caseimportance: medium
+        caselevel: component
+        caseposneg: positive
+        caseautomation: Not Automated
+        testtype: functional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Add catalog_item
+            2. Goto catalog detail page and select `add button` from toolbar
+            3. Fill info and save button
+    """
+    pass
+
+
+@pytest.mark.manual
+def test_custom_button_dialog_service_archived():
+    """ From Service OPS check if archive vms"s dialog invocation via custom button. ref: BZ1439883
+
+    Bugzilla:
+        * 1439883
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/8h
+        caseimportance: medium
+        caselevel: component
+        caseposneg: positive
+        caseautomation: Not Automated
+        testtype: functional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Create a button at the service level with InspectMe method
+            2. Create a service that contains 1 VM
+            3. Remove this VM from the provider, resulting in a VM state of 'Archived'
+            4. Go to the service and try to execute the button
+    """
+    pass
+
+
+@pytest.mark.manual
+def test_custom_button_dialog(button_group):
+    """ Test custom button with dialog and InspectMe method
+
+    Bugzillas:
+        * 1574774
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/4h
+        caseimportance: medium
+        caselevel: component
+        caseposneg: positive
+        caseautomation: Not Automated
+        testtype: functional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Create custom button group with the Object type
+            2. Create a custom button with service dialog
+            3. Navigate to object Details page
+            4. Check for button group and button
+            5. Select/execute button from group dropdown for selected entities
+            6. Fill dialog and submit
+            7. Check for the proper flash message related to button execution
+    """
+    pass

@@ -327,3 +327,78 @@ def test_custom_button_quotes(appliance, provider, setup_provider, dialog, reque
 
     dialog_view.submit.click()
     view.flash.assert_message("Order Request was Submitted")
+
+
+@pytest.mark.manual
+def test_custom_button_simulation():
+    """ Test whether custom button works with simulation option
+
+    Bugzillas:
+        * 1535215
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/8h
+        caseimportance: low
+        caselevel: component
+        caseposneg: positive
+        caseautomation: Not Automated
+        testtype: functional
+        startsin: 5.8
+        casecomponent: custom_button
+        tags: custom_button
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_custom_button_language():
+    """ There was bug with usecase before.
+    Additional info - https://bugzilla.redhat.com/show_bug.cgi?id=1568417
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/4h
+        caseimportance: low
+        caselevel: acceptance
+        caseposneg: positive
+        caseautomation: Manual Only
+        testtype: nonfunctional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. set the language to french
+            2. go to automation-> automate -> customization
+            3. check the custom buttons tree should not empty from automation
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_attribute_override():
+    """
+    Reference BZ:
+    https://bugzilla.redhat.com/show_bug.cgi?id=1651099
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/4h
+        caseimportance: medium
+        caselevel: acceptance
+        caseposneg: positive
+        caseautomation: Non Automated
+        testtype: nonfunctional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. create a custom button to request the call_instance_with_message
+            2. set the message to create
+            3. set the attributes instance, class, namespace to "whatever"
+            4. set the attribute message to "my_message"
+            5. save it
+    """
+    pass
