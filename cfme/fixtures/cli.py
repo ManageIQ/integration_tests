@@ -339,30 +339,6 @@ def appliance_with_providers(appliance_preupdate):
     return appliance_preupdate
 
 
-@pytest.fixture(scope="module")
-def ansible_repository(appliance):
-    repositories = appliance.collections.ansible_repositories
-    try:
-        repository = repositories.create(
-            name=fauxfactory.gen_alpha(),
-            url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
-            description=fauxfactory.gen_alpha()
-        )
-    except KeyError:
-        pytest.skip("Skipping since no such key found in yaml")
-    view = navigate_to(repository, "Details")
-    refresh = view.toolbar.refresh.click
-    wait_for(
-        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
-        timeout=60,
-        fail_func=refresh,
-    )
-    yield repository
-
-    if repository.exists:
-        repository.delete()
-
-
 def provider_app_crud(provider_class, appliance):
     try:
         prov = list_providers_by_class(provider_class)[0]
