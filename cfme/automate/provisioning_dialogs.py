@@ -203,8 +203,8 @@ class ProvisioningDialogsCollection(BaseCollection):
             flash_msg = 'Dialog "{}" was added'.format(dialog.description)
             btn = view.form.add
         btn.click()
-        view = dialog.create_view(ProvDiagAllView if cancel else ProvDiagDetailsView)
-        assert view.is_displayed
+        view = dialog.create_view(ProvDiagAllView if cancel else ProvDiagDetailsView,
+                                           wait='10s')
         view.flash.assert_success_message(flash_msg)
         return dialog
 

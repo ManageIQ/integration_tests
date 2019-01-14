@@ -877,7 +877,7 @@ class GroupCollection(BaseCollection):
         else:
             view.add_button.click()
             flash_message = 'Group "{}" was saved'.format(group.description)
-        view = self.create_view(AllGroupView)
+        view = self.create_view(AllGroupView, wait='10s')
 
         try:
             view.flash.assert_message(flash_blocked_msg)
@@ -885,9 +885,7 @@ class GroupCollection(BaseCollection):
         except AssertionError:
             pass
 
-        view.wait_displayed()
         view.flash.assert_success_message(flash_message)
-        assert view.is_displayed
 
         # To ensure that the group list is updated
         view.browser.refresh()

@@ -546,8 +546,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
         if not cancel:
             msg = ('Delete initiated for 1 {} Provider from '
                    'the {} Database'.format(self.string_name, self.appliance.product_name))
-            main_view = self.create_view(navigator.get_class(self, 'All').VIEW)
-            main_view.wait_displayed(timeout='10s')
+            main_view = self.create_view(navigator.get_class(self, 'All').VIEW, wait='10s')
             main_view.flash.assert_success_message(msg)
 
     def delete_rest(self):

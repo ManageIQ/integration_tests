@@ -41,7 +41,11 @@ class MiqSSUIBrowser(Browser):
         return self.extra_objects['appliance']
 
     def create_view(self, *args, **kwargs):
-        return self.appliance.ssui.create_view(*args, **kwargs)
+        timeout = kwargs.pop('wait', None)
+        view = self.appliance.ssui.create_view(*args, **kwargs)
+        if timeout:
+            view.wait_displayed(timeout=timeout)
+        return view
 
     @property
     def product_version(self):

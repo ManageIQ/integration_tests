@@ -391,9 +391,7 @@ class Method(BaseEntity, Copiable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(MethodDetailsView, override=updates)
-        view.wait_displayed()
-        assert view.is_displayed
+        view = self.create_view(MethodDetailsView, override=updates, wait='10s')
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
@@ -409,8 +407,7 @@ class Method(BaseEntity, Copiable):
             assert details_page.is_displayed
             details_page.flash.assert_no_error()
         else:
-            result_view = self.create_view(ClassDetailsView, self.parent_obj)
-            assert result_view.is_displayed
+            result_view = self.create_view(ClassDetailsView, self.parent_obj, wait='10s')
             result_view.flash.assert_no_error()
             result_view.flash.assert_message(
                 'Automate Method "{}": Delete successful'.format(self.name))

@@ -254,9 +254,7 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
             view.save.click()
         else:
             view.cancel.click()
-        view = self.create_view(DetailsCatalogItemView, override=updates)
-        view.wait_displayed()
-        assert view.is_displayed
+        view = self.create_view(DetailsCatalogItemView, override=updates, wait='10s')
         view.flash.assert_no_error()
         # TODO move these assertions to tests
         # if changed:
@@ -503,12 +501,10 @@ class CatalogItemsCollection(BaseCollection):
         view = navigate_to(cat_item, 'Add')
         view.fill(cat_item.fill_dict)
         view.add.click()
-        view = self.create_view(AllCatalogItemView)
+        view = self.create_view(AllCatalogItemView, wait='10s')
         # TODO move this assertion to tests
         # view.flash.assert_success_message('Catalog Item "{}" was added'.format(
         #     cat_item.name), partial=True)
-        view.wait_displayed()
-        assert view.is_displayed
         view.flash.assert_no_error()
         return cat_item
 

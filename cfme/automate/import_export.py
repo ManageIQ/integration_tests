@@ -80,14 +80,12 @@ class AutomateGitRepository(Navigatable):
         assert imex_page.import_git.fill(self.fill_values_repo_add)
         imex_page.import_git.submit.click()
         imex_page.browser.plugin.ensure_page_safe(timeout='5m')
-        git_select = self.create_view(GitImportSelectorView)
-        assert git_select.is_displayed
+        git_select = self.create_view(GitImportSelectorView, wait='10s')
         git_select.flash.assert_no_error()
         git_select.fill(self.fill_values_branch_select(branch, tag))
         git_select.submit.click()
         git_select.browser.plugin.ensure_page_safe(timeout='5m')
-        imex_page = self.create_view(AutomateImportExportView)
-        assert imex_page.is_displayed
+        imex_page = self.create_view(AutomateImportExportView, wait='10s')
         imex_page.flash.assert_no_error()
         # Now find the domain in database
         namespaces = self.appliance.db.client['miq_ae_namespaces']

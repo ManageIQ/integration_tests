@@ -240,8 +240,7 @@ class Alert(BaseEntity, Updateable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(AlertDetailsView, override=updates)
-        view.wait_displayed()
+        view = self.create_view(AlertDetailsView, override=updates, wait='10s')
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
@@ -282,8 +281,7 @@ class Alert(BaseEntity, Updateable, Pretty):
             view.cancel_button.click()
         for attrib, value in updates.items():
             setattr(new_alert, attrib, value)
-        view = new_alert.create_view(AlertDetailsView)
-        view.wait_displayed()
+        view = new_alert.create_view(AlertDetailsView, wait='10s')
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
@@ -370,8 +368,7 @@ class AlertCollection(BaseCollection):
             timeline_event=timeline_event, mgmt_event=mgmt_event)
         alert._fill(view)
         view.add_button.click()
-        view = alert.create_view(AlertDetailsView)
-        view.wait_displayed()
+        view = alert.create_view(AlertDetailsView, wait='10s')
         view.flash.assert_success_message('Alert "{}" was added'.format(alert.description))
         return alert
 

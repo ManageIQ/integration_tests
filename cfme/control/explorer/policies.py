@@ -603,8 +603,7 @@ class PolicyCollection(BaseCollection):
         })
         view.add_button.click()
 
-        view = policy.create_view(PolicyDetailsView, o=policy)
-        view.wait_displayed()
+        view = policy.create_view(PolicyDetailsView, o=policy, wait='10s')
         view.flash.assert_success_message('Policy "{}" was added'.format(policy.description))
         return policy
 

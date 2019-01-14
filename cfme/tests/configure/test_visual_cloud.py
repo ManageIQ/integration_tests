@@ -192,8 +192,7 @@ def test_cloud_start_page(request, appliance, start_page):
     appliance.user.my_settings.visual.login_page = start_page
     appliance.server.logout()
     appliance.server.login_admin()
-    landing_view = appliance.browser.create_view(landing_pages[start_page])
-    assert landing_view.is_displayed
+    appliance.browser.create_view(landing_pages[start_page], wait='10s')
 
 
 def test_cloudprovider_noquads(request, set_cloud_provider_quad):

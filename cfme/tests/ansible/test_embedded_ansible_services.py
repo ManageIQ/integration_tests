@@ -426,7 +426,6 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
             "machine_credential": ansible_credential.name
         }
     view = navigate_to(service_catalog, "Order")
-    view.wait_displayed()
     options = [o.text for o in (view.fields('credential')).visible_widget.all_options]
     assert ansible_credential.name in set(options)
 

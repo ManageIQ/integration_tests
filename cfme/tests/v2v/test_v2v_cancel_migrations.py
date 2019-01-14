@@ -62,8 +62,7 @@ def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, h
         handle_exception=True)
     view.progress_card.select_plan(migration_plan.name)
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
-                                                             'Details').VIEW)
-    view.wait_displayed()
+                                                             'Details').VIEW, wait='10s')
     request_details_list = view.migration_request_details_list
     vms = request_details_list.read()
 

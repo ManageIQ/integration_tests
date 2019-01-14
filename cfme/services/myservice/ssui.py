@@ -219,12 +219,7 @@ def delete(self):
         view.remove_service.click()
     view = self.create_view(RemoveServiceView)
     view.remove.click()
-    view = self.create_view(MyServicesView)
-    wait_for(
-        lambda: view.is_displayed, delay=15, num_sec=300,
-        message="waiting for view to be displayed"
-    )
-    assert view.is_displayed
+    view = self.create_view(MyServicesView, wait=300)
     # TODO - remove sleep when BZ 1518954 is fixed
     time.sleep(10)
     assert view.notification.assert_message("{} was removed.".format(self.name))
@@ -252,13 +247,10 @@ def retire(self):
     view = navigate_to(self, 'Retire')
     view.retire.click()
     if self.appliance.version < "5.10":
-        view = self.create_view(MyServicesView)
-    else:
-        view = self.create_view(DetailsMyServiceView)
-    view.wait_displayed('20s')
-    if self.appliance.version < "5.10":
+        view = self.create_view(MyServicesView, wait='20s')
         assert view.notification.assert_message("{} was retired.".format(self.name))
     else:
+        view = self.create_view(DetailsMyServiceView, wait='20s')
         assert view.notification.assert_message("Service Retire - Request Created")
 
 

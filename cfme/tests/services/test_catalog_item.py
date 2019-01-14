@@ -165,8 +165,7 @@ def test_catalog_item_duplicate_name(appliance, dialog, catalog):
         catalog=catalog,
         dialog=dialog
     )
-    view = cat_item.create_view(AllCatalogItemView)
-    view.wait_displayed()
+    view = cat_item.create_view(AllCatalogItemView, wait='10s')
     view.flash.assert_success_message('Service Catalog Item "{}" was added'.format(cat_item.name))
     with pytest.raises(AssertionError):
         appliance.collections.catalog_items.create(
@@ -177,8 +176,7 @@ def test_catalog_item_duplicate_name(appliance, dialog, catalog):
             catalog=catalog,
             dialog=dialog
         )
-    view = cat_item.create_view(AddCatalogItemView)
-    view.wait_displayed()
+    view = cat_item.create_view(AddCatalogItemView, wait='10s')
     view.flash.assert_message('Name has already been taken')
 
 

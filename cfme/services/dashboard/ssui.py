@@ -82,12 +82,8 @@ def total_services(self):
     total_service = view.dashboard_card.get_count('Total Services')
     view = navigate_to(self, 'TotalServices')
     view.flash.assert_no_error()
-    view = self.create_view(MyServicesView)
-    wait_for(
-        lambda: view.is_displayed, delay=15, num_sec=300,
-        message="waiting for view to be displayed"
-    )
-    assert view.is_displayed
+    self.create_view(MyServicesView, wait=300)
+
     return total_service
 
 
@@ -143,12 +139,7 @@ def retiring_soon(self):
     retiring_services = view.aggregate_card.get_count('Retiring Soon')
     view = navigate_to(self, 'RetiringSoon')
     view.flash.assert_no_error()
-    view = self.create_view(MyServicesView)
-    wait_for(
-        lambda: view.is_displayed, delay=15, num_sec=300,
-        message="waiting for view to be displayed"
-    )
-    assert view.is_displayed
+    self.create_view(MyServicesView, wait=300)
     return retiring_services
 
 
@@ -160,12 +151,7 @@ def current_services(self):
     current_service = view.aggregate_card.get_count('Current Services')
     view = navigate_to(self, 'CurrentServices')
     view.flash.assert_no_error()
-    view = self.create_view(MyServicesView)
-    wait_for(
-        lambda: view.is_displayed, delay=15, num_sec=300,
-        message="waiting for view to be displayed"
-    )
-    assert view.is_displayed
+    self.create_view(MyServicesView, wait=300)
     return current_service
 
 
@@ -177,12 +163,7 @@ def retired_services(self):
     retired_service = view.aggregate_card.get_count('Retired Services')
     view = navigate_to(self, 'RetiredServices')
     view.flash.assert_no_error()
-    view = self.create_view(MyServicesView)
-    wait_for(
-        lambda: view.is_displayed, delay=15, num_sec=300,
-        message="waiting for view to be displayed"
-    )
-    assert view.is_displayed
+    self.create_view(MyServicesView, wait=300)
     return retired_service
 
 

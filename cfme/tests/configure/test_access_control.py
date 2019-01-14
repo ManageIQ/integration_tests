@@ -1371,7 +1371,7 @@ def test_copied_user_password_inheritance(appliance, group_collection, request):
     request.addfinalizer(user.delete)
     view = navigate_to(user, 'Details')
     view.toolbar.configuration.item_select('Copy this User to a new User')
-    view = user.create_view(AddUserView)
+    view = user.create_view(AddUserView, wait='10s')
     assert view.password_txt.value == '' and view.password_verify_txt.value == ''
     view.cancel_button.click()
 
