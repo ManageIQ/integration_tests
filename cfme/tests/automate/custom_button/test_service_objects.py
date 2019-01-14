@@ -368,10 +368,17 @@ def vis_enb_button(request, appliance, button_group):
 def test_custom_button_expression(appliance, context, objects, button_group, vis_enb_button):
     """ Test custom button as per expression enablement/visibility.
 
+    Bugzilla:
+        * 1509959, 1513498
+
     Polarion:
         assignee: ndhandre
         initialEstimate: 1/4h
         caseimportance: medium
+        caselevel: component
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
         testSteps:
             1. Create custom button group with the Object type
             2. Create a custom button with expression (Tag)
@@ -381,6 +388,7 @@ def test_custom_button_expression(appliance, context, objects, button_group, vis
             4. Check: button should not enable/visible without tag
             5. Check: button should enable/visible with tag
     """
+
     # ToDo: Add support for Generic Object by adding tagging ability from All page.
     group, obj_type = button_group
     button, expression = vis_enb_button
