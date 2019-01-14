@@ -11,7 +11,7 @@ from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ssui import (
     navigator, SSUINavigateStep, navigate_to, ViaSSUI
 )
-from cfme.utils.version import VersionPicker, LOWEST
+from cfme.utils.version import Version, VersionPicker, LOWEST
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     Notification,
@@ -145,16 +145,25 @@ class RemoveServiceView(MyServicesView):
 
 
 class RetireServiceView(MyServicesView):
-    title = Text(locator='//h4[@id="myModalLabel"]')
+    title = Text(locator='//h4[@class="modal-title"]')
 
-    retire = Button('Yes, Retire Service Now')
+    retire = VersionPicker({
+        Version.lowest(): Button('Yes, Retire Service Now'),
+        "5.10": Button('OK')
+    })
     cancel = Button('Cancel')
 
     @property
     def is_displayed(self):
+        title = VersionPicker(
+            {
+                LOWEST: "Retire Service Now",
+                '5.10': "Retire Services"
+            }
+        ).pick(self.extra.appliance.version)
         return (
             self.retire.is_displayed and
-            self.title.text == 'Retire Service Now')
+            self.title.text == title)
 
 
 @MiqImplementationContext.external_for(MyService.update, ViaSSUI)
@@ -242,14 +251,15 @@ def launch_vm_console(self, catalog_item):
 def retire(self):
     view = navigate_to(self, 'Retire')
     view.retire.click()
-    view = self.create_view(MyServicesView)
-    assert wait_for(
-        lambda: view.is_displayed, delay=3, num_sec=300,
-        message="waiting for view to be displayed"
-    )
-    # TODO - remove sleep when BZ 1518954 is fixed
-    time.sleep(10)
-    assert view.notification.assert_message("{} was retired.".format(self.name))
+    if self.appliance.version < "5.10":
+        view = self.create_view(MyServicesView)
+    else:
+        view = self.create_view(DetailsMyServiceView)
+    view.wait_displayed('20s')
+    if self.appliance.version < "5.10":
+        assert view.notification.assert_message("{} was retired.".format(self.name))
+    else:
+        assert view.notification.assert_message("Service Retire - Request Created")
 
 
 @MiqImplementationContext.external_for(MyService.service_power, ViaSSUI)
@@ -342,7 +352,4 @@ class MyServiceRetire(SSUINavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        if self.appliance.version >= "5.8":
-            self.prerequisite_view.lifecycle.item_select('Retire')
-        else:
-            self.prerequisite_view.lifecycle.item_select('Retire Now')
+        self.prerequisite_view.lifecycle.item_select('Retire')
