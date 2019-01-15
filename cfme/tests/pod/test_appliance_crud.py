@@ -6,6 +6,7 @@ import yaml
 
 from kubernetes.client.rest import ApiException
 from pytest import config
+from time import sleep
 
 from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.fixtures.appliance import sprout_appliances
@@ -257,6 +258,7 @@ def test_crud_pod_appliance(temp_pod_appliance, provider, setup_provider):
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -278,6 +280,7 @@ def test_crud_pod_appliance_ansible_deployment(temp_pod_ansible_appliance, provi
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: high
         initialEstimate: 1/2h
     """
@@ -296,6 +299,7 @@ def test_crud_pod_appliance_ext_db():
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -313,6 +317,7 @@ def test_crud_pod_appliance_custom_config():
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -327,6 +332,7 @@ def test_pod_appliance_config_upgrade():
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -340,6 +346,7 @@ def test_pod_appliance_image_upgrade():
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -353,6 +360,7 @@ def test_pod_appliance_db_upgrade():
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -368,6 +376,7 @@ def test_pod_appliance_start_stop(temp_pod_appliance, provider, setup_provider):
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: high
         initialEstimate: 1/6h
     """
@@ -386,6 +395,7 @@ def test_pod_appliance_scale():
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -399,6 +409,7 @@ def test_aws_smartstate_pod():
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: medium
         initialEstimate: 1h
     """
@@ -417,6 +428,7 @@ def test_pod_appliance_db_backup_restore(temp_pod_appliance, provider, setup_pro
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: high
         initialEstimate: 1h
     """
@@ -491,17 +503,18 @@ def test_pod_appliance_basic_ipa_auth(temp_pod_appliance, provider, setup_provid
                                       template_folder, ipa_auth_provider, setup_ipa_auth_provider,
                                       ipa_user):
     """ Test basic ipa authentication in appliance
-    The test does the following:
-     - enable external httpd authentication in appliance
-     - deploy latest configmap generator
-     - generate new configuration
-     - deploy new httpd configmap configuration
-     - restart httpd pod
-     - to login to appliance using external credentials
 
     Polarion:
         assignee: izapolsk
-        initialEstimate: None
+        initialEstimate: 1/2h
+        casecomponent: Containers
+        testSteps:
+          - enable external httpd authentication in appliance
+          - deploy latest configmap generator
+          - generate new configuration
+          - deploy new httpd configmap configuration
+          - restart httpd pod
+          - to login to appliance using external credentials
     """
     appliance = temp_pod_appliance
     auth_prov = ipa_auth_provider
@@ -548,21 +561,23 @@ def test_pod_appliance_basic_ipa_auth(temp_pod_appliance, provider, setup_provid
 
     logger.info("running configmap generation command inside generator app")
     output_file = '/tmp/ipa_configmap'
-    generator_cmd = ['/opt/httpd_configmap_generator/bin/httpd_configmap_generator', 'ipa',
+    generator_cmd = ['/usr/bin/bash -c',
+                     '"httpd_configmap_generator', 'ipa',
                      '--host={}'.format(appliance.hostname),
                      '--ipa-server={}'.format(auth_prov.host1),
                      '--ipa-domain={}'.format(auth_prov.iparealm),  # looks like yaml value is wrong
                      '--ipa-realm={}'.format(auth_prov.iparealm),
                      '--ipa-principal={}'.format(auth_prov.ipaprincipal),
                      '--ipa-password={}'.format(auth_prov.bind_password),
-                     '--output={}'.format(output_file), '-d', '-f']
+                     '--output={}'.format(output_file), '-d', '-f"']
 
     # todo: implement this in wrapanapi by resolving chain dc->rc->po/st
     def get_pod_name(pattern):
         def func(name):
             try:
                 all_pods = provider.mgmt.list_pods(namespace=appliance.project)
-                return next(p.metadata.name for p in all_pods if p.metadata.name.startswith(name))
+                return next(p.metadata.name for p in all_pods if p.metadata.name.startswith(name)
+                            and not p.metadata.name.endswith('-deploy'))
             except StopIteration:
                 return None
         return wait_for(func=func, func_args=[pattern], timeout='5m',
@@ -570,11 +585,18 @@ def test_pod_appliance_basic_ipa_auth(temp_pod_appliance, provider, setup_provid
 
     logger.info("generator cmd: %s", generator_cmd)
     generator_pod_name = get_pod_name(generator_dc_name)
-    generator_output = provider.mgmt.run_command(namespace=appliance.project,
-                                                 name=generator_pod_name,
-                                                 cmd=generator_cmd)
+    logger.info("generator pod name: {}", generator_pod_name)
+    # workaround generator pod becomes ready but cannot property run commands for some time
+    sleep(60)
+    logger.info(appliance.ssh_client.run_command('oc get pods -n {}'.format(appliance.project),
+                                                 ensure_host=True))
+    generator_output = str(appliance.ssh_client.run_command(
+        'oc exec {pod} -n {ns} -- {cmd}'.format(pod=generator_pod_name, ns=appliance.project,
+                                                cmd=" ".join(generator_cmd)),
+        ensure_host=True))
 
-    assert 'Saving Auth Config-Map to' in generator_output, "config map generation failed"
+    assert_output = "config map generation failed because of {}".format(generator_output)
+    assert 'Saving Auth Config-Map to' in generator_output, assert_output
 
     httpd_config = provider.mgmt.run_command(namespace=appliance.project,
                                              name=generator_pod_name,
@@ -598,6 +620,8 @@ def test_pod_appliance_basic_ipa_auth(temp_pod_appliance, provider, setup_provid
     provider.mgmt.scale_entity(name=httpd_name, namespace=appliance.project, replicas=1)
     provider.mgmt.wait_pod_running(namespace=appliance.project, name=httpd_name)
 
+    # workaround, httpd pod becomes running but cannot handle requests properly for some short time
+    sleep(60)
     # connect to appliance and try to login
     logger.info("trying to login with user from ext auth system")
     appliance.server.login(user=ipa_user)
