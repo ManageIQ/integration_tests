@@ -22,15 +22,16 @@ from cfme.utils.wait import wait_for
 class BasicInfoForm(ServicesCatalogView):
     title = Text('#explorer_title_text')
 
-    # Filling dropdowns first to avoid selenium field reset bug
-    select_catalog = BootstrapSelect('catalog_id')
-    select_dialog = BootstrapSelect('dialog_id')
     name = Input(name='name')
     description = Input(name='description')
     display = Checkbox(name='display')
+
+    select_catalog = BootstrapSelect('catalog_id')
+    select_dialog = BootstrapSelect('dialog_id')
+    select_provider = BootstrapSelect('manager_id')
     select_orch_template = BootstrapSelect('template_id')
     select_config_template = BootstrapSelect('template_id')
-    select_provider = BootstrapSelect('manager_id')
+
     subtype = BootstrapSelect('generic_subtype')
     field_entry_point = Input(name='fqname')
     retirement_entry_point = Input(name='retire_fqname')
