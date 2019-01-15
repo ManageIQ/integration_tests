@@ -1,7 +1,7 @@
 # Common stuff for custom button testing
 
 from widgetastic.widget import View, Text, TextInput
-from widgetastic_patternfly import Button
+from widgetastic_patternfly import Button, Dropdown
 
 
 OBJ_TYPE_59 = [
@@ -91,3 +91,12 @@ class TextInputDialogView(View):
     def is_displayed(self):
         # This is only for wait for view
         return self.submit.is_displayed and self.service_name.is_displayed
+
+
+class CustomButtonSSUIDropdwon(Dropdown):
+    """This is workaround for custom button Dropdown in SSUI item_enabled method"""
+
+    def item_enabled(self, item):
+        self._verify_enabled()
+        el = self.item_element(item)
+        return 'disabled' not in self.browser.classes(el)

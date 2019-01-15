@@ -4,7 +4,7 @@ import fauxfactory
 from widgetastic_patternfly import Dropdown
 
 from cfme.services.myservice import MyService
-from cfme.tests.automate.custom_button import log_request_check
+from cfme.tests.automate.custom_button import CustomButtonSSUIDropdwon, log_request_check
 from cfme.utils.appliance import ViaREST, ViaUI, ViaSSUI
 from cfme.utils.appliance.implementations.ui import navigate_to as ui_nav
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
@@ -28,15 +28,6 @@ TEXT_DISPLAY = {
     "group": {"group_display": False, "btn_display": True},
     "button": {"group_display": True, "btn_display": False},
 }
-
-
-
-class CustomButtonSSUIDropdwon(Dropdown):
-    def item_enabled(self, item):
-        """This is workaround for custom button Dropdwon SSUI item_enabled method"""
-        self._verify_enabled()
-        el = self.item_element(item)
-        return 'disabled' not in self.browser.classes(el)
 
 
 @pytest.fixture(scope="module")
@@ -407,16 +398,21 @@ def test_custom_button_expression(appliance, context, objects, button_group, vis
 
     with appliance.context.use(context):
         view = navigate_to(obj, dest_name)
-        custom_button_group = CustomButtonSSUIDropdwon(view, group.text)
+        custom_button_group = (
+            CustomButtonSSUIDropdwon(view, group.text)
+            if context is ViaSSUI
+            else Dropdown(view, group.text)
+        )
 
         if expression == "enablement":
-            # Note: SSUI still fallow enablement behaviour like 5.9
+            # Note: SSUI still fallow enablement behaviour like 5.9. In latest version dropdown
+            # having single button and button is disabled then dropdown disabled.
             if appliance.version < "5.10" or (context is ViaSSUI):
                 assert not custom_button_group.item_enabled(button.text)
             else:
                 assert not custom_button_group.is_enabled
         elif expression == "visibility":
-            assert not custom_button_group.is_displayed
+                assert not custom_button_group.is_displayed
 
     # Check with tag
     with appliance.context.use(ViaUI):
@@ -425,9 +421,13 @@ def test_custom_button_expression(appliance, context, objects, button_group, vis
 
     with appliance.context.use(context):
         view = navigate_to(obj, dest_name)
-        custom_button_group = CustomButtonSSUIDropdwon(view, group.text)
+        custom_button_group = (
+            CustomButtonSSUIDropdwon(view, group.text)
+            if context is ViaSSUI
+            else Dropdown(view, group.text)
+        )
 
         if expression == "enablement":
             assert custom_button_group.item_enabled(button.text)
         elif expression == "visibility":
-            assert custom_button_group.is_displayed
+                assert button.text in custom_button_group.items
