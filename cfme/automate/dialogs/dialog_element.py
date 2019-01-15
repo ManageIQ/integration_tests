@@ -132,8 +132,7 @@ class Element(BaseEntity):
         view.fill(element)
         view.ele_save_button.click()
         view.save_button.click()
-        view = self.create_view(DetailsDialogView)
-        assert view.is_displayed
+        view = self.create_view(DetailsDialogView, wait='10s')
         view.flash.assert_no_error()
 
     def reorder_elements(self, add_element, second_element, element_data):
@@ -158,8 +157,7 @@ class Element(BaseEntity):
         dropped_el = second_element.get('element_information').get("ele_label")
         view.dragndrop.drag_and_drop(self.element_loc(dragged_el), self.element_loc(dropped_el))
         view.save_button.click()
-        view = self.create_view(DetailsDialogView)
-        assert view.is_displayed
+        view = self.create_view(DetailsDialogView, wait='10s')
         view.flash.assert_no_error()
 
 

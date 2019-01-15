@@ -176,8 +176,7 @@ class Action(BaseEntity, Updateable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ActionDetailsView, override=updates)
-        view.wait_displayed('15s')
+        view = self.create_view(ActionDetailsView, override=updates, wait='15s')
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
@@ -252,8 +251,7 @@ class ActionCollection(BaseCollection):
         self.browser.plugin.ensure_page_safe()
         view.add_button.click()
         action = self.instantiate(description, action_type, action_values=action_values)
-        view = action.create_view(ActionDetailsView)
-        view.wait_displayed()
+        view = action.create_view(ActionDetailsView, wait='10s')
         view.flash.assert_success_message('Action "{}" was added'.format(action.description))
         return action
 

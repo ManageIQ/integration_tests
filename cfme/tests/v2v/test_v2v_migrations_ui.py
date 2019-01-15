@@ -284,7 +284,6 @@ def test_v2v_ui_set2(request, appliance, v2v_providers, form_data_single_datasto
         view.migration_plans_not_started_list.migrate_plan(plan_name)
 
     view = navigate_to(migration_plan_collection, 'All')
-    view.wait_displayed()
     soft_assert(plan_name in view.migration_plans_not_started_list.read())
     soft_assert(view.migration_plans_not_started_list.get_plan_description(plan_name) ==
      plan_description)
@@ -292,8 +291,7 @@ def test_v2v_ui_set2(request, appliance, v2v_providers, form_data_single_datasto
     soft_assert(str(len(vm_selected)) in view.migration_plans_not_started_list.
         get_vm_count_in_plan(plan_name))
     view.migration_plans_not_started_list.select_plan(plan_name)
-    view = appliance.browser.create_view(MigrationPlanRequestDetailsView)
-    view.wait_displayed()
+    view = appliance.browser.create_view(MigrationPlanRequestDetailsView, wait='10s')
     view.items_on_page.item_select('15')
     soft_assert(set(view.migration_request_details_list.read()) == set(vm_selected))
     # Test plan has unique name
@@ -308,7 +306,6 @@ def test_v2v_ui_set2(request, appliance, v2v_providers, form_data_single_datasto
     view.cancel_btn.click()
 
     view = navigate_to(infrastructure_mapping_collection, 'All')
-    view.wait_displayed()
     soft_assert(view.infra_mapping_list.get_associated_plans_count(mapping.name) ==
      '1 Associated Plan')
     soft_assert(view.infra_mapping_list.get_associated_plans(mapping.name) == plan_name)

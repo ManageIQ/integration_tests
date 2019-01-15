@@ -206,8 +206,7 @@ class Class(BaseEntity, Copiable):
             assert details_page.is_displayed
             details_page.flash.assert_no_error()
         else:
-            result_view = self.create_view(NamespaceDetailsView, self.parent_obj)
-            assert result_view.is_displayed
+            result_view = self.create_view(NamespaceDetailsView, self.parent_obj, wait='10s')
             result_view.flash.assert_no_error()
             result_view.flash.assert_message(
                 'Automate Class "{}": Delete successful'.format(self.description or self.name))
@@ -219,8 +218,7 @@ class Class(BaseEntity, Copiable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ClassDetailsView, override=updates)
-        assert view.is_displayed
+        view = self.create_view(ClassDetailsView, override=updates, wait='10s')
         view.flash.assert_no_error()
         if changed:
             # When updating, class FQDN is used

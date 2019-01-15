@@ -83,8 +83,7 @@ def test_storage_snapshot_create_cancelled_validation(volume):
 
     snapshot_name = fauxfactory.gen_alpha()
     volume.create_snapshot(snapshot_name, cancel=True)
-    view = volume.create_view(VolumeDetailsView)
-    view.wait_displayed(timeout='10s')
+    view = volume.create_view(VolumeDetailsView, wait='10s')
     view.flash.assert_message(
         'Snapshot of Cloud Volume "{}" was cancelled by the user'.format(volume.name))
 
@@ -133,8 +132,7 @@ def test_storage_volume_snapshot_crud(volume):
     initial_snapshot_count = volume.snapshots_count
     snapshot_name = fauxfactory.gen_alpha()
     snapshot = volume.create_snapshot(snapshot_name)
-    view = volume.create_view(VolumeDetailsView)
-    view.wait_displayed(timeout='10s')
+    view = volume.create_view(VolumeDetailsView, wait='10s')
     view.flash.assert_success_message(
         'Snapshot for Cloud Volume "{}" created'.format(volume.name))
 

@@ -34,7 +34,7 @@ class Implementation(object):
         except AttributeError:
             pass
 
-    def create_view(self, view_class, additional_context=None):
+    def create_view(self, view_class, additional_context=None, wait=None):
         """Method that is used to instantiate a Widgetastic View.
 
         Views may define ``LOCATION`` on them, that implies a :py:meth:`force_navigate` call with
@@ -45,7 +45,7 @@ class Implementation(object):
             additional_context: Additional informations passed to the view (user name, VM name, ...)
                 which is also passed to the :py:meth:`force_navigate` in case when navigation is
                 requested.
-
+            wait: time to wait for view to show up
         Returns:
             An instance of the ``view_class``
         """
@@ -54,5 +54,6 @@ class Implementation(object):
             self.widgetastic,
             additional_context=additional_context,
             logger=logger)
-
+        if wait:
+            view.wait_displayed(timeout=wait)
         return view

@@ -88,8 +88,7 @@ def test_compute_chargeback_duplicate_disallowed(request):
     # cancel form, check all redirect
     view.cancel_button.click()
     view = cb_rate.create_view(
-        navigator.get_class(cb_rate, 'All').VIEW)
-    assert view.is_displayed
+        navigator.get_class(cb_rate, 'All').VIEW, wait='10s')
     view.flash.assert_success_message('Add of new Chargeback Rate was cancelled by the user')
 
 

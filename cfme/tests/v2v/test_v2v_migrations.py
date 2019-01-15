@@ -126,8 +126,7 @@ def test_single_network_single_vm_migration(request, appliance, v2v_providers, h
         handle_exception=True)
     view.progress_card.select_plan(migration_plan.name)
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
-                                                             'Details').VIEW)
-    view.wait_displayed()
+                                                             'Details').VIEW, wait='10s')
     request_details_list = view.migration_request_details_list
     vms = request_details_list.read()
     # ideally this will always pass as request details list shows VMs in migration plan
@@ -182,8 +181,7 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
         handle_exception=True)
     view.progress_card.select_plan(migration_plan.name)
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
-                                                             'Details').VIEW)
-    view.wait_displayed()
+                                                             'Details').VIEW, wait='10s')
     request_details_list = view.migration_request_details_list
     vms = request_details_list.read()
 
@@ -343,8 +341,7 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
         handle_exception=True)
     view.progress_card.select_plan(migration_plan.name)
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
-                                                             'Details').VIEW)
-    view.wait_displayed()
+                                                             'Details').VIEW, wait='10s')
     request_details_list = view.migration_request_details_list
     view.items_on_page.item_select('15')
     vms = request_details_list.read()
@@ -562,8 +559,7 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
         handle_exception=True)
     view.progress_card.select_plan(migration_plan.name)
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
-                                                             'Details').VIEW)
-    view.wait_displayed()
+                                                             'Details').VIEW, wait='10s')
     request_details_list = view.migration_request_details_list
     vms = request_details_list.read()
     view.items_on_page.item_select('15')

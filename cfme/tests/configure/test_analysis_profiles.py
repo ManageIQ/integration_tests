@@ -171,9 +171,8 @@ def test_vmanalysis_profile_description_validation(analysis_profile_collection):
 
     # Should still be on the form page after create method raises exception
     view = analysis_profile_collection.create_view(
-        navigator.get_class(analysis_profile_collection, 'AddVmProfile').VIEW
+        navigator.get_class(analysis_profile_collection, 'AddVmProfile').VIEW, wait='10s'
     )
-    assert view.is_displayed
     view.flash.assert_message("Description can't be blank")
     view.cancel.click()
 
@@ -204,9 +203,8 @@ def test_analysis_profile_duplicate_name(analysis_profile_collection):
 
     # Should still be on the form page after create method raises exception
     view = analysis_profile_collection.create_view(
-        navigator.get_class(analysis_profile_collection, 'AddVmProfile').VIEW
+        navigator.get_class(analysis_profile_collection, 'AddVmProfile').VIEW, wait='10s'
     )
-    assert view.is_displayed
     view.flash.assert_message("Name has already been taken")
     view.cancel.click()
 
@@ -280,9 +278,8 @@ def test_analysis_profile_item_validation(analysis_profile_collection):
 
     # Should still be on the form page after create method raises exception
     view = analysis_profile_collection.create_view(
-        navigator.get_class(analysis_profile_collection, 'AddHostProfile').VIEW
+        navigator.get_class(analysis_profile_collection, 'AddHostProfile').VIEW, wait='10s'
     )
-    assert view.is_displayed
     view.flash.assert_message("At least one item must be entered to create Analysis Profile")
     view.cancel.click()
 
@@ -307,9 +304,8 @@ def test_analysis_profile_name_validation(analysis_profile_collection):
 
     # Should still be on the form page after create method raises exception
     view = analysis_profile_collection.create_view(
-        navigator.get_class(analysis_profile_collection, 'AddHostProfile').VIEW
+        navigator.get_class(analysis_profile_collection, 'AddHostProfile').VIEW, wait='10s'
     )
-    assert view.is_displayed
     view.flash.assert_message("Name can't be blank")
     view.cancel.click()
 
@@ -333,8 +329,7 @@ def test_analysis_profile_description_validation(analysis_profile_collection):
 
     # Should still be on the form page after create method raises exception
     view = analysis_profile_collection.create_view(
-        navigator.get_class(analysis_profile_collection, 'AddHostProfile').VIEW
+        navigator.get_class(analysis_profile_collection, 'AddHostProfile').VIEW, wait='10s'
     )
-    assert view.is_displayed
     view.flash.assert_message("Description can't be blank")
     view.cancel.click()

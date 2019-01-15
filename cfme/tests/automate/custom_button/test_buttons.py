@@ -322,8 +322,7 @@ def test_custom_button_quotes(appliance, provider, setup_provider, dialog, reque
     assert custom_button_group.has_item(button.text)
     custom_button_group.item_select(button.text)
 
-    dialog_view = view.browser.create_view(TextInputDialogView)
-    dialog_view.wait_displayed("60s")
+    dialog_view = view.browser.create_view(TextInputDialogView, wait='60s')
     dialog_view.service_name.fill("Custom Button Execute")
 
     dialog_view.submit.click()

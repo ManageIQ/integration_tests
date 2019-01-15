@@ -260,8 +260,7 @@ def update(self, updates):
         view.flash.assert_success_message(
             'Edit of Service "{}" was cancelled by the user'.format(
                 updates.get('description', self.description)))
-    view = self.create_view(MyServiceDetailView, override=updates)
-    view.wait_displayed(timeout='5s')
+    self.create_view(MyServiceDetailView, override=updates, wait='5s')
 
 
 @MiqImplementationContext.external_for(MyService.exists.getter, ViaUI)
@@ -281,9 +280,8 @@ def delete(self):
     else:
         remove_str = 'Remove Service from Inventory'
     view.toolbar.configuration.item_select(remove_str, handle_alert=True)
-    view = self.create_view(MyServicesView)
+    view = self.create_view(MyServicesView, wait='5s')
     view.flash.assert_no_error()
-    view.wait_displayed(timeout='5s')
     view.flash.assert_success_message(
         'Service "{}": Delete successful'.format(self.name))
 
@@ -294,8 +292,7 @@ def set_ownership(self, owner, group):
     view.fill({'select_owner': owner,
                'select_group': group})
     view.save_button.click()
-    view = self.create_view(MyServiceDetailView)
-    view.wait_displayed(timeout='5s')
+    view = self.create_view(MyServiceDetailView, wait='5s')
     view.flash.assert_no_error()
     view.flash.assert_success_message('Ownership saved for selected Service')
 
@@ -306,8 +303,7 @@ def edit_tags(self, tag, value):
     view.fill({'select_tag': tag,
                'select_value': value})
     view.save_button.click()
-    view = self.create_view(MyServiceDetailView)
-    view.wait_displayed(timeout='5s')
+    view = self.create_view(MyServiceDetailView, wait='5s')
     view.flash.assert_no_error()
     view.flash.assert_success_message('Tag edits were successfully saved')
 
@@ -332,8 +328,7 @@ def reconfigure_service(self):
     view = navigate_to(self, 'Reconfigure')
     view.submit_button.click()
     view.flash.assert_no_error()
-    view = self.create_view(MyServiceDetailView)
-    view.wait_displayed(timeout='5s')
+    self.create_view(MyServiceDetailView, wait='5s')
 
 
 @navigator.register(MyService, 'All')

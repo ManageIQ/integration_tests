@@ -98,8 +98,7 @@ class Catalog(BaseEntity, Updateable, Pretty, Taggable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(DetailsCatalogView, override=updates)
-        assert view.wait_displayed()
+        view = self.create_view(DetailsCatalogView, override=updates, wait='10s')
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
@@ -111,8 +110,7 @@ class Catalog(BaseEntity, Updateable, Pretty, Taggable):
     def delete(self):
         view = navigate_to(self, "Details")
         view.configuration.item_select('Remove Catalog', handle_alert=True)
-        view = self.create_view(CatalogsView)
-        assert view.is_displayed
+        view = self.create_view(CatalogsView, wait='10s')
         view.flash.assert_no_error()
         view.flash.assert_success_message(
             'Catalog "{}": Delete successful'.format(self.description or self.name))

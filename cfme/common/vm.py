@@ -925,8 +925,7 @@ class VM(BaseVM):
             view.form.cancel.click()
             msg = 'Set/remove retirement date was cancelled by the user'
         if self.DETAILS_VIEW_CLASS is not None:
-            view = self.create_view(self.DETAILS_VIEW_CLASS)
-            assert view.is_displayed
+            view = self.create_view(self.DETAILS_VIEW_CLASS, wait='5s')
         view.flash.assert_success_message(msg)
 
     def equal_drift_results(self, drift_section, section, *indexes):
@@ -952,8 +951,7 @@ class VM(BaseVM):
         # mark by indexes or mark all
         details_view = navigate_to(self, "Details")
         details_view.entities.summary("Relationships").click_at("Drift History")
-        drift_history_view = self.create_view(DriftHistory)
-        assert drift_history_view.is_displayed
+        drift_history_view = self.create_view(DriftHistory, wait='10s')
         if indexes:
             _select_rows(indexes)
         else:
@@ -965,8 +963,7 @@ class VM(BaseVM):
             else:
                 _select_rows(range(rows_number))
         drift_history_view.analyze_button.click()
-        drift_analysis_view = self.create_view(DriftAnalysis)
-        assert drift_analysis_view.is_displayed
+        drift_analysis_view = self.create_view(DriftAnalysis, wait='10s')
         drift_analysis_view.drift_sections.check_node(section)
         drift_analysis_view.apply_button.click()
         if not drift_analysis_view.toolbar.all_attributes.active:

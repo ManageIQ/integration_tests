@@ -187,8 +187,7 @@ def test_custom_button_dialog(appliance, dialog, request, setup_objs, button_gro
         assert custom_button_group.has_item(button.text)
         custom_button_group.item_select(button.text)
 
-        dialog_view = view.browser.create_view(TextInputDialogView)
-        dialog_view.wait_displayed()
+        dialog_view = view.browser.create_view(TextInputDialogView, wait='10s')
         dialog_view.service_name.fill("Custom Button Execute")
 
         # Clear the automation log

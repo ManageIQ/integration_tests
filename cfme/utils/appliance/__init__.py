@@ -3177,15 +3177,19 @@ class NavigatableMixin(object):
     def browser(self):
         return self.appliance.browser.widgetastic
 
-    def create_view(self, view_class, o=None, override=None):
+    def create_view(self, view_class, o=None, override=None, wait=None):
         o = o or self
         if override is not None:
             new_obj = copy(o)
             new_obj.__dict__.update(override)
         else:
             new_obj = o
-        return self.appliance.browser.create_view(
-            view_class, additional_context={'object': new_obj})
+
+        view = self.appliance.browser.create_view(view_class,
+                                                  additional_context={'object': new_obj})
+        if wait:
+            view.wait_displayed(timeout=wait)
+        return view
 
     def list_destinations(self):
         """This function returns a list of all valid destinations for a particular object

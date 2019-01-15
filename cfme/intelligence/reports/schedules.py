@@ -153,9 +153,7 @@ class Schedule(Updateable, Pretty, BaseEntity):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ScheduleDetailsView, override=updates)
-        view.wait_displayed()
-        assert view.is_displayed
+        view = self.create_view(ScheduleDetailsView, override=updates, wait='10s')
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
