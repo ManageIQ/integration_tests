@@ -220,7 +220,7 @@ def test_upgrade_multi_ext_inplace():
 
     Polarion:
         assignee: jhenner
-        casecomponent: Configuration
+        casecomponent: config
         caseimportance: medium
         initialEstimate: 1h
         setup: 2 appliances:
