@@ -408,7 +408,7 @@ def create_report(scenario_data, appliance_results, process_results, use_slab, g
 
     # Dump scenario Yaml:
     with open(str(scenario_path.join('scenario.yml')), 'w') as scenario_file:
-        yaml.dump(dict(scenario_data['scenario']), scenario_file, default_flow_style=False)
+        yaml.safe_dump(dict(scenario_data['scenario']), scenario_file, default_flow_style=False)
 
     generate_summary_csv(scenario_path.join('{}-summary.csv'.format(ver)), appliance_results,
         process_results, provider_names, ver)
@@ -971,7 +971,7 @@ def add_workload_quantifiers(quantifiers, scenario_data):
 
 def get_scenario_html(scenario_data):
     scenario_dict = create_dict(scenario_data)
-    scenario_yaml = yaml.dump(scenario_dict)
+    scenario_yaml = yaml.safe_dump(scenario_dict)
     scenario_html = scenario_yaml.replace('\n', '<br>\n')
     scenario_html = scenario_html.replace(', ', '<br>\n &nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;')
     scenario_html = scenario_html.replace(' ', '&nbsp;')

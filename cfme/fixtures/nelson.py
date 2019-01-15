@@ -51,7 +51,7 @@ def pytest_collection_modifyitems(items):
         import lya
         from yaml.representer import SafeRepresenter
         yaml.add_representer(lya.lya.AttrDict, SafeRepresenter.represent_dict)
-        yaml.dump(output, f)
+        yaml.safe_dump(output, f)
 
 
 def pytest_pycollect_makeitem(collector, name, obj):

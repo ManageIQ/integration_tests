@@ -2124,7 +2124,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
             temp_yaml = NamedTemporaryFile()
             dest_yaml = '/tmp/conf.yaml'
-            yaml.dump(data_dict_base, temp_yaml, default_flow_style=False)
+            yaml.safe_dump(data_dict_base, temp_yaml, default_flow_style=False)
             self.ssh_client.put_file(temp_yaml.name, dest_yaml)
             # Build and send ruby script
             dest_ruby = '/tmp/set_conf.rb'
