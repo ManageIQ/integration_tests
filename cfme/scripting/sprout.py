@@ -111,7 +111,7 @@ def populate_config_from_appliances(appliance_data):
         y_data = {}
     if y_data:
         with open(conf_path.join('env.local.backup').strpath, 'w') as f:
-            yaml.dump(y_data, f, default_flow_style=False)
+            yaml.safe_dump(y_data, f, default_flow_style=False)
 
     y_data['appliances'] = []
     for app in appliance_data:

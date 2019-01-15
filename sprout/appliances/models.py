@@ -66,7 +66,7 @@ def apply_if_not_none(o, meth, *args, **kwargs):
 class MetadataMixin(models.Model):
     class Meta:
         abstract = True
-    object_meta_data = models.TextField(default=yaml.dump({}))
+    object_meta_data = models.TextField(default=yaml.safe_dump({}))
     created_on = models.DateTimeField(default=timezone.now, editable=False)
     modified_on = models.DateTimeField(default=timezone.now)
 
@@ -99,7 +99,7 @@ class MetadataMixin(models.Model):
     def metadata(self, value):
         if not isinstance(value, dict):
             raise TypeError("You can store only dict in metadata!")
-        self.object_meta_data = yaml.dump(value)
+        self.object_meta_data = yaml.safe_dump(value)
 
     @property
     @contextmanager

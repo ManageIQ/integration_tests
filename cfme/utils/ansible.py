@@ -11,7 +11,7 @@ from cfme.utils.appliance import current_appliance
 
 
 from git import Repo
-from yaml import load, dump
+from yaml import load, safe_dump
 
 local_git_repo = "manageiq_ansible_module"
 yml_path = path.join(path.dirname(__file__), local_git_repo)
@@ -141,7 +141,7 @@ def setup_basic_script(provider, script_type):
         elif script_type == 'tags':
             doc[0]['tasks'][0]['manageiq_tag_assignment'][key] = values_dict[key]
         with open(script_path, 'w') as f:
-            f.write(dump(doc))
+            f.write(safe_dump(doc))
 
 
 def open_yml(script, script_type):
@@ -153,7 +153,7 @@ def open_yml(script, script_type):
 
 def write_yml(script, doc):
     with open(path.join(basic_yml_path, script + yml), 'w') as f:
-        f.write(dump(doc))
+        f.write(safe_dump(doc))
 
 
 def setup_ansible_script(provider, script, script_type=None, values_to_update=None):
