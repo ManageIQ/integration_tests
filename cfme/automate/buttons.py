@@ -18,7 +18,6 @@ from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, I
 
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.update import Updateable
 from widgetastic_manageiq import (
     FonticonPicker,
@@ -246,8 +245,7 @@ class BaseButton(BaseEntity, Updateable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ButtonDetailView, override=updates)
-        assert view.is_displayed
+        view = self.create_view(ButtonDetailView, override=updates, wait="10s")
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
@@ -266,8 +264,7 @@ class BaseButton(BaseEntity, Updateable):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            view = self.create_view(ButtonGroupDetailView, self.group)
-            assert view.is_displayed
+            view = self.create_view(ButtonGroupDetailView, self.group, wait="10s")
             view.flash.assert_no_error()
             view.flash.assert_message('Button "{}": Delete successful'.format(self.hover))
 
@@ -482,8 +479,7 @@ class ButtonCollection(BaseCollection):
                 view.advanced.attribute(i).fill(dict_)
 
         view.add_button.click()
-        view = self.create_view(ButtonGroupDetailView, self.group)
-        view.wait_displayed("15s")
+        view = self.create_view(ButtonGroupDetailView, self.group, wait="15s")
         view.flash.assert_no_error()
         view.flash.assert_message('Custom Button "{}" was added'.format(hover))
 
@@ -676,9 +672,7 @@ class ButtonGroup(BaseEntity, Updateable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ButtonGroupDetailView, override=updates)
-        if not BZ(1500176, forced_streams=["5.9", "upstream"]).blocks:
-            view.wait_displayed()
+        view = self.create_view(ButtonGroupDetailView, override=updates, wait="10s")
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
@@ -697,9 +691,7 @@ class ButtonGroup(BaseEntity, Updateable):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            view = self.create_view(ButtonGroupObjectTypeView)
-            if not BZ(1500176, forced_streams=["5.9", "upstream"]).blocks:
-                view.wait_displayed()
+            view = self.create_view(ButtonGroupObjectTypeView, wait="10s")
             view.flash.assert_no_error()
             view.flash.assert_message('Button Group "{}": Delete successful'.format(self.hover))
 
