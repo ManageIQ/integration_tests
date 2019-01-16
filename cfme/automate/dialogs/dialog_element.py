@@ -40,6 +40,7 @@ class ElementForm(AddBoxView):
         field_category = Select(
             locator='.//select[../../../../label[normalize-space(text())="Category"]]')
 
+        validation_switch = DialogBootstrapSwitch(label='Validation')
         validation = Input(name='validator_rule')
         visible = DialogBootstrapSwitch(label='Visible')
 
