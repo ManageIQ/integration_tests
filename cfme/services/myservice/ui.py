@@ -14,7 +14,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
                                   BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector,
-                                  BaseEntitiesView, Search)
+                                  BaseEntitiesView, Search, ParametrizedSummaryTable)
 
 
 class MyServiceToolbar(View):
@@ -86,10 +86,15 @@ class MyServiceDetailsToolbar(MyServiceToolbar):
             self._dropdown.item_select(button, handle_alert=handle_alert)
 
 
+class MyServiceDetailsEntities(View):
+    """Represents Details page."""
+    summary = ParametrizedView.nested(ParametrizedSummaryTable)
+
+
 class MyServiceDetailView(MyServicesView):
     title = Text('#explorer_title_text')
     toolbar = View.nested(MyServiceDetailsToolbar)
-    entities = View.nested(BaseNonInteractiveEntitiesView)
+    entities = View.nested(MyServiceDetailsEntities)
 
     @View.nested
     class details(View):  # noqa

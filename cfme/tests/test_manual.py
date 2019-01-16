@@ -21451,56 +21451,6 @@ def test_automate_methods_from_dynamic_dialog_should_run_as_per_designed():
 
 
 @pytest.mark.manual
-def test_custom_button_enabled_ssui_false():
-    """
-    Steps to Reproduce:
-    1. Create a button, eg. for Service in this case. Set the visibility
-    and enablement expression to eg. some tags.
-    2. Create a service
-    3. Go to the Self Service UI, select the service and look for the
-    button and its status
-    4. Repeat 3 with setting and unsetting the appropriate tags and also
-    removing either or both of the expressions
-    If button disable then PASS
-    Additional info:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1509959
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        caseposneg: negative
-        initialEstimate: 1/8h
-        startsin: 5.9
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_enabled_ssui_true():
-    """
-    Steps to Reproduce:
-    1. Create a button, eg. for Service in this case. Set the visibility
-    and enablement expression to eg. some tags.
-    2. Create a service
-    3. Go to the Self Service UI, select the service and look for the
-    button and its status
-    4. Repeat 3 with setting and unsetting the appropriate tags and also
-    removing either or both of the expressions
-    If button enabled then PASS
-    Additional info:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1509959
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        initialEstimate: 1/8h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_vmware_storage_profile_provision():
     """
@@ -21680,57 +21630,6 @@ def test_distributed_zone_failover_notifier_singleton():
         casecomponent: appl
         caseimportance: medium
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_visible_ssui_false():
-    """
-    Steps to Reproduce:
-    1. Create a button, eg. for Service in this case. Set the visibility
-    and enablement expression to eg. some tags.
-    2. Create a service
-    3. Go to the Self Service UI, select the service and look for the
-    button and its status
-    4. Repeat 3 with setting and unsetting the appropriate tags and also
-    removing either or both of the expressions
-    If button hidden then PASS
-    Additional info:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1509959
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        caseposneg: negative
-        initialEstimate: 1/8h
-        startsin: 5.9
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_visible_ssui_true():
-    """
-    Steps to Reproduce:
-    1. Create a button, eg. for Service in this case. Set the visibility
-    and enablement expression to eg. some tags.
-    2. Create a service
-    3. Go to the Self Service UI, select the service and look for the
-    button and its status
-    4. Repeat 3 with setting and unsetting the appropriate tags and also
-    removing either or both of the expressions
-    If button visible then PASS
-    Additional info:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1509959
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        initialEstimate: 1/8h
-        startsin: 5.9
-        upstream: yes
     """
     pass
 
