@@ -318,7 +318,7 @@ class Report(BaseEntity, Updateable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ReportDetailsView, override=updates, wait='5s')
+        view = self.create_view(ReportDetailsView, override=updates, wait="5s")
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
@@ -333,10 +333,8 @@ class Report(BaseEntity, Updateable):
 
         view = navigate_to(self, "Copy")
         view.add_button.click()
-        view = self.create_view(AllReportsView, wait='5s')
-        view.flash.assert_no_error()
+        view = self.create_view(AllReportsView, wait="5s")
 
-        view.flash.assert_message('Report "{}" was added'.format(menu_name))
         return self.appliance.collections.reports.instantiate(
             type=self.company_name, subtype="Custom", menu_name=menu_name
         )
