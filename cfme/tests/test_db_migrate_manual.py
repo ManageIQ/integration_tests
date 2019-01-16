@@ -34,13 +34,17 @@ def test_upgrade_dedicated_db_migration_local():
     Previously it was missing the database.yml during setup with would
     case the rake task to fail.
     https://bugzilla.redhat.com/show_bug.cgi?id=1478986
+    https://bugzilla.redhat.com/show_bug.cgi?id=1561075
+    https://bugzilla.redhat.com/show_bug.cgi?id=1590846
+    https://bugzilla.redhat.com/show_bug.cgi?id=1578957
+
 
     Polarion:
         assignee: jhenner
         casecomponent: config
         caseimportance: medium
         initialEstimate: 1/3h
-        startsin: 5.8
+        startsin: 5.9
         testSteps:
             1. Upgrade appliances
             2. Check failover
