@@ -321,19 +321,32 @@ class TaggableCommonBase(object):
 class Taggable(TaggableCommonBase):
     """
     This class can be inherited by any class that honors tagging.
-    Class should have following
+
+    Classes inheriting this class should have following defined:
 
     * 'Details' navigation
     * 'Details' view should have entities.smart_management SummaryTable widget
-    * 'EditTags' navigation
-    * 'EditTags' view should have nested 'form' view with 'tags' table widget
-    * Suggest using class cfme.common.TagPageView as view for 'EditTags' nav
+    * 'EditTagsFromDetails' navigation
+    * 'EditTagsFromDetails' At a minimum, views should include EditTagsFromDetails class. View
+    should have nested 'form' view with 'tags' table widget
+    'In addition, the prerequisite should be NavigateToSibling('Details')
+
+    Optional classes that can be defined:
+
+    'EditTags':
+    * 'All' navigation
+    * Same as EditTagsFromDetails but the prerequisite should be NavigateToSibling('All')
+    'EditTagsFromDashboard':
+    * 'Dashboard' navigation
+    * Same as EditTagsFromDetails but the prerequisite should be NavigateToSibling('Dashboard')
+
+    Suggest using class cfme.common.TagPageView as view for all 'EditTags' nav
 
     This class provides functionality to assign and unassigned tags for page models with
     standardized widgetastic views
     """
 
-    def add_tag(self, tag=None, cancel=False, reset=False, details=True):
+    def add_tag(self, tag=None, cancel=False, reset=False, details=True, dashboard=False):
         """ Add tag to tested item
 
         Args:
@@ -342,8 +355,14 @@ class Taggable(TaggableCommonBase):
             reset: set True to reset already set up tag
             details (bool): set False if tag should be added for list selection,
                             default is details page
+            dashboard (bool): Set to True if tag should be added via the Dashboard view
         """
-        step = 'EditTagsFromDetails' if details else 'EditTags'
+        if details and not dashboard:
+            step = 'EditTagsFromDetails'
+        elif dashboard:
+            step = 'EditTagsFromDashboard'
+        else:
+            step = 'EditTags'
         view = navigate_to(self, step)
         added_tag, updated = self._assign_tag_action(view, tag)
         # In case if field is not updated cancel the edition

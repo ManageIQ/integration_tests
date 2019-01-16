@@ -1,6 +1,7 @@
 import pytest
 
 from cfme.containers.provider import ContainersProvider
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [
@@ -12,6 +13,9 @@ container_test_items = [
     'container_provider', 'container_projects', 'container_routes', 'container_services',
     'container_replicators', 'container_pods', 'container_nodes', 'container_volumes',
     'container_image_registries', 'container_images', 'container_templates']
+
+
+bz_1665284_test_items = ["container_provider", "container_projects"]
 
 
 def get_collection_entity(appliance, collection_name, provider):
@@ -44,11 +48,32 @@ def get_collection_entity(appliance, collection_name, provider):
         return item_collection.instantiate(**d)
 
 
-@pytest.mark.parametrize('test_param', container_test_items, ids=[cti for cti in
-                                                                  container_test_items])
+def verify_tags(obj_under_test, tag, details, dashboard):
+
+    obj_under_test.add_tag(tag=tag, details=details, dashboard=dashboard)
+
+    tags = obj_under_test.get_tags()
+
+    assert any(
+        object_tags.category.display_name == tag.category.display_name and
+        object_tags.display_name == tag.display_name for object_tags in tags), (
+        "{tag_cat_name}: {tag_name} not in ({tags})"
+            .format(tag_cat_name=tag.category.display_name, tag_name=tag.display_name,
+                    tags=str(tags)))
+
+    obj_under_test.remove_tag(tag=tag, details=details)
+
+    post_remove_tags = obj_under_test.get_tags()
+    if post_remove_tags:
+        for post_tags in post_remove_tags:
+            assert(
+                post_tags.category.display_name != tag.category.display_name and
+                post_tags.display_name != tag.display_name)
+
+
+@pytest.mark.parametrize('test_param', container_test_items)
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
-def test_tag_container_objects(soft_assert, test_param, appliance, provider, request, tag,
-                               tag_place):
+def test_tag_container_objects(test_param, appliance, provider, tag, tag_place):
     """ Test for container items tagging action from list and details pages
 
     Polarion:
@@ -61,20 +86,25 @@ def test_tag_container_objects(soft_assert, test_param, appliance, provider, req
     obj_under_test = get_collection_entity(appliance=appliance, collection_name=test_param,
                                            provider=provider)
 
-    obj_under_test.add_tag(tag=tag, details=tag_place)
+    verify_tags(obj_under_test=obj_under_test, tag=tag, details=tag_place, dashboard=False)
 
-    tags = obj_under_test.get_tags()
 
-    assert any(
-        object_tags.category.display_name == tag.category.display_name and
-        object_tags.display_name == tag.display_name for object_tags in tags), (
-        "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))
+@pytest.mark.parametrize('test_param', bz_1665284_test_items)
+@pytest.mark.meta(
+    blockers=[BZ(1667178, forced_streams=['5.10'],
+                 unblock=lambda test_param: test_param != "container_provider")])
+def test_tag_container_objects_dashboard_view(test_param, appliance, provider, tag):
+    """ Test for BZ 1665284: Tagging: Unable to edit tag from container provider or container
+    project dashboard view
 
-    obj_under_test.remove_tag(tag=tag, details=tag_place)
+       Polarion:
+           assignee: juwatts
+           casecomponent: Containers
+           caseimportance: medium
+           initialEstimate: 1/6h
+       """
 
-    post_remove_tags = obj_under_test.get_tags()
-    if post_remove_tags:
-        for post_tags in post_remove_tags:
-            soft_assert(
-                not post_tags.category.display_name == tag.category.display_name and
-                not post_tags.display_name == tag.display_name)
+    obj_under_test = get_collection_entity(appliance=appliance, collection_name=test_param,
+                                           provider=provider)
+
+    verify_tags(obj_under_test=obj_under_test, tag=tag, details=False, dashboard=True)
