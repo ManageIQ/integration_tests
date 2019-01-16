@@ -1,10 +1,10 @@
 import fauxfactory
 import pytest
 
-from cfme.services.catalogs.catalog import Catalog
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.wait import wait_for
 
@@ -101,7 +101,8 @@ def order_ansible_service_in_ops_ui(appliance, ansible_catalog_item,
     service_request = appliance.collections.requests.instantiate(description=request_descr)
     if service_request.exists():
         service_request.wait_for_request()
-        service_request.remove_request()
+        if not BZ(1646333, forced_streams=['5.10']).blocks:
+            service_request.remove_request()
     yield cat_item_name
     service = MyService(appliance, cat_item_name)
     if service.exists:
