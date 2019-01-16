@@ -20,7 +20,6 @@ from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.update import Updateable
-from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     FonticonPicker,
     PotentiallyInvisibleTab,
@@ -30,6 +29,26 @@ from widgetastic_manageiq import (
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 
 from . import AutomateCustomizationView
+
+
+EVM_TAG_OBJS = ["Group", "User"]
+
+BUILD_TAG_OBJS = [
+    "Availability Zone",
+    "Cloud Network",
+    "Cloud Object Store Container",
+    "Cloud Subnet",
+    "Network Router",
+    "Security Group",
+    "Tenant",
+    "Container Volume",
+    "Generic Object",
+    "Virtual Infra Switch",
+    "Cloud Tenant",
+    "Cloud Volume",
+    "Load Balancer",
+    "Orchestration Stack",
+]
 
 
 class AutomateRadioGroup(RadioGroup):
@@ -423,11 +442,11 @@ class ButtonCollection(BaseCollection):
 
         if visibility:
             # ToDo: extend visibility expression variations if needed.
-            if self.group.type in ["Group", "User"]:
+            if self.group.type in EVM_TAG_OBJS:
                 tag = "EVM {obj_type}.{tag}".format(
                     obj_type=self.group.type, tag=visibility["tag"]
                 )
-            elif self.group.type in ["Tenant", "Container Volume", "Generic Object"]:
+            elif self.group.type in BUILD_TAG_OBJS:
                 tag = "{obj_type}.Build.{tag}".format(
                     obj_type=self.group.type, tag=visibility["tag"]
                 )
@@ -440,11 +459,11 @@ class ButtonCollection(BaseCollection):
 
         if enablement:
             # ToDo: extend enablement expression variations if needed.
-            if self.group.type in ["Group", "User"]:
+            if self.group.type in EVM_TAG_OBJS:
                 tag = "EVM {obj_type}.{tag}".format(
                     obj_type=self.group.type, tag=enablement["tag"]
                 )
-            elif self.group.type in ["Tenant", "Container Volume", "Generic Object"]:
+            elif self.group.type in BUILD_TAG_OBJS:
                 tag = "{obj_type}.Build.{tag}".format(
                     obj_type=self.group.type, tag=enablement["tag"]
                 )
