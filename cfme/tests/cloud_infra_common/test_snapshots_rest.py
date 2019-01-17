@@ -105,6 +105,8 @@ class TestRESTSnapshots(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         vm, snapshot = vm_snapshot
@@ -122,6 +124,8 @@ class TestRESTSnapshots(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         __, snapshot = vm_snapshot
@@ -136,6 +140,8 @@ class TestRESTSnapshots(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         vm, snapshot = vm_snapshot
@@ -159,6 +165,8 @@ class TestRESTSnapshots(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         # create and delete snapshot #1
@@ -187,6 +195,8 @@ class TestRESTSnapshots(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         __, snapshot = vm_snapshot

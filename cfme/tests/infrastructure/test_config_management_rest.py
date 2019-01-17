@@ -87,7 +87,9 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            initialEstimate: None
+            casecomponent: Rest
+            caseimportance: medium
+            initialEstimate: 1/4h
         """
         query_resource_attributes(authentications[0], soft_assert=soft_assert)
 
@@ -99,6 +101,8 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         new_names = []
@@ -119,6 +123,8 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         new_names = []
@@ -144,6 +150,8 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         for auth in authentications:
@@ -165,6 +173,8 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         for auth in authentications:
@@ -186,6 +196,8 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         appliance.rest_api.collections.authentications.action.delete.POST(*authentications)
@@ -205,6 +217,7 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """

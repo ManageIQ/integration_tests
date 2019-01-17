@@ -65,6 +65,8 @@ def test_query_template_attributes(request, appliance, provider, soft_assert):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     templates = appliance.rest_api.collections.templates.all
@@ -127,6 +129,8 @@ def test_delete_template_from_detail_post(template):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     delete_resources_from_detail([template], method='POST')
@@ -141,6 +145,8 @@ def test_delete_template_from_detail_delete(template):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     delete_resources_from_detail([template], method='DELETE')
@@ -155,6 +161,8 @@ def test_delete_template_from_collection(template):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     delete_resources_from_collection([template])

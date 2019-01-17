@@ -27,36 +27,6 @@ def test_automate_git_domain_import_top_level_directory():
 
 
 @pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_generate_custom_storage_fields():
-    """
-    Steps to Reproduce:
-    1. Add cloud provider (Openstack) -> Go to Compute-> Clouds->
-    Configuration-> Add new cloud provider.
-    2. Generate Report -> Go to cloud intel -> Reports-> Configuration->
-    Add new report.
-    3. Report filters -> Configure Report Columns:
-    Base the report on: Cloud Volumes
-    Selected Fields:
-    -- Cloud Tenant: Name
-    --  VMs: Name
-    --  VMs: Used Storage
-    --  VMs  RAM Size
-    --  Vms: Disk 1
-    https://bugzilla.redhat.com/show_bug.cgi?id=1499553
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.3
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware65_test_vm_migration_with_rhel_75_last_time_74():
     """
     OSP: vmware65-Test VM migration with RHEL 7.5 (last time 7.4)
@@ -146,28 +116,6 @@ def test_status_of_a_task_via_api_with_evmrole_administrator():
     """
     pass
 
-
-@pytest.mark.manual
-@test_requirements.report
-def test_calculating_the_sum_of_a_value_in_a_consolidated_report():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1298298
-    Steps to Reproduce:
-    1. create a new report on vms & templates
-    2. select os name, number of cpus, disk space and other nuerical
-    values
-    3. consolidate the report by os name and calculate the total of all
-    the other value
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.5
-        title: Calculating the sum of a value in a consolidated report
-    """
-    pass
 
 
 @pytest.mark.manual
@@ -327,24 +275,6 @@ def test_embed_tower_retire_service_with_instances_ec2():
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-def test_create_simple_aggregated_custom_report():
-    """
-    Create aggregate custom report.
-    Eg: consolidate and aggregate data points into maximum, minimum,
-    average, and total.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Create simple aggregated custom report
     """
     pass
 
@@ -2055,46 +1985,6 @@ def test_template_info_scvmm2016():
 
 
 @pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_reconfigure_vm_vmware_cores_multiple():
-    """
-    Test changing the cpu cores of multiple vms at the same time.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: infra
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: -get new configured appliance
-               -add vmware provider
-               -provision 2 new vms
-               -power off 1 vm
-               -select both vms
-               -configure-->reconfigure vm
-               -increase/decrease counts
-               -power on vm
-               -check changes
-        startsin: 5.6
-        testSteps:
-            1. Hot increase
-            2. Hot Decrease
-            3. Cold Increase
-            4. Cold Decrease
-            5. Hot + Cold Increase
-            6. Hot + Cold Decrease
-        expectedResults:
-            1. Action should fail
-            2. Action should fail
-            3. Action should succeed
-            4. Action should succeed
-            5. Action should fail
-            6. Action should Error
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
 def test_group_cloud_memory_quota_by_services():
@@ -2253,22 +2143,6 @@ def test_osp_test_immediately_migration_after_migration_plan_creation():
     """
     pass
 
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_should_generate_with_no_errors_in_logs():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1592480#c21
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        initialEstimate: 1/2h
-        startsin: 5.9
-        title: Reports should generate with no errors in logs
-    """
-    pass
 
 
 @pytest.mark.manual
@@ -2681,21 +2555,6 @@ def test_osp_vmware67_test_vm_migration_with_really_long_name_upto_64_chars_work
     pass
 
 
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_generate_persistent_volumes():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1563861
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
 
 @pytest.mark.manual
 def test_osp_test_migrating_a_vm_using_migration_plan_with_name_which_has_all_special_characte():
@@ -2815,24 +2674,6 @@ def test_user_cloud_memory_quota_by_lifecycle():
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_reconfigure_add_disk_cold():
-    """
-    Test adding 16th disk to test how a new scsi controller is handled.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1337310
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: infra
-        caseimportance: medium
-        initialEstimate: 1/3h
-        startsin: 5.7
     """
     pass
 
@@ -3035,21 +2876,71 @@ def test_control_import_with_incorrect_schema():
 
 
 @pytest.mark.manual
-@test_requirements.rest
-def test_cloud_volume_types():
+@test_requirements.log_depot
+@pytest.mark.tier(2)
+def test_log_azure_settings_azure():
     """
-    Test CloudVolumeType endpoint. Add a cloud provider and check if it
-    gives correct response for the GET request.
-    GET /api/cloud_volume_types
-    GET /api/cloud_volume_types/:id
-    PR: https://github.com/ManageIQ/manageiq-api/pull/465
+    In configuration\server\advanced you can set the log level for the
+    azure specific azure.log file.  Need to changes the values and verify
+    that the correct info is recording.  For this test, at least set it to
+    DEBUG.
+    tail -f azure.log | grep --line-buffered ERROR or WARN or something.
 
     Polarion:
-        assignee: pvala
-        initialEstimate: None
-        startsin: 5.10
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: medium
+        initialEstimate: 1/8h
+        upstream: yes
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.log_depot
+@pytest.mark.tier(1)
+def test_log_collect_all_zone_unconfigured():
+    """
+    check collect all logs under zone when both levels are unconfigured.
+    Expected result - all buttons are disabled
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/2h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.upgrade
+@pytest.mark.tier(2)
+def test_upgrade_rubyrep_to_pglogical():
+    """
+    Test upgrading appliances in ruby replication and change it over to
+    pglogical
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: config
+        caseimportance: medium
+        endsin: 5.9
+        initialEstimate: 1h
+        setup: provision 2 appliances
+               setup rubyrep between them
+               test replication is working
+               stop replication
+               upgrade appliances following version dependent docs found here
+               https://mojo.redhat.com/docs/DOC-1058772
+               configure pglogical replication
+               confirm replication is working correctly
+        startsin: 5.6
+        testtype: upgrade
+    """
+    pass
+
 
 
 @pytest.mark.manual
@@ -3099,23 +2990,6 @@ def test_osp_vmware67_test_vm_migration_with_windows_7():
     """
     pass
 
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_import_invalid_file():
-    """
-    import invalid file like txt, pdf.
-    Import yaml file with wrong data.
-    Flash message should display if we import wrong file.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/16h
-    """
-    pass
 
 
 @pytest.mark.manual
@@ -3310,22 +3184,6 @@ def test_credentials_login_password_with_special_characters():
 
 
 @pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_attach_iso_vsphere67_nested():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1533728
-
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        startsin: 5.10
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.provision
 @pytest.mark.tier(2)
 def test_azure_instance_password_requirements_azure():
@@ -3422,20 +3280,6 @@ def test_host_tagged_crosshair_op_vsphere55():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_network_adapters_vsphere67_nested_vmkernel():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/16h
-        startsin: 5.9
     """
     pass
 
@@ -5058,22 +4902,6 @@ def test_verify_that_changing_groups_while_in_ssui_updates_dashboard_items():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_create_and_run_custom_report_using_rbac():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1526058
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
 
 @pytest.mark.manual
 @test_requirements.ansible
@@ -5174,27 +5002,6 @@ def test_ec2_api_filter_limit():
         casecomponent: cloud
         initialEstimate: 1 1/3h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_reconfigure_add_disk_cold_controller_sas():
-    """
-    Steps to Reproduce:
-    1. Add 15 disks to an existing VM with Controller type set to SAS
-    2. look at the 16th Disk Controller Type
-    Expected results: Should be SAS like exiting Controller
-    https://bugzilla.redhat.com/show_bug.cgi?id=1445874
-
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        caseimportance: medium
-        initialEstimate: 1/3h
-        startsin: 5.3
     """
     pass
 
@@ -5857,26 +5664,30 @@ def test_ec2_targeted_refresh_floating_ip():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_reports_custom_tags():
+@test_requirements.upgrade
+@pytest.mark.tier(2)
+def test_upgrade_single_inplace_ipv6():
     """
-    Add custom tags to report
-    1)add custom tags to appliance using black console
-    ssh to appliance, vmdb; rails c
-    use following commands
-    cat = Classification.create_category!(name: "rocat1", description:
-    "read_only cat 1", read_only: true)
-    cat.add_entry(name: "roent1", description: "read_only entry
-    1")2)Create new or Edit existing report and look for the tag category
-    in list of columns.
+    Upgrading a single appliance on ipv6 only env
 
     Polarion:
-        assignee: pvala
-        casecomponent: report
+        assignee: jhenner
+        casecomponent: appl
         caseimportance: medium
-        initialEstimate: 1/4h
+        initialEstimate: 1/3h
+        setup: provision appliance
+               add provider
+               add repo file to /etc/yum.repos.d/
+               run "yum update"
+               run "rake db:migrate"
+               run "rake evm:automate:reset"
+               run "systemctl start evmserverd"
+               check webui is available
+               add additional provider/provision vms
+        startsin: 5.9
     """
     pass
+
 
 
 @pytest.mark.manual
@@ -6087,30 +5898,6 @@ def test_ec2_targeted_refresh_network():
     """
     pass
 
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_generate_custom_conditional_filter_report():
-    """
-    Steps to Reproduce: ===================
-    1. Create a service with one of the above naming conventions (vm-test
-    ,My-Test)
-    2. Have at least one VM in the service so the reporting will parse it
-    3. Create a report with a conditional filter in it, such as:
-    conditions: !ruby/object:MiqExpression exp: and: - IS NOT NULL: field:
-    Vm.service-name - IS NOT NULL: field: Vm-ems_cluster_name 3. Run the
-    report
-    https://bugzilla.redhat.com/show_bug.cgi?id=1521167
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.8
-    """
-    pass
 
 
 @pytest.mark.manual
@@ -8074,48 +7861,6 @@ def test_bottleneck_host():
 
 
 @pytest.mark.manual
-@test_requirements.discovery
-@pytest.mark.tier(1)
-def test_domain_id_required_validation():
-    """
-    Steps:1. Try to add OpenStack provider
-    2. Select Keystone V3 as for it only we need to set domain id
-    3. don"t fill domain id
-    4. Verify
-    5. check for flash
-    https://bugzilla.redhat.com/show_bug.cgi?id=1545520
-
-    Polarion:
-        assignee: pvala
-        casecomponent: infra
-        caseimportance: low
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-def test_the_columns_for_the_custom_attribute_should_have_their_values_in_report():
-    """
-    Steps to Reproduce:
-    1. set a custom attribute on a VM with a space in the name
-    2. set a custom attribute on a VM with a colon in the name
-    3. Create a report with the VM name and the two custom attributes
-    4. run the report
-    https://bugzilla.redhat.com/show_bug.cgi?id=1553750
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: The columns for the custom attribute should have their values in report
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_vmware_provider_filters():
     """
@@ -8765,48 +8510,6 @@ def test_automate_relationship_trailing_spaces():
 
 
 @pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_network_adapters_vsphere67_nested_dportgroup():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/16h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_network_adapters_vsphere67_nested_mgmtnetwork():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/16h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_network_adapters_vsphere67_nested_vmnetwork():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/16h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_custom_reports_with_timelines_policy_events2():
     """
     None
@@ -9031,22 +8734,6 @@ def test_switching_user_group_without_disconnecting():
             31. Verify that testusr"s group is testGrp
             32. Verify that testusr"s role is EvmRole-user
             33.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_report_import_export_widgets():
-    """
-    Import and  Export widgets
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        initialEstimate: 1/16h
-        startsin: 5.3
     """
     pass
 
@@ -9411,27 +9098,20 @@ def test_automate_engine_database_connection():
 
 
 @pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(3)
-def test_import_duplicate_report():
+@test_requirements.configuration
+def test_configuration_region_description_change():
     """
-    This case tests appliance behaviour when a duplicate report is
-    imported.
-    Steps:
-    1) Create a custom report.
-    2) Go to Import/Export accordion and click on `Custom Reports`.
-    3) Export the available report(newly created custom report from step
-    1).
-    4) Import the same exported yaml file.
-    Expected Result:
-    A flash message should appear: `Skipping Report (already in DB):
-    [report_name]`
+    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1350808 Go to Settings
+    -> Configure -> Settings
+    Details -> Region
+    Change region description
+    Check whether description was changed
 
     Polarion:
-        assignee: pvala
-        casecomponent: report
+        assignee: anikifor
+        casecomponent: config
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/20h
     """
     pass
 
@@ -10164,22 +9844,6 @@ def test_vpc_env_selection():
 
 
 @pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_create_schedule_for_base_report_one_time_a_day():
-    """
-    Create schedule that runs report daily. Check it was ran successfully
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/16h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_passwords_are_not_registered_in_plain_text_in_auth_logs():
@@ -10262,27 +9926,6 @@ def test_osp_test_create_migration_plan_create_and_read():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test create migration plan - Create and Read
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-def test_report_menus_moving_reports():
-    """
-    Go to Cloud Intel -> Reports -> Edit reports menuSelect EvmGroup
-    Administrator -> Configuration Management -> Virtual MachinesSelect
-    Virtual Machines folder
-    Select 5 Reports and move them to the left.
-    All 5 reports should be moved.
-    Then reset it and select all reports and move them to the left.
-    All reports should be moved.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: low
-        initialEstimate: 1/12h
     """
     pass
 
@@ -10635,29 +10278,6 @@ def test_bottleneck_cluster():
         caseimportance: medium
         initialEstimate: 3/4h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_copy_generate_report_provisioning_activity():
-    """
-    1.Copied the report "Provisioning Activity - by Requester" to
-    "Provisioning Activity - by Requester-2"
-    2.Executing the copied report, one can se the vaule "Administrator"
-    for the field "Provision.Request : Approved By".
-    If one later configures the Styling to:
-    Style: if: Red Background = Administrador Light Background Starts With
-    A
-    https://bugzilla.redhat.com/show_bug.cgi?id=1402547
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/16h
     """
     pass
 
@@ -11668,28 +11288,26 @@ def test_set_ownership_back_to_default():
 
 
 @pytest.mark.manual
-@test_requirements.report
-def test_after_setting_certain_types_of_filters_filter_tab_should_be_accessible_and_editable():
+@test_requirements.provision
+@pytest.mark.tier(2)
+def test_vm_placement_with_duplicated_folder_name_vmware():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1519809
-    Steps to Reproduce:
-    1.configure a report using a filter based on "EVM Custom Attributes:
-    Name" and "EVM Custom Attributes: Value"
-    2.
-    3.
-    Actual results:
-    after saving changes, trying to edit the filter will result in the
-    user looping and being unable to access the page. Attempts to access
-    the report will also cause puma to consume all cpu on at least one
-    thread
+    This testcase is related to -
+    https://bugzilla.redhat.com/show_bug.cgi?id=1414136
+    Description of problem:
+    Duplicate folder names between host & vm/templates causes placement
+    issues
+    Hosts & Clusters shared a common folder name with a folder that also
+    resides in vm & templates inside of VMWare which will cause CloudForms
+    to attempt to place a vm inside of the Host & Clusters folder.
 
     Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
+        assignee: jhenner
+        casecomponent: prov
+        caseimportance: low
         initialEstimate: 1/4h
-        title: After setting certain types of filters filter tab should be
-               accessible and editable
+        startsin: 5.7
+        testtype: nonfunctional
     """
     pass
 
@@ -11948,25 +11566,6 @@ def test_automate_git_domain_import_with_no_connection():
     """
     pass
 
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_create_schedule_send_report():
-    """
-    Create schedule
-    Send an E-mail" and add more than five users in the mailing list.
-    Un-check "Send if Report is Empty" option and select the type of
-    attachmentQueue up this Schedule
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
 
 
 @pytest.mark.manual
@@ -12942,16 +12541,21 @@ def test_optimize_memory_usage_by_making_object_in_hash():
 
 
 @pytest.mark.manual
-def test_default_views_can_save_or_reset():
+@test_requirements.general_ui
+@pytest.mark.tier(1)
+def test_key_pairs_quadicon():
     """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1389225
-    1) Go to My Settings -> Default views
-    2) Change something and try to reset configuration
-    3) Change something and try to save it
+    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1352914
+    Requirement: Have a cloud provider with at least one key pair
+    1. Go to Compute -> Cloud -> Key Pairs
+    2. Set View to Grid
+    3. Cloud with two keys icon should be displayed(auth_key_pair.png)
+    4. Same in Key Pairs summary.
 
     Polarion:
-        assignee: pvala
-        casecomponent: config
+        assignee: anikifor
+        casecomponent: cloud
+        caseimportance: low
         initialEstimate: 1/20h
     """
     pass
@@ -13187,26 +12791,6 @@ def test_tenant_parent_name_rest():
 
 
 @pytest.mark.manual
-@test_requirements.discovery
-@pytest.mark.tier(1)
-def test_infrastructure_providers_rhevm_edit_provider_no_default_port():
-    """
-    1) Add a rhevm provider
-    2) Edit it and try to change it to another rhevm provider
-    3) There shouldn"t be any default API port and API port should be
-    blank
-
-    Polarion:
-        assignee: pvala
-        casecomponent: infra
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_utilization_host():
@@ -13369,94 +12953,6 @@ def test_gap_collection_vsphere6():
 
 
 @pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_hw_hot_vsphere67_nested_cores_per_socket():
-    """
-    test changing vm"s cpu cores
-
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        setup: -get new configured appliance
-               -add vmware provider
-               -provision new vm
-               -select vm
-               -configure-->reconfigure vm
-               -increase/decrease the cpu cores
-               -check changes
-        startsin: 5.5
-        testSteps:
-            1. Increase vm cpu cores
-            2. Decrease vm cpu cores
-        expectedResults:
-            1. Changes shouldn"t succeed
-            2. Changes shouldn"t succeed
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_hw_hot_vsphere67_nested_sockets():
-    """
-    test change vm"s cpu sockets
-
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        setup: -get new configured appliance
-               -add vmware provider
-               -provision new vm
-               -select vm
-               -configure-->reconfigure vm
-               -increase/decreasing cpu sockets
-               -check changes
-        startsin: 5.5
-        testSteps:
-            1. Increase sockets of vm
-            2. Decrease sockets of vm
-        expectedResults:
-            1. Changes should succeed
-            2. Changes shouldn"t succeed
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_hw_hot_vsphere67_nested_memory():
-    """
-    test changing the memory of a vm
-
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        setup: -get new configured appliance
-               -add vmware provider
-               -provision new vm
-               -select vm
-               -configure-->reconfigure vm
-               -increase/decrease the memory and submit
-               -check changes
-        startsin: 5.5
-        testSteps:
-            1. Increase memory of selected VM
-            2. Decrease memory of select vm
-        expectedResults:
-            1. Changes should succeed
-            2. Changes should fail (you can"t hot decrease memory) [Error:
-               The operation is not supported on the object.]
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_vmware_manual_placemant_cluster_only():
     """
@@ -13506,49 +13002,18 @@ def test_service_retirement_requests_shall_be_run_by_the_user():
 
 
 @pytest.mark.manual
-@test_requirements.settings
-@pytest.mark.tier(3)
-def test_validate_landing_pages_for_rbac():
+@pytest.mark.tier(2)
+def test_tagvis_tag_and_vm_combination():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1450012
+    Combine My Company tag restriction tab with VM&Tepmlates restriction
+    tab
+    Vm , template should match both tab restrictions
 
     Polarion:
-        assignee: pvala
+        assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        initialEstimate: 1/5h
-        title: test validate landing pages for rbac
-        testSteps:
-            1.create a new role by selecting few product features.
-              2.create a group base on the above role and the create a new
-              user with this group 3.Login with the new user and navigate
-              to my settings->visuals and check the start page entries in
-              show at login drop down list
-        expectedResults:
-            1. Display landing pages for which the user has access to
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.discovery
-def test_add_infra_provider_screen():
-    """
-    Manually add provider using Add screen
-    Provider Add:
-    -test form validation using incorrect format for each field
-    -test wrong ip
-    -test wrong credentials
-    -test verify cretentials
-    -test verify wrong credentials
-    -test wrong security protocol
-    -test wrong provider type
-
-    Polarion:
-        assignee: pvala
-        casecomponent: infra
-        caseimportance: medium
-        initialEstimate: 1/2h
+        initialEstimate: 1/8h
     """
     pass
 
@@ -13676,45 +13141,28 @@ def test_snapshot_tree_view_functionality():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(3)
-def test_report_fullscreen_enabled():
+@test_requirements.cfme_tenancy
+def test_superadmin_child_tenant_delete_parent_catalog():
     """
-    Navigate to Intelligence > Reports
-    (queue same report twice)
-    1)Sucesful report generting [populated]
-    Select Generating Report
-    -check Configuration > Show Fullscreen Report is disabled
-    Wait ~1minute and Select sucesfully generated report
-    -check Configuration > Show Fullscreen Report is enabled
-    Select Show Fullscreen Report
-    -check report was shown in fullscreen
-    2)Select report with no data for reporting, queue the report [blank]
-    (queue same report twice)
-    Select Generating Report
-    -check Configuration > Show Fullscreen Report is disabled
-    Wait ~1minute and Select sucesfully generated report
-    -check Configuration > Show Fullscreen Report is disabled
-    Navigate to Intelligence > Saved Reports
-    3)Select group of [populated] reports
-    In table, select one of reports
-    -check Configuration > Show Fullscreen Report is enabled
-    Select Show Fullscreen Report
-    -check report was shown in fullscreen
-    Select both of reports
-    -check Configuration > Show Fullscreen Report is disabled
-    4)Select group of [blank] reports
-    In table, select one of reports
-    -check Configuration > Show Fullscreen Report is disabled
-    Select both of reports
-    -check Configuration > Show Fullscreen Report is disabled
+    Child superadmin tenant should able to delete catalog belonging to
+    superadmin in parent tenant. This is by design tenancy has not been
+    split any further and at this point is not expected to be changed
+    Note: As per below BZ#1375713,  Child superadmin tenant should not
+    delete catalog belonging to superadmin in parent tenant. However as
+    per the current code base this is by design: "ServiceTemplate"
+    => :ancestor_ids,
+    https://github.com/ManageIQ/manageiq/blob/2a66cb59e26816c7296896620b5b
+    7731b350943d/lib/rbac/filterer.rb#L114
+    You"re able to see Catalog items of parent and ancestor tenants.  If
+    your role has permission to modify catalog items / delete them, and
+    you can to see ones from ancestor tenants, then you can delete them.
+    https://bugzilla.redhat.com/show_bug.cgi?id=1375713
 
     Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: low
-        initialEstimate: 1/12h
+        assignee: mnadeem
+        casecomponent: config
+        initialEstimate: 1/2h
+        startsin: 5.5
     """
     pass
 
@@ -14189,48 +13637,6 @@ def test_show_tag_info_for_playbook_services():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Show tag info for playbook services
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_hot_vsphere67_nested_independent_persistent_thin():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_hot_vsphere67_nested_independent_persistent_thick():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_hot_vsphere67_nested_persistent_thin():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        startsin: 5.9
     """
     pass
 
@@ -15041,24 +14447,28 @@ def test_automate_git_import_deleted_tag():
 
 
 @pytest.mark.manual
-@test_requirements.report
-def test_check_my_company_all_evm_groups_filter_from_reports_schedule():
+@test_requirements.upgrade
+@pytest.mark.tier(2)
+def test_update_webui_ipv6():
     """
-    Steps to Reproduce:
-    1.Navigate to Cloud Intel → Reports.
-    2.Click the Schedules accordion
-    3.Add a New Schedule
-    4.Under Report Selection →
-    Try to select custom report In Filter drop downs that you want to
-    schedule
-    https://bugzilla.redhat.com/show_bug.cgi?id=1559323
+    Test updating the appliance to release version from prior version.
+    (i.e 5.5.x to 5.5.x+) IPV6 only env
 
     Polarion:
-        assignee: pvala
-        casecomponent: report
-        initialEstimate: 1/16h
-        startsin: 5.9
-        title: Check My Company(All EVM Groups) filter from reports schedule
+        assignee: jhenner
+        casecomponent: appl
+        caseimportance: medium
+        initialEstimate: 1/3h
+        setup: -Provision configured appliance
+               -Register it with RHSM using web UI
+               -Create /etc/yum.repos.d/update.repo
+               -populate file with repos from
+               https://mojo.redhat.com/docs/DOC-1058772
+               -check for update in web UI
+               -apply update
+               -appliance should shutdown update and start back up
+               -confirm you can login afterwards
+        startsin: 5.8
     """
     pass
 
@@ -16458,27 +15868,6 @@ def test_verify_the_trusted_forest_settings_table_display_in_authentication_page
 
 
 @pytest.mark.manual
-@test_requirements.report
-def test_date_should_be_change_in_editing_reports_scheduled():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1446052
-    Steps to Reproduce:
-    1. Edit schedule report
-    2. Under "Timer" Select "monthly"  every "month"
-    3. Try to change "Starting Date"
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.3
-        title: Date should be change In editing reports scheduled
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware65_test_vm_migration_with_windows_2016_server():
     """
     OSP: vmware65-Test VM migration with Windows 2016 server
@@ -16509,41 +15898,6 @@ def test_sui_session_timeout():
         title: SUI : Session Timeout
     """
     pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-def test_rest_metric_rollups():
-    """
-    This test checks that the we get a correct reply for our query.
-
-    Polarion:
-        assignee: pvala
-        caseimportance: medium
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_provider_discover_error_azure():
-    """
-    Same as discover provider, only we want to make sure to enter an
-    incorrect value for all fields and make sure it doesn"t accept the
-    entry as valid. (Provider will not discover)
-
-    Polarion:
-        assignee: pvala
-        casecomponent: cloud
-        caseimportance: medium
-        caseposneg: negative
-        endsin: 5.8
-        initialEstimate: 1/8h
-        startsin: 5.6
-    """
-    pass
-
 
 @pytest.mark.manual
 @test_requirements.auth
@@ -17565,28 +16919,6 @@ def test_embed_tower_add_private_repo():
 
 
 @pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_report_export_import_run_custom_report():
-    """
-    Steps:1. generate a report from an affected custom report
-    2. export the custom report
-    3. import the custom report
-    4. generate a new report of that custom reportall rows behave
-    consistently
-    https://bugzilla.redhat.com/show_bug.cgi?id=1498471
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.3
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(3)
 def test_service_ansible_service_name():
@@ -17832,23 +17164,6 @@ def test_restart_guest_scvmm():
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.4
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_create_schedule_for_base_report_hourly():
-    """
-    Create schedule that runs report hourly during the day. Check it was
-    ran successfully
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/16h
     """
     pass
 
@@ -18336,23 +17651,13 @@ def test_power_controls_on_archived_vm():
 
 
 @pytest.mark.manual
-@test_requirements.report
-def test_report_secondary_display_filter_should_be_editable():
+@pytest.mark.tier(1)
+def test_replication_central_admin_adhoc_provision_template():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1565171
-    Steps to Reproduce:
-    1.Create report based on container images
-    2. Select some fields for the report
-    3. ON the filter tab add primary filter
-    4. Add secondary filter
-    5. try to edit the secondary filter.
-
     Polarion:
-        assignee: pvala
-        casecomponent: report
+        assignee: tpapaioa
         caseimportance: medium
         initialEstimate: 1/6h
-        title: Report secondary (display) filter should be editable
     """
     pass
 
@@ -18423,76 +17728,6 @@ def test_distributed_zone_failover_provider_inventory_singleton():
         casecomponent: appl
         caseimportance: medium
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_cold_vsphere67_nested_independent_persistent_thick():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_cold_vsphere67_nested_persistent_thin():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_cold_vsphere67_nested_independent_persistent_thin():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_cold_vsphere67_nested_independent_nonpersistent_thin():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_cold_vsphere67_nested_independent_nonpersistent_thick():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        startsin: 5.9
     """
     pass
 
@@ -18704,18 +17939,17 @@ def test_automate_import_namespace_attributes_updated():
 
 
 @pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_edit_chargeback_for_projects_report():
+@pytest.mark.tier(2)
+def test_tagvis_configuration_management_configured_system():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1485006
+    Tag a configuration management's configured system and check for its
+    visibility
 
     Polarion:
-        assignee: pvala
-        casecomponent: report
+        assignee: anikifor
+        casecomponent: config
         caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.3
+        initialEstimate: 1/8h
     """
     pass
 
@@ -21314,103 +20548,18 @@ def test_monitor_ansible_playbook_std_output():
 
 
 @pytest.mark.manual
-@test_requirements.discovery
-def test_add_cloud_provider_screen():
+@pytest.mark.tier(1)
+def test_appliance_log_error():
     """
-    Add cloud provider using Add Provider screen:
-    Open Stack:
-    -test Name
-    -test incorrect format of Name
-    (all combinations of following)
-    -test Hostname
-    -test incorrect format of Hostname
-    -test incorrect Hostname
-    -test Security Protocol
-    -test incorrect Security Protocol
-    -test Username
-    -test incorrect format of Username
-    -test incorrect Username
-    -test Password
-    -test incorrect format of Password
-    -test incorrect Password
-    -test Validate
-    -test switching Security Protocol
-    Events > AMQP
-    (all combinations of following)
-    -test Hostname
-    -test incorrect format of Hostname
-    -test incorrect Hostname
-    -test API Port
-    -test incorrect format of API Port
-    -test incorrect API Port
-    -test Security Protocol
-    -test incorrect Security Protocol
-    -test Username
-    -test incorrect format of Username
-    -test incorrect Username
-    -test Password
-    -test incorrect format of Password
-    -test incorrect Password
-    -test Validate
-    -test switching Security Protocol
-    Amazon EC2:
-    -test Name
-    -test incorrect format of Name
-    (all combinations of following)
-    -test Region
-    -test incorrect Region
-    -test Access Key ID
-    -test incorrect format of Access Key ID
-    -test incorrect Access Key ID
-    -test Secret Access Key
-    -test incorrect format of Secret Access Key
-    -test incorrect Secret Access Key
-    -test Confirm Secret Access Key
-    -test incorrect format of Confirm Secret Access Key
-    -test incorrect Confirm Secret Access Key
-    -test Validate
-    Azure:
-    -test Name
-    -test incorrect format of Name
-    (all combinations of following)
-    -test Region
-    -test incorrect Region
-    -test Tenant ID
-    -test incorrect format of Tenant ID
-    -test incorrect Tenant ID
-    -test Subscription ID
-    -test incorrect format of Subscription ID
-    -test incorrect Subscription ID
-    (all combinations of following)
-    -test Client ID
-    -test incorrect format of Client ID
-    -test incorrect Client ID
-    -test Client Key
-    -test incorrect format of Client Key
-    -test incorrect Client Key
-    -test Confirm Client Key
-    -test incorrect format of Confirm Client Key
-    -test incorrect Confirm Client Key
-    -test Validate
-    Google Compute Engine
-    -test Name
-    -test incorrect format of Name
-    (all combinations of following)
-    -test Region
-    -test incorrect Region
-    -test Project
-    -test incorrect format of Project
-    -test incorrect Project
-    -test Service Account JSON
-    -test incorrect format of Service Account JSON
-    -test incorrect Service Account JSON
-    -test Validate
+    check logs for errors such as
+    https://bugzilla.redhat.com/show_bug.cgi?id=1392087
 
     Polarion:
-        assignee: pvala
-        casecomponent: cloud
-        caseimportance: medium
-        initialEstimate: 3h
+        assignee: jhenner
+        casecomponent: appl
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/2h
     """
     pass
 
@@ -21500,59 +20649,6 @@ def test_osp_test_cpu_cores_and_sockets_pre_vs_post_migration():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test CPU Cores and Sockets Pre vs Post migration
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_import_export_report():
-    """
-    Import and export report
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup: Create or Identify appliance
-               (no prerequisite or provider needed for this test)
-        title: Import/Export report
-        testSteps:
-            1. Sign up to appliance
-            2. Navigate to Cloud Intelligence > Reports
-            3. Select any report and create its copy
-            4. Locate newly created report in My Company > Custom
-            5. Navigate to Import / Export
-            6. Select Custom reports
-            7. Select newly copied report and select Export
-            8. Download the yaml file
-            9. Locate exported report in My Company > Custom
-            10. Delete exported report
-            11. Navigate back to Import / Export
-            12. Select Choose file
-            13. Locate and select previously downloaded yaml file
-            14. Select Upload
-            15. Locate import report in My Company > Custom
-            16. Sign out
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Verify that canned report was copied under new name
-            5.
-            6. Verify you"ve been redirected to Import / Export screen
-            7. Verify that yaml file download was initiated
-            8.
-            9.
-            10.
-            11.
-            12. Verify File upload screen was open
-            13.
-            14. Verify Imported report is now again available for Export
-            15. Verify report is present
-            16.
     """
     pass
 
@@ -22036,92 +21132,6 @@ def test_crosshair_op_datastore_vsphere6():
 
 
 @pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_independent_nonpersistent_thick():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/3h
-        startsin: 5.7
-        title: test_vm_reconfig_add_remove_disk_hot[vsphere67-nested-
-               independent_nonpersistent-thick]
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_independent_persistent_thick():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/3h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_independent_nonpersistent_thin():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/3h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_independent_persistent_thin():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/3h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_persistent_thin():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/3h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_persistent_thick():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/3h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_migration_plan_delete():
     """
     OSP: Test migration plan delete
@@ -22258,33 +21268,6 @@ def test_notification_window_can_be_closed_by_clicking_x():
         initialEstimate: 1/15h
         startsin: 5.9
         title: Notification window can be closed by clicking 'x'
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_generate_report_custom_with_tag():
-    """
-    steps:
-    1 Assign tag to VM, for example, departament tag,we have used
-    "Discipline".
-    2 Asign tag to Tenant, for example, departament tag, we have used
-    "Discipline".
-    3 Create report with base report "VMs and Instances" and the next
-    fields: Name Departament tag.
-    4 Create report with base report "Cloud Tenant" and the next fields:
-    Name Departament tag.
-    5 Generate the two reports.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1504086
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.8
     """
     pass
 
@@ -22458,22 +21441,6 @@ def test_embed_tower_add_repo_invalid_url():
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-def test_schedule_add_from_report():
-    """
-    Add schedule from report queue
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.3
     """
     pass
 
@@ -22689,20 +21656,6 @@ def test_black_console_ext_auth_options_skip():
             6. check changes in ui
             7. check changes in ui
             8. check changes in ui
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_hot_vsphere65_nested_persistent_thick():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        startsin: 5.9
     """
     pass
 
@@ -23106,31 +22059,6 @@ def test_cloud_tenant_crud_rhos():
 
 
 @pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_manage_report_menu_accordion_with_users():
-    """
-    Steps:
-    1. Create a new report called report01
-    2. Create a new user under EvmGroup-super_administrator called
-    testuser
-    3. "Edit Report Menus" and add the report01 under EvmGroup-
-    super_administrator"s Provisioning -> Activities
-    4. Login using testuser and navigate to Reports
-    5. No report01 is under Provisioning -> Activities
-    BZ: 1535023
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(3)
 def test_cluster_tagged_crosshair_op_vsphere65():
@@ -23203,46 +22131,6 @@ def test_refresh_with_empty_iot_hub_azure():
         casecomponent: cloud
         caseimportance: low
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_reconfigure_vm_vmware_sockets_multiple():
-    """
-    Test changing the cpu sockets of multiple vms at the same time.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: infra
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: -get new configured appliance
-               -add vmware provider
-               -provision 2 new vms
-               -power off 1 vm
-               -select both vms
-               -configure-->reconfigure vm
-               -increase/decrease counts
-               -power on vm
-               -check changes
-        startsin: 5.6
-        testSteps:
-            1. Hot increase
-            2. Hot Decrease
-            3. Cold Increase
-            4. Cold Decrease
-            5. Hot + Cold Increase
-            6. Hot + Cold Decrease
-        expectedResults:
-            1. Action should succeed
-            2. Action should fail
-            3. Action should succeed
-            4. Action should succeed
-            5. Action should succeed
-            6. Action should Error
     """
     pass
 
@@ -23357,25 +22245,6 @@ def test_config_manager_job_template_refresh():
         assignee: nachandr
         casecomponent: ansible
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_generate_reports_after_upgrade():
-    """
-    Test generate reports after updating the appliance to release version
-    from prior version.
-    BZ LInk: 1464154
-
-    Polarion:
-        assignee: pvala
-        casecomponent: report
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.3
     """
     pass
 
@@ -27263,99 +26132,19 @@ def test_create_remove_network_security_groups_events_azure():
 
 
 @pytest.mark.manual
-@test_requirements.report
+@test_requirements.log_depot
 @pytest.mark.tier(1)
-def test_queue_tenant_quotas_report():
+def test_log_collect_all_zone_multiple_servers():
     """
-    Test multiple possible Tenant Quota Report configurations
+    using any type of depot check collect all log function under zone.
+    Zone should have multiplie servers under it. Zone and all servers
+    should have their own settings
 
     Polarion:
-        assignee: pvala
-        casecomponent: report
-        initialEstimate: 1/4h
-        setup: Create or Identify appliance with one or more synced providers
-        title: Queue Tenant Quotas Report
-        testSteps:
-            1. Sign in to appliance
-            2. Navigate to Settings > Access control > Tenants > My Tenant > Manage quotas
-            3. Turn on Allocated Virtual CPUs and set it up to 10
-            4. Save new quota configuration
-            5. Navigate to Cloud Intel > Reports > Reports > Tentant Quotas
-            6. Queue Tenant Quotas report
-            7. //Wait ~1 minute
-            8.
-            9.
-            10. Navigate to Settings > Access control > Tenants > My Tenant > Manage quotas
-            11. Turn off Allocated Virtual CPUs, turn on Allocated Memory in
-                GB and set it up to 100
-            12. Save new quota configuration
-            13. Navigate to Cloud Intel > Reports > Reports > Tentant Quotas
-            14. Queue Tenant Quotas report
-            15. //Wait ~1 minute
-            16.
-            17.
-            18. Navigate to Settings > Access control > Tenants > My Tenant > Manage quotas
-            19. Turn on Allocated Virtual CPUs and set it up to 10, turn on
-                Allocated Memory in GB and set it up to 100
-            20. Save new quota configuration
-            21. Navigate to Cloud Intel > Reports > Reports > Tentant Quotas
-            22. Queue Tenant Quotas report
-            23. //Wait ~1 minute
-            24.
-            25.
-            26. Navigate to Settings > Access control > Tenants > My Tenant > Manage quotas
-            27. Turn on all quotas and set them up adequate numbers
-            28. Save new quota configuration
-            29. Navigate to Cloud Intel > Reports > Reports > Tentant Quotas
-            30. Queue Tenant Quotas report
-            31. //Wait ~1 minute
-            32.
-            33.
-            34. Sign out
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Verify that flash message "Quotas for Tenant were saved" is shown
-            5.
-            6.
-            7. Verify that only Allocated Virtual CPUs row is present in report
-            8. Verify that Count is unit in the report
-            9. Verify that following columns are shown in report:
-               Tenant Name         Quota Name         Total Quota
-               In Use         Allocated         Available
-            10.
-            11.
-            12. Verify that flash message "Quotas for Tenant were saved" is shown
-            13.
-            14.
-            15. Verify that only Allocated Memory in GB row is present in report
-            16. Verify that GB is unit in the report
-            17. Verify that following columns are shown in report:
-                Tenant Name         Quota Name         Total Quota
-                In Use         Allocated         Available
-            18.
-            19.
-            20. Verify that flash message "Quotas for Tenant were saved" is shown
-            21.
-            22.
-            23. Verify that Allocated Virtual CPUs and Allocated Memory in
-                GB rows are present in report
-            24. Verify that both Count and GB units are used in the report
-            25. Verify that following columns are shown in report:
-                Tenant Name         Quota Name         Total Quota
-                In Use         Allocated         Available
-            26.
-            27.
-            28. Verify that flash message "Quotas for Tenant were saved" is shown
-            29.
-            30.
-            31. Verify that all quotas are present in report
-            32. Verify that both Count and GB units are used in the report
-            33. Verify that following columns are shown in report:
-                Tenant Name         Quota Name         Total Quota
-                In Use         Allocated         Available
-            34.
+        assignee: anikifor
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/2h
     """
     pass
 
@@ -27471,20 +26260,6 @@ def test_validate_chargeback_cost_resource_maximum_memory():
 
 
 @pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_cold_vsphere67_nested_persistent_thick():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: infra
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(3)
 def test_configure_ldaps_for_customized_port_eg_10636_10389_and_validate_cfme_auth():
@@ -27535,46 +26310,6 @@ def test_user_should_be_able_to_change_the_order_of_values_of_the_drop_down_list
         initialEstimate: 1/16h
         startsin: 5.10
         title: User should be able to change the order of values of the drop down list
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_reconfigure_vm_vmware_mem_multiple():
-    """
-    Test changing the memory of multiple vms at the same time.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: infra
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: -get new configured appliance
-               -add vmware provider
-               -provision 2 new vms
-               -power off 1 vm
-               -select both vms
-               -configure-->reconfigure vm
-               -increase/decrease counts
-               -power on vm
-               -check changes
-        startsin: 5.6
-        testSteps:
-            1. Hot increase
-            2. Hot Decrease
-            3. Cold Increase
-            4. Cold Decrease
-            5. Hot + Cold Increase
-            6. Hot + Cold Decrease
-        expectedResults:
-            1. Action should succeed
-            2. Action should fail
-            3. Action should succeed
-            4. Action should succeed
-            5. Action should succeed
-            6. Action should Error
     """
     pass
 

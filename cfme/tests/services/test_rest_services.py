@@ -716,6 +716,8 @@ class TestServiceDialogsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         query_resource_attributes(service_dialogs[0], soft_assert=soft_assert)
@@ -815,6 +817,8 @@ class TestServiceTemplateRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         query_resource_attributes(service_templates[0], soft_assert=soft_assert)
@@ -977,6 +981,8 @@ class TestServiceCatalogsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         outcome = query_resource_attributes(service_catalogs[0])
@@ -1282,6 +1288,8 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         query_resource_attributes(pending_request, soft_assert=soft_assert)
@@ -1294,6 +1302,8 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         # Wait a bit to check that it will not get auto-approved
@@ -1315,6 +1325,8 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         delete_resources_from_detail([pending_request], method=method)
@@ -1327,6 +1339,8 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         delete_resources_from_collection([pending_request])
@@ -1339,6 +1353,8 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         pending_request.action.approve(reason='I said so.')
@@ -1367,6 +1383,8 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         pending_request.action.deny(reason='I said so.')
@@ -1459,116 +1477,6 @@ class TestServiceRequests(object):
         request.addfinalizer(new_service.action.delete)
 
 
-# blueprints were removed in versions >= 5.9'
-@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
-class TestBlueprintsRESTAPI(object):
-    @pytest.fixture(scope="function")
-    def blueprints(self, request, appliance):
-        num = 2
-        response = _blueprints(request, appliance, num=num)
-        assert_response(appliance)
-        assert len(response) == num
-        return response
-
-    def test_query_blueprints_attributes(self, blueprints, soft_assert):
-        """Tests access to blueprints attributes.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        outcome = query_resource_attributes(blueprints[0])
-        for failure in outcome.failed:
-            if failure.name == 'service_templates' and BZ(
-                    1546952, forced_streams=['5.8']).blocks:
-                continue
-            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
-                failure.type, failure.name, failure.response.status_code, failure.error))
-
-    @pytest.mark.tier(3)
-    def test_create_blueprints(self, appliance, blueprints):
-        """Tests creation of blueprints.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        for blueprint in blueprints:
-            record = appliance.rest_api.collections.blueprints.get(id=blueprint.id)
-            assert record.name == blueprint.name
-            assert record.description == blueprint.description
-            assert record.ui_properties == blueprint.ui_properties
-
-    @pytest.mark.tier(3)
-    @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-    def test_delete_blueprints_from_detail(self, blueprints, method):
-        """Tests deleting blueprints from detail.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        delete_resources_from_detail(blueprints, method=method)
-
-    @pytest.mark.tier(3)
-    def test_delete_blueprints_from_collection(self, blueprints):
-        """Tests deleting blueprints from collection.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        delete_resources_from_collection(blueprints)
-
-    @pytest.mark.tier(3)
-    @pytest.mark.parametrize(
-        "from_detail", [True, False],
-        ids=["from_detail", "from_collection"])
-    def test_edit_blueprints(self, appliance, blueprints, from_detail):
-        """Tests editing of blueprints.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        response_len = len(blueprints)
-        new = [{
-            'ui_properties': {
-                'automate_entrypoints': {'Reconfigure': 'foo'}
-            }
-        } for _ in range(response_len)]
-        if from_detail:
-            edited = []
-            for i in range(response_len):
-                edited.append(blueprints[i].action.edit(**new[i]))
-                assert_response(appliance)
-        else:
-            for i in range(response_len):
-                new[i].update(blueprints[i]._ref_repr())
-            edited = appliance.rest_api.collections.blueprints.action.edit(*new)
-            assert_response(appliance)
-        assert len(edited) == response_len
-        for i in range(response_len):
-            assert edited[i].ui_properties == new[i]['ui_properties']
-            blueprints[i].reload()
-            assert blueprints[i].ui_properties == new[i]['ui_properties']
-
-
 class TestOrchestrationTemplatesRESTAPI(object):
     @pytest.fixture(scope='function')
     def orchestration_templates(self, request, appliance):
@@ -1586,6 +1494,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         query_resource_attributes(orchestration_templates[0], soft_assert=soft_assert)
@@ -1599,6 +1509,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         for template in orchestration_templates:
@@ -1616,6 +1528,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         delete_resources_from_collection(orchestration_templates, not_found=True)
@@ -1630,6 +1544,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         delete_resources_from_detail(orchestration_templates, method='POST')
@@ -1643,6 +1559,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         delete_resources_from_detail(orchestration_templates, method='DELETE')
@@ -1659,6 +1577,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         response_len = len(orchestration_templates)
@@ -1694,6 +1614,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         num_orch_templates = len(orchestration_templates)
@@ -1741,6 +1663,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         num_orch_templates = len(orchestration_templates)
@@ -1772,6 +1696,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         uniq = fauxfactory.gen_alphanumeric(5)
@@ -1809,6 +1735,8 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         query_resource_attributes(cart, soft_assert=soft_assert)

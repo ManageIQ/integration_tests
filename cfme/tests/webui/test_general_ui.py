@@ -257,7 +257,7 @@ def test_ui_notification_icon():
         caseautomation: manualonly
         initialEstimate: 1/6h
         startsin: 5.9
-        testSTeps:
+        testSteps:
             1. Go to rails console and type:
             Notification.create(:type => :automate_user_error, :initiator =>
             User.first, :options => { :message => "test" })

@@ -42,47 +42,13 @@ def enable_regions(provider):
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
-                         reason='no more support for cloud provider discovery')
-def test_empty_discovery_form_validation_cloud(appliance):
-    """ Tests that the flash message is correct when discovery form is empty.
-
-    Polarion:
-        assignee: None
-        initialEstimate: None
-    """
-    collection = appliance.collections.cloud_providers
-
-    collection.discover(None, AzureProvider)
-    view = appliance.browser.create_view(CloudProvidersDiscoverView)
-    view.flash.assert_message('Client ID, Client Key, Azure Tenant ID and '
-                              'Subscription ID are required')
-
-
-@pytest.mark.tier(3)
-@test_requirements.discovery
-@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
-                         reason='no more support for cloud provider discovery')
-def test_discovery_cancelled_validation_cloud(appliance):
-    """ Tests that the flash message is correct when discovery is cancelled.
-
-    Polarion:
-        assignee: None
-        initialEstimate: None
-    """
-    collection = appliance.collections.cloud_providers
-    collection.discover(None, AzureProvider, cancel=True)
-    view = appliance.browser.create_view(CloudProvidersView)
-    view.flash.assert_success_message('Cloud Providers Discovery was cancelled by the user')
-
-
-@pytest.mark.tier(3)
-@test_requirements.discovery
 def test_add_cancelled_validation_cloud(request, appliance):
     """Tests that the flash message is correct when add is cancelled.
 
     Polarion:
         assignee: pvala
+        casecomponent: cloud
+        caseimportance: medium
         initialEstimate: 1/16h
     """
     collection = appliance.collections.cloud_providers
@@ -95,66 +61,6 @@ def test_add_cancelled_validation_cloud(request, appliance):
         prov.create(cancel=True)
     view = prov.browser.create_view(CloudProvidersView)
     view.flash.assert_success_message('Add of Cloud Provider was cancelled by the user')
-
-
-@pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
-                         reason='no more support for cloud provider discovery')
-def test_discovery_password_mismatch_validation_cloud(appliance):
-    """
-    Polarion:
-        assignee: None
-        initialEstimate: None
-    """
-    cred = Credential(
-        principal=fauxfactory.gen_alphanumeric(5),
-        secret=fauxfactory.gen_alphanumeric(5),
-        verify_secret=fauxfactory.gen_alphanumeric(7))
-    collection = appliance.collections.cloud_providers
-    collection.discover(cred, EC2Provider)
-    view = appliance.browser.create_view(CloudProvidersView)
-    view.flash.assert_message('Password/Verify Password do not match')
-
-
-@pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9',
-                        reason='no more support for cloud provider discovery')
-def test_discovery_error_azure_cloud(appliance):
-    """ Test Azure discovery with fake data
-
-    prerequisites:
-        * appliance supporting discovery
-
-    Steps:
-        * Navigate Cloud provider discovery and select Azure
-        * Fill all fields with fake data
-        * Start Discovery
-        * Even with wrong data discovery will start with the proper flash message assert it
-        * Check for provider should not discover
-
-    Polarion:
-        assignee: None
-        initialEstimate: None
-    """
-    cred = Credential(
-        principal=fauxfactory.gen_alphanumeric(5),
-        secret=fauxfactory.gen_alphanumeric(8),
-        tenant_id=fauxfactory.gen_alphanumeric(10),
-        subscription_id=fauxfactory.gen_alphanumeric(10))
-
-    collection = appliance.collections.cloud_providers
-    view = navigate_to(collection, 'All')
-    initial_count = len(view.entities.entity_names)
-
-    collection.discover(cred, AzureProvider)
-    view = appliance.browser.create_view(CloudProvidersView)
-    view.flash.assert_success_message('Cloud Providers: Discovery successfully initiated')
-
-    # While waiting for new provider, TimeOutError will come (Negative Test)
-    with pytest.raises(TimedOutError):
-        collection.wait_for_new_provider(timeout=120)
-
-    assert len(view.entities.entity_names) <= initial_count
 
 
 @pytest.mark.tier(3)
@@ -191,6 +97,8 @@ def test_providers_discovery(request, appliance, provider):
 
     Polarion:
         assignee: pvala
+        casecomponent: cloud
+        caseimportance: high
         initialEstimate: 1/8h
     """
     if provider.one_of(AzureProvider):
@@ -226,7 +134,9 @@ def test_cloud_provider_add_with_bad_credentials(provider, enable_regions):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: cloud
+        caseimportance: high
+        initialEstimate: 1/6h
     """
     default_credentials = provider.default_endpoint.credentials
 
@@ -267,7 +177,9 @@ def test_cloud_provider_crud(provider, enable_regions):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: cloud
+        caseimportance: high
+        initialEstimate: 1/3h
     """
     provider.create()
     provider.validate_stats(ui=True)
@@ -290,6 +202,8 @@ def test_type_required_validation_cloud(request, appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: cloud
+        caseimportance: high
         initialEstimate: 1/10h
     """
     collection = appliance.collections.cloud_providers
@@ -305,6 +219,8 @@ def test_name_required_validation_cloud(request, appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: cloud
+        caseimportance: high
         initialEstimate: 1/15h
     """
     collection = appliance.collections.cloud_providers
@@ -392,6 +308,8 @@ def test_host_name_required_validation_cloud(request, appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: cloud
+        caseimportance: high
         initialEstimate: 1/15h
     """
     endpoint = RHOSEndpoint(hostname=None,
@@ -437,44 +355,14 @@ def test_api_port_blank_validation(request, appliance):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
-                         reason='EC2 option not available')
-def test_user_id_max_character_validation(appliance):
-    """
-    Polarion:
-        assignee: None
-        initialEstimate: None
-    """
-    cred = Credential(principal=fauxfactory.gen_alphanumeric(51), secret='')
-    collection = appliance.collections.cloud_providers
-    collection.discover(cred, EC2Provider)
-
-
-@pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9',
-                         reason='EC2 option not available')
-def test_password_max_character_validation(appliance):
-    """
-    Polarion:
-        assignee: None
-        initialEstimate: None
-    """
-    password = fauxfactory.gen_alphanumeric(51)
-    cred = Credential(
-        principal=fauxfactory.gen_alphanumeric(5),
-        secret=password,
-        verify_secret=password)
-    collection = appliance.collections.cloud_providers
-    collection.discover(cred, EC2Provider)
-
-
-@pytest.mark.tier(3)
 @test_requirements.discovery
 def test_name_max_character_validation_cloud(request, cloud_provider):
     """Test to validate that provider can have up to 255 characters in name
 
     Polarion:
         assignee: pvala
+        casecomponent: cloud
+        caseimportance: medium
         initialEstimate: 1/15h
     """
     request.addfinalizer(lambda: cloud_provider.delete_if_exists(cancel=False))
@@ -490,6 +378,8 @@ def test_hostname_max_character_validation_cloud(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: cloud
+        caseimportance: high
         initialEstimate: 1/15h
     """
     endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(256),
@@ -517,6 +407,7 @@ def test_api_port_max_character_validation_cloud(appliance):
     Polarion:
         assignee: pvala
         casecomponent: cloud
+        caseimportance: high
         initialEstimate: 1/15h
     """
     endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
@@ -780,6 +671,7 @@ class TestProvidersRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: cloud
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -809,6 +701,7 @@ class TestProvidersRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: cloud
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -822,149 +715,6 @@ class TestProvidersRESTAPI(object):
         if security_groups:
             assert 'SecurityGroup' in security_groups[0]['type']
 
-    @pytest.mark.tier(3)
-    # arbitration_profiles were removed in versions >= 5.9'
-    @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
-    def test_create_arbitration_profiles(self, appliance, arbitration_profiles):
-        """Tests creation of arbitration profiles.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        for profile in arbitration_profiles:
-            record = appliance.rest_api.collections.arbitration_profiles.get(id=profile.id)
-            assert_response(appliance)
-            assert record._data == profile._data
-            assert 'ArbitrationProfile' in profile.type
-
-    @pytest.mark.tier(3)
-    # arbitration_profiles were removed in versions >= 5.9'
-    @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
-    @pytest.mark.parametrize('method', ['post', 'delete'])
-    def test_delete_arbitration_profiles_from_detail(self, arbitration_profiles, method):
-        """Tests delete arbitration profiles from detail.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        delete_resources_from_detail(arbitration_profiles, method=method)
-
-    @pytest.mark.tier(3)
-    # arbitration_profiles were removed in versions >= 5.9'
-    @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
-    def test_delete_arbitration_profiles_from_collection(self, arbitration_profiles):
-        """Tests delete arbitration profiles from collection.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        delete_resources_from_collection(arbitration_profiles)
-
-    @pytest.mark.tier(3)
-    # arbitration_profiles were removed in versions >= 5.9'
-    @pytest.mark.uncollectif(lambda: store.current_appliance.version >= '5.9')
-    @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_edit_arbitration_profiles(self, appliance, arbitration_profiles, from_detail):
-        """Tests editing of arbitration profiles.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        response_len = len(arbitration_profiles)
-        zone = appliance.rest_api.collections.availability_zones[-1]
-        locators = [{'id': zone.id}, {'href': zone.href}]
-        new = [{'availability_zone': locators[i % 2]} for i in range(response_len)]
-        if from_detail:
-            edited = []
-            for i in range(response_len):
-                edited.append(arbitration_profiles[i].action.edit(**new[i]))
-                assert_response(appliance)
-        else:
-            for i in range(response_len):
-                new[i].update(arbitration_profiles[i]._ref_repr())
-            edited = appliance.rest_api.collections.arbitration_profiles.action.edit(*new)
-            assert_response(appliance)
-        assert len(edited) == response_len
-        for i in range(response_len):
-            assert edited[i].availability_zone_id == zone.id
-
-    @pytest.mark.tier(3)
-    # arbitration_rules were removed in versions >= 5.9'
-    @pytest.mark.uncollectif(lambda:
-        store.current_appliance.version >= '5.9' or
-        store.current_appliance.version < '5.8')
-    def test_create_arbitration_rules_with_profile(self, request, appliance, arbitration_profiles):
-        """Tests creation of arbitration rules referencing arbitration profiles.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        num_rules = 2
-        profile = arbitration_profiles[0]
-        references = [{'id': profile.id}, {'href': profile._href}]
-        data = []
-        for index in range(num_rules):
-            data.append({
-                'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),
-                'operation': 'inject',
-                'arbitration_profile': references[index % 2],
-                'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
-            })
-
-        response = creating_skeleton(request, appliance, 'arbitration_rules', data)
-        assert_response(appliance)
-        assert len(response) == num_rules
-        for rule in response:
-            record = appliance.rest_api.collections.arbitration_rules.get(id=rule.id)
-            assert record.arbitration_profile_id == rule.arbitration_profile_id == profile.id
-
-    @pytest.mark.tier(3)
-    # arbitration_rules were removed in versions >= 5.9'
-    @pytest.mark.uncollectif(lambda:
-        store.current_appliance.version >= '5.9' or
-        store.current_appliance.version < '5.8')
-    def test_create_arbitration_rule_with_invalid_profile(self, request, appliance):
-        """Tests creation of arbitration rule referencing invalid arbitration profile.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        data = [{
-            'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),
-            'operation': 'inject',
-            'arbitration_profile': 'invalid_value',
-            'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
-        }]
-
-        response = creating_skeleton(request, appliance, 'arbitration_rules', data)
-        # this will fail once BZ 1433477 is fixed - change and expand the test accordingly
-        assert_response(appliance)
-        for rule in response:
-            assert not hasattr(rule, 'arbitration_profile_id')
 
 
 @pytest.mark.provider([CloudProvider], override=True, selector=ONE)

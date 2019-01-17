@@ -50,13 +50,13 @@ def custom_report_values(request):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1541324, forced_streams=["5.9"])])
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_top_level(appliance, group, report_menus):
     """
     Polarion:
         assignee: pvala
         casecomponent: report
+        caseimportance: high
         initialEstimate: 1/6h
     """
     # Shuffle the order
@@ -73,7 +73,6 @@ def test_shuffle_top_level(appliance, group, report_menus):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1541324, forced_streams=["5.9"])])
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_first_level(appliance, group, report_menus):
     """
@@ -113,7 +112,8 @@ def test_add_reports_to_available_reports_menu(appliance, request, group,
     Polarion:
         assignee: pvala
         casecomponent: report
-        initialEstimate: None
+        caseimportance: high
+        initialEstimate: 1/10h
     """
 
     custom_report = appliance.collections.reports.create(**custom_report_values)

@@ -75,6 +75,7 @@ class TestReposRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -110,6 +111,7 @@ class TestReposRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -135,6 +137,7 @@ class TestReposRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -150,6 +153,8 @@ class TestPayloadsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.configuration_script_payloads
@@ -166,6 +171,8 @@ class TestPayloadsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         script_payloads = appliance.rest_api.collections.configuration_script_payloads
@@ -180,6 +187,8 @@ class TestPayloadsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         script_sources = appliance.rest_api.collections.configuration_script_sources

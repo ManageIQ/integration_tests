@@ -40,6 +40,8 @@ class TestConditionsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         query_resource_attributes(conditions[0], soft_assert=soft_assert)
@@ -52,6 +54,7 @@ class TestConditionsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -68,6 +71,7 @@ class TestConditionsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -81,6 +85,7 @@ class TestConditionsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -97,6 +102,7 @@ class TestConditionsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -143,6 +149,8 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: low
             initialEstimate: 1/4h
         """
         query_resource_attributes(policies[0], soft_assert=soft_assert)
@@ -155,6 +163,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -170,6 +179,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -186,6 +196,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -199,6 +210,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -217,6 +229,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -256,7 +269,7 @@ class TestPoliciesRESTAPI(object):
         Polarion:
             assignee: pvala
             casecomponent: Rest
-            caseimportance: High
+            caseimportance: high
             initialEstimate: 1/30h
         """
         policy_name = fauxfactory.gen_alphanumeric(5)

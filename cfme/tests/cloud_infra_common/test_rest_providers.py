@@ -56,7 +56,9 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: Rest
+        caseimportance: medium
+        initialEstimate: 1/30h
     """
     outcome = query_resource_attributes(provider_rest)
     for failure in outcome.failed:
@@ -89,6 +91,8 @@ def test_provider_options(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     options = appliance.rest_api.options(appliance.rest_api.collections.providers._href)
@@ -104,6 +108,8 @@ def test_create_provider(provider_rest):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     assert "ManageIQ::Providers::" in provider_rest.type
@@ -118,6 +124,8 @@ def test_provider_refresh(provider_rest, appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     # initiate refresh
@@ -153,6 +161,8 @@ def test_provider_edit(request, provider_rest, appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     new_name = fauxfactory.gen_alphanumeric()
@@ -176,6 +186,8 @@ def test_provider_delete_from_detail(provider_rest, method):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     delete_resources_from_detail([provider_rest], method=method, num_sec=50)
@@ -192,6 +204,8 @@ def test_provider_delete_from_collection(provider_rest):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     delete_resources_from_collection([provider_rest], num_sec=50)

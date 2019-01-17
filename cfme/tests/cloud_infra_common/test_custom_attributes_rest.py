@@ -142,6 +142,8 @@ class TestCustomAttributesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         resource = get_resource[collection_name]()
@@ -163,6 +165,8 @@ class TestCustomAttributesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         attributes = add_custom_attributes(request, get_resource[collection_name]())
@@ -181,6 +185,8 @@ class TestCustomAttributesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         attributes = add_custom_attributes(request, get_resource[collection_name]())
@@ -198,6 +204,8 @@ class TestCustomAttributesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         resource = get_resource[collection_name]()
@@ -217,6 +225,8 @@ class TestCustomAttributesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         resource = get_resource[collection_name]()
@@ -238,6 +248,8 @@ class TestCustomAttributesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: None
         """
         resource = get_resource[collection_name]()
@@ -289,6 +301,8 @@ class TestCustomAttributesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         resource = get_resource[collection_name]()
@@ -329,6 +343,8 @@ class TestCustomAttributesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         resource = get_resource[collection_name]()
@@ -359,6 +375,8 @@ class TestCustomAttributesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: None
         """
         resource = get_resource[collection_name]()
