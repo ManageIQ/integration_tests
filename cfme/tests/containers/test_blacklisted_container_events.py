@@ -2,7 +2,6 @@ import fauxfactory
 import pytest
 import time
 
-from copy import deepcopy
 from wrapanapi.systems.container.rhopenshift import ApiException
 
 from cfme.containers.provider import ContainersProvider
@@ -69,6 +68,18 @@ TEST_POD = {
 }
 
 
+def restore_advanced_settings(appliance):
+    """Restores the Advanced Settings config"""
+    if appliance.version < '5.10':
+        appliance.update_advanced_settings(
+            {"ems": {"ems_openshift": {"blacklisted_event_names": []}}}
+        )
+    else:
+        appliance.update_advanced_settings(
+            {"ems": {"ems_openshift": {"blacklisted_event_names": "<<reset>>"}}}
+        )
+
+
 def create_pod(provider, namespace):
     """Creates OpenShift pod in provided namespace"""
 
@@ -94,10 +105,10 @@ def delete_pod(provider, namespace):
     assert not provider.mgmt.list_pods(namespace=namespace)
 
 
-def appliance_cleanup(config, provider, appliance, namespace):
+def appliance_cleanup(provider, appliance, namespace):
     """Returns the appliance and provider to the original state"""
 
-    appliance.update_advanced_settings(config)
+    restore_advanced_settings(appliance=appliance)
     appliance.ssh_client.run_rails_console(
         "BlacklistedEvent.where(:event_name => 'POD_CREATED').destroy_all")
     appliance.evmserverd.restart()
@@ -128,10 +139,9 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
         Polarion:
             assignee: juwatts
             caseimportance: medium
+            casecomponent: Containers
             initialEstimate: 1/6h
     """
-    config = appliance.advanced_settings
-    original_conifg = deepcopy(config)
 
     project_name = fauxfactory.gen_alpha(8).lower()
 
@@ -139,7 +149,7 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
     provider.mgmt.create_project(name=project_name)
     provider.mgmt.wait_project_exist(name=project_name)
 
-    request.addfinalizer(lambda: appliance_cleanup(config=original_conifg, provider=provider,
+    request.addfinalizer(lambda: appliance_cleanup(provider=provider,
                                                    appliance=appliance,
                                                    namespace=project_name))
 
@@ -161,8 +171,9 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
 
     delete_pod(provider=provider, namespace=project_name)
 
-    config["ems"]["ems_openshift"]["blacklisted_event_names"] = ["POD_CREATED"]
-    appliance.update_advanced_settings(config)
+    appliance.update_advanced_settings(
+        {"ems": {"ems_openshift": {"blacklisted_event_names": ["POD_CREATED"]}}}
+    )
     appliance.evmserverd.restart()
     appliance.wait_for_web_ui()
 
@@ -185,7 +196,7 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
 
     delete_pod(provider=provider, namespace=project_name)
 
-    appliance.update_advanced_settings(original_conifg)
+    restore_advanced_settings(appliance=appliance)
     rails_destroy_blacklist = appliance.ssh_client.run_rails_console(
         "BlacklistedEvent.where(:event_name => 'POD_CREATED').destroy_all")
     assert rails_destroy_blacklist.success
