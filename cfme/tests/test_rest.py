@@ -10,8 +10,6 @@ from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
-from cfme.rest.gen_data import arbitration_rules as _arbitration_rules
-from cfme.rest.gen_data import arbitration_settings as _arbitration_settings
 from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.blockers import BZ
@@ -194,6 +192,8 @@ def test_query_simple_collections(appliance, collection_name):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/3h
     """
     collection = getattr(appliance.rest_api.collections, collection_name)
@@ -222,6 +222,8 @@ def test_collections_actions(appliance, collection_name):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     collection_href = '{}/{}'.format(appliance.rest_api._entry_point, collection_name)
@@ -251,6 +253,8 @@ def test_query_with_api_version(api_version, collection_name):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     collection = getattr(api_version.collections, collection_name)
@@ -275,6 +279,8 @@ def test_select_attributes(appliance, collection_name):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/8h
     """
     collection = getattr(appliance.rest_api.collections, collection_name)
@@ -297,6 +303,8 @@ def test_http_options(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/3h
     """
     assert 'boot_time' in appliance.rest_api.collections.vms.options()['attributes']
@@ -312,6 +320,8 @@ def test_http_options_node_types(appliance, collection_name):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     collection = getattr(appliance.rest_api.collections, collection_name)
@@ -327,6 +337,8 @@ def test_http_options_subcollections(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/4h
     """
     assert 'tags' in appliance.rest_api.collections.vms.options()['subcollections']
@@ -341,6 +353,8 @@ def test_server_info(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/3h
     """
     assert all(item in appliance.rest_api.server_info for item in ('appliance', 'build', 'version'))
@@ -354,6 +368,8 @@ def test_server_info_href(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     items = ('server_href', 'zone_href', 'region_href')
@@ -370,6 +386,8 @@ def test_default_region(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     reg = appliance.rest_api.collections.regions[0]
@@ -399,6 +417,8 @@ def test_settings_collection(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     # the "settings" collection is untypical as it doesn't have "resources" and
@@ -415,6 +435,8 @@ def test_identity(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/3h
     """
     assert all(item in appliance.rest_api.identity for item in
@@ -429,6 +451,8 @@ def test_user_settings(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/3h
     """
     assert isinstance(appliance.rest_api.settings, dict)
@@ -442,6 +466,8 @@ def test_datetime_filtering(appliance, provider):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     collection = appliance.rest_api.collections.vms
@@ -482,6 +508,8 @@ def test_date_filtering(appliance, provider):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     collection = appliance.rest_api.collections.vms
@@ -518,6 +546,8 @@ def test_resources_hiding(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/8h
     """
     roles = appliance.rest_api.collections.roles
@@ -539,6 +569,8 @@ def test_sorting_by_attributes(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     url_string = '{}{}'.format(
@@ -580,6 +612,8 @@ def test_rest_paging(appliance, paging):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     limit, offset = paging
@@ -650,7 +684,9 @@ def test_attributes_present(appliance, collection_name):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: Rest
+        caseimportance: medium
+        initialEstimate: 1/5h
     """
     attrs = 'href,id,href_slug'
     collection = getattr(appliance.rest_api.collections, collection_name)
@@ -675,6 +711,8 @@ def test_collection_class_valid(appliance, provider, vendor):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     collection = appliance.rest_api.collections.vms
@@ -702,6 +740,8 @@ def test_collection_class_invalid(appliance, provider):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     with pytest.raises(Exception, match='Invalid collection_class'):
@@ -722,6 +762,8 @@ def test_bulk_delete(request, appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     collection = appliance.rest_api.collections.services
@@ -750,6 +792,8 @@ def test_rest_ping(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     ping_addr = '{}/ping'.format(appliance.rest_api._entry_point)
@@ -773,6 +817,8 @@ class TestPicturesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         picture = self.create_picture(appliance)
@@ -793,6 +839,8 @@ class TestPicturesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.pictures
@@ -811,6 +859,8 @@ class TestPicturesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.pictures
@@ -832,6 +882,8 @@ class TestPicturesRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.pictures
@@ -854,6 +906,8 @@ class TestBulkQueryRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.events
@@ -874,6 +928,8 @@ class TestBulkQueryRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         data = appliance.rest_api.collections.users[0]._data
@@ -891,6 +947,8 @@ class TestBulkQueryRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.roles
@@ -909,6 +967,8 @@ class TestBulkQueryRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.groups
@@ -918,194 +978,6 @@ class TestBulkQueryRESTAPI(object):
         assert_response(appliance)
         assert len(response) == 2
         assert data0 == response[0]._data and data1 == response[1]._data
-
-
-# arbitration_settings were removed in versions >= 5.9'
-@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9')
-class TestArbitrationSettingsRESTAPI(object):
-    @pytest.fixture(scope='function')
-    def arbitration_settings(self, request, appliance):
-        num_settings = 2
-        response = _arbitration_settings(request, appliance, num=num_settings)
-        assert_response(appliance)
-        assert len(response) == num_settings
-        return response
-
-    def test_query_arbitration_setting_attributes(self, arbitration_settings, soft_assert):
-        """Tests access to arbitration setting attributes.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        query_resource_attributes(arbitration_settings[0], soft_assert=soft_assert)
-
-    def test_create_arbitration_settings(self, appliance, arbitration_settings):
-        """Tests create arbitration settings.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        for setting in arbitration_settings:
-            record = appliance.rest_api.collections.arbitration_settings.get(id=setting.id)
-            assert record._data == setting._data
-
-    @pytest.mark.parametrize('method', ['post', 'delete'])
-    def test_delete_arbitration_settings_from_detail(self, appliance, arbitration_settings, method):
-        """Tests delete arbitration settings from detail.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        delete_resources_from_detail(arbitration_settings, method=method)
-
-    def test_delete_arbitration_settings_from_collection(self, arbitration_settings):
-        """Tests delete arbitration settings from collection.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        delete_resources_from_collection(arbitration_settings)
-
-    @pytest.mark.parametrize(
-        "from_detail", [True, False],
-        ids=["from_detail", "from_collection"])
-    def test_edit_arbitration_settings(self, appliance, arbitration_settings, from_detail):
-        """Tests edit arbitration settings.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        num_settings = len(arbitration_settings)
-        uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_settings)]
-        new = [{'name': 'test_edit{}'.format(u), 'display_name': 'Test Edit{}'.format(u)}
-               for u in uniq]
-        if from_detail:
-            edited = []
-            for i in range(num_settings):
-                edited.append(arbitration_settings[i].action.edit(**new[i]))
-                assert_response(appliance)
-        else:
-            for i in range(num_settings):
-                new[i].update(arbitration_settings[i]._ref_repr())
-            edited = appliance.rest_api.collections.arbitration_settings.action.edit(*new)
-            assert_response(appliance)
-        assert len(edited) == num_settings
-        for i in range(num_settings):
-            assert (edited[i].name == new[i]['name'] and
-                    edited[i].display_name == new[i]['display_name'])
-
-
-# arbitration_rules were removed in versions >= 5.9'
-@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9')
-class TestArbitrationRulesRESTAPI(object):
-    @pytest.fixture(scope='function')
-    def arbitration_rules(self, request, appliance):
-        num_rules = 2
-        response = _arbitration_rules(request, appliance, num=num_rules)
-        assert_response(appliance)
-        assert len(response) == num_rules
-        return response
-
-    def test_query_arbitration_rule_attributes(self, arbitration_rules, soft_assert):
-        """Tests access to arbitration rule attributes.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        query_resource_attributes(arbitration_rules[0], soft_assert=soft_assert)
-
-    def test_create_arbitration_rules(self, arbitration_rules, appliance):
-        """Tests create arbitration rules.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        for rule in arbitration_rules:
-            record = appliance.rest_api.collections.arbitration_rules.get(id=rule.id)
-            assert record.description == rule.description
-
-    # there's no test for the DELETE method as it is not working and won't be fixed, see BZ 1410504
-    def test_delete_arbitration_rules_from_detail_post(self, arbitration_rules, appliance):
-        """Tests delete arbitration rules from detail.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        delete_resources_from_detail(arbitration_rules, method='POST')
-
-    def test_delete_arbitration_rules_from_collection(self, arbitration_rules):
-        """Tests delete arbitration rules from collection.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        delete_resources_from_collection(arbitration_rules)
-
-    @pytest.mark.parametrize(
-        'from_detail', [True, False],
-        ids=['from_detail', 'from_collection'])
-    def test_edit_arbitration_rules(self, arbitration_rules, appliance, from_detail):
-        """Tests edit arbitration rules.
-
-        Metadata:
-            test_flag: rest
-
-        Polarion:
-            assignee: None
-            initialEstimate: None
-        """
-        num_rules = len(arbitration_rules)
-        uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_rules)]
-        new = [{'description': 'new test admin rule {}'.format(u)} for u in uniq]
-        if from_detail:
-            edited = []
-            for i in range(num_rules):
-                edited.append(arbitration_rules[i].action.edit(**new[i]))
-                assert_response(appliance)
-        else:
-            for i in range(num_rules):
-                new[i].update(arbitration_rules[i]._ref_repr())
-            edited = appliance.rest_api.collections.arbitration_rules.action.edit(*new)
-            assert_response(appliance)
-        assert len(edited) == num_rules
-        for i in range(num_rules):
-            assert edited[i].description == new[i]['description']
 
 
 class TestNotificationsRESTAPI(object):
@@ -1125,6 +997,8 @@ class TestNotificationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.notifications
@@ -1142,6 +1016,8 @@ class TestNotificationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         unseen = appliance.rest_api.collections.notifications.find_by(seen=False)
@@ -1170,6 +1046,8 @@ class TestNotificationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         notifications = appliance.rest_api.collections.notifications.all[-3:]
@@ -1183,6 +1061,8 @@ class TestNotificationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         notifications = appliance.rest_api.collections.notifications.all[-3:]
@@ -1209,6 +1089,8 @@ class TestEventStreamsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         collection = appliance.rest_api.collections.event_streams
@@ -1223,6 +1105,8 @@ class TestEventStreamsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
             initialEstimate: 1/4h
         """
         vm_name = vm_obj

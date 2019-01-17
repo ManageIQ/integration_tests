@@ -265,8 +265,10 @@ def test_infra_start_page(visual, request, appliance, start_page):
         test_flag: visuals
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     request.addfinalizer(set_default_page)
     if appliance.user.my_settings.visual.login_page != start_page:
@@ -288,8 +290,10 @@ def test_infraprovider_noquads(request, set_infra_provider_quad):
         Visual Tab under "Show Infrastructure Provider Quadrants" option works properly.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     view = navigate_to(InfraProvider, 'All')
     view.toolbar.view_selector.select('Grid View')
@@ -303,8 +307,10 @@ def test_host_noquads(appliance, request, set_host_quad):
         Visual Tab under "Show Host Quadrants" option works properly.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     host_collection = appliance.collections.hosts
     view = navigate_to(host_collection, 'All')
@@ -319,8 +325,10 @@ def test_datastore_noquads(request, set_datastore_quad, appliance):
         Visual Tab under "Show Datastores Quadrants" option works properly.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     dc = DatastoreCollection(appliance)
     view = navigate_to(dc, 'All')
@@ -335,8 +343,10 @@ def test_vm_noquads(appliance, request, set_vm_quad):
         Visual Tab under "Show VM Quadrants" option works properly.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     view.toolbar.view_selector.select('Grid View')
@@ -351,8 +361,10 @@ def test_template_noquads(appliance, set_template_quad):
         Visual Tab under "Show Template Quadrants" option works properly.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     view = navigate_to(appliance.collections.infra_templates, 'TemplatesOnly')
     view.toolbar.view_selector.select('Grid View')

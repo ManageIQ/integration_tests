@@ -77,8 +77,10 @@ def test_provisioning(appliance, request, scenario):
     Memory Monitor creates graphs and summary at the end of each scenario.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
+        initialEstimate: 1/4h
     """
 
     from_ts = int(time.time() * 1000)

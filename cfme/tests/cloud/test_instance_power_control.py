@@ -536,6 +536,8 @@ class TestInstanceRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: high
             initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
@@ -557,6 +559,8 @@ class TestInstanceRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: high
             initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(
@@ -579,6 +583,8 @@ class TestInstanceRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: high
             initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
@@ -610,8 +616,10 @@ class TestInstanceRESTAPI(object):
             test_flag: power_control, provision, rest
 
         Polarion:
-            assignee: None
-            initialEstimate: None
+            assignee: pvala
+            casecomponent: Rest
+            caseimportance: high
+            initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.get_vm_via_rest()
@@ -635,6 +643,8 @@ class TestInstanceRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: high
             initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
@@ -664,8 +674,10 @@ class TestInstanceRESTAPI(object):
             test_flag: power_control, provision, rest
 
         Polarion:
-            assignee: None
-            initialEstimate: None
+            assignee: pvala
+            casecomponent: Rest
+            caseimportance: high
+            initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.get_vm_via_rest()
@@ -694,6 +706,8 @@ class TestInstanceRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: high
             initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)

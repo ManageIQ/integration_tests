@@ -19,6 +19,7 @@ def test_time_profile_crud(appliance):
     Polarion:
         assignee: pvala
         casecomponent: config
+        caseimportance: high
         initialEstimate: 1/8h
     """
     collection = appliance.collections.time_profiles

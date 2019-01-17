@@ -56,6 +56,8 @@ def test_bind_timeout_rest(appliance, request):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
         initialEstimate: None
     """
     old_bind = appliance.advanced_settings.get('authentication', {}).get('bind_timeout')

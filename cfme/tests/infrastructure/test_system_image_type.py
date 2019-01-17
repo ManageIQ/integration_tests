@@ -87,6 +87,8 @@ def test_system_image_type_selective_delete(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: infra
+        caseimportance: medium
         initialEstimate: 1/12h
     """
     collection = appliance.collections.system_image_types

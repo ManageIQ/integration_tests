@@ -6,8 +6,8 @@ from cfme.services import workloads
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [pytest.mark.tier(3),
-              test_requirements.settings,
-              pytest.mark.usefixtures('infra_provider')]
+            test_requirements.settings,
+            pytest.mark.usefixtures('infra_provider')]
 
 
 def test_default_filters_reset(appliance):
@@ -15,7 +15,8 @@ def test_default_filters_reset(appliance):
     Polarion:
         assignee: pvala
         casecomponent: config
-        initialEstimate: None
+        caseimportance: high
+        initialEstimate: 1/8h
     """
     tree_path = ['Cloud', 'Instances', 'Images', 'Platform / Openstack']
     view = navigate_to(appliance.user.my_settings, "DefaultFilters")
@@ -43,8 +44,10 @@ def test_cloudimage_defaultfilters(appliance):
 def test_cloudinstance_defaultfilters(appliance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: config
+        caseimportance: medium
+        initialEstimate: 1/6h
     """
     filters = [['Cloud', 'Instances', 'Instances', 'Platform / Openstack']]
     tree_path = ['All Instances', 'Global Filters', 'Platform / Openstack']

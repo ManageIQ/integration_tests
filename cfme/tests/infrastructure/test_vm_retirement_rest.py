@@ -45,6 +45,8 @@ def test_retire_vm_now(appliance, vm, from_collection):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/3h
     """
     retire_vm = appliance.rest_api.collections.vms.get(name=vm)
@@ -90,6 +92,8 @@ def test_retire_vm_future(appliance, vm, from_collection):
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/3h
     """
     retire_vm = appliance.rest_api.collections.vms.get(name=vm)

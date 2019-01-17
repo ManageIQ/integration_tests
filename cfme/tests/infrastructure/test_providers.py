@@ -49,6 +49,8 @@ def test_empty_discovery_form_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: infra
+        caseimportance: medium
         initialEstimate: 1/15h
     """
     collection = appliance.collections.infra_providers
@@ -63,6 +65,7 @@ def test_discovery_cancelled_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: infra
         caseimportance: low
         initialEstimate: 1/15h
     """
@@ -79,6 +82,8 @@ def test_add_cancelled_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: infra
+        caseimportance: medium
         initialEstimate: 1/15h
     """
     appliance.collections.infra_providers.create(prov_class=VMwareProvider, cancel=True)
@@ -92,6 +97,8 @@ def test_type_required_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: infra
+        caseimportance: medium
         initialEstimate: 1/15h
     """
     with pytest.raises(AssertionError):
@@ -105,6 +112,8 @@ def test_name_required_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: infra
+        caseimportance: medium
         initialEstimate: 1/15h
     """
     collections = appliance.collections.infra_providers
@@ -123,6 +132,8 @@ def test_host_name_required_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: infra
+        caseimportance: medium
         initialEstimate: 1/15h
     """
     endpoint = VirtualCenterEndpoint(hostname=None)
@@ -144,6 +155,8 @@ def test_name_max_character_validation_infra(request, infra_provider):
 
     Polarion:
         assignee: pvala
+        casecomponent: infra
+        caseimportance: medium
         initialEstimate: 1/15h
     """
     request.addfinalizer(lambda: infra_provider.delete_if_exists(cancel=False))
@@ -158,7 +171,9 @@ def test_host_name_max_character_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: infra
+        caseimportance: medium
+        initialEstimate: 1/10h
     """
     endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(256))
     collections = appliance.collections.infra_providers
@@ -177,6 +192,8 @@ def test_api_port_max_character_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
+        casecomponent: infra
+        caseimportance: medium
         initialEstimate: 1/15h
     """
     collections = appliance.collections.infra_providers
@@ -208,6 +225,8 @@ def test_providers_discovery(request, appliance, provider):
 
     Polarion:
         assignee: pvala
+        casecomponent: infra
+        caseimportance: high
         initialEstimate: 1/8h
     """
     appliance.collections.infra_providers.discover(provider, cancel=False,
@@ -230,7 +249,9 @@ def test_infra_provider_add_with_bad_credentials(provider):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: infra
+        caseimportance: high
+        initialEstimate: 1/8h
     """
     provider.default_endpoint.credentials = Credential(
         principal='bad',
@@ -256,7 +277,9 @@ def test_infra_provider_crud(provider):
 
     Polarion:
         assignee: pvala
-        initialEstimate: None
+        casecomponent: infra
+        caseimportance: high
+        initialEstimate: 1/5h
     """
     provider.create()
     # Fails on upstream, all provider types - BZ1087476
@@ -339,7 +362,8 @@ def test_infra_discovery_screen(appliance):
     Polarion:
         assignee: pvala
         casecomponent: infra
-        initialEstimate: None
+        caseimportance: high
+        initialEstimate: 1/6h
     """
     collections = appliance.collections.infra_providers
     view = navigate_to(collections, 'Discover')

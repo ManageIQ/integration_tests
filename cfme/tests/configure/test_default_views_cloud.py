@@ -33,8 +33,10 @@ def test_default_view_cloud_reset(appliance):
         * Check Reset Button is enabled
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: cloud
+        caseimportance: high
+        initialEstimate: 1/20h
     """
     view = navigate_to(appliance.user.my_settings, "DefaultViews")
     assert view.tabs.default_views.reset.disabled
@@ -51,8 +53,10 @@ def test_cloud_default_view(appliance, group_name, expected_view):
     """This test case changes the default view of a cloud related page and asserts the change.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: cloud
+        caseimportance: high
+        initialEstimate: 1/10h
     """
     page = gtl_params[group_name]
     default_views = appliance.user.my_settings.default_views
@@ -72,8 +76,10 @@ def test_cloud_compare_view(appliance, expected_view):
     and asserts the change.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: cloud
+        caseimportance: high
+        initialEstimate: 1/10h
     """
 
     if expected_view in ['Expanded View', 'Compressed View']:

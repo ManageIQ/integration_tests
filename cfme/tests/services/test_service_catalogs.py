@@ -69,6 +69,8 @@ def test_order_catalog_item_via_rest(
 
     Polarion:
         assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
         initialEstimate: 1/3h
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]

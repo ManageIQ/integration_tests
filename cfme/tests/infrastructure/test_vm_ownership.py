@@ -33,6 +33,8 @@ class TestVmOwnershipRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: high
             initialEstimate: 1/3h
         """
         if "set_ownership" not in appliance.rest_api.collections.services.action.all:
@@ -57,6 +59,8 @@ class TestVmOwnershipRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: high
             initialEstimate: 1/3h
         """
         rest_vm = appliance.rest_api.collections.vms.get(name=vm)
@@ -90,6 +94,8 @@ class TestVmOwnershipRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
+            caseimportance: high
             initialEstimate: 1/3h
         """
         rest_vm = appliance.rest_api.collections.vms.get(name=vm)

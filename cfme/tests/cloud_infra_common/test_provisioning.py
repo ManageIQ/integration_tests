@@ -263,8 +263,10 @@ def test_provision_from_template_using_rest(appliance, request, provider, vm_nam
         test_flag: provision, rest
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
+        initialEstimate: 1/30h
     """
     if auto:
         form_values = {"vm_fields": {"placement_auto": True}}
