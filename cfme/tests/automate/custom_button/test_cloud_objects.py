@@ -190,7 +190,7 @@ def test_custom_button_dialog(appliance, dialog, request, setup_objs, button_gro
         assert custom_button_group.has_item(button.text)
         custom_button_group.item_select(button.text)
 
-        dialog_view = view.browser.create_view(TextInputDialogView, wait='10s')
+        dialog_view = view.browser.create_view(TextInputDialogView, wait="10s")
         dialog_view.service_name.fill("Custom Button Execute")
 
         # Clear the automation log
@@ -358,21 +358,30 @@ def test_custom_button_expression(appliance, request, setup_objs, button_group, 
         view = navigate_to(setup_obj, "Details")
         custom_button_group = Dropdown(view, group.hover)
 
+        # Note: For higher version (5.10+), button group having single button;
+        # If button is disabled then group disabled.
+
         if tag.display_name in [item.display_name for item in setup_obj.get_tags()]:
             if expression == "enablement":
                 assert custom_button_group.item_enabled(button.text)
                 setup_obj.remove_tag(tag)
-                assert not custom_button_group.item_enabled(button.text)
+                if appliance.version < "5.10":
+                    assert not custom_button_group.item_enabled(button.text)
+                else:
+                    assert not custom_button_group.is_enabled
             elif expression == "visibility":
-                assert custom_button_group.is_displayed
+                assert button.text in custom_button_group.items
                 setup_obj.remove_tag(tag)
                 assert not custom_button_group.is_displayed
         else:
             if expression == "enablement":
-                assert not custom_button_group.item_enabled(button.text)
+                if appliance.version < "5.10":
+                    assert not custom_button_group.item_enabled(button.text)
+                else:
+                    assert not custom_button_group.is_enabled
                 setup_obj.add_tag(tag)
                 assert custom_button_group.item_enabled(button.text)
             elif expression == "visibility":
                 assert not custom_button_group.is_displayed
                 setup_obj.add_tag(tag)
-                assert custom_button_group.is_displayed
+                assert button.text in custom_button_group.items

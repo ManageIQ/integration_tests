@@ -301,7 +301,7 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
     assert custom_button_group.has_item(button.text)
     custom_button_group.item_select(button.text)
 
-    dialog_view = view.browser.create_view(TextInputDialogView, wait='10s')
+    dialog_view = view.browser.create_view(TextInputDialogView, wait="10s")
     assert dialog_view.service_name.fill("Custom Button Execute")
 
     # Clear the automation log
@@ -367,6 +367,9 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
     view = navigate_to(setup_obj, "Details")
     custom_button_group = Dropdown(view, group.hover)
 
+    # Note: For higher version (5.10+), button group having single button;
+    # If button is disabled then group disabled.
+
     if tag.display_name in [item.display_name for item in setup_obj.get_tags()]:
         if expression == "enablement":
             assert custom_button_group.item_enabled(button.text)
@@ -376,7 +379,7 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
             else:
                 assert not custom_button_group.is_enabled
         elif expression == "visibility":
-            assert custom_button_group.is_displayed
+            assert button.text in custom_button_group.items
             setup_obj.remove_tag(tag)
             assert not custom_button_group.is_displayed
     else:
@@ -390,7 +393,7 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
         elif expression == "visibility":
             assert not custom_button_group.is_displayed
             setup_obj.add_tag(tag)
-            assert custom_button_group.is_displayed
+            assert button.text in custom_button_group.items
 
 
 @pytest.mark.uncollectif(lambda button_group: "VM_INSTANCE" not in button_group)
