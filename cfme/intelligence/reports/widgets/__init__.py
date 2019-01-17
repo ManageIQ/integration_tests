@@ -58,7 +58,7 @@ class BaseDashboardReportWidget(BaseEntity, Updateable, Pretty):
         """
         # In order to update the tree in the side menu we have to refresh a whole page
         self.browser.refresh()
-        view = navigate_to(self, "Edit")
+        view = navigate_to(self, "Edit", use_resetter=False)
         changed = view.fill_with(
             updates,
             on_change=view.save_button.click,
