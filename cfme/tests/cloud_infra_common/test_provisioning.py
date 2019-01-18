@@ -14,6 +14,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -255,6 +256,16 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
     wait_for(verify, message="email receive check", delay=5)
 
 
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1662638,
+            forced_streams=["5.9", "5.10", "upstream"],
+            unblock=lambda provider: provider.one_of(VMwareProvider)
+            and provider.version == "6.5",
+        )
+    ]
+)
 @pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
 def test_provision_from_template_using_rest(appliance, request, provider, vm_name, auto):
     """ Tests provisioning from a template using the REST API.
