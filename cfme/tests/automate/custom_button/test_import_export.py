@@ -80,26 +80,26 @@ def checks(obj_type_conf):
 def test_custom_button_import_export(appliance, setup_groups_buttons):
     """ Test custom button display on a targeted page
 
-    prerequisites:
-        * Appliance with Provider
-        * Custom buttons and groups for some objects type
-
-    Steps:
-        * Check custom buttons and groups available or not
-        * Check for custom buttons in respective implementation location
-        * Export created custom buttons using rake command
-            `rake evm:export:custom_buttons -- --directory /tmp/custom_buttons`
-        * Clean all created buttons and groups
-        * Check properly clean up or not
-        * Import exported custom button yaml file using import rake command
-            `rake evm:import:custom_buttons -- --source /tmp/custom_buttons`
-        * Check for custom buttons and groups which was exported comes back to UI or not
-        * Check for custom buttons in respective implementation location
-
     Polarion:
         assignee: ndhandre
-        caseimportance: critical
         initialEstimate: 1/2h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Create custom buttons and groups
+            2. Check for custom buttons in respective implementation location
+            3. Export created custom buttons using rake command
+                `rake evm:export:custom_buttons -- --directory /tmp/custom_buttons`
+            4. Clean all created buttons and groups
+            5. Check properly clean up or not
+            6. Import exported custom button yaml file using import rake command
+                `rake evm:import:custom_buttons -- --source /tmp/custom_buttons`
+            7. Check for custom buttons and groups which was exported comes back to UI or not
+            8. Check for custom buttons in respective implementation location
     """
 
     # Check all buttons, groups and respective display at respective locations

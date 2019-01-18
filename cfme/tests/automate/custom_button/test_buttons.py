@@ -9,7 +9,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import OBJ_TYPE, OBJ_TYPE_59, TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate, pytest.mark.usefixtures("uses_infra_providers")]
@@ -31,29 +30,30 @@ def buttongroup(appliance):
 
 # IMPORTANT: This is a canonical test. It shows how a proper test should look like under new order.
 @pytest.mark.sauce
-@pytest.mark.tier(2)
+@pytest.mark.tier(1)
 @pytest.mark.uncollectif(
     lambda appliance, obj_type: obj_type not in OBJ_TYPE_59 and appliance.version < "5.10"
 )
 @pytest.mark.parametrize("obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE])
 def test_button_group_crud(request, appliance, obj_type):
-    """Test Creating a Button Group
-
-    Prerequisities:
-        * An appliance
-
-    Steps:
-        * Create a Button Group with random button text and button hover text, select type Service
-        * Assert that the button group exists
-        * Assert that the entered values correspond with what is displayed on the details page
-        * Change the hover text, ensure the text is changed on details page
-        * Delete the button group
-        * Assert that the button group no longer exists.
+    """Test crud operation for Button Group
 
     Polarion:
         assignee: ndhandre
-        caseimportance: critical
         initialEstimate: 1/6h
+        caseimportance: critical
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.8
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Create a Button Group with random button text and hover, select type Service
+            2. Assert that the button group exists
+            3. Assert that the entered values correspond with what is displayed on the details page
+            4. Change the hover text, ensure the text is changed on details page
+            5. Delete the button group
+            6. Assert that the button group no longer exists.
     """
     # 1) Create it
     collection = appliance.collections.button_groups
@@ -92,32 +92,33 @@ def test_button_group_crud(request, appliance, obj_type):
 
 
 @pytest.mark.sauce
-@pytest.mark.tier(2)
+@pytest.mark.tier(1)
 @pytest.mark.uncollectif(
     lambda appliance, obj_type: obj_type not in OBJ_TYPE_59 and appliance.version < "5.10"
 )
 @pytest.mark.parametrize("obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE])
 def test_button_crud(appliance, dialog, request, buttongroup, obj_type):
-    """Test Creating a Button
-
-    Prerequisities:
-        * An Button Group
-
-    Steps:
-        * Create a Button with random button text and button hover text, and random request
-        * Assert that the button exists
-        * Assert that the entered values correspond with what is displayed on the details page
-        * Change the hover text, ensure the text is changed on details page
-        * Delete the button
-        * Assert that the button no longer exists.
-
-    Bugzillas:
-        * 1143019, 1205235
+    """Test crud operation for Custom Button
 
     Polarion:
         assignee: ndhandre
-        caseimportance: critical
         initialEstimate: 1/6h
+        caseimportance: critical
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.8
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Create a Button with random button text and button hover text, and random request
+            2. Assert that the button exists
+            3. Assert that the entered values correspond with what is displayed on the details page
+            4. Change the hover text, ensure the text is changed on details page
+            5. Delete the button
+            6. Assert that the button no longer exists.
+
+    Bugzilla:
+        1143019, 1205235
     """
     button_gp = buttongroup(obj_type)
     button = button_gp.buttons.create(
@@ -144,19 +145,25 @@ def test_button_crud(appliance, dialog, request, buttongroup, obj_type):
     assert not button.exists
 
 
-@pytest.mark.meta(blockers=[BZ(1460774, forced_streams=["5.8", "upstream"])])
 @pytest.mark.tier(2)
 def test_button_avp_displayed(appliance, dialog, request):
     """This test checks whether the Attribute/Values pairs are displayed in the dialog.
-       automates 1229348
-    Steps:
-        * Open a dialog to create a button.
-        * Locate the section with attribute/value pairs.
 
     Polarion:
         assignee: anikifor
-        casecomponent: automate
         initialEstimate: 1/12h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.8
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Open a dialog to create a button.
+            2. Locate the section with attribute/value pairs.
+
+    Bugzilla:
+        1229348, 1460774
     """
     # This is optional, our nav tree does not have unassigned button
     buttongroup = appliance.collections.button_groups.create(
@@ -179,17 +186,19 @@ def test_button_avp_displayed(appliance, dialog, request):
 def test_button_required(appliance, field):
     """Test Icon and Request are required field while adding custom button.
 
-    Prerequisities:
-        * Button Group
-
-    Steps:
-        * Try to add custom button without icon/request
-        * Assert flash message.
-
     Polarion:
         assignee: ndhandre
-        caseimportance: medium
         initialEstimate: 1/6h
+        caseimportance: low
+        caseposneg: positive
+        testtype: nonfunctional
+        startsin: 5.8
+        casecomponent: custom_button
+        tags: custom_button
+        setup: Button Group
+        testSteps:
+            1. Try to add custom button without icon/request
+            2. Assert flash message.
     """
     unassigned_gp = appliance.collections.button_groups.instantiate(
         text="[Unassigned Buttons]", hover="Unassigned Buttons", type="Provider"
@@ -226,17 +235,19 @@ def test_button_required(appliance, field):
 def test_open_url_availability(appliance):
     """Test open URL option should only available for Single display.
 
-    Prerequisities:
-        * Button Group
-
-    Steps:
-        * Create a Button with other than Single display options
-        * Assert flash message.
-
     Polarion:
         assignee: ndhandre
-        caseimportance: medium
         initialEstimate: 1/6h
+        caseimportance: low
+        caseposneg: positive
+        testtype: nonfunctional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        setup: Button Group
+        testSteps:
+            1. Create a Button with other than Single display options
+            2. Assert flash message.
     """
 
     unassigned_gp = appliance.collections.button_groups.instantiate(
@@ -273,35 +284,28 @@ def test_open_url_availability(appliance):
 def test_custom_button_quotes(appliance, provider, setup_provider, dialog, request):
     """ Test custom button and group allows quotes or not
 
-    To-Do: collect test for 5.9; If developer backport BZ-1646905
-
-    Bugzillas:
-        * 1646905
-
-    Prerequisites:
-        * Appliance
-        * Simple TextInput service dialog
-
     Polarion:
         assignee: ndhandre
+        initialEstimate: 1/6h
         caseimportance: medium
-        initialEstimate: 1/4
+        caseposneg: positive
+        testtype: nonfunctional
+        startsin: 5.8
+        casecomponent: custom_button
+        tags: custom_button
+        setup: Simple TextInput service dialog
         testSteps:
             1. Create custom button group with single quote in name like "Group's"
             2. Create a custom button with quote in name like "button's"
             3. Navigate to object Details page
             4. Check for button group and button
             5. Select/execute button from group dropdown for selected entities
-            6. Fill dialog and submit
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5.
-            6. Check for the proper flash message related to button execution
-    """
+            6. Fill dialog and submit Check for the flash message related to button execution
 
+    Bugzilla:
+        1646905
+    """
+    # ToDo: collect test for 5.9; If developer backport BZ-1646905
     collection = appliance.collections.button_groups
     group = collection.create(
         text="Group's", hover="Group's Hover", type=getattr(collection, "PROVIDER")
@@ -330,23 +334,22 @@ def test_custom_button_quotes(appliance, provider, setup_provider, dialog, reque
 
 
 @pytest.mark.manual
+@pytest.mark.tier(3)
 def test_custom_button_simulation():
     """ Test whether custom button works with simulation option
 
-    Bugzillas:
-        * 1535215
-
     Polarion:
         assignee: ndhandre
-        initialEstimate: 1/8h
+        initialEstimate: 1/4h
         caseimportance: low
-        caselevel: component
         caseposneg: positive
-        caseautomation: Not Automated
         testtype: functional
-        startsin: 5.8
+        startsin: 5.9
         casecomponent: custom_button
         tags: custom_button
+
+    Bugzilla:
+        1535215
     """
     pass
 
@@ -354,17 +357,14 @@ def test_custom_button_simulation():
 @pytest.mark.manual
 @pytest.mark.tier(3)
 def test_custom_button_language():
-    """ There was bug with usecase before.
-    Additional info - https://bugzilla.redhat.com/show_bug.cgi?id=1568417
+    """ There was bug with usecase before... (#1568417)
 
     Polarion:
         assignee: ndhandre
         initialEstimate: 1/4h
         caseimportance: low
-        caselevel: acceptance
         caseposneg: positive
-        caseautomation: Manual Only
-        testtype: nonfunctional
+        testtype: functional
         startsin: 5.9
         casecomponent: custom_button
         tags: custom_button
@@ -372,6 +372,9 @@ def test_custom_button_language():
             1. set the language to french
             2. go to automation-> automate -> customization
             3. check the custom buttons tree should not empty from automation
+
+    Bugzilla:
+        1568417
     """
     pass
 
@@ -379,17 +382,13 @@ def test_custom_button_language():
 @pytest.mark.manual
 @pytest.mark.tier(2)
 def test_attribute_override():
-    """
-    Reference BZ:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1651099
+    """ Test custom button attribute override
 
     Polarion:
         assignee: ndhandre
         initialEstimate: 1/4h
         caseimportance: medium
-        caselevel: acceptance
         caseposneg: positive
-        caseautomation: Non Automated
         testtype: nonfunctional
         startsin: 5.9
         casecomponent: custom_button
@@ -400,5 +399,8 @@ def test_attribute_override():
             3. set the attributes instance, class, namespace to "whatever"
             4. set the attribute message to "my_message"
             5. save it
+
+    Bugzilla:
+        1651099
     """
     pass

@@ -14,9 +14,7 @@ def test_custom_button_crud_via_rest():
         assignee: ndhandre
         initialEstimate: 1/4h
         caseimportance: medium
-        caselevel: component
         caseposneg: positive
-        caseautomation: Not Automated
         testtype: functional
         startsin: 5.9
         casecomponent: custom_button
@@ -36,9 +34,7 @@ def test_custom_button_edit_via_rest_put():
         assignee: ndhandre
         initialEstimate: 1/4h
         caseimportance: medium
-        caselevel: component
         caseposneg: positive
-        caseautomation: Not Automated
         testtype: functional
         startsin: 5.9
         casecomponent: custom_button
@@ -58,9 +54,7 @@ def test_custom_button_edit_via_rest_patch():
         assignee: ndhandre
         initialEstimate: 1/4h
         caseimportance: medium
-        caselevel: component
         caseposneg: positive
-        caseautomation: Not Automated
         testtype: functional
         startsin: 5.9
         casecomponent: custom_button

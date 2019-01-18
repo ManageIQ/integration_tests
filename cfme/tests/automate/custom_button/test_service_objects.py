@@ -124,6 +124,7 @@ def serv_button_group(appliance, request):
         button.delete_if_exists()
 
 
+@pytest.mark.tier(1)
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
 @pytest.mark.parametrize(
     "display", DISPLAY_NAV.keys(), ids=[item.replace(" ", "_") for item in DISPLAY_NAV.keys()]
@@ -145,25 +146,26 @@ def serv_button_group(appliance, request):
 def test_custom_button_display(request, appliance, context, display, objects, button_group):
     """ Test custom button display on a targeted page
 
-    prerequisites:
-        * Appliance with Service and Generic object setup
-
-    Steps:
-        * Create custom button group with the Object type
-        * Create a custom button with specific display
-        * Navigate to object type page as per display selected [For service SSUI]
-        * Single entity: Details page of the entity
-        * List: All page of the entity
-        * Single and list: Both All and Details page of the entity
-        * Check for button group and button
-
-    Bugzilla:
-        * 1650066
-
     Polarion:
         assignee: ndhandre
-        caseimportance: critical
         initialEstimate: 1/4h
+        caseimportance: critical
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.8
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Create custom button group with the Object type
+            2. Create a custom button with specific display
+            3. Navigate to object type page as per display selected [For service SSUI]
+            4. Single entity: Details page of the entity
+            5. List: All page of the entity
+            6. Single and list: Both All and Details page of the entity
+            7. Check for button group and button
+
+    Bugzilla:
+        1650066
     """
 
     group, obj_type = button_group
@@ -197,27 +199,28 @@ def test_custom_button_display(request, appliance, context, display, objects, bu
 def test_custom_button_automate(request, appliance, context, submit, objects, button_group):
     """ Test custom button for automate and requests count as per submit
 
-    prerequisites:
-        * Appliance with service and generic object
-
-    Steps:
-        * Create custom button group with the Object type
-        * Create a custom button with specific submit option and Single and list display
-        * Navigate to object type pages (All and Details)
-        * Check for button group and button
-        * Select/execute button from group dropdown for selected entities
-        * Check for the proper flash message related to button execution
-        * Check automation log requests. Submitted as per selected submit option or not.
-        * Submit all: single request for all entities execution
-        * One by one: separate requests for all entities execution
-
-    Bugzillas:
-        * 1650066
-
     Polarion:
         assignee: ndhandre
-        caseimportance: high
         initialEstimate: 1/4h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Create custom button group with the Object type
+            2. Create a custom button with specific submit option and Single and list display
+            3. Navigate to object type pages (All and Details)
+            4. Check for button group and button
+            5. Select/execute button from group dropdown for selected entities
+            6. Check for the proper flash message related to button execution
+            7. Check automation log requests. Submitted as per selected submit option or not.
+            8. Submit all: single request for all entities execution
+            9. One by one: separate requests for all entities execution
+
+    Bugzilla:
+        1650066
     """
 
     group, obj_type = button_group
@@ -303,17 +306,22 @@ def test_custom_button_automate(request, appliance, context, submit, objects, bu
 def test_custom_button_text_display(appliance, context, serv_button_group, service):
     """ Test custom button text display on option
 
-    Bugzilla:
-        * 1650066
-
     Polarion:
         assignee: ndhandre
-        caseimportance: medium
         initialEstimate: 1/6h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
         testSteps:
-                1. Appliance with Service
-                2. Create custom button `Group` or `Button` without display option
-                3. Check Group/Button text display or not on UI and SSUI.
+            1. Appliance with Service
+            2. Create custom button `Group` or `Button` without display option
+            3. Check Group/Button text display or not on UI and SSUI.
+
+    Bugzilla:
+        1650066, 1659452
     """
 
     my_service = MyService(appliance, name=service.name)
@@ -360,9 +368,6 @@ def vis_enb_button(request, appliance, button_group):
 def test_custom_button_expression(appliance, context, objects, button_group, vis_enb_button):
     """ Test custom button as per expression enablement/visibility.
 
-    Bugzilla:
-        * 1509959, 1513498
-
     Polarion:
         assignee: ndhandre
         initialEstimate: 1/4h
@@ -378,6 +383,9 @@ def test_custom_button_expression(appliance, context, objects, button_group, vis
             3. Navigate to object Detail page
             4. Check: button should not enable/visible without tag
             5. Check: button should enable/visible with tag
+
+    Bugzilla:
+        1509959, 1513498
     """
 
     # ToDo: Add support for Generic Object by adding tagging ability from All page.
@@ -439,16 +447,11 @@ def test_custom_button_expression(appliance, context, objects, button_group, vis
 def test_custom_button_on_vm_resource_detail(context):
     """ Test custom button on SSUI vm resource detail page
 
-    Bugzilla:
-        * 1427430
-
     Polarion:
         assignee: ndhandre
         initialEstimate: 1/2h
-        caseimportance: high
-        caselevel: integration
+        caseimportance: medium
         caseposneg: positive
-        caseautomation: Not Automated
         testtype: functional
         startsin: 5.9
         casecomponent: custom_button
@@ -458,6 +461,9 @@ def test_custom_button_on_vm_resource_detail(context):
             2. In normal UI - OPS, Provision test service using any infra provider
             (nvc55 recommended)
             3. In SSUI, Check custom button on VM resource details page
+
+    Bugzilla:
+        1427430
     """
     pass
 
@@ -465,16 +471,13 @@ def test_custom_button_on_vm_resource_detail(context):
 @pytest.mark.manual
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
 def test_custom_button_role_access_service(context):
-    """
-    Test custom button for role access of SSUI
+    """Test custom button for role access of SSUI
 
     Polarion:
         assignee: ndhandre
         initialEstimate: 1/4h
         caseimportance: medium
-        caselevel: integration
         caseposneg: positive
-        caseautomation: Not Automated
         testtype: functional
         startsin: 5.9
         casecomponent: custom_button
@@ -496,9 +499,7 @@ def test_custom_group_on_catalog_item():
         assignee: ndhandre
         initialEstimate: 1/8h
         caseimportance: medium
-        caselevel: component
         caseposneg: positive
-        caseautomation: Not Automated
         testtype: functional
         startsin: 5.9
         casecomponent: custom_button
@@ -518,9 +519,7 @@ def test_custom_button_on_catalog_item():
         assignee: ndhandre
         initialEstimate: 1/8h
         caseimportance: medium
-        caselevel: component
         caseposneg: positive
-        caseautomation: Not Automated
         testtype: functional
         startsin: 5.9
         casecomponent: custom_button
@@ -537,16 +536,11 @@ def test_custom_button_on_catalog_item():
 def test_custom_button_dialog_service_archived():
     """ From Service OPS check if archive vms"s dialog invocation via custom button. ref: BZ1439883
 
-    Bugzilla:
-        * 1439883
-
     Polarion:
         assignee: ndhandre
         initialEstimate: 1/8h
         caseimportance: medium
-        caselevel: component
         caseposneg: positive
-        caseautomation: Not Automated
         testtype: functional
         startsin: 5.9
         casecomponent: custom_button
@@ -556,6 +550,9 @@ def test_custom_button_dialog_service_archived():
             2. Create a service that contains 1 VM
             3. Remove this VM from the provider, resulting in a VM state of 'Archived'
             4. Go to the service and try to execute the button
+
+    Bugzilla:
+        1439883
     """
     pass
 
@@ -564,16 +561,11 @@ def test_custom_button_dialog_service_archived():
 def test_custom_button_dialog(button_group):
     """ Test custom button with dialog and InspectMe method
 
-    Bugzillas:
-        * 1574774
-
     Polarion:
         assignee: ndhandre
         initialEstimate: 1/4h
         caseimportance: medium
-        caselevel: component
         caseposneg: positive
-        caseautomation: Not Automated
         testtype: functional
         startsin: 5.9
         casecomponent: custom_button
@@ -586,5 +578,8 @@ def test_custom_button_dialog(button_group):
             5. Select/execute button from group dropdown for selected entities
             6. Fill dialog and submit
             7. Check for the proper flash message related to button execution
+
+    Bugzilla:
+        1574774
     """
     pass
