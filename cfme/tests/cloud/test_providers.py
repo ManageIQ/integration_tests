@@ -268,7 +268,6 @@ def test_regions_all_azure():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/12h
         startsin: 5.6
     """
@@ -287,7 +286,6 @@ def test_regions_disable_azure():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/10h
         testSteps:
             1. Go into advanced settings and add or remove items from the following section.
@@ -788,7 +786,6 @@ def test_public_ip_without_nic_azure():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/6h
         testSteps:
             1. Have a Puplic IP on Azure which is not assigned to any Network
@@ -808,7 +805,6 @@ def test_sdn_nsg_arrays_refresh_azure():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: medium
-        caseautomation: manualonly
         initialEstimate: 1/6h
         testSteps:
             1. Add Network Security group on Azure with coma separated port ranges
@@ -837,7 +833,6 @@ def test_provider_flavors_azure():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: low
-        caseautomation: manualonly
         initialEstimate: 1/8h
         startsin: 5.6
     """
@@ -854,7 +849,6 @@ def test_market_place_images_azure():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/6h
         testSteps:
             1.Enable market place images
@@ -874,7 +868,6 @@ def test_upload_azure_image_to_azure():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/2h
         setup: # Video Demo Script - Upload VHD to Azure
                # You have to log in via Login-AzureRmAccount
@@ -907,7 +900,6 @@ def test_create_azure_vm_from_azure_image():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: high
-        caseautomation: notautomated
         initialEstimate: 1/2h
         setup: # Virtual Machine Name - as it appears in Azure
                $VMName = "myVmName"

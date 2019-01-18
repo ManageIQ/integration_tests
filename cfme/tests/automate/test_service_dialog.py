@@ -354,7 +354,6 @@ def test_copying_customization_dialog():
         assignee: anikifor
         casecomponent: automate
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/12h
         testSteps:
             1. Automate -> Customization -> Check checkbox for at least one dialog

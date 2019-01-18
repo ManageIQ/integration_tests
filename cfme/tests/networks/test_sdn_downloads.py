@@ -94,7 +94,6 @@ def test_pdf_summary_infra_provider():
         assignee: anikifor
         casecomponent: web_ui
         caseimportance: medium
-        caseautomation: manualonly
         initialEstimate: 1/8h
         testSteps:
             1. Add an Infrastructure Provider (tested with VMware)

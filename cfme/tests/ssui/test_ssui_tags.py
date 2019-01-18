@@ -9,7 +9,6 @@ def test_tagvis_ssui_catalog_items():
         assignee: anikifor
         casecomponent: ssui
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
         testSteps:
             1.Create groups with tag

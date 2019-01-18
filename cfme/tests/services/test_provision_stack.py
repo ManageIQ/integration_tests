@@ -290,7 +290,6 @@ def test_error_message_azure():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/4h
         setup: Easiest way to do this is provision an azure vm from orchestration
                catalog item and just add a short password like "test".  This will

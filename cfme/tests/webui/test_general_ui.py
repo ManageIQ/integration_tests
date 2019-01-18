@@ -231,7 +231,6 @@ def test_ui_pinning_after_relog():
         assignee: anikifor
         casecomponent: web_ui
         caseimportance: medium
-        caseautomation: notautomated
         caseposneg: negative
         initialEstimate: 1/12h
         testSteps:
@@ -254,7 +253,6 @@ def test_ui_notification_icon():
         assignee: anikifor
         casecomponent: web_ui
         caseimportance: low
-        caseautomation: manualonly
         initialEstimate: 1/6h
         startsin: 5.9
         testSteps:
@@ -279,7 +277,6 @@ def test_containers_topology_display_names():
         assignee: anikifor
         casecomponent: web_ui
         caseimportance: low
-        caseautomation: notautomated
         initialEstimate: 1/30h
         startsin: 5.6
         testSteps:
@@ -298,7 +295,6 @@ def test_configuration_icons_trusted_forest_settings():
         assignee: anikifor
         casecomponent: config
         caseimportance: low
-        caseautomation: notautomated
         initialEstimate: 1/20h
         testSteps:
             1. Go to Configuration -> Authentication
@@ -317,7 +313,6 @@ def test_cloud_icons_instances():
         assignee: anikifor
         casecomponent: web_ui
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/20h
         testSteps:
             1. Have a cloud provider added.Navigate to Compute -> Cloud -> Instances
@@ -338,7 +333,6 @@ def test_key_pairs_quadicon():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: low
-        caseautomation: notautomated
         initialEstimate: 1/20h
         testSteps:
             1. Have a cloud provider with at least one key pair
@@ -359,7 +353,6 @@ def test_search_is_displayed_myservices():
         assignee: anikifor
         casecomponent: web_ui
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/30h
         testSteps:
             1. Go to Services -> My Services
@@ -378,7 +371,6 @@ def test_misclicking_checkbox_vms():
         assignee: anikifor
         casecomponent: infra
         caseimportance: low
-        caseautomation: notautomated
         initialEstimate: 1/8h
         setup: https://bugzilla.redhat.com/show_bug.cgi?id=1627387
     """
@@ -392,7 +384,6 @@ def test_timeout():
     Polarion:
         assignee: anikifor
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/4h
         testSteps:
             1. Set timeout to 5 minutes.
@@ -414,7 +405,6 @@ def test_my_settings_default_views_alignment():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/20h
         testSteps:
             1. Go to My Settings -> Default Views
@@ -432,7 +422,6 @@ def test_configure_icons_roles_by_server():
         assignee: anikifor
         casecomponent: config
         caseimportance: low
-        caseautomation: notautomated
         initialEstimate: 1/15h
         testSteps:
             1. Go to Settings -> Configuration and enable all Server Roles.

@@ -339,7 +339,6 @@ def test_inventory_refresh_westindia_azure():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/12h
     """
     pass
