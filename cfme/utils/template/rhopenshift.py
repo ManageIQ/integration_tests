@@ -1,6 +1,7 @@
 import re
 import os
 
+from cfme.utils import trackerbot
 from cfme.utils.log import logger
 from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
 
@@ -9,6 +10,8 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
     log_name = "OPENSHIFT"
     provider_type = "openshift"
     image_pattern = re.compile(r'<a href="?\'?(openshift-pods/*)')
+
+    template_filenames = ()
 
     def __init__(self, *args, **kwargs):
         super(OpenshiftTemplateUpload, self).__init__(*args, **kwargs)
@@ -21,6 +24,15 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
     @tags.setter
     def tags(self, tags):
         self._tags = tags
+
+    @property
+    def templates(self):
+        return [
+            {'filename': 'cfme-template.yaml',
+             'name': self.template_name},
+            {'filename': 'cfme-template-ext-db.yaml',
+             'name': self.template_name + '-extdb'}
+        ]
 
     @property
     def upload_folder(self):
@@ -92,26 +104,33 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
 
     @log_wrap('backed name update')
     def update_name_and_create(self):
-        main_template = os.path.join(self.destination_directory, 'cfme-template.yaml')
-        change_name_cmd = ("""python -c 'import yaml
+        for template in self.templates:
+            cur_template = os.path.join(self.destination_directory, template['filename'])
+
+            change_name_cmd = ("""python -c 'import yaml
 data = yaml.safe_load(open("{file}"))
 data["metadata"]["name"] = "{new_name}"
 yaml.safe_dump(data, stream=open("{file}", "w"))'"""
-                           .format(new_name=self.template_name, file=main_template))
-        # our templates always have the same name but we have to keep many templates
-        # of the same stream. So we have to change template name before upload to ocp
-        # in addition, openshift doesn't provide any convenient way to change template name
-        logger.info('Command to change name: \n%s\n', change_name_cmd)
-        result = self.execute_ssh_command(change_name_cmd)
-        if result.failed:
-            logger.exception('%s: failed running name change command: %s',
-                             self.provider_key, result)
-            return False
+                               .format(new_name=template['name'], file=cur_template))
+            # our templates always have the same name but we have to keep many templates
+            # of the same stream. So we have to change template name before upload to ocp
+            # in addition, openshift doesn't provide any convenient way to change template name
+            logger.info('Command to change name: \n%s\n', change_name_cmd)
+            result = self.execute_ssh_command(change_name_cmd)
+            if result.failed:
+                logger.exception('%s: failed running name change command: %s',
+                                 self.provider_key, result)
+                return False
 
-        logger.info("uploading main template to ocp")
-        result = self.execute_ssh_command('oc create -f {t} --namespace=openshift'
-                                          .format(t=main_template))
+            logger.info("uploading main template to ocp")
+            result = self.execute_ssh_command('oc create -f {t} --namespace=openshift'
+                                              .format(t=cur_template))
         return result.success
+
+    @log_wrap("add template to trackerbot")
+    def track_template(self, *args, **kwargs):
+        trackerbot.trackerbot_add_provider_template(*args, **kwargs)
+        return True
 
     def run(self):
         if 'podtesting' not in self.provider_data.get('tags', []):
@@ -137,6 +156,8 @@ yaml.safe_dump(data, stream=open("{file}", "w"))'"""
         if not self.update_name_and_create():
             return False
 
-        self.track_template(custom_data={'TAGS': self.tags})
+        for template in self.templates:
+            self.track_template(self.stream, self.provider_key, template['name'],
+                                custom_data={'TAGS': self.tags})
 
         return True
