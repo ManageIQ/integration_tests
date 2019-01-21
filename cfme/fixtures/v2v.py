@@ -34,14 +34,14 @@ def v2v_downstream_enable(appliance):
         appliance.wait_for_web_ui(timeout=300)
 
 
-@pytest.fixture(scope='function')
-def v2v_providers(request, second_provider, provider, v2v_downstream_enable):
+@pytest.fixture(scope='module')
+def v2v_providers(request, source_provider, provider, v2v_downstream_enable):
     """ Fixture to setup providers """
     V2vProviders = namedtuple(
         'V2vProviders', ['vmware_provider', 'rhv_provider']
     )
     vmware_provider, rhv_provider = None, None
-    for provider in [second_provider, provider]:
+    for provider in [source_provider, provider]:
         if provider.one_of(VMwareProvider):
             vmware_provider = provider
         elif provider.one_of(RHEVMProvider):
@@ -57,7 +57,7 @@ def v2v_providers(request, second_provider, provider, v2v_downstream_enable):
     v2v_providers.rhv_provider.delete_if_exists(cancel=False)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def host_creds(request, v2v_providers):
     """Add credentials to VMware and RHV hosts."""
     if len(v2v_providers) > 2:
@@ -111,7 +111,7 @@ def _tag_cleanup(host_obj, tag1, tag2):
     return False
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def conversion_tags(request, appliance, host_creds):
     """Assigning tags to conversation host"""
     tag1 = appliance.collections.categories.instantiate(
@@ -146,14 +146,14 @@ def conversion_tags(request, appliance, host_creds):
         host.remove_tags(tags=(tag1, tag2))
 
 
-def get_vm(request, appliance, second_provider, template, datastore='nfs'):
-    source_datastores_list = second_provider.data.get('datastores', [])
+def get_vm(request, appliance, source_provider, template, datastore='nfs'):
+    source_datastores_list = source_provider.data.get('datastores', [])
     source_datastore = [d.name for d in source_datastores_list if d.type == datastore][0]
-    collection = second_provider.appliance.provider_based_collection(second_provider)
+    collection = source_provider.appliance.provider_based_collection(source_provider)
     vm_name = random_vm_name('v2v-auto')
     vm_obj = collection.instantiate(vm_name,
-                                    second_provider,
-                                    template_name=template(second_provider)['name'])
+                                    source_provider,
+                                    template_name=template(source_provider)['name'])
     power_on_vm = True
     if template.__name__ == 'win10_template':
         # Need to leave this off, otherwise migration fails
@@ -166,7 +166,7 @@ def get_vm(request, appliance, second_provider, template, datastore='nfs'):
     return vm_obj
 
 
-def _form_data(second_provider, provider):
+def _form_data(source_provider, provider):
     form_data = {
         'general': {
             'name': 'infra_map_{}'.format(fauxfactory.gen_alphanumeric()),
@@ -174,17 +174,17 @@ def _form_data(second_provider, provider):
                            " {ds_type2}".format(ds_type1='nfs', ds_type2='nfs')
         },
         'cluster': {
-            'mappings': [_form_data_mapping('clusters', second_provider, provider)]
+            'mappings': [_form_data_mapping('clusters', source_provider, provider)]
         },
         'datastore': {
             'Cluster ({})'.format(provider.data.get('clusters')[0]): {
-                'mappings': [_form_data_mapping('datastores', second_provider, provider,
+                'mappings': [_form_data_mapping('datastores', source_provider, provider,
                                                 'nfs', 'nfs')]
             }
         },
         'network': {
             'Cluster ({})'.format(provider.data.get('clusters')[0]): {
-                'mappings': [_form_data_mapping('vlans', second_provider, provider,
+                'mappings': [_form_data_mapping('vlans', source_provider, provider,
                                                 'VM Network', 'ovirtmgmt')]
             }
         }
@@ -193,33 +193,33 @@ def _form_data(second_provider, provider):
 
 
 @pytest.fixture(scope='function')
-def form_data_multiple_vm_obj_single_datastore(request, appliance, second_provider, provider):
+def form_data_multiple_vm_obj_single_datastore(request, appliance, source_provider, provider):
     # this fixture will take list of N VM templates via request and call get_vm for each
     cluster = provider.data.get('clusters', [False])[0]
     if not cluster:
         pytest.skip("No data for cluster available on provider.")
 
-    form_data = _form_data(second_provider, provider)
+    form_data = _form_data(source_provider, provider)
     recursive_update(form_data, {
         'general': {
             'description': "Single Datastore migration of VM from {ds_type1} to"
             " {ds_type2},".format(ds_type1=request.param[0], ds_type2=request.param[1])},
         'network': {
             'Cluster ({})'.format(provider.data.get('clusters')[0]): {
-                'mappings': [_form_data_mapping('vlans', second_provider, provider,
+                'mappings': [_form_data_mapping('vlans', source_provider, provider,
                                                 'VM Network', 'ovirtmgmt')]
             }
         }
     })
     vm_list = []
     for template_name in request.param[2]:
-        vm_list.append(get_vm(request, appliance, second_provider, template_name))
+        vm_list.append(get_vm(request, appliance, source_provider, template_name))
     return FormDataVmObj(form_data=form_data, vm_list=vm_list)
 
 
 @pytest.fixture(scope='function')
-def form_data_single_datastore(request, second_provider, provider):
-    form_data = _form_data(second_provider, provider)
+def form_data_single_datastore(request, source_provider, provider):
+    form_data = _form_data(source_provider, provider)
     recursive_update(form_data, {
         'general': {
             'description': "Single Datastore migration of VM from {ds_type1} to"
@@ -228,7 +228,7 @@ def form_data_single_datastore(request, second_provider, provider):
         },
         'datastore': {
             'Cluster ({})'.format(provider.data.get('clusters')[0]): {
-                'mappings': [_form_data_mapping('datastores', second_provider, provider,
+                'mappings': [_form_data_mapping('datastores', source_provider, provider,
                                                 request.param[0], request.param[1])]
             }
         }
@@ -237,15 +237,15 @@ def form_data_single_datastore(request, second_provider, provider):
 
 
 @pytest.fixture(scope='function')
-def form_data_single_network(request, second_provider, provider):
-    form_data = _form_data(second_provider, provider)
+def form_data_single_network(request, source_provider, provider):
+    form_data = _form_data(source_provider, provider)
     recursive_update(form_data, {
         'general': {
             'description': "Single Network migration of VM from {vlan1} to {vlan2},".
                      format(vlan1=request.param[0], vlan2=request.param[1])},
         'network': {
             'Cluster ({})'.format(provider.data.get('clusters')[0]): {
-                'mappings': [_form_data_mapping('vlans', second_provider, provider,
+                'mappings': [_form_data_mapping('vlans', source_provider, provider,
                                                 request.param[0], request.param[1])]
             }
         }
@@ -254,14 +254,37 @@ def form_data_single_network(request, second_provider, provider):
 
 
 @pytest.fixture(scope='function')
-def form_data_dual_vm_obj_dual_datastore(request, appliance, second_provider, provider):
-    vmware_nw = second_provider.data.get('vlans', [None])[0]
+def edited_form_data(source_provider, provider):
+    form_data = _form_data(source_provider, provider)
+    edited_form_data = {
+        'general': {
+            'description': "my edited description"},
+        'cluster': {},
+        'datastore': {
+            'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                'mappings': [_form_data_mapping('datastores', source_provider, provider,
+                                                'iscsi', 'iscsi')]
+            }
+        },
+        'network': {
+            'Cluster ({})'.format(provider.data.get('clusters')[0]): {
+                'mappings': [_form_data_mapping('vlans', source_provider, provider,
+                                                'DPortGroup', 'Storage - VLAN 33')]
+            }
+        }
+    }
+    return form_data, edited_form_data
+
+
+@pytest.fixture(scope='function')
+def form_data_dual_vm_obj_dual_datastore(request, appliance, source_provider, provider):
+    vmware_nw = source_provider.data.get('vlans', [None])[0]
     rhvm_nw = provider.data.get('vlans', [None])[0]
     cluster = provider.data.get('clusters', [False])[0]
     if not vmware_nw or not rhvm_nw or not cluster:
         pytest.skip("No data for source or target network in providers.")
 
-    form_data = _form_data(second_provider, provider)
+    form_data = _form_data(source_provider, provider)
     recursive_update(form_data, {
         'general': {
             'description': "Dual Datastore migration of VM from {} to {},& from {} to {}"
@@ -269,35 +292,35 @@ def form_data_dual_vm_obj_dual_datastore(request, appliance, second_provider, pr
                              request.param[1][1])},
         'datastore': {
             'Cluster ({})'.format(provider.data.get('clusters')[0]): {
-                'mappings': [_form_data_mapping('datastores', second_provider, provider,
+                'mappings': [_form_data_mapping('datastores', source_provider, provider,
                                                 request.param[0][0], request.param[0][1]),
-                             _form_data_mapping('datastores', second_provider, provider,
+                             _form_data_mapping('datastores', source_provider, provider,
                                                 request.param[1][0], request.param[1][1])]
             }
         },
         'network': {
             'Cluster ({})'.format(provider.data.get('clusters')[0]): {
-                'mappings': [_form_data_mapping('vlans', second_provider, provider,
-                                                second_provider.data.get('vlans')[0],
+                'mappings': [_form_data_mapping('vlans', source_provider, provider,
+                                                source_provider.data.get('vlans')[0],
                                                 provider.data.get('vlans')[0])]
             }
         }
     })
     # creating 2 VMs on two different datastores and returning its object list
-    vm_obj1 = get_vm(request, appliance, second_provider, request.param[0][2], request.param[0][0])
-    vm_obj2 = get_vm(request, appliance, second_provider, request.param[1][2], request.param[1][0])
+    vm_obj1 = get_vm(request, appliance, source_provider, request.param[0][2], request.param[0][0])
+    vm_obj2 = get_vm(request, appliance, source_provider, request.param[1][2], request.param[1][0])
     return FormDataVmObj(form_data=form_data, vm_list=[vm_obj1, vm_obj2])
 
 
 @pytest.fixture(scope='function')
-def form_data_vm_obj_dual_nics(request, appliance, second_provider, provider):
-    vmware_nw = second_provider.data.get('vlans', [None])[0]
+def form_data_vm_obj_dual_nics(request, appliance, source_provider, provider):
+    vmware_nw = source_provider.data.get('vlans', [None])[0]
     rhvm_nw = provider.data.get('vlans', [None])[0]
     cluster = provider.data.get('clusters', [False])[0]
     if not vmware_nw or not rhvm_nw or not cluster:
         pytest.skip("No data for source or target network in providers.")
 
-    form_data = _form_data(second_provider, provider)
+    form_data = _form_data(source_provider, provider)
     recursive_update(form_data, {
         'general': {
             'description': "Dual Datastore migration of VM from {} to {},& from {} to {}"
@@ -305,56 +328,56 @@ def form_data_vm_obj_dual_nics(request, appliance, second_provider, provider):
                              request.param[1][1])},
         'network': {
             'Cluster ({})'.format(provider.data.get('clusters')[0]): {
-                'mappings': [_form_data_mapping('vlans', second_provider, provider,
+                'mappings': [_form_data_mapping('vlans', source_provider, provider,
                                                 request.param[0][0], request.param[0][1]),
-                            _form_data_mapping('vlans', second_provider, provider,
+                            _form_data_mapping('vlans', source_provider, provider,
                                 request.param[1][0], request.param[1][1])]
             }
         }
     })
-    vm_obj = get_vm(request, appliance, second_provider, request.param[2])
+    vm_obj = get_vm(request, appliance, source_provider, request.param[2])
     return FormDataVmObj(form_data=form_data, vm_list=[vm_obj])
 
 
 @pytest.fixture(scope='function')
-def form_data_vm_obj_single_datastore(request, appliance, second_provider, provider):
+def form_data_vm_obj_single_datastore(request, appliance, source_provider, provider):
     """Return Infra Mapping form data and vm object"""
-    form_data = _form_data(second_provider, provider)
+    form_data = _form_data(source_provider, provider)
     recursive_update(form_data, {
         'general': {
             'description': "Single Datastore migration of VM from {ds_type1} to {ds_type2},"
                      .format(ds_type1=request.param[0], ds_type2=request.param[1])},
         'datastore': {
             'Cluster ({})'.format(provider.data.get('clusters')[0]): {
-                'mappings': [_form_data_mapping('datastores', second_provider, provider,
+                'mappings': [_form_data_mapping('datastores', source_provider, provider,
                                                 request.param[0], request.param[1])]
             }
         }
     })
-    vm_obj = get_vm(request, appliance, second_provider, request.param[2], request.param[0])
+    vm_obj = get_vm(request, appliance, source_provider, request.param[2], request.param[0])
     return FormDataVmObj(form_data=form_data, vm_list=[vm_obj])
 
 
 @pytest.fixture(scope='function')
-def form_data_vm_obj_single_network(request, appliance, second_provider, provider):
-    form_data = _form_data(second_provider, provider)
+def form_data_vm_obj_single_network(request, appliance, source_provider, provider):
+    form_data = _form_data(source_provider, provider)
     recursive_update(form_data, {
         'general': {
             'description': "Single Network migration of VM from {vlan1} to {vlan2},".
                      format(vlan1=request.param[0], vlan2=request.param[1])},
         'network': {
             'Cluster ({})'.format(provider.data.get('clusters')[0]): {
-                'mappings': [_form_data_mapping('vlans', second_provider, provider,
+                'mappings': [_form_data_mapping('vlans', source_provider, provider,
                                                 request.param[0], request.param[1])]
             }
         }
     })
-    vm_obj = get_vm(request, appliance, second_provider, request.param[2])
+    vm_obj = get_vm(request, appliance, source_provider, request.param[2])
     return FormDataVmObj(form_data=form_data, vm_list=[vm_obj])
 
 
-def _form_data_mapping(selector, second_provider, provider, source_list=None, target_list=None):
-    source_data = second_provider.data.get(selector, [])
+def _form_data_mapping(selector, source_provider, provider, source_list=None, target_list=None):
+    source_data = source_provider.data.get(selector, [])
     target_data = provider.data.get(selector, [])
     if selector is 'clusters':
         source = source_data if source_data else None

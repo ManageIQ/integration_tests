@@ -411,6 +411,16 @@ class IPAppliance(object):
         return self.appliance.server.zone
 
     @property
+    def name(self):
+        """Appliance name from advanced settings, equivalent to master server name"""
+        try:
+            return self.advanced_settings['server']['name']
+        except KeyError:
+            logger.exception('Appliance name attribute not where it was expected in %r',
+                             self.advanced_settings.get('server'))
+            raise ApplianceException('Failed to find appliance server name key in settings')
+
+    @property
     def server(self):
         return self.collections.servers.get_master()
 
@@ -2600,7 +2610,7 @@ class Appliance(IPAppliance):
         return self
 
     @classmethod
-    def from_provider(cls, provider_key, vm_name, name=None, **kwargs):
+    def from_provider(cls, provider_key, vm_name, **kwargs):
         """Constructor of this Appliance.
 
         Retrieves the IP address of the appliance from the provider and then instantiates it,
@@ -2656,7 +2666,6 @@ class Appliance(IPAppliance):
         appliance.vm_name = vm_name
         appliance.provider = provider.mgmt
         appliance.provider_key = provider_key
-        appliance.name = name or cls._default_name
         return appliance
 
     def _custom_configure(self, **kwargs):
@@ -2782,7 +2791,6 @@ class Appliance(IPAppliance):
         """
         vmdb_config = {'server': {'name': new_name}}
         self.update_advanced_settings(vmdb_config)
-        self.name = new_name
 
     def destroy(self):
         """Destroys the VM this appliance is running as
