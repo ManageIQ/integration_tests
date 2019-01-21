@@ -658,3 +658,61 @@ class UtilizationMixin(object):
     # @cached_property
     # def utilization(self):
     #     return Utilization(self)
+
+
+class CustomButtonEventsView(View):
+    """Class represents common custom button events page in CFME UI"""
+
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+    table = Table('//*[@class="miq-data-table"]/table')
+
+    @property
+    def is_displayed(self):
+        expected_title = "{} (All Custom Button Events)".format(self.context["object"].name)
+        return (
+            self.title.text == expected_title and self.breadcrumb.active_location == expected_title
+        )
+
+
+class CustomButtonEventsMixin(object):
+    @property
+    def cb_event_count(self):
+        view = navigate_to(self, "Details")
+        ent = view.entities
+        table = ent.summary("Relationships") if hasattr(ent, "summary") else ent.relationships
+        # Some objects have filed text `Custom button events` in relationship table
+        cb_text = (
+            "Custom Button Events"
+            if "Custom Button Events" in table.fields
+            else "Custom button events"
+        )
+        return int(table.get_text_of(cb_text))
+
+    def get_button_events(self):
+        try:
+            view = navigate_to(self, "ButtonEvents")
+            return view.table.read()
+        except DestinationNotFound:
+            return []
+
+
+@navigator.register(CustomButtonEventsMixin, "ButtonEvents")
+class CustomButtonEvents(CFMENavigateStep):
+
+    VIEW = CustomButtonEventsView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        ent = self.prerequisite_view.entities
+        table = ent.summary("Relationships") if hasattr(ent, "summary") else ent.relationships
+        # Some objects have filed text `Custom button events` in relationship table
+        cb_text = (
+            "Custom Button Events"
+            if "Custom Button Events" in table.fields
+            else "Custom button events"
+        )
+        if int(table.get_text_of(cb_text)) > 0:
+            table.click_at(cb_text)
+        else:
+            raise DestinationNotFound("Custom button event count less than 0")

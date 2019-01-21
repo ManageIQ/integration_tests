@@ -8,7 +8,7 @@ from cached_property import cached_property
 from riggerlib import recursive_update
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import Taggable
+from cfme.common import Taggable, CustomButtonEventsMixin
 from cfme.common.vm_console import ConsoleMixin
 from cfme.common.vm_views import DriftAnalysis, DriftHistory, VMPropertyDetailView
 from cfme.exceptions import CFMEException, VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable
@@ -57,7 +57,15 @@ class _TemplateMixin(object):
 
 
 @attr.s
-class BaseVM(BaseEntity, Pretty, Updateable, PolicyProfileAssignable, Taggable, ConsoleMixin):
+class BaseVM(
+    BaseEntity,
+    Pretty,
+    Updateable,
+    PolicyProfileAssignable,
+    Taggable,
+    ConsoleMixin,
+    CustomButtonEventsMixin,
+):
     """Base VM and Template class that holds the largest common functionality between VMs,
     instances, templates and images.
 

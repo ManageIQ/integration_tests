@@ -7,7 +7,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BreadCrumb, Button, Dropdown
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import Taggable
+from cfme.common import CustomButtonEventsMixin, Taggable
 from cfme.common.candu_views import ClusterInfraUtilizationView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
@@ -135,7 +135,7 @@ class ClusterTimelinesView(TimelinesView, ClusterView):
 
 
 @attr.s
-class Cluster(Pretty, BaseEntity, Taggable):
+class Cluster(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
     """ Model of an infrastructure cluster in cfme
 
     Args:

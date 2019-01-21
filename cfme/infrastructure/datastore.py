@@ -16,7 +16,7 @@ from widgetastic_manageiq import (
 )
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import Taggable
+from cfme.common import CustomButtonEventsMixin, Taggable
 from cfme.common.candu_views import DatastoreInfraUtilizationView
 from cfme.common.host_views import HostsView
 from cfme.exceptions import ItemNotFound, MenuItemNotFound, displayed_not_implemented
@@ -156,7 +156,7 @@ class RegisteredHostsView(HostsView):
 
 
 @attr.s
-class Datastore(Pretty, BaseEntity, Taggable):
+class Datastore(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
     """Model of an infrastructure datastore in cfme
 
     Args:
