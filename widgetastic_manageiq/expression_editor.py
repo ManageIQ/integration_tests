@@ -85,6 +85,7 @@ class ExpressionEditor(View, Pretty):
 
     @View.nested
     class find_form_view(View):  # noqa
+        fill_strategy = WaitFillViewStrategy()
         type = BootstrapSelect("chosen_typ")
         field = BootstrapSelect("chosen_field")
         skey = BootstrapSelect("chosen_skey")
@@ -171,6 +172,7 @@ class ExpressionEditor(View, Pretty):
         self.browser.click(self.REMOVE)
 
     def click_commit(self):
+        self.COMMIT.wait_displayed()
         self.browser.click(self.COMMIT)
         self.UNDO.wait_displayed()
 
