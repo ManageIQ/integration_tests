@@ -317,6 +317,7 @@ class ProvisionView(BaseLoggedInPage):
     title = Text('#explorer_title_text')
     breadcrumb = BreadCrumb()
     image_table = Table('//div[@id="pre_prov_div"]//table')
+    paginator = PaginationPane()
 
     @View.nested
     class sidebar(View):  # noqa
@@ -334,8 +335,10 @@ class ProvisionView(BaseLoggedInPage):
 
         def _select_template(self, template_name, provider_name):
             try:
-                row = self.parent.image_table.row(name=template_name, provider=provider_name)
-                row.click()
+                self.parent.paginator.find_row_on_pages(self.parent.image_table,
+                                                        name=template_name,
+                                                        provider=provider_name).click()
+            # image was not found, therefore raise an exception
             except IndexError:
                 raise TemplateNotFound('Cannot find template "{}" for provider "{}"'
                                        .format(template_name, provider_name))
