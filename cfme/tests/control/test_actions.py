@@ -966,7 +966,6 @@ def test_control_icons_simulation():
         assignee: anikifor
         casecomponent: control
         caseimportance: medium
-        caseautomation: manualonly
         initialEstimate: 1/15h
         testSteps:
             1. Have an infrastructure provider

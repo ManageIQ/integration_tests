@@ -84,7 +84,6 @@ def test_ec2_tags_mapping():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/5h
         startsin: 5.8
         testSteps:
@@ -113,7 +112,6 @@ def test_ec2_tags_instances():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/6h
         startsin: 5.8
         testSteps:
@@ -136,7 +134,6 @@ def test_ec2_tags_images():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/6h
         startsin: 5.8
         testSteps:

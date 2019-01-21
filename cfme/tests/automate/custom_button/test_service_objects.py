@@ -354,6 +354,7 @@ def vis_enb_button(request, appliance, button_group):
     button.delete_if_exists()
 
 
+@pytest.mark.tier(0)
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
 @pytest.mark.uncollectif(lambda context, button_group: "GENERIC" in button_group)
 def test_custom_button_expression(appliance, context, objects, button_group, vis_enb_button):
@@ -366,7 +367,6 @@ def test_custom_button_expression(appliance, context, objects, button_group, vis
         assignee: ndhandre
         initialEstimate: 1/4h
         caseimportance: medium
-        caselevel: component
         caseposneg: positive
         testtype: functional
         startsin: 5.9

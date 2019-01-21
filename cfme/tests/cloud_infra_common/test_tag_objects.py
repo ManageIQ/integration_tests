@@ -174,7 +174,6 @@ def test_tagvis_tag_host_vm_combination():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
     """
     pass
@@ -188,7 +187,6 @@ def test_tagvis_config_manager_provider():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
         startsin: 5.9
         testSteps:
@@ -210,7 +208,6 @@ def test_tagvis_storage_provider_children():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
         testSteps:
             1. Tag provider
@@ -231,7 +228,6 @@ def test_tagvis_cluster_change():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
     """
     pass
@@ -249,7 +245,6 @@ def test_tagvis_vm_and_template_modified():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
     """
     pass
@@ -266,7 +261,6 @@ def test_tagvis_host_change():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
     """
     pass
@@ -283,7 +277,6 @@ def test_tagvis_tag_and_cluster_combination():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
     """
     pass
@@ -300,7 +293,6 @@ def test_tagvis_tag_cluster_vm_combination():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
     """
     pass
@@ -319,7 +311,6 @@ def test_tagvis_cluster_and_vm_combination():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
     """
     pass
@@ -336,7 +327,6 @@ def test_tagvis_tag_and_host_combination():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
     """
     pass
@@ -354,7 +344,6 @@ def test_tagvis_tag_and_vm_combination():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
     """
     pass
@@ -371,7 +360,6 @@ def test_tagvis_ldap_group_host():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
     """
     pass
@@ -406,7 +394,6 @@ def test_tagvis_storage_managers():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
         testSteps:
             1. Create group with tag, use this group for user creation
@@ -431,7 +418,6 @@ def test_tagvis_configuration_management_configured_system():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
     """
     pass
@@ -445,7 +431,6 @@ def test_tagvis_group_filter_network_provider():
         assignee: anikifor
         casecomponent: cloud
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
         testSteps:
             1. Add cloud provider
@@ -467,7 +452,6 @@ def test_tagvis_infra_networking_switch():
         assignee: anikifor
         casecomponent: infra
         caseimportance: low
-        caseautomation: notautomated
         initialEstimate: 1/8h
         testSteps:
             1. Create group with tag, use this group for user creation
@@ -489,7 +473,6 @@ def test_tagvis_performance_reports():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/3h
         testSteps:
             1. Create role with group and user restriction

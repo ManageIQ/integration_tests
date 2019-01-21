@@ -176,7 +176,6 @@ def test_tagvis_tag_and_configuration_management_ansible_tower_job_templates():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
     """
     pass
@@ -190,7 +189,6 @@ def test_tagvis_ansible_tower_tag_configured_system():
         assignee: anikifor
         casecomponent: ansible
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
         testSteps:
             1. Create group with tag, use this group for user creation

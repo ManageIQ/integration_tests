@@ -164,7 +164,6 @@ def test_configure_diagnostics_pages_cfme_region():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/15h
     """
     pass

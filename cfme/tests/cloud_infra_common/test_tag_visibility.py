@@ -281,7 +281,6 @@ def test_tag_expression_and_with_or_with_not():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
         startsin: 5.9
         testSteps:
@@ -299,7 +298,6 @@ def test_tag_expression_and_with_or():
         assignee: anikifor
         casecomponent: config
         caseimportance: medium
-        caseautomation: notautomated
         initialEstimate: 1/8h
         startsin: 5.9
         testSteps:
