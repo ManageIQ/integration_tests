@@ -455,3 +455,57 @@ def test_open_url(request, setup_obj, button_group, method):
             view.browser.selenium.switch_to_window(main_window)
 
     assert "example.com" in view.browser.url
+
+
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1668023,
+            forced_streams=["5.10"],
+            unblock=lambda button_group, btn_dialog: not ("HOSTS" in button_group and btn_dialog),
+        )
+    ]
+)
+@pytest.mark.ignore_stream("5.9")
+@pytest.mark.parametrize("btn_dialog", [False, True], ids=["simple", "dialog"])
+def test_custom_button_events(request, dialog, setup_obj, button_group, btn_dialog):
+    """Test custom button events
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: medium
+        initialEstimate: 1/4h
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Create a Button Group
+            2. Create custom button [with dialog/ without dialog]
+            2. Execute button from respective location
+            3. Assert event count
+    """
+    group, obj_type = button_group
+    dialog_ = dialog if btn_dialog else None
+
+    button = group.buttons.create(
+        text="btn_{}".format(fauxfactory.gen_alphanumeric(3)),
+        hover="btn_hover{}".format(fauxfactory.gen_alphanumeric(3)),
+        dialog=dialog_,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    view = navigate_to(setup_obj, "Details")
+    initial_count = setup_obj.cb_event_count
+    custom_button_group = Dropdown(view, group.hover)
+    custom_button_group.item_select(button.text)
+
+    if btn_dialog:
+        dialog_view = view.browser.create_view(TextInputDialogView, wait="10s")
+        dialog_view.submit.click()
+
+    view.browser.refresh()
+    assert setup_obj.cb_event_count == (initial_count + 1)
