@@ -6,7 +6,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown, Button, BreadCrumb
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import Taggable
+from cfme.common import CustomButtonEventsMixin, Taggable
 from cfme.common.candu_views import AzoneCloudUtilizationView
 from cfme.exceptions import AvailabilityZoneNotFound, ItemNotFound
 from cfme.modeling.base import BaseEntity, BaseCollection
@@ -60,7 +60,7 @@ class AvailabilityZoneDetailsAccordion(View):
         tree = ManageIQTree()
 
 
-class AvailabilityZoneView(BaseLoggedInPage):
+class AvailabilityZoneView(BaseLoggedInPage, CustomButtonEventsMixin):
     """Bare bones base view for page header matching"""
     @property
     def in_availability_zones(self):

@@ -10,7 +10,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.modeling.base import CustomButtonEventsMixin, BaseCollection, BaseEntity
 from widgetastic_manageiq import (
     Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable)
 
@@ -89,7 +89,7 @@ class ObjectStoreContainerDetailsView(ObjectStoreContainerView):
 
 
 @attr.s
-class ObjectStoreContainer(BaseEntity, Taggable):
+class ObjectStoreContainer(BaseEntity, CustomButtonEventsMixin, Taggable):
     """ Model of an Storage Object Store Containers in cfme
 
     Args:

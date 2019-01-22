@@ -3,7 +3,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Version, VersionPick
 
-from cfme.common import Taggable
+from cfme.common import CustomButtonEventsMixin, Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.networks.views import (CloudNetworkAddView, CloudNetworkEditView, CloudNetworkDetailsView,
@@ -102,7 +102,7 @@ class CloudNetwork(Taggable, BaseEntity):
 
 
 @attr.s
-class CloudNetworkCollection(BaseCollection):
+class CloudNetworkCollection(BaseCollection, CustomButtonEventsMixin):
     """Collection object for Cloud Network object"""
     ENTITY = CloudNetwork
 
