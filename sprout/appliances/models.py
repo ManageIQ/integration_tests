@@ -1307,7 +1307,7 @@ class AppliancePool(MetadataMixin):
                         "User has too many pools ({} allowed, {} already existing)".format(
                             owner.quotas.total_pool_quota, user_pools_count))
             if owner.quotas.total_vm_quota is not None:
-                if owner.quotas.total_vm_quota <= (user_vms_count + num_appliances):
+                if owner.quotas.total_vm_quota < (user_vms_count + num_appliances):
                     raise ValueError(
                         "Requested {} appliances, limit is {} and currently user has {}".format(
                             num_appliances, owner.quotas.total_vm_quota, user_vms_count))
