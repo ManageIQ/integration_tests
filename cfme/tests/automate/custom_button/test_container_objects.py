@@ -254,3 +254,63 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
             assert not custom_button_group.is_displayed
             setup_obj.add_tag(tag)
             assert button.text in custom_button_group.items
+
+
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1668023,
+            forced_streams=["5.10"],
+            unblock=lambda button_group, btn_dialog: not (
+                bool([obj for obj in ["PROVIDER", "CONTAINER_VOLUMES"] if obj in button_group])
+                and btn_dialog
+            ),
+        )
+    ]
+)
+@pytest.mark.ignore_stream("5.9")
+@pytest.mark.parametrize("btn_dialog", [False, True], ids=["simple", "dialog"])
+def test_custom_button_events(request, dialog, setup_obj, button_group, btn_dialog):
+    """Test custom button events
+
+    Polarion:
+        assignee: ndhandre
+        caseimportance: medium
+        initialEstimate: 1/4h
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: CustomButton
+        tags: custom_button
+        testSteps:
+            1. Create a Button Group
+            2. Create custom button [with dialog/ without dialog]
+            2. Execute button from respective location
+            3. Assert event count
+
+    Bugzilla:
+        1668023
+    """
+    group, obj_type = button_group
+    dialog_ = dialog if btn_dialog else None
+
+    button = group.buttons.create(
+        text="btn_{}".format(fauxfactory.gen_alphanumeric(3)),
+        hover="btn_hover{}".format(fauxfactory.gen_alphanumeric(3)),
+        dialog=dialog_,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    view = navigate_to(setup_obj, "Details")
+    initial_count = len(setup_obj.get_button_events())
+    custom_button_group = Dropdown(view, group.hover)
+    custom_button_group.item_select(button.text)
+
+    if btn_dialog:
+        dialog_view = view.browser.create_view(TextInputDialogView, wait="10s")
+        dialog_view.submit.click()
+    view.browser.refresh()
+    current_count = len(setup_obj.get_button_events())
+    assert current_count == (initial_count + 1)

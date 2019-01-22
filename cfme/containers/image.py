@@ -284,7 +284,7 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        # self.view.entities.search.clear_simple_search()
+        self.view.entities.search.clear_simple_search()
         self.view.toolbar.view_selector.select("List View")
 
 
@@ -295,7 +295,6 @@ class Details(CFMENavigateStep):
 
     def step(self):
         search_visible = self.prerequisite_view.entities.search.is_displayed
-        # import ipdb; ipdb.set_trace()
         self.prerequisite_view.entities.get_entity(provider=self.obj.provider.name,
                                                    surf_pages=not search_visible,
                                                    use_search=search_visible, name=self.obj.name,
