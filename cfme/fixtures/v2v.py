@@ -329,11 +329,12 @@ def form_data_dual_vm_obj_dual_datastore(request, appliance, source_provider, pr
         form_data,
         {
             "general": {
-                "description": "Dual Datastore migration of VM from {} to {},& from {} to {}".format(
-                    request.param[0][0],
-                    request.param[0][1],
-                    request.param[1][0],
-                    request.param[1][1],
+                "description":
+                    "Dual Datastore migration of VM from {} to {},& from {} to {}".format(
+                     request.param[0][0],
+                     request.param[0][1],
+                     request.param[1][0],
+                     request.param[1][1],
                 )
             },
             "datastore": {
@@ -390,11 +391,12 @@ def form_data_vm_obj_dual_nics(request, appliance, source_provider, provider):
         form_data,
         {
             "general": {
-                "description": "Dual Datastore migration of VM from {} to {},& from {} to {}".format(
-                    request.param[0][0],
-                    request.param[0][1],
-                    request.param[1][0],
-                    request.param[1][1],
+                "description":
+                    "Dual Datastore migration of VM from {} to {},& from {} to {}".format(
+                     request.param[0][0],
+                     request.param[0][1],
+                     request.param[1][0],
+                     request.param[1][1],
                 )
             },
             "network": {
@@ -431,8 +433,9 @@ def form_data_vm_obj_single_datastore(request, appliance, source_provider, provi
         form_data,
         {
             "general": {
-                "description": "Single Datastore migration of VM from {ds_type1} to {ds_type2},".format(
-                    ds_type1=request.param[0], ds_type2=request.param[1]
+                "description":
+                    "Single Datastore migration of VM from {ds_type1} to {ds_type2},".format(
+                     ds_type1=request.param[0], ds_type2=request.param[1]
                 )
             },
             "datastore": {

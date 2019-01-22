@@ -409,14 +409,16 @@ class MigrationPlan(BaseEntity):
                             new_msg = "playbook is executing.."
                             pass
                         logger.info(
-                            "For plan {plan_name}, is plan in progress: {visibility}, {message}".format(
-                                plan_name=name, visibility=is_plan_visible, message=new_msg
+                            "For plan {plan_name}, is plan in progress: {visibility},"
+                            " {message}".format(plan_name=name, visibility=is_plan_visible,
+                                                message=new_msg
                             )
                         )
                     # return False if plan visible under "In Progress Plans"
                     return not is_plan_visible
                 except ItemNotFound:
-                    # This will end the wait_for loop and check the plan under completed_plans section
+                    # This will end the wait_for loop
+                    # and check the plan under completed_plans section
                     return True
             except StaleElementReferenceException:
                 self.browser.refresh()
@@ -446,9 +448,8 @@ class MigrationPlan(BaseEntity):
                 view = navigate_to(self, "Complete")
                 view.search_box.fill("{}\n\n".format(name))
         # ==================================================================================
-        return name in view.migration_plans_completed_list.read() and view.migration_plans_completed_list.is_plan_succeeded(
-            name
-        )
+        return (name in view.migration_plans_completed_list.read() and
+                view.migration_plans_completed_list.is_plan_succeeded(name)
 
     def is_plan_request_shows_vm(self, name):
         view = navigate_to(self, "In Progress")
