@@ -72,7 +72,7 @@ def test_download_pdf_summary(appliance, collection_type, provider):
         test_flag: sdn
 
     Polarion:
-        assignee: jhenner
+        assignee: mmojzis
         initialEstimate: 1/10h
     """
     collection = getattr(appliance.collections, collection_type)
