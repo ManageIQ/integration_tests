@@ -4,6 +4,7 @@ from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox, View
+from widgetastic.utils import WaitFillViewStrategy
 from widgetastic_manageiq import FonticonPicker, ManageIQTree, WaitTab
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound
 
@@ -25,12 +26,15 @@ class BasicInfoForm(ServicesCatalogView):
     # Filling dropdowns first to avoid selenium field reset bug
     select_catalog = BootstrapSelect('catalog_id')
     select_dialog = BootstrapSelect('dialog_id')
+
+    select_provider = BootstrapSelect('manager_id')
+    select_orch_template = BootstrapSelect('template_id')
+    select_config_template = BootstrapSelect('template_id')
+
     name = Input(name='name')
     description = Input(name='description')
     display = Checkbox(name='display')
-    select_orch_template = BootstrapSelect('template_id')
-    select_config_template = BootstrapSelect('template_id')
-    select_provider = BootstrapSelect('manager_id')
+
     subtype = BootstrapSelect('generic_subtype')
     field_entry_point = Input(name='fqname')
     retirement_entry_point = Input(name='retire_fqname')
@@ -120,16 +124,9 @@ class ChooseCatalogItemTypeView(ServicesCatalogView):
 
 class AddCatalogItemView(BasicInfoForm):
     """NonCloudInfraCatalogItem catalog items have this view."""
+    fill_strategy = WaitFillViewStrategy()
     add = Button('Add')
     cancel = Button('Cancel')
-
-    def fill(self, values):
-        provider = values.pop('select_provider', None)
-        changed = super(AddCatalogItemView, self).fill(values)
-        # for orchestration catalog item
-        # where provider appears with some timeout after template has been chosen
-        changed_prov = super(AddCatalogItemView, self).fill({'select_provider': provider})
-        return changed or changed_prov
 
     @property
     def is_displayed(self):
@@ -138,6 +135,19 @@ class AddCatalogItemView(BasicInfoForm):
             self.catalog_items.is_opened and
             self.title.text == 'Adding a new Service Catalog Item'
         )
+
+
+class AddOrchestrationCatalogItemView(AddCatalogItemView):
+    fill_strategy = WaitFillViewStrategy()
+
+    @property
+    def widget_names(self):
+        # there are several derived views, widgets in those views are displayed in different order
+        # this property is just workaround in order to change widget bypass order
+        return ['title', 'select_catalog', 'select_dialog',
+                'select_orch_template', 'select_config_template', 'select_provider',
+                'name', 'description', 'display',
+                'subtype', 'field_entry_point', 'retirement_entry_point', 'select_resource']
 
 
 class TabbedAddCatalogItemView(ServicesCatalogView):
@@ -184,17 +194,10 @@ class EditCatalogItemView(BasicInfoForm):
 
 
 class TabbedEditCatalogItemView(ServicesCatalogView):
+    fill_strategy = WaitFillViewStrategy()
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')
-
-    def fill(self, values):
-        provider = values.pop('select_provider', None)
-        changed = super(TabbedEditCatalogItemView, self).fill(values)
-        # for orchestration catalog item
-        # where provider appears with some timeout after template has been chosen
-        changed_prov = super(TabbedEditCatalogItemView, self).fill({'select_provider': provider})
-        return changed or changed_prov
 
     @View.nested
     class basic_info(WaitTab):  # noqa
@@ -536,6 +539,9 @@ class CatalogItemAddStep(CFMENavigateStep):
     def VIEW(self):  # noqa
         if isinstance(self.obj, CloudInfraCatalogItem):
             return TabbedAddCatalogItemView
+        elif isinstance(self.obj, OrchestrationCatalogItem):
+            # Orchestration View has different order of widgets than the rest
+            return AddOrchestrationCatalogItemView
         else:
             return AddCatalogItemView
 
