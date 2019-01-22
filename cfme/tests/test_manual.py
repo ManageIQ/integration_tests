@@ -702,21 +702,6 @@ def test_copy_provisioning_dialog():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_capture_vm_event_azure():
-    """
-    capture vm event[azure]
-
-    Polarion:
-        assignee: None
-        caseimportance: low
-        initialEstimate: 1/4h
-        title: capture vm event[azure]
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
 def test_user_cloud_storage_quota_by_services():
@@ -26603,21 +26588,6 @@ def test_regions_gov_azure():
         initialEstimate: 1/8h
         setup: Check the region list when adding a Azure Provider.
         startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_create_remove_network_security_groups_events_azure():
-    """
-    create/remove network security groups events[azure]
-
-    Polarion:
-        assignee: None
-        caseimportance: low
-        initialEstimate: 1/4h
-        title: create/remove network security groups events[azure]
     """
     pass
 
