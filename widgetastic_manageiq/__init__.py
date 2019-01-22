@@ -2527,6 +2527,10 @@ class Search(View):
             self.filter_clear_button.click()
         self.clear_simple_search()
 
+    @property
+    def is_displayed(self):
+        return self.search_input.is_displayed
+
 
 class UpDownSelect(View):
     """Multiselect with two arrows (up/down) next to it. Eg. in AE/Domain priority selection.
