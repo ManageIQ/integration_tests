@@ -67,6 +67,7 @@ def setup_obj(appliance, provider, button_group):
     return obj
 
 
+@pytest.mark.tier(1)
 @pytest.mark.uncollectif(
     lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
     and appliance.version < "5.10"
@@ -77,22 +78,23 @@ def setup_obj(appliance, provider, button_group):
 def test_custom_button_display(request, display, setup_obj, button_group):
     """ Test custom button display on a targeted page
 
-    prerequisites:
-        * Appliance with Container provider
-
-    Steps:
-        * Create custom button group with the Object type
-        * Create a custom button with specific display
-        * Navigate to object type page as per display selected
-        * Single entity: Details page of the entity
-        * List: All page of the entity
-        * Single and list: Both All and Details page of the entity
-        * Check for button group and button
-
     Polarion:
         assignee: ndhandre
-        caseimportance: critical
         initialEstimate: 1/4h
+        caseimportance: critical
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Create custom button group with the Object type
+            2. Create a custom button with specific display
+            3. Navigate to object type page as per display selected
+            4. Single entity: Details page of the entity
+            5. List: All page of the entity
+            6. Single and list: Both All and Details page of the entity
+            7. Check for button group and button
     """
 
     group, obj_type = button_group
@@ -121,24 +123,24 @@ def test_custom_button_display(request, display, setup_obj, button_group):
 def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_group):
     """ Test custom button with dialog and InspectMe method
 
-    Prerequisites:
-        * Appliance
-        * Simple TextInput service dialog
-
-    Steps:
-        * Create custom button group with the Object type
-        * Create a custom button with service dialog
-        * Navigate to object Details page
-        * Check for button group and button
-        * Select/execute button from group dropdown for selected entities
-        * Fill dialog and submit
-        * Check for the proper flash message related to button execution
-        * Check request in automation log
-
     Polarion:
         assignee: ndhandre
-        caseimportance: high
         initialEstimate: 1/4h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Create custom button group with the Object type
+            2. Create a custom button with service dialog
+            3. Navigate to object Details page
+            4. Check for button group and button
+            5. Select/execute button from group dropdown for selected entities
+            6. Fill dialog and submit
+            7. Check for the proper flash message related to button execution
+            8. Check request in automation log
     """
 
     group, obj_type = button_group
@@ -189,22 +191,23 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
 def test_custom_button_expression(appliance, request, setup_obj, button_group, expression):
     """ Test custom button as per expression enablement/visibility.
 
-    Prerequisites:
-        * Appliance with Infra provider
-
-    Steps:
-        * Create custom button group with the Object type
-        * Create a custom button with expression (Tag)
-            1. Enablement Expression
-            2. Visibility Expression
-        * Navigate to object Detail page
-        * Check: button should not enable/visible without tag
-        * Check: button should enable/visible with tag
-
     Polarion:
         assignee: ndhandre
-        caseimportance: high
         initialEstimate: 1/4h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: custom_button
+        tags: custom_button
+        testSteps:
+            1. Create custom button group with the Object type
+            2. Create a custom button with expression (Tag)
+                a. Enablement Expression
+                b. Visibility Expression
+            3. Navigate to object Detail page
+            4. Check: button should not enable/visible without tag
+            5. Check: button should enable/visible with tag
     """
 
     group, obj_type = button_group

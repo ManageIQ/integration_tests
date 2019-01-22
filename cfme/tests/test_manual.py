@@ -2326,21 +2326,6 @@ def test_shutdown_guest_scvmm():
 
 
 @pytest.mark.manual
-def test_custom_button_display_ssui_single():
-    """
-    Test custom button display for single/detail page for SSUI
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        initialEstimate: 1/8h
-        startsin: 5.9
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_storage_ebs_volume_crud():
     """
     Requires:
@@ -3100,43 +3085,6 @@ def test_crosshair_op_azone_ec2():
 
 
 @pytest.mark.manual
-def test_custom_button_state_hidden():
-    """
-    If the expression of visibility is true then the button will be in
-    enabled(unhidden) state but if it is false then it will be in the
-    hidden state.
-    Steps:
-    1. Add provider
-    2. Create service dialog
-    3. Create custom button group in service accordion option
-    5. Add button to the group. In "Advanced" tab of button, put valid
-    expression for Visibility (Make sure to select dialog created at
-    step2)
-    6. Create catalog from Services
-    7. Create catalog item and assign dialog & catalog created in step2 &
-    6 respectively.
-    8. Navigate to self-service UI and Order created catalog item
-    9. Click service you have ordered and you will notice button will
-    disappear.
-    (Better practice will be carried test_custom_button_state_enabled
-    first and then try out this)
-    Expression used while test: COUNT OF Service.User.VMs < -1
-    Additional info:
-    This enhancement feature is related to https://github.com/ManageIQ
-    /manageiq-ui-service/pull/1012.
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: ssui
-        caseimportance: low
-        initialEstimate: None
-        startsin: 5.9
-        upstream: no
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rest
 def test_edit_provider_request_task():
     """
@@ -3148,21 +3096,6 @@ def test_edit_provider_request_task():
         assignee: mkourim
         caseimportance: medium
         initialEstimate: None
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_access_ssui():
-    """
-    Test custom button for role access of SSUI
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.9
     """
     pass
 
@@ -5972,25 +5905,6 @@ def test_change_provider_template_in_catalog_item():
 
 
 @pytest.mark.manual
-def test_custom_button_crud_via_rest():
-    """
-    In this Test case we verify the functionality of custom button using
-    rest api
-    Steps
-    1) POST method to create the custom button
-    2) POST method to edit the custom button
-    3) Delete method to delete the custom button
-
-    Polarion:
-        assignee: ndhandre
-        initialEstimate: None
-        startsin: 5.9
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_targeted_refresh_network():
     """
     #AWS naming is VPC
@@ -7706,23 +7620,6 @@ def test_embed_tower_repo_tag():
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-def test_custom_button_openurl_vm():
-    """
-    Refer custom button mojo FAQ for more detail.
-    Additional info - https://bugzilla.redhat.com/show_bug.cgi?id=1602023
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        initialEstimate: 1/8h
-        startsin: 5.10
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
 def test_create_appliance_on_scvmm_using_the_vhd_image():
     """
     Log into qeblade33 and download the VHD appliance image.  Create a new
@@ -8890,20 +8787,6 @@ def test_switching_user_group_without_disconnecting():
 
 
 @pytest.mark.manual
-def test_custom_button_automate_ssui():
-    """
-    Test custom button with automation request method
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        initialEstimate: 1/8h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rep
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_cu_data_collector():
@@ -8958,31 +8841,6 @@ def test_rhi_inventory():
         assignee: sbulage
         casecomponent: smartst
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-def test_single_custom_button_disable():
-    """
-    Steps 1.Create a custom button (Unassigned Button) for services
-    2.Provide an Enablement expression for disabling the custom button.
-    (e.g: COUNT OF Service.VMs > 5000 )
-    3.Add "Disabled Button Text"
-    4.Click on save
-    5.Login on to SSUI page
-    6.Goto Service and check the button is disabled
-    7.Hover over button to check the disable text.
-    Additional Information:
-    https://bugzilla.redhat.com/show_bug.cgi?id=%201502304 Use the above
-    BZ link for understand the [RFE]
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: services
-        caseimportance: medium
-        initialEstimate: 1/4h
     """
     pass
 
@@ -9389,29 +9247,6 @@ def test_custom_service_dialog_quota_flavors():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_custom_button_on_resource_detail_ssui():
-    """
-    Steps:
-    1. Add custom button under service option (from automation > automate
-    > customization > service accordion)
-    2. In normal UI - OPS, Provision test service using any infra provider
-    (nvc55 recommended)
-    3. In SSUI, Check custom button on VM resource details page
-    Additional info: https://bugzilla.redhat.com/show_bug.cgi?id=1427430
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: ssui
-        initialEstimate: None
-        startsin: 5.9
-        tags: ssui
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_order_credentials_usecredsfromservicedialog():
@@ -9426,29 +9261,6 @@ def test_service_ansible_playbook_order_credentials_usecredsfromservicedialog():
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_attribute_override():
-    """
-    Steps to Reproduce:
-    1. create a custom button to request the call_instance_with_message
-    2. set the message to create
-    3. set the attributes instance, class, namespace to "whatever"
-    4. set the attribute message to "my_message"
-    5. save it
-    Reference BZ:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1651099
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.9
     """
     pass
 
@@ -9617,40 +9429,6 @@ def test_ec2_targeted_refresh_stack():
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_dialog_ssui():
-    """
-    Test custom button dialog runner via SSUI
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.9
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_dialog_service_archived():
-    """
-    From Service OPS check if archive vms"s dialog invocation via custom
-    button
-    https://bugzilla.redhat.com/show_bug.cgi?id=1439883
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        caseimportance: low
-        initialEstimate: 1/8h
-        startsin: 5.9
-        upstream: yes
     """
     pass
 
@@ -14965,22 +14743,6 @@ def test_embedded_ansible_update_bad_version_59017():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_sui_should_show_custom_button_dialog():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1574774
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: SUI should show custom button dialog
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_candu_graphs_datastore_vsphere6():
@@ -15652,41 +15414,6 @@ def test_automate_requests_tab_exposed():
 
 
 @pytest.mark.manual
-def test_custom_button_state_disabled():
-    """
-    Custom button by default will be in the enabled state. For example:
-    (enabled only if VM > 0) In this case, button get enabled if condition
-    true and disabled if it is false.
-    Steps:
-    1. Add provider
-    2. Create service dialog
-    3. Create custom button group in service accordion option
-    5. Add button to the group. In "Advanced" tab of a button, put valid
-    expression for Enablement such that condition should fail. (Make sure
-    to select dialog created at step2)
-    6. Create catalog from Services
-    7. Create catalog item and assign dialog & catalog created in step2 &
-    6 respectively.
-    8. Navigate to self-service UI and Order created catalog item
-    9. Click service you have ordered and check enabled custom button
-    there
-    Additional info:
-    This enhancement feature is related to https://github.com/ManageIQ
-    /manageiq-ui-service/pull/1012.
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: ssui
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: None
-        startsin: 5.9
-        upstream: no
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rep
 @pytest.mark.tier(1)
 def test_distributed_field_zone_name_long():
@@ -16230,32 +15957,6 @@ def test_bottleneck_summary_graph():
             1. setup c&u for provider and wait for bottleneck events
         expectedResults:
             1. summary graph is present and clickeble
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_custom_button_language():
-    """
-    There was bug with usecase before.
-    Additional info - https://bugzilla.redhat.com/show_bug.cgi?id=1568417
-    Steps:
-    1. set the language to french
-    2. go to automation-> automate -> customization
-    Expected:
-    The custom buttons tree should not empty from automation-> automate ->
-    customization
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        caseimportance: low
-        customerscenario: true
-        initialEstimate: 1/8h
-        startsin: 5.9
-        testtype: nonfunctional
-        upstream: yes
     """
     pass
 
@@ -17125,42 +16826,6 @@ def test_saved_chargeback_report_show_full_screen():
         casecomponent: candu
         caseimportance: low
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_state_enabled():
-    """
-    Custom button by default will be in the enabled state, but it can be
-    also used by putting positive expressions. For example: (enabled only
-    if VM > 0) In this case, button get enabled if the condition is true
-    and disabled if it is false.
-    Steps:
-    1. Add provider
-    2. Create service dialog
-    3. Create custom button group in service accordion option
-    5. Add button to the button group. In "Advanced" tab of button, put
-    valid expression for visibility (Make sure to select dialog created at
-    step2)
-    6. Create catalog from Services
-    7. Create catalog item and assign dialog & catalog created in step2 &
-    6 respectively.
-    8. Navigate to self-service UI and Order catalog item
-    9. Check enabled custom button by clicking service you have ordered
-    Expression used while test:  COUNT OF Service.User.VMs > -1
-    Additional info:
-    [1]This enhancement feature is related to https://github.com/ManageIQ
-    /manageiq-ui-service/pull/1012.
-    [2]Screenshot attached
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: ssui
-        caseimportance: low
-        initialEstimate: None
-        startsin: 5.9
-        upstream: no
     """
     pass
 
@@ -21005,24 +20670,6 @@ def test_osp_test_cpu_cores_and_sockets_pre_vs_post_migration():
 
 
 @pytest.mark.manual
-def test_custom_button_on_catalog_item():
-    """
-    Steps:
-    1. Add catalog_item
-    2. Goto catalog detail page and select `add button` from toolbar
-    3. Fill info and save button
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(3)
 def test_service_template_provisioning_quota_for_number_of_vms_using_custom_dialog():
@@ -21955,25 +21602,6 @@ def test_ec2_targeted_refresh_security_group():
 
 
 @pytest.mark.manual
-def test_custom_group_on_catalog_item():
-    """
-    Steps:
-    1. Add catalog_item
-    2. Goto catalog detail page and select `add group` from toolbar
-    3. Fill info and save button
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.9
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_verify_page_landing_cloud_subnets():
     """
@@ -22693,38 +22321,6 @@ def test_osp_test_in_progress_migrations_can_be_canceled():
 
 
 @pytest.mark.manual
-def test_custom_button_edit_via_rest_put():
-    """
-    Steps:
-    1) Create custom button
-    2) Use Put method to edit the custom button
-    3) Delete custom button
-
-    Polarion:
-        assignee: ndhandre
-        initialEstimate: None
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_edit_via_rest_patch():
-    """
-    Steps:
-    1) Create Custom button
-    2) Edit custom button using Patch method
-    3) Delete custom button
-
-    Polarion:
-        assignee: ndhandre
-        initialEstimate: None
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.config_management
 def test_config_manager_job_template_refresh():
     """
@@ -22736,70 +22332,6 @@ def test_config_manager_job_template_refresh():
         assignee: nachandr
         casecomponent: ansible
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_submit_ssui_all():
-    """
-    Test custom button all submit via SSUI
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.9
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_submit_ssui_sequence():
-    """
-    Test custom button submit sequence via SSUI
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.9
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_submit_ssui_both():
-    """
-    Test custom button display for detail and list page of SSUI
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.9
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_submit_ssui_list():
-    """
-    Test custom button display for list page for SSUI
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.9
-        upstream: yes
     """
     pass
 
@@ -22883,23 +22415,6 @@ def test_snapshot_timeline_verify_data():
             3. timelines page displayed
             4. event displayed on timeline
             5. data should be identical
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_custom_button_simulation():
-    """
-    Test whether custom button works with simulation option
-    (Additional info: https://bugzilla.redhat.com/show_bug.cgi?id=1535215)
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: automate
-        caseimportance: low
-        initialEstimate: 1/8h
-        startsin: 5.8
-        upstream: yes
     """
     pass
 
