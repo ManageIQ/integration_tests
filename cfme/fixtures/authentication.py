@@ -74,3 +74,6 @@ def configure_auth(appliance, auth_mode, auth_provider, user_type, request, fix_
     appliance.server.authentication.auth_settings = original_config
     appliance.evmserverd.restart()
     appliance.wait_for_web_ui()
+    # After evmserverd restart, we need to logout from the appliance in the UI.
+    # Otherwise the UI would be in a bad state and produce errors while testing.
+    appliance.server.logout()
