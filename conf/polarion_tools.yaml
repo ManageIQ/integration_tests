@@ -96,6 +96,7 @@ docstrings:
             - appl
             - automate
             - candu
+            - custom_button
             - cloud
             - config
             - control
