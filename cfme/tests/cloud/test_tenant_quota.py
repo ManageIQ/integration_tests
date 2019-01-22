@@ -25,14 +25,15 @@ def set_default(provider, request):
        must be used in all tests of quota which are related to services where catalog item needs to
        be created with specific values for these entries.
     """
+    with_prov = (
+        "/ManageIQ (Locked)/{}/VM/Provisioning/StateMachines/ProvisionRequestApproval/Default"
+        .format(provider.string_name)
+    )
+    default = (
+        "/Service/Provisioning/StateMachines/ServiceProvision_Template/CatalogItemInitialization"
+    )
 
-    provisioning_entry_point = (
-        "/Service/Provisioning/StateMachines/ServiceProvision_Template/CatalogItemInitialization")
-    if request.param:
-        provisioning_entry_point = ("/ManageIQ (Locked)/" + provider.string_name
-                                + "/VM/Provisioning/StateMachines/ProvisionRequestApproval/Default")
-
-    return provisioning_entry_point
+    return with_prov if request.param else default
 
 
 @pytest.fixture
@@ -181,11 +182,11 @@ def test_tenant_quota_enforce_via_service_cloud(request, appliance, provider, se
 
 
 # Args of parametrize is the list of navigation parameters to order catalog item.
-@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated,
 # sequence is important here.
 # indirect is the list where we define which fixtures are to be passed values indirectly.
+@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data', 'extra_msg', 'set_default'],
     [
