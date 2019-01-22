@@ -367,7 +367,7 @@ def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, con
         view.switch_to("In Progress Plans")
         wait_for(func=view.progress_card.is_plan_started, func_args=[plan.name],
             message="migration plan is starting, be patient please", delay=5, num_sec=150,
-            handle_exception=True)
+            handle_exception=True, fail_cond=False)
         wait_for(func=view.plan_in_progress, func_args=[plan.name], delay=5, num_sec=600,
             handle_exception=True)
 

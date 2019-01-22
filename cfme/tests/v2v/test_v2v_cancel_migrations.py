@@ -59,7 +59,7 @@ def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, h
                                                             'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True)
+        handle_exception=True, fail_cond=False)
     view.progress_card.select_plan(migration_plan.name)
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
                                                              'Details').VIEW, wait='10s')

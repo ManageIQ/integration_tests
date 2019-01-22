@@ -73,6 +73,7 @@ def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, con
         delay=5,
         num_sec=150,
         handle_exception=True,
+        fail_cond=False
     )
 
     # wait until plan is in progress

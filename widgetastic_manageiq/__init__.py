@@ -4990,6 +4990,7 @@ class MigrationProgressBar(Widget):
     SIZE_LOCATOR = './/strong[contains(@id,"size-migrated")]'
     VMS_LOCATOR = './/strong[contains(@id,"vms-migrated")]'
     SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
+    ERROR_LOCATOR = './/div/span[contains(@class,"pficon-error-circle-o")]'
     PROGRESS_BARS = './/div[@class="progress-bar"]'
     PROGRESS_DESCRIPTION = './/div[contains(@class,"progress-description")]'
 
@@ -5042,11 +5043,16 @@ class MigrationProgressBar(Widget):
     def is_plan_started(self, plan_name):
         """Returns true if migration plan card is shown in-progress state, spinners are gone"""
         el = self._get_card_element(plan_name)
-        try:
-            result = self.browser.is_displayed(self.SPINNER_LOCATOR, parent=el)
-        except NoSuchElementException:
-            result = self.browser.is_displayed(self.TIMER_LOCATOR, parent=el)
-        return result
+        spinner_displayed = self.browser.is_displayed(self.SPINNER_LOCATOR, parent=el)
+        timer_displayed = self.browser.is_displayed(self.TIMER_LOCATOR, parent=el)
+        error_displayed = self.browser.is_displayed(self.ERROR_LOCATOR, parent=el)
+        self.logger.info("spinner_displayed is %s, timer_displayed is %s and error_displayed is %s",
+            spinner_displayed, timer_displayed, error_displayed)
+        if error_displayed:
+            return False
+        if timer_displayed and not spinner_displayed:
+            return True
+        return False
 
     def is_plan_visible(self, plan_name):
         """Returns true if migration plan card is shown in-progress section, else False"""

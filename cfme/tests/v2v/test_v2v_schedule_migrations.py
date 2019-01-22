@@ -63,7 +63,7 @@ def test_single_vm_scheduled_migration(request, appliance, v2v_providers, host_c
     view.switch_to('In Progress Plans')
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=30, num_sec=600,
-        handle_exception=True)
+        handle_exception=True, fail_cond=False)
 
     # wait until plan is in progress
     wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],

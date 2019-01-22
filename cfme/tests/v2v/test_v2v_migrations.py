@@ -72,7 +72,7 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
         navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True)
+        handle_exception=True, fail_cond=False)
 
     # wait until plan is in progress
     wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
@@ -123,7 +123,7 @@ def test_single_network_single_vm_migration(request, appliance, v2v_providers, h
         navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True)
+        handle_exception=True, fail_cond=False)
     view.progress_card.select_plan(migration_plan.name)
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
                                                              'Details').VIEW, wait='10s')
@@ -178,7 +178,7 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
         navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True)
+        handle_exception=True, fail_cond=False)
     view.progress_card.select_plan(migration_plan.name)
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
                                                              'Details').VIEW, wait='10s')
@@ -232,7 +232,7 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
         navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True)
+        handle_exception=True, fail_cond=False)
 
     # wait until plan is in progress
     wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
@@ -283,7 +283,7 @@ def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, c
         navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True)
+        handle_exception=True, fail_cond=False)
 
     # wait until plan is in progress
     wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
@@ -338,7 +338,7 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
         navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True)
+        handle_exception=True, fail_cond=False)
     view.progress_card.select_plan(migration_plan.name)
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
                                                              'Details').VIEW, wait='10s')
@@ -428,7 +428,7 @@ def test_single_vm_migration_with_ssh(request, appliance, v2v_providers, host_cr
         navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True)
+        handle_exception=True, fail_cond=False)
 
     # wait until plan is in progress
     wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
@@ -495,7 +495,7 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
         navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True)
+        handle_exception=True, fail_cond=False)
 
     # wait until plan is in progress
     wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
@@ -556,7 +556,7 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
         navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True)
+        handle_exception=True, fail_cond=False)
     view.progress_card.select_plan(migration_plan.name)
     view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
                                                              'Details').VIEW, wait='10s')
@@ -627,7 +627,7 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
         navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
         message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True)
+        handle_exception=True, fail_cond=False)
 
     # wait until plan is in progress
     wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
@@ -702,6 +702,7 @@ def test_migration_long_name(request, appliance, v2v_providers, host_creds, conv
         delay=5,
         num_sec=150,
         handle_exception=True,
+        fail_cond=False
     )
 
     # wait until plan is in progress
@@ -768,7 +769,7 @@ def test_migration_with_edited_mapping(request, appliance, v2v_providers, edited
         navigator.get_class(migration_plan_collection, 'All').VIEW.pick())
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
              message="migration plan is starting, be patient please", delay=5, num_sec=150,
-             handle_exception=True)
+             handle_exception=True, fail_cond=False)
 
     # wait until plan is in progress
     wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
@@ -778,9 +779,9 @@ def test_migration_with_edited_mapping(request, appliance, v2v_providers, edited
     view.wait_displayed()
     migration_plan_collection.find_completed_plan(migration_plan)
     logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
-                migration_plan.name, view.migration_plans_completed_list.get_vm_count_in_plan(
-            migration_plan.name), view.migration_plans_completed_list.get_clock(
-            migration_plan.name))
+                migration_plan.name, view.migration_plans_completed_list.
+                get_vm_count_in_plan(migration_plan.name),
+                view.migration_plans_completed_list.get_clock(migration_plan.name))
     # validate MAC address matches between source and target VMs
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
     migrated_vm = get_migrated_vm_obj(src_vm_obj, v2v_providers.rhv_provider)

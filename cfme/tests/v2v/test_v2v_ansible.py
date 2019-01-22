@@ -146,6 +146,7 @@ def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conv
         delay=5,
         num_sec=280,
         handle_exception=True,
+        fail_cond=False
     )
 
     # wait until plan is in progress
