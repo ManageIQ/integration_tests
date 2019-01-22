@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import cfme.intelligence.chargeback.assignments as cb
 import pytest
 import random
 
@@ -20,13 +19,15 @@ def test_assign_compute_enterprise(appliance, virtualcenter_provider):
         assignee: None
         initialEstimate: None
     """
-    view = navigate_to(appliance.server, 'Chargeback')
+    view = navigate_to(appliance.server, 'Chargeback', wait_for_view=30)
 
-    enterprise = cb.ComputeAssign(
+    enterprise = appliance.collections.assignments.instantiate(
+        assign_type="Compute",
         assign_to="The Enterprise",
         selections={
             'Enterprise': {'Rate': 'Default'}
-        })
+        }
+    )
     enterprise.assign()
 
     # Assert that the selection made is listed on the UI
@@ -44,7 +45,8 @@ def test_assign_compute_provider(appliance, virtualcenter_provider):
     """
     view = navigate_to(appliance.server, 'Chargeback')
 
-    compute_provider = cb.ComputeAssign(
+    compute_provider = appliance.collections.assignments.instantiate(
+        assign_type="Compute",
         assign_to='Selected Providers',
         selections={
             virtualcenter_provider.name: {'Rate': 'Default'}
@@ -70,7 +72,8 @@ def test_assign_compute_cluster(appliance, virtualcenter_provider):
     cluster_name = "{}/{}".format(virtualcenter_provider.name,
                                   random.choice(virtualcenter_provider.data["clusters"]))
 
-    cluster = cb.ComputeAssign(
+    cluster = appliance.collections.assignments.instantiate(
+        assign_type="Compute",
         assign_to='Selected Cluster / Deployment Roles',
         selections={
             cluster_name: {'Rate': 'Default'}
@@ -94,7 +97,8 @@ def test_assign_compute_taggedvm(appliance, virtualcenter_provider):
     """
     view = navigate_to(appliance.server, 'Chargeback')
 
-    tagged_vm = cb.ComputeAssign(
+    tagged_vm = appliance.collections.assignments.instantiate(
+        assign_type="Compute",
         assign_to="Tagged VMs and Instances",
         tag_category="Location",
         selections={
@@ -119,7 +123,8 @@ def test_assign_storage_enterprise(appliance, virtualcenter_provider):
     """
     view = navigate_to(appliance.server, 'Chargeback')
 
-    enterprise = cb.StorageAssign(
+    enterprise = appliance.collections.assignments.instantiate(
+        assign_type="Storage",
         assign_to="The Enterprise",
         selections={
             'Enterprise': {'Rate': 'Default'}
@@ -143,7 +148,8 @@ def test_assign_storage_datastores(appliance, virtualcenter_provider):
 
     datastore = random.choice(virtualcenter_provider.data["datastores"])["name"]
 
-    sel_datastore = cb.StorageAssign(
+    sel_datastore = appliance.collections.assignments.instantiate(
+        assign_type="Storage",
         assign_to="Selected Datastores",
         selections={
             datastore: {'Rate': 'Default'}
@@ -166,7 +172,8 @@ def test_assign_storage_tagged_datastores(appliance, virtualcenter_provider):
     """
     view = navigate_to(appliance.server, 'Chargeback')
 
-    tagged_datastore = cb.StorageAssign(
+    tagged_datastore = appliance.collections.assignments.instantiate(
+        assign_type="Storage",
         assign_to="Tagged Datastores",
         tag_category="Location",
         selections={

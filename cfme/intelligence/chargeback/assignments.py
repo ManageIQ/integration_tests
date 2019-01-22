@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 # Page model for Intel->Chargeback->Assignments.
-
-from navmazing import NavigateToSibling, NavigateToAttribute
+import attr
+from navmazing import NavigateToAttribute
 from widgetastic.widget import Text
 from widgetastic_patternfly import BootstrapSelect, Button
 
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from widgetastic_manageiq import Table
 from widgetastic_manageiq.hacks import BootstrapSelectByLocator
@@ -20,8 +19,7 @@ class AssignmentsAllView(ChargebackView):
     @property
     def is_displayed(self):
         return (
-            self.in_chargeback and
-            self.title.text == "All Assignments"
+            self.in_chargeback and self.title.text == "All Assignments"
         )
 
 
@@ -35,11 +33,11 @@ class AssignmentsView(ChargebackView):
         return (
             self.in_chargeback and
             self.title.text == '{} Rate Assignments'.format(
-                self.context["object"].TYPE) and
+                self.context["object"].assign_type) and
             self.assignments.is_opened and
             self.assignments.tree.currently_selected == [
                 "Assignments",
-                self.context["object"].TYPE
+                self.context["object"].assign_type
             ]
         )
 
@@ -56,7 +54,8 @@ class AssignmentsView(ChargebackView):
     )
 
 
-class Assign(Updateable, Pretty, Navigatable):
+@attr.s
+class Assign(Updateable, BaseEntity):
     """
     Model of Chargeback Assignment page in cfme.
 
@@ -69,24 +68,19 @@ class Assign(Updateable, Pretty, Navigatable):
             providers the rate is to be assigned.
 
     Usage:
-        enterprise = ComputeAssign(
-        assign_to="The Enterprise",
-        selections={
+        enterprise = appliance.collections.assignments.instantiate(
+            assign_to =  "The Enterprise",
+            assign_type = "Compute", # or "Storage"
+            selections={
             'Enterprise': {'Rate': 'Default'}
         })
-    enterprise.assign()
-
+        enterprise.assign()
     """
-    def __init__(self, assign_to=None,
-                 tag_category=None,
-                 docker_labels=None,
-                 selections=None,
-                 appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.assign_to = assign_to
-        self.tag_category = tag_category
-        self.docker_labels = docker_labels
-        self.selections = selections
+    assign_to = attr.ib()
+    assign_type = attr.ib()
+    tag_category = attr.ib(default=None)
+    docker_labels = attr.ib(default=None)
+    selections = attr.ib(default=None)
 
     def assign(self):
         view = navigate_to(self, 'Details')
@@ -107,15 +101,15 @@ class Assign(Updateable, Pretty, Navigatable):
         return view.fill(fill_details)
 
 
-class ComputeAssign(Assign):
-    TYPE = "Compute"
+@attr.s
+class AssignsCollection(BaseCollection):
+    """Collection object for the
+    :py:class:'cfme.intelligence.chargeback.assignments.Assign'."""
+
+    ENTITY = Assign
 
 
-class StorageAssign(Assign):
-    TYPE = "Storage"
-
-
-@navigator.register(Assign, 'All')
+@navigator.register(AssignsCollection, "All")
 class AssignAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'IntelChargeback')
     VIEW = AssignmentsAllView
@@ -125,9 +119,10 @@ class AssignAll(CFMENavigateStep):
 
 
 @navigator.register(Assign, 'Details')
-class AssignStorage(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+class AssignDetails(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = AssignmentsView
 
     def step(self):
-        self.view.assignments.tree.click_path("Assignments", self.obj.TYPE)
+
+        self.view.assignments.tree.click_path("Assignments", self.obj.assign_type)
