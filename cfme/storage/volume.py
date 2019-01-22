@@ -9,9 +9,9 @@ from widgetastic_manageiq import Search
 from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, Taggable, TaggableCollection
+from cfme.common import CustomButtonEventsMixin, TagPageView, Taggable, TaggableCollection
 from cfme.exceptions import VolumeNotFoundError, ItemNotFound, displayed_not_implemented
-from cfme.modeling.base import CustomButtonEventsMixin, BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name

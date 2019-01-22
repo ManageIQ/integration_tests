@@ -7,10 +7,10 @@ from widgetastic_manageiq import Search
 from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, Taggable
+from cfme.common import CustomButtonEventsMixin, TagPageView, Taggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.modeling.base import CustomButtonEventsMixin, BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from widgetastic_manageiq import (
     Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable)
 

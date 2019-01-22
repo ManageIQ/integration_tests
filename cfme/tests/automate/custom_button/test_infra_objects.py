@@ -485,6 +485,9 @@ def test_custom_button_events(request, dialog, setup_obj, button_group, btn_dial
             2. Create custom button [with dialog/ without dialog]
             2. Execute button from respective location
             3. Assert event count
+
+    Bugzilla:
+        1668023
     """
     group, obj_type = button_group
     dialog_ = dialog if btn_dialog else None
