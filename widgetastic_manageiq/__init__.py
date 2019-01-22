@@ -14,6 +14,7 @@ from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.common.keys import Keys
 from wait_for import TimedOutError, wait_for
 from widgetastic.exceptions import NoSuchElementException, WidgetOperationFailed
 from widgetastic.log import logged
@@ -56,6 +57,7 @@ from widgetastic_patternfly import (
     Tab,
     BreadCrumb,
     AggregateStatusCard,
+    SelectorDropdown,
 )
 
 from cfme.exceptions import ItemNotFound
@@ -1099,7 +1101,9 @@ class SSUIlist(Widget, ClickableMixin):
     @ParametrizedView.nested
     class list(ParametrizedView):  # noqa
         PARAMETERS = ("item_name",)
-        list_item = Text(ParametrizedLocator(".//div/span/*[normalize-space(.)={item_name|quote}]"))
+        list_item = Text(
+            ParametrizedLocator(".//div/span/*[normalize-space(.)={item_name|quote}]")
+        )
 
         def list_click(self):
             """Clicks the list item with this name."""
@@ -1557,7 +1561,11 @@ class ReportDataControllerMixin(object):
             # js api compares values in lower case but don't replace space with underscore
             updated_keys[key.replace("_", " ")] = str(updated_keys.pop(key))
 
-        raw_data = {"controller": "reportDataController", "action": "query", "data": [updated_keys]}
+        raw_data = {
+            "controller": "reportDataController",
+            "action": "query",
+            "data": [updated_keys],
+        }
         js_cmd = ("sendDataWithRx({data}); " "return ManageIQ.qe.gtl.result").format(
             data=json.dumps(raw_data)
         )
@@ -2233,7 +2241,9 @@ class AdvancedFilterLoad(View):
 class AdvancedFilterUserInput(View):
     """ View for Advanced Filter user input """
 
-    USER_INPUT_FIELD = '//div[@id="user_input_filter"]//div[contains(normalize-space(.), {})]/input'
+    USER_INPUT_FIELD = (
+        '//div[@id="user_input_filter"]//div[contains(normalize-space(.), {})]/input'
+    )
     user_input_cancel = Button("Cancel")
     user_input_apply = Button(title="Apply the current filter (Enter)")
     # We have different close button for user input
@@ -3332,7 +3342,8 @@ class DashboardWidgetsPicker(View):
         @classmethod
         def all(cls, browser):
             return [
-                (e.get_attribute("title").split('"')[1],) for e in browser.elements(cls.ALL_WIDGETS)
+                (e.get_attribute("title").split('"')[1],)
+                for e in browser.elements(cls.ALL_WIDGETS)
             ]
 
     def add_dashboard_widget(self, widget):
@@ -3522,7 +3533,9 @@ class DynamicTable(VanillaTable):
             raise DynamicTableAddError(
                 'DynamicTable action_row index "{}" not found in table'.format(self.action_row)
             )
-        return self._process_negative_index(nindex=-1)  # use process_negative_index to get last row
+        return self._process_negative_index(
+            nindex=-1
+        )  # use process_negative_index to get last row
 
 
 class FolderManager(Widget):
@@ -3763,7 +3776,9 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
                 return self.entity_class(parent=self, entity_id=entity_id)
             else:
                 try:
-                    return self.entity_class(parent=self, entity_id=self.get_ids_by_keys(**keys)[0])
+                    return self.entity_class(
+                        parent=self, entity_id=self.get_ids_by_keys(**keys)[0]
+                    )
                 except IndexError:
                     pass
         return None
@@ -4447,6 +4462,12 @@ class MigrationPlansList(Widget):
         self.list_class = list_class
 
     @property
+    def is_displayed(self):
+        """Returns True if the list is displayed."""
+
+        return self.browser.is_displayed(self.browser.element(self.ITEM_LOCATOR))
+
+    @property
     def all_items(self):
         return [self.browser.text(item) for item in self.browser.elements(self.ITEM_TEXT_LOCATOR)]
 
@@ -4465,7 +4486,9 @@ class MigrationPlansList(Widget):
     def get_plan_description(self, plan_name):
         try:
             el = self._get_plan_element(plan_name)
-            return self.browser.text(self.browser.element(self.ITEM_DESCRIPTION_LOCATOR, parent=el))
+            return self.browser.text(
+                self.browser.element(self.ITEM_DESCRIPTION_LOCATOR, parent=el)
+            )
         except NoSuchElementException:
             # Plan with no description
             return ""
@@ -4608,7 +4631,9 @@ class InfraMappingList(Widget):
     TARGET_ITEMS_LIST_LOCATOR = './/div[contains(@class,"infra-mapping-item-target")]'
     ITEM_EXPAND_LOCATOR = './span[contains(@class,"fa-angle-down")]'
     ITEM_COLLAPSE_DETAILS_BUTTON_LOCATOR = './/span[contains(@class, "pficon-close")]'
-    ITEM_PROMPT_DELETE_BUTTON_LOCATOR = './/div[@role="document"]//button[@class="btn btn-primary"]'
+    ITEM_PROMPT_DELETE_BUTTON_LOCATOR = (
+        './/div[@role="document"]//button[@class="btn btn-primary"]'
+    )
     ITEM_PROMPT_CANCEL_BUTTON_LOCATOR = (
         './/div[@role="document"]' '//button[@class="btn-cancel btn btn-default"]'
     )
@@ -5003,6 +5028,12 @@ class MigrationProgressBar(Widget):
         self.locator = locator
 
     @property
+    def is_displayed(self):
+        """Returns True if the list is displayed."""
+
+        return self.browser.is_displayed(self.browser.element(self.TITLE_LOCATOR))
+
+    @property
     def all_items(self):
         return [self.browser.text(item) for item in self.browser.elements(self.TITLE_LOCATOR)]
 
@@ -5095,9 +5126,83 @@ class MigrationDashboardStatusCard(AggregateStatusCard):
     ROOT = ParametrizedLocator(
         './/div[contains(@class, "card-pf-aggregate-status")'
         ' and not(contains(@class, "card-pf-aggregate-status-mini")) and'
-        ' h2[contains(@class,"card-pf-title")  and contains(.,{@name|quote})]]'
+        ' h2[contains(@class,"card-pf-title")  and contains(normalize-space(.),{@name|quote})]]'
     )
-    TITLE_ANCHOR = ".//h2"
+    TITLE_ANCHOR = "./h2"
+
+    @property
+    def is_active(self):
+        return "active" in self.root_browser.classes(self.ROOT or self.__locator__)
+
+
+class V2vPaginator(Paginator):
+    """ Represents Paginator control for V2V."""
+
+    PAGINATOR_CTL = './/div[contains(@class,"form-group")][./ul]'
+    './input[contains(@class,"pagination-pf-page")]'
+    CUR_PAGE_CTL = './/span[./span[contains(@class,"pagination-pf-items-current")]]'
+    PAGE_BUTTON_CTL = ".//li/a[contains(@title,{})]"
+
+    def next_page(self):
+        self._click_button("Next Page")
+
+    def prev_page(self):
+        self._click_button("Previous Page")
+
+    def last_page(self):
+        self._click_button("Last Page")
+
+    def first_page(self):
+        self._click_button("First Page")
+
+    def page_info(self):
+        return self.browser.text(self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator))
+
+
+class V2vPaginationDropup(SelectorDropdown):
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class, "dropup") and ./button[@{@b_attr}={@b_attr_value|quote}]]'
+    )
+
+
+class V2vPaginatorPane(View):
+    """ Represents Paginator Pane for V2V."""
+
+    ROOT = './/form[contains(@class,"content-view-pf-pagination")]'
+
+    items_on_page = V2vPaginationDropup("id", "pagination-row-dropdown")
+    paginator = V2vPaginator()
+
+
+class MigrationDropdown(Dropdown):
+    """Represents the migration plan dropdown of v2v.
+
+    Args:
+        text: Text of the button, can be inner text or the title attribute.
+    """
+
+    ROOT = './/div[contains(@class, "dropdown") and .//button[contains(@id, "dropdown-filter")]]'
+    BUTTON_LOCATOR = './/button[contains(@id, "dropdown-filter")]'
+    ITEMS_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a'
+    ITEM_LOCATOR = (
+        './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a[normalize-space(.)={}]'
+    )
+
+
+class SearchBox(TextInput):
+    """Overriding fill method of TextInput to send
+       enter after filling """
+
+    def fill(self, value):
+        current_value = self.value
+        if value == current_value:
+            return False
+        # Clear and type everything
+        self.browser.click(self)
+        self.browser.clear(self)
+        self.browser.send_keys(value, self)
+        self.browser.send_keys(Keys.ENTER, self)
+        return True
 
 
 class MonitorStatusCard(ParametrizedView):
