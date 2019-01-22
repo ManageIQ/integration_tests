@@ -160,7 +160,7 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
     assert custom_button_group.has_item(button.text)
     custom_button_group.item_select(button.text)
 
-    dialog_view = view.browser.create_view(TextInputDialogView, wait='10s')
+    dialog_view = view.browser.create_view(TextInputDialogView, wait="10s")
     assert dialog_view.service_name.fill("Custom Button Execute")
 
     # Clear the automation log
@@ -239,7 +239,7 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
             else:
                 assert not custom_button_group.is_enabled
         elif expression == "visibility":
-            assert custom_button_group.is_displayed
+            assert button.text in custom_button_group.items
             setup_obj.remove_tag(tag)
             assert not custom_button_group.is_displayed
     else:
@@ -253,4 +253,4 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
         elif expression == "visibility":
             assert not custom_button_group.is_displayed
             setup_obj.add_tag(tag)
-            assert custom_button_group.is_displayed
+            assert button.text in custom_button_group.items

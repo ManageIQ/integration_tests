@@ -420,7 +420,7 @@ def test_custom_button_expression(appliance, context, objects, button_group, vis
             else:
                 assert not custom_button_group.is_enabled
         elif expression == "visibility":
-                assert not custom_button_group.is_displayed
+            assert not custom_button_group.is_displayed
 
     # Check with tag
     with appliance.context.use(ViaUI):
@@ -438,7 +438,7 @@ def test_custom_button_expression(appliance, context, objects, button_group, vis
         if expression == "enablement":
             assert custom_button_group.item_enabled(button.text)
         elif expression == "visibility":
-                assert button.text in custom_button_group.items
+            assert button.text in custom_button_group.items
 
 
 @pytest.mark.manual

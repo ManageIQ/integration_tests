@@ -18,9 +18,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, I
 
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.update import Updateable
-from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     FonticonPicker,
     PotentiallyInvisibleTab,
@@ -30,6 +28,26 @@ from widgetastic_manageiq import (
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 
 from . import AutomateCustomizationView
+
+
+EVM_TAG_OBJS = ["Group", "User"]
+
+BUILD_TAG_OBJS = [
+    "Availability Zone",
+    "Cloud Network",
+    "Cloud Object Store Container",
+    "Cloud Subnet",
+    "Network Router",
+    "Security Group",
+    "Tenant",
+    "Container Volume",
+    "Generic Object",
+    "Virtual Infra Switch",
+    "Cloud Tenant",
+    "Cloud Volume",
+    "Load Balancer",
+    "Orchestration Stack",
+]
 
 
 class AutomateRadioGroup(RadioGroup):
@@ -227,8 +245,7 @@ class BaseButton(BaseEntity, Updateable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ButtonDetailView, override=updates)
-        assert view.is_displayed
+        view = self.create_view(ButtonDetailView, override=updates, wait="10s")
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
@@ -247,8 +264,7 @@ class BaseButton(BaseEntity, Updateable):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            view = self.create_view(ButtonGroupDetailView, self.group)
-            assert view.is_displayed
+            view = self.create_view(ButtonGroupDetailView, self.group, wait="10s")
             view.flash.assert_no_error()
             view.flash.assert_message('Button "{}": Delete successful'.format(self.hover))
 
@@ -423,11 +439,11 @@ class ButtonCollection(BaseCollection):
 
         if visibility:
             # ToDo: extend visibility expression variations if needed.
-            if self.group.type in ["Group", "User"]:
+            if self.group.type in EVM_TAG_OBJS:
                 tag = "EVM {obj_type}.{tag}".format(
                     obj_type=self.group.type, tag=visibility["tag"]
                 )
-            elif self.group.type in ["Tenant", "Container Volume", "Generic Object"]:
+            elif self.group.type in BUILD_TAG_OBJS:
                 tag = "{obj_type}.Build.{tag}".format(
                     obj_type=self.group.type, tag=visibility["tag"]
                 )
@@ -440,11 +456,11 @@ class ButtonCollection(BaseCollection):
 
         if enablement:
             # ToDo: extend enablement expression variations if needed.
-            if self.group.type in ["Group", "User"]:
+            if self.group.type in EVM_TAG_OBJS:
                 tag = "EVM {obj_type}.{tag}".format(
                     obj_type=self.group.type, tag=enablement["tag"]
                 )
-            elif self.group.type in ["Tenant", "Container Volume", "Generic Object"]:
+            elif self.group.type in BUILD_TAG_OBJS:
                 tag = "{obj_type}.Build.{tag}".format(
                     obj_type=self.group.type, tag=enablement["tag"]
                 )
@@ -463,8 +479,7 @@ class ButtonCollection(BaseCollection):
                 view.advanced.attribute(i).fill(dict_)
 
         view.add_button.click()
-        view = self.create_view(ButtonGroupDetailView, self.group)
-        view.wait_displayed("15s")
+        view = self.create_view(ButtonGroupDetailView, self.group, wait="15s")
         view.flash.assert_no_error()
         view.flash.assert_message('Custom Button "{}" was added'.format(hover))
 
@@ -657,9 +672,7 @@ class ButtonGroup(BaseEntity, Updateable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ButtonGroupDetailView, override=updates)
-        if not BZ(1500176, forced_streams=["5.9", "upstream"]).blocks:
-            view.wait_displayed()
+        view = self.create_view(ButtonGroupDetailView, override=updates, wait="10s")
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
@@ -678,9 +691,7 @@ class ButtonGroup(BaseEntity, Updateable):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            view = self.create_view(ButtonGroupObjectTypeView)
-            if not BZ(1500176, forced_streams=["5.9", "upstream"]).blocks:
-                view.wait_displayed()
+            view = self.create_view(ButtonGroupObjectTypeView, wait="10s")
             view.flash.assert_no_error()
             view.flash.assert_message('Button Group "{}": Delete successful'.format(self.hover))
 
