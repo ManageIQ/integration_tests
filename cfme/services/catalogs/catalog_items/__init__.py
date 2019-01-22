@@ -19,6 +19,19 @@ from cfme.utils.version import LOWEST, VersionPicker
 from cfme.utils.wait import wait_for
 
 
+class EntryPoint(Input):
+    def fill(self, value):
+        if super(EntryPoint, self).fill(value):
+            self.parent_view.modal.cancel.click()
+            # After changing default path values of 'retirement_entry_point',
+            # 'reconfigure_entry_point' or 'provisioning_entry_point';
+            # 'Select Entry Point Instance'(pop up) occures which also helps to select these paths
+            # using tree structure. Here we have already filled these values through text input.
+            # So to ignore this pop up clicking on cancel button is required.
+            return True
+        return False
+
+
 # Views
 class BasicInfoForm(ServicesCatalogView):
     title = Text('#explorer_title_text')
@@ -36,8 +49,9 @@ class BasicInfoForm(ServicesCatalogView):
     display = Checkbox(name='display')
 
     subtype = BootstrapSelect('generic_subtype')
-    field_entry_point = Input(name='fqname')
-    retirement_entry_point = Input(name='retire_fqname')
+    provisioning_entry_point = EntryPoint(name='fqname')
+    retirement_entry_point = EntryPoint(name='retire_fqname')
+    reconfigure_entry_point = EntryPoint(name='reconfigure_fqname')
     select_resource = BootstrapSelect('resource_id')
 
     @View.nested
@@ -183,8 +197,8 @@ class EditCatalogItemView(BasicInfoForm):
         return (
             self.in_explorer and
             self.catalog_items.is_opened and
-            self.title.text == 'Editing Service Catalog Item "{}"'
-                .format(self.context['object'].name)
+            self.title.text
+            == 'Editing Service Catalog Item "{}"'.format(self.context["object"].name)
         )
 
     def after_fill(self, was_change):
@@ -213,8 +227,8 @@ class TabbedEditCatalogItemView(ServicesCatalogView):
         return (
             self.in_explorer and
             self.catalog_items.is_opened and
-            self.title.text == 'Editing Service Catalog Item "{}"'
-                .format(self.context['object'].name)
+            self.title.text
+            == 'Editing Service Catalog Item "{}"'.format(self.context['object'].name)
         )
 
 
@@ -339,6 +353,12 @@ class CloudInfraCatalogItem(BaseCatalogItem):
     domain = attr.ib(default='ManageIQ (Locked)')
     provider = attr.ib(default=None)
     item_type = None
+    provisioning_entry_point = attr.ib(default=(
+        "/Service/Provisioning/StateMachines/ServiceProvision_Template/CatalogItemInitialization"))
+    retirement_entry_point = attr.ib(
+        default="/Service/Retirement/StateMachines/ServiceRetirement/Default"
+    )
+    reconfigure_entry_point = attr.ib(default=None)
 
     @property
     def fill_dict(self):
@@ -348,7 +368,10 @@ class CloudInfraCatalogItem(BaseCatalogItem):
                 'description': self.description,
                 'display': self.display_in,
                 'select_catalog': self.catalog_name,
-                'select_dialog': self.dialog
+                'select_dialog': self.dialog,
+                'provisioning_entry_point': self.provisioning_entry_point,
+                'retirement_entry_point': self.retirement_entry_point,
+                'reconfigure_entry_point': self.reconfigure_entry_point
             },
             'request_info': {'provisioning': self.prov_data}
         }
@@ -501,7 +524,7 @@ class CatalogItemsCollection(BaseCollection):
             An instance of catalog_item_class
         """
         cat_item = self.instantiate(catalog_item_class, *args, **kwargs)
-        view = navigate_to(cat_item, 'Add')
+        view = navigate_to(cat_item, "Add")
         view.fill(cat_item.fill_dict)
         view.add.click()
         view = self.create_view(AllCatalogItemView, wait='10s')
