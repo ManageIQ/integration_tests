@@ -8,7 +8,7 @@ from cfme.containers.provider import (ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       GetRandomInstancesMixin, Labelable, LoggingableView)
 from cfme.exceptions import ItemNotFound
-from cfme.common import Taggable, TagPageView
+from cfme.common import CustomButtonEventsMixin, Taggable, TagPageView
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.providers import get_crud_by_name
@@ -55,7 +55,7 @@ class ContainerDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Container(BaseEntity, Taggable, Labelable):
+class Container(BaseEntity, CustomButtonEventsMixin, Taggable, Labelable):
     """Container Class"""
     PLURAL = 'Containers'
     all_view = ContainerAllView

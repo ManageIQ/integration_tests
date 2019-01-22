@@ -5,7 +5,7 @@ from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
 
-from cfme.common import (Taggable, TagPageView, PolicyProfileAssignable)
+from cfme.common import CustomButtonEventsMixin, Taggable, TagPageView, PolicyProfileAssignable
 from cfme.containers.provider import (ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       ContainerObjectDetailsEntities, GetRandomInstancesMixin,
@@ -39,8 +39,14 @@ class ImageDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssignable):
-
+class Image(
+    BaseEntity,
+    CustomButtonEventsMixin,
+    Taggable,
+    Labelable,
+    LoadDetailsMixin,
+    PolicyProfileAssignable,
+):
     PLURAL = 'Container Images'
     all_view = ImageAllView
     details_view = ImageDetailsView
@@ -278,7 +284,7 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        self.view.entities.search.clear_simple_search()
+        # self.view.entities.search.clear_simple_search()
         self.view.toolbar.view_selector.select("List View")
 
 
@@ -289,6 +295,7 @@ class Details(CFMENavigateStep):
 
     def step(self):
         search_visible = self.prerequisite_view.entities.search.is_displayed
+        # import ipdb; ipdb.set_trace()
         self.prerequisite_view.entities.get_entity(provider=self.obj.provider.name,
                                                    surf_pages=not search_visible,
                                                    use_search=search_visible, name=self.obj.name,

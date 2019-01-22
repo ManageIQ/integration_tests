@@ -4,7 +4,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic_manageiq import NestedSummaryTable
 from widgetastic.widget import View
 
-from cfme.common import Taggable, TagPageView
+from cfme.common import CustomButtonEventsMixin, Taggable, TagPageView
 from cfme.containers.provider import (ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView,
                                       ContainerObjectDetailsEntities, Labelable,
@@ -31,7 +31,7 @@ class PodDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Pod(BaseEntity, Taggable, Labelable):
+class Pod(BaseEntity, CustomButtonEventsMixin, Taggable, Labelable):
     """Pod Class"""
     PLURAL = 'Pods'
     all_view = PodAllView

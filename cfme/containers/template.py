@@ -3,7 +3,7 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 
-from cfme.common import Taggable, TagPageView
+from cfme.common import CustomButtonEventsMixin, Taggable, TagPageView
 from cfme.containers.provider import (ContainerObjectAllBaseView, ContainerObjectDetailsBaseView,
                                       Labelable, GetRandomInstancesMixin)
 from cfme.exceptions import ItemNotFound
@@ -23,7 +23,7 @@ class TemplateDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Template(BaseEntity, Taggable, Labelable):
+class Template(BaseEntity, CustomButtonEventsMixin, Taggable, Labelable):
 
     PLURAL = 'Templates'
     all_view = TemplateAllView

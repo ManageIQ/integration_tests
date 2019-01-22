@@ -3,7 +3,7 @@ import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme.common import Taggable, TagPageView
+from cfme.common import CustomButtonEventsMixin, Taggable, TagPageView
 from cfme.containers.provider import (ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView, Labelable,
                                       GetRandomInstancesMixin)
@@ -24,7 +24,7 @@ class VolumeDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Volume(BaseEntity, Taggable, Labelable):
+class Volume(BaseEntity, CustomButtonEventsMixin, Taggable, Labelable):
 
     PLURAL = 'Volumes'
     all_view = VolumeAllView

@@ -3,7 +3,7 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 
-from cfme.common import Taggable, TagPageView
+from cfme.common import CustomButtonEventsMixin, Taggable, TagPageView
 from cfme.containers.provider import (ContainerObjectAllBaseView,
                                       ContainerObjectDetailsBaseView, Labelable,
                                       GetRandomInstancesMixin)
@@ -33,7 +33,7 @@ class ProjectDashboardView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Project(BaseEntity, Taggable, Labelable):
+class Project(BaseEntity, CustomButtonEventsMixin, Taggable, Labelable):
 
     PLURAL = 'Projects'
     all_view = ProjectAllView

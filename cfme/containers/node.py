@@ -7,7 +7,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_patternfly import BreadCrumb
 
-from cfme.common import Taggable, TagPageView, PolicyProfileAssignable
+from cfme.common import CustomButtonEventsMixin, Taggable, TagPageView, PolicyProfileAssignable
 from cfme.common.vm_console import ConsoleMixin
 from cfme.containers.provider import (Labelable,
     ContainerObjectAllBaseView, LoggingableView, ContainerObjectDetailsBaseView,
@@ -57,7 +57,9 @@ class NodeDetailsView(ContainerObjectDetailsBaseView):
 
 
 @attr.s
-class Node(BaseEntity, Taggable, Labelable, PolicyProfileAssignable, ConsoleMixin):
+class Node(
+    BaseEntity, CustomButtonEventsMixin, Taggable, Labelable, PolicyProfileAssignable, ConsoleMixin
+):
     """Node Class"""
     PLURAL = 'Nodes'
     all_view = NodeAllView
