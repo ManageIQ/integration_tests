@@ -6,7 +6,7 @@ from widgetastic_manageiq import SummaryFormItem, Table
 from widgetastic.exceptions import RowNotFound
 from widgetastic.widget import View, Text
 
-from cfme.base.ui import ServerDiagnosticsView
+from cfme.base.ui import ServerDiagnosticsView, prepare_server_name
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -520,8 +520,8 @@ class DiagnosticsCollectLogs(CFMENavigateStep):
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.appliance.server_region_string(),
             "Zone: {} (current)".format(self.appliance.server.zone.description),
-            "Server: {} [{}] (current)".format(self.appliance.server.name,
-                                               self.appliance.server.sid))
+            prepare_server_name("Server: {} [{}] (current)".format(self.appliance.server.name,
+                                self.appliance.server.sid)))
         self.prerequisite_view.collectlogs.select()
 
 
@@ -536,8 +536,8 @@ class DiagnosticsCollectLogsSlave(CFMENavigateStep):
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.appliance.server_region_string(),
             "Zone: {} (current)".format(self.appliance.server.zone.description),
-            "Server: {} [{}]".format(slave_server.name,
-                                     int(slave_server.sid)))
+            prepare_server_name("Server: {} [{}]".format(slave_server.name,
+                                int(slave_server.sid))))
         self.prerequisite_view.collectlogs.select()
 
 
