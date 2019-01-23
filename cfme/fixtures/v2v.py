@@ -329,13 +329,12 @@ def form_data_dual_vm_obj_dual_datastore(request, appliance, source_provider, pr
         form_data,
         {
             "general": {
-                "description":
-                    "Dual Datastore migration of VM from {} to {},& from {} to {}".format(
-                     request.param[0][0],
-                     request.param[0][1],
-                     request.param[1][0],
-                     request.param[1][1],
-                )
+                "description": "Dual Datastore migration of VM from {} to {},&"
+                               " from {} to {}".format(request.param[0][0],
+                                                       request.param[0][1],
+                                                       request.param[1][0],
+                                                       request.param[1][1],
+                                                       )
             },
             "datastore": {
                 "Cluster ({})".format(provider.data.get("clusters")[0]): {
@@ -392,12 +391,12 @@ def form_data_vm_obj_dual_nics(request, appliance, source_provider, provider):
         {
             "general": {
                 "description":
-                    "Dual Datastore migration of VM from {} to {},& from {} to {}".format(
-                     request.param[0][0],
-                     request.param[0][1],
-                     request.param[1][0],
-                     request.param[1][1],
-                )
+                    "Dual Datastore migration of VM from {} to {},&"
+                    " from {} to {}".format(request.param[0][0],
+                                            request.param[0][1],
+                                            request.param[1][0],
+                                            request.param[1][1],
+                                            )
             },
             "network": {
                 "Cluster ({})".format(provider.data.get("clusters")[0]): {
@@ -434,21 +433,18 @@ def form_data_vm_obj_single_datastore(request, appliance, source_provider, provi
         {
             "general": {
                 "description":
-                    "Single Datastore migration of VM from {ds_type1} to {ds_type2},".format(
-                     ds_type1=request.param[0], ds_type2=request.param[1]
-                )
+                    "Single Datastore migration of VM from {ds_type1} to"
+                    " {ds_type2},".format(ds_type1=request.param[0],
+                                          ds_type2=request.param[1])
             },
             "datastore": {
                 "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                    "mappings": [
-                        _form_data_mapping(
-                            "datastores",
-                            source_provider,
-                            provider,
-                            request.param[0],
-                            request.param[1],
-                        )
-                    ]
+                    "mappings": [_form_data_mapping("datastores",
+                                                    source_provider,
+                                                    provider,
+                                                    request.param[0],
+                                                    request.param[1],
+                                                    )]
                 }
             },
         },

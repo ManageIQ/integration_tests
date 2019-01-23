@@ -389,6 +389,7 @@ class MigrationPlan(BaseEntity):
             delay=5,
             num_sec=150,
             handle_exception=True,
+            fail_cond=False
         )
 
     def is_plan_in_progress(self, name):
@@ -403,16 +404,14 @@ class MigrationPlan(BaseEntity):
                         try:
                             plan_time_elapsed = view.progress_card.get_clock(name)
                             new_msg = "time elapsed for migration: {time}".format(
-                                time=plan_time_elapsed
-                            )
+                                time=plan_time_elapsed)
                         except NoSuchElementException:
                             new_msg = "playbook is executing.."
                             pass
                         logger.info(
                             "For plan {plan_name}, is plan in progress: {visibility},"
                             " {message}".format(plan_name=name, visibility=is_plan_visible,
-                                                message=new_msg
-                            )
+                                                message=new_msg)
                         )
                     # return False if plan visible under "In Progress Plans"
                     return not is_plan_visible
@@ -424,7 +423,7 @@ class MigrationPlan(BaseEntity):
                 self.browser.refresh()
                 return False
 
-        wait_for(
+        return wait_for(
             func=_in_progress,
             message="migration plan is in progress, be patient please",
             delay=5,
@@ -447,9 +446,9 @@ class MigrationPlan(BaseEntity):
             while not view.clear_filters.is_displayed:
                 view = navigate_to(self, "Complete")
                 view.search_box.fill("{}\n\n".format(name))
-        # ==================================================================================
+            # ==================================================================================
         return (name in view.migration_plans_completed_list.read() and
-                view.migration_plans_completed_list.is_plan_succeeded(name)
+                view.migration_plans_completed_list.is_plan_succeeded(name))
 
     def is_plan_request_shows_vm(self, name):
         view = navigate_to(self, "In Progress")
