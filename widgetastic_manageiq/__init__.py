@@ -5046,8 +5046,12 @@ class MigrationProgressBar(Widget):
         spinner_displayed = self.browser.is_displayed(self.SPINNER_LOCATOR, parent=el)
         timer_displayed = self.browser.is_displayed(self.TIMER_LOCATOR, parent=el)
         error_displayed = self.browser.is_displayed(self.ERROR_LOCATOR, parent=el)
-        self.logger.info("spinner_displayed is %s, timer_displayed is %s and error_displayed is %s",
-            spinner_displayed, timer_displayed, error_displayed)
+        self.logger.info(
+            "spinner_displayed is %s, timer_displayed is %s and error_displayed is %s",
+            spinner_displayed,
+            timer_displayed,
+            error_displayed,
+        )
         if error_displayed:
             return False
         if timer_displayed and not spinner_displayed:
