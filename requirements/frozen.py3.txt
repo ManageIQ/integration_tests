@@ -204,7 +204,7 @@ oslo.config==6.6.2
 oslo.i18n==3.22.1
 oslo.serialization==2.28.1
 oslo.utils==3.37.1
-ovirt-engine-sdk-python==4.2.9
+ovirt-engine-sdk-python~=4.3
 packaging==18.0
 pandocfilters==1.4.2
 paramiko==2.4.2
