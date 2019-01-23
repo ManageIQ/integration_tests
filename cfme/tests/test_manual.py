@@ -10,23 +10,6 @@ pytestmark = [pytest.mark.ignore_stream('5.9', '5.10', 'upstream')]
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_git_domain_import_top_level_directory():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1389823 Importing domain
-    from git should work with or without the top level domain directory.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware65_test_vm_migration_with_rhel_75_last_time_74():
     """
     OSP: vmware65-Test VM migration with RHEL 7.5 (last time 7.4)
@@ -115,7 +98,6 @@ def test_status_of_a_task_via_api_with_evmrole_administrator():
         title: Test status of a task via API with EvmRole_administrator
     """
     pass
-
 
 
 @pytest.mark.manual
@@ -1347,7 +1329,7 @@ def test_infrastructure_hosts_icons_states():
     Then do in console:
     su - postgres
     psql
-    \c vmdb_production
+    vmdb_production
     UPDATE hosts SET power_state = "preparing_for_maintenance" WHERE
     name="NAME OF THE TESTED HOST";
     UPDATE hosts SET power_state = "maintenance" WHERE name="NAME OF THE
@@ -2105,7 +2087,6 @@ def test_osp_test_immediately_migration_after_migration_plan_creation():
     pass
 
 
-
 @pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(3)
@@ -2501,7 +2482,6 @@ def test_osp_vmware67_test_vm_migration_with_really_long_name_upto_64_chars_work
     pass
 
 
-
 @pytest.mark.manual
 def test_osp_test_migrating_a_vm_using_migration_plan_with_name_which_has_all_special_characte():
     """
@@ -2851,7 +2831,6 @@ def test_upgrade_rubyrep_to_pglogical():
     pass
 
 
-
 @pytest.mark.manual
 @test_requirements.chargeback
 @pytest.mark.tier(2)
@@ -2898,7 +2877,6 @@ def test_osp_vmware67_test_vm_migration_with_windows_7():
         title: OSP: vmware67-Test VM migration with Windows 7
     """
     pass
-
 
 
 @pytest.mark.manual
@@ -2978,23 +2956,6 @@ def test_distributed_zone_delete_occupied():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_quota_source_user():
-    """
-    When copying and modifying
-    /System/CommonMethods/QuotaStateMachine/quota to user the user as the
-    quota source and when the user is tagged, the quotas are in effect.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/8h
     """
     pass
 
@@ -4760,7 +4721,6 @@ def test_verify_that_changing_groups_while_in_ssui_updates_dashboard_items():
     pass
 
 
-
 @pytest.mark.manual
 @test_requirements.ansible
 def test_embed_tower_exec_play_stdout():
@@ -4893,29 +4853,6 @@ def test_osp_vmware67_test_vm_migration_from_nfs_storage_in_vmware_to_nfs_on_osp
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware67-Test VM migration from NFS Storage in VMware to NFS on OSP
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_automate_simulate_retry():
-    """
-    PR Link
-    Automate simulation now supports simulating the state machines.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/4h
-        setup: Create a state machine that contains a couple of states from which one
-               of them retries at least once.
-        startsin: 5.6
-        testSteps:
-            1. Use automate simulation UI to call the state machine (Call_Instance)
-        expectedResults:
-            1. A Retry button appears.
     """
     pass
 
@@ -5547,7 +5484,6 @@ def test_upgrade_single_inplace_ipv6():
     pass
 
 
-
 @pytest.mark.manual
 def test_in_dynamic_dropdown_list_the_default_value_should_not_contain_all_the_values_of_the_l():
     """
@@ -5736,7 +5672,6 @@ def test_ec2_targeted_refresh_network():
         startsin: 5.9
     """
     pass
-
 
 
 @pytest.mark.manual
@@ -7338,21 +7273,6 @@ def test_drop_down_dialog_should_honor_the_order_of_values_as_they_are_inputted(
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_customize_request_security_group():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1335989
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_authentication_ldap_switch_groups():
     """
@@ -7766,23 +7686,6 @@ def test_ec2_targeted_refresh_network_port():
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_git_import_multiple_domains():
-    """
-    Import of multiple domains from a single git repo is not allowed
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/12h
-        startsin: 5.10
     """
     pass
 
@@ -8272,33 +8175,6 @@ def test_edit_request_task():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_automate_relationship_trailing_spaces():
-    """
-    PR Link (Merged 2016-04-01)
-    Handle trailing whitespaces in automate instance relationships.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/10h
-        setup: A fresh appliance.
-        startsin: 5.6
-        testSteps:
-            1. Create a class and its instance, also create second one,
-               that has a relationship field. Create an instance with the
-               relationship field pointing to the first class" instance but
-               add a couple of whitespaces after it.
-            2. Execute the AE model, eg. using Simulate.
-        expectedResults:
-            1.
-            2. Logs contain no resolution errors
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.reconfigure
 @pytest.mark.tier(1)
 def test_vm_reconfig_add_remove_network_adapters_vsphere67_nested_mgmtnetwork():
@@ -8631,44 +8507,6 @@ def test_project_cloud_storage_quota_by_enforce():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_automate_generic_object_service_associations():
-    """
-    Use the attached domain to test this bug:
-    1) Import end enable the domain
-    2) Have at least one service created (Generic is enough)
-    3) Run rails console and create the object definition:
-    GenericObjectDefinition.create(
-    :name => "LoadBalancer",
-    :properties => {
-    :attributes   => {:location => "string"},
-    :associations => {:vms => "Vm", :services => "Service"},
-    }
-    )
-    4) Run tail -fn0 log/automation.log | egrep "ERROR|XYZ"
-    5) Simulate Request/GOTest with method execution
-    In the tail"ed log:
-    There should be no ERROR lines related to the execution.
-    There should be these two lines:
-    <AEMethod gotest> XYZ go object: #<MiqAeServiceGenericObject
-    ....something...>
-    <AEMethod gotest> XYZ load balancer got service:
-    #<MiqAeServiceService:....something....>
-    If there is "XYZ load balancer got service: nil", then this bug was
-    reproduced.
-    thx @lfu
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_custom_button_in_sui():
     """
     https://bugzilla.redhat.com/show_bug.cgi?id=1450473
@@ -8680,24 +8518,6 @@ def test_custom_button_in_sui():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Test Custom button in SUI
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_automate_git_domain_displayed_in_dialog():
-    """
-    Check that the domain imported from git is displayed and usable in the
-    pop-up tree in the dialog editor.
-    You can use eg. https://github.com/ramrexx/CloudForms_Essentials.git
-    for that
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        initialEstimate: 1/15h
-        startsin: 5.7
     """
     pass
 
@@ -8724,23 +8544,6 @@ def test_verify_user_validation_works_fine_but_authentication_fails_if_no_group_
         initialEstimate: 1/4h
         title: verify user validation works fine but authentication fails
                if no group is assigned for user.
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_multiple_sources_to_single_target_mapping_for_clusters_ds_network():
-    """
-    OSP: Test multiple sources to single target mapping (For Clusters, DS,
-    Network)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test multiple sources to single target mapping (For Clusters, DS, Network)
     """
     pass
 
@@ -8816,25 +8619,6 @@ def test_embed_tower_repo_list():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_disabled_domains_in_domain_priority():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1331017 When the admin
-    clicks on a instance that has duplicate entries in two different
-    domains. If one domain is disabled it is still displayed in the UI for
-    the domain priority.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.storage
 def test_storage_volume_in_use_delete_openstack():
     """
@@ -8856,21 +8640,6 @@ def test_storage_volume_in_use_delete_openstack():
         caseimportance: medium
         initialEstimate: 1/16h
         startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_automate_engine_database_connection():
-    """
-    All steps in: https://bugzilla.redhat.com/show_bug.cgi?id=1334909
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/8h
     """
     pass
 
@@ -9164,9 +8933,6 @@ def test_default_view_settings_should_apply_for_service_catalogs():
         title: Default view settings should apply for service catalogs
     """
     pass
-
-
-
 
 
 @pytest.mark.manual
@@ -10423,41 +10189,6 @@ def test_add_ec2_provider_with_instance_without_name():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_check_quota_regression():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1554989
-    Update from 5.8.2 to 5.8.3 has broken custom automate method.  Error
-    is thrown for the check_quota instance method for an undefined method
-    provisioned_storage.
-    You"ll need to create an invalid VM provisioning request to reproduce
-    this issue.
-    The starting point is an appliance with a provider configured, that
-    can successfully provision a VM using lifecycle provisioning.
-    1. Add a second provider to use for VM lifecycle provisioning.
-    2. Add a 2nd zone called "test_zone". (Don"t add a second appliance
-    for this zone)
-    3. Set the zone of the second provider to be "test_zone".
-    4. Provision a VM for the second provider, using VM lifecycle
-    provisioning. (The provisioning request should remain in
-    pending/active status and should not get processed because there is no
-    appliance/workers for the "test_zone".)
-    5. Delete the template used in step 4.(Through the UI when you
-    navigate to virtual machines, templates is on the left nav bar, select
-    the template used in step 4 and select: "Remove from Inventory"
-    6. Provisioning a VM for the first provider, using VM lifecycle
-    provisioning should produce the reported error.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 def test_embed_tower_exec_play_against_openstack():
     """
@@ -11250,23 +10981,6 @@ def test_candu_graphs_vm_compare_cluster_vsphere65():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_git_domain_import_with_no_connection():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1391208
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.7
-    """
-    pass
-
-
-
-@pytest.mark.manual
 @test_requirements.cloud_init
 @pytest.mark.tier(1)
 def test_cloud_init_cfme():
@@ -11279,23 +10993,6 @@ def test_cloud_init_cfme():
         endsin: 5.4
         initialEstimate: 1/2h
         startsin: 5.4
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_schema_field_without_type():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1365442
-    It shouldn"t be possible to add a field without specifying a type.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/12h
     """
     pass
 
@@ -11686,29 +11383,6 @@ def test_verify_login_fails_for_user_in_cfme_after_changing_the_password_in_saml
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-def test_automate_retry_onexit_increases():
-    """
-    To reproduce:
-    1) Import the attached file, it will create a domain called
-    OnExitRetry
-    2) Enable the domain
-    3) Go to Automate / Simulation
-    4) Simulate Request with instance OnExitRetry, execute methods
-    5) Click submit, open the tree on right and expand ae_state_retries
-    It should be 1 by now and subsequent clicks on Retry should raise the
-    number if it works properly.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
 def test_proxy_invalid_azure():
     """
     With 5.7 there is a new feature that allows users to specific a
@@ -11985,23 +11659,6 @@ def test_proxy_valid_ec2():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_simulation_result_has_hash_data():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1445089
-    The UI should display the result objects if the Simulation Result has
-    hash data.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_two_factor_authentication_works_with_user_password_and_otp():
@@ -12174,22 +11831,6 @@ def test_ldap_user_group():
             2. CFME configuration for multiple users/groups should work without any error.
             3. login should be successful upon valid credentials input.
             4. user should have access to only the data defined by him/group
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_git_import_without_master():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1508881
-    Git repository doesn"t have to have master branch
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -12501,22 +12142,6 @@ def test_utilization_host():
         caseimportance: medium
         initialEstimate: 1/8h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_state_machine_variable():
-    """
-    Test whether storing the state machine variable works and the vaule is
-    available in another state.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/4h
     """
     pass
 
@@ -14022,30 +13647,6 @@ def test_verify_the_authentication_mode_is_displayed_correctly_for_new_trusted_f
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_custom_button_disable():
-    """
-    Check if the button is disable or not (i.e. visible but blurry)
-    Steps
-    1)Add Button Group
-    2)Add a button to the newly created button group
-    3)Add an expression for disabling button (can use simple {"tag":
-    {"department":"Support"}} expression)
-    4)Add the Button group to a page
-    5)Check that button is enabled; if enabled pass else fail.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
-        startsin: 5.9
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_host_info_scvmm():
     """
     The purpose of this test is to verify that SCVMM-SP1 hosts are not
@@ -14216,22 +13817,6 @@ def test_osp_vmware67_test_vm_with_mutliple_nics_with_single_ip_ipv6_to_first_ni
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_git_import_deleted_tag():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1394194
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.upgrade
 @pytest.mark.tier(2)
 def test_update_webui_ipv6():
@@ -14290,22 +13875,6 @@ def test_suspend_scvmm2016_from_collection():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_automate_service_quota_runs_only_once():
-    """
-    Steps described here:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1317698
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/4h
     """
     pass
 
@@ -14956,40 +14525,6 @@ def test_remove_catalog_items_from_catalog_bundle_resource_list():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_automate_state_method():
-    """
-    PR link (merged 2016-03-24)
-    You can pass methods as states compared to the old method of passing
-    instances which had to be located in different classes. You use the
-    METHOD:: prefix
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/4h
-        setup: A fresh appliance.
-        startsin: 5.6
-        testSteps:
-            1. Create an automate class that has one state.
-            2. Create a method in the class, make the method output
-               something recognizable in the logs
-            3. Create an instance inside the class, and as a Value for the
-               state use: METHOD::method_name where method_name is the name
-               of the method you created
-            4. Run a simulation, use Request / Call_Instance to call your
-               state machine instance
-        expectedResults:
-            1. Class created
-            2. Method created
-            3. Instance created
-            4. The method got called, detectable by grepping logs
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware60_test_vm_migration_with_windows_2016_server():
     """
     OSP: vmware60-Test VM migration with Windows 2016 server
@@ -15046,23 +14581,6 @@ def test_rightsize_cpu_values_correct_vsphere6():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_button_can_trigger_events():
-    """
-    In the button creation dialog there must be MiqEvent available for
-    System/Process entry.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/60h
-        startsin: 5.6.1
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.smartstate
 @pytest.mark.tier(1)
 def test_ssa_host_os_info():
@@ -15114,27 +14632,6 @@ def test_sui_auto_refresh_of_pages_of_sui_request_and_service_explorer_and_myord
         caseimportance: medium
         initialEstimate: 1/4h
         title: SUI : Auto-refresh of pages of SUI (Request and Service Explorer and MyOrders)
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_requests_tab_exposed():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1508490
-    Need to expose Automate => Requests tab from the Web UI without
-    exposing any other Automate tabs (i.e. Explorer, Customization,
-    Import/Export, Logs). The only way to expose this in the Web UI, is to
-    enable Services => Requests, and at least one tab from the Automate
-    section (i.e. Explorer, Customization, etc).
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
-        startsin: 5.10
     """
     pass
 
@@ -15633,6 +15130,7 @@ def test_sui_session_timeout():
     """
     pass
 
+
 @pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
@@ -16097,21 +15595,6 @@ def test_storage_ebs_volume_attach():
         assignee: mmojzis
         initialEstimate: 1/6h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_git_credentials_changed():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1552274
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/6h
     """
     pass
 
@@ -16883,47 +16366,6 @@ def test_crosshair_op_host_vsphere6():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_automate_git_import_case_insensitive():
-    """
-    bin/rake evm:automate:import PREVIEW=false
-    GIT_URL=https://github.com/mkanoor/SimpleDomain REF=test2branch
-    This should not cause an error (the actual name of the branch is
-    Test2Branch).
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_custom_button_enable():
-    """
-    Check if the button is enabled or not
-    Steps
-    1)Add Button Group
-    2)Add a button to the newly created button group
-    3)Add an expression for enabling button
-    4)Add the Button group to a page
-    5)Check that button is enabled; if enabled pass else fail.
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_retire_non_ascii():
@@ -16975,21 +16417,6 @@ def test_verify_invalid_user_login_fails():
         caseposneg: negative
         initialEstimate: 1/4h
         title: Verify invalid user login fails
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_assert_failed_substitution():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1335669
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/4h
     """
     pass
 
@@ -17641,27 +17068,6 @@ def test_vm_terminate_deletedisk_azure():
         initialEstimate: 1/8h
         startsin: 5.6.1
         upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_import_namespace_attributes_updated():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1440226 1. Export an
-    Automate model
-    2. Change the display name and description in the exported namespace
-    yaml file
-    3. Run an import with the updated data
-    4. Check if the namespace attributes get updated.Display name and
-    description attributes should get updated
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: low
-        initialEstimate: 1/12h
     """
     pass
 
@@ -20293,24 +19699,6 @@ def test_appliance_log_error():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_user_has_groups():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1411424
-    This method should work:  groups = $evm.vmdb(:user).first.miq_groups
-    $evm.log(:info, "Displaying the user"s groups: #{groups.inspect}")
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(3)
 def test_automate_methods_from_dynamic_dialog_should_run_as_per_designed():
@@ -20527,26 +19915,6 @@ def test_verify_user_authentication_works_fine_if_default_evm_groups_are_already
 
 
 @pytest.mark.manual
-def test_osp_test_multi_host_migration_execution_if_more_than_one_host_present_migration_of_mu():
-    """
-    OSP: Test Multi-host migration execution, if more than one host
-    present, migration of multiple VMs should be spread across all
-    available host
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test Multi-host migration execution, if more than one
-               host present, migration of multiple VMs should be spread
-               across all available hosts
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(3)
 def test_quota_enforcement_for_cloud_volumes():
@@ -20671,22 +20039,6 @@ def test_service_dialog_saving_elements_when_switching_elements():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Test service dialog saving elements when switching elements
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_quota_units():
-    """
-    Steps described here:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1334318
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: low
-        initialEstimate: 1/4h
     """
     pass
 
@@ -25675,24 +25027,6 @@ def test_ssa_vm_files():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_restrict_domain_crud():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1365493
-    When you create a role that can only view automate domains, it can
-    view automate domains, it cannot manipulate the domains themselves,
-    but can CRUD on namespaces, classes, instances ....
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(3)
 def test_vm_migrate_should_create_notifications_when_migrations_fail():
@@ -26067,29 +25401,6 @@ def test_osp_vmware67_test_vm_migration_from_iscsi_storage_in_vmware_to_iscsi_on
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_custom_button_visibility():
-    """
-    This test is required to test the visibility option in the customize
-    button.
-    Steps
-    1)Create Button Group
-    2)Create a Button for the button group
-    3)Add the Button group to a page
-    4)Make write a positive visibility expression
-    5)If button is visible and clickable then pass else fail
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(3)
 def test_saml_verify_multiple_appliances_can_be_added_to_the_same_realm():
@@ -26103,23 +25414,6 @@ def test_saml_verify_multiple_appliances_can_be_added_to_the_same_realm():
         caseimportance: medium
         initialEstimate: 1/2h
         title: saml: Verify multiple appliances can be added to the same REALM.
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_embedded_method():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1523379
-    For a "new" method when adding Embedded Methods the UI hangs in the
-    tree view when the method is selected
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -26177,22 +25471,6 @@ def test_search_field_at_the_top_of_a_dynamic_drop_down_dialog_element_should_di
         initialEstimate: 1/4h
         startsin: 5.9
         title: search field at the top of a dynamic drop-down dialog element should display
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_git_verify_ssl():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1470738
-
-    Polarion:
-        assignee: dmisharo
-        casecomponent: Automate
-        caseimportance: low
-        initialEstimate: 1/12h
-        startsin: 5.7
     """
     pass
 
