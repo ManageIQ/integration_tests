@@ -6,7 +6,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.fixtures.provider import rhel7_minimal
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE_PER_VERSION
+from cfme.markers.env_markers.provider import ONE_PER_VERSION, ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError, wait_for
@@ -19,7 +19,7 @@ pytestmark = [
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
-        selector=ONE_PER_VERSION,
+        selector=ONE_PER_TYPE,
         fixture_name='second_provider',
         required_flags=['v2v']
     )

@@ -8,7 +8,7 @@ from cfme.exceptions import ItemNotFound
 from cfme.fixtures.provider import small_template
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE_PER_VERSION
+from cfme.markers.env_markers.provider import ONE_PER_VERSION, ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.tests.services.test_service_rbac import new_user, new_group, new_role
 from cfme.utils.log import logger
@@ -24,7 +24,7 @@ pytestmark = [
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
-        selector=ONE_PER_VERSION,
+        selector=ONE_PER_TYPE,
         fixture_name='second_provider',
         required_flags=['v2v']
     )
@@ -443,3 +443,40 @@ def test_edit_mapping_fields(appliance, v2v_providers, edited_form_data,
                 mapping_list.get_map_source_networks(mapping.name)[1])
     soft_assert(edited_form_data['network'].values()[0]['mappings'][0]['target'][0].format() in
                 mapping_list.get_map_target_networks(mapping.name)[1])
+
+
+def test_conversion_host_tags(appliance, v2v_providers):
+    """Tests following cases:
+
+    1)Test Attribute in UI indicating host has/has not been configured as conversion host like Tags
+    2)Test converstion host tags
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: None
+        subcomponent: RHV
+        upstream: yes
+    """
+    tag1 = (appliance.collections.categories.instantiate(
+            display_name='V2V - Transformation Host *')
+            .collections.tags.instantiate(display_name='t'))
+
+    tag2 = (appliance.collections.categories.instantiate(
+            display_name='V2V - Transformation Method')
+            .collections.tags.instantiate(display_name='VDDK'))
+
+    # We just pick the first available host hence [0]
+    host = v2v_providers.rhv_provider.hosts.all()[0]
+    # Remove any prior tags
+    host.remove_tags(host.get_tags())
+
+    host.add_tag(tag1)
+    assert host.get_tags()[0].category.display_name in tag1.category.display_name
+    host.remove_tag(tag1)
+
+    host.add_tag(tag2)
+    assert host.get_tags()[0].category.display_name in tag2.category.display_name
+    host.remove_tag(tag2)
+
+    host.remove_tags(host.get_tags())
