@@ -198,7 +198,9 @@ def test_quota(appliance, provider, setup_provider, custom_prov_data, vm_name, a
     Polarion:
         assignee: ghubale
         casecomponent: Quota
+        caseimportance: medium
         initialEstimate: 1/6h
+        tags: quota
     """
     recursive_update(prov_data, custom_prov_data)
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
@@ -227,14 +229,12 @@ def test_user_quota_diff_groups(request, appliance, provider, setup_provider, ne
                                 prov_data, vm_name, template_name):
     """prerequisite: Provider should be added
 
-    steps:
-
-    1. Provision VM with more than assigned quota
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
         casecomponent: Quota
+        caseimportance: high
+        tags: quota
     """
     with new_user:
         recursive_update(prov_data, custom_prov_data)

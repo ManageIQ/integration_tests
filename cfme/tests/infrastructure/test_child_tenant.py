@@ -103,7 +103,7 @@ def new_user(appliance, new_group, new_credential):
 @pytest.mark.rhv3
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7385',
     unblock=lambda provider, appliance_version:
-    not provider.one_of(RHEVMProvider) or appliance_version < '5.9')])
+    not provider.one_of(RHEVMProvider))])
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
@@ -131,7 +131,9 @@ def test_child_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, set
     Polarion:
         assignee: ghubale
         casecomponent: Infra
+        caseimportance: medium
         initialEstimate: 1/6h
+        tags: quota
     """
     with new_user:
         recursive_update(prov_data, custom_prov_data)

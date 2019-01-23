@@ -43,10 +43,11 @@ def namespace(request, domain):
 def test_class_crud(namespace):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/30h
+        tags: automate
     """
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -68,10 +69,11 @@ def test_class_crud(namespace):
 def test_schema_crud(request, namespace):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/20h
+        tags: automate
     """
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -95,10 +97,11 @@ def test_schema_crud(request, namespace):
 def test_schema_duplicate_field_disallowed(request, domain):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/16h
+        tags: automate
     """
     ns = domain.namespaces.create(
         name=fauxfactory.gen_alpha(),
@@ -120,10 +123,11 @@ def test_schema_duplicate_field_disallowed(request, domain):
 def test_duplicate_class_disallowed(namespace):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseposneg: negative
         initialEstimate: 1/30h
+        tags: automate
     """
     name = fauxfactory.gen_alphanumeric()
     namespace.classes.create(name=name)
@@ -135,9 +139,10 @@ def test_duplicate_class_disallowed(namespace):
 def test_same_class_name_different_namespace(request, domain):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         initialEstimate: 1/16h
+        tags: automate
     """
     ns1 = domain.namespaces.create(
         name=fauxfactory.gen_alpha(),
@@ -172,9 +177,10 @@ def test_same_class_name_different_namespace(request, domain):
 def test_class_display_name_unset_from_ui(request, namespace):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         initialEstimate: 1/30h
+        tags: automate
     """
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),

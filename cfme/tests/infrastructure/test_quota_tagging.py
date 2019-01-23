@@ -172,10 +172,13 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider, setup_p
                                            set_entity_quota_tag, custom_prov_data,
                                            vm_name, template_name, prov_data):
     """
+
     Polarion:
         assignee: ghubale
         casecomponent: Quota
+        caseimportance: medium
         initialEstimate: 1/6h
+        tags: quota
     """
     recursive_update(prov_data, custom_prov_data)
     do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
@@ -213,7 +216,9 @@ def test_quota_tagging_infra_via_services(request, appliance, provider, setup_pr
     Polarion:
         assignee: ghubale
         casecomponent: Quota
+        caseimportance: medium
         initialEstimate: 1/6h
+        tags: quota
     """
 
     prov_data.update(custom_prov_data)
@@ -281,15 +286,16 @@ def test_quota_vm_reconfigure(
 ):
     """Tests quota with vm reconfigure
 
-    Steps:
-        1. Assign Quota to group and user individually
-        2. Reconfigure the VM above the assigned Quota
-        3. Check whether VM  reconfiguration 'Denied' with Exceeded Quota or not
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
         casecomponent: Quota
+        caseimportance: high
+        tags: quota
+        testSteps:
+            1. Assign Quota to group and user individually
+            2. Reconfigure the VM above the assigned Quota
+            3. Check whether VM  reconfiguration 'Denied' with Exceeded Quota or not
     """
     original_config = small_vm.configuration.copy()
     new_config = small_vm.configuration.copy()
@@ -329,21 +335,21 @@ def test_quota_vm_reconfigure(
 )
 def test_quota_infra(request, appliance, provider, setup_provider, admin_email, entities,
                      custom_prov_data, prov_data, catalog_item, context, vm_name, template_name):
-
     """This test case verifies the quota assigned by automation method for user and group
        is working correctly for the infra providers.
-
-    Steps:
-        1. Navigate to Automation > Automate > Explorer
-        2. Add quota automation methods to domain
-        3. Change 'quota_source_type' to 'user' or 'group'
-        4. Test quota by provisioning VMs over quota limit via UI or SSUI for user and group
-        5. Check whether quota is exceeded or not
 
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
         casecomponent: Quota
+        caseimportance: medium
+        tags: quota
+        testSteps:
+            1. Navigate to Automation > Automate > Explorer
+            2. Add quota automation methods to domain
+            3. Change 'quota_source_type' to 'user' or 'group'
+            4. Test quota by provisioning VMs over quota limit via UI or SSUI for user and group
+            5. Check whether quota is exceeded or not
     """
     prov_data.update(custom_prov_data)
     with appliance.context.use(context):
@@ -378,23 +384,23 @@ def test_quota_infra(request, appliance, provider, setup_provider, admin_email, 
 def test_quota_catalog_bundle_infra(request, appliance, provider, setup_provider, admin_email,
                                     entities, custom_prov_data, prov_data, catalog_bundle, context,
                                     vm_name, template_name):
-
     """This test case verifies the quota assigned by automation method for user and group
        is working correctly for the infra providers by ordering catalog bundle.
-
-    Steps:
-        1. Navigate to Automation > Automate > Explorer
-        2. Add quota automation methods to domain
-        3. Change 'quota_source_type' to 'user' or 'group'
-        4. Create one or more catalogs to test quota by provisioning VMs over quota limit via UI or
-           SSUI for user and group
-        5. Add more than one catalog to catalog bundle and order catalog bundle
-        6. Check whether quota is exceeded or not
 
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
         casecomponent: Quota
+        caseimportance: high
+        tags: quota
+        testSteps:
+            1. Navigate to Automation > Automate > Explorer
+            2. Add quota automation methods to domain
+            3. Change 'quota_source_type' to 'user' or 'group'
+            4. Create one or more catalogs to test quota by provisioning VMs over quota limit via UI
+               or SSUI for user and group
+            5. Add more than one catalog to catalog bundle and order catalog bundle
+            6. Check whether quota is exceeded or not
     """
     prov_data.update(custom_prov_data)
     with appliance.context.use(context):

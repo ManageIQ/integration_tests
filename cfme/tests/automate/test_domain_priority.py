@@ -98,31 +98,29 @@ def test_priority(
         original_method_write_data, copy_method_write_data, domain_collection):
     """This test checks whether method overriding works across domains with the aspect of priority.
 
-    Prerequisities:
-        * Pick a random file name.
-
-    Steps:
-        * If the picked file name exists on the appliance, delete it
-        * Create two domains (one for the original method and one for copied method).
-        * Create a method in ``System/Request`` (in original domain) containing the method code as
-            in this testing module, with the file in the method being the file picked and you pick
-            the contents you want to write to the file.
-        * Set the domain order so the original domain is first.
-        * Run the simulation on the ``Request/<method_name>`` with executing.
-        * The file on appliance should contain the data as you selected.
-        * Copy the method to the second (copy) domain.
-        * Change the copied method so it writes different data.
-        * Set the domain order so the copy domain is first.
-        * Run the same simulation again.
-        * Check the file contents, it should be the same as the content you entered last.
-        * Then pick the domain order so the original domain is first.
-        * Run the same simulation again.
-        * The contents of the file should be the same as in the first case.
-
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
+        caseimportance: medium
         initialEstimate: 1/4h
+        tags: automate
+        testSteps:
+            1.If the picked file name exists on the appliance, delete it
+            2.Create two domains (one for the original method and one for copied method).
+            3.Create a method in ``System/Request`` (in original domain) containing the method code
+              as in this testing module, with the file in the method being the file picked and you
+              pick the contents you want to write to the file.
+            4.Set the domain order so the original domain is first.
+            5.Run the simulation on the ``Request/<method_name>`` with executing.
+            6.The file on appliance should contain the data as you selected.
+            7.Copy the method to the second (copy) domain.
+            8.Change the copied method so it writes different data.
+            9.Set the domain order so the copy domain is first.
+            10.Run the same simulation again.
+            11.Check the file contents, it should be the same as the content you entered last.
+            12.Then pick the domain order so the original domain is first.
+            13.Run the same simulation again.
+            14.The contents of the file should be the same as in the first case.
     """
     ssh_client = appliance.ssh_client
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))

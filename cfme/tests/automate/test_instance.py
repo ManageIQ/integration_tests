@@ -44,10 +44,11 @@ def klass(request, namespace):
 def test_instance_crud(klass):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/16h
+        tags: automate
     """
     instance = klass.instances.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -68,10 +69,12 @@ def test_instance_crud(klass):
 def test_duplicate_instance_disallowed(request, klass):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
+        caseimportance: high
         caseposneg: negative
         initialEstimate: 1/60h
+        tags: automate
     """
     name = fauxfactory.gen_alphanumeric()
     klass.instances.create(name=name)
@@ -79,15 +82,16 @@ def test_duplicate_instance_disallowed(request, klass):
         klass.instances.create(name=name)
 
 
-@pytest.mark.meta(blockers=[1148541])
 @pytest.mark.tier(3)
 @pytest.mark.polarion('RHCF3-20872')
 def test_instance_display_name_unset_from_ui(request, klass):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
+        caseimportance: high
         initialEstimate: 1/30h
+        tags: automate
     """
     instance = klass.instances.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -103,14 +107,15 @@ def test_instance_display_name_unset_from_ui(request, klass):
 @pytest.mark.tier(1)
 def test_automate_instance_missing(domain, klass, namespace, appliance):
     """If an instance called in class does not exist, a .missing instance is processed if it exists.
-
     A _missing_instance attribute (which contains the name of the instance that was supposed to be
     called) is then set on $evm.object so it then can be used eg. to resolve methods dynamically.
 
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
+        caseimportance: high
         initialEstimate: 1/10h
+        tags: automate
     """
     catch_string = fauxfactory.gen_alphanumeric()
     method = klass.methods.create(

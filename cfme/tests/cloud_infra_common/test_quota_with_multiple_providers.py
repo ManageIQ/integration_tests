@@ -22,16 +22,20 @@ pytestmark = [
 def test_show_quota_used_on_tenant_screen(request, appliance, v2v_providers):
     """Test show quota used on tenant quota screen even when no quotas are set.
 
-    Steps:
-        1. Navigate to provider's 'Details' page.
-        2. Fetch the information of 'number of VMs'.
-        3. Navigate to 'Details' page of 'My Company' tenant.
-        4. Go to tenant quota table.
-        5. Check whether number of VMs are equal to number of VMs in 'in use' column.
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
+        caseimportance: low
+        caseposneg: positive
+        casecomponent: Infra
+        tags: quota
+        testSteps:
+            1. Add two infra providers
+            2. Navigate to provider's 'Details' page.
+            3. Fetch the information of 'number of VMs'.
+            4. Navigate to 'Details' page of 'My Company' tenant.
+            5. Go to tenant quota table.
+            6. Check whether number of VMs are equal to number of VMs in 'in use' column.
     """
     v2v_providers.vmware_provider.refresh_provider_relationships
     v2v_providers.rhv_provider.refresh_provider_relationships

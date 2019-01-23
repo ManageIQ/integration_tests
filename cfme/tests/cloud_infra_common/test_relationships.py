@@ -154,6 +154,7 @@ def test_host_relationships(appliance, provider, setup_provider, host, relations
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
+        tags: relationship
     """
     host_view = navigate_to(host, "Details")
     if host_view.entities.summary("Relationships").get_text_of(relationship) == "0":
@@ -179,6 +180,7 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: relationship
     """
     provider_view = navigate_to(provider, "Details")  # resetter selects summary view
     if provider_view.entities.summary("Relationships").get_text_of(relationship) == "0":
@@ -199,6 +201,7 @@ def test_cloud_provider_relationships(appliance, provider, setup_provider, relat
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: relationship
     """
     # Version dependent strings
     relationship = _fix_item(appliance, relationship)
@@ -301,7 +304,9 @@ def test_provider_refresh_relationship(provider, setup_provider):
     Polarion:
         assignee: ghubale
         casecomponent: Infra
+        caseimportance: high
         initialEstimate: 1/8h
+        tags: relationship
     """
     provider.refresh_provider_relationships(method='ui')
     wait_for_relationship_refresh(provider)
@@ -319,6 +324,7 @@ def test_host_refresh_relationships(provider, setup_provider):
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/8h
+        tags: relationship
         testSteps:
             1. Go to a host summary page in cfme
             2. From configuration -> select "Refresh Relationships and Power State"
@@ -340,5 +346,27 @@ def test_inventory_refresh_westindia_azure():
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_change_network_security_groups_per_page_items():
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/12h
+        tags: relationship
+        testSteps:
+            1.Open Azure provider details view.
+            2.Open Azure Network Manager
+            3.Select Network Security Groups
+            4.Change items per page
+
+    Bugzilla:
+        1524443
     """
     pass

@@ -286,3 +286,33 @@ def test_restricted_catalog_items_select_for_catalog_bundle(appliance, request, 
         soft_assert(any(
             option.text == catalog_item.name for option in available_options), (
             'Restricted catalog item is not visible while bundle creation'))
+
+
+@pytest.mark.manual
+@test_requirements.service
+@pytest.mark.tier(1)
+def test_catalog_all_page_after_deleting_selected_template():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/12h
+        caseimportance: low
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: Services
+        tags: service
+        testSteps:
+            1. Add provider (VMware or scvmm)
+            2. Create catalog item (Remember template you selected.)
+            3. Order Service catalog item
+            4. Go to details page of provider and click on templates
+            5. Either delete this template while provisioning process in progress or after
+               completing process.
+            6. Go to service > catalogs > service catalogs or catalog items
+            7. Click on catalog item you created or ordered
+
+    Bugzilla:
+        1652858
+    """
+    pass

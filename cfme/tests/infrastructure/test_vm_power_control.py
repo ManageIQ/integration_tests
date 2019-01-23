@@ -174,12 +174,12 @@ class TestControlOnQuadicons(object):
     def test_power_off(self, appliance, testing_vm, ensure_vm_running, soft_assert):
         """Tests power off
 
-        Metadata:
-            test_flag: power_control, provision
-
         Polarion:
             assignee: ghubale
             initialEstimate: 1/6h
+            casecomponent: Infra
+            caseimportance: high
+            tags: power
         """
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=720)
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=False)
@@ -197,12 +197,12 @@ class TestControlOnQuadicons(object):
     def test_power_on_cancel(self, testing_vm, ensure_vm_stopped, soft_assert):
         """Tests power on cancel
 
-        Metadata:
-            test_flag: power_control, provision
-
         Polarion:
             assignee: ghubale
             initialEstimate: 1/4h
+            casecomponent: Infra
+            caseimportance: high
+            tags: power
         """
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=720)
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=True)
@@ -223,6 +223,9 @@ class TestControlOnQuadicons(object):
         Polarion:
             assignee: ghubale
             initialEstimate: 1/6h
+            casecomponent: Infra
+            caseimportance: high
+            tags: power
         """
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=720)
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False)
@@ -249,6 +252,9 @@ class TestVmDetailsPowerControlPerProvider(object):
         Polarion:
             assignee: ghubale
             initialEstimate: 1/6h
+            casecomponent: Infra
+            caseimportance: high
+            tags: power
         """
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
@@ -280,6 +286,9 @@ class TestVmDetailsPowerControlPerProvider(object):
         Polarion:
             assignee: ghubale
             initialEstimate: 1/6h
+            casecomponent: Infra
+            caseimportance: high
+            tags: power
         """
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
@@ -298,12 +307,12 @@ class TestVmDetailsPowerControlPerProvider(object):
     def test_suspend(self, appliance, testing_vm, ensure_vm_running, soft_assert):
         """Tests suspend
 
-        Metadata:
-            test_flag: power_control, provision
-
         Polarion:
             assignee: ghubale
             initialEstimate: 1/6h
+            casecomponent: Infra
+            caseimportance: high
+            tags: power
         """
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
@@ -336,12 +345,13 @@ class TestVmDetailsPowerControlPerProvider(object):
             self, appliance, testing_vm, ensure_vm_suspended, soft_assert):
         """Tests start from suspend
 
-        Metadata:
-            test_flag: power_control, provision
-
         Polarion:
             assignee: ghubale
             initialEstimate: 1/6h
+            casecomponent: Infra
+            caseimportance: high
+            tags: power
+
         """
         try:
             testing_vm.provider.refresh_provider_relationships()
@@ -446,9 +456,7 @@ def test_no_power_controls_on_archived_vm(appliance, testing_vm, archived_vm, so
 
 @pytest.mark.rhv3
 @pytest.mark.meta(blockers=[BZ(1520489, forced_streams=['5.9'],
-                               unblock=lambda provider: not provider.one_of(SCVMMProvider)),
-                            BZ(1659340, forced_streams=['5.9', '5.10'],
-                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+                               unblock=lambda provider: not provider.one_of(SCVMMProvider))])
 def test_archived_vm_status(testing_vm, archived_vm):
     """Tests archived vm status
 
@@ -457,7 +465,10 @@ def test_archived_vm_status(testing_vm, archived_vm):
 
     Polarion:
         assignee: ghubale
-        initialEstimate: 1/10h
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/8h
+        tags: power
     """
     vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
     assert (vm_state == 'archived')
@@ -467,12 +478,11 @@ def test_archived_vm_status(testing_vm, archived_vm):
 def test_orphaned_vm_status(testing_vm, orphaned_vm):
     """Tests orphaned vm status
 
-    Metadata:
-        test_flag: inventory
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/10h
+        casecomponent: Infra
+        tags: power
     """
     vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
     assert (vm_state == 'orphaned')
@@ -522,6 +532,8 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
     Polarion:
         assignee: ghubale
         initialEstimate: 1/6h
+        casecomponent: Infra
+        tags: power
     """
     wait_for_vm_tools(testing_vm_tools)
     view = navigate_to(testing_vm_tools, "Details")
@@ -546,12 +558,12 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
 def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
 
-    Metadata:
-        test_flag: power_control
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/6h
+        caseimportance: high
+        casecomponent: Infra
+        tags: power
     """
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
