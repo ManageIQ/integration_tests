@@ -8,7 +8,7 @@ from cfme.exceptions import ItemNotFound
 from cfme.fixtures.provider import small_template
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE_PER_VERSION
+from cfme.markers.env_markers.provider import ONE_PER_VERSION, ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.tests.services.test_service_rbac import new_user, new_group, new_role
 from cfme.utils.log import logger
@@ -24,7 +24,7 @@ pytestmark = [
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
-        selector=ONE_PER_VERSION,
+        selector=ONE_PER_TYPE,
         fixture_name='second_provider',
         required_flags=['v2v']
     )
@@ -38,7 +38,7 @@ def test_infra_mapping_ui_assertions(appliance, v2v_providers, form_data_single_
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -91,7 +91,7 @@ def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -181,7 +181,7 @@ def test_v2v_ui_no_providers(appliance, v2v_providers, soft_assert):
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -210,7 +210,7 @@ def test_v2v_mapping_with_special_chars(appliance, v2v_providers, form_data_sing
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -237,7 +237,7 @@ def test_v2v_ui_set2(request, appliance, v2v_providers, form_data_single_datasto
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -317,8 +317,8 @@ def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, con
         form_data_multiple_vm_obj_single_datastore, soft_assert):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
     """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     migration_plan_collection = appliance.collections.v2v_plans
@@ -367,7 +367,7 @@ def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, con
         view.switch_to("In Progress Plans")
         wait_for(func=view.progress_card.is_plan_started, func_args=[plan.name],
             message="migration plan is starting, be patient please", delay=5, num_sec=150,
-            handle_exception=True)
+            handle_exception=True, fail_cond=False)
         wait_for(func=view.plan_in_progress, func_args=[plan.name], delay=5, num_sec=600,
             handle_exception=True)
 
@@ -443,3 +443,40 @@ def test_edit_mapping_fields(appliance, v2v_providers, edited_form_data,
                 mapping_list.get_map_source_networks(mapping.name)[1])
     soft_assert(edited_form_data['network'].values()[0]['mappings'][0]['target'][0].format() in
                 mapping_list.get_map_target_networks(mapping.name)[1])
+
+
+def test_conversion_host_tags(appliance, v2v_providers):
+    """Tests following cases:
+
+    1)Test Attribute in UI indicating host has/has not been configured as conversion host like Tags
+    2)Test converstion host tags
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: V2V
+        initialEstimate: 1/4h
+        subcomponent: RHV
+        upstream: yes
+    """
+    tag1 = (appliance.collections.categories.instantiate(
+            display_name='V2V - Transformation Host *')
+            .collections.tags.instantiate(display_name='t'))
+
+    tag2 = (appliance.collections.categories.instantiate(
+            display_name='V2V - Transformation Method')
+            .collections.tags.instantiate(display_name='VDDK'))
+
+    # We just pick the first available host hence [0]
+    host = v2v_providers.rhv_provider.hosts.all()[0]
+    # Remove any prior tags
+    host.remove_tags(host.get_tags())
+
+    host.add_tag(tag1)
+    assert host.get_tags()[0].category.display_name in tag1.category.display_name
+    host.remove_tag(tag1)
+
+    host.add_tag(tag2)
+    assert host.get_tags()[0].category.display_name in tag2.category.display_name
+    host.remove_tag(tag2)
+
+    host.remove_tags(host.get_tags())

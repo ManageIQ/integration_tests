@@ -123,6 +123,7 @@ def conversion_tags(request, appliance, host_creds):
     tag2 = appliance.collections.categories.instantiate(
         display_name='V2V - Transformation Method').collections.tags.instantiate(
         display_name=transformation_method)
+    appliance.ssh_client.run_rails_command("\'ConversionHost.delete_all\'")
     for host in host_creds:
         # if _tag_cleanup() returns True, means all tags were removed
         if _tag_cleanup(host, tag1, tag2):
