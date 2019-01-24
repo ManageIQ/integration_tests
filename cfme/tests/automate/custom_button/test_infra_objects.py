@@ -497,9 +497,8 @@ def test_custom_button_events(request, dialog, setup_obj, button_group, btn_dial
         request="InspectMe",
     )
     request.addfinalizer(button.delete_if_exists)
-
+    initial_count = len(setup_obj.get_button_events())
     view = navigate_to(setup_obj, "Details")
-    initial_count = setup_obj.cb_event_count
     custom_button_group = Dropdown(view, group.hover)
     custom_button_group.item_select(button.text)
 
@@ -508,4 +507,5 @@ def test_custom_button_events(request, dialog, setup_obj, button_group, btn_dial
         dialog_view.submit.click()
 
     view.browser.refresh()
-    assert setup_obj.cb_event_count == (initial_count + 1)
+    current_count = len(setup_obj.get_button_events())
+    assert current_count == (initial_count + 1)

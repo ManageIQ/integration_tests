@@ -669,26 +669,13 @@ class CustomButtonEventsView(View):
 
     @property
     def is_displayed(self):
-        expected_title = "{} (All Custom Button Events)".format(self.context["object"].name)
         return (
-            self.title.text == expected_title and self.breadcrumb.active_location == expected_title
+            "Custom Button Events" in self.title.text
+            and self.context["object"].name in self.title.text
         )
 
 
 class CustomButtonEventsMixin(object):
-    @property
-    def cb_event_count(self):
-        view = navigate_to(self, "Details")
-        ent = view.entities
-        table = ent.summary("Relationships") if hasattr(ent, "summary") else ent.relationships
-        # Some objects have filed text `Custom button events` in relationship table
-        cb_text = (
-            "Custom Button Events"
-            if "Custom Button Events" in table.fields
-            else "Custom button events"
-        )
-        return int(table.get_text_of(cb_text))
-
     def get_button_events(self):
         try:
             view = navigate_to(self, "ButtonEvents")
@@ -706,7 +693,10 @@ class CustomButtonEvents(CFMENavigateStep):
     def step(self):
         ent = self.prerequisite_view.entities
         table = ent.summary("Relationships") if hasattr(ent, "summary") else ent.relationships
-        # Some objects have filed text `Custom button events` in relationship table
+
+        # ToDo: remove this workaround as BZ-1668691 fix.
+        #  This is temporary workaround to avoid inconsistency in UI.
+
         cb_text = (
             "Custom Button Events"
             if "Custom Button Events" in table.fields
@@ -715,4 +705,4 @@ class CustomButtonEvents(CFMENavigateStep):
         if int(table.get_text_of(cb_text)) > 0:
             table.click_at(cb_text)
         else:
-            raise DestinationNotFound("Custom button event count less than 0")
+            raise DestinationNotFound("Custom button event count 0")
