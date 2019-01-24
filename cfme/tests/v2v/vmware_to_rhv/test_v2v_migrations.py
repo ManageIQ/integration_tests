@@ -122,7 +122,11 @@ def test_single_network_single_vm_migration(
     )
     assert migration_plan.is_plan_started(migration_plan.name)
     assert migration_plan.is_plan_in_progress(migration_plan.name)
-    assert migration_plan.is_plan_request_shows_vm(migration_plan.name)
+    request_details_list = migration_plan.migration_plan_request(migration_plan.name)
+    vms = request_details_list.read()
+    assert (len(vms) > 0 and
+            request_details_list.is_successful(vms[0]) and
+            not request_details_list.is_errored(vms[0]))
     # validate MAC address matches between source and target VMs
     src_vm = form_data_vm_obj_single_network.vm_list.pop()
     migrated_vm = get_migrated_vm_obj(src_vm, provider)
@@ -164,7 +168,12 @@ def test_dual_datastore_dual_vm_migration(
     )
     assert migration_plan.is_plan_started(migration_plan.name)
     assert migration_plan.is_plan_in_progress(migration_plan.name)
-    assert migration_plan.is_plan_request_shows_vm(migration_plan.name)
+    request_details_list = migration_plan.migration_plan_request(migration_plan.name)
+    vms = request_details_list.read()
+    assert (len(vms) > 0 and
+            request_details_list.is_successful(vms[0]) and
+            not request_details_list.is_errored(vms[0]))
+
     src_vms_list = form_data_dual_vm_obj_dual_datastore.vm_list
     # validate MAC address matches between source and target VMs
     for src_vm in src_vms_list:
@@ -285,8 +294,12 @@ def test_migrations_different_os_templates(
     )
     assert migration_plan.is_plan_started(migration_plan.name)
     assert migration_plan.is_plan_in_progress(migration_plan.name)
-    # assert migration_plan.is_migration_complete(migration_plan.name)
-    assert migration_plan.is_plan_request_shows_vm(migration_plan.name)
+    request_details_list = migration_plan.migration_plan_request(migration_plan.name)
+    vms = request_details_list.read()
+    assert (len(vms) > 0 and
+            request_details_list.is_successful(vms[0]) and
+            not request_details_list.is_errored(vms[0]))
+
     src_vms_list = form_data_multiple_vm_obj_single_datastore.vm_list
     # validate MAC address matches between source and target VMs
     for src_vm in src_vms_list:

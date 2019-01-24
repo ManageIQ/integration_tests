@@ -105,7 +105,7 @@ def test_single_vm_migration_power_state_tags_retirement(
 def test_multi_host_multi_vm_migration(
     request,
     appliance,
-    providers,
+    provider,
     host_creds,
     soft_assert,
     form_data_multiple_vm_obj_single_datastore,
@@ -138,26 +138,9 @@ def test_multi_host_multi_vm_migration(
     # as migration is started, try to track progress using migration plan request details page
 
     assert migration_plan.is_plan_started(migration_plan.name)
-    assert migration_plan.is_plan_request_shows_vm(migration_plan.name)
-    view = appliance.browser.create_view(navigator.get_class(migration_plan, "Details").VIEW)
-    view.wait_displayed()
-    request_details_list = view.migration_request_details_list
+    request_details_list = migration_plan.migration_plan_request(migration_plan.name)
     vms = request_details_list.read()
-    view.items_on_page.item_select("15")
-    # testing multi-host utilization
-
-    def _is_migration_started():
-        for vm in vms:
-            if request_details_list.get_message_text(vm) != "Migrating":
-                return False
-        return True
-
-    wait_for(
-        func=_is_migration_started,
-        message="migration is not started for all VMs, " "be patient please",
-        delay=5,
-        num_sec=600,
-    )
+    assert len(vms) > 0
 
     hosts_dict = {key.name: [] for key in host_creds}
     for vm in vms:
@@ -172,12 +155,7 @@ def test_multi_host_multi_vm_migration(
             len(hosts_dict[host]) > 0
         ), "Conversion Host: {} not being utilized for migration!".format(host)
 
-    wait_for(
-        func=view.plan_in_progress,
-        message="migration plan is in progress, be patient please",
-        delay=5,
-        num_sec=14400,
-    )
+    assert migration_plan.is_plan_in_progress(migration_plan.name)
 
     for vm in vms:
         soft_assert(

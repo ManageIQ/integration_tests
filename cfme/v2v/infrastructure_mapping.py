@@ -62,6 +62,7 @@ class InfraMappingForm(View):
     back_btn = Button("Back")
     next_btn = Button("Next")
     cancel_btn = Button("Cancel")
+    save = Button("Save")
 
     def after_fill(self, was_change):
         # Cancel button is the common button on all pages so

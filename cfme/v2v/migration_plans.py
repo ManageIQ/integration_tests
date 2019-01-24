@@ -450,13 +450,14 @@ class MigrationPlan(BaseEntity):
         return (name in view.migration_plans_completed_list.read() and
                 view.migration_plans_completed_list.is_plan_succeeded(name))
 
-    def is_plan_request_shows_vm(self, name):
+    def migration_plan_request(self, name):
         view = navigate_to(self, "In Progress")
         view.progress_card.select_plan(name)
         request_view = self.create_view(MigrationPlanRequestDetailsView)
         request_view.wait_displayed()
         request_details_list = request_view.migration_request_details_list
         vms = request_details_list.read()
+        view.items_on_page.item_select("15")
 
         def _is_migration_started():
             for vm in vms:
@@ -464,12 +465,16 @@ class MigrationPlan(BaseEntity):
                     return False
             return True
 
-        return (
-            len(vms) > 0
-            and _is_migration_started
-            and request_details_list.is_successful(vms[0])
-            and not request_details_list.is_errored(vms[0])
-        )
+        wait_for(func=_is_migration_started, message="migration is not started for all VMs, "
+                                                     "be patient please", delay=5, num_sec=600)
+        print(len(vms))
+        print("==length=")
+        print(_is_migration_started)
+        print("********_is_migration_started***")
+        print(request_details_list.is_successful(vms[0]))
+        print("%%%%%%%%%%")
+        print(request_details_list.is_errored(vms[0]))
+        return request_details_list
 
 
 @attr.s
