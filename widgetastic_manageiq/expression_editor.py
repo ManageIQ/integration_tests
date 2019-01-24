@@ -9,7 +9,7 @@ from functools import partial
 import six
 from selenium.common.exceptions import NoSuchElementException
 from widgetastic.utils import Version, VersionPick, WaitFillViewStrategy
-from widgetastic.widget import View
+from widgetastic.widget import Text, View
 from widgetastic_patternfly import BootstrapSelect as VanillaBootstrapSelect
 from widgetastic_patternfly import Button, Input
 
@@ -123,6 +123,8 @@ class ExpressionEditor(View, Pretty):
     })
     # fmt: on
     EXPRESSION_TEXT = "//a[contains(@id,'exp_')]"
+    expression_text_widget = Text(EXPRESSION_TEXT)
+    # TODO: do not refer to these buttons with CAPS
     COMMIT = Button(title="Commit expression element changes")
     DISCARD = Button(title="Discard expression element changes")
     REMOVE = Button(title="Remove this expression element")
@@ -153,6 +155,7 @@ class ExpressionEditor(View, Pretty):
     def __locator__(self):
         return self.ROOT
 
+    # TODO: update these methods to use the button's click method
     def click_undo(self):
         self.browser.click(self.UNDO)
 
@@ -196,7 +199,7 @@ class ExpressionEditor(View, Pretty):
     @property
     def expression_text(self):
         try:
-            return self.browser.text(self.EXPRESSION_TEXT, parent=self._expressions_root)
+            return self.expression_text_widget.text
         except NoSuchElementException:
             return "<new element>"
 
@@ -262,6 +265,13 @@ class ExpressionEditor(View, Pretty):
         prog = create_program(expression, self)
         before = self.expression_text.encode("utf-8").strip()
         prog()
+        wait_for(
+            lambda: self.expression_text != "<new element>" and self.expression_text != before,
+            handle_exception=True,
+            num_sec=10,
+            message="updated expression text to appear",
+            delay=1,
+        )
         after = self.expression_text.encode("utf-8").strip()
         return before != after
 

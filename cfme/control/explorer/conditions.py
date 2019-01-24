@@ -203,7 +203,8 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
         view.save_button.click()
         view = self.create_view(ConditionDetailsView, override=updates, wait="10s")
         view.flash.assert_success_message(
-        'Condition "{}" was saved'.format(updates.get("description", self.description)))
+            'Condition "{}" was saved'.format(updates.get("description", self.description))
+        )
 
     def delete(self, cancel=False):
         """Delete this Condition in UI.
