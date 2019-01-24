@@ -36,7 +36,7 @@ def v2v_downstream_enable(appliance):
 
 @pytest.fixture(scope="module")
 def v2v_providers(request, source_provider, provider, v2v_downstream_enable):
-    """ Fixture to setup providers """
+    """ Fixture to setup v2v providers """
     V2vProviders = namedtuple("V2vProviders", ["vmware_provider", "rhv_provider"])
     vmware_provider, rhv_provider = None, None
     for provider in [source_provider, provider]:

@@ -8,10 +8,8 @@ from cfme.fixtures.v2v import _form_data
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION, ONE_PER_TYPE
-from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.provider(
