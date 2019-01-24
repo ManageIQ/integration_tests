@@ -29,18 +29,19 @@ function setApplianceDescription(e) {
     var applianceId = parseInt(e.data('applianceid'));
     var defaultTitle = (title === undefined) ? "" : title;
     var newTitle = prompt("Please enter a new description for appliance #" + applianceId, defaultTitle);
-
-    $.ajax({
-        type: "POST",
-        url: "{% url 'set_appliance_description' %}",
-        data: JSON.stringify({appliance_id: applianceId, description: newTitle}),
-        dataType: 'json'
-    }).done(function(data){
-        alert("Description of the appliance " + applianceId + " set to '" + newTitle + "'.");
-        e.attr('title', newTitle);
-    }).fail(function(xhr, textStatus, errorThrown){
-        alert("Error during setting of the description of the appliance " + applianceId + ": '" + xhr.responseText + "'.");
-    })
+    if (newTitle) {
+        $.ajax({
+            type: "POST",
+            url: "{% url 'set_appliance_description' %}",
+            data: JSON.stringify({appliance_id: applianceId, description: newTitle}),
+            dataType: 'json'
+        }).done(function(data){
+            alert("Description of the appliance " + applianceId + " set to '" + newTitle + "'.");
+            e.attr('title', newTitle);
+        }).fail(function(xhr, textStatus, errorThrown){
+            alert("Error during setting of the description of the appliance " + applianceId + ": '" + xhr.responseText + "'.");
+        })
+    }
 }
 
 function replaceSelectContents(name, data, submit_handling) {
