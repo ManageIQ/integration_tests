@@ -108,6 +108,7 @@ cached-property==1.5.1
 cachetools==2.1.0
 certifi==2018.10.15
 cffi==1.11.5
+cfme-testcases==0.12
 chardet==3.0.4
 Click==7.0
 cliff==2.13.0
@@ -129,7 +130,7 @@ docker-py==1.10.6
 docker-pycreds==0.3.0
 docutils==0.14
 dogpile.cache==0.6.7
-dump2polarion==0.36
+dump2polarion==0.38
 entrypoints==0.2.3
 fauxfactory==3.0.2
 flake8==3.6.0
@@ -239,7 +240,7 @@ pyparsing==2.2.2
 pyperclip==1.7.0
 pytesseract==0.2.5
 pytest==3.4.1
-pytest-polarion-collect==0.11
+pytest-polarion-collect==0.12
 python-bugzilla==2.2.0
 python-cinderclient==4.1.0
 python-dateutil==2.7.5
@@ -270,7 +271,7 @@ requestsexceptions==1.4.0
 rfc3986==1.1.0
 riggerlib==3.1.5
 rsa==4.0
-ruamel.yaml==0.15.75
+ruamel.yaml==0.15.89
 s3transfer==0.1.13
 scp==0.12.1
 selenium==3.14.0
