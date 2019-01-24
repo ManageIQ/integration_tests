@@ -29,10 +29,11 @@ OBJECTCOLLECTIONS = [
 ]
 
 
-def download(appliance, objecttype, extension):
+def download(objecttype, extension):
     view = navigate_to(objecttype, 'All')
-    if appliance.version >= '5.10' and extension == 'pdf':
+    if view.browser.product_version >= '5.10' and extension == 'pdf':
         view.toolbar.download.item_select("Print or export as PDF")
+        handle_extra_tabs(view)
     else:
         view.toolbar.download.item_select("Download as {}".format(extensions_mapping[extension]))
 
@@ -40,6 +41,17 @@ def download(appliance, objecttype, extension):
 def download_summary(spec_object):
     view = navigate_to(spec_object, 'Details')
     view.toolbar.download.click()
+    if view.browser.product_version >= '5.10':
+        handle_extra_tabs(view)
+
+
+def handle_extra_tabs(view):
+    tabs = view.browser.selenium.window_handles
+    while len(tabs) > 1:
+        view.browser.selenium.switch_to_window(tabs[-1])
+        view.browser.selenium.close()
+        tabs = view.browser.selenium.window_handles
+    view.browser.selenium.switch_to_window(tabs[0])
 
 
 @pytest.mark.parametrize("filetype", extensions_mapping.keys())
@@ -56,9 +68,11 @@ def test_download_lists_base(filetype, collection_type, appliance):
     Polarion:
         assignee: mmojzis
         initialEstimate: 1/10h
+        casecomponent: WebUI
+        caseimportance: medium
     """
     collection = getattr(appliance.collections, collection_type)
-    download(appliance, collection, filetype)
+    download(collection, filetype)
 
 
 @pytest.mark.uncollectif(
@@ -74,6 +88,8 @@ def test_download_pdf_summary(appliance, collection_type, provider):
     Polarion:
         assignee: mmojzis
         initialEstimate: 1/10h
+        casecomponent: WebUI
+        caseimportance: medium
     """
     collection = getattr(appliance.collections, collection_type)
     all_entities = collection.all()
@@ -92,7 +108,7 @@ def test_pdf_summary_infra_provider():
 
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/8h
         testSteps:
