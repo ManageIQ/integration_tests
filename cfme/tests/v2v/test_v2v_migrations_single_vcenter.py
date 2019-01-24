@@ -47,7 +47,7 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/2h
         subcomponent: RHV
         upstream: yes
     """
@@ -121,7 +121,7 @@ def test_multi_host_multi_vm_migration(request, appliance, v2v_providers, host_c
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1h
         subcomponent: RHV
         upstream: yes
     """
@@ -191,7 +191,7 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/2h
         subcomponent: RHV
         upstream: yes
     """
@@ -239,8 +239,8 @@ def test_migration_long_name(request, appliance, v2v_providers, host_creds, conv
     """Test to check VM name with 64 character should work
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1h
     """
     source_datastores_list = v2v_providers.vmware_provider.data.get("datastores", [])
     source_datastore = [d.name for d in source_datastores_list if d.type == "nfs"][0]

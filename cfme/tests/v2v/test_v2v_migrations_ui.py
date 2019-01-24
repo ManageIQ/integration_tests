@@ -38,7 +38,7 @@ def test_infra_mapping_ui_assertions(appliance, v2v_providers, form_data_single_
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -91,7 +91,7 @@ def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -181,7 +181,7 @@ def test_v2v_ui_no_providers(appliance, v2v_providers, soft_assert):
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -210,7 +210,7 @@ def test_v2v_mapping_with_special_chars(appliance, v2v_providers, form_data_sing
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -237,7 +237,7 @@ def test_v2v_ui_set2(request, appliance, v2v_providers, form_data_single_datasto
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -317,8 +317,8 @@ def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, con
         form_data_multiple_vm_obj_single_datastore, soft_assert):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
     """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     migration_plan_collection = appliance.collections.v2v_plans
@@ -454,7 +454,7 @@ def test_conversion_host_tags(appliance, v2v_providers):
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
