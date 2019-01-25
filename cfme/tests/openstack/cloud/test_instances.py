@@ -107,8 +107,8 @@ def test_create_instance(new_instance, soft_assert):
     """Creates an instance and verifies it appears on UI
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view = navigate_to(new_instance, 'Details')
     prov_data = new_instance.provider.data['provisioning']
@@ -135,8 +135,8 @@ def test_create_instance(new_instance, soft_assert):
 def test_stop_instance(new_instance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.STOP)
@@ -150,8 +150,8 @@ def test_stop_instance(new_instance):
 def test_suspend_instance(new_instance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SUSPEND)
@@ -165,8 +165,8 @@ def test_suspend_instance(new_instance):
 def test_pause_instance(new_instance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.PAUSE)
@@ -180,8 +180,8 @@ def test_pause_instance(new_instance):
 def test_shelve_instance(new_instance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SHELVE)
@@ -199,8 +199,8 @@ def test_shelve_instance(new_instance):
 def test_shelve_offload_instance(new_instance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SHELVE)
@@ -221,8 +221,8 @@ def test_shelve_offload_instance(new_instance):
 def test_start_instance(new_instance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     new_instance.mgmt.ensure_state(VmState.STOPPED)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_OFF)
@@ -238,8 +238,8 @@ def test_start_instance(new_instance):
 def test_soft_reboot_instance(new_instance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SOFT_REBOOT)
@@ -255,8 +255,8 @@ def test_soft_reboot_instance(new_instance):
 def test_hard_reboot_instance(new_instance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.HARD_REBOOT)
@@ -272,8 +272,8 @@ def test_hard_reboot_instance(new_instance):
 def test_delete_instance(new_instance, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.TERMINATE)
@@ -297,8 +297,8 @@ def test_delete_instance(new_instance, provider):
 def test_instance_operating_system_linux(new_instance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view = navigate_to(new_instance, 'Details')
     os = view.entities.summary('Properties').get_text_of("Operating System")
@@ -310,8 +310,8 @@ def test_instance_operating_system_linux(new_instance):
 def test_instance_attach_volume(volume, new_instance, appliance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     initial_volume_count = new_instance.volume_count
     new_instance.attach_volume(volume.name)
@@ -330,8 +330,8 @@ def test_instance_attach_volume(volume, new_instance, appliance):
 def test_instance_attach_detach_volume_with_type(volume_with_type, new_instance, appliance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     initial_volume_count = new_instance.volume_count
     new_instance.attach_volume(volume_with_type.name)

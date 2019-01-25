@@ -43,8 +43,8 @@ def test_scale_provider_down(provider, host, has_mistral_service):
         test_flag: openstack_scale
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     host.toggle_maintenance_mode()
     host_uuid = host.name.split()[0]  # cut off deployment role part from host's name
@@ -83,8 +83,8 @@ def test_delete_host(appliance, host, provider, has_mistral_service):
         test_flag: openstack_scale
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     def is_host_disappeared():
         return host.name not in [h.uuid for h in provider.mgmt.iapi.node.list()]
@@ -104,8 +104,8 @@ def test_register_host(provider, host, has_mistral_service):
         test_flag: openstack_scale
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     hosts_before = [h.uuid for h in provider.mgmt.iapi.node.list()]
     provider.register(provider.data['instackenv_file_path'])
@@ -133,8 +133,8 @@ def test_introspect_host(host, provider, has_mistral_service):
         test_flag: openstack_scale
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     host.run_introspection()
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).inspection_finished_at, delay=15,
@@ -156,8 +156,8 @@ def test_provide_host(host, provider, has_mistral_service):
         test_flag: openstack_scale
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     host.provide_node()
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).provision_state == 'available', delay=5,
@@ -176,8 +176,8 @@ def test_scale_provider_out(host, provider, has_mistral_service):
         test_flag: openstack_scale
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     # Host has to be given a profile role before the scale out
     params = [{'path': '/properties/capabilities', 'value': 'profile:compute,boot_option:local',

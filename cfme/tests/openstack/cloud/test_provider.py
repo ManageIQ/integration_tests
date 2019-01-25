@@ -22,8 +22,8 @@ CARDS = [("Flavors", "list_flavor"), ("Images", "list_templates"),
 def test_cloud_provider_cards(provider, card, api):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view = navigate_to(provider, 'Details')
     view.toolbar.view_selector.select('Dashboard View')
@@ -37,8 +37,8 @@ def test_cloud_provider_cards(provider, card, api):
 def test_dashboard_card_availability_zones(provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view = navigate_to(provider, 'Details')
     view.toolbar.view_selector.select('Dashboard View')
@@ -51,8 +51,8 @@ def test_dashboard_card_availability_zones(provider):
 def test_dashboard_card_tenants(provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     collection = provider.appliance.collections.cloud_tenants
     view = navigate_to(provider, 'Details')
@@ -67,8 +67,8 @@ def test_dashboard_card_tenants(provider):
 def test_dashboard_card_security_groups(provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view = navigate_to(provider, 'Details')
     sec_groups = view.entities.summary('Relationships').get_text_of('Security Groups')

@@ -102,6 +102,7 @@ def test_services_request_direct_url(appliance, generated_request):
     Polarion:
         assignee: nansari
         initialEstimate: 1/8h
+        casecomponent: Services
     """
     widgetastic = appliance.browser.widgetastic
     selenium = widgetastic.selenium
@@ -122,8 +123,9 @@ def test_copy_request(request, generated_request, vm_name, template_name):
     """Check if request gets properly copied.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nansari
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     new_vm_name = '{}-xx'.format(vm_name)
     modifications = {'catalog': {'vm_name': new_vm_name}}

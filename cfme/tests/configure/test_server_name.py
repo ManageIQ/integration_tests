@@ -12,7 +12,7 @@ def test_server_name(request, appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h
     """

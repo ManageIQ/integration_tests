@@ -49,8 +49,9 @@ def backup(appliance, provider):
 def test_storage_volume_backup_create(backup):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Cloud
     """
     assert backup.exists
     assert backup.size == STORAGE_SIZE
@@ -61,8 +62,9 @@ def test_storage_volume_backup_create(backup):
 def test_storage_volume_backup_edit_tag_from_detail(backup):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Cloud
     """
     # add tag with category Department and tag communication
     added_tag = backup.add_tag()
@@ -82,8 +84,9 @@ def test_storage_volume_backup_delete(backup):
     """ Volume backup deletion method not support by 5.8
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Cloud
     """
 
     backup.parent.delete(backup)

@@ -250,7 +250,7 @@ class TestCustomAttributesRESTAPI(object):
             assignee: pvala
             casecomponent: Rest
             caseimportance: medium
-            initialEstimate: None
+            initialEstimate: 1/4h
         """
         resource = get_resource[collection_name]()
         attributes = add_custom_attributes(request, resource)
@@ -377,7 +377,7 @@ class TestCustomAttributesRESTAPI(object):
             assignee: pvala
             casecomponent: Rest
             caseimportance: medium
-            initialEstimate: None
+            initialEstimate: 1/4h
         """
         resource = get_resource[collection_name]()
         orig_attribute, = add_custom_attributes(request, resource, num=1)

@@ -34,7 +34,7 @@ def test_single_vm_scheduled_migration(request, appliance, v2v_providers, host_c
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """

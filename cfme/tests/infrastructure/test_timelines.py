@@ -280,8 +280,9 @@ def test_infra_timeline_create_event(new_vm, soft_assert):
     Vm's cluster,  VM's host, VM's provider.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'create'
     vm_event = VMEvent(new_vm, event)
@@ -298,8 +299,9 @@ def test_infra_timeline_policy_event(new_vm, control_policy, soft_assert):
     profile, assign it to the VM and stopping it which triggers the policy.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: Events
     """
 
     event = 'policy'
@@ -315,8 +317,9 @@ def test_infra_timeline_stop_event(new_vm, soft_assert):
     Vm's cluster,  VM's host, VM's provider.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'stop'
     targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -331,8 +334,9 @@ def test_infra_timeline_start_event(new_vm, soft_assert):
     Vm's cluster,  VM's host, VM's provider.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'start'
     targets = (new_vm, new_vm.host, new_vm.cluster, new_vm.provider)
@@ -347,8 +351,9 @@ def test_infra_timeline_suspend_event(new_vm, soft_assert):
     Vm's cluster,  VM's host, VM's provider. The VM needs to be set before as management engine.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'suspend'
     targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -363,8 +368,9 @@ def test_infra_timeline_diagnostic(new_vm, soft_assert, mark_vm_as_appliance):
     diagnostic/Timelines.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'create'
     targets = (new_vm.appliance.server,)
@@ -378,8 +384,9 @@ def test_infra_timeline_clone_event(new_vm, soft_assert):
     Vm's cluster,  VM's host, VM's provider.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'clone'
     vm_event = VMEvent(new_vm, event)
@@ -394,8 +401,9 @@ def test_infra_timeline_migrate_event(new_vm, soft_assert):
     Vm's cluster,  VM's host, VM's provider.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'migrate'
     vm_event = VMEvent(new_vm, event)
@@ -412,8 +420,9 @@ def test_infra_timeline_rename_event(new_vm, soft_assert):
     Action "rename" does not exist on RHV, thats why it is excluded.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'rename'
     vm_event = VMEvent(new_vm, event)
@@ -430,8 +439,9 @@ def test_infra_timeline_delete_event(new_vm, soft_assert):
     Vm's cluster,  VM's host, VM's provider.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'delete'
     vm_event = VMEvent(new_vm, event)

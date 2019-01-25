@@ -52,12 +52,7 @@ def prov_data(vm_name):
 
 
 @pytest.fixture(scope='module')
-def test_domain(appliance):
-    """
-    Polarion:
-        assignee: None
-        initialEstimate: None
-    """
+def domain(appliance):
     domain = appliance.collections.domains.create('test_{}'.format(fauxfactory.gen_alphanumeric()),
                                                   'description_{}'.format(
                                                       fauxfactory.gen_alphanumeric()),
@@ -68,7 +63,7 @@ def test_domain(appliance):
 
 
 @pytest.fixture(scope='module')
-def max_quota_test_instance(appliance, test_domain):
+def max_quota_test_instance(appliance, domain):
     miq = appliance.collections.domains.instantiate('ManageIQ')
 
     original_instance = miq. \
@@ -76,16 +71,16 @@ def max_quota_test_instance(appliance, test_domain):
         namespaces.instantiate('CommonMethods'). \
         classes.instantiate('QuotaMethods'). \
         instances.instantiate('quota_source')
-    original_instance.copy_to(domain=test_domain)
+    original_instance.copy_to(domain=domain)
 
     original_instance = miq. \
         namespaces.instantiate('System'). \
         namespaces.instantiate('CommonMethods'). \
         classes.instantiate('QuotaStateMachine'). \
         instances.instantiate('quota')
-    original_instance.copy_to(domain=test_domain)
+    original_instance.copy_to(domain=domain)
 
-    instance = test_domain. \
+    instance = domain. \
         namespaces.instantiate('System'). \
         namespaces.instantiate('CommonMethods'). \
         classes.instantiate('QuotaStateMachine'). \
@@ -202,7 +197,7 @@ def test_quota(appliance, provider, setup_provider, custom_prov_data, vm_name, a
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Quota
         initialEstimate: 1/6h
     """
     recursive_update(prov_data, custom_prov_data)
@@ -237,8 +232,9 @@ def test_user_quota_diff_groups(request, appliance, provider, setup_provider, ne
     1. Provision VM with more than assigned quota
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ghubale
+        initialEstimate: 1/4h
+        casecomponent: Quota
     """
     with new_user:
         recursive_update(prov_data, custom_prov_data)

@@ -26,8 +26,9 @@ def test_remote_server_advanced_config(temp_appliance_preconfig, request,
     BZ1536524
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Configuration
     """
     appliance = temp_appliance_preconfig
     remote_server = appliance.server.slave_servers[0]

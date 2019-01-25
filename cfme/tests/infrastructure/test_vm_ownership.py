@@ -138,8 +138,9 @@ def test_rename_vm(small_vm):
     6. Check whether VM is renamed or not
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ghubale
+        initialEstimate: 1/4h
+        casecomponent: Infra
     """
     view = navigate_to(small_vm, 'Details')
     vm_name = small_vm.name

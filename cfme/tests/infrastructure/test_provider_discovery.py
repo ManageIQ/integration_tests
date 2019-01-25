@@ -92,7 +92,7 @@ def test_discover_infra(appliance, providers_for_discover, start_ip, max_range):
     """
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/16h
         upstream: yes

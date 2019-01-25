@@ -106,7 +106,7 @@ def test_tag_ansible_repository(repository, tag_place, check_tag_place):
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     check_tag_place(repository, tag_place)
 
@@ -117,7 +117,7 @@ def test_tag_ansible_credential(credential, tag_place, check_tag_place):
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     check_tag_place(credential, tag_place)
 
@@ -128,7 +128,7 @@ def test_tag_ansible_playbook(playbook, tag_place, check_tag_place):
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     check_tag_place(playbook, tag_place)
 
@@ -139,7 +139,7 @@ def test_tagvis_ansible_repository(repository, check_item_visibility, visibility
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     check_item_visibility(repository, visibility)
 
@@ -150,7 +150,7 @@ def test_tagvis_ansible_credential(credential, check_item_visibility, visibility
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     check_item_visibility(credential, visibility)
 
@@ -161,7 +161,7 @@ def test_tagvis_playbook(playbook, check_item_visibility, visibility):
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     check_item_visibility(playbook, visibility)
 
@@ -174,7 +174,7 @@ def test_tagvis_tag_and_configuration_management_ansible_tower_job_templates():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -187,7 +187,7 @@ def test_tagvis_ansible_tower_tag_configured_system():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/8h
         testSteps:
@@ -211,7 +211,7 @@ def test_tagvis_ansible_tower_job():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/8h
         testSteps:

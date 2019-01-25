@@ -37,7 +37,7 @@ def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -57,7 +57,7 @@ def test_automate_git_domain_displayed_in_service(appliance, imported_domain, br
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/20h
     """
     collection = appliance.collections.catalog_items

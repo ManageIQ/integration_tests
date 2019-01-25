@@ -74,12 +74,7 @@ def test_tagvis_network_provider_children(provider, appliance, request, relation
 
 
 @pytest.fixture(params=network_collections, scope='module')
-def test_entity(request, appliance):
-    """
-    Polarion:
-        assignee: None
-        initialEstimate: None
-    """
+def entity(request, appliance):
     collection_name = request.param
     item_collection = getattr(appliance.collections, collection_name)
     items = item_collection.all()
@@ -90,7 +85,7 @@ def test_entity(request, appliance):
 
 
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_network_tagvis(check_item_visibility, test_entity, visibility):
+def test_network_tagvis(check_item_visibility, entity, visibility):
     """ Tests network provider and its items honors tag visibility
     Prerequisites:
         Catalog, tag, role, group and restricted user should be created
@@ -103,6 +98,6 @@ def test_network_tagvis(check_item_visibility, test_entity, visibility):
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
-    check_item_visibility(test_entity, visibility)
+    check_item_visibility(entity, visibility)

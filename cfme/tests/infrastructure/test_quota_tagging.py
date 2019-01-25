@@ -61,12 +61,7 @@ def prov_data(provider, vm_name, template_name):
 
 
 @pytest.fixture(scope='module')
-def test_domain(appliance):
-    """
-    Polarion:
-        assignee: None
-        initialEstimate: None
-    """
+def domain(appliance):
     domain = appliance.collections.domains.create('test_{}'.format(fauxfactory.gen_alphanumeric()),
                                                   'description_{}'.format(
                                                       fauxfactory.gen_alphanumeric()),
@@ -108,28 +103,31 @@ def catalog_bundle(appliance, dialog, catalog, catalog_item):
 
 
 @pytest.fixture(scope='module')
-def max_quota_test_instance(appliance, test_domain):
+def max_quota_test_instance(appliance, domain):
     miq = appliance.collections.domains.instantiate('ManageIQ')
 
-    original_instance = miq. \
-        namespaces.instantiate('System'). \
-        namespaces.instantiate('CommonMethods'). \
-        classes.instantiate('QuotaMethods'). \
+    original_instance = (
+        miq.namespaces.instantiate('System').
+        namespaces.instantiate('CommonMethods').
+        classes.instantiate('QuotaMethods').
         instances.instantiate('quota_source')
-    original_instance.copy_to(domain=test_domain)
+    )
+    original_instance.copy_to(domain=domain)
 
-    original_instance = miq. \
-        namespaces.instantiate('System'). \
-        namespaces.instantiate('CommonMethods'). \
-        classes.instantiate('QuotaStateMachine'). \
+    original_instance = (
+        miq.namespaces.instantiate('System').
+        namespaces.instantiate('CommonMethods').
+        classes.instantiate('QuotaStateMachine').
         instances.instantiate('quota')
-    original_instance.copy_to(domain=test_domain)
+    )
+    original_instance.copy_to(domain=domain)
 
-    instance = test_domain. \
-        namespaces.instantiate('System'). \
-        namespaces.instantiate('CommonMethods'). \
-        classes.instantiate('QuotaStateMachine'). \
+    instance = (
+        domain.namespaces.instantiate('System').
+        namespaces.instantiate('CommonMethods').
+        classes.instantiate('QuotaStateMachine').
         instances.instantiate('quota')
+    )
     return instance
 
 
@@ -176,7 +174,7 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider, setup_p
     """
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Quota
         initialEstimate: 1/6h
     """
     recursive_update(prov_data, custom_prov_data)
@@ -214,7 +212,7 @@ def test_quota_tagging_infra_via_services(request, appliance, provider, setup_pr
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Quota
         initialEstimate: 1/6h
     """
 
@@ -289,8 +287,9 @@ def test_quota_vm_reconfigure(
         3. Check whether VM  reconfiguration 'Denied' with Exceeded Quota or not
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ghubale
+        initialEstimate: 1/4h
+        casecomponent: Quota
     """
     original_config = small_vm.configuration.copy()
     new_config = small_vm.configuration.copy()
@@ -342,8 +341,9 @@ def test_quota_infra(request, appliance, provider, setup_provider, admin_email, 
         5. Check whether quota is exceeded or not
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ghubale
+        initialEstimate: 1/4h
+        casecomponent: Quota
     """
     prov_data.update(custom_prov_data)
     with appliance.context.use(context):
@@ -392,8 +392,9 @@ def test_quota_catalog_bundle_infra(request, appliance, provider, setup_provider
         6. Check whether quota is exceeded or not
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ghubale
+        initialEstimate: 1/4h
+        casecomponent: Quota
     """
     prov_data.update(custom_prov_data)
     with appliance.context.use(context):

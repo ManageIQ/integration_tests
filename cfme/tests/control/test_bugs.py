@@ -154,7 +154,7 @@ def test_scope_windows_registry_stuck(request, appliance, infra_provider, policy
 
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: low
         initialEstimate: 1/6h
     """
@@ -192,7 +192,7 @@ def test_invoke_custom_automation(request, action_collection):
 
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -235,8 +235,9 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, po
         Compliance history screen with last 10 checks should be opened
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Control
     """
     policy = policy_collection.create(
         VMCompliancePolicy,
@@ -273,7 +274,7 @@ def test_delete_all_actions_from_compliance_policy(request, policy_collection):
 
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/12h
@@ -298,7 +299,7 @@ def test_control_identical_descriptions(request, create_function, collections, a
 
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -321,7 +322,7 @@ def test_vmware_alarm_selection_does_not_fail(request, alert_collection):
 
     Polarion:
         assignee: jdupuy
-        casecomponent: control
+        casecomponent: Control
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -344,7 +345,7 @@ def test_alert_ram_reconfigured(hardware_reconfigured_alert):
 
     Polarion:
         assignee: jdupuy
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
     """

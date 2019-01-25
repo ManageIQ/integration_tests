@@ -53,8 +53,8 @@ def test_provision_vm_to_virtual_network(appliance, setup_provider, provider,
         test_flag: provision
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
     """
     vm_name = random_vm_name('provd')
 

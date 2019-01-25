@@ -36,8 +36,8 @@ def test_security_group_crud(sec_group):
         * Also delete it.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     # TODO: Update need to be done in future.
     assert sec_group.exists
@@ -57,8 +57,8 @@ def test_security_group_create_cancel(appliance, provider):
         * Cancel it.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     security_group = appliance.collections.security_groups
     sec_group = security_group.create(name=fauxfactory.gen_alphanumeric(),

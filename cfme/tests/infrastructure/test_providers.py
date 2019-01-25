@@ -49,7 +49,7 @@ def test_empty_discovery_form_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/15h
     """
@@ -65,7 +65,7 @@ def test_discovery_cancelled_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/15h
     """
@@ -82,7 +82,7 @@ def test_add_cancelled_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/15h
     """
@@ -97,7 +97,7 @@ def test_type_required_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/15h
     """
@@ -112,7 +112,7 @@ def test_name_required_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/15h
     """
@@ -132,7 +132,7 @@ def test_host_name_required_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/15h
     """
@@ -155,7 +155,7 @@ def test_name_max_character_validation_infra(request, infra_provider):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/15h
     """
@@ -171,7 +171,7 @@ def test_host_name_max_character_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -192,7 +192,7 @@ def test_api_port_max_character_validation_infra(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/15h
     """
@@ -225,7 +225,7 @@ def test_providers_discovery(request, appliance, provider):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/8h
     """
@@ -249,7 +249,7 @@ def test_infra_provider_add_with_bad_credentials(provider):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/8h
     """
@@ -267,8 +267,6 @@ def test_infra_provider_add_with_bad_credentials(provider):
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
 @pytest.mark.smoke
-@pytest.mark.meta(blockers=[BZ(1450527,
-                               unblock=lambda provider: not provider.one_of(SCVMMProvider))])
 def test_infra_provider_crud(provider):
     """Tests provider add with good credentials
 
@@ -277,7 +275,7 @@ def test_infra_provider_crud(provider):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/5h
     """
@@ -308,8 +306,9 @@ def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
        test_flag: crud
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        casecomponent: Infra
+        initialEstimate: 1/4h
     """
 
     if not provider.endpoints.get('default').__dict__.get('verify_tls'):
@@ -338,7 +337,7 @@ def test_infrastructure_add_provider_trailing_whitespaces(appliance):
 
     Polarion:
         assignee: mmojzis
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/8h
     """
@@ -361,7 +360,7 @@ def test_infra_discovery_screen(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/6h
     """

@@ -23,8 +23,8 @@ def test_physical_infra_provider_crud(provider, has_no_providers):
         test_flag: crud
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     provider.create()
 

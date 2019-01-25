@@ -149,7 +149,7 @@ def test_sdn_nsg_firewall_rules(provider, appliance, secgroup_with_rule):
 
     Polarion:
         assignee: mmojzis
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
 
     # Navigate to network provider.

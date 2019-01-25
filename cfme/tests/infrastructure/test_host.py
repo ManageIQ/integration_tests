@@ -87,7 +87,7 @@ def test_discover_host(request, provider, appliance, host_ips):
 
     Polarion:
         assignee: mkourim
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     if provider.delete_if_exists(cancel=False):
         provider.wait_for_delete()
@@ -130,7 +130,7 @@ def test_multiple_host_good_creds(setup_provider, provider, creds):
     """
     Polarion:
         assignee: mkourim
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     if len(provider.data.get('hosts', {})) < 2:
         pytest.skip('not enough hosts to run test')
@@ -222,7 +222,7 @@ def test_250_vmware_hosts_loading(appliance, create_250_hosts, view_type):
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     # Without the patch, this will cause the process to consume roughly 10+ Gigs of RAM
     # due to a poorly optimized database query

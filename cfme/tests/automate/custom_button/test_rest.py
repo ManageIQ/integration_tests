@@ -17,7 +17,7 @@ def test_custom_button_crud_via_rest():
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. POST method to create the custom button
@@ -37,7 +37,7 @@ def test_custom_button_edit_via_rest_put():
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create custom button
@@ -57,7 +57,7 @@ def test_custom_button_edit_via_rest_patch():
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create Custom button

@@ -37,7 +37,7 @@ def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/6h
     """
     app = temp_appliance_preconfig_funcscope
@@ -58,7 +58,7 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/12h
     """
     app = temp_appliance_preconfig_modscope
@@ -73,7 +73,7 @@ def test_appliance_console_cli_set_hostname(configured_appliance):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/12h
     """
     hostname = 'test.example.com'
@@ -90,7 +90,7 @@ def test_appliance_console_cli_internal_fetch_key(app_creds, unconfigured_applia
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
     """
     fetch_key_ip = appliance.hostname
@@ -109,7 +109,7 @@ def test_appliance_console_cli_external_join(app_creds, appliance,
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     appliance_ip = appliance.hostname
@@ -128,7 +128,7 @@ def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/3h
     """
     hostname = dedicated_db_appliance.hostname
@@ -146,7 +146,7 @@ def test_appliance_console_cli_external_auth(auth_type, ipa_crud, app_creds, con
     Polarion:
         assignee: sbulage
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to true.*'.format(auth_type)],
@@ -182,7 +182,7 @@ def test_appliance_console_cli_ipa(ipa_crud, configured_appliance, no_ipa_config
     Polarion:
         assignee: sbulage
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     ipa_args = ipa_crud.as_external_value()
     configured_appliance.appliance_console_cli.configure_ipa(**ipa_args)
@@ -198,7 +198,7 @@ def test_appliance_console_cli_extend_storage(unconfigured_appliance):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/6h
     """
     unconfigured_appliance.ssh_client.run_command('appliance_console_cli -t auto')
@@ -215,7 +215,7 @@ def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/6h
     """
     unconfigured_appliance.ssh_client.run_command('appliance_console_cli -l auto')
@@ -233,7 +233,7 @@ def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, ap
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/6h
     """
     unconfigured_appliance.appliance_console_cli.configure_appliance_dedicated_db(
@@ -251,7 +251,7 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1h
     """
     apps = unconfigured_appliances

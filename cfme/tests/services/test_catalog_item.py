@@ -79,7 +79,7 @@ def test_catalog_item_crud(appliance, dialog, catalog):
     """
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: high
         initialEstimate: 1/8h
     """
@@ -106,8 +106,8 @@ def test_catalog_item_crud(appliance, dialog, catalog):
 def test_add_button_group(catalog_item, appliance):
     """
     Polarion:
-        assignee: sshveta
-        casecomponent: services
+        assignee: nansari
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -123,8 +123,9 @@ def test_add_button_group(catalog_item, appliance):
 def test_add_button(catalog_item, appliance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nansari
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     button_name = catalog_item.add_button()
     view = appliance.browser.create_view(BaseLoggedInPage)
@@ -139,7 +140,7 @@ def test_edit_tags(catalog_item):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/8h
     """
@@ -152,7 +153,7 @@ def test_catalog_item_duplicate_name(appliance, dialog, catalog):
     """
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -185,7 +186,7 @@ def test_permissions_catalog_item_add(appliance, catalog, dialog, request):
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: high
         initialEstimate: 1/8h
     """
@@ -218,7 +219,7 @@ def test_tagvis_catalog_items(check_catalog_visibility, catalog_item):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/8h
     """
     check_catalog_visibility(catalog_item)
@@ -237,21 +238,20 @@ def test_tagvis_catalog_bundle(check_catalog_visibility, catalog_bundle):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/8h
     """
     check_catalog_visibility(catalog_bundle)
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9',
-                         reason='Catalog item restriction was not added to 5.8')
 def test_restricted_catalog_items_select_for_catalog_bundle(appliance, request, catalog_item,
                                                             user_restricted, tag, soft_assert):
     """Test catalog item restriction while bundle creation
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nansari
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     catalog_bundles = appliance.collections.catalog_bundles
     with user_restricted:

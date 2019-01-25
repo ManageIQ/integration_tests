@@ -34,7 +34,7 @@ def test_tag_vis_vm(tagged_vm, user_restricted):
     """
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     with user_restricted:
         assert tagged_vm.exists, "vm not found"
@@ -132,7 +132,7 @@ def test_tag_expression_and_condition(
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     first_vm, _ = vms_for_tagging
     group = group_with_tag_expression(';select_first_expression;click_and;'.join(
@@ -162,7 +162,7 @@ def test_tag_expression_or_condition(
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     first_vm, second_vm = vms_for_tagging
     group = group_with_tag_expression(';select_first_expression;click_or;'.join(
@@ -192,7 +192,7 @@ def test_tag_expression_not_condition(
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     first_vm, second_vm = vms_for_tagging
     group = group_with_tag_expression('{};select_first_expression;click_not;'.format(
@@ -220,7 +220,7 @@ def test_tag_expression_not_and_condition(
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     first_vm, second_vm = vms_for_tagging
     group = group_with_tag_expression(
@@ -255,7 +255,7 @@ def test_tag_expression_not_or_condition(
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     first_vm, _ = vms_for_tagging
     group = group_with_tag_expression(
@@ -279,7 +279,7 @@ def test_tag_expression_and_with_or_with_not():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.9
@@ -296,7 +296,7 @@ def test_tag_expression_and_with_or():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.9

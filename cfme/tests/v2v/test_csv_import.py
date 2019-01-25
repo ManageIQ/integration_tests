@@ -141,8 +141,9 @@ def test_column_headers(appliance, infra_map):
     """Test csv with unsupported column header
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ytale
+        initialEstimate: 1/4h
+        casecomponent: V2V
     """
     content = fauxfactory.gen_alpha(10)
     error_msg = "Error: Required column 'Name' does not exist in the .CSV file"
@@ -153,8 +154,9 @@ def test_inconsistent_columns(appliance, infra_map):
     """Test csv with extra inconsistent column value
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ytale
+        initialEstimate: 1/4h
+        casecomponent: V2V
     """
     content = "Name\n{}, {}".format(fauxfactory.gen_alpha(10), fauxfactory.gen_alpha(10))
     error_msg = "Error: Number of columns is inconsistent on line 2"

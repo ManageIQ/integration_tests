@@ -10,7 +10,7 @@ def test_verify_rss_links(appliance):
     """
     Polarion:
         assignee: jhenner
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     view = navigate_to(appliance.server, 'RSS')
     for row in view.table.rows():

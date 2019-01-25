@@ -527,7 +527,7 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
     """
     template_name = vm_analysis_provisioning_data['image']
@@ -572,7 +572,7 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
     """
     ssa_vm.smartstate_scan(wait_for_task_result=True)
@@ -612,7 +612,7 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/2h
     """
@@ -650,7 +650,7 @@ def test_ssa_vm(ssa_vm, soft_assert, vm_system_type):
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
     """
     ssa_vm.smartstate_scan(wait_for_task_result=True)
@@ -686,7 +686,7 @@ def test_ssa_users(ssa_vm):
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         testtype: integration
     """
@@ -731,7 +731,7 @@ def test_ssa_groups(ssa_vm):
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
     """
 
@@ -774,7 +774,7 @@ def test_ssa_packages(ssa_vm):
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
     """
 
@@ -820,7 +820,7 @@ def test_ssa_files(ssa_vm):
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
     """
 
@@ -854,7 +854,7 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
     """
 
@@ -934,7 +934,7 @@ def test_ssa_multiple_vms(ssa_multiple_vms, soft_assert, appliance, compare_linu
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
     """
 

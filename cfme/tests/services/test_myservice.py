@@ -69,7 +69,7 @@ def test_retire_service_ui(appliance, context, myservice):
 
     Polarion:
         assignee: sshveta
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     service_name, vm_name = myservice
     with appliance.context.use(context):

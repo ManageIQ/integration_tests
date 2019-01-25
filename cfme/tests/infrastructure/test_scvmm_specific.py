@@ -21,8 +21,9 @@ def testing_vm_without_dvd(provider, small_template):
 def test_no_dvd_ruins_refresh(provider, testing_vm_without_dvd):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: Infra
     """
     provider.refresh_provider_relationships()
     testing_vm_without_dvd.wait_to_appear()

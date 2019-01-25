@@ -36,7 +36,7 @@ def test_namespace_crud(request, parent_namespace):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/16h
     """
@@ -59,7 +59,7 @@ def test_namespace_delete_from_table(request, parent_namespace):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/30h
     """
@@ -80,7 +80,7 @@ def test_duplicate_namespace_disallowed(request, parent_namespace):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseposneg: negative
         initialEstimate: 1/16h
     """

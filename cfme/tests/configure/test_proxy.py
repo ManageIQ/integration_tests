@@ -114,8 +114,8 @@ def test_proxy_valid(appliance, proxy_machine, proxy_ssh, prepare_proxy_default,
        proxy logs.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
     """
     provider.refresh_provider_relationships()
     validate_proxy_logs(provider, proxy_ssh, appliance.hostname)
@@ -142,8 +142,8 @@ def test_proxy_override(appliance, proxy_ssh, prepare_proxy_specific, provider):
      * Wait for the provider refresh to complete to check the settings worked.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
     """
     provider.refresh_provider_relationships()
     validate_proxy_logs(provider, proxy_ssh, appliance.hostname)
@@ -167,8 +167,8 @@ def test_proxy_invalid(appliance, prepare_proxy_invalid, provider):
      * Wait for the provider refresh to complete to check the settings causes error.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
     """
     provider.refresh_provider_relationships()
 

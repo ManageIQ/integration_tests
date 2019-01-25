@@ -53,7 +53,7 @@ def test_can_open_vm_advanced_search(vm_view):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -65,7 +65,7 @@ def test_vm_filter_without_user_input(appliance, vm_view, vms, subset_of_vms,
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -83,7 +83,7 @@ def test_vm_filter_with_user_input(
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -102,7 +102,7 @@ def test_vm_filter_with_user_input_and_cancellation(vm_view, vms, subset_of_vms,
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -120,7 +120,7 @@ def test_vm_filter_save_cancel(vm_view, vms, subset_of_vms, expression_for_vms_s
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -141,7 +141,7 @@ def test_vm_filter_save_and_load(appliance, request, vm_view, vms, subset_of_vms
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -170,7 +170,7 @@ def test_vm_filter_save_and_cancel_load(request, vm_view):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -195,7 +195,7 @@ def test_vm_filter_save_and_load_cancel(request, vms, subset_of_vms, vm_view):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -226,7 +226,7 @@ def test_quick_search_without_vm_filter(appliance, request, vms, subset_of_vms):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -248,7 +248,7 @@ def test_quick_search_with_vm_filter(
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -267,7 +267,7 @@ def test_can_delete_vm_filter(vm_view):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -309,7 +309,7 @@ def test_cannot_delete_vm_filter_more_than_once(vm_view):
 
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """

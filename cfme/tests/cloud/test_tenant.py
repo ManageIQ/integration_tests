@@ -33,8 +33,8 @@ def test_tenant_crud(tenant):
         test_flag: tenant
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
 
     with update(tenant):

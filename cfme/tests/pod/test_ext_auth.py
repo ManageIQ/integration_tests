@@ -8,6 +8,6 @@ def test_pod_appliance_basic_ipa_auth():
 
     Polarion:
         assignee: izapolsk
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     pass

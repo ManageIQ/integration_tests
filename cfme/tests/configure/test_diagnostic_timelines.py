@@ -6,7 +6,7 @@ import pytest
 def test_diagnostic_timelines():
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
     """
     pass

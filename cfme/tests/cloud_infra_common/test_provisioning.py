@@ -97,7 +97,7 @@ def test_provision_from_template(provider, provisioned_instance):
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     assert provisioned_instance.exists_on_provider, "Instance wasn't provisioned successfully"
 
@@ -355,7 +355,7 @@ def test_cloud_provision_from_template_with_attached_disks(
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     vm_name, inst_args = instance_args
     # Modify availiability_zone for Azure provider
@@ -408,7 +408,7 @@ def test_provision_with_boot_volume(request, instance_args, provider, soft_asser
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     vm_name, inst_args = instance_args
 
@@ -477,7 +477,7 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     vm_name, inst_args = instance_args
 
@@ -557,7 +557,7 @@ def test_provision_with_tag(appliance, vm_name, tag, provider, request):
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
 
     inst_args = {'purpose': {

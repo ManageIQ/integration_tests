@@ -27,7 +27,7 @@ def test_domain_present(domain_name, soft_assert, appliance):
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/60h
         testtype: functional

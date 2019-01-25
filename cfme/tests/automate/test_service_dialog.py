@@ -31,7 +31,7 @@ def test_crud_service_dialog(appliance):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
     """
     element_data = {
@@ -60,7 +60,7 @@ def test_service_dialog_duplicate_name(appliance, request):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/8h
     """
@@ -93,7 +93,7 @@ def test_checkbox_dialog_element(appliance, request):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/8h
     """
@@ -117,7 +117,7 @@ def test_datecontrol_dialog_element(appliance, request):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -144,7 +144,7 @@ def test_tagcontrol_dialog_element(appliance, request):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -168,7 +168,7 @@ def test_textareabox_dialog_element(appliance, request):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -195,7 +195,7 @@ def test_reorder_elements(appliance, request):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/8h
     """
     element_1_data = {
@@ -231,7 +231,7 @@ def test_reorder_unsaved_elements(appliance, request):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/16h
     """
@@ -269,7 +269,7 @@ def test_dropdownlist_dialog_element(appliance, request):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/4h
     """
@@ -293,7 +293,7 @@ def test_radiobutton_dialog_element(appliance, request):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/4h
     """
@@ -317,7 +317,7 @@ def test_mandatory_entry_point_with_dynamic_element(appliance):
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: high
         initialEstimate: 1/8h
     """
@@ -352,7 +352,7 @@ def test_copying_customization_dialog():
 
     Polarion:
         assignee: anikifor
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
         testSteps:

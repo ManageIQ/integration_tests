@@ -30,8 +30,8 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
     and Datastores
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     from_ts = int(time.time() * 1000)
     logger.debug('Scenario: {}'.format(scenario['name']))

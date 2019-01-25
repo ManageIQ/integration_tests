@@ -48,7 +48,7 @@ def test_links(appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/20h
     """
@@ -78,7 +78,7 @@ def test_contents(appliance, soft_assert):
 
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/10h
     """
@@ -112,9 +112,7 @@ def test_contents(appliance, soft_assert):
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-@pytest.mark.ignore_stream("upstream")
-@pytest.mark.uncollectif(lambda appliance: appliance.version >= '5.9',
-                         reason="doesn't apply to 5.9")
+@pytest.mark.ignore_stream("upstream", "5.9")
 def test_info(appliance, soft_assert):
     """
     Test the alt/title and href attributes.
@@ -123,8 +121,10 @@ def test_info(appliance, soft_assert):
     Verify image anchor href matches link text href
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: WebUI
+
     """
     view = navigate_to(appliance.server, 'Documentation')
     for link_widget in view.links.sub_widgets:
@@ -153,7 +153,7 @@ def test_all_docs_present(appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/10h
     """

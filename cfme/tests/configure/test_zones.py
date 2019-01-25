@@ -46,7 +46,7 @@ def test_zone_add_cancel_validation():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/20h
     """
@@ -67,7 +67,7 @@ def test_zone_change_appliance_zone(request, appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h
     """
@@ -93,7 +93,7 @@ def test_zone_add_dupe(appliance, request):
     Polarion:
         assignee: anikifor
         caseimportance: low
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     zc = current_appliance.collections.zones
     name = fauxfactory.gen_alphanumeric(5)
@@ -121,7 +121,7 @@ def test_zone_add_maxlength(request, soft_assert):
     Polarion:
         assignee: anikifor
         caseimportance: low
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     zc = current_appliance.collections.zones
     zone = zc.create(
@@ -140,7 +140,7 @@ def test_zone_add_blank_name():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/8h
@@ -159,7 +159,7 @@ def test_zone_add_blank_description():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/8h
@@ -179,8 +179,9 @@ def test_add_zone_windows_domain_credentials(request):
     Testing Windows Domain credentials add
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Configuration
     """
     zc = current_appliance.collections.zones.all()
     values = {'username': 'userid',
@@ -207,8 +208,9 @@ def test_remove_zone_windows_domain_credentials():
     Testing Windows Domain credentials removal
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Configuration
     """
     zc = current_appliance.collections.zones.all()
     values = {'username': 'userid',

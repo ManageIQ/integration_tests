@@ -94,8 +94,9 @@ def test_add_provider_trailing_whitespaces(provider, soft_assert):
     """Test to validate the hostname and username should be without whitespaces
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     provider.endpoints['default'].credentials.principal = '{}  '.format(
         provider.endpoints['default'].credentials.principal)
@@ -118,7 +119,7 @@ def test_configuration_large_number_of_tags(appliance, import_tags, soft_assert)
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/3h
@@ -144,7 +145,7 @@ def test_configuration_help_menu(appliance, set_help_menu_options, soft_assert):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -167,7 +168,7 @@ def test_automate_can_edit_copied_method(appliance, request):
 
     Polarion:
         assignee: anikifor
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -211,7 +212,7 @@ def test_infrastructure_filter_20k_vms(appliance, create_20k_vms):
 
     Polarion:
         assignee: anikifor
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -229,7 +230,7 @@ def test_ui_pinning_after_relog():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/12h
@@ -251,7 +252,7 @@ def test_ui_notification_icon():
 
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/6h
         startsin: 5.9
@@ -275,7 +276,7 @@ def test_containers_topology_display_names():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/30h
         startsin: 5.6
@@ -293,7 +294,7 @@ def test_configuration_icons_trusted_forest_settings():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/20h
         testSteps:
@@ -311,7 +312,7 @@ def test_cloud_icons_instances():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/20h
         testSteps:
@@ -331,7 +332,7 @@ def test_key_pairs_quadicon():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/20h
         testSteps:
@@ -351,7 +352,7 @@ def test_search_is_displayed_myservices():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/30h
         testSteps:
@@ -369,7 +370,7 @@ def test_misclicking_checkbox_vms():
 
     Polarion:
         assignee: anikifor
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/8h
         setup: https://bugzilla.redhat.com/show_bug.cgi?id=1627387
@@ -403,7 +404,7 @@ def test_my_settings_default_views_alignment():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/20h
         testSteps:
@@ -420,7 +421,7 @@ def test_configure_icons_roles_by_server():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h
         testSteps:

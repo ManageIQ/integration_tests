@@ -26,8 +26,8 @@ def keypair(appliance, provider):
 def test_download_private_key(keypair):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     assert keypair.exists
     keypair.download_private_key()

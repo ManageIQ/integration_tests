@@ -142,8 +142,8 @@ def test_user_change_groups(appliance, group_collection):
     """Assign a user to multiple groups and confirm that the user can successfully change groups
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: apagac
+        initialEstimate: 1/4h
     """
     group_names = [
         'EvmGroup-super_administrator', 'EvmGroup-administrator', 'EvmGroup-approver',
@@ -1175,7 +1175,7 @@ def test_superadmin_tenant_project_crud(request, appliance):
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         tags: obsolete20180808
     """
@@ -1221,7 +1221,7 @@ def test_superadmin_child_tenant_crud(request, appliance, number_of_childrens):
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1h
     """
     tenant_collection = appliance.collections.tenants
@@ -1298,7 +1298,7 @@ def test_unique_tenant_name_on_parent_level(request, appliance):
     """
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/20h
     """
     tenant_unique_tenant_project_name_on_parent_level(request, appliance,
@@ -1310,7 +1310,7 @@ def test_unique_project_name_on_parent_level(request, appliance):
     """
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/20h
     """
     tenant_unique_tenant_project_name_on_parent_level(request, appliance,
@@ -1321,7 +1321,7 @@ def test_tenant_quota_input_validate(appliance):
     """
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/8h
     """
     roottenant = appliance.collections.tenants.get_root_tenant()
@@ -1345,7 +1345,7 @@ def test_delete_default_tenant(appliance):
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/20h
     """
     view = navigate_to(appliance.collections.tenants, "All")
@@ -1383,7 +1383,7 @@ def test_superadmin_tenant_admin_crud(appliance, group_collection):
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
         testSteps:
@@ -1409,7 +1409,7 @@ def test_tenant_unique_catalog():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         caseposneg: negative
         initialEstimate: 1/2h
         startsin: 5.5
@@ -1427,7 +1427,7 @@ def test_tenant_visibility_service_template_catalogs_all_parents():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.5
@@ -1444,7 +1444,7 @@ def test_tenant_visibility_services_all_childs():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.5
@@ -1484,7 +1484,7 @@ def test_tenant_visibility_providers_all_parents():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.5
@@ -1501,7 +1501,7 @@ def test_tenant_visibility_miq_requests_all_childs():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.5
@@ -1517,7 +1517,7 @@ def test_tenant_osp_mapping_delete():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.7
@@ -1539,7 +1539,7 @@ def test_tenant_ssui_users_can_see_their_services():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.5
@@ -1585,7 +1585,7 @@ def test_tenant_unique_automation_domain_name_on_parent_level():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         caseposneg: negative
         initialEstimate: 1/2h
         startsin: 5.5
@@ -1601,7 +1601,7 @@ def test_tenantadmin_user_crud():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
         testSteps:
@@ -1630,7 +1630,7 @@ def test_tenant_automation_domains():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
         testSteps:
@@ -1674,7 +1674,7 @@ def test_superadmin_child_tenant_delete_parent_catalog():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/2h
         startsin: 5.5
     """
@@ -1691,7 +1691,7 @@ def test_verify_groups_for_tenant_user():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -1708,7 +1708,7 @@ def test_tenant_visibility_service_template_items_all_parents():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.5
@@ -1725,7 +1725,7 @@ def test_tenantadmin_group_crud():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
         testSteps:
@@ -1747,7 +1747,7 @@ def test_tenant_visibility_vms_all_childs():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.5
@@ -1763,7 +1763,7 @@ def test_tenant_ldap_group_switch_between_tenants():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
         testSteps:
@@ -1798,7 +1798,7 @@ def test_tenant_visibility_miq_ae_namespaces_all_parents():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.5

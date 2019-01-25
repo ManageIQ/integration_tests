@@ -37,7 +37,7 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
     Polarion:
         assignee: jhenner
         caseimportance: high
-        casecomponent: report
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     # We need to make sure the widgets have some data.
@@ -72,7 +72,7 @@ def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, 
     Polarion:
         assignee: jhenner
         caseimportance: high
-        casecomponent: report
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     # Very useful construct. List is mutable, so we can prepare the generic delete finalizer.
@@ -117,7 +117,7 @@ def test_verify_rss_links_from_dashboards(dashboards):
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     wait_for(
         lambda: not any(widget.blank for widget in dashboards.default.collections.widgets.all()),
@@ -147,7 +147,7 @@ def test_widgets_reorder(dashboards, soft_assert, request):
     Polarion:
         assignee: jhenner
         caseimportance: high
-        casecomponent: report
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     request.addfinalizer(dashboards.default.collections.widgets.reset)
@@ -172,7 +172,7 @@ def test_dashboard_layouts_match():
 
     Polarion:
         assignee: jhenner
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -188,7 +188,7 @@ def test_dashboard_widgets_fullscreen():
 
     Polarion:
         assignee: jhenner
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -204,7 +204,7 @@ def test_identical_dashboard_widgets():
 
     Polarion:
         assignee: jhenner
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/12h
@@ -222,7 +222,7 @@ def test_dashboard_chart_widgets_size_in_modal():
 
     Polarion:
         assignee: jhenner
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: low
         initialEstimate: 1/6h
         testtype: nonfunctional

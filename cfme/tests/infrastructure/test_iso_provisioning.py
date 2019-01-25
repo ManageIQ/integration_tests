@@ -91,7 +91,7 @@ def test_iso_provision_from_template(appliance, provider, vm_name, datastore_ini
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     # generate_tests makes sure these have values
     iso_template, host, datastore, iso_file, iso_kickstart,\

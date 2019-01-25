@@ -80,8 +80,9 @@ def created_template(appliance, template_type):
 def test_orchestration_template_crud(appliance, template_type):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     method = METHOD_TORSO.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     collection = appliance.collections.orchestration_templates
@@ -101,8 +102,9 @@ def test_copy_template(created_template):
     """Tests Orchestration template copy
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     copied_method = METHOD_TORSO_copied.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     template = created_template
@@ -117,14 +119,14 @@ def test_name_required_error_validation_orch_template(appliance, template_type):
     """Tests error validation if Name wasn't specified during template creation
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
-    flash_msg = \
-        "Error during 'Orchestration Template creation': Validation failed: Name can't be blank"
+    msg = "Error during 'Orchestration Template creation': Validation failed: Name can't be blank"
     copied_method = METHOD_TORSO_copied.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     collection = appliance.collections.orchestration_templates
-    with pytest.raises(Exception, match=flash_msg):
+    with pytest.raises(Exception, match=msg):
         collection.create(template_group=templates.get(template_type)[1],
                           template_type=templates.get(template_type)[0],
                           template_name=None,
@@ -136,11 +138,11 @@ def test_empty_all_fields_error_validation(appliance, template_type):
     """Tests error validation if we try to create template with all empty fields
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
-    flash_msg = \
-        "Error during Orchestration Template creation: new template content cannot be empty"
+    flash_msg = "Error during Orchestration Template creation: new template content cannot be empty"
     collection = appliance.collections.orchestration_templates
     with pytest.raises(Exception, match=flash_msg):
         collection.create(template_group=templates.get(template_type)[1],
@@ -154,11 +156,11 @@ def test_empty_content_error_validation(appliance, template_type):
     """Tests error validation if content wasn't added during template creation
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
-    flash_msg = \
-        "Error during Orchestration Template creation: new template content cannot be empty"
+    flash_msg = "Error during Orchestration Template creation: new template content cannot be empty"
     collection = appliance.collections.orchestration_templates
     with pytest.raises(Exception, match=flash_msg):
         collection.create(template_group=templates.get(template_type)[1],
@@ -174,7 +176,7 @@ def test_tag_orchestration_template(tag, created_template):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h
     """
@@ -195,8 +197,9 @@ def test_duplicated_content_error_validation(appliance, created_template, templa
     """Tests that we are not allowed to have duplicated content in different templates
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     collection = appliance.collections.orchestration_templates
     if action == "copy":
@@ -223,8 +226,9 @@ def test_service_dialog_creation_from_customization_template(request, created_te
     """Tests Service Dialog creation  from customization template
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     dialog_name = created_template.template_name
     service_dialog = created_template.create_service_dialog_from_template(dialog_name)

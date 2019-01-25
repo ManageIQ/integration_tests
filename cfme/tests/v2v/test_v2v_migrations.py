@@ -46,7 +46,7 @@ def test_single_datastore_single_vm_migration(request, appliance, v2v_providers,
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -99,7 +99,7 @@ def test_single_network_single_vm_migration(request, appliance, v2v_providers, h
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -153,7 +153,7 @@ def test_dual_datastore_dual_vm_migration(request, appliance, v2v_providers, hos
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -208,7 +208,7 @@ def test_dual_nics_migration(request, appliance, v2v_providers, host_creds, conv
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -260,7 +260,7 @@ def test_dual_disk_vm_migration(request, appliance, v2v_providers, host_creds, c
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -314,7 +314,7 @@ def test_migrations_different_os_templates(request, appliance, v2v_providers, ho
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """
@@ -367,7 +367,7 @@ def test_single_vm_migration_with_ssh(request, appliance, v2v_providers, host_cr
     Polarion:
         assignee: kkulkarn
         casecomponent: V2V
-        initialEstimate: None
+        initialEstimate: 1/4h
         subcomponent: RHV
         upstream: yes
     """

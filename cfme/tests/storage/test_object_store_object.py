@@ -17,7 +17,7 @@ def test_object_add_remove_tag(appliance, provider):
     """
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     collection = appliance.collections.object_store_objects.filter({'provider': provider})
     all_objects = collection.all()

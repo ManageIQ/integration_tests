@@ -15,7 +15,7 @@ def test_configure_vmdb_last_start_time(appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -47,7 +47,7 @@ def test_configuration_database_garbage_collection(appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
     """

@@ -179,7 +179,7 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/12h
     """
     updated_description = "edited_{}".format(fauxfactory.gen_alpha())
@@ -201,7 +201,7 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/6h
     """
     credential = credentials_collection.create(
@@ -245,7 +245,7 @@ def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/6h
     """
     "Tests if playbooks list changed after playbooks repo removing"
@@ -271,7 +271,7 @@ def test_control_crud_ansible_playbook_action(request, catalog_item, action_coll
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         initialEstimate: 1/12h
     """
     action = action_collection.create(
@@ -310,7 +310,7 @@ def test_control_add_ansible_playbook_action_invalid_address(request, catalog_it
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         initialEstimate: 1/12h
     """
     action = action_collection.create(
@@ -343,7 +343,7 @@ def test_embedded_ansible_credential_with_private_key(request, wait_for_ansible,
 
     Polarion:
         assignee: dmisharo
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
     """

@@ -77,8 +77,9 @@ def test_storage_snapshot_create_cancelled_validation(volume):
         * Assert flash message
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: apagac
+        initialEstimate: 1/4h
+        casecomponent: Cloud
     """
 
     snapshot_name = fauxfactory.gen_alpha()
@@ -102,8 +103,9 @@ def test_storage_snapshot_create_reset_validation(volume):
         * Assert flash message
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: apagac
+        initialEstimate: 1/4h
+        casecomponent: Cloud
     """
 
     snapshot_name = fauxfactory.gen_alpha()
@@ -124,8 +126,9 @@ def test_storage_volume_snapshot_crud(volume):
         * Delete a snapshot
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: apagac
+        initialEstimate: 1/4h
+        casecomponent: Cloud
     """
 
     # create new snapshot
@@ -173,8 +176,9 @@ def test_storage_volume_snapshot_edit_tag_from_detail(snapshot, tag):
         * Remove Tag
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Configuration
     """
 
     # add tag with category Department and tag communication

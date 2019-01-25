@@ -282,7 +282,7 @@ def test_validate_cpu_usage(resource_usage, metering_report):
     Polarion:
         assignee: nachandr
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     for groups in metering_report:
         if groups["CPU Used"]:
@@ -303,7 +303,7 @@ def test_validate_memory_usage(resource_usage, metering_report):
 
     Polarion:
         assignee: tpapaioa
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     for groups in metering_report:
         if groups["Memory Used"]:
@@ -323,7 +323,7 @@ def test_validate_network_usage(resource_usage, metering_report):
     Polarion:
         assignee: nachandr
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     for groups in metering_report:
         if groups["Network I/O Used"]:
@@ -341,7 +341,7 @@ def test_validate_disk_usage(resource_usage, metering_report):
 
     Polarion:
         assignee: tpapaioa
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     for groups in metering_report:
         if groups["Disk I/O Used"]:
@@ -358,7 +358,7 @@ def test_validate_storage_usage(resource_usage, metering_report):
 
     Polarion:
         assignee: tpapaioa
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     for groups in metering_report:
         if groups["Storage Used"]:

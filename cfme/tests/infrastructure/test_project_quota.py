@@ -119,7 +119,7 @@ def test_project_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pr
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
     """
     with new_user:

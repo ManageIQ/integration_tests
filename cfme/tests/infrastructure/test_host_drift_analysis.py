@@ -67,7 +67,7 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
     """
 

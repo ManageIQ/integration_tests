@@ -355,8 +355,8 @@ def test_hard_reboot(appliance, provider, testing_instance, ensure_vm_running, s
         test_flag: power_control, provision
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ghubale
+        initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     view = navigate_to(testing_instance, 'Details')
@@ -379,7 +379,7 @@ def test_hard_reboot_unsupported(appliance, testing_instance):
         test_flag: power_control, provision
 
     Polarion:
-        assignee: bsquizza
+        assignee: ghubale
         initialEstimate: 1/8h
     """
     testing_instance.power_control_from_cfme(option=testing_instance.HARD_REBOOT,
@@ -401,7 +401,7 @@ def test_suspend(appliance, provider, testing_instance, ensure_vm_running, soft_
         test_flag: power_control, provision
 
     Polarion:
-        assignee: bsquizza
+        assignee: ghubale
         initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
@@ -423,8 +423,8 @@ def test_unpause(appliance, provider, testing_instance, ensure_vm_paused, soft_a
         test_flag: power_control, provision
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ghubale
+        initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_PAUSED)
     testing_instance.power_control_from_cfme(option=testing_instance.START)
@@ -443,7 +443,7 @@ def test_resume(appliance, provider, testing_instance, ensure_vm_suspended, soft
         test_flag: power_control, provision
 
     Polarion:
-        assignee: bsquizza
+        assignee: ghubale
         initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_SUSPENDED)
@@ -483,7 +483,7 @@ def test_instance_power_options_from_on(provider, testing_instance, ensure_vm_ru
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/10h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
@@ -499,7 +499,7 @@ def test_instance_power_options_from_off(provider, testing_instance,
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/10h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_OFF,

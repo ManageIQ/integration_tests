@@ -21,7 +21,7 @@ def test_service_catalog_crud_ui(appliance, context, order_ansible_service_in_op
 
     Polarion:
         assignee: sshveta
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
 
     service_name = order_ansible_service_in_ops_ui

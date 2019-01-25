@@ -10,8 +10,8 @@ pytestmark = [pytest.mark.tier(3),
 def test_physical_overview_page(appliance, setup_provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     providers = appliance.collections.physical_providers
     view = navigate_to(providers, 'Overview')
@@ -21,8 +21,8 @@ def test_physical_overview_page(appliance, setup_provider):
 def test_physical_overview_servers_number(appliance, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     providers = appliance.collections.physical_providers
     servers = provider.mgmt.list_servers()
@@ -33,8 +33,8 @@ def test_physical_overview_servers_number(appliance, provider):
 def test_physical_overview_switches_number(appliance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     providers = appliance.collections.physical_providers
     switches = appliance.collections.physical_switches.all()

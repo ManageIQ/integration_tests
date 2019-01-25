@@ -14,8 +14,8 @@ def test_system_image_type_crud(appliance):
     Tests a System Image Type using CRUD operations.
 
     Polarion:
-        assignee: dmisharo
-        casecomponent: automate
+        assignee: pvala
+        casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/10h
     """
@@ -33,8 +33,9 @@ def test_system_image_duplicate_name_error_validation(appliance):
     Tests a System Image for duplicate name.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     collection = appliance.collections.system_image_types
     name = fauxfactory.gen_alphanumeric(8)
@@ -58,8 +59,9 @@ def test_name_required_error_validation_system_image(appliance):
     Tests a System Image with no name.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     collection = appliance.collections.system_image_types
     with pytest.raises(Exception, match='Name is required'):
@@ -87,7 +89,7 @@ def test_system_image_type_selective_delete(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/12h
     """

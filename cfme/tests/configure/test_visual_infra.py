@@ -141,7 +141,7 @@ def test_infra_grid_page_per_item(appliance, request, page, value, set_grid):
 
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -172,7 +172,7 @@ def test_infra_tile_page_per_item(appliance, request, page, value, set_tile):
 
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -203,7 +203,7 @@ def test_infra_list_page_per_item(appliance, request, page, value, set_list):
 
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -235,7 +235,7 @@ def test_infra_report_page_per_item(appliance, value, set_report, get_report):
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -266,7 +266,7 @@ def test_infra_start_page(visual, request, appliance, start_page):
 
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -291,7 +291,7 @@ def test_infraprovider_noquads(request, set_infra_provider_quad):
 
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -308,7 +308,7 @@ def test_host_noquads(appliance, request, set_host_quad):
 
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -326,7 +326,7 @@ def test_datastore_noquads(request, set_datastore_quad, appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -344,7 +344,7 @@ def test_vm_noquads(appliance, request, set_vm_quad):
 
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -362,7 +362,7 @@ def test_template_noquads(appliance, set_template_quad):
 
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
     """

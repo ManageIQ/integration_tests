@@ -44,7 +44,7 @@ def test_method_crud(klass):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/16h
     """
@@ -73,7 +73,7 @@ def test_automate_method_inputs_crud(klass):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/8h
     """
     method = klass.methods.create(
@@ -111,7 +111,7 @@ def test_duplicate_method_disallowed(request, klass):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseposneg: negative
         initialEstimate: 1/10h
     """

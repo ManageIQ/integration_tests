@@ -13,7 +13,7 @@ def test_add_cloud_provider_screen():
     """
     Polarion:
         assignee: pvala
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 3h
         setup:

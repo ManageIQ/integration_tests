@@ -21,7 +21,7 @@ def test_each_page(appliance):
     """
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     view = navigate_to(appliance.server, 'Dashboard')
     # test meta is here and CFME will be displayed correctly in IE11

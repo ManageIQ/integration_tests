@@ -15,7 +15,7 @@ def test_session_timeout(request, appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/8h
     """
@@ -58,7 +58,7 @@ def test_bind_timeout_rest(appliance, request):
         assignee: pvala
         casecomponent: Rest
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     old_bind = appliance.advanced_settings.get('authentication', {}).get('bind_timeout')
     if not old_bind:

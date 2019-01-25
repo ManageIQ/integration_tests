@@ -90,7 +90,7 @@ def test_ssa_vddk(vm, configure_vddk):
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
     """
     vm.smartstate_scan(wait_for_task_result=True)

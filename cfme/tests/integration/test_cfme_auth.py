@@ -124,7 +124,7 @@ def test_login_evm_group(appliance, auth_user, user_obj, soft_assert):
 
     Polarion:
         assignee: mpusater
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     # get a list of groups for the user that match evm default group names
     # Replace spaces with dashes in UPN type usernames for login compatibility
@@ -188,7 +188,7 @@ def test_login_retrieve_group(appliance, request, auth_mode, auth_provider, soft
 
     Polarion:
         assignee: mpusater
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     # get a list of (user_obj, groupname) tuples, creating the user object inline
     # filtering on those that do NOT evmgroup in groupname
@@ -267,8 +267,9 @@ def test_login_local_group(appliance, local_user, local_group, soft_assert):
 
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: apagac
+        initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     # modify auth settings to not get groups
     appliance.server.authentication.auth_settings = {'auth_settings': {'get_groups': False}}
@@ -294,8 +295,9 @@ def test_user_group_switching(appliance, auth_user, auth_mode, auth_provider, so
     """Test switching groups on a single user, between retreived group and built-in group
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: apagac
+        initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     retrieved_groups = []
     for group in auth_user.groups:

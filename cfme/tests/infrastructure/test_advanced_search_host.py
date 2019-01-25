@@ -63,7 +63,7 @@ def test_can_open_host_advanced_search(hosts_advanced_search):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -75,7 +75,7 @@ def test_host_filter_without_user_input(host_collection, hosts, hosts_with_vm_co
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -98,7 +98,7 @@ def test_host_filter_with_user_input(host_collection, hosts, hosts_with_vm_count
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -121,7 +121,7 @@ def test_host_filter_with_user_input_and_cancellation(host_collection, hosts, ho
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -141,7 +141,7 @@ def test_host_filter_save_cancel(hosts_advanced_search,
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -161,7 +161,7 @@ def test_host_filter_save_and_load(host_collection, request, hosts, hosts_with_v
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -187,7 +187,7 @@ def test_host_filter_save_and_cancel_load(host_collection, request, hosts, hosts
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -215,7 +215,7 @@ def test_host_filter_save_and_load_cancel(
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -247,7 +247,7 @@ def test_quick_search_without_host_filter(host_collection, request, hosts, hosts
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -269,7 +269,7 @@ def test_quick_search_with_host_filter(host_collection, request, hosts, hosts_wi
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -291,7 +291,7 @@ def test_can_delete_host_filter(host_collection, hosts_advanced_search):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -313,7 +313,7 @@ def test_delete_button_should_appear_after_save_host(host_collection,
 
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -334,7 +334,7 @@ def test_cannot_delete_host_filter_more_than_once(host_collection, hosts_advance
 
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """

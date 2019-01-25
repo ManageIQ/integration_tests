@@ -44,7 +44,7 @@ def test_graph_screen(provider, interval, graph_type, enable_candu):
     Polarion:
         assignee: nachandr
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     vm_collection = provider.appliance.provider_based_collection(provider)
     vm = vm_collection.instantiate("cu-24x7", provider)

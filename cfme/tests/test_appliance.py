@@ -207,9 +207,9 @@ def test_html5_ssl_files_present(appliance, soft_assert):
 
     Polarion:
         assignee: joden
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     cert = conf.cfme_data['vm_console']['cert']
     cert_file = os.path.join(cert.install_dir, 'server.cer')
@@ -269,8 +269,8 @@ def test_appliance_console_packages(appliance):
     """Test that we have no scl packages installed.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
     """
     assert appliance.ssh_client.run_command('scl --list | grep -v rh-ruby').success
 
@@ -284,7 +284,7 @@ def test_appliance_chrony_conf():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/12h
@@ -301,7 +301,7 @@ def test_appliance_executing_script():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -339,7 +339,7 @@ def test_appliance_log_rotate_postgres():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/12h
         startsin: 5.6
     """
@@ -357,7 +357,7 @@ def test_appliance_log_rotate_evm():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/12h
         startsin: 5.6
     """
@@ -373,7 +373,7 @@ def test_appliance_log_crond():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/12h
@@ -393,7 +393,7 @@ def test_appliance_exec_scripts():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -410,7 +410,7 @@ def test_appliance_replicate_database_disconnection_with_backlog():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/2h
     """
     pass
@@ -426,7 +426,7 @@ def test_appliance_replicate_sync_role_change_with_backlog():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         endsin: 5.6
         initialEstimate: 1/2h
     """
@@ -442,7 +442,7 @@ def test_appliance_replicate_database_disconnection():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/2h
     """
     pass
@@ -457,7 +457,7 @@ def test_appliance_log_error():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/2h

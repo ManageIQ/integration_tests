@@ -18,8 +18,8 @@ def test_physical_switch_details(physical_switch):
     """Navigate to the physical switch details page and verify that the page is displayed
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_switch_view = navigate_to(physical_switch, 'Details')
     assert physical_switch_view.is_displayed
@@ -29,8 +29,8 @@ def test_physical_switch_details_dropdowns(physical_switch):
     """Navigate to the physical switch details page and verify that the menus are present
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_switch_view = navigate_to(physical_switch, 'Details')
 

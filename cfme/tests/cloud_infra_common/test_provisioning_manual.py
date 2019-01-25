@@ -12,7 +12,7 @@ def test_provision_bad_password():
 
     Polarion:
         assignee: jhenner
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.8
@@ -29,7 +29,7 @@ def test_provision_request_approved_msg():
 
     Polarion:
         assignee: jhenner
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
@@ -45,7 +45,7 @@ def test_service_provision_azure():
 
     Polarion:
         assignee: jhenner
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/8h
         startsin: 5.6
         upstream: yes
@@ -64,7 +64,7 @@ def test_none_public_ip_provision_azure():
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
@@ -87,7 +87,7 @@ def test_template_list_of_provider():
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -107,7 +107,7 @@ def test_vmware_default_placement_vmware():
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: Provisioning
         initialEstimate: 1/6h
         startsin: 5.7
     """
@@ -125,7 +125,7 @@ def test_provision_with_storage_profile_vsphere():
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: Provisioning
         initialEstimate: 1/6h
         startsin: 5.7
         tags: provision, vmware
@@ -149,7 +149,7 @@ def test_vm_placement_with_duplicated_folder_name_vmware():
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: low
         initialEstimate: 1/4h
         startsin: 5.7
@@ -173,7 +173,7 @@ def test_multiple_vm_provision_with_public_ip_azure():
 
     Polarion:
         assignee: jhenner
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -210,7 +210,7 @@ def test_provision_image_managed_azure():
 
     Polarion:
         assignee: jhenner
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/4h
         upstream: yes
     """
@@ -225,7 +225,7 @@ def test_provision_from_private_image_azure():
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -243,7 +243,7 @@ def test_provision_market_place_image_azure():
 
     Polarion:
         assignee: jhenner
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -261,7 +261,7 @@ def test_provision_fileshare_scvmm():
 
     Polarion:
         assignee: jhenner
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.7
@@ -280,7 +280,7 @@ def test_provision_host_maintenancemode_scvmm():
 
     Polarion:
         assignee: jhenner
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.7
@@ -298,7 +298,7 @@ def test_service_provision_managed_image_azure():
 
     Polarion:
         assignee: jhenner
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/6h
     """
     pass
@@ -314,7 +314,7 @@ def test_admin_username_azure():
 
     Polarion:
         assignee: jhenner
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/10h
@@ -338,7 +338,7 @@ def test_create_provisioning_dialog_without_dialog_type():
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/4h
@@ -371,7 +371,7 @@ def test_auto_placement_provision_to_dvswitch_vlan_vmware():
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/12h
     """

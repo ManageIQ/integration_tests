@@ -88,7 +88,7 @@ def test_run_datastore_analysis(setup_provider, datastore, soft_assert, datastor
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/3h
     """

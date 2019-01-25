@@ -15,7 +15,7 @@ def test_restart_workers(appliance):
     Polarion:
         assignee: mmojzis
         caseimportance: low
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     worker = appliance.collections.diagnostic_workers.instantiate(name="Generic Worker")
     pids = worker.reload_worker()

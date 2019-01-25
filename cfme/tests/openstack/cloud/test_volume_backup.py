@@ -149,8 +149,8 @@ def attached_volume(appliance, provider, volume_backup, new_instance):
 def test_create_volume_backup(volume_backup):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     assert volume_backup.exists
     assert volume_backup.size == VOLUME_SIZE
@@ -160,8 +160,8 @@ def test_create_volume_backup(volume_backup):
 def test_create_volume_incremental_backup(incremental_backup):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     assert incremental_backup.exists
     assert incremental_backup.size == VOLUME_SIZE
@@ -171,8 +171,8 @@ def test_create_volume_incremental_backup(incremental_backup):
 def test_incr_backup_of_attached_volume_crud(appliance, provider, request, attached_volume):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     backup_name = fauxfactory.gen_alpha()
     collection = appliance.collections.volume_backups.filter({'provider': provider})
@@ -204,8 +204,8 @@ def test_incr_backup_of_attached_volume_crud(appliance, provider, request, attac
 def test_create_backup_of_volume_with_type(volume_backup_with_type):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     assert volume_backup_with_type.exists
     assert volume_backup_with_type.size == VOLUME_SIZE
@@ -215,8 +215,8 @@ def test_create_backup_of_volume_with_type(volume_backup_with_type):
 def test_restore_volume_backup(volume_backup):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     if volume_backup.status == 'available':
         volume_backup.restore(volume_backup.volume)
@@ -228,8 +228,8 @@ def test_restore_volume_backup(volume_backup):
 def test_restore_incremental_backup(incremental_backup):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     if incremental_backup.status == 'available':
         incremental_backup.restore(incremental_backup.volume)

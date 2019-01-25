@@ -46,8 +46,8 @@ def enumerate_events_and_refresh_physical_infra_provider(appliance, provider):
 def test_get_physical_infra_provider_power_event(appliance, physical_server, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     previous_num_events = enumerate_physical_infra_provider_events(appliance)
     physical_server.action.restart_now()

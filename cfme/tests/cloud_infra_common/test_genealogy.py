@@ -61,7 +61,7 @@ def test_vm_genealogy_detected(
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
     """

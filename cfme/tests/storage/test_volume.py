@@ -54,8 +54,9 @@ def test_storage_volume_create_cancelled_validation(appliance, provider):
         * Assert flash message
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Cloud
     """
     volume_collection = appliance.collections.volumes
     manager_name = '{} Cinder Manager'.format(provider.name)
@@ -82,8 +83,9 @@ def test_storage_volume_crud(appliance, provider):
         * Delete volume
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Cloud
     """
     # create volume
     volume_collection = appliance.collections.volumes
@@ -121,8 +123,9 @@ def test_storage_volume_edit_tag(volume):
         * Remove tag and check
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Cloud
     """
 
     # add tag with category Department and tag communication
@@ -144,6 +147,7 @@ def test_multiple_cloud_volumes_tag_edit(appliance, soft_assert):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/12h
+        casecomponent: Configuration
     """
     all_volumes = appliance.collections.volumes.all()
     volumes = all_volumes[:3] if len(all_volumes) > 4 else all_volumes

@@ -47,7 +47,7 @@ def test_tag_mapping_azure_instances(vm, map_tags, refresh_provider):
     """"
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/12h
         testSteps:
@@ -82,7 +82,7 @@ def test_ec2_tags_mapping():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/5h
         startsin: 5.8
@@ -110,7 +110,7 @@ def test_ec2_tags_instances():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
@@ -132,7 +132,7 @@ def test_ec2_tags_images():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8

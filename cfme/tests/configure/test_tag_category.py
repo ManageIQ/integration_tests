@@ -19,7 +19,7 @@ def test_category_crud(appliance, soft_assert):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h
     """

@@ -65,8 +65,8 @@ def test_host_most_recent_hour_graph_screen(graph_type, provider, host, enable_c
         * Check data for legends collected or not
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nachandr
+        initialEstimate: 1/4h
     """
 
     host.wait_candu_data_available(timeout=1200)
@@ -125,7 +125,7 @@ def test_graph_screen(provider, interval, graph_type, host, enable_candu):
     Polarion:
         assignee: nachandr
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     wait_for(
         host.capture_historical_data,
@@ -203,8 +203,8 @@ def test_tagwise(provider, interval, graph_type, gp_by, candu_tag_vm, enable_can
         * 1367560
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nachandr
+        initialEstimate: 1/4h
     """
     # Capture historical data for cu-24x7 and its host
     candu_tag_vm.capture_historical_data()

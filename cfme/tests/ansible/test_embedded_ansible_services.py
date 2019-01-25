@@ -186,7 +186,7 @@ def test_service_ansible_playbook_available(appliance):
     """
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/6h
     """
     view = navigate_to(appliance.collections.catalog_items, "Choose Type")
@@ -199,7 +199,7 @@ def test_service_ansible_playbook_crud(appliance, ansible_repository):
     """
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/6h
     """
     cat_item = appliance.collections.catalog_items.create(
@@ -240,7 +240,7 @@ def test_service_ansible_playbook_tagging(ansible_catalog_item):
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
     """
     added_tag = ansible_catalog_item.add_tag()
@@ -258,7 +258,7 @@ def test_service_ansible_playbook_negative(appliance):
     """
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseposneg: negative
         initialEstimate: 1/6h
     """
@@ -279,7 +279,7 @@ def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
@@ -300,7 +300,7 @@ def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catal
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -329,7 +329,7 @@ def test_service_ansible_playbook_confirm(appliance, soft_assert):
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -377,8 +377,8 @@ def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item, 
     unavailable host.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sbulage
+        initialEstimate: 1/4h
     """
     service_catalog.ansible_dialog_values = {"hosts": order_value}
     service_catalog.order()
@@ -397,7 +397,7 @@ def test_service_ansible_playbook_plays_table(service_catalog, service_request, 
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: low
         initialEstimate: 1/6h
     """
@@ -417,7 +417,7 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -439,8 +439,8 @@ def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_reque
     retirement.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sbulage
+        initialEstimate: 1/4h
     """
     service_catalog.order()
     service_request.wait_for_request()
@@ -469,7 +469,7 @@ def test_service_ansible_execution_ttl(request, service_catalog, ansible_catalog
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 2h
     """
@@ -505,8 +505,8 @@ def test_custom_button_ansible_credential_list(custom_service_button, service_ca
     https://bugzilla.redhat.com/show_bug.cgi?id=1448918
 
     Polarion:
-        assignee: dmisharo
-        casecomponent: automate
+        assignee: sbulage
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -531,8 +531,8 @@ def test_ansible_group_id_in_payload(service_catalog, service_request, service):
     In order to get manageiq payload the service's standard output should be parsed.
 
     Polarion:
-        assignee: dmisharo
-        casecomponent: ansible
+        assignee: sbulage
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -556,8 +556,8 @@ def test_embed_tower_exec_play_against_amazon(request, provider, setup_provider,
         ansible_catalog_item, service, ansible_amazon_credential, service_catalog):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sbulage
+        initialEstimate: 1/4h
     """
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {

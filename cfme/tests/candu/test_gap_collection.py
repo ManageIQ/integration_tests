@@ -52,9 +52,9 @@ def test_gap_collection(appliance, provider, element, graph_type, order_data):
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     if element == 'host':
         collection = appliance.collections.hosts

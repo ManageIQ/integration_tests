@@ -67,7 +67,7 @@ def test_custom_button_display(request, display, setup_obj, button_group):
         caseposneg: positive
         testtype: functional
         startsin: 5.10
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create custom button group with the Object type
@@ -118,7 +118,7 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
         caseposneg: positive
         testtype: functional
         startsin: 5.10
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create custom button group with the Object type
@@ -196,7 +196,7 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
         caseposneg: positive
         testtype: functional
         startsin: 5.10
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create custom button group with the Object type
@@ -263,7 +263,7 @@ def test_custom_button_expression(appliance, request, setup_obj, button_group, e
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create custom button group with the Object type

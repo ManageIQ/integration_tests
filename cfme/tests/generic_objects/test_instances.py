@@ -128,9 +128,10 @@ def generic_object_button(appliance, generic_object_button_group, definition):
 def test_generic_objects_crud(appliance, context, request):
     """
     Polarion:
-        assignee: mkourim
+        assignee: jdupuy
         initialEstimate: 1/4h
         tags: 5.9
+        casecomponent: GenericObjects
     """
     with appliance.context.use(context):
         definition = appliance.collections.generic_object_definitions.create(
@@ -192,8 +193,9 @@ def test_generic_objects_with_buttons_ui(appliance, request, add_generic_object_
             test_flag: ui
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: GenericObjects
     """
     instance = add_generic_object_to_service
     generic_button = generic_object_button(button_group)
@@ -217,7 +219,7 @@ def test_generic_objects_tag_ui(appliance, generic_object, tag_place):
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     with appliance.context.use(ViaUI):
         assigned_tag = generic_object.add_tag(details=tag_place)
@@ -241,7 +243,7 @@ def test_generic_objects_tag_rest(appliance, generic_object, tags):
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     tag = tags[0]
     with appliance.context.use(ViaREST):

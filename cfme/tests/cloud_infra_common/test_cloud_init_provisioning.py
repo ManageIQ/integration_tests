@@ -122,9 +122,10 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(lambda provider, appliance:
-    not provider.one_of(RHEVMProvider) or appliance.version < '5.10.0.12',
+@pytest.mark.uncollectif(
+    lambda appliance: appliance.version < '5.10.0.12',
     reason='Required customization template is only available in CFME 5.10.0.12 or greater.')
+@pytest.mark.provider([RHEVMProvider], override=True)
 def test_provision_cloud_init_payload(appliance, request, setup_provider, provider, provisioning,
                                       vm_name):
     """
@@ -135,8 +136,8 @@ def test_provision_cloud_init_payload(appliance, request, setup_provider, provid
         test_flag: cloud_init, provision
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
     """
     image = provisioning.get('ci-image', None)
     if not image:

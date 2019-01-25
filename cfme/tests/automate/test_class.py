@@ -44,7 +44,7 @@ def test_class_crud(namespace):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/30h
     """
@@ -69,7 +69,7 @@ def test_schema_crud(request, namespace):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/20h
     """
@@ -96,7 +96,7 @@ def test_schema_duplicate_field_disallowed(request, domain):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/16h
     """
@@ -121,7 +121,7 @@ def test_duplicate_class_disallowed(namespace):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseposneg: negative
         initialEstimate: 1/30h
     """
@@ -136,7 +136,7 @@ def test_same_class_name_different_namespace(request, domain):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/16h
     """
     ns1 = domain.namespaces.create(
@@ -173,7 +173,7 @@ def test_class_display_name_unset_from_ui(request, namespace):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/30h
     """
     a_class = namespace.classes.create(

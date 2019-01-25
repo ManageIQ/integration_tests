@@ -92,23 +92,26 @@ docstrings:
             - system
             - acceptance
         casecomponent:
-            - ansible
-            - appl
-            - automate
-            - candu
-            - custom_button
-            - cloud
-            - config
+            - Ansible
+            - Appliance
+            - Automate
+            - CandU
+            - CustomButton
+            - Cloud
+            - Configuration
             - Containers
-            - control
-            - infra
-            - optimize
-            - prov
-            - report
+            - Control
+            - Events
+            - GenericObjects
+            - Infra
+            - Optimize
+            - Provisioning
+            - Quota
+            - Reporting
             - Rest
-            - services
-            - smartst
-            - ssui
-            - stack
+            - SelfServiceUI
+            - Services
+            - SmartState
+            - Stack
             - V2V
-            - web_ui
+            - WebUI

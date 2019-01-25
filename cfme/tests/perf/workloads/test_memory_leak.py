@@ -55,8 +55,8 @@ def test_workload_memory_leak(request, scenario, appliance, provider):
     running for a set period of time. Memory Monitor creates graphs and summary info.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     from_ts = int(time.time() * 1000)
     logger.debug('Scenario: {}'.format(scenario['name']))

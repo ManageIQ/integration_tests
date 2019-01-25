@@ -51,7 +51,7 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
     Polarion:
         assignee: nachandr
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate('cu-24x7', provider)
@@ -114,7 +114,7 @@ def test_graph_screen(provider, interval, graph_type, enable_candu):
     Polarion:
         assignee: nachandr
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate('cu-24x7', provider)

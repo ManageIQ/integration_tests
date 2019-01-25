@@ -47,7 +47,7 @@ def test_ntp_crud(request, appliance, empty_ntp_dict, ntp_servers_keys):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -69,7 +69,7 @@ def test_ntp_server_max_character(request, appliance, ntp_servers_keys, empty_nt
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/8h
     """
@@ -87,8 +87,9 @@ def test_ntp_conf_file_update_check(request, appliance, empty_ntp_dict, ntp_serv
 
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        casecomponent: Configuration
+        initialEstimate: 1/4h
     """
     request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
     ntp_file_date_stamp = appliance.ssh_client.run_command(
@@ -119,8 +120,9 @@ def test_ntp_conf_file_update_check(request, appliance, empty_ntp_dict, ntp_serv
 def test_ntp_server_check(request, appliance, ntp_servers_keys, empty_ntp_dict):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Configuration
     """
     request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
     orig_date = appliance_date(appliance)
@@ -159,7 +161,7 @@ def test_clear_ntp_settings(request, appliance, empty_ntp_dict):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/30h
     """

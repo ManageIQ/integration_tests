@@ -24,7 +24,7 @@ def test_run_cluster_analysis(appliance, provider):
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
     """
     cluster_coll = appliance.collections.clusters.filter({'provider': provider})

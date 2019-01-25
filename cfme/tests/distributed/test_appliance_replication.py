@@ -84,13 +84,8 @@ def configure_db_replication(db_address, appliance):
 
 
 @pytest.fixture(scope="module")
-def test_vm(virtualcenter_provider):
-    """Fixture to provision appliance to the provider being tested if necessary
-
-    Polarion:
-        assignee: None
-        initialEstimate: None
-    """
+def vm_obj(virtualcenter_provider):
+    """Fixture to provision appliance to the provider being tested if necessary"""
     vm_name = random_vm_name('distpwr')
     collection = virtualcenter_provider.appliance.provider_based_collection(virtualcenter_provider)
     vm = collection.instantiate(vm_name, virtualcenter_provider)
@@ -114,8 +109,9 @@ def test_appliance_replicate_between_regions(request, virtualcenter_provider):
         test_flag: replication
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     appl1, appl2 = get_replication_appliances()
 
@@ -145,8 +141,9 @@ def test_external_database_appliance(request, virtualcenter_provider, appliance)
         test_flag: replication
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     appl1, appl2 = get_distributed_appliances(appliance)
 
@@ -174,8 +171,9 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, a
         test_flag: replication
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     appl1, appl2 = get_replication_appliances()
     replication_conf = appliance.server.zone.region.replication
@@ -216,8 +214,9 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
         test_flag: replication
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     appl1, appl2 = get_replication_appliances()
     replication_conf = appliance.server.zone.region.replication
@@ -256,8 +255,9 @@ def test_appliance_replicate_database_disconnection(request, virtualcenter_provi
         test_flag: replication
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     appl1, appl2 = get_replication_appliances()
     replication_conf = appliance.server.zone.region.replication
@@ -295,8 +295,9 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
         test_flag: replication
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     appl1, appl2 = get_replication_appliances()
     replication_conf = appliance.server.zone.region.replication
@@ -327,7 +328,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
 @pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
-def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, ensure_vm_running,
+def test_distributed_vm_power_control(request, vm_obj, virtualcenter_provider, ensure_vm_running,
                                       register_event, soft_assert):
     """Tests that a replication parent appliance can control the power state of a
     VM being managed by a replication child appliance.
@@ -336,8 +337,9 @@ def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, 
         test_flag: replication
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     appl1, appl2 = get_replication_appliances()
 
@@ -354,15 +356,15 @@ def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, 
     appl2.ipapp.browser_steal = True
 
     with appl2.ipapp:
-        register_event(target_type='VmOrTemplate', target_name=test_vm.name,
+        register_event(target_type='VmOrTemplate', target_name=vm_obj.name,
                        event_type='request_vm_poweroff')
-        register_event(target_type='VmOrTemplate', target_name=test_vm.name,
+        register_event(target_type='VmOrTemplate', target_name=vm_obj.name,
                        event_type='vm_poweroff')
 
-        test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
-        navigate_to(test_vm.provider, 'Details')
-        test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=900)
-        soft_assert(test_vm.find_quadicon().data['state'] == 'off')
+        vm_obj.power_control_from_cfme(option=vm_obj.POWER_OFF, cancel=False)
+        navigate_to(vm_obj.provider, 'Details')
+        vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_OFF, timeout=900)
+        soft_assert(vm_obj.find_quadicon().data['state'] == 'off')
         soft_assert(
-            not test_vm.mgmt.is_running,
+            not vm_obj.mgmt.is_running,
             "vm running")

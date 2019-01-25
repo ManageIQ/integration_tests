@@ -67,7 +67,7 @@ def test_webmks_vm_console(request, appliance, provider, vm_obj, configure_webso
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
     """

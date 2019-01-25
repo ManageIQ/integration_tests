@@ -26,8 +26,8 @@ def test_creating_entities_emits_events(register_event, with_nuage_sandbox):
         need to start collecting events before we actually create the entities.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     listener = register_event
     sandbox = with_nuage_sandbox
@@ -66,8 +66,8 @@ def test_creating_entities_triggers_targeted_refresh(targeted_refresh, with_nuag
     fixture because we have to start tracking evm.log before we create the entites
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     sandbox = with_nuage_sandbox
     with targeted_refresh.timeout():

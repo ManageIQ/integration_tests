@@ -153,7 +153,7 @@ def test_custom_button_display(request, appliance, context, display, objects, bu
         caseposneg: positive
         testtype: functional
         startsin: 5.8
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create custom button group with the Object type
@@ -206,7 +206,7 @@ def test_custom_button_automate(request, appliance, context, submit, objects, bu
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create custom button group with the Object type
@@ -313,7 +313,7 @@ def test_custom_button_text_display(appliance, context, serv_button_group, servi
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Appliance with Service
@@ -454,7 +454,7 @@ def test_custom_button_on_vm_resource_detail(context):
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Add custom button for VM/Instance object from automation
@@ -480,7 +480,7 @@ def test_custom_button_role_access_service(context):
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create role by copying EvmRole-user_self_service
@@ -502,7 +502,7 @@ def test_custom_group_on_catalog_item():
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Add catalog_item
@@ -522,7 +522,7 @@ def test_custom_button_on_catalog_item():
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Add catalog_item
@@ -543,7 +543,7 @@ def test_custom_button_dialog_service_archived():
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create a button at the service level with InspectMe method
@@ -568,7 +568,7 @@ def test_custom_button_dialog(button_group):
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create custom button group with the Object type

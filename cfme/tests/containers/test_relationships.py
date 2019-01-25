@@ -90,8 +90,9 @@ def test_container_status_relationships_data_integrity(provider, appliance, soft
         is the same number that appears in the Relationships table containers field
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: juwatts
+        initialEstimate: 1/4h
+        casecomponent: Containers
     """
 
     pod_instances = PodCollection(appliance).all()

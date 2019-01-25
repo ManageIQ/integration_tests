@@ -63,7 +63,7 @@ def test_tag_dialog_catalog_item_ssui(appliance, catalog_item):
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: high
         initialEstimate: 1/8h
     """

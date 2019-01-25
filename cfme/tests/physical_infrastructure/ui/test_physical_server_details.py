@@ -18,8 +18,8 @@ def test_physical_server_details(physical_server):
     """Navigate to the physical server details page and verify that the page is displayed
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server_view = navigate_to(physical_server, 'Details')
     assert physical_server_view.is_displayed
@@ -29,8 +29,8 @@ def test_physical_server_details_dropdowns(physical_server):
     """Navigate to the physical server details page and verify that the menus are present
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server_view = navigate_to(physical_server, 'Details')
 
@@ -66,8 +66,8 @@ def test_network_devices(physical_server):
     """Navigate to the Network Devices page and verify that the page is displayed
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
 
     num_network_devices = physical_server.num_network_devices()
@@ -81,8 +81,8 @@ def test_storage_devices(physical_server):
     """Navigate to the Storage Devices page and verify that the page is displayed
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
 
     num_storage_devices = physical_server.num_storage_devices()
@@ -96,7 +96,7 @@ def test_physical_server_details_stats(physical_server):
     """Navigate to the physical server details page and verify that the stats match
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server.validate_stats(ui=True)

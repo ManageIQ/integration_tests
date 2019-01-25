@@ -21,7 +21,7 @@ def test_pxe_server_crud(pxe_name, pxe_server_crud):
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/6h
         upstream: yes

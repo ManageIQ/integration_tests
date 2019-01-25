@@ -92,7 +92,7 @@ def test_pdf_summary_infra_provider():
 
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/8h
         testSteps:

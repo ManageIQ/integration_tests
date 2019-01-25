@@ -15,8 +15,8 @@ def test_redfish_provider_crud(provider, has_no_physical_providers):
     """Tests provider add with good credentials
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     provider.create()
 

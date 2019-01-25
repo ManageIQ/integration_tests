@@ -8,8 +8,9 @@ def test_empty_region_description(appliance):
     """Test changing region description to empty field
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
+        casecomponent: Configuration
     """
     view = navigate_to(appliance.server.zone.region, 'ChangeRegionName')
     view.region_description.fill("")
@@ -24,8 +25,8 @@ def test_description_change(appliance, request):
     BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1350808
 
     Polarion:
-        assignee: anikifor
-        casecomponent: config
+        assignee: jhenner
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/20h
         testSteps:

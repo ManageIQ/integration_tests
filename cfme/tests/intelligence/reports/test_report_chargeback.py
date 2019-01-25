@@ -29,7 +29,7 @@ def test_charge_report_filter_owner(appliance, infra_provider, request):
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -67,7 +67,7 @@ def test_charge_report_filter_tag(appliance, infra_provider, request):
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
     """

@@ -15,8 +15,8 @@ pytestmark = [
 def test_number_of_cpu(provider, soft_assert):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view_details = navigate_to(provider, 'Details')
     v = view_details.entities.summary('Properties').get_text_of('Aggregate Node CPU Resources')
@@ -31,8 +31,8 @@ def test_number_of_cpu(provider, soft_assert):
 def test_node_memory(provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view_details = navigate_to(provider, 'Details')
     node_memory = view_details.entities.summary('Properties').get_text_of('Aggregate Node Memory')

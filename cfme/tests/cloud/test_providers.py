@@ -47,7 +47,7 @@ def test_add_cancelled_validation_cloud(request, appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/16h
     """
@@ -70,8 +70,8 @@ def test_add_cancelled_validation_cloud(request, appliance):
 def test_providers_discovery_amazon(appliance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     # This test was being uncollected anyway, and needs to be parametrized and not directory call
     # out to specific credential keys
@@ -97,7 +97,7 @@ def test_providers_discovery(request, appliance, provider):
 
     Polarion:
         assignee: pvala
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/8h
     """
@@ -134,7 +134,7 @@ def test_cloud_provider_add_with_bad_credentials(provider, enable_regions):
 
     Polarion:
         assignee: pvala
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/6h
     """
@@ -177,7 +177,7 @@ def test_cloud_provider_crud(provider, enable_regions):
 
     Polarion:
         assignee: pvala
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/3h
     """
@@ -202,7 +202,7 @@ def test_type_required_validation_cloud(request, appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/10h
     """
@@ -219,7 +219,7 @@ def test_name_required_validation_cloud(request, appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/15h
     """
@@ -266,7 +266,7 @@ def test_regions_all_azure():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/12h
         startsin: 5.6
@@ -284,7 +284,7 @@ def test_regions_disable_azure():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/10h
         testSteps:
@@ -306,7 +306,7 @@ def test_host_name_required_validation_cloud(request, appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/15h
     """
@@ -359,7 +359,7 @@ def test_name_max_character_validation_cloud(request, cloud_provider):
 
     Polarion:
         assignee: pvala
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/15h
     """
@@ -376,7 +376,7 @@ def test_hostname_max_character_validation_cloud(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/15h
     """
@@ -404,7 +404,7 @@ def test_api_port_max_character_validation_cloud(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/15h
     """
@@ -424,7 +424,7 @@ def test_api_port_max_character_validation_cloud(appliance):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider))
+@pytest.mark.provider([AzureProvider], scope="function", override=True)
 def test_azure_subscription_required(request, provider):
     """
     Tests that provider can't be added w/o subscription
@@ -434,7 +434,7 @@ def test_azure_subscription_required(request, provider):
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseposneg: negative
         initialEstimate: 1/10h
         testSteps:
@@ -463,8 +463,8 @@ def test_azure_multiple_subscription(appliance, request, soft_assert):
         test_flag: crud
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
     """
     pf = ProviderFilter(classes=[AzureProvider], required_flags=['crud'])
     providers = list_providers([pf])
@@ -492,8 +492,8 @@ def test_openstack_provider_has_api_version(appliance):
     """Check whether the Keystone API version field is present for Openstack.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
     """
     view = navigate_to(appliance.collections.cloud_providers, 'Add')
     view.fill({"prov_type": "OpenStack"})
@@ -507,7 +507,7 @@ def test_openstack_provider_has_dashboard(appliance, openstack_provider):
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/12h
         startsin: 5.10
     """
@@ -517,7 +517,7 @@ def test_openstack_provider_has_dashboard(appliance, openstack_provider):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider))
+@pytest.mark.provider([EC2Provider], scope="function", override=True)
 def test_select_key_pair_none_while_provisioning(appliance, request, has_no_cloud_providers,
                                                  provider):
     """
@@ -532,8 +532,8 @@ def test_select_key_pair_none_while_provisioning(appliance, request, has_no_clou
         5. None should be selected
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
     """
     if 'govcloud' in provider.data.tags:
         pytest.skip("providers with such tag aren't supported for some reason")
@@ -569,8 +569,8 @@ def test_azure_instance_password_requirements(appliance, request,
         5. Error message should be displayed.
 
     Polarion:
-        assignee: jhenner
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
     """
     view = navigate_to(appliance.collections.cloud_instances, 'Provision')
     view.image_table[0].click()
@@ -633,7 +633,7 @@ def test_display_network_topology(appliance, openstack_provider):
 
     Polarion:
         assignee: anikifor
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -669,7 +669,7 @@ class TestProvidersRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: cloud
+            casecomponent: Cloud
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -699,7 +699,7 @@ class TestProvidersRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: cloud
+            casecomponent: Cloud
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -757,8 +757,8 @@ def test_domain_id_validation(request, provider):
         * Validate without Domain ID
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     prov = provider
     prov.api_version = 'Keystone v3'
@@ -784,7 +784,7 @@ def test_public_ip_without_nic_azure():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/6h
         testSteps:
@@ -803,7 +803,7 @@ def test_sdn_nsg_arrays_refresh_azure():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/6h
         testSteps:
@@ -831,7 +831,7 @@ def test_provider_flavors_azure():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/8h
         startsin: 5.6
@@ -847,7 +847,7 @@ def test_market_place_images_azure():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/6h
         testSteps:
@@ -866,7 +866,7 @@ def test_upload_azure_image_to_azure():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/2h
         setup: # Video Demo Script - Upload VHD to Azure
@@ -898,7 +898,7 @@ def test_create_azure_vm_from_azure_image():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/2h
         setup: # Virtual Machine Name - as it appears in Azure

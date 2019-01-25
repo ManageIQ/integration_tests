@@ -29,7 +29,7 @@ def test_login(context, method, appliance):
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/8h
         tags: rbac
     """
@@ -55,7 +55,7 @@ def test_bad_password(context, request, appliance):
 
     Polarion:
         assignee: apagac
-        casecomponent: web_ui
+        casecomponent: WebUI
         initialEstimate: 1/8h
         tags: rbac
     """
@@ -85,7 +85,7 @@ def test_update_password(context, request, appliance):
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
     """
 

@@ -105,7 +105,7 @@ def test_dynamicdropdown_dialog(appliance, dialog, catalog):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
     """

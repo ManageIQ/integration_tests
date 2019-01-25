@@ -148,7 +148,7 @@ def test_current_service(appliance, context):
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
     """
 
@@ -163,7 +163,7 @@ def test_retiring_soon(appliance, context):
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
     """
 
@@ -178,7 +178,7 @@ def test_retired_service(appliance, context):
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
     """
 
@@ -210,7 +210,7 @@ def test_total_requests(appliance, context):
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
     """
 
@@ -225,7 +225,7 @@ def test_pending_requests(appliance, context):
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
     """
 
@@ -240,7 +240,7 @@ def test_approved_requests(appliance, context):
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
     """
 
@@ -255,7 +255,7 @@ def test_denied_requests(appliance, context):
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
     """
 

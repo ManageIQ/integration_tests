@@ -30,8 +30,9 @@ def test_iso_datastore_crud(setup_provider, no_iso_dss, provider):
         test_flag: iso
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Infra
     """
     template_crud = pxe.ISODatastore(provider.name)
     template_crud.create()

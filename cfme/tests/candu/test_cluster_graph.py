@@ -72,7 +72,7 @@ def test_graph_screen(provider, cluster, host, graph_type, interval, enable_cand
     Polarion:
         assignee: nachandr
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     host.capture_historical_data()
     cluster.wait_candu_data_available(timeout=1200)

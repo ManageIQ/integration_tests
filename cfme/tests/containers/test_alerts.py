@@ -7,11 +7,7 @@ from cfme.utils.providers import ProviderFilter
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda: current_version() < "5.9"),
-    pytest.mark.provider(gen_func=providers,
-                         filters=[ProviderFilter(classes=[ContainersProvider],
-                                                 required_flags=['prometheus_alerts'])],
-                         scope='function')
+    pytest.mark.provider(classes=[ContainersProvider], required_flags=['prometheus_alerts'])
 ]
 
 # TODO There needs to be more to this test
@@ -20,7 +16,7 @@ pytestmark = [
 def test_add_alerts_provider(provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: juwatts
+        initialEstimate: 1/4h
     """
     provider.setup()

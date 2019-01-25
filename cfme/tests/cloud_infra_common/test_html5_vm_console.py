@@ -72,7 +72,7 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
 
     Polarion:
         assignee: apagac
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     console_vm_username = credentials[provider.data.templates.get('console_template')
                             ['creds']].get('username')

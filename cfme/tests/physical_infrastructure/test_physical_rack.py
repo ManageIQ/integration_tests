@@ -21,8 +21,8 @@ def test_physical_rack_details_dropdowns(physical_rack):
     """Navigate to the physical rack details page and verify the refresh button
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_rack.refresh()
 
@@ -36,8 +36,8 @@ def test_physical_racks_view_dropdowns(physical_rack_collection):
     """Navigate to the physical racks page and verify that the dropdown menus are present
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_racks_view = navigate_to(physical_rack_collection, 'All')
 

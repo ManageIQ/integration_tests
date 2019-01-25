@@ -116,7 +116,7 @@ def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider, 
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/10h
     """
     prov_data.update(custom_prov_data)
@@ -161,7 +161,7 @@ def test_tenant_quota_enforce_via_service_cloud(request, appliance, provider, se
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/10h
     """
     with appliance.context.use(context):
@@ -207,7 +207,7 @@ def test_service_cloud_tenant_quota_with_default_entry_point(request, appliance,
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/12h
         testSteps:
