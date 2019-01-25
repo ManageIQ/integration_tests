@@ -703,10 +703,10 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
             logger.info('Authentication form reset, returning')
             return
         elif changed:
-            if validate and mode not in [AUTH_MODES['database'], AUTH_MODES['external'],
-                                         AUTH_MODES['ldap'], AUTH_MODES['ldaps']]:
-                view.form.auth_settings.validate.click()
-                view.flash.assert_no_error()
+            if validate and mode not in [AUTH_MODES['database'], AUTH_MODES['external']]:
+                if view.form.auth_settings.validate.is_displayed:
+                    view.form.auth_settings.validate.click()
+                    view.flash.assert_no_error()
             # FIXME BZ 1527239 This button goes disabled if a password field is 'changed' to same
             # on exception, log and continue
             # no exception - assert flash messages
