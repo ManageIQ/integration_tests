@@ -146,7 +146,7 @@ def get_provider_templates(provider_key, template_providers, unresponsive_provid
         with thread_lock:
             for template in templates:
                 # If it ends with 'db', skip it, it's a largedb/nodb variant
-                if template.lower().endswith('db'):
+                if template.lower().endswith('db') and not template.lower().endswith('extdb'):
                     continue
                 template_providers[template].append(provider_key)
     except Exception:
