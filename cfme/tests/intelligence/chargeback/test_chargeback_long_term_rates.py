@@ -389,8 +389,8 @@ def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_cust
     cost estimated in the chargeback_costs_custom fixture.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
     """
     if not chargeback_report_custom[0]["CPU Used Cost"]:
         pytest.skip('missing column in report')
@@ -411,8 +411,8 @@ def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_c
     cost estimated in the chargeback_costs_custom fixture.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
     """
     if not chargeback_report_custom[0]["Memory Used Cost"]:
         pytest.skip('missing column in report')
@@ -433,8 +433,8 @@ def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_
     cost estimated in the chargeback_costs_custom fixture.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
     """
     if not chargeback_report_custom[0]["Network I/O Used Cost"]:
         pytest.skip('missing column in report')
@@ -455,8 +455,8 @@ def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_cus
     cost estimated in the chargeback_costs_custom fixture.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
     """
     if not chargeback_report_custom[0]["Disk I/O Used Cost"]:
         pytest.skip('missing column in report')
@@ -476,8 +476,8 @@ def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_
     cost estimated in the chargeback_costs_custom fixture.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
     """
     if not chargeback_report_custom[0]["Storage Used Cost"]:
         pytest.skip('missing column in report')

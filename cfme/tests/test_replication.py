@@ -10,7 +10,7 @@ def test_replication_powertoggle():
 
     Polarion:
         assignee: jhenner
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/12h
     """
@@ -25,7 +25,7 @@ def test_replication_central_admin_vm_retirement():
 
     Polarion:
         assignee: jhenner
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/12h
     """
     pass
@@ -52,7 +52,7 @@ def test_replication_appliance_add_single_subscription():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/12h
         startsin: 5.7
@@ -69,7 +69,7 @@ def test_replication_delete_remote_from_global():
 
     Polarion:
         assignee: jhenner
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/5h
     """
@@ -83,8 +83,8 @@ def test_replication_low_bandwidth():
 
     Polarion:
         assignee: jhenner
-        casecomponent: infra
-        initialEstimate: None
+        casecomponent: Infra
+        initialEstimate: 1/4h
     """
     pass
 
@@ -98,7 +98,7 @@ def test_replication_re_add_deleted_remote():
 
     Polarion:
         assignee: jhenner
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/12h
     """
     pass
@@ -112,7 +112,7 @@ def test_replication_central_admin_ansible_playbook_service_from_global():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -129,7 +129,7 @@ def test_replication_remote_to_global_by_ip_pglogical():
 
     Polarion:
         assignee: jhenner
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/4h
         startsin: 5.6
@@ -147,7 +147,7 @@ def test_replication_appliance_set_type_global_ui():
 
     Polarion:
         assignee: jhenner
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/6h
         testtype: integration
@@ -164,7 +164,7 @@ def test_replication_appliance_add_multi_subscription():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.7
     """
@@ -180,7 +180,7 @@ def test_replication_appliance_set_type_remote_ui():
 
     Polarion:
         assignee: jhenner
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/12h
         testtype: integration
@@ -195,8 +195,8 @@ def test_replication_network_dropped_packets():
 
     Polarion:
         assignee: jhenner
-        casecomponent: infra
-        initialEstimate: None
+        casecomponent: Infra
+        initialEstimate: 1/4h
     """
     pass
 
@@ -210,7 +210,7 @@ def test_replication_global_region_dashboard():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     pass
@@ -225,7 +225,7 @@ def test_replication_global_to_remote_new_vm_from_template():
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: critical
         initialEstimate: 1/6h
     """
@@ -240,7 +240,7 @@ def test_replication_central_admin_vm_reconfigure():
 
     Polarion:
         assignee: jhenner
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/12h
     """
     pass
@@ -267,7 +267,7 @@ def test_replication_subscription_revalidation_pglogical():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
         testSteps:

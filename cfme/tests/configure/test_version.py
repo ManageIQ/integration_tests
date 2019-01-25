@@ -17,7 +17,7 @@ def test_appliance_version(appliance):
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     ssh_version = str(appliance.version)
     ui_version = about.get_detail(about.VERSION, server=appliance.server)

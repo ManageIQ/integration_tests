@@ -17,7 +17,7 @@ def test_catalog_crud(appliance):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/8h
     """
     catalog_name = fauxfactory.gen_alphanumeric()
@@ -37,7 +37,7 @@ def test_catalog_duplicate_name(appliance):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -55,7 +55,7 @@ def test_permissions_catalog_add(appliance, request):
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
     """

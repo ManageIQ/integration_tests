@@ -17,7 +17,7 @@ def test_provisioning_dialog_crud(appliance):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/10h
     """
     # CREATE
@@ -67,7 +67,7 @@ def test_provisioning_dialogs_sorting(appliance, name, by, order):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/30h
     """

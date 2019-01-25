@@ -47,7 +47,7 @@ def test_server_roles_changing(request, roles, appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h
     """

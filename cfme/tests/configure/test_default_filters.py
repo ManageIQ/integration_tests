@@ -14,7 +14,7 @@ def test_default_filters_reset(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: high
         initialEstimate: 1/8h
     """
@@ -30,7 +30,7 @@ def test_cloudimage_defaultfilters(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -45,7 +45,7 @@ def test_cloudinstance_defaultfilters(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -60,7 +60,7 @@ def test_infrastructurehost_defaultfilters(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -75,7 +75,7 @@ def test_infrastructurevms_defaultfilters(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -90,7 +90,7 @@ def test_infrastructuretemplates_defaultfilters(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -105,7 +105,7 @@ def test_servicetemplateandimages_defaultfilters(appliance, request):
     """
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -123,7 +123,7 @@ def test_servicevmsandinstances_defaultfilters(appliance, request):
     """
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
     """

@@ -451,7 +451,7 @@ def test_condition_crud(condition_collection, condition_prerequisites):
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -475,7 +475,7 @@ def test_action_crud(action_collection):
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: critical
         initialEstimate: 1/12h
     """
@@ -500,8 +500,8 @@ def test_policy_crud(policy_collection, policy_class):
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: control
-        initialEstimate: None
+        casecomponent: Control
+        initialEstimate: 1/4h
     """
     # CR
     policy = policy_collection.create(policy_class, fauxfactory.gen_alphanumeric())
@@ -519,7 +519,7 @@ def test_policy_copy(policy_class, policy):
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -537,8 +537,8 @@ def test_assign_two_random_events_to_control_policy(control_policy, control_poli
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: control
-        initialEstimate: None
+        casecomponent: Control
+        initialEstimate: 1/4h
     """
     random_events = random.sample(EVENTS, 2)
     control_policy.assign_events(*random_events)
@@ -555,7 +555,7 @@ def test_control_assign_actions_to_event(request, policy_class, policy, action):
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: critical
         initialEstimate: 1/12h
     """
@@ -582,7 +582,7 @@ def test_assign_condition_to_control_policy(request, policy_and_condition, condi
 
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -598,7 +598,7 @@ def test_policy_profile_crud(policy_profile_collection, two_random_policies):
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: critical
         initialEstimate: 1/12h
     """
@@ -622,7 +622,7 @@ def test_modify_condition_expression(condition_for_expressions, fill_type, expre
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -639,7 +639,7 @@ def test_alert_crud(alert_collection):
     """
     Polarion:
         assignee: jdupuy
-        casecomponent: control
+        casecomponent: Control
         initialEstimate: 1/12h
     """
     # CR
@@ -659,7 +659,7 @@ def test_control_alert_copy(alert):
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -675,7 +675,7 @@ def test_alert_profile_crud(request, alert_profile_class, alert_collection,
     """
     Polarion:
         assignee: jdupuy
-        casecomponent: control
+        casecomponent: Control
         caseimportance: critical
         initialEstimate: 1/12h
     """
@@ -701,7 +701,7 @@ def test_alert_profile_assigning(alert_profile, appliance):
     """
     Polarion:
         assignee: jdupuy
-        casecomponent: control
+        casecomponent: Control
         initialEstimate: 1/12h
     """
     view = appliance.browser.create_view(AlertProfileDetailsView)
@@ -727,7 +727,7 @@ def test_control_is_ansible_playbook_available_in_actions_dropdown(action_collec
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         initialEstimate: 1/12h
     """
     view = navigate_to(action_collection, "Add")
@@ -740,7 +740,7 @@ def test_alerts_monitor_overview_page(alert_collection, virtualcenter_provider,
     """
     Polarion:
         assignee: jdupuy
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
     """

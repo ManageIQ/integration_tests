@@ -18,7 +18,7 @@ def test_log_collect_current_zone_multiple_servers_server_setup():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -36,7 +36,7 @@ def test_log_collect_all_zone_zone_multiple_servers_server_setup():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -54,7 +54,7 @@ def test_log_collect_current_zone_multiple_servers():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -72,7 +72,7 @@ def test_log_collect_all_zone_multiple_servers():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -90,7 +90,7 @@ def test_log_collect_current_zone():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -108,7 +108,7 @@ def test_log_collect_all_zone_zone_setup():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -126,7 +126,7 @@ def test_log_collect_current_zone_zone_setup():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -143,7 +143,7 @@ def test_log_multiple_servers_unconfigured():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         testSteps:
@@ -166,7 +166,7 @@ def test_log_collect_all_zone_unconfigured():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/2h
@@ -184,7 +184,7 @@ def test_log_collect_current_zone_all_unconfigured():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/2h
@@ -227,7 +227,7 @@ def test_log_collection_via_ftp_over_ipv6():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         title: Log collection via FTP over IPv6

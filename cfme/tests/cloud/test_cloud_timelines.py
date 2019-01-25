@@ -260,8 +260,8 @@ def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
         test_flag: timelines, events
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
     """
     targets = (new_instance, new_instance.provider, azone)
     event = 'create'
@@ -278,8 +278,8 @@ def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
         test_flag: timelines, events
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
     """
     event = 'policy'
     targets = (new_instance, new_instance.provider)
@@ -295,8 +295,8 @@ def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
         test_flag: timelines, events
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
     """
     targets = (new_instance, new_instance.provider, azone)
     event = 'stop'
@@ -312,8 +312,8 @@ def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
         test_flag: timelines, events
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
     """
     targets = (new_instance, new_instance.provider, azone)
     event = 'start'
@@ -330,8 +330,8 @@ def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_asse
         test_flag: timelines, events
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
     """
     event = 'create'
     targets = (new_instance.appliance.server,)
@@ -348,8 +348,8 @@ def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
         test_flag: timelines, events
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
     """
     event = 'rename'
     targets = (new_instance, new_instance.provider, azone)
@@ -367,8 +367,8 @@ def test_cloud_timeline_delete_event(new_instance, soft_assert, azone):
         test_flag: timelines, events
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
     """
     event = 'delete'
     targets = (new_instance, new_instance.provider, azone)

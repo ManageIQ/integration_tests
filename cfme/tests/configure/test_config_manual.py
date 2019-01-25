@@ -15,7 +15,7 @@ def test_validate_landing_pages_for_rbac():
 
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/5h
         title: test validate landing pages for rbac

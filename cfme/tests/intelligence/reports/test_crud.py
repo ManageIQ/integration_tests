@@ -66,7 +66,7 @@ def test_custom_report_crud(custom_report_values, appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/16h
     """
@@ -87,7 +87,7 @@ def test_schedule_crud(schedule_data, appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/16h
     """
@@ -106,7 +106,7 @@ def test_reports_disable_enable_schedule(schedule_data, appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/10h
     """
@@ -125,7 +125,7 @@ def test_menuwidget_crud(appliance):
     """
     Polarion:
         assignee: jhenner
-        casecomponent: report
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     w = appliance.collections.dashboard_report_widgets.create(
@@ -153,7 +153,7 @@ def test_reportwidget_crud(appliance):
     """
     Polarion:
         assignee: jhenner
-        casecomponent: report
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     w = appliance.collections.dashboard_report_widgets.create(
@@ -181,7 +181,7 @@ def test_chartwidget_crud(appliance):
     """
     Polarion:
         assignee: jhenner
-        casecomponent: report
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     w = appliance.collections.dashboard_report_widgets.create(
@@ -206,7 +206,7 @@ def test_rssfeedwidget_crud(appliance):
     """
     Polarion:
         assignee: jhenner
-        casecomponent: report
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     w = appliance.collections.dashboard_report_widgets.create(
@@ -242,7 +242,7 @@ def test_dashboard_crud(appliance):
     """
     Polarion:
         assignee: jhenner
-        casecomponent: report
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     d = appliance.collections.report_dashboards.create(
@@ -267,7 +267,7 @@ def test_run_report(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/16h
     """
@@ -292,7 +292,7 @@ def test_import_report(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/16h
     """
@@ -327,7 +327,7 @@ def test_reports_delete_saved_report(appliance, request):
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/16h
     """
@@ -351,7 +351,7 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/16h
     """
@@ -383,7 +383,7 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/10h
     """
@@ -402,7 +402,7 @@ def test_report_schedules_invalid_email(appliance, schedule_data):
     """
         Polarion:
             assignee: pvala
-            casecomponent: report
+            casecomponent: Reporting
             initialEstimate: 1/12h
     """
     schedule_data["emails"] = (fauxfactory.gen_alpha(), fauxfactory.gen_alpha())

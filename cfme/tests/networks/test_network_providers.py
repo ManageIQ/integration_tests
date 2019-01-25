@@ -22,8 +22,8 @@ def test_add_cancelled_validation(request, appliance):
     """Tests that the flash message is correct when add is cancelled.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
     """
     collection = appliance.collections.network_providers
     try:
@@ -45,8 +45,8 @@ def test_network_provider_add_with_bad_credentials(provider):
         test_flag: crud
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
     """
     default_credentials = provider.default_endpoint.credentials
 
@@ -70,8 +70,8 @@ def test_network_provider_crud(provider, has_no_networks_providers):
         test_flag: crud
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
     """
     provider.create()
     provider.validate_stats(ui=True)

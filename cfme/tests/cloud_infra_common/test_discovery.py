@@ -73,7 +73,7 @@ def test_vm_discovery(request, setup_provider, provider, vm_crud):
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
 

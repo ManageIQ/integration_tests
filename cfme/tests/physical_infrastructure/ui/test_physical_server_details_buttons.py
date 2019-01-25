@@ -20,8 +20,8 @@ def physical_server(appliance, provider):
 def test_refresh_relationships(physical_server, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     last_refresh = provider.last_refresh_date()
     physical_server.refresh(provider, handle_alert=True)
@@ -32,8 +32,8 @@ def test_refresh_relationships(physical_server, provider):
 def test_power_off(physical_server, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server.power_off()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
@@ -43,8 +43,8 @@ def test_power_off(physical_server, provider):
 def test_power_on(physical_server, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server.power_on()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
@@ -54,8 +54,8 @@ def test_power_on(physical_server, provider):
 def test_power_off_immediately(physical_server, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server.power_off_immediately()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
@@ -65,8 +65,8 @@ def test_power_off_immediately(physical_server, provider):
 def test_restart(physical_server, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server.restart()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
@@ -76,8 +76,8 @@ def test_restart(physical_server, provider):
 def test_restart_immediately(physical_server, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server.restart_immediately()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
@@ -88,8 +88,8 @@ def test_restart_immediately(physical_server, provider):
 def test_turn_on_led(physical_server, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server.turn_on_led()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
@@ -99,8 +99,8 @@ def test_turn_on_led(physical_server, provider):
 def test_turn_off_led(physical_server, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server.turn_off_led()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
@@ -110,8 +110,8 @@ def test_turn_off_led(physical_server, provider):
 def test_turn_blink_led(physical_server, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server.turn_blink_led()
     view = provider.create_view(PhysicalServerDetailsView, physical_server)
@@ -122,8 +122,8 @@ def test_turn_blink_led(physical_server, provider):
 def test_lifecycle_provision(physical_server):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view = navigate_to(physical_server, "Provision")
     assert view.is_displayed
@@ -133,8 +133,8 @@ def test_lifecycle_provision(physical_server):
 def test_monitoring_button(physical_server):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view = navigate_to(physical_server, "Timelines")
     assert view.is_displayed

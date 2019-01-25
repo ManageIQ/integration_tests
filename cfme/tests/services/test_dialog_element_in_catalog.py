@@ -57,8 +57,9 @@ def test_dropdownlist_required_dialog_element(appliance, catalog_item):
     Testing BZ 1512398.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nansari
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     view = navigate_to(service_catalogs, 'Order')

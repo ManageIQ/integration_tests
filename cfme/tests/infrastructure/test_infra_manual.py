@@ -13,7 +13,7 @@ def test_infrastructure_providers_rhevm_edit_provider_no_default_port():
     """
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/12h
@@ -37,7 +37,7 @@ def test_add_infra_provider_screen():
     """
     Polarion:
         assignee: pvala
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         setup:

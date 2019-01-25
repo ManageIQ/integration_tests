@@ -36,8 +36,9 @@ def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, h
                                         cancel_migration_after_percent):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ytale
+        initialEstimate: 1/4h
+        casecomponent: V2V
     """
     # TODO: Improve this test to cover cancel operation at various stages in migration.
     # This test will make use of migration request details page to track status of migration

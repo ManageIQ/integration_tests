@@ -121,7 +121,7 @@ def test_priority(
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/4h
     """
     ssh_client = appliance.ssh_client

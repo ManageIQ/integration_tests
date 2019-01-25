@@ -16,8 +16,8 @@ pytestmark = [
 def test_api_port(provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view_details = navigate_to(provider, 'Details')
     port = provider.data['endpoints']['default']['api_port']
@@ -29,8 +29,8 @@ def test_api_port(provider):
 def test_credentials_quads(provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view = navigate_to(provider, 'All')
     prov_item = view.entities.get_entity(name=provider.name, surf_pages=True)
@@ -45,8 +45,8 @@ def test_credentials_quads(provider):
 def test_delete_provider(provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     provider.delete(cancel=False)
     provider.wait_for_delete()

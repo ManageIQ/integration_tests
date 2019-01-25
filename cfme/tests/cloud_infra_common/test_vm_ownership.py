@@ -148,7 +148,7 @@ def test_form_button_validation(request, user1, setup_provider, provider, vm_cru
     Polarion:
         assignee: apagac
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     # Reset button test
     vm_crud.set_ownership(user=user1, click_reset=True)
@@ -170,7 +170,7 @@ def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
     Polarion:
         assignee: apagac
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     # Set the ownership and checking it
     vm_crud.set_ownership(user=user1)
@@ -191,7 +191,7 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
     Polarion:
         assignee: apagac
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
 
     # user is only a member of a single group so it will always be the current group
@@ -214,7 +214,7 @@ def test_group_ownership_on_user_or_group_role(
     Polarion:
         assignee: apagac
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     # user is only a member of a single group so it will always be the current group
     vm_crud.set_ownership(group=user3.groups[0])
@@ -237,7 +237,7 @@ def test_template_set_ownership(appliance, request, provider, setup_provider, vm
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
     """

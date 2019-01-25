@@ -111,7 +111,7 @@ def test_custom_button_display(appliance, request, display, setup_objs, button_g
         caseposneg: positive
         testtype: functional
         startsin: 5.8
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create custom button group with the Object type
@@ -156,7 +156,7 @@ def test_custom_button_dialog(appliance, dialog, request, setup_objs, button_gro
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Simple TextInput service dialog
@@ -230,7 +230,7 @@ def test_custom_button_automate(appliance, request, submit, setup_objs, button_g
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create custom button group with the Object type
@@ -325,7 +325,7 @@ def test_custom_button_expression(appliance, request, setup_objs, button_group, 
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create custom button group with the Object type

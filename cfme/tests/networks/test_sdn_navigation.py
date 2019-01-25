@@ -22,7 +22,7 @@ def test_sdn_provider_relationships_navigation(provider, tested_part, appliance)
 
     Polarion:
         assignee: mmojzis
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     collection = appliance.collections.network_providers.filter({'provider': provider})
     network_provider = collection.all()[0]

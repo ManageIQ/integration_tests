@@ -7,7 +7,8 @@ def test_pod_appliance_db_backup_restore():
     database has been saved and recovered
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: izapolsk
+        initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     pass

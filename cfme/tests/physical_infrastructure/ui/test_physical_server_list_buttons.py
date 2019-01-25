@@ -26,8 +26,8 @@ def physical_servers_collection(appliance):
 def test_refresh_relationships(physical_servers_collection, physical_servers, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view = navigate_to(physical_servers_collection, "All")
     last_refresh = provider.last_refresh_date()
@@ -74,8 +74,8 @@ def test_server_actions(physical_servers_collection, physical_servers, provider,
         test_flag: crud
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view = provider.create_view(PhysicalServersView)
 
@@ -102,8 +102,8 @@ def test_server_actions(physical_servers_collection, physical_servers, provider,
 def test_manage_button(physical_servers_collection, physical_servers):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_servers_collection.select_entity_rows(physical_servers)
     view = navigate_to(physical_servers_collection, "ManagePoliciesCollection")
@@ -113,8 +113,8 @@ def test_manage_button(physical_servers_collection, physical_servers):
 def test_edit_tag(physical_servers_collection, physical_servers):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_servers_collection.select_entity_rows(physical_servers)
     view = navigate_to(physical_servers_collection, "EditTagsCollection")
@@ -125,8 +125,8 @@ def test_edit_tag(physical_servers_collection, physical_servers):
 def test_lifecycle_provision(physical_servers_collection, physical_servers):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_servers_collection.select_entity_rows(physical_servers)
     view = navigate_to(physical_servers_collection, "ProvisionCollection")

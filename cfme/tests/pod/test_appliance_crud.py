@@ -290,7 +290,7 @@ def test_pod_appliance_config_upgrade():
     Polarion:
         assignee: izapolsk
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     pass
 
@@ -303,7 +303,7 @@ def test_pod_appliance_image_upgrade():
     Polarion:
         assignee: izapolsk
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     pass
 
@@ -316,7 +316,7 @@ def test_pod_appliance_db_upgrade():
     Polarion:
         assignee: izapolsk
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     pass
 

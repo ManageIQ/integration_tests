@@ -72,7 +72,7 @@ def test_widgets_on_dashboard(appliance, request, dashboard, default_widgets,
     """
     Polarion:
         assignee: jhenner
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -100,7 +100,7 @@ def test_widgets_reorder_in_reports(request, dashboard):
 
     Polarion:
         assignee: jhenner
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/6h
     """

@@ -45,7 +45,7 @@ def test_instance_crud(klass):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/16h
     """
@@ -69,7 +69,7 @@ def test_duplicate_instance_disallowed(request, klass):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseposneg: negative
         initialEstimate: 1/60h
     """
@@ -86,7 +86,7 @@ def test_instance_display_name_unset_from_ui(request, klass):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/30h
     """
     instance = klass.instances.create(
@@ -109,7 +109,7 @@ def test_automate_instance_missing(domain, klass, namespace, appliance):
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/10h
     """
     catch_string = fauxfactory.gen_alphanumeric()

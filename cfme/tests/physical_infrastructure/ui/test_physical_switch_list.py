@@ -11,8 +11,8 @@ def test_physical_switches_view_displayed(appliance):
     """Navigate to the physical switches page and verify that switches are displayed
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_switches_view = navigate_to(appliance.collections.physical_switches, 'All')
     assert physical_switches_view.is_displayed
@@ -22,8 +22,8 @@ def test_physical_switches_view_dropdowns(appliance):
     """Navigate to the physical switches page and verify that the dropdown menus are present
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_switches_view = navigate_to(appliance.collections.physical_switches, 'All')
 

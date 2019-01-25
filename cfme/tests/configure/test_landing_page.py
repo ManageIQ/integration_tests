@@ -148,7 +148,7 @@ def test_landing_page_admin(start_page, appliance, my_settings, request):
 
     Polarion:
         assignee: pvala
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
     """

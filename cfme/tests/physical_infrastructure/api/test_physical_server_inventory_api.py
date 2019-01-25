@@ -19,8 +19,8 @@ def physical_server(setup_provider_modscope, appliance):
 def test_get_hardware(appliance, physical_server):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server.reload(attributes=['hardware'])
     assert_response(appliance)
@@ -31,8 +31,8 @@ def test_get_hardware(appliance, physical_server):
 def test_get_hardware_attributes(appliance, physical_server, attribute):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     expanded_attribute = 'hardware.{}'.format(attribute)
     physical_server.reload(attributes=[expanded_attribute])
@@ -43,8 +43,8 @@ def test_get_hardware_attributes(appliance, physical_server, attribute):
 def test_get_asset_detail(appliance, physical_server):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server.reload(attributes=['asset_detail'])
     assert_response(appliance)

@@ -110,7 +110,7 @@ def test_host_analysis_profile_crud(appliance, soft_assert, analysis_profile_col
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -157,7 +157,7 @@ def test_vmanalysis_profile_description_validation(analysis_profile_collection):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/20h
     """
@@ -182,7 +182,7 @@ def test_analysis_profile_duplicate_name(analysis_profile_collection):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h
     """
@@ -214,7 +214,7 @@ def test_delete_default_analysis_profile(default_host_profile, appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h
     """
@@ -239,7 +239,7 @@ def test_edit_default_analysis_profile(default_host_profile, appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/10h
     """
@@ -263,7 +263,7 @@ def test_analysis_profile_item_validation(analysis_profile_collection):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h
     """
@@ -289,7 +289,7 @@ def test_analysis_profile_name_validation(analysis_profile_collection):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/20h
     """
@@ -310,14 +310,13 @@ def test_analysis_profile_name_validation(analysis_profile_collection):
     view.cancel.click()
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version > '5.9',
-                         reason='Description is not required started from 5.10')
+@pytest.mark.ignore_stream('5.10')
 def test_analysis_profile_description_validation(analysis_profile_collection):
     """ Test to validate profile description.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
     """
     with pytest.raises(AssertionError):
         analysis_profile_collection.create(

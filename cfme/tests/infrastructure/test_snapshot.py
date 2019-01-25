@@ -71,9 +71,8 @@ def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
 
 
 @pytest.mark.rhv2
-@pytest.mark.uncollectif(lambda provider:
-                         (provider.one_of(RHEVMProvider) and provider.version < 4) or
-                         current_version() < '5.8', 'Must be RHEVM provider version >= 4')
+@pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
+                         'Must be RHEVM provider version >= 4')
 def test_memory_checkbox(small_test_vm, provider, soft_assert):
     """Tests snapshot memory checkbox
 
@@ -85,7 +84,7 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -107,8 +106,6 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
 
 
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[BZ(1552059, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
                          'Must be RHEVM provider version >= 4')
 def test_snapshot_crud(small_test_vm, provider):
@@ -119,7 +116,7 @@ def test_snapshot_crud(small_test_vm, provider):
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
     """
     # has_name is false if testing RHEVMProvider
@@ -129,7 +126,7 @@ def test_snapshot_crud(small_test_vm, provider):
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(RHEVMProvider))
+@pytest.mark.provider([RHEVMProvider], override=True)
 def test_create_without_description(small_test_vm):
     """
     Test that we get an error message when we try to create a snapshot with
@@ -139,8 +136,9 @@ def test_create_without_description(small_test_vm):
         test_flag: snapshot, provision
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Infra
     """
     snapshot = new_snapshot(small_test_vm, has_name=False, create_description=False)
     with pytest.raises(AssertionError):
@@ -149,8 +147,7 @@ def test_create_without_description(small_test_vm):
     view.flash.assert_message('Description is required')
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
-                         'Not VMware provider')
+@pytest.mark.provider([VMwareProvider], override=True)
 def test_delete_all_snapshots(small_test_vm, provider):
     """Tests snapshot removal
 
@@ -159,7 +156,7 @@ def test_delete_all_snapshots(small_test_vm, provider):
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -244,8 +241,15 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
 
 
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[BZ(1561618, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1561618,
+            forced_streams=['5.8', '5.9'],
+            unblock=lambda provider: not provider.one_of(RHEVMProvider)
+        )
+    ]
+)
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
                          'Must be RHEVM provider version >= 4')
 def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request):
@@ -256,14 +260,13 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request)
 
 
-@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider),
-                         'Must NOT be RHEVM provider')
+@pytest.mark.provider([VMwareProvider], override=True)
 def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_event, request):
     """Tests revert active snapshot
 
@@ -272,7 +275,7 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_ev
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -281,7 +284,7 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_ev
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(RHEVMProvider))
+@pytest.mark.provider([RHEVMProvider], override=True)
 @pytest.mark.meta(automates=[BZ(1375544)])
 def test_revert_on_running_vm(small_test_vm):
     """
@@ -291,8 +294,9 @@ def test_revert_on_running_vm(small_test_vm):
         test_flag: snapshot, provision
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Infra
     """
     snapshot = new_snapshot(small_test_vm, has_name=False)
     snapshot.create()
@@ -315,8 +319,7 @@ def setup_snapshot_env(test_vm, memory):
 
 
 @pytest.mark.parametrize("parent_vm", ["on_with_memory", "on_without_memory", "off"])
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
-                         'Not VMware provider')
+@pytest.mark.provider([VMwareProvider], override=True)
 def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
     """
     test vm state after revert snapshot with parent vm:
@@ -331,7 +334,7 @@ def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -344,8 +347,7 @@ def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
     assert bool(small_test_vm.mgmt.is_running) == memory
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
-                         'Not VMware provider')
+@pytest.mark.provider([VMwareProvider], override=True)
 def test_operations_suspended_vm(small_test_vm, soft_assert):
     """Tests snapshot operations on suspended vm
 
@@ -354,7 +356,7 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/2h
     """
     # Create first snapshot when VM is running
@@ -388,13 +390,12 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
     snapshot2.delete()
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
-                         'Not VMware provider')
+@pytest.mark.provider([VMwareProvider], override=True)
 def test_operations_powered_off_vm(small_test_vm):
     """
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/2h
     """
     # Make sure the VM is off
@@ -428,7 +429,7 @@ def test_snapshot_history_btn(small_test_vm, provider):
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -441,8 +442,7 @@ def test_snapshot_history_btn(small_test_vm, provider):
     assert snapshot_view.is_displayed
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
-                         'Not VMware provider')
+@pytest.mark.provider([VMwareProvider], override=True)
 def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
     """This test checks whether the vm.create_snapshot works in AE.
 
@@ -461,7 +461,7 @@ def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
     """

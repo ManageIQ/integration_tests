@@ -13,12 +13,11 @@ pytestmark = [
 ]
 
 
-@pytest.mark.meta(blockers=[1273654])
 def test_assign_compute_enterprise(appliance, virtualcenter_provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
     """
     view = navigate_to(appliance.server, 'Chargeback')
 
@@ -39,8 +38,8 @@ def test_assign_compute_enterprise(appliance, virtualcenter_provider):
 def test_assign_compute_provider(appliance, virtualcenter_provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
     """
     view = navigate_to(appliance.server, 'Chargeback')
 
@@ -60,8 +59,8 @@ def test_assign_compute_provider(appliance, virtualcenter_provider):
 def test_assign_compute_cluster(appliance, virtualcenter_provider):
     """
     Polarion:
-        assignee: nachandr
-        casecomponent: candu
+        assignee: tpapaioa
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -87,8 +86,8 @@ def test_assign_compute_cluster(appliance, virtualcenter_provider):
 def test_assign_compute_taggedvm(appliance, virtualcenter_provider):
     """
     Polarion:
-        assignee: nachandr
-        casecomponent: candu
+        assignee: tpapaioa
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -108,12 +107,11 @@ def test_assign_compute_taggedvm(appliance, virtualcenter_provider):
     assert selected_option == "Default", 'Selection does not match'
 
 
-@pytest.mark.meta(blockers=[1273654])
 def test_assign_storage_enterprise(appliance, virtualcenter_provider):
     """
     Polarion:
-        assignee: nachandr
-        casecomponent: candu
+        assignee: tpapaioa
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -136,8 +134,8 @@ def test_assign_storage_enterprise(appliance, virtualcenter_provider):
 def test_assign_storage_datastores(appliance, virtualcenter_provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
     """
     view = navigate_to(appliance.server, 'Chargeback')
 
@@ -159,8 +157,8 @@ def test_assign_storage_datastores(appliance, virtualcenter_provider):
 def test_assign_storage_tagged_datastores(appliance, virtualcenter_provider):
     """
     Polarion:
-        assignee: nachandr
-        casecomponent: candu
+        assignee: tpapaioa
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """

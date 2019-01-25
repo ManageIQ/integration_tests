@@ -308,7 +308,7 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
     """
     # Wipe the FTP contents in the end
@@ -377,7 +377,7 @@ def test_collect_unconfigured(appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
     """
@@ -406,7 +406,7 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
     """
     appliance = temp_appliance_preconfig
@@ -463,7 +463,7 @@ def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request,
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
     """
     log_depot.machine_ip = depot_machine_ip

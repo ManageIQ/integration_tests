@@ -64,8 +64,9 @@ def test_bottlenecks_report_event_groups(temp_appliance_extended_db, db_restore,
     """ Checks event_groups selectbox in report tab. It should filter events by type
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nachandr
+        initialEstimate: 1/4h
+        casecomponent: Optimize
     """
     col = temp_appliance_extended_db.collections.bottlenecks
     view = navigate_to(col, 'All')
@@ -85,8 +86,9 @@ def test_bottlenecks_report_show_host_events(temp_appliance_extended_db, db_rest
     """ Checks host_events checkbox in report tab. It should show or not host events
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nachandr
+        initialEstimate: 1/4h
+        casecomponent: Optimize
     """
     col = temp_appliance_extended_db.collections.bottlenecks
     view = navigate_to(col, 'All')
@@ -105,8 +107,9 @@ def test_bottlenecks_report_time_zone(temp_appliance_extended_db, db_restore, db
     """ Checks time zone selectbox in report tab. It should change time zone of events in table
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nachandr
+        initialEstimate: 1/4h
+        casecomponent: Optimize
     """
     col = temp_appliance_extended_db.collections.bottlenecks
     view = navigate_to(col, 'All')
@@ -128,8 +131,9 @@ def test_bottlenecks_summary_event_groups(temp_appliance_extended_db, db_restore
     """ Checks event_groups selectbox in summary tab. It should filter events by type
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nachandr
+        initialEstimate: 1/4h
+        casecomponent: Optimize
     """
     col = temp_appliance_extended_db.collections.bottlenecks
     view = navigate_to(col, 'All')
@@ -149,8 +153,9 @@ def test_bottlenecks_summary_show_host_events(temp_appliance_extended_db, db_res
     """ Checks host_events checkbox in summary tab. It should show or not host events
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nachandr
+        initialEstimate: 1/4h
+        casecomponent: Optimize
     """
     col = temp_appliance_extended_db.collections.bottlenecks
     view = navigate_to(col, 'All')
@@ -169,8 +174,9 @@ def test_bottlenecks_summary_time_zone(temp_appliance_extended_db, db_restore, d
     """ Checks time zone selectbox in summary tab. It should change time zone of events in chart
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nachandr
+        initialEstimate: 1/4h
+        casecomponent: Optimize
     """
     col = temp_appliance_extended_db.collections.bottlenecks
     view = navigate_to(col, 'All')

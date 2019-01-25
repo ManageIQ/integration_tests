@@ -350,7 +350,7 @@ def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, v
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     prov_data['catalog']['vm_name'] = vm_name
     prov_data['network'] = {'vlan': vnic_profile}
@@ -396,7 +396,7 @@ def test_provision_vm_with_2_nics(provisioner, provisioning, prov_data, vm_name)
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     template_name = provisioning.get('template_2_nics', None)
     prov_data['catalog']['vm_name'] = vm_name
@@ -425,7 +425,7 @@ def test_vmware_default_placement(provisioner, prov_data, provider, setup_provid
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     template_name = provider.data['provisioning']['template']
     prov_data['catalog']['vm_name'] = vm_name

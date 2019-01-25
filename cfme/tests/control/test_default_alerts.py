@@ -44,7 +44,7 @@ def test_default_alerts(appliance,default_alerts):
 
     Polarion:
         assignee: jdupuy
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     # get the alerts of the appliance
     alerts = appliance.collections.alerts.all()

@@ -42,7 +42,7 @@ def test_report_view(report, view_mode):
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/6h
     """

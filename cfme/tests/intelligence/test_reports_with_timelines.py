@@ -151,7 +151,7 @@ def test_reports_with_timelines(appliance, setup_for_reports):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/5h
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         testSteps:
             1. Add an infrastructure provider to ensure that an event for each report will occur

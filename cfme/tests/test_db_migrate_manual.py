@@ -12,7 +12,7 @@ def test_upgrade_single_inplace_postgres():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: critical
         endsin: 5.8
         initialEstimate: 1/2h
@@ -41,7 +41,7 @@ def test_upgrade_dedicated_db_migration_local():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.9
@@ -64,7 +64,7 @@ def test_upgrade_single_inplace_ipv6():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: provision appliance
@@ -90,7 +90,7 @@ def test_upgrade_single_negative_v2_key_fix_auth():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/3h
@@ -112,7 +112,7 @@ def test_upgrade_custom_css():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
         setup: provision appliance
@@ -139,7 +139,7 @@ def test_upgrade_custom_widgets():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: provision appliance
@@ -166,7 +166,7 @@ def test_rh_rhsm_sat6_cred_save_crud():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/12h
@@ -193,7 +193,7 @@ def test_upgrade_rubyrep_to_pglogical():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         endsin: 5.9
         initialEstimate: 1h
@@ -220,7 +220,7 @@ def test_upgrade_multi_ext_inplace():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1h
         setup: 2 appliances:
@@ -259,7 +259,7 @@ def test_update_custom_widgets():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: provision appliance
@@ -284,7 +284,7 @@ def test_rh_registration_rhsm_proxy_on_ipv6():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
         setup: Provision appliace
@@ -310,7 +310,7 @@ def test_rh_registration_ui_proxy():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
         setup: Provision appliance
@@ -333,7 +333,7 @@ def test_update_webui_custom_css():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
         setup: provision appliance
@@ -358,7 +358,7 @@ def test_rh_registration_proxy_crud():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
         setup: Provision appliance
@@ -386,7 +386,7 @@ def test_rh_unregistration_ui():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
         setup: Provision appliance
@@ -409,7 +409,7 @@ def test_upgrade_multi_replication_inplace():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1h
         setup: 2 appliances:
@@ -448,7 +448,7 @@ def test_update_webui_ipv6():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: -Provision configured appliance
@@ -475,7 +475,7 @@ def test_upgrade_check_repo_names():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
         setup: Provision appliance
@@ -497,7 +497,7 @@ def test_upgrade_appliance_console_scap():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.8
@@ -515,7 +515,7 @@ def test_upgrade_multi_ha_inplace():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
@@ -539,7 +539,7 @@ def test_upgrade_multi_replication_inplace_55():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         endsin: 5.9
         initialEstimate: 1h
@@ -558,7 +558,7 @@ def test_upgrade_multi_replication_inplace_56():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         endsin: 5.10
         initialEstimate: 1h
@@ -576,7 +576,7 @@ def test_update_webui_ha():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
         setup: provision 3 appliances
@@ -602,7 +602,7 @@ def test_rh_rhsm_reregistering():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/12h
@@ -630,7 +630,7 @@ def test_update_webui_replication():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1h
         setup: Provision two appliances of the previous minor build

@@ -43,7 +43,7 @@ def test_control_navigation(destination, appliance):
 
     Polarion:
         assignee: dmisharo
-        casecomponent: web_ui
+        casecomponent: WebUI
         initialEstimate: 1/60h
     """
     # some of views like Control -> Log incredibly long first time
@@ -60,7 +60,7 @@ def test_control_explorer_tree(control_explorer_view, destination, appliance):
 
     Polarion:
         assignee: dmisharo
-        casecomponent: web_ui
+        casecomponent: WebUI
         initialEstimate: 1/60h
     """
     navigate_to(appliance.server, 'ControlExplorer', wait_for_view=30)

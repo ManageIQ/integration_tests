@@ -130,7 +130,7 @@ def test_child_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, set
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
     """
     with new_user:

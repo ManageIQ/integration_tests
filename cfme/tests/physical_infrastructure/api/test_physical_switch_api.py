@@ -13,8 +13,8 @@ pytestmark = [
 def test_get_switch(physical_switch, appliance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     existent_switch = appliance.rest_api.get_entity('switches', physical_switch.id)
     existent_switch.reload()
@@ -24,8 +24,8 @@ def test_get_switch(physical_switch, appliance):
 def test_get_nonexistent_physical_switch(appliance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     nonexistent = appliance.rest_api.get_entity('switches', 999999)
     with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
@@ -36,8 +36,8 @@ def test_get_nonexistent_physical_switch(appliance):
 def test_invalid_action(physical_switch, appliance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     payload = {
         "action": "invalid_action"
@@ -49,8 +49,8 @@ def test_invalid_action(physical_switch, appliance):
 def test_refresh_physical_switch(appliance, physical_switch):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     assert getattr(physical_switch.action, "refresh")()
     assert_response(appliance)

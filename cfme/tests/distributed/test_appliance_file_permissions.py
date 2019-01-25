@@ -13,7 +13,7 @@ def test_v2_key_permissions(appliance):
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/60h
     """
     stdout = appliance.ssh_client.run_command(

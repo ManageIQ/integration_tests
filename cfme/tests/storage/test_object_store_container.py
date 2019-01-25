@@ -25,7 +25,7 @@ def test_add_remove_tag(containers):
     """
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     container = random.choice(containers)
 

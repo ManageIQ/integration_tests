@@ -79,8 +79,8 @@ def new_instance(provider):
 def test_create_volume(volume, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     assert volume.exists
     assert volume.size == '{} GB'.format(VOLUME_SIZE)
@@ -91,8 +91,8 @@ def test_create_volume(volume, provider):
 def test_edit_volume(volume, appliance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     new_name = fauxfactory.gen_alpha()
     with update(volume):
@@ -105,8 +105,8 @@ def test_edit_volume(volume, appliance):
 def test_delete_volume(volume):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     volume.delete()
     assert not volume.exists
@@ -117,8 +117,8 @@ def test_delete_volume(volume):
 def test_create_volume_with_type(volume_with_type, provider):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     assert volume_with_type.exists
     assert volume_with_type.size == '{} GB'.format(VOLUME_SIZE)
@@ -130,8 +130,8 @@ def test_create_volume_with_type(volume_with_type, provider):
 def test_edit_volume_with_type(volume_with_type, appliance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     new_name = fauxfactory.gen_alpha()
     with update(volume_with_type):
@@ -145,8 +145,8 @@ def test_edit_volume_with_type(volume_with_type, appliance):
 def test_delete_volume_with_type(volume_with_type):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     volume_with_type.delete()
     assert not volume_with_type.exists

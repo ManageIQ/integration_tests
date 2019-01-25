@@ -50,7 +50,7 @@ def test_queue_tenant_quota_reports(appliance, request, set_and_get_tenant_quota
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/10h
     """

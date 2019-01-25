@@ -42,7 +42,7 @@ def test_schedule_queue(schedule, appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/10h
     """

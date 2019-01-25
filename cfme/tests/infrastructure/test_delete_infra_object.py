@@ -22,8 +22,8 @@ def test_delete_cluster_appear_after_refresh(provider, appliance):
         test_flag: delete_object
 
     Polarion:
-        assignee: ghubale
-        casecomponent: infra
+        assignee: tpapaioa
+        casecomponent: WebUI
         initialEstimate: 1/10h
     """
     cluster_col = appliance.collections.clusters.filter({'provider': provider})
@@ -40,8 +40,9 @@ def test_delete_host_appear_after_refresh(appliance, provider):
         test_flag: delete_object
 
     Polarion:
-        assignee: mkourim
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     host_collection = appliance.collections.hosts
     host_name = provider.data['remove_test']['host']
@@ -59,8 +60,9 @@ def test_delete_vm_appear_after_refresh(provider):
         test_flag: delete_object
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     vm = provider.data['remove_test']['vm']
     test_vm = provider.appliance.collections.infra_vms.instantiate(vm, provider)
@@ -77,8 +79,9 @@ def test_delete_template_appear_after_refresh(provider):
         test_flag: delete_object
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     template = provider.data['remove_test']['template']
     test_template = provider.appliance.collections.infra_templates.instantiate(template, provider)
@@ -95,8 +98,9 @@ def test_delete_resource_pool_appear_after_refresh(provider, appliance):
         test_flag: delete_object
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     resourcepool_name = provider.data['remove_test']['resource_pool']
     test_resourcepool = appliance.collections.resource_pools.instantiate(
@@ -115,8 +119,9 @@ def test_delete_datastore_appear_after_refresh(provider, appliance):
         test_flag: delete_object
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     datastore_collection = appliance.collections.datastores
     data_store = provider.data['remove_test']['datastore']
@@ -149,8 +154,9 @@ def test_delete_cluster_from_table(provider, appliance):
         test_flag: delete_object
 
     Polarion:
-        assignee: ghubale
-        initialEstimate: None
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     cluster_col = appliance.collections.clusters.filter({"provider": provider})
     cluster1 = cluster_col.all()[0]

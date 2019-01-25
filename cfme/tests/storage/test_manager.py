@@ -39,8 +39,9 @@ def manager(request, openstack_provider, appliance):
 def test_manager_navigation(manager):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Cloud
     """
     view = navigate_to(manager.parent, 'All')
     assert view.is_displayed
@@ -63,8 +64,9 @@ def test_storage_manager_edit_tag(manager):
         * Remove tag and check
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Cloud
     """
 
     # add tag with category Department and tag communication
@@ -91,8 +93,9 @@ def test_storage_manager_delete(manager, provider_cleanup):
         * Check storage manager exists or not
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Cloud
     """
     manager.delete()
     view = manager.create_view(StorageManagerDetailsView)

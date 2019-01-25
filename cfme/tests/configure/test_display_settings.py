@@ -39,7 +39,7 @@ def test_timezone_setting(appliance, set_timezone):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/30h
     """

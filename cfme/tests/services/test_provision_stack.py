@@ -175,6 +175,7 @@ def test_provision_stack(order_stack):
     Polarion:
         assignee: jhenner
         initialEstimate: 1/3h
+        casecomponent: Provisioning
     """
     provision_request, stack = order_stack
     assert provision_request.is_succeeded()
@@ -190,6 +191,7 @@ def test_reconfigure_service(appliance, service_catalogs, request):
     Polarion:
         assignee: sshveta
         initialEstimate: 1/4h
+        casecomponent: Services
     """
     provision_request = service_catalogs.order()
     provision_request.wait_for_request(method='ui')
@@ -215,8 +217,9 @@ def test_remove_non_read_only_orch_template(appliance, provider, template, servi
         test_flag: provision
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     provision_request = service_catalogs.order()
     request.addfinalizer(lambda: _cleanup(appliance, provision_request))
@@ -244,8 +247,9 @@ def test_remove_read_only_orch_template_neg(appliance, provider, template, servi
         test_flag: provision
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     provision_request = service_catalogs.order()
     request.addfinalizer(lambda: _cleanup(appliance, provision_request))
@@ -266,8 +270,9 @@ def test_retire_stack(order_stack):
         test_flag: provision
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     _, stack = order_stack
     stack.retire_stack()
@@ -288,7 +293,7 @@ def test_error_message_azure():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/4h
         setup: Easiest way to do this is provision an azure vm from orchestration

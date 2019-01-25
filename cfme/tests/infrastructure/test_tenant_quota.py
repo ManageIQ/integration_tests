@@ -142,7 +142,7 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/8h
     """
     prov_data.update(custom_prov_data)
@@ -188,7 +188,7 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, provider, se
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/8h
     """
     with appliance.context.use(context):
@@ -233,7 +233,7 @@ def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_ro
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
     """
     original_config = small_vm.configuration.copy()
@@ -259,7 +259,7 @@ def test_setting_child_quota_more_than_parent(appliance, tenants_setup, parent_q
     """
     Polarion:
         assignee: ghubale
-        casecomponent: prov
+        casecomponent: Provisioning
         initialEstimate: 1/12h
     """
     test_parent, test_child = tenants_setup
@@ -310,7 +310,7 @@ def test_vm_migration_after_assigning_tenant_quota(appliance, setup_provider, sm
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
     """
 

@@ -151,7 +151,7 @@ def test_host_relationships(appliance, provider, setup_provider, host, relations
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -176,7 +176,7 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -196,7 +196,7 @@ def test_cloud_provider_relationships(appliance, provider, setup_provider, relat
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -265,7 +265,7 @@ def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, r
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     prov_child_visibility(relationship, visibility=False)
 
@@ -300,7 +300,7 @@ def test_provider_refresh_relationship(provider, setup_provider):
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/8h
     """
     provider.refresh_provider_relationships(method='ui')
@@ -316,7 +316,7 @@ def test_host_refresh_relationships(provider, setup_provider):
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/8h
         testSteps:
@@ -337,7 +337,7 @@ def test_inventory_refresh_westindia_azure():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/12h
     """

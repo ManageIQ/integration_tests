@@ -40,7 +40,7 @@ def test_custom_vm_report(soft_assert, report_vms):
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: low
         initialEstimate: 1/16h
     """

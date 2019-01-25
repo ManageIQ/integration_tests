@@ -63,7 +63,7 @@ def test_paginator(some_dialogs, soft_assert, appliance):
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     service_dialog = appliance.collections.service_dialogs
     view = navigate_to(service_dialog, 'All')

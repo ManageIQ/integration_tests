@@ -188,7 +188,7 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/8h
         testSteps:
@@ -259,7 +259,7 @@ def test_project_quota_enforce_via_lifecycle_cloud(
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/8h
         testSteps:

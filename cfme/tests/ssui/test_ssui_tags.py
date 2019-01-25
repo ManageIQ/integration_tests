@@ -7,7 +7,7 @@ def test_tagvis_ssui_catalog_items():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/8h
         testSteps:

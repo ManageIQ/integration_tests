@@ -9,7 +9,7 @@ def test_send_test_email(smtp_test, random_string, appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/10h
     """

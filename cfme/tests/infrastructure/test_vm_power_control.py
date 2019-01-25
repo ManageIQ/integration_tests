@@ -487,7 +487,7 @@ def test_vm_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_r
 
     Polarion:
         assignee: bsquizza
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
@@ -503,7 +503,7 @@ def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_
 
     Polarion:
         assignee: bsquizza
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)

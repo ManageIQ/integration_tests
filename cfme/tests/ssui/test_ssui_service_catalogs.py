@@ -35,7 +35,7 @@ def test_service_catalog_crud_ssui(appliance, setup_provider,
 
     Polarion:
         assignee: sshveta
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
 
     catalog_item = order_service

@@ -89,8 +89,9 @@ def test_rhev_iso_servicecatalog(appliance, provider, setup_provider, setup_iso_
         test_flag: iso, provision
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(

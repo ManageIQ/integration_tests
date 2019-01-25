@@ -45,7 +45,7 @@ def test_button_group_crud(request, appliance, obj_type):
         caseposneg: positive
         testtype: functional
         startsin: 5.8
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create a Button Group with random button text and hover, select type Service
@@ -107,7 +107,7 @@ def test_button_crud(appliance, dialog, request, buttongroup, obj_type):
         caseposneg: positive
         testtype: functional
         startsin: 5.8
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create a Button with random button text and button hover text, and random request
@@ -156,7 +156,7 @@ def test_button_avp_displayed(appliance, dialog, request):
         caseposneg: positive
         testtype: functional
         startsin: 5.8
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Open a dialog to create a button.
@@ -193,7 +193,7 @@ def test_button_required(appliance, field):
         caseposneg: positive
         testtype: nonfunctional
         startsin: 5.8
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         setup: Button Group
         testSteps:
@@ -242,7 +242,7 @@ def test_open_url_availability(appliance):
         caseposneg: positive
         testtype: nonfunctional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         setup: Button Group
         testSteps:
@@ -291,7 +291,7 @@ def test_custom_button_quotes(appliance, provider, setup_provider, dialog, reque
         caseposneg: positive
         testtype: nonfunctional
         startsin: 5.8
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         setup: Simple TextInput service dialog
         testSteps:
@@ -345,7 +345,7 @@ def test_custom_button_simulation():
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
 
     Bugzilla:
@@ -366,7 +366,7 @@ def test_custom_button_language():
         caseposneg: positive
         testtype: functional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. set the language to french
@@ -391,7 +391,7 @@ def test_attribute_override():
         caseposneg: positive
         testtype: nonfunctional
         startsin: 5.9
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. create a custom button to request the call_instance_with_message

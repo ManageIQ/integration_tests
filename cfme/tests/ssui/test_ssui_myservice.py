@@ -63,7 +63,7 @@ def test_retire_service_ssui(appliance, setup_provider,
 
     Polarion:
         assignee: sshveta
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     catalog_item = order_service
     with appliance.context.use(context):
@@ -86,7 +86,7 @@ def test_service_start(appliance, setup_provider, context,
 
     Polarion:
         assignee: sshveta
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     catalog_item = order_service
     with appliance.context.use(context):
@@ -127,7 +127,7 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
     """

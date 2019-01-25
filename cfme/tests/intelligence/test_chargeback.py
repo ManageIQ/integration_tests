@@ -71,7 +71,7 @@ def test_compute_chargeback_duplicate_disallowed(request):
     """
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -98,8 +98,9 @@ def test_compute_chargeback_duplicate_disallowed(request):
 def test_chargeback_rate(rate_resource, rate_type, rate_action, request):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nachandr
+        casecomponent: CandU
+        initialEstimate: 1/4h
     """
     cb_rate = chargeback_rate(rate_resource, rate_type, rate_action, request)
     cb_rate.create()
@@ -154,7 +155,7 @@ class TestRatesViaREST(object):
 
         Polarion:
             assignee: nachandr
-            casecomponent: candu
+            casecomponent: CandU
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -175,7 +176,7 @@ class TestRatesViaREST(object):
 
         Polarion:
             assignee: nachandr
-            casecomponent: candu
+            casecomponent: CandU
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -220,7 +221,7 @@ class TestRatesViaREST(object):
 
         Polarion:
             assignee: nachandr
-            casecomponent: candu
+            casecomponent: CandU
             caseimportance: medium
             initialEstimate: 1/20h
         """
@@ -235,7 +236,7 @@ class TestRatesViaREST(object):
 
         Polarion:
             assignee: nachandr
-            casecomponent: candu
+            casecomponent: CandU
             caseimportance: low
             initialEstimate: 1/4h
         """

@@ -28,7 +28,7 @@ def test_embedded_ansible_enable(enabled_embedded_appliance):
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
     """
@@ -53,7 +53,7 @@ def test_embedded_ansible_disable(enabled_embedded_appliance):
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
     """

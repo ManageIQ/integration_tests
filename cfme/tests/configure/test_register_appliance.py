@@ -197,7 +197,7 @@ def test_rhsm_registration_check_repo_names(
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     ver = temp_appliance_preconfig_funcscope.version.series()
     repos = cfme_data.redhat_updates.repos
@@ -227,7 +227,7 @@ def test_rh_updates(appliance_preupdate, appliance):
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
 
     set_default_repo = True

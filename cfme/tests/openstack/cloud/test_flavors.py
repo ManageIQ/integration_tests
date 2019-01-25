@@ -137,8 +137,8 @@ def instance_with_private_flavor(provider, private_flavor):
 def test_create_instance_with_zero_disk_flavor(new_instance, soft_assert):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view = navigate_to(new_instance, 'Details')
     prov_data = new_instance.provider.data['provisioning']
@@ -166,8 +166,8 @@ def test_create_instance_with_zero_disk_flavor(new_instance, soft_assert):
 def test_flavor_crud(appliance, provider, request):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     collection = appliance.collections.cloud_flavors
     flavor = collection.create(name=fauxfactory.gen_alpha(),
@@ -204,8 +204,8 @@ def test_flavor_crud(appliance, provider, request):
 def test_flavors_details_from_list_view(appliance, soft_assert, private_flavor):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     collection = appliance.collections.cloud_flavors
     view = navigate_to(collection, 'All')
@@ -222,8 +222,8 @@ def test_flavors_details_from_list_view(appliance, soft_assert, private_flavor):
 def test_flavor_details(appliance, soft_assert, private_flavor):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     view = navigate_to(private_flavor, 'Details')
     soft_assert(view.entities.properties.get_text_of('CPUs') == str(private_flavor.vcpus))

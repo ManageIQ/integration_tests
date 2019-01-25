@@ -39,7 +39,7 @@ def test_delete_catalog_deletes_service(appliance, dialog, catalog):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -59,7 +59,7 @@ def test_delete_catalog_item_deletes_service(appliance, catalog_item):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -73,7 +73,7 @@ def test_service_circular_reference(appliance, catalog_item):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -97,7 +97,7 @@ def test_service_generic_catalog_bundle(appliance, catalog_item):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -121,7 +121,7 @@ def test_bundles_in_bundle(appliance, catalog_item):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/8h
     """
@@ -155,7 +155,7 @@ def test_delete_dialog_before_parent_item(appliance, catalog_item):
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/8h
     """

@@ -99,7 +99,7 @@ def test_advanced_search_button_displayed(params, appliance):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/30h
     """
@@ -115,7 +115,7 @@ def test_can_open_advanced_search(params, appliance):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/30h
     """

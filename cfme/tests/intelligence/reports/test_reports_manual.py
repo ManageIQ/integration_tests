@@ -15,7 +15,7 @@ def test_reports_should_generate_with_no_errors_in_logs():
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         initialEstimate: 1/2h
         startsin: 5.9
         title: Reports should generate with no errors in logs
@@ -47,7 +47,7 @@ def test_reports_generate_persistent_volumes():
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/6h
         setup:
@@ -71,7 +71,7 @@ def test_reports_import_invalid_file():
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/16h
         setup:
@@ -97,7 +97,7 @@ def test_reports_generate_custom_conditional_filter_report():
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
@@ -123,7 +123,7 @@ def test_report_import_export_widgets():
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         initialEstimate: 1/16h
         startsin: 5.3
         setup:
@@ -147,9 +147,9 @@ def test_import_duplicate_report():
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
         setup:
             1. Create a custom report.
             2. Go to Import/Export accordion and click on `Custom Reports`.
@@ -170,7 +170,7 @@ def test_reports_create_schedule_for_base_report_one_time_a_day():
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/16h
         setup:
@@ -193,7 +193,7 @@ def test_after_setting_certain_types_of_filters_filter_tab_should_be_accessible_
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/4h
         title: After setting certain types of filters filter tab should be
@@ -221,7 +221,7 @@ def test_reports_create_schedule_send_report():
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
@@ -246,7 +246,7 @@ def test_report_fullscreen_enabled():
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: low
         initialEstimate: 1/12h
         setup:
@@ -273,7 +273,7 @@ def test_date_should_be_change_in_editing_reports_scheduled():
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/16h
         startsin: 5.3
@@ -300,7 +300,7 @@ def test_report_export_import_run_custom_report():
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.3
@@ -328,7 +328,7 @@ def test_reports_create_schedule_for_base_report_hourly():
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/16h
         setup:
@@ -352,7 +352,7 @@ def test_report_secondary_display_filter_should_be_editable():
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/6h
         title: Report secondary (display) filter should be editable
@@ -380,7 +380,7 @@ def test_import_export_report():
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/2h
         setup: Create or Identify appliance
@@ -429,7 +429,7 @@ def test_reports_manage_report_menu_accordion_with_users():
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
@@ -455,7 +455,7 @@ def test_report_menus_moving_reports():
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: low
         initialEstimate: 1/12h
         setup:

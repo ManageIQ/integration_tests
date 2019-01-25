@@ -164,7 +164,7 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip, applia
     Polarion:
         assignee: jhenner
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
 
     # ---- Create new db backup schedule set to run in the next 6 min

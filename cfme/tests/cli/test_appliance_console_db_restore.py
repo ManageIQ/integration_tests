@@ -233,7 +233,7 @@ def test_appliance_console_restore_db_local(request, get_appliances_with_provide
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/2h
     """
@@ -266,7 +266,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     """
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/2h
     """
@@ -310,7 +310,7 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     """
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/2h
         upstream: no
@@ -356,7 +356,7 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1h
     """
@@ -399,7 +399,7 @@ def test_appliance_console_restore_db_replicated(
     Polarion:
         assignee: jhenner
         caseimportance: high
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1h
     """
     appl1, appl2 = get_replicated_appliances_with_providers
@@ -448,8 +448,8 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
     Polarion:
         assignee: jhenner
         caseimportance: high
-        casecomponent: appl
-        initialEstimate: None
+        casecomponent: Appliance
+        initialEstimate: 1/4h
     """
     appl1, appl2, appl3 = get_ha_appliances_with_providers
     providers_before_restore = set(appl3.managed_provider_names)
@@ -499,7 +499,7 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1h
     """
@@ -537,7 +537,7 @@ def test_appliance_console_restore_db_samba(request, get_appliances_with_provide
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1h
     """

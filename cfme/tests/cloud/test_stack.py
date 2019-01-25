@@ -69,7 +69,7 @@ def test_outputs_link(stack):
     """
     Polarion:
         assignee: nansari
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     try:
         view = navigate_to(stack, 'RelationshipOutputs')
@@ -87,7 +87,7 @@ def test_outputs_link_url(appliance, stack):
     """
     Polarion:
         assignee: nansari
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     try:
         view = navigate_to(stack, 'RelationshipOutputs')
@@ -127,7 +127,7 @@ def test_edit_tags(request, stack):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/8h
     """
@@ -139,8 +139,8 @@ def test_edit_tags(request, stack):
 def test_delete_stack(stack, provider, request):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
     """
     stack.delete()
     assert not stack.exists
@@ -151,8 +151,8 @@ def test_delete_stack(stack, provider, request):
 def test_collection_delete(provider, setup_provider_modscope, appliance):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: mmojzis
+        initialEstimate: 1/4h
     """
     collection = appliance.collections.cloud_stacks
 

@@ -42,7 +42,7 @@ def test_policy_profiles_listed(appliance, policy_profile):
 
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: low
         initialEstimate: 1/12h
     """

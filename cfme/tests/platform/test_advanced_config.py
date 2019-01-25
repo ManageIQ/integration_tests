@@ -30,8 +30,9 @@ def test_advanced_config_reset_pzed(appliance, vmdb_config, configurer):
     of the advanced config.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
+        casecomponent: Configuration
     """
 
     vmdb_config['http_proxy']['default'] = {'host': 'bar'}

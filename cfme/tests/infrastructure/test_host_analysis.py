@@ -75,7 +75,7 @@ def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_na
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
     """
     register_event(target_type='Host', target_name=host_name, event_type='request_host_scan')

@@ -18,7 +18,7 @@ def test_automate_git_domain_import_top_level_directory():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.7
@@ -54,7 +54,7 @@ def test_ec2_refresh_with_stack_without_parameters():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/5h
     """
     pass
@@ -79,7 +79,7 @@ def test_nor_cpu_values_correct_vsphere6():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     pass
@@ -94,7 +94,7 @@ def test_nor_cpu_values_correct_rhv41():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -108,7 +108,7 @@ def test_status_of_a_task_via_api_with_evmrole_administrator():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         tags: rbac
@@ -127,7 +127,7 @@ def test_embed_tower_exec_play_against_vmware():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
@@ -144,7 +144,7 @@ def test_check_service_link_from_vm_detail_page():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Check service link from VM detail page
@@ -161,7 +161,7 @@ def test_embed_tower_dashboard():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
@@ -177,7 +177,7 @@ def test_dialogs_should_only_run_once():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Dialogs should only run once
@@ -194,7 +194,7 @@ def test_rbac_assigning_multiple_tags_from_same_category_to_catalog_item():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/8h
         startsin: 5.5
@@ -212,7 +212,7 @@ def test_crosshair_op_cluster_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
         testtype: integration
@@ -239,7 +239,7 @@ def test_crosshair_op_cluster_vsphere65():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -255,7 +255,7 @@ def test_dialog_dropdown_elements_should_honour_defaults():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         startsin: 5.8
         title: Dialog dropdown elements should honour defaults
@@ -271,7 +271,7 @@ def test_embed_tower_retire_service_with_instances_ec2():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
@@ -288,7 +288,7 @@ def test_distributed_field_zone_description_special():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/30h
     """
@@ -304,7 +304,7 @@ def test_embed_tower_playbook_links():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
@@ -321,7 +321,7 @@ def test_childtenant_cloud_memory_quota_by_enforce():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
     """
@@ -336,7 +336,7 @@ def test_ldap_password_being_logged_in_plain_text_in_evm_log():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/3h
         title: LDAP password being logged in plain text in evm log
@@ -353,7 +353,7 @@ def test_ssa_datastore_files():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         testtype: integration
@@ -375,8 +375,8 @@ def test_proxy_remove_default():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         setup: I think the best way to do this one is start with a bad proxy value,
@@ -404,8 +404,8 @@ def test_proxy_remove_ec2():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: proxy
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         setup: I think the best way to do this one is start with a bad proxy value,
@@ -433,8 +433,8 @@ def test_proxy_remove_gce():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: proxy
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         setup: I think the best way to do this one is start with a bad proxy value,
@@ -463,8 +463,8 @@ def test_proxy_remove_azure():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         setup: I think the best way to do this one is start with a bad proxy value,
@@ -515,7 +515,7 @@ def test_verify_httpd_only_running_when_roles_require_it():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/4h
         title: Verify httpd only running when roles require it
@@ -532,7 +532,7 @@ def test_sui_monitor_ansible_playbook_std_output():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
         title: SUI : Monitor Ansible playbook Std output
@@ -556,7 +556,7 @@ def test_change_the_domain_sequence_in_sssd_and_verify_user_groups_retrieval():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         title: Change the domain sequence in sssd, and verify user groups retrieval.
@@ -580,7 +580,7 @@ def test_embed_tower_exec_play_against_machine_multi_appliance():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
@@ -596,7 +596,7 @@ def test_black_console_ipa_ntp_negative():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         setup: -Provision configured appliance
@@ -620,7 +620,7 @@ def test_appliance_terminates_unresponsive_worker_process():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
@@ -639,7 +639,7 @@ def test_childtenant_cloud_vm_quota_by_enforce():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
     """
@@ -674,7 +674,7 @@ def test_cockpit_connected():
 
     Polarion:
         assignee: nansari
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -691,8 +691,8 @@ def test_copy_provisioning_dialog():
     Configuration - Copy this dialog .
 
     Polarion:
-        assignee: None
-        casecomponent: prov
+        assignee: ghubale
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
@@ -711,7 +711,7 @@ def test_user_cloud_storage_quota_by_services():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -735,7 +735,7 @@ def test_export_all_existing_dialogs_almost_100_dialogs():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Export all existing dialogs (almost 100 dialogs
@@ -769,7 +769,7 @@ def test_embed_tower_playbooks():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
@@ -882,7 +882,7 @@ def test_rhos_test_notification_for_snapshot_delete_failure():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         title: RHOS: test notification for snapshot delete failure
@@ -899,7 +899,7 @@ def test_ssa_vm_users():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         testtype: integration
@@ -917,7 +917,7 @@ def test_rhi_appliance():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         testtype: integration
     """
@@ -933,7 +933,7 @@ def test_ssa_datastore_files_unicode():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.3
@@ -950,7 +950,7 @@ def test_external_database_appliance():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
     """
     pass
@@ -965,7 +965,7 @@ def test_distributed_zone_failover_cu_data_processor():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -981,7 +981,7 @@ def test_sui_stack_service_vm_detail_page_should_show_correct_data():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
         title: SUI : Stack Service VM detail page should show correct data
@@ -1000,7 +1000,7 @@ def test_notification_for_snapshot_actions_on_openstack():
 
     Polarion:
         assignee: apagac
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1h
         title: Test notification for snapshot actions on OpenStack
@@ -1019,7 +1019,7 @@ def test_ssa_groups_scvmm2k12_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -1037,7 +1037,7 @@ def test_ssa_groups_azure_ubuntu():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -1055,7 +1055,7 @@ def test_ssa_groups_scvmm2k12_centos_xfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -1073,7 +1073,7 @@ def test_ssa_groups_azure_rhel():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -1091,7 +1091,7 @@ def test_ssa_groups_scvmm2k12_rhel74():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -1109,7 +1109,7 @@ def test_ssa_groups_azure_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -1125,7 +1125,7 @@ def test_ssa_groups_rhos7_ga_fedora_22_ext4():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.3
@@ -1145,7 +1145,7 @@ def test_ssa_groups_scvmm2k16_centos_xfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -1163,7 +1163,7 @@ def test_ssa_groups_scvmm2k16_rhel74():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -1181,7 +1181,7 @@ def test_ssa_groups_scvmm2k16_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -1199,7 +1199,7 @@ def test_ssa_groups_azure_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -1217,7 +1217,7 @@ def test_ssa_groups_ec2_rhel():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -1235,7 +1235,7 @@ def test_ssa_groups_ec2_ubuntu():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -1253,7 +1253,7 @@ def test_ssa_groups_ec2_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -1271,7 +1271,7 @@ def test_ssa_groups_scvmm2k16_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -1289,7 +1289,7 @@ def test_ssa_groups_scvmm2k12_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -1307,7 +1307,7 @@ def test_ssa_groups_ec2_fedora():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -1324,7 +1324,7 @@ def test_retire_infra_vms_folder():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -1340,7 +1340,7 @@ def test_email_should_be_sent_when_service_approval_is_set_to_manual():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Email should be sent when service approval is set to manual
@@ -1357,7 +1357,7 @@ def test_group_infra_storage_quota_by_services():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -1389,7 +1389,7 @@ def test_infrastructure_hosts_icons_states():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/3h
     """
@@ -1405,7 +1405,7 @@ def test_sui_should_allow_selecting_multiple_items_in_a_service_dialog_element_w
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/16h
         title: SUI should allow selecting multiple items in a Service
                Dialog element with Multiselect enabled
@@ -1422,7 +1422,7 @@ def test_provision_more_than_15_vms_for_gce():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.5
@@ -1460,7 +1460,7 @@ def test_ssa_vm_init_processes():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         testtype: integration
@@ -1476,7 +1476,7 @@ def test_black_console_ipa_negative():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
@@ -1493,7 +1493,7 @@ def test_ssa_vm_packages():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         testtype: integration
@@ -1512,7 +1512,7 @@ def test_sui_create_snapshot_from_vm_details_page_snapshot_page_and_service_deta
 
     Polarion:
         assignee: apagac
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.9
@@ -1532,7 +1532,7 @@ def test_group_cloud_storage_quota_by_lifecycle():
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -1548,7 +1548,7 @@ def test_validate_chargeback_cost_weekly_rate_network_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1565,7 +1565,7 @@ def test_validate_chargeback_cost_tiered_rate_fixedvariable_network_cost():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/10h
     """
     pass
@@ -1579,7 +1579,7 @@ def test_validate_chargeback_cost_monthly_rate_disk_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1594,7 +1594,7 @@ def test_validate_chargeback_cost_monthlyreport_hourly_rate_network_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1609,7 +1609,7 @@ def test_validate_chargeback_cost_weeklyreport_hourly_rate_disk_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1624,7 +1624,7 @@ def test_validate_chargeback_cost_monthly_rate_network_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1639,7 +1639,7 @@ def test_validate_chargeback_cost_weekly_rate_disk_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1656,7 +1656,7 @@ def test_validate_chargeback_cost_resource_allocation_cpu_allocated():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1672,7 +1672,7 @@ def test_validate_chargeback_cost_weekly_rate_cpu_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1689,7 +1689,7 @@ def test_validate_chargeback_cost_tiered_rate_fixedvariable_cpu_cost():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/10h
     """
     pass
@@ -1705,7 +1705,7 @@ def test_validate_chargeback_cost_resource_allocation_storage_allocated():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1720,7 +1720,7 @@ def test_validate_chargeback_cost_monthlyreport_hourly_rate_disk_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1735,7 +1735,7 @@ def test_validate_chargeback_cost_weeklyreport_hourly_rate_cpu_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1750,7 +1750,7 @@ def test_validate_chargeback_cost_monthlyreport_hourly_rate_memory_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1765,7 +1765,7 @@ def test_validate_chargeback_cost_monthly_rate_cpu_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1781,7 +1781,7 @@ def test_validate_chargeback_cost_weekly_rate_memory_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1796,7 +1796,7 @@ def test_validate_chargeback_cost_weeklyreport_hourly_rate_memory_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1811,7 +1811,7 @@ def test_validate_chargeback_cost_weeklyreport_hourly_rate_network_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1828,7 +1828,7 @@ def test_validate_chargeback_cost_tiered_rate_fixedvariable_disk_cost():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/10h
     """
     pass
@@ -1844,7 +1844,7 @@ def test_validate_chargeback_cost_resource_allocation_memory_allocated():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1859,7 +1859,7 @@ def test_validate_chargeback_cost_monthlyreport_hourly_rate_cpu_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1876,7 +1876,7 @@ def test_validate_chargeback_cost_tiered_rate_fixedvariable_memory_cost():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/10h
     """
     pass
@@ -1890,7 +1890,7 @@ def test_validate_chargeback_cost_monthly_rate_memory_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -1928,7 +1928,7 @@ def test_quota_with_invalid_service_request():
 
     Polarion:
         assignee: ghubale
-        casecomponent: control
+        casecomponent: Control
         initialEstimate: 1/4h
         startsin: 5.9
     """
@@ -1960,8 +1960,8 @@ def test_template_info_scvmm2016():
     template and check that the details correspond to SCVMM details.
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: jdupuy
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -1978,7 +1978,7 @@ def test_reconfigure_vm_vmware_cores_multiple():
 
     Polarion:
         assignee: sshveta
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
         setup: -get new configured appliance
@@ -2019,7 +2019,7 @@ def test_group_cloud_memory_quota_by_services():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -2047,7 +2047,7 @@ def test_config_manager_prov_from_service_survey_ansible_tower_310():
 
     Polarion:
         assignee: nachandr
-        casecomponent: prov
+        casecomponent: Provisioning
         initialEstimate: 1h
         startsin: 5.6
     """
@@ -2093,7 +2093,7 @@ def test_service_ansible_retirement_remove_resources():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -2110,7 +2110,7 @@ def test_user_quota_vm_reconfigure():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -2128,7 +2128,7 @@ def test_configure_external_auth_for_ldaps_with_sssdconf_for_single_ldaps_domain
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
         title: Configure External auth for ldaps with sssd.conf for single ldaps domain
@@ -2146,7 +2146,7 @@ def test_chargeback_report_weekly():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -2184,7 +2184,7 @@ def test_verify_change_update_in_ldap_server_takes_effect_in_the_cfme_authentica
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         title: Verify change/update in ldap server takes effect in the CFME authentication.
@@ -2200,7 +2200,7 @@ def test_distributed_add_provider_to_remote_zone():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -2214,7 +2214,7 @@ def test_role_configured_with_the_option_only_user_or_group_owned_should_allow_t
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.9
@@ -2233,7 +2233,7 @@ def test_group_cloud_cpu_quota_by_services():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -2254,7 +2254,7 @@ def test_that_non_admin_users_can_view_catalog_items_in_ssui():
 
     Polarion:
         assignee: apagac
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/2h
         setup: Create a user account with a non-admin role w/ any necessary tags,
                "View Catalog Items" permissions and SSUI access
@@ -2302,7 +2302,7 @@ def test_shutdown_guest_scvmm():
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.4
@@ -2355,7 +2355,7 @@ def test_embed_tower_failover():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
@@ -2372,7 +2372,7 @@ def test_embed_tower_add_scm_credentials():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -2388,7 +2388,7 @@ def test_generic_objects_class_accordion_should_display_when_locale_is_french():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.10
@@ -2405,9 +2405,9 @@ def test_triggered_refresh_shouldnt_occurs_for_dialog_after_changing_type_to_sta
     https://bugzilla.redhat.com/show_bug.cgi?id=1614436
 
     Polarion:
-        assignee: None
-        casecomponent: services
-        initialEstimate: None
+        assignee: sshveta
+        casecomponent: Services
+        initialEstimate: 1/4h
         title: Triggered Refresh shouldn't Occurs for Dialog After Changing Type to Static
     """
     pass
@@ -2422,7 +2422,7 @@ def test_childtenant_cloud_storage_quota_by_enforce():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
     """
@@ -2438,7 +2438,7 @@ def test_notification_banner_vm_provisioning_notification_and_service_request_sh
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Notification Banner - VM Provisioning Notification and
@@ -2458,7 +2458,7 @@ def test_retirement_now_scvmm():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.4
@@ -2477,7 +2477,7 @@ def test_ssa_patches_azure_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -2495,7 +2495,7 @@ def test_ssa_patches_ec2_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -2513,7 +2513,7 @@ def test_ssa_patches_azure_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -2539,7 +2539,7 @@ def test_ec2_deploy_cfme_image():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 4h
     """
@@ -2593,9 +2593,9 @@ def test_timepicker_should_show_date_when_chosen_once():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
         title: Timepicker should show date when chosen once
     """
     pass
@@ -2611,7 +2611,7 @@ def test_distributed_field_zone_description_long():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/30h
     """
@@ -2680,7 +2680,7 @@ def test_user_cloud_memory_quota_by_lifecycle():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -2698,7 +2698,7 @@ def test_reconfigure_add_disk_cold():
 
     Polarion:
         assignee: sshveta
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.7
@@ -2737,7 +2737,7 @@ def test_retirement_date_uses_correct_time_zone():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/15h
         startsin: 5.9
@@ -2756,7 +2756,7 @@ def test_embed_tower_monitor_resources():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/10h
         startsin: 5.8
@@ -2774,7 +2774,7 @@ def test_check_default_value_setting_for_all_options_in_dialog():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Check default value setting for all options in Dialog
     """
@@ -2789,7 +2789,7 @@ def test_distributed_zone_add_provider_to_nondefault_zone():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/12h
     """
@@ -2810,7 +2810,7 @@ def test_automate_buttons_requests():
 
     Polarion:
         assignee: ghubale
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: low
         initialEstimate: 1/18h
     """
@@ -2830,7 +2830,7 @@ def test_saml_verify_user_login_with_and_without_correct_groups_added_to_saml_se
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/2h
@@ -2848,7 +2848,7 @@ def test_azone_cpu_usage_gce():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/12h
         startsin: 5.7
     """
@@ -2864,7 +2864,7 @@ def test_azone_cpu_usage_azure():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/12h
         testtype: integration
     """
@@ -2878,7 +2878,7 @@ def test_orchestration_link_mismatch():
 
     Polarion:
         assignee: sshveta
-        casecomponent: stack
+        casecomponent: Stack
         caseimportance: medium
         initialEstimate: 1/4h
         title: orchestration link mismatch
@@ -2895,7 +2895,7 @@ def test_control_import_with_incorrect_schema():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/12h
@@ -2916,7 +2916,7 @@ def test_log_azure_settings_azure():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         upstream: yes
@@ -2934,7 +2934,7 @@ def test_log_collect_all_zone_unconfigured():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/2h
@@ -2952,7 +2952,7 @@ def test_upgrade_rubyrep_to_pglogical():
 
     Polarion:
         assignee: jhenner
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         endsin: 5.9
         initialEstimate: 1h
@@ -2980,7 +2980,7 @@ def test_service_chargeback_multiple_vms():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/2h
     """
     pass
@@ -2994,8 +2994,8 @@ def test_vm_mac_scvmm():
     Test case covers this BZ - we can"t get MAC ID of VM at the moment
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: jdupuy
+        casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/20h
         setup: https://bugzilla.redhat.com/show_bug.cgi?id=1514461
@@ -3029,7 +3029,7 @@ def test_crosshair_op_azone_azure():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -3045,7 +3045,7 @@ def test_crosshair_op_azone_gce():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -3061,7 +3061,7 @@ def test_crosshair_op_azone_ec2():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
         testtype: integration
@@ -3080,7 +3080,7 @@ def test_edit_provider_request_task():
     Polarion:
         assignee: mkourim
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     pass
 
@@ -3094,7 +3094,7 @@ def test_distributed_zone_delete_occupied():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -3111,7 +3111,7 @@ def test_quota_source_user():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -3135,7 +3135,7 @@ def test_can_add_child_tenant_to_tenant():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/10h
         tags: rbac
     """
@@ -3151,7 +3151,7 @@ def test_credentials_login_password_with_special_characters():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
@@ -3168,7 +3168,7 @@ def test_vm_reconfig_attach_iso_vsphere67_nested():
 
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.10
     """
@@ -3194,7 +3194,7 @@ def test_azure_instance_password_requirements_azure():
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: Provisioning
         caseposneg: negative
         initialEstimate: 1/10h
         testtype: nonfunctional
@@ -3230,7 +3230,7 @@ def test_host_tagged_crosshair_op_vsphere65():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -3249,7 +3249,7 @@ def test_host_tagged_crosshair_op_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -3268,7 +3268,7 @@ def test_host_tagged_crosshair_op_vsphere55():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -3283,7 +3283,7 @@ def test_vm_reconfig_add_remove_network_adapters_vsphere67_nested_vmkernel():
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/16h
         startsin: 5.9
     """
@@ -3300,7 +3300,7 @@ def test_verify_only_groups_with_ssui_access_can_access_the_ssui_when_switching_
 
     Polarion:
         assignee: apagac
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: critical
         initialEstimate: 1/6h
         setup: Create a user that is a member of two more groups with one group
@@ -3342,7 +3342,7 @@ def test_webmks_console_edge_vsphere67_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -3369,7 +3369,7 @@ def test_webmks_console_ie11_vsphere65_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -3397,7 +3397,7 @@ def test_webmks_console_firefox_vsphere67_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -3424,7 +3424,7 @@ def test_webmks_console_chrome_vsphere65_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -3452,7 +3452,7 @@ def test_webmks_console_chrome_vsphere65_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -3480,7 +3480,7 @@ def test_webmks_console_firefox_vsphere65_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
@@ -3509,7 +3509,7 @@ def test_webmks_console_passwordwithspecialchars():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -3533,7 +3533,7 @@ def test_webmks_console_chrome_vsphere65_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -3561,7 +3561,7 @@ def test_webmks_console_chrome_vsphere6_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -3589,7 +3589,7 @@ def test_webmks_console_chrome_vsphere65_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -3617,7 +3617,7 @@ def test_webmks_console_firefox_vsphere6_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -3644,7 +3644,7 @@ def test_webmks_console_chrome_vsphere67_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -3672,7 +3672,7 @@ def test_webmks_console_chrome_vsphere67_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -3700,7 +3700,7 @@ def test_webmks_console_firefox_vsphere6_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
@@ -3728,7 +3728,7 @@ def test_webmks_console_chrome_vsphere6_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -3756,7 +3756,7 @@ def test_webmks_console_chrome_vsphere67_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -3783,7 +3783,7 @@ def test_webmks_console_chrome_vsphere6_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -3810,7 +3810,7 @@ def test_webmks_console_chrome_vsphere65_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -3837,7 +3837,7 @@ def test_webmks_console_firefox_vsphere67_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
@@ -3865,7 +3865,7 @@ def test_webmks_console_chrome_vsphere65_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -3892,7 +3892,7 @@ def test_webmks_console_firefox_vsphere67_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
@@ -3920,7 +3920,7 @@ def test_webmks_console_chrome_vsphere6_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -3948,7 +3948,7 @@ def test_webmks_console_chrome_vsphere67_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -3975,7 +3975,7 @@ def test_webmks_console_edge_vsphere65_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -4002,7 +4002,7 @@ def test_webmks_console_chrome_vsphere67_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -4030,7 +4030,7 @@ def test_webmks_console_firefox_vsphere65_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
@@ -4058,7 +4058,7 @@ def test_webmks_console_ie11_vsphere65_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -4086,7 +4086,7 @@ def test_webmks_console_edge_vsphere6_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -4113,7 +4113,7 @@ def test_webmks_console_firefox_vsphere67_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -4140,7 +4140,7 @@ def test_webmks_console_firefox_vsphere6_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -4168,7 +4168,7 @@ def test_webmks_console_chrome_vsphere6_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -4195,7 +4195,7 @@ def test_webmks_console_ie11_vsphere67_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -4223,7 +4223,7 @@ def test_webmks_console_firefox_vsphere65_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
@@ -4251,7 +4251,7 @@ def test_webmks_console_firefox_vsphere65_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -4278,7 +4278,7 @@ def test_webmks_console_chrome_vsphere6_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -4305,7 +4305,7 @@ def test_webmks_console_chrome_vsphere65_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -4333,7 +4333,7 @@ def test_webmks_console_chrome_vsphere67_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -4361,7 +4361,7 @@ def test_webmks_console_firefox_vsphere6_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
@@ -4389,7 +4389,7 @@ def test_webmks_console_firefox_vsphere65_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
@@ -4417,7 +4417,7 @@ def test_webmks_console_firefox_vsphere6_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -4445,7 +4445,7 @@ def test_webmks_console_ie11_vsphere67_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -4473,7 +4473,7 @@ def test_webmks_console_firefox_vsphere6_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -4500,7 +4500,7 @@ def test_webmks_console_ie11_vsphere6_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -4528,7 +4528,7 @@ def test_webmks_console_firefox_vsphere6_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -4555,7 +4555,7 @@ def test_webmks_console_chrome_vsphere67_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -4583,7 +4583,7 @@ def test_webmks_console_firefox_vsphere67_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
@@ -4611,7 +4611,7 @@ def test_webmks_console_firefox_vsphere67_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
@@ -4639,7 +4639,7 @@ def test_webmks_console_chrome_vsphere6_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -4667,7 +4667,7 @@ def test_webmks_console_firefox_vsphere65_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
@@ -4695,7 +4695,7 @@ def test_webmks_console_firefox_vsphere65_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -4722,7 +4722,7 @@ def test_webmks_console_firefox_vsphere67_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         setup: On CFME Appliance do the following:
@@ -4750,7 +4750,7 @@ def test_webmks_console_ie11_vsphere6_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -4799,8 +4799,8 @@ def test_storage_volume_backup_restore_openstack():
     3. check in Task whether restored or not.
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: mmojzis
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/5h
         startsin: 5.7
@@ -4835,7 +4835,7 @@ def test_group_infra_memory_quota_by_lifecycle():
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -4852,7 +4852,7 @@ def test_default_dialog_entries_should_localized_when_ordering_catalog_item_in_f
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/16h
         title: Default dialog entries should localized when ordering catalog item in French
@@ -4871,7 +4871,7 @@ def test_ec2_targeted_refresh_instance():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1 1/6h
         startsin: 5.9
     """
@@ -4887,7 +4887,7 @@ def test_verify_that_changing_groups_while_in_ssui_updates_dashboard_items():
 
     Polarion:
         assignee: apagac
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
         setup: Create a user with two or more groups with access to the SSUI. The
                groups should have role permissions that grant access to different
@@ -4918,7 +4918,7 @@ def test_embed_tower_exec_play_stdout():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
@@ -4951,9 +4951,9 @@ def test_config_manager_accordion_tree():
 
     Polarion:
         assignee: nachandr
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: low
-        initialEstimate: None
+        initialEstimate: 1/4h
         startsin: 5.8
     """
     pass
@@ -4967,7 +4967,7 @@ def test_service_chargeback_bundled_service():
 
     Polarion:
         assignee: nachandr
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -4982,8 +4982,8 @@ def test_bottleneck_datastore():
     Verify bottleneck events from host
 
     Polarion:
-        assignee: None
-        casecomponent: optimize
+        assignee: nachandr
+        casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 3/4h
         testtype: integration
@@ -5004,8 +5004,8 @@ def test_ec2_api_filter_limit():
     4) Wait for public images to be refreshed (cleared)
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1 1/3h
         startsin: 5.9
     """
@@ -5025,7 +5025,7 @@ def test_reconfigure_add_disk_cold_controller_sas():
 
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.3
@@ -5040,8 +5040,8 @@ def test_host_credentials_web():
     Validate that web connections to the host can be created.
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: rhcf3_machine
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         upstream: yes
@@ -5075,7 +5075,7 @@ def test_automate_simulate_retry():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h
         setup: Create a state machine that contains a couple of states from which one
@@ -5095,8 +5095,8 @@ def test_diagnostic_timelines():
     None
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jdupuy
+        initialEstimate: 1/4h
     """
     pass
 
@@ -5105,8 +5105,8 @@ def test_diagnostic_timelines():
 def test_group_quota_via_ssui():
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: sshveta
+        initialEstimate: 1/4h
     """
     pass
 
@@ -5119,7 +5119,7 @@ def test_black_console_ext_auth_options():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
         setup: -ssh to appliance
@@ -5154,7 +5154,7 @@ def test_embed_ansible_next_gen():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.10
     """
@@ -5170,7 +5170,7 @@ def test_cluster_graph_by_vm_tag_vsphere65():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -5186,7 +5186,7 @@ def test_cluster_graph_by_vm_tag_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -5203,7 +5203,7 @@ def test_group_cloud_storage_quota_by_services():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -5228,7 +5228,7 @@ def test_can_add_project_to_tenant():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/10h
         tags: rbac
     """
@@ -5243,7 +5243,7 @@ def test_service_bundle_provsioning_with_quota_enabled():
 
     Polarion:
         assignee: ghubale
-        casecomponent: prov
+        casecomponent: Provisioning
         initialEstimate: 1/4h
         setup: 1.create a catalog item of type vmware
                2.create a catalog bundle by adding the above resource.
@@ -5287,7 +5287,7 @@ def test_no_rbac_warnings_in_logs_when_viewing_satellite_provider():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/15h
         title: No RBAC warnings in logs when viewing Satellite provider
@@ -5305,7 +5305,7 @@ def test_ec2_create_sns_topic():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/6h
         startsin: 5.8
     """
@@ -5320,8 +5320,8 @@ def test_bottleneck_provider():
     Verify bottleneck events from providers
 
     Polarion:
-        assignee: None
-        casecomponent: optimize
+        assignee: nachandr
+        casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 3/4h
         testtype: integration
@@ -5370,7 +5370,7 @@ def test_config_manager_prov_from_service_limit_ansible_tower_310():
 
     Polarion:
         assignee: nachandr
-        casecomponent: prov
+        casecomponent: Provisioning
         initialEstimate: 1h
         startsin: 5.8
     """
@@ -5404,9 +5404,9 @@ def test_database_wildcard_should_work_and_be_included_in_the_query():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
         startsin: 5.10
         title: Database wildcard should work and be included in the query
     """
@@ -5420,7 +5420,7 @@ def test_user_should_be_able_to_see_requests_irrespective_of_tags_assigned():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         startsin: 5.9
         title: User should be able to see requests irrespective of tags assigned
@@ -5437,7 +5437,7 @@ def test_ssui_myservice_myrequests_and_service_catalog_filter_links():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         endsin: 5.6
         initialEstimate: 1/8h
@@ -5456,7 +5456,7 @@ def test_refresh_ssui_page():
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/8h
     """
     pass
@@ -5472,7 +5472,7 @@ def test_create_generic_class():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: create generic class
@@ -5489,7 +5489,7 @@ def test_embed_tower_exec_play_against_rhos():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.9
@@ -5507,7 +5507,7 @@ def test_simultaneous_tenant_quota():
 
     Polarion:
         assignee: ghubale
-        casecomponent: prov
+        casecomponent: Provisioning
         initialEstimate: 1/6h
         startsin: 5.8
     """
@@ -5523,7 +5523,7 @@ def test_distributed_migrate_embedded_ansible_role():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/4h
         setup: 1. Configure a 2 server installation (same region + zone)
@@ -5563,7 +5563,7 @@ def test_validate_cost_weekly_usage_memory():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -5577,7 +5577,7 @@ def test_validate_cost_weekly_allocation_storage():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -5591,7 +5591,7 @@ def test_validate_cost_weekly_usage_disk():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -5605,7 +5605,7 @@ def test_validate_cost_weekly_usage_storage():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -5619,7 +5619,7 @@ def test_validate_cost_weekly_usage_cpu():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -5633,7 +5633,7 @@ def test_validate_cost_weekly_allocation_memory():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -5647,7 +5647,7 @@ def test_validate_cost_weekly_usage_network():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -5661,7 +5661,7 @@ def test_validate_cost_weekly_allocation_cpu():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -5682,7 +5682,7 @@ def test_ec2_targeted_refresh_floating_ip():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1 1/2h
         startsin: 5.9
@@ -5699,7 +5699,7 @@ def test_upgrade_single_inplace_ipv6():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: provision appliance
@@ -5724,7 +5724,7 @@ def test_in_dynamic_dropdown_list_the_default_value_should_not_contain_all_the_v
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: In dynamic dropdown list, the default value should not
@@ -5742,7 +5742,7 @@ def test_sui_snapshots_for_vm_create_edit_delete():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.8
@@ -5760,7 +5760,7 @@ def test_submit_or_cancelation_buttons_in_dynamic_dialogs_tied_to_a_service_butt
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/6h
         title: Submit or cancelation buttons in dynamic dialogs tied to a
                Service button should be visble
@@ -5778,7 +5778,7 @@ def test_notification_for_snapshot_delete_failure():
 
     Polarion:
         assignee: apagac
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/4h
         title: test notification for snapshot delete failure
@@ -5802,7 +5802,7 @@ def test_authentication_user_created_after_success_login():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
     """
     pass
@@ -5817,7 +5817,7 @@ def test_host_graph_by_vm_tag_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
         testtype: integration
@@ -5841,7 +5841,7 @@ def test_host_graph_by_vm_tag_vsphere65():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -5873,7 +5873,7 @@ def test_change_provider_template_in_catalog_item():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
@@ -5899,7 +5899,7 @@ def test_ec2_targeted_refresh_network():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.9
@@ -5917,7 +5917,7 @@ def test_candu_graphs_vm_compare_host_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/6h
     """
@@ -5933,7 +5933,7 @@ def test_candu_graphs_vm_compare_host_vsphere65():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -5948,7 +5948,7 @@ def test_embed_tower_crud_repo():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/2h
         startsin: 5.8
@@ -5971,7 +5971,7 @@ def test_sdn_nsg_firewall_rules_azure():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -5989,7 +5989,7 @@ def test_provider_specific_vm():
 
     Polarion:
         assignee: mkourim
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -6005,7 +6005,7 @@ def test_new_dialog_editor_all_element_types_ui_and_validations():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         startsin: 5.9
         title: New dialog editor - All element types UI and validations
@@ -6023,7 +6023,7 @@ def test_embed_tower_refresh_provider_repo_list():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
@@ -6041,7 +6041,7 @@ def test_embed_tower_refresh_provider_repo_details():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
@@ -6055,8 +6055,8 @@ def test_embed_tower_refresh_provider_repo_details():
 def test_utilization_utilization_graphs():
     """
     Polarion:
-        assignee: None
-        casecomponent: optimize
+        assignee: nachandr
+        casecomponent: Optimize
         initialEstimate: 1/4h
         testSteps:
             1. Enable C&U
@@ -6081,7 +6081,7 @@ def test_distributed_field_zone_name_special():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/30h
     """
@@ -6097,7 +6097,7 @@ def test_delete_orchestration_template_in_use():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/16h
         setup: Create a orchestration template and provision a stack from it .
@@ -6118,7 +6118,7 @@ def test_embed_tower_invisible():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/12h
         startsin: 5.8
@@ -6167,7 +6167,7 @@ def test_service_chargeback_retired_service():
 
     Polarion:
         assignee: nachandr
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: low
         initialEstimate: 1/2h
     """
@@ -6184,7 +6184,7 @@ def test_ec2_targeted_refresh_network_router():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.9
@@ -6206,8 +6206,8 @@ def test_storage_object_store_object_remove():
     4) Verify object removed or not
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: mmojzis
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.8
@@ -6224,7 +6224,7 @@ def test_sui_order_and_request_should_be_sorted_by_time():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: low
         initialEstimate: 1/8h
         startsin: 5.8
@@ -6242,7 +6242,7 @@ def test_notification_show_notification_when_tenant_quota_is_reached():
 
     Polarion:
         assignee: ghubale
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.8
@@ -6260,7 +6260,7 @@ def test_in_the_self_service_portal_reconfigure_service_should_shows_available_p
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/2h
         title: In the self service portal, reconfigure service should shows
                available Provisioning Dialog
@@ -6295,7 +6295,7 @@ def test_service_infra_tenant_quota_storage_default_entry_point():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
     """
@@ -6311,7 +6311,7 @@ def test_ssa_vm_groups():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         testtype: integration
@@ -6329,7 +6329,7 @@ def test_service_cloud_tenant_quota_memory_default_entry_point():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -6368,7 +6368,7 @@ def test_puma_server():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: web_ui
+        casecomponent: WebUI
         initialEstimate: 1/2h
     """
     pass
@@ -6383,7 +6383,7 @@ def test_saving_a_service_dialog_with_a_multi_select_drop_down_populated_by_expr
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Saving a service dialog with a multi-select drop-down
                populated by expression method should not error
@@ -6400,7 +6400,7 @@ def test_sui_reconfigure_service_from_sui():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.8
@@ -6419,7 +6419,7 @@ def test_ssa_vm_azure_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.8
     """
@@ -6436,7 +6436,7 @@ def test_ssa_vm_scvmm2k16_centos_xfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -6452,7 +6452,7 @@ def test_ssa_vm_azure_multiple_vms():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/4h
     """
@@ -6470,7 +6470,7 @@ def test_ssa_vm_scvmm2k16_windows2016_disk_fileshare():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -6487,7 +6487,7 @@ def test_ssa_vm_scvmm2k12_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -6506,7 +6506,7 @@ def test_ssa_vm_scvmm2k12_windows2016_refs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -6523,7 +6523,7 @@ def test_ssa_vm_azure_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.8
     """
@@ -6542,7 +6542,7 @@ def test_ssa_vm_scvmm2k16_windows2012r2_refs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -6561,7 +6561,7 @@ def test_ssa_vm_ec2_customer_scenario():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -6577,7 +6577,7 @@ def test_ssa_vm_rhos7_ga_fedora_22_ext4():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.3
@@ -6595,7 +6595,7 @@ def test_ssa_vm_scvmm2k16_schedule():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/4h
         startsin: 5.3
@@ -6615,7 +6615,7 @@ def test_ssa_vm_scvmm2k12_second_disk_refs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -6632,7 +6632,7 @@ def test_ssa_vm():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         testtype: integration
@@ -6650,7 +6650,7 @@ def test_ssa_vm_ec2_fedora():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -6667,7 +6667,7 @@ def test_ssa_vm_azure_compliance_policy():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/4h
     """
@@ -6685,7 +6685,7 @@ def test_ssa_vm_vsphere6_nested_wimdows7_xfs_ssui():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.8
@@ -6703,7 +6703,7 @@ def test_ssa_vm_scvmm2k12_compliance_policy():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/4h
         startsin: 5.3
@@ -6720,7 +6720,7 @@ def test_ssa_vm_scvmm2k16_multiple_vms():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/4h
         startsin: 5.3
@@ -6737,7 +6737,7 @@ def test_ssa_vm_azure_schedule():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/4h
     """
@@ -6754,7 +6754,7 @@ def test_ssa_vm_scvmm2k16_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -6770,7 +6770,7 @@ def test_ssa_vm_azure_managed_disk():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
     """
     pass
@@ -6787,7 +6787,7 @@ def test_ssa_vm_ec2_windows2012_ssui():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.9
@@ -6805,7 +6805,7 @@ def test_ssa_vm_ec2_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -6824,7 +6824,7 @@ def test_ssa_vm_azure_rhel():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.6
@@ -6844,7 +6844,7 @@ def test_ssa_vm_azure_wimdows2016_ssui():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.8
@@ -6881,7 +6881,7 @@ def test_ssa_vm_azure_windows2016_refs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/4h
@@ -6907,7 +6907,7 @@ def test_ssa_vm_scvmm2k12_multiple_vms():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/4h
     """
@@ -6924,7 +6924,7 @@ def test_ssa_vm_scvmm2k12_centos_xfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -6942,7 +6942,7 @@ def test_ssa_vm_azure_region():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -6959,7 +6959,7 @@ def test_ssa_vm_scvmm2k16_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -6978,7 +6978,7 @@ def test_ssa_vm_scvmm2k16_windows2016_refs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -6996,7 +6996,7 @@ def test_ssa_vm_ec2_ubuntu_ssui():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.9
@@ -7015,7 +7015,7 @@ def test_ssa_vm_azure_wimdows2012_ssui():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.8
@@ -7036,7 +7036,7 @@ def test_ssa_vm_ec2_rhel():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -7052,7 +7052,7 @@ def test_ssa_vm_ec2_agent_tracker():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.9
     """
@@ -7088,7 +7088,7 @@ def test_ssa_vm_azure_windows2012r2_refs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseposneg: negative
         initialEstimate: 1/2h
         setup: Need to create a windows 2012r2 instance and save it onto the ReFS
@@ -7113,7 +7113,7 @@ def test_ssa_vm_ec2_ubuntu():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -7131,7 +7131,7 @@ def test_ssa_vm_vsphere6_nested_centos_xfs_ssui():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.8
@@ -7148,7 +7148,7 @@ def test_ssa_vm_azure_ubuntu():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -7167,7 +7167,7 @@ def test_ssa_vm_scvmm2k12_windows2012r2_refs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -7184,7 +7184,7 @@ def test_ssa_vm_scvmm2k12_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -7200,7 +7200,7 @@ def test_ssa_vm_azure_non_managed_disk():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
     """
     pass
@@ -7217,7 +7217,7 @@ def test_ssa_vm_scvmm2k12_windows2016_disk_fileshare():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -7234,7 +7234,7 @@ def test_ssa_vm_scvmm2k16_rhel74():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -7252,7 +7252,7 @@ def test_ssa_vm_azure_ubuntu_ssui():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.8
@@ -7272,7 +7272,7 @@ def test_ssa_vm_scvmm2k16_second_disk_refs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -7288,7 +7288,7 @@ def test_ssa_vm_scvmm2k12_schedule():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/4h
     """
@@ -7306,7 +7306,7 @@ def test_ssa_vm_ec2_windows2016_ssui():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.9
@@ -7327,7 +7327,7 @@ def test_ssa_vm_disk_usage():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.3
@@ -7346,7 +7346,7 @@ def test_ssa_vm_cancel_task():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -7363,7 +7363,7 @@ def test_ssa_vm_scvmm2k12_rhel74():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -7380,7 +7380,7 @@ def test_ssa_vm_scvmm2k16_compliance_policy():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/4h
         startsin: 5.3
@@ -7399,7 +7399,7 @@ def test_ssa_vm_azure():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -7420,7 +7420,7 @@ def test_ssa_vm_ec2_vpc():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.9
     """
@@ -7438,8 +7438,8 @@ def test_vm_collect_running_processes_neg():
     is selected.
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: sbulage
+        casecomponent: Infra
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/4h
@@ -7460,7 +7460,7 @@ def test_embed_tower_ui_requests_notifications_negative():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/6h
         startsin: 5.8
     """
@@ -7478,7 +7478,7 @@ def test_automate_ansible_playbook_method_type_verbosity():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.9
@@ -7497,7 +7497,7 @@ def test_session_purging_occurs_only_when_session_store_is_sql():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/10h
         title: Session purging occurs only when session_store is sql
@@ -7514,7 +7514,7 @@ def test_ssa_vm_actions():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         testtype: integration
@@ -7531,7 +7531,7 @@ def test_drop_down_dialog_should_honor_the_order_of_values_as_they_are_inputted(
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/16h
         startsin: 5.9
         title: Drop Down Dialog should Honor the Order of Values as they are Inputted
@@ -7547,7 +7547,7 @@ def test_customize_request_security_group():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -7563,7 +7563,7 @@ def test_authentication_ldap_switch_groups():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -7578,8 +7578,8 @@ def test_host_credentials_default():
     Collect Running Processes to get the processes from a VM>
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: sbulage
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         upstream: yes
@@ -7596,7 +7596,7 @@ def test_embed_tower_repo_tag():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.10
     """
@@ -7611,8 +7611,8 @@ def test_create_appliance_on_scvmm_using_the_vhd_image():
     VM, attach the VHD disk, and boot system.
 
     Polarion:
-        assignee: None
-        casecomponent: appl
+        assignee: jdupuy
+        casecomponent: Appliance
         initialEstimate: 1/4h
         subtype1: usability
         title: Create Appliance on SCVMM using the VHD image.
@@ -7632,7 +7632,7 @@ def test_satellite_host_groups_show_up_as_configuration_profiles_satellite_62():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/15h
         title: Satellite host groups show up as Configuration Profiles [satellite_62]
@@ -7649,7 +7649,7 @@ def test_service_ansible_playbook_with_already_existing_catalog_item_name():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
@@ -7667,7 +7667,7 @@ def test_verify_external_auth_details_updated_in_appliance_console_ipa_():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         title: Verify external_auth details updated in appliance_console[IPA].
@@ -7680,7 +7680,7 @@ def test_dynamic_dropdowns_should_show_value_only_once():
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Dynamic dropdowns should show value only once
@@ -7699,7 +7699,7 @@ def test_snapshot_timeline_group_actions():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/3h
         testSteps:
@@ -7728,7 +7728,7 @@ def test_dynamic_dropdown_multiselect_default_element_is_shouldnt_be_blank_when_
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/16h
         title: Dynamic Dropdown Multiselect: Default element is shouldn't
                be blank when loaded by another element
@@ -7745,7 +7745,7 @@ def test_expression_method_definitions_should_not_fail_with_script_error_in_a_di
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/6h
         startsin: 5.10
         title: Expression method definitions should not fail with "" in a dialog
@@ -7778,7 +7778,7 @@ def test_sui_test_all_language_translations():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: SUI : Test all Language translations
@@ -7797,7 +7797,7 @@ def test_service_ansible_verbosity():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
@@ -7812,8 +7812,8 @@ def test_update_yum_bad_version_59017():
     Test Source
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
     """
     pass
 
@@ -7826,7 +7826,7 @@ def test_vm_request_approval_by_user_in_different_group():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         title: Test VM request approval by user in different group
@@ -7842,8 +7842,8 @@ def test_bottleneck_host():
     Verify bottleneck events from host
 
     Polarion:
-        assignee: None
-        casecomponent: optimize
+        assignee: nachandr
+        casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 3/4h
         testtype: integration
@@ -7860,10 +7860,10 @@ def test_vmware_provider_filters():
     So filters for 6.5 (n), 6.0 (n-1), 5.5 (n-2) at minimum.
 
     Polarion:
-        assignee: None
-        casecomponent: prov
+        assignee: kkulkarn
+        casecomponent: Provisioning
         caseimportance: low
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     pass
 
@@ -7878,7 +7878,7 @@ def test_verify_saml_sso_works_fine_check_both_enable_disable_options():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
         title: Verify SAML SSO works fine, check both enable/disable options.
@@ -7895,8 +7895,8 @@ def test_dialog_text_box_triggers_fields_shouldnt_refresh_too_soon_often():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
-        initialEstimate: None
+        casecomponent: Services
+        initialEstimate: 1/4h
         startsin: 5.10
         title: Dialog text box triggers fields shouldn't refresh too soon / often
     """
@@ -7912,7 +7912,7 @@ def test_distributed_zone_mixed_appliance_ip_versions():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1h
     """
@@ -7927,8 +7927,8 @@ def test_appliance_scsi_control_vmware():
     Virtual
 
     Polarion:
-        assignee: None
-        casecomponent: appl
+        assignee: kkulkarn
+        casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/4h
     """
@@ -7943,7 +7943,7 @@ def test_dynamic_check_box_does_not_update_in_classic_ui():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: critical
         initialEstimate: 1/4h
         startsin: 5.8
@@ -7964,7 +7964,7 @@ def test_ec2_targeted_refresh_network_port():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.9
@@ -7980,7 +7980,7 @@ def test_automate_git_import_multiple_domains():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/12h
@@ -7998,7 +7998,7 @@ def test_cui_should_check_dialog_field_associations():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/6h
         title: CUI Should check dialog field associations
@@ -8040,7 +8040,7 @@ def test_snapshot_timeline_new_vm():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/6h
         testSteps:
@@ -8064,7 +8064,7 @@ def test_embed_tower_repo_links():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
@@ -8097,7 +8097,7 @@ def test_changing_action_order_in_catalog_bundle_should_not_removes_resource():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/16h
         title: Changing action order in catalog bundle should not removes resource
     """
@@ -8112,7 +8112,7 @@ def test_rhn_mirror_role_packages():
 
     Polarion:
         assignee: jkrocil
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 3/4h
     """
@@ -8161,7 +8161,7 @@ def test_sui_duplicate_order_does_not_provision_service():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.8
@@ -8186,7 +8186,7 @@ def test_embed_tower_exec_play_against_amazon():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1h
         startsin: 5.8
     """
@@ -8202,7 +8202,7 @@ def test_show_quota_used_on_tenant_quota_screen_even_when_no_quotas_are_set():
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.9
         title: Test show quota used on tenant quota screen even when no quotas are set
@@ -8243,7 +8243,7 @@ def test_embed_tower_add_branch_repo():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
@@ -8264,7 +8264,7 @@ def test_distributed_delete_offline_worker_appliance():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/2h
     """
     pass
@@ -8279,7 +8279,7 @@ def test_playbook_with_already_existing_dialogs_name():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
         title: Test Playbook with already existing dialog's name
@@ -8299,7 +8299,7 @@ def test_notification_banner_service_event_should_be_shown_in_notification_bell(
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Notification Banner : Service event should be shown in notification bell
     """
@@ -8316,7 +8316,7 @@ def test_retire_cloud_vms_date_folder():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -8330,7 +8330,7 @@ def test_create_generic_instance():
 
     Polarion:
         assignee: nansari
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h
         title: Create generic Instance
@@ -8346,8 +8346,8 @@ def test_utilization_provider():
     Verify гutilication data from providers
 
     Polarion:
-        assignee: None
-        casecomponent: optimize
+        assignee: nachandr
+        casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 1/8h
         testtype: integration
@@ -8383,7 +8383,7 @@ def test_pg_stat_activity_view_in_postgres_should_show_worker_information():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/10h
         startsin: 5.7
@@ -8400,7 +8400,7 @@ def test_black_console_ext_auth_options_disable():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
         setup: -ssh to appliance
@@ -8434,7 +8434,7 @@ def test_reconfigure_service_fields_empty_after_deploying_service():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Reconfigure service fields empty after deploying service
@@ -8451,7 +8451,7 @@ def test_distributed_zone_failover_reporting():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -8468,7 +8468,7 @@ def test_edit_request_task():
     Polarion:
         assignee: mkourim
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     pass
 
@@ -8482,7 +8482,7 @@ def test_automate_relationship_trailing_spaces():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/10h
         setup: A fresh appliance.
@@ -8507,7 +8507,7 @@ def test_vm_reconfig_add_remove_network_adapters_vsphere67_nested_dportgroup():
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/16h
         startsin: 5.9
     """
@@ -8521,7 +8521,7 @@ def test_vm_reconfig_add_remove_network_adapters_vsphere67_nested_mgmtnetwork():
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/16h
         startsin: 5.9
     """
@@ -8535,7 +8535,7 @@ def test_vm_reconfig_add_remove_network_adapters_vsphere67_nested_vmnetwork():
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/16h
         startsin: 5.9
     """
@@ -8548,8 +8548,8 @@ def test_custom_reports_with_timelines_policy_events2():
     None
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     pass
 
@@ -8560,8 +8560,8 @@ def test_custom_reports_with_timelines_vm_operation():
     None
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     pass
 
@@ -8576,8 +8576,8 @@ def test_custom_reports_with_timelines():
     Such custom reports appear in Cloud Intel -> Timelines after creation.
 
     Polarion:
-        assignee: None
-        casecomponent: report
+        assignee: pvala
+        casecomponent: Reporting
         caseimportance: low
         initialEstimate: 1/3h
     """
@@ -8590,8 +8590,8 @@ def test_custom_reports_with_timelines_hosts():
     None
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     pass
 
@@ -8602,8 +8602,8 @@ def test_custom_reports_with_timelines_policy_events():
     None
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: pvala
+        initialEstimate: 1/4h
     """
     pass
 
@@ -8633,7 +8633,7 @@ def test_ssui_dynamic_dropdown_values_are_not_loaded_in_dropdown_unless_refresh_
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
@@ -8653,7 +8653,7 @@ def test_control_policy_simulation_displayed():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: control
+        casecomponent: Control
         caseimportance: low
         initialEstimate: 1/6h
     """
@@ -8674,7 +8674,7 @@ def test_verify_look_up_ldap_groups_option_works_fine():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         title: verify Look Up LDAP Groups option works fine.
     """
@@ -8690,7 +8690,7 @@ def test_switching_user_group_without_disconnecting():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Open two private/anonymous windows in Firefox/Chrome/etc.
@@ -8780,7 +8780,7 @@ def test_distributed_zone_failover_cu_data_collector():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -8793,7 +8793,7 @@ def test_dialog_value_type_integer_string_check_in_dropdown_elements():
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Dialog : value type(Integer/string) check in dropdown elements
     """
@@ -8809,7 +8809,7 @@ def test_group_cloud_memory_quota_by_lifecycle():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/2h
         startsin: 5.8
     """
@@ -8824,7 +8824,7 @@ def test_rhi_inventory():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
     """
     pass
@@ -8839,7 +8839,7 @@ def test_project_cloud_storage_quota_by_enforce():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
     """
@@ -8876,7 +8876,7 @@ def test_automate_generic_object_service_associations():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -8892,7 +8892,7 @@ def test_custom_button_in_sui():
 
     Polarion:
         assignee: ndhandre
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
         title: Test Custom button in SUI
@@ -8911,7 +8911,7 @@ def test_automate_git_domain_displayed_in_dialog():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/15h
         startsin: 5.7
     """
@@ -8935,7 +8935,7 @@ def test_verify_user_validation_works_fine_but_authentication_fails_if_no_group_
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         title: verify user validation works fine but authentication fails
@@ -8989,7 +8989,7 @@ def test_service_ansible_playbook_cloud_credentials():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: low
         initialEstimate: 1/4h
         startsin: 5.8
@@ -9006,7 +9006,7 @@ def test_rhi_unregister():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         testtype: integration
     """
@@ -9024,7 +9024,7 @@ def test_embed_tower_repo_list():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/6h
         startsin: 5.8
     """
@@ -9042,7 +9042,7 @@ def test_automate_disabled_domains_in_domain_priority():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/12h
@@ -9067,8 +9067,8 @@ def test_storage_volume_in_use_delete_openstack():
     removed because it is attached to one or more Instances "
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: mmojzis
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/16h
         startsin: 5.7
@@ -9084,7 +9084,7 @@ def test_automate_engine_database_connection():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -9103,7 +9103,7 @@ def test_configuration_region_description_change():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/20h
     """
@@ -9115,7 +9115,7 @@ def test_ec2_add_delete_add_provider():
     """
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1h
     """
     pass
@@ -9146,7 +9146,7 @@ def test_credentials_change_password_trailing_whitespace():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
@@ -9164,7 +9164,7 @@ def test_embed_tower_event_catcher_collect():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -9181,7 +9181,7 @@ def test_api_edit_user_no_groups():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -9205,7 +9205,7 @@ def test_generic_object_should_be_visible_in_service_view():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         setup: https://bugzilla.redhat.com/show_bug.cgi?id=1515945
         startsin: 5.9
@@ -9224,7 +9224,7 @@ def test_custom_service_dialog_quota_flavors():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -9242,7 +9242,7 @@ def test_service_ansible_playbook_order_credentials_usecredsfromservicedialog():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.8
@@ -9264,7 +9264,7 @@ def test_storage_object_store_container_edit_tag_openstack():
     5) Verify the tag is removed
 
     Polarion:
-        assignee: None
+        assignee: mmojzis
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -9301,7 +9301,7 @@ def test_in_dynamic_multi_select_dialog_elements_the_first_element_shouldnt_be_s
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/6h
         title: In Dynamic multi select dialog elements the first element
                shouldn't be selected when nil default is specified
@@ -9320,7 +9320,7 @@ def test_service_ansible_playbook_machine_credentials_service_details_opsui():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
@@ -9339,7 +9339,7 @@ def test_service_ansible_playbook_machine_credentials_service_details_sui():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
@@ -9373,7 +9373,7 @@ def test_default_view_settings_should_apply_for_service_catalogs():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.9
@@ -9394,7 +9394,7 @@ def test_user_cloud_cpu_quota_by_services():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -9410,7 +9410,7 @@ def test_ec2_targeted_refresh_stack():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.9
@@ -9427,7 +9427,7 @@ def test_ssa_vm_running_processes():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         testtype: integration
@@ -9444,7 +9444,7 @@ def test_embed_tower_repos_available():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
@@ -9461,7 +9461,7 @@ def test_quota_for_simultaneous_service_catalog_request_with_different_users():
 
     Polarion:
         assignee: ghubale
-        casecomponent: prov
+        casecomponent: Provisioning
         initialEstimate: 1/4h
         startsin: 5.8
         title: test quota for simultaneous service catalog request with different users
@@ -9485,7 +9485,7 @@ def test_ssui_test_snapshot_vm_memory_checkbox_when_creating_snapshot_for_powere
 
     Polarion:
         assignee: apagac
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/4h
         title: [SSUI] Test "snapshot vm memory" checkbox when creating
@@ -9507,7 +9507,7 @@ def test_heat_stacks_in_non_admin_tenants_shall_also_be_collected():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
@@ -9532,7 +9532,7 @@ def test_automate_schedule_crud():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/15h
         startsin: 5.8
     """
@@ -9552,7 +9552,7 @@ def test_embed_tower_add_vmware_credentials():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1h
         startsin: 5.8
     """
@@ -9568,7 +9568,7 @@ def test_add_to_shopping_cart_button_should_enable_after_refresh_on_some_dialog_
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/6h
         startsin: 5.10
         title: "Add to shopping cart" button should enable after refresh on
@@ -9586,7 +9586,7 @@ def test_embed_tower_repo_details():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
@@ -9603,7 +9603,7 @@ def test_distributed_zone_failover_web_services():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -9619,7 +9619,7 @@ def test_validate_lookup_button_provsioning():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/4h
@@ -9639,7 +9639,7 @@ def test_verify_role_configuration_work_as_expected_for_new_ldap_groups():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1h
         title: verify role configuration work as expected for new ldap groups
@@ -9664,7 +9664,7 @@ def test_crosshair_op_vm_vsphere65():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -9680,7 +9680,7 @@ def test_crosshair_op_vm_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
         testtype: integration
@@ -9697,7 +9697,7 @@ def test_rightsize_memory_values_correct_vsphere6():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     pass
@@ -9712,7 +9712,7 @@ def test_rightsize_memory_values_correct_rhv41():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -9727,7 +9727,7 @@ def test_dialog_fields_should_update_after_hitting_save_in_dialog_editor():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Dialog fields should update after hitting save in dialog editor
     """
@@ -9742,8 +9742,8 @@ def test_vpc_env_selection():
     Related to BZ 1315945
 
     Polarion:
-        assignee: None
-        casecomponent: web_ui
+        assignee: anikifor
+        casecomponent: WebUI
         initialEstimate: 1d
         testSteps:
             1. Provision an Azure Instance from an Image.
@@ -9769,7 +9769,7 @@ def test_verify_passwords_are_not_registered_in_plain_text_in_auth_logs():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         title: verify passwords are not registered in plain text in auth logs.
@@ -9786,7 +9786,7 @@ def test_set_retirement_date_scvmm():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.4
@@ -9802,8 +9802,8 @@ def test_add_provider_without_subscription_azure():
     2.Validate
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: anikifor
+        casecomponent: Cloud
         caseposneg: negative
         initialEstimate: 1/10h
     """
@@ -9821,7 +9821,7 @@ def test_saved_chargeback_report():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -9853,8 +9853,8 @@ def test_it_should_add_new_service_catalog_item_when_display_in_catalog_selected
 
     Polarion:
         assignee: nansari
-        casecomponent: services
-        initialEstimate: None
+        casecomponent: Services
+        initialEstimate: 1/4h
         startsin: 5.9
         title: It should add new Service Catalog Item when "Display in
                Catalog" selected and no Catalog chosen
@@ -9893,8 +9893,8 @@ def test_proxy_override_gce():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         setup: Make sure you create a bad proxy for default and a correct proxy for
@@ -9919,8 +9919,8 @@ def test_proxy_override_ec2():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         setup: Make sure you create a bad proxy for default and a correct proxy for
@@ -9945,8 +9945,8 @@ def test_proxy_override_azure():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/4h
         setup: Setup the azure proxy correct and the default proxy incorrectly and
@@ -9966,7 +9966,7 @@ def test_rbac_user_with_no_permissions_should_not_be_able_to_create_catalog_item
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: RBAC : User with no permissions should not be able to create catalog item
@@ -9983,8 +9983,8 @@ def test_zone_credentials_windows():
     Collect Running Processes.
 
     Polarion:
-        assignee: None
-        casecomponent: config
+        assignee: sbulage
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         upstream: yes
@@ -10007,8 +10007,8 @@ def test_storage_object_store_object_edit_tag_openstack():
     5) Verify the tag is removed
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: mmojzis
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.8
@@ -10021,7 +10021,7 @@ def test_able_to_add_long_description_for_playbook_catalog_items():
     """
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Able to add long description for playbook catalog items
@@ -10037,8 +10037,8 @@ def test_utilization_cluster():
     Verify гutilication data from cluster
 
     Polarion:
-        assignee: None
-        casecomponent: optimize
+        assignee: nachandr
+        casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 1/8h
         testtype: integration
@@ -10056,7 +10056,7 @@ def test_ldap_user_login():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         testSteps:
             1. login with the valid ldap user configured with CFME
@@ -10084,7 +10084,7 @@ def test_ec2_deploy_instance_with_ssh_addition_template():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -10102,7 +10102,7 @@ def test_add_cloud_key_pair():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/16h
         startsin: 5.5
@@ -10119,7 +10119,7 @@ def test_textbox_value_should_update_with_automate_method():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: TextBox value should update with automate method
@@ -10156,7 +10156,7 @@ def test_custom_button_order_ansible_playbook_service():
 
     Polarion:
         assignee: sbulage
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.8
@@ -10171,8 +10171,8 @@ def test_vmware_vds_deploy_target():
     Target vDS for deployment
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: kkulkarn
+        casecomponent: Infra
         initialEstimate: 1/12h
         testtype: integration
     """
@@ -10187,8 +10187,8 @@ def test_bottleneck_cluster():
     Verify bottleneck events from cluster
 
     Polarion:
-        assignee: None
-        casecomponent: optimize
+        assignee: nachandr
+        casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 3/4h
         testtype: integration
@@ -10246,7 +10246,7 @@ def test_verify_purging_of_old_records():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/4h
         startsin: 5.8
         title: Verify purging of old records
@@ -10262,8 +10262,8 @@ def test_vm_collect_running_processes():
     Windows Guest OS that is running and has an IP Address.
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: sbulage
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.5
@@ -10292,7 +10292,7 @@ def test_config_manager_prov_from_service_ansible_tower_310():
 
     Polarion:
         assignee: nachandr
-        casecomponent: prov
+        casecomponent: Provisioning
         initialEstimate: 1h
         startsin: 5.6
     """
@@ -10308,7 +10308,7 @@ def test_embed_tower_add_gce_credentials():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -10332,7 +10332,7 @@ def test_when_clicking_refresh_for_text_field_2_only_text_field_2_should_refresh
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: When clicking refresh for text field 2 only text field 2
                should refreshed of service dialog
@@ -10356,7 +10356,7 @@ def test_verify_disable_local_login_option_works_fine_verify_enable_disable_opti
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         title: Verify disable local login option works fine. Verify enable/disable option
@@ -10378,7 +10378,7 @@ def test_nor_cpu_vsphere6():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -10398,7 +10398,7 @@ def test_nor_cpu_rhv41():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -10419,7 +10419,7 @@ def test_nor_cpu_vsphere55():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -10440,7 +10440,7 @@ def test_dialogs_including_a_tag_control_element_should_submit_the_dialog():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Dialogs including a tag control element should submit the dialog
     """
@@ -10458,7 +10458,7 @@ def test_retire_infra_vms_notification_folder():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -10512,8 +10512,8 @@ def test_storage_volume_detach_openstack():
     5. Check whether volume was detached from that instance
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/8h
         startsin: 5.7
     """
@@ -10532,7 +10532,7 @@ def test_verify_that_users_can_access_help_documentation():
 
     Polarion:
         assignee: apagac
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
@@ -10562,7 +10562,7 @@ def test_reconfigure_service_for_dialogs_with_timeout_values():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/4h
         title: Test reconfigure service for dialogs with timeout values
@@ -10598,7 +10598,7 @@ def test_requests_in_ui_and_api():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         tags: rbac
@@ -10616,7 +10616,7 @@ def test_childtenant_cloud_cpu_quota_by_enforce():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
     """
@@ -10632,7 +10632,7 @@ def test_add_ec2_provider_with_instance_without_name():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/6h
     """
     pass
@@ -10666,7 +10666,7 @@ def test_automate_check_quota_regression():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -10683,7 +10683,7 @@ def test_embed_tower_exec_play_against_openstack():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
@@ -10701,7 +10701,7 @@ def test_chargeback_report_compute_provider():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -10718,7 +10718,7 @@ def test_chargeback_report_storage_tenants():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/10h
     """
     pass
@@ -10734,7 +10734,7 @@ def test_chargeback_report_compute_tenants():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/10h
     """
     pass
@@ -10750,7 +10750,7 @@ def test_chargeback_report_storage_tagged_datastore():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -10767,7 +10767,7 @@ def test_chargeback_report_storage_enterprise():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -10784,7 +10784,7 @@ def test_chargeback_report_compute_cluster():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -10801,7 +10801,7 @@ def test_chargeback_report_compute_enterprise():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -10818,7 +10818,7 @@ def test_chargeback_report_compute_tagged_vm():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -10835,7 +10835,7 @@ def test_chargeback_report_storage_datastore():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -10852,7 +10852,7 @@ def test_authorized_users_can_login():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/8h
     """
@@ -10870,7 +10870,7 @@ def test_ssa_users_azure_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -10888,7 +10888,7 @@ def test_ssa_users_azure_rhel():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -10906,7 +10906,7 @@ def test_ssa_users_scvmm2k16_centos_xfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -10924,7 +10924,7 @@ def test_ssa_users_scvmm2k12_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -10942,7 +10942,7 @@ def test_ssa_users_scvmm2k16_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -10960,7 +10960,7 @@ def test_ssa_users_scvmm2k12_centos_xfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -10978,7 +10978,7 @@ def test_ssa_users_ec2_ubuntu():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -10996,7 +10996,7 @@ def test_ssa_users_scvmm2k12_rhel74():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -11014,7 +11014,7 @@ def test_ssa_users_azure_ubuntu():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -11032,7 +11032,7 @@ def test_ssa_users_ec2_fedora():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -11050,7 +11050,7 @@ def test_ssa_users_scvmm2k16_rhel74():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -11066,7 +11066,7 @@ def test_ssa_users_rhos7_ga_fedora_22_ext4():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.3
@@ -11086,7 +11086,7 @@ def test_ssa_users_scvmm2k16_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -11104,7 +11104,7 @@ def test_ssa_users_scvmm2k12_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -11122,7 +11122,7 @@ def test_ssa_users_ec2_rhel():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -11140,7 +11140,7 @@ def test_ssa_users_azure_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -11158,7 +11158,7 @@ def test_ssa_users_ec2_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -11193,7 +11193,7 @@ def test_set_ownership_back_to_default():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         title: Set Ownership back to default
@@ -11217,7 +11217,7 @@ def test_vm_placement_with_duplicated_folder_name_vmware():
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: low
         initialEstimate: 1/4h
         startsin: 5.7
@@ -11281,7 +11281,7 @@ def test_can_only_select_this_regions_zones_when_changing_server_zone():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         title: Can only select this region's zones when changing server zone
@@ -11317,7 +11317,7 @@ def test_service_ansible_overridden_extra_vars():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -11332,7 +11332,7 @@ def test_embed_tower_add_public_repo():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
@@ -11349,7 +11349,7 @@ def test_disable_toast_notifications_by_role_in_sui():
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.9
@@ -11376,7 +11376,7 @@ def test_ec2_flavor_list_up_to_date():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/3h
     """
     pass
@@ -11409,7 +11409,7 @@ def test_user_quota_via_ssui():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -11442,7 +11442,7 @@ def test_candu_graphs_vm_compare_cluster_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/6h
     """
@@ -11458,7 +11458,7 @@ def test_candu_graphs_vm_compare_cluster_vsphere65():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -11473,7 +11473,7 @@ def test_automate_git_domain_import_with_no_connection():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.7
@@ -11490,8 +11490,8 @@ def test_cloud_init_cfme():
     test adding cloud init payload to cfme appliance (infra-PXE clod init)
 
     Polarion:
-        assignee: None
-        casecomponent: appl
+        assignee: jhenner
+        casecomponent: Appliance
         endsin: 5.4
         initialEstimate: 1/2h
         startsin: 5.4
@@ -11508,7 +11508,7 @@ def test_automate_schema_field_without_type():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/12h
@@ -11527,7 +11527,7 @@ def test_ssa_packages_ec2_ubuntu():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -11545,7 +11545,7 @@ def test_ssa_packages_scvmm2k12_rhel74():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -11561,7 +11561,7 @@ def test_ssa_packages_rhos7_ga_fedora_22_ext4():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.3
@@ -11581,7 +11581,7 @@ def test_ssa_packages_ec2_fedora():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -11599,7 +11599,7 @@ def test_ssa_packages_scvmm2k16_centos_xfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -11617,7 +11617,7 @@ def test_ssa_packages_ec2_rhel():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -11635,7 +11635,7 @@ def test_ssa_packages_scvmm2k12_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -11653,7 +11653,7 @@ def test_ssa_packages_azure_ubuntu():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -11671,7 +11671,7 @@ def test_ssa_packages_azure_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -11689,7 +11689,7 @@ def test_ssa_packages_scvmm2k12_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -11707,7 +11707,7 @@ def test_ssa_packages_scvmm2k16_rhel74():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -11725,7 +11725,7 @@ def test_ssa_packages_scvmm2k16_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -11743,7 +11743,7 @@ def test_ssa_packages_ec2_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -11761,7 +11761,7 @@ def test_ssa_packages_scvmm2k16_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -11779,7 +11779,7 @@ def test_ssa_packages_azure_rhel():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -11797,7 +11797,7 @@ def test_ssa_packages_azure_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -11815,7 +11815,7 @@ def test_ssa_packages_scvmm2k12_centos_xfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -11849,7 +11849,7 @@ def test_verify_ldap_authentication_works_without_groups_from_ldap_by_uncheck_th
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
         title: verify LDAP authentication works without groups from LDAP by
@@ -11867,8 +11867,8 @@ def test_vmware_vds_ui_display():
     Compute > Infrastructure > Host > [Select host] > Properties > Network
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: kkulkarn
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
         testtype: integration
@@ -11890,7 +11890,7 @@ def test_verify_login_fails_for_user_in_cfme_after_changing_the_password_in_saml
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/4h
@@ -11916,7 +11916,7 @@ def test_automate_retry_onexit_increases():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -11937,8 +11937,8 @@ def test_proxy_invalid_azure():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/2h
@@ -11961,8 +11961,8 @@ def test_proxy_invalid_gce():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/8h
@@ -11990,8 +11990,8 @@ def test_proxy_invalid_default():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/2h
@@ -12016,8 +12016,8 @@ def test_proxy_invalid_ec2():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/4h
@@ -12037,7 +12037,7 @@ def test_crosshair_op_instance_gce():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -12053,7 +12053,7 @@ def test_crosshair_op_instance_azure():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -12075,7 +12075,7 @@ def test_crosshair_op_instance_ec2():
 
     Polarion:
         assignee: mshriver
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
         testtype: integration
@@ -12112,8 +12112,8 @@ def test_proxy_valid_gce():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/4h
         setup: Configure advanced settings for GCE proxy.
@@ -12139,8 +12139,8 @@ def test_proxy_valid_default():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/2h
         setup: Follow the instructions in the mojo doc above.
@@ -12162,8 +12162,8 @@ def test_proxy_valid_azure():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/2h
         setup: Configure advanced settings for Azure proxy.
@@ -12189,8 +12189,8 @@ def test_proxy_valid_ec2():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: jhenner
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/2h
         setup: Follow the instructions in the mojo doc above as it is easier to
@@ -12210,7 +12210,7 @@ def test_automate_simulation_result_has_hash_data():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -12246,7 +12246,7 @@ def test_embed_tower_add_amazon_credentials():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.8
     """
@@ -12261,7 +12261,7 @@ def test_timepicker_should_pass_correct_timing_on_service_order():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Timepicker should pass correct timing on service order
@@ -12278,7 +12278,7 @@ def test_candu_graphs_cluster_hourly_vsphere55():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -12307,7 +12307,7 @@ def test_should_be_able_to_see_requests_if_our_users_are_in_groups_with_managed_
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Should be able to see requests if our users are in groups with managed tags
     """
@@ -12324,7 +12324,7 @@ def test_chargeback_resource_allocation_cpu_allocated():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -12341,7 +12341,7 @@ def test_chargeback_resource_allocation_memory_allocated():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -12358,7 +12358,7 @@ def test_chargeback_resource_allocation_storage_allocated():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -12377,7 +12377,7 @@ def test_ldap_user_group():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         testSteps:
             1.configure CFME appliance with ldap authentication mode.
@@ -12403,7 +12403,7 @@ def test_automate_git_import_without_master():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -12420,7 +12420,7 @@ def test_edit_catalog_item_after_remove_resource_pool():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/8h
         startsin: 5.5
@@ -12446,8 +12446,8 @@ def test_optimize_memory_usage_by_making_object_in_hash():
     so we don"t need to store that many data in memory.
 
     Polarion:
-        assignee: None
-        casecomponent: appl
+        assignee: jhenner
+        casecomponent: Appliance
         initialEstimate: 1h
         title: Optimize memory usage by making object in hash
     """
@@ -12468,7 +12468,7 @@ def test_key_pairs_quadicon():
 
     Polarion:
         assignee: anikifor
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/20h
     """
@@ -12483,7 +12483,7 @@ def test_disabling_dashboard_under_service_ui_for_a_role_shall_disable_the_dashb
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Disabling "Dashboard" under service UI for a role shall disable the dashboard
@@ -12501,7 +12501,7 @@ def test_ec2_targeted_refresh_volume():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 2/3h
         startsin: 5.9
     """
@@ -12539,9 +12539,9 @@ def test_view_quotas_without_manage_quota_permisson():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
         tags: rbac
         title: Test view quotas without manage quota permisson
     """
@@ -12566,7 +12566,7 @@ def test_ec2_proxy():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/2h
     """
     pass
@@ -12589,7 +12589,7 @@ def test_crosshair_op_datastore_vsphere65():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -12612,7 +12612,7 @@ def test_drift_analysis_vpshere6_rhel():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.3
     """
@@ -12628,7 +12628,7 @@ def test_bundle_stack_deployment():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.5
@@ -12645,7 +12645,7 @@ def test_project_cloud_memory_quota_by_enforce():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         setup: Prerequisities:
                * A provider set up, supporting provisioning in CFME
@@ -12679,7 +12679,7 @@ def test_provider_refresh_via_api():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         tags: rbac
@@ -12698,7 +12698,7 @@ def test_tenant_parent_name_rest():
     Polarion:
         assignee: mkourim
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
         upstream: yes
     """
     pass
@@ -12712,8 +12712,8 @@ def test_utilization_host():
     Verify гutilication data from host
 
     Polarion:
-        assignee: None
-        casecomponent: optimize
+        assignee: nachandr
+        casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 1/8h
         testtype: integration
@@ -12730,7 +12730,7 @@ def test_state_machine_variable():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -12746,7 +12746,7 @@ def test_credentials_login_password_blank():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/8h
@@ -12766,7 +12766,7 @@ def test_value_input_into_service_dialog_element():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/16h
         startsin: 5.5
@@ -12804,7 +12804,7 @@ def test_embed_tower_ui_requests_notifications():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/6h
         startsin: 5.8
     """
@@ -12829,7 +12829,7 @@ def test_nor_memory_values_correct_vsphere6():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     pass
@@ -12844,7 +12844,7 @@ def test_nor_memory_values_correct_rhv41():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -12859,7 +12859,7 @@ def test_gap_collection_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -12875,7 +12875,7 @@ def test_vm_reconfig_add_remove_hw_hot_vsphere67_nested_cores_per_socket():
 
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         setup: -get new configured appliance
                -add vmware provider
@@ -12904,7 +12904,7 @@ def test_vm_reconfig_add_remove_hw_hot_vsphere67_nested_sockets():
 
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         setup: -get new configured appliance
                -add vmware provider
@@ -12933,7 +12933,7 @@ def test_vm_reconfig_add_remove_hw_hot_vsphere67_nested_memory():
 
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         setup: -get new configured appliance
                -add vmware provider
@@ -12961,8 +12961,8 @@ def test_vmware_manual_placemant_cluster_only():
     VMware MANUAL Placement to Support ONLY Clusters
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: kkulkarn
+        casecomponent: Infra
         initialEstimate: 1/12h
     """
     pass
@@ -12977,7 +12977,7 @@ def test_embed_tower_api_auth():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
@@ -12994,7 +12994,7 @@ def test_service_retirement_requests_shall_be_run_by_the_user():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
@@ -13013,7 +13013,7 @@ def test_tagvis_tag_and_vm_combination():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -13046,7 +13046,7 @@ def test_embed_tower_exec_play_against_gce():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.9
@@ -13063,7 +13063,7 @@ def test_new_dialog_editor_entry_point_should_be_mandatory_for_dynamic_elements(
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         startsin: 5.9
         title: New dialog editor : Entry point should be mandatory for dynamic elements
@@ -13080,7 +13080,7 @@ def test_group_by_tag_azone_azure():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -13096,7 +13096,7 @@ def test_group_by_tag_azone_gce():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -13112,8 +13112,8 @@ def test_template_info_scvmm():
     template and check that the details correspond to SCVMM details.
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: jdupuy
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.4
@@ -13134,7 +13134,7 @@ def test_snapshot_tree_view_functionality():
 
     Polarion:
         assignee: apagac
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/4h
         setup: https://bugzilla.redhat.com/show_bug.cgi?id=1398239
@@ -13162,7 +13162,7 @@ def test_superadmin_child_tenant_delete_parent_catalog():
 
     Polarion:
         assignee: mnadeem
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/2h
         startsin: 5.5
     """
@@ -13181,8 +13181,8 @@ def test_provider_summary_scvmm2016():
     the content.
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: jdupuy
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -13202,8 +13202,8 @@ def test_provider_summary_scvmm():
     the content.
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: jdupuy
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.4
@@ -13221,7 +13221,7 @@ def test_vm_relationship_datastore_fileshare_scvmm():
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.7
@@ -13239,7 +13239,7 @@ def test_instance_quota_reconfigure_with_flavors():
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/6h
         startsin: 5.8
     """
@@ -13255,7 +13255,7 @@ def test_distributed_zone_create_new():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/12h
     """
@@ -13287,7 +13287,7 @@ def test_project_cloud_vm_quota_by_enforce():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
     """
@@ -13307,7 +13307,7 @@ def test_service_dialog_default_values_should_be_rendered_in_dialog_fields():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/8h
         title: Service Dialog : Default values should be rendered in dialog fields
     """
@@ -13329,7 +13329,7 @@ def test_service_dialog_elements_with_regex_validation_should_be_validated():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Service Dialog Elements with regex validation should be validated
     """
@@ -13345,7 +13345,7 @@ def test_verify_smart_mgmt_orchest_template():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/4h
         startsin: 5.5
@@ -13380,7 +13380,7 @@ def test_child_dialog_should_update_with_new_options_based_on_option_of_parent_d
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Child dialog should update with new options based on option
                of parent dialog upon refreshing
@@ -13401,7 +13401,7 @@ def test_notification_window_events_show_in_timestamp_order():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.9
@@ -13439,7 +13439,7 @@ def test_dynamic_dropdown_values_should_load_correctly():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Dynamic dropdown Values should load correctly
     """
@@ -13455,7 +13455,7 @@ def test_rightsize_cpu_vsphere55():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -13471,7 +13471,7 @@ def test_rightsize_cpu_vsphere6():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -13491,7 +13491,7 @@ def test_rightsize_cpu_rhv41():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -13511,7 +13511,7 @@ def test_ssa_with_snapshot_scvmm2():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.6.1
@@ -13537,7 +13537,7 @@ def test_group_quota_vm_reconfigure():
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.8
     """
@@ -13555,7 +13555,7 @@ def test_verify_orchestration_catalog_items_can_only_use_providers_that_are_visi
 
     Polarion:
         assignee: apagac
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/4h
         setup: On CFME appliance, add a Microsoft Azure provider with no restrictions
@@ -13600,7 +13600,7 @@ def test_osp_test_osp_volumes_are_cleaned_up_if_migration_fails_to_create_instan
         assignee: kkulkarn
         casecomponent: V2V
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
         title: OSP: Test OSP Volumes are cleaned up if migration fails to create instance
     """
     pass
@@ -13618,7 +13618,7 @@ def test_consistent_capitalization_of_cpu_when_creating_compute_chargeback_rate(
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/15h
         title: Consistent capitalization of 'CPU' when creating compute chargeback rate
@@ -13635,7 +13635,7 @@ def test_show_tag_info_for_playbook_services():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
         title: Show tag info for playbook services
@@ -13650,7 +13650,7 @@ def test_vm_reconfig_resize_disk_hot_vsphere67_nested_independent_persistent_thi
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.9
     """
@@ -13664,7 +13664,7 @@ def test_vm_reconfig_resize_disk_hot_vsphere67_nested_independent_persistent_thi
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.9
     """
@@ -13678,7 +13678,7 @@ def test_vm_reconfig_resize_disk_hot_vsphere67_nested_persistent_thin():
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.9
     """
@@ -13692,8 +13692,8 @@ def test_vmware_storage_profile_vm_summary():
     Correctly display the name of the storage profile
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: kkulkarn
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -13713,7 +13713,7 @@ def test_snapshot_link_in_vm_summary_page_after_deleting_snapshot():
 
     Polarion:
         assignee: apagac
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/6h
         setup: https://bugzilla.redhat.com/show_bug.cgi?id=1395116
@@ -13731,7 +13731,7 @@ def test_distributed_zone_failover_cu_coordinator_singleton():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -13746,8 +13746,8 @@ def test_stack_parent():
     an Orchestration Stack has, or can have, it"s parent relationship set.
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: sshveta
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/8h
         setup: This test is pretty straight forward.  Spin up a VM using and
@@ -13770,7 +13770,7 @@ def test_sui_rbac_see_catalogs_and_orders_as_user_with_permissions():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
         title: SUI : RBAC : see catalogs and orders as user with permissions
@@ -13787,7 +13787,7 @@ def test_dialog_dropdown_ui_values_in_the_dropdown_should_be_visible_in_edit_mod
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/16h
         title: Dialog dropdown UI values in the dropdown should be visible in edit mode
@@ -13805,7 +13805,7 @@ def test_embed_tower_credentials():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/12h
         startsin: 5.8
@@ -13822,7 +13822,7 @@ def test_cockpit_after_uninstalling():
 
     Polarion:
         assignee: sshveta
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/12h
@@ -13836,8 +13836,8 @@ def test_cockpit_after_uninstalling():
 def test_vmware_topology_status():
     """
     Polarion:
-        assignee: None
-        casecomponent: web_ui
+        assignee: kkulkarn
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -13877,7 +13877,7 @@ def test_automate_method_copy():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.9
@@ -13895,7 +13895,7 @@ def test_ec2_targeted_refresh_subnet():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.9
@@ -13912,7 +13912,7 @@ def test_validate_cost_monthly_usage_storage():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -13927,7 +13927,7 @@ def test_validate_cost_monthly_usage_disk():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -13942,7 +13942,7 @@ def test_validate_cost_monthly_allocation_cpu():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -13957,7 +13957,7 @@ def test_validate_cost_monthly_allocation_storage():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -13972,7 +13972,7 @@ def test_validate_cost_monthly_usage_cpu():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -13987,7 +13987,7 @@ def test_validate_cost_monthly_allocation_memory():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -14002,7 +14002,7 @@ def test_validate_cost_monthly_usage_memory():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -14017,7 +14017,7 @@ def test_validate_cost_monthly_usage_network():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -14035,7 +14035,7 @@ def test_embed_tower_enhanced_playbook_debug():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
@@ -14055,7 +14055,7 @@ def test_embed_tower_creds_details():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/6h
         startsin: 5.8
     """
@@ -14076,7 +14076,7 @@ def test_vm_tempate_ownership_nogroup():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/8h
@@ -14093,7 +14093,7 @@ def test_should_be_able_to_access_services_requests_as_user():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Should be able to access services - requests as user
@@ -14108,7 +14108,7 @@ def test_drop_down_list_dialog_does_should_keep_default_value_for_integer_type_i
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         startsin: 5.9
         title: Drop Down List Dialog does should keep default value for Integer type in dialogs
@@ -14142,7 +14142,7 @@ def test_dynamic_drop_down_dialog_should_work_with_automate_expression_method():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/6h
         title: Dynamic Drop Down Dialog should work with Automate Expression Method
     """
@@ -14158,7 +14158,7 @@ def test_retire_ansible_stack():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
         setup: 1. Add Ansible Tower provider (name: tower) and perform refresh
@@ -14196,7 +14196,7 @@ def test_azone_group_by_tag_ec2():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
         testtype: integration
@@ -14212,8 +14212,8 @@ def test_automated_locale_switching():
     changes accordingly with user"s preferred locale in the browser.
 
     Polarion:
-        assignee: None
-        casecomponent: appl
+        assignee: jhenner
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -14229,7 +14229,7 @@ def test_user_cloud_cpu_quota_by_lifecycle():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -14249,8 +14249,8 @@ def test_stack_template_azure():
     the value.
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: anikifor
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/8h
         setup: Create a stack based on a cloud image.  Go to stack details and check
@@ -14270,7 +14270,7 @@ def test_verify_the_authentication_mode_is_displayed_correctly_for_new_trusted_f
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/6h
         title: verify the authentication mode is displayed correctly for
@@ -14294,7 +14294,7 @@ def test_custom_button_disable():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
         startsin: 5.9
@@ -14312,8 +14312,8 @@ def test_host_info_scvmm():
     the time to spot check at least one host.
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: jdupuy
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.4
@@ -14349,7 +14349,7 @@ def test_configure_ldap_authentication():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         testSteps:
             1. specify the authentication mode to LDAP.
@@ -14374,7 +14374,7 @@ def test_quota_for_ansible_service():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
         setup: Quota check causes errors for service provisioning when using Ansible
@@ -14396,7 +14396,7 @@ def test_verify_that_when_modifying_rbac_roles_existing_enabled_disabled_product
 
     Polarion:
         assignee: apagac
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/4h
         tags: rbac
@@ -14429,7 +14429,7 @@ def test_check_all_availability_zones_for_amazon_provider():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
@@ -14447,7 +14447,7 @@ def test_sui_timeline_should_display_snapshots_at_the_time_of_creation():
 
     Polarion:
         assignee: apagac
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.9
@@ -14482,7 +14482,7 @@ def test_automate_git_import_deleted_tag():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
         startsin: 5.7
@@ -14500,7 +14500,7 @@ def test_update_webui_ipv6():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: -Provision configured appliance
@@ -14528,7 +14528,7 @@ def test_ec2_targeted_refresh_load_balancer():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.9
@@ -14545,7 +14545,7 @@ def test_suspend_scvmm2016_from_collection():
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -14562,7 +14562,7 @@ def test_automate_service_quota_runs_only_once():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -14580,7 +14580,7 @@ def test_config_manager_change_zone():
 
     Polarion:
         assignee: nachandr
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
@@ -14619,7 +14619,7 @@ def test_service_ansible_linked_vms_opsui_sui():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.8
     """
@@ -14635,7 +14635,7 @@ def test_request_filter_on_request_page():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/4h
         title: Test Request filter on Request page
@@ -14655,7 +14655,7 @@ def test_sui_test_snapshot_count():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -14675,7 +14675,7 @@ def test_verify_that_a_user_with_a_custom_tag_can_view_vms_with_the_same_tag():
 
     Polarion:
         assignee: apagac
-        casecomponent: prov
+        casecomponent: Provisioning
         initialEstimate: 1/3h
         setup: Add a provider with two VMs available for tagging
         tags: rbac
@@ -14721,8 +14721,8 @@ def test_embedded_ansible_update_bad_version_59017():
     Test Source
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
     """
     pass
 
@@ -14736,7 +14736,7 @@ def test_candu_graphs_datastore_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -14753,7 +14753,7 @@ def test_ldap_invalid_user_login():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/4h
@@ -14796,7 +14796,7 @@ def test_sui_create_snapshot_when_no_provider_is_connected():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
         title: SUI : Create snapshot when no provider is connected
@@ -14830,7 +14830,7 @@ def test_remove_display_name_for_user_in_ldap_and_verify_auth():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/2h
@@ -14861,7 +14861,7 @@ def test_ssa_template_rhos7_ga_fedora_22_ext4():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.3
@@ -14896,7 +14896,7 @@ def test_rhi_rules():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         testtype: integration
     """
@@ -14924,7 +14924,7 @@ def test_change_the_search_base_for_user_and_groups_lookup_at_domain_component_(
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         title: Change the search base for user and groups lookup at domain component .
@@ -14939,7 +14939,7 @@ def test_automation_executed_on_field_refresh_are_called_twice_in_self_service_d
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: automation executed on field refresh are called twice in self service dialogs
@@ -14956,7 +14956,7 @@ def test_distributed_zone_failover_smartstate_analysis():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -14988,7 +14988,7 @@ def test_user_cloud_storage_quota_by_lifecycle():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -15004,8 +15004,8 @@ def test_multiple_stack_deployment():
     Create bundle of stack and provision
 
     Polarion:
-        assignee: None
-        casecomponent: services
+        assignee: sshveta
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
@@ -15023,7 +15023,7 @@ def test_group_infra_memory_quota_by_services():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -15049,8 +15049,8 @@ def test_storage_volume_attach_openstack():
     6. Check whether volume was attached to that instance
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/4h
         startsin: 5.7
     """
@@ -15068,7 +15068,7 @@ def test_distributed_field_zone_name_whitespace():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/30h
     """
@@ -15087,7 +15087,7 @@ def test_snapshot_timeline_crud():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/2h
         testSteps:
@@ -15118,7 +15118,7 @@ def test_distributed_zone_create_duplicate():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -15141,7 +15141,7 @@ def test_edit_vm():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -15156,7 +15156,7 @@ def test_project_cloud_cpu_quota_by_enforce():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
     """
@@ -15172,7 +15172,7 @@ def test_group_cloud_cpu_quota_by_lifecycle():
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -15207,8 +15207,8 @@ def test_remove_catalog_items_from_catalog_bundle_resource_list():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
-        initialEstimate: None
+        casecomponent: Services
+        initialEstimate: 1/4h
         title: remove catalog items from Catalog Bundle resource list
     """
     pass
@@ -15225,7 +15225,7 @@ def test_automate_state_method():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h
         setup: A fresh appliance.
@@ -15283,7 +15283,7 @@ def test_rightsize_cpu_values_correct_rhv41():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -15298,7 +15298,7 @@ def test_rightsize_cpu_values_correct_vsphere6():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     pass
@@ -15313,7 +15313,7 @@ def test_button_can_trigger_events():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/60h
         startsin: 5.6.1
@@ -15330,7 +15330,7 @@ def test_ssa_host_os_info():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         testtype: integration
@@ -15353,7 +15353,7 @@ def test_external_auth_configuration_with_ipa():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         title: External Auth configuration with IPA
     """
@@ -15369,7 +15369,7 @@ def test_sui_auto_refresh_of_pages_of_sui_request_and_service_explorer_and_myord
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: SUI : Auto-refresh of pages of SUI (Request and Service Explorer and MyOrders)
@@ -15390,7 +15390,7 @@ def test_automate_requests_tab_exposed():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
         startsin: 5.10
@@ -15408,7 +15408,7 @@ def test_distributed_field_zone_name_long():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/30h
     """
@@ -15428,7 +15428,7 @@ def test_verify_retrieve_ldaps_groups_works_fine_for_ldap_user_from_cfme_webui()
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         title: verify retrieve ldaps groups works fine for ldap user from CFME webui.
     """
@@ -15445,7 +15445,7 @@ def test_retire_ansible_service_bundle():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.5
@@ -15463,7 +15463,7 @@ def test_quota_calculation_using_service_dialog_overrides():
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.8
         title: Test Quota calculation using service dialog overrides.
@@ -15499,7 +15499,7 @@ def test_retire_infra_vms_date_folder():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -15514,7 +15514,7 @@ def test_generic_object_details_displayed_from_a_service_do_not_include_associat
 
     Polarion:
         assignee: nansari
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h
         title: Generic object details displayed from a service do not
@@ -15546,7 +15546,7 @@ def test_distributed_zone_in_different_networks():
     """
     Polarion:
         assignee: tpapaioa
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1h
     """
     pass
@@ -15569,7 +15569,7 @@ def test_verify_that_errored_out_queue_messages_are_removed():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/15h
         title: Verify that errored-out queue messages are removed
@@ -15590,7 +15590,7 @@ def test_satellite_credential_validation_times_out_with_error_message():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/6h
         title: Satellite credential validation times out with error message
@@ -15607,7 +15607,7 @@ def test_azure_provisioning_service_owner():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/16h
         startsin: 5.5
@@ -15627,7 +15627,7 @@ def test_verify_session_timeout_works_fine_for_external_auth():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/6h
         title: Verify session timeout works fine for external auth.
@@ -15644,7 +15644,7 @@ def test_button_groups_created_on_orchestration_type_heat_service_catalog_items_
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/4h
         title: Button groups created on orchestration type (heat) service
@@ -15662,7 +15662,7 @@ def test_default_value_on_dropdown_inside_dialog():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         title: Test default value on Dropdown inside Dialog
@@ -15683,7 +15683,7 @@ def test_check_disk_allocation_size_scvmm():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         title: Check disk allocation size [SCVMM]
@@ -15740,7 +15740,7 @@ def test_verify_user_groups_can_be_retrieved_from_trusted_forest():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         title: verify user groups can be retrieved from "trusted forest"
@@ -15757,7 +15757,7 @@ def test_catalog_item_changing_the_provider_template_after_filling_all_tabs():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.5
@@ -15775,7 +15775,7 @@ def test_embed_tower_ha():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.8
@@ -15792,7 +15792,7 @@ def test_distributed_zone_failover_scheduler_singleton():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -15808,7 +15808,7 @@ def test_embed_tower_add_azure_credentials():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -15833,7 +15833,7 @@ def test_service_dialog_import():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
         upstream: yes
@@ -15852,7 +15852,7 @@ def test_verify_the_trusted_forest_settings_table_display_in_authentication_page
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/6h
         title: verify the trusted forest settings table display in authentication page.
@@ -15885,7 +15885,7 @@ def test_sui_session_timeout():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
         startsin: 5.8
         title: SUI : Session Timeout
@@ -15902,7 +15902,7 @@ def test_verify_switch_groups_works_fine_for_user_with_multiple_groups_assigned(
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         title: Verify switch groups works fine for user with multiple groups assigned.
@@ -15919,7 +15919,7 @@ def test_credentials_change_password_greater_than_16_chars():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
@@ -15935,8 +15935,8 @@ def test_bottleneck_summary_graph():
     test_bottleneck_summary_graph
 
     Polarion:
-        assignee: None
-        casecomponent: optimize
+        assignee: nachandr
+        casecomponent: Optimize
         initialEstimate: 1/4h
         testSteps:
             1. setup c&u for provider and wait for bottleneck events
@@ -15955,7 +15955,7 @@ def test_embed_tower_exec_play_against_machine():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
@@ -15974,7 +15974,7 @@ def test_ssa_files_scvmm2k12_centos_xfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -15992,7 +15992,7 @@ def test_ssa_files_azure_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -16010,7 +16010,7 @@ def test_ssa_files_scvmm2k12_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -16026,7 +16026,7 @@ def test_ssa_files_rhos7_ga_fedora_22_ext4():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.3
@@ -16046,7 +16046,7 @@ def test_ssa_files_azure_ubuntu():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -16064,7 +16064,7 @@ def test_ssa_files_ec2_rhel():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -16082,7 +16082,7 @@ def test_ssa_files_ec2_fedora():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -16100,7 +16100,7 @@ def test_ssa_files_scvmm2k12_rhel74():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -16118,7 +16118,7 @@ def test_ssa_files_scvmm2k16_centos_xfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -16136,7 +16136,7 @@ def test_ssa_files_scvmm2k16_rhel74():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -16154,7 +16154,7 @@ def test_ssa_files_scvmm2k16_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -16172,7 +16172,7 @@ def test_ssa_files_scvmm2k12_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -16190,7 +16190,7 @@ def test_ssa_files_ec2_ubuntu():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -16208,7 +16208,7 @@ def test_ssa_files_scvmm2k16_windows2016_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
     """
@@ -16226,7 +16226,7 @@ def test_ssa_files_azure_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -16244,7 +16244,7 @@ def test_ssa_files_ec2_windows2012r2_ntfs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -16262,7 +16262,7 @@ def test_ssa_files_azure_rhel():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
     """
@@ -16278,7 +16278,7 @@ def test_embed_tower_add_network_credentials():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -16295,7 +16295,7 @@ def test_chargeback_report_filter_owner():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -16311,7 +16311,7 @@ def test_chargeback_report_filter_tag():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -16327,7 +16327,7 @@ def test_sui_while_ordering_service_catalog_the_dynamic_drop_down_dialogs_fields
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: SUI - While ordering service catalog, the dynamic drop-down
@@ -16368,7 +16368,7 @@ def test_automate_git_credentials_changed():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -16389,7 +16389,7 @@ def test_set_hostname_from_appliance_console_and_configure_external_auth():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/3h
         title: set hostname from appliance_console and configure external_auth
@@ -16406,7 +16406,7 @@ def test_group_infra_cpu_quota_by_lifecycle():
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -16432,8 +16432,8 @@ def test_restricted_user_rbac_for_access_control():
     Click on Users or Groups.
 
     Polarion:
-        assignee: None
-        casecomponent: config
+        assignee: apagac
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/6h
     """
@@ -16449,7 +16449,7 @@ def test_ssa_vm_files_unicode():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/2h
@@ -16469,7 +16469,7 @@ def test_verify_ldap_group_retrieval_works_fine_for_groups_with_descriptions_whi
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
         title: verify ldap group retrieval works fine for groups with
@@ -16508,7 +16508,7 @@ def test_vms_retirement_state_field_is_capitalized_correctly():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/15h
         title: VM's Retirement State field is capitalized correctly
@@ -16525,7 +16525,7 @@ def test_catalog_item_for_ansible_playbook():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: critical
         initialEstimate: 1/4h
         startsin: 5.8
@@ -16545,7 +16545,7 @@ def test_embed_ansible_catalog_items():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
@@ -16563,7 +16563,7 @@ def test_embed_tower_add_rhos_credentials():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.9
     """
@@ -16613,8 +16613,8 @@ def test_public_ip_reuse_azure():
     Select PubIP on Environment tab during provisioning
 
     Polarion:
-        assignee: None
-        casecomponent: prov
+        assignee: anikifor
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.7
@@ -16633,7 +16633,7 @@ def test_service_infra_tenant_quota_cpu_default_entry_point():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
     """
@@ -16649,7 +16649,7 @@ def test_service_ui_should_not_time_outs_after_10_mins_even_if_you_are_interacti
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/16h
         startsin: 5.8
         title: Service UI should not time-outs after 10 mins even if you
@@ -16668,7 +16668,7 @@ def test_html5_console_disabled_vsphere65_opsui_ssui():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseposneg: negative
         initialEstimate: 1h
         startsin: 5.7
@@ -16710,7 +16710,7 @@ def test_distributed_field_zone_description_leading_whitespace():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/30h
     """
@@ -16726,7 +16726,7 @@ def test_chargeback_report_monthly():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -16739,7 +16739,7 @@ def test_edit_catalog_bundle():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Edit catalog bundle
     """
@@ -16756,7 +16756,7 @@ def test_duplicate_groups_when_setting_ownership_to_multiple_items():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
         title: Test duplicate groups when setting ownership to multiple items
@@ -16774,7 +16774,7 @@ def test_service_cloud_tenant_quota_storage_default_entry_point():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -16791,7 +16791,7 @@ def test_orphaned_vms_get_excluded_from_used_quota_counts():
 
     Polarion:
         assignee: mkourim
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
         title: Test orphaned VMs get excluded from used quota counts
@@ -16808,7 +16808,7 @@ def test_saved_chargeback_report_show_full_screen():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -16825,7 +16825,7 @@ def test_service_ansible_playbook_standard_output_non_ascii_hostname():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
@@ -16841,7 +16841,7 @@ def test_embed_tower_add_private_repo():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
@@ -16862,7 +16862,7 @@ def test_service_ansible_service_name():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
@@ -16879,7 +16879,7 @@ def test_authentication_user_not_in_ldap_but_in_db():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/4h
@@ -16892,7 +16892,7 @@ def test_service_ui_should_take_user_default_language():
     """
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.9
@@ -16927,7 +16927,7 @@ def test_distributed_change_appliance_zone():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -16994,7 +16994,7 @@ def test_cloud_key_pair_validation():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/16h
         startsin: 5.5
@@ -17045,7 +17045,7 @@ def test_embed_tower_repo_url_validation():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/6h
         startsin: 5.8
     """
@@ -17068,7 +17068,7 @@ def test_restart_guest_scvmm2016():
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -17091,7 +17091,7 @@ def test_restart_guest_scvmm():
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.4
@@ -17117,7 +17117,7 @@ def test_crosshair_op_host_vsphere65():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -17133,7 +17133,7 @@ def test_crosshair_op_host_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
         testtype: integration
@@ -17152,7 +17152,7 @@ def test_automate_git_import_case_insensitive():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -17174,7 +17174,7 @@ def test_custom_button_enable():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
         startsin: 5.9
@@ -17191,7 +17191,7 @@ def test_service_ansible_playbook_retire_non_ascii():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
@@ -17210,7 +17210,7 @@ def test_verify_database_user_login_fails_with_external_auth_configured():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
         title: Verify DataBase user login fails with External auth configured.
@@ -17229,7 +17229,7 @@ def test_verify_invalid_user_login_fails():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/4h
@@ -17246,7 +17246,7 @@ def test_assert_failed_substitution():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -17269,8 +17269,8 @@ def test_subscription_multiple_azure():
     can verify this inside of Azure.
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: anikifor
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         setup: Create an appliance
@@ -17300,7 +17300,7 @@ def test_rightsize_memory_rhv41():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -17316,7 +17316,7 @@ def test_rightsize_memory_vsphere55():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -17332,7 +17332,7 @@ def test_rightsize_memory_vsphere6():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -17348,7 +17348,7 @@ def test_service_ansible_playbook_order_non_ascii():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
@@ -17365,7 +17365,7 @@ def test_entries_shouldnt_be_mislabeled_for_dropdown_element_in_dialog_editor():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/16h
         startsin: 5.10
         title: Entries Shouldn't be Mislabeled for Dropdown element in Dialog Editor
@@ -17382,7 +17382,7 @@ def test_credentials_change_password_leading_whitespace():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
@@ -17400,7 +17400,7 @@ def test_retire_cloud_vms_folder():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -17418,7 +17418,7 @@ def test_automation_request_task():
     Polarion:
         assignee: mkourim
         caseimportance: medium
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     pass
 
@@ -17432,7 +17432,7 @@ def test_service_chargeback_vm_poweredoff():
 
     Polarion:
         assignee: nachandr
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: low
         initialEstimate: 1/2h
     """
@@ -17481,7 +17481,7 @@ def test_opening_ssui_and_regular_ui_tab_in_same_browser_and_then_edit_catalog()
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.5
@@ -17500,8 +17500,8 @@ def test_refresh_azure_provider_with_empty_ipv6_config_on_vm():
     2) refresh provider - check logs
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: anikifor
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -17533,7 +17533,7 @@ def test_active_tasks_get_timed_out_when_they_run_too_long():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.7
@@ -17551,7 +17551,7 @@ def test_reconfigure_existing_duplicate_orders():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -17572,7 +17572,7 @@ def test_power_controls_on_archived_vm():
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/10h
@@ -17603,7 +17603,7 @@ def test_embed_tower_playbooks_tag():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.10
     """
@@ -17623,7 +17623,7 @@ def test_ordering_service_by_non_admin_user():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         title: Test ordering service by non-admin user
@@ -17640,7 +17640,7 @@ def test_gap_collection_hourly_graph_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -17656,7 +17656,7 @@ def test_distributed_zone_failover_provider_inventory_singleton():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -17670,7 +17670,7 @@ def test_vm_reconfig_resize_disk_cold_vsphere67_nested_independent_persistent_th
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.9
     """
@@ -17684,7 +17684,7 @@ def test_vm_reconfig_resize_disk_cold_vsphere67_nested_persistent_thin():
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.9
     """
@@ -17698,7 +17698,7 @@ def test_vm_reconfig_resize_disk_cold_vsphere67_nested_independent_persistent_th
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.9
     """
@@ -17712,7 +17712,7 @@ def test_vm_reconfig_resize_disk_cold_vsphere67_nested_independent_nonpersistent
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.9
     """
@@ -17726,7 +17726,7 @@ def test_vm_reconfig_resize_disk_cold_vsphere67_nested_independent_nonpersistent
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.9
     """
@@ -17742,7 +17742,7 @@ def test_deployment_multiple_instances():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.5
@@ -17759,7 +17759,7 @@ def test_distributed_zone_failover_provider_operations():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -17811,8 +17811,8 @@ def test_vm_volume_specchar1_scvmm():
     https://bugzilla.redhat.com/show_bug.cgi?id=1353285
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: jdupuy
+        casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/4h
         startsin: 5.6.1
@@ -17831,7 +17831,7 @@ def test_evmgroup_self_service_user_can_access_the_self_service_ui():
 
     Polarion:
         assignee: apagac
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: critical
         initialEstimate: 1/4h
         startsin: 5.8
@@ -17855,7 +17855,7 @@ def test_notifications_should_appear_in_sui_after_enableing_embedded_ansible_rol
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/16h
         title: Notifications should appear in SUI after Enableing Embedded Ansible Role
@@ -17872,7 +17872,7 @@ def test_able_to_access_openstack_instance_console_from_self_service_portal():
 
     Polarion:
         assignee: nansari
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/2h
         startsin: 5.9
         title: Able to access Openstack instance console from self service portal
@@ -17908,8 +17908,8 @@ def test_vm_terminate_deletedisk_azure():
     https://bugzilla.redhat.com/show_bug.cgi?id=1353306
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: anikifor
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.6.1
@@ -17932,7 +17932,7 @@ def test_automate_import_namespace_attributes_updated():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -17948,7 +17948,7 @@ def test_tagvis_configuration_management_configured_system():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -17965,7 +17965,7 @@ def test_service_infra_tenant_quota_memory_default_entry_point():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
     """
@@ -17984,7 +17984,7 @@ def test_power_contols_on_vm_in_stack_cloud():
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.6
@@ -18002,8 +18002,8 @@ def test_tenant_template_visibility():
     Log in as user, check template is visible for user(only this template)
 
     Polarion:
-        assignee: None
-        casecomponent: config
+        assignee: apagac
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -18019,7 +18019,7 @@ def test_html5_console_vncstartportnegative_endportnegative():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/2h
@@ -18039,7 +18039,7 @@ def test_html5_console_firefox_ssui_rhel():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -18094,7 +18094,7 @@ def test_html5_console_ie11_vsphere6_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -18141,7 +18141,7 @@ def test_html5_console_edge_ssui_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -18194,7 +18194,7 @@ def test_html5_console_firefox_vsphere55_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -18242,7 +18242,7 @@ def test_html5_console_vncstartport5955_endportblank():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
@@ -18258,7 +18258,7 @@ def test_html5_console_chrome_vsphere6_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -18304,7 +18304,7 @@ def test_html5_console_chrome_ssui_fedora():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -18356,7 +18356,7 @@ def test_html5_console_chrome_vsphere55_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -18399,7 +18399,7 @@ def test_html5_console_firefox_vsphere55_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -18446,7 +18446,7 @@ def test_html5_console_inaddproviderhoststartvncportpresent():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -18464,7 +18464,7 @@ def test_html5_console_chrome_ssui_rhel():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -18517,7 +18517,7 @@ def test_html5_console_firefox_vsphere6_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -18564,7 +18564,7 @@ def test_html5_console_firefox_vsphere6_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -18610,7 +18610,7 @@ def test_html5_console_vncstartportblank_endport5901():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
@@ -18627,7 +18627,7 @@ def test_html5_console_firefox_vsphere6_rhel6x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -18673,7 +18673,7 @@ def test_html5_console_firefox_vsphere55_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -18719,7 +18719,7 @@ def test_html5_console_chrome_vsphere6_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -18762,7 +18762,7 @@ def test_html5_console_edge_rhevm41_win10_vnc():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
     """
     pass
@@ -18775,7 +18775,7 @@ def test_html5_console_firefox_rhevm41_fedora28_vnc():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
     """
     pass
@@ -18790,7 +18790,7 @@ def test_html5_console_firefox_vsphere55_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -18837,7 +18837,7 @@ def test_html5_console_chrome_vsphere55_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -18879,7 +18879,7 @@ def test_html5_console_firefox_rhevm41_fedora28_spice():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
     """
     pass
@@ -18894,7 +18894,7 @@ def test_html5_console_ie11_vsphere55_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -18938,7 +18938,7 @@ def test_html5_console_firefox_vsphere6_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -18994,7 +18994,7 @@ def test_html5_console_vsphere6_ssui():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     pass
@@ -19009,7 +19009,7 @@ def test_html5_console_chrome_vsphere55_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -19052,7 +19052,7 @@ def test_html5_console_chrome_vsphere55_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -19097,7 +19097,7 @@ def test_html5_console_chrome_vsphere55_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -19146,7 +19146,7 @@ def test_html5_console_vncstartport5900_endport5902():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
@@ -19163,7 +19163,7 @@ def test_html5_console_ie11_vsphere55_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -19208,7 +19208,7 @@ def test_html5_console_firefox_vsphere6_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -19254,7 +19254,7 @@ def test_html5_console_firefox_vsphere55_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -19301,7 +19301,7 @@ def test_html5_console_rhv():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -19317,7 +19317,7 @@ def test_html5_console_firefox_vsphere55_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -19363,7 +19363,7 @@ def test_html5_console_edge_vsphere6_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -19411,7 +19411,7 @@ def test_html5_console_vncstartport5955_endport5956():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
@@ -19431,7 +19431,7 @@ def test_html5_console_vncstartportblank_endportblank():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/2h
     """
     pass
@@ -19445,7 +19445,7 @@ def test_html5_console_edge_rhevm41_win10_spice():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
     """
     pass
@@ -19462,7 +19462,7 @@ def test_html5_console_chrome_ssui_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -19515,7 +19515,7 @@ def test_html5_console_check_consistency_of_behavior():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 3/4h
         startsin: 5.8
     """
@@ -19533,7 +19533,7 @@ def test_html5_console_firefox_ssui_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -19588,7 +19588,7 @@ def test_html5_console_firefox_vsphere55_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -19637,7 +19637,7 @@ def test_html5_console_firefox_ssui_fedora():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -19692,7 +19692,7 @@ def test_html5_console_chrome_vsphere6_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -19737,7 +19737,7 @@ def test_html5_console_chrome_vsphere6_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -19782,7 +19782,7 @@ def test_html5_console_edge_vsphere55_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -19828,7 +19828,7 @@ def test_html5_console_firefox_ssui_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -19882,7 +19882,7 @@ def test_html5_console_chrome_vsphere55_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -19925,7 +19925,7 @@ def test_html5_console_chrome_rhevm41_fedora28_spice():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
     """
     pass
@@ -19940,7 +19940,7 @@ def test_html5_console_firefox_vsphere55_rhel6x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -19987,7 +19987,7 @@ def test_html5_console_chrome_vsphere6_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
                1) Login to CFME Appliance as admin.
@@ -20031,7 +20031,7 @@ def test_html5_console_chrome_vsphere55_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -20075,7 +20075,7 @@ def test_html5_console_chrome_vsphere6_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -20119,7 +20119,7 @@ def test_html5_console_firefox_vsphere6_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -20166,7 +20166,7 @@ def test_html5_console_chrome_vsphere6_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -20213,7 +20213,7 @@ def test_html5_console_ie11_ssui_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -20267,7 +20267,7 @@ def test_html5_console_ie11_vsphere6_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: On CFME Appliance do the following:
@@ -20312,7 +20312,7 @@ def test_html5_console_firefox_vsphere6_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -20357,7 +20357,7 @@ def test_html5_console_chrome_rhevm41_fedora28_vnc():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
     """
     pass
@@ -20372,7 +20372,7 @@ def test_html5_console_firefox_vsphere6_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 2/3h
         setup: On CFME Appliance do the following:
@@ -20491,7 +20491,7 @@ def test_config_manager_override_extra_vars_dialog_vsphere():
 
     Polarion:
         assignee: nachandr
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1d
         startsin: 5.7
@@ -20508,7 +20508,7 @@ def test_azone_disk_io_gce():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/12h
         startsin: 5.7
     """
@@ -20524,7 +20524,7 @@ def test_azone_disk_io_azure():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/12h
         testtype: integration
     """
@@ -20540,7 +20540,7 @@ def test_monitor_ansible_playbook_std_output():
 
     Polarion:
         assignee: apagac
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
         title: Monitor Ansible playbook std output
@@ -20557,7 +20557,7 @@ def test_appliance_log_error():
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/2h
@@ -20575,7 +20575,7 @@ def test_automate_user_has_groups():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
         startsin: 5.8
@@ -20592,7 +20592,7 @@ def test_automate_methods_from_dynamic_dialog_should_run_as_per_designed():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/16h
         startsin: 5.9
         title: Automate Methods from Dynamic Dialog should Run as per Designed
@@ -20612,8 +20612,8 @@ def test_vmware_storage_profile_provision():
     storage_profile
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: kkulkarn
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
         testtype: integration
@@ -20629,8 +20629,8 @@ def test_host_credentials_remote():
     usually WMI.  Used for Collect Running Processes
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: sbulage
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
         upstream: yes
@@ -20663,7 +20663,7 @@ def test_service_template_provisioning_quota_for_number_of_vms_using_custom_dial
 
     Polarion:
         assignee: ghubale
-        casecomponent: prov
+        casecomponent: Provisioning
         initialEstimate: 1/4h
         startsin: 5.8
         title: test service template provisioning quota for number of vm's using custom dialog
@@ -20689,7 +20689,7 @@ def test_verify_external_authentication_with_openldap_proxy_to_3_different_domai
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         title: verify external authentication with OpenLDAP proxy to 3 different domains
@@ -20706,7 +20706,7 @@ def test_distributed_zone_failover_notifier_singleton():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -20722,7 +20722,7 @@ def test_self_service_ui_should_honor_some_service_dialog_settings():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
         setup: https://bugzilla.redhat.com/show_bug.cgi?id=1518017
                Steps to Reproduce:
@@ -20752,7 +20752,7 @@ def test_sui_service_explorer_will_also_show_child_services():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: SUI : Service Explorer will also show child services
@@ -20770,7 +20770,7 @@ def test_dialog_items_default_values_on_different_screens():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         title: Test dialog items default values on different screens
@@ -20791,7 +20791,7 @@ def test_verify_user_authentication_works_fine_if_default_evm_groups_are_already
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         title: verify user authentication works fine if default evm groups
                are already created and assigned for user in ldaps
@@ -20829,7 +20829,7 @@ def test_quota_enforcement_for_cloud_volumes():
 
     Polarion:
         assignee: ghubale
-        casecomponent: prov
+        casecomponent: Provisioning
         initialEstimate: 1/4h
         startsin: 5.8
         title: test quota enforcement for cloud volumes
@@ -20846,7 +20846,7 @@ def test_embed_tower_api_on_url():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
@@ -20862,7 +20862,7 @@ def test_creating_second_snapshot_on_suspended_vm():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
         title: test creating second snapshot on suspended vm
@@ -20906,7 +20906,7 @@ def test_generic_objects_class_crud():
 
     Polarion:
         assignee: nansari
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/16h
         title: Generic Objects Class Crud
@@ -20924,7 +20924,7 @@ def test_service_cloud_tenant_quota_cpu_default_entry_point():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -20940,7 +20940,7 @@ def test_service_dialog_saving_elements_when_switching_elements():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Test service dialog saving elements when switching elements
@@ -20957,7 +20957,7 @@ def test_automate_quota_units():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: low
         initialEstimate: 1/4h
     """
@@ -20975,7 +20975,7 @@ def test_verify_saml_configuration_works_fine_for_cfme():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/2h
         title: Verify SAML configuration works fine for CFME
     """
@@ -20992,7 +20992,7 @@ def test_grid_tile_list_view_pages_on_instance():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/16h
         startsin: 5.5
@@ -21017,7 +21017,7 @@ def test_power_operations_from_global_region():
 
     Polarion:
         assignee: ghubale
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.6
@@ -21034,7 +21034,7 @@ def test_credentials_change_password_with_special_characters():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
@@ -21050,7 +21050,7 @@ def test_default_selection_of_dropdown_list_is_should_display_properly():
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/6h
         title: Default selection of dropdown list is should display properly
     """
@@ -21065,7 +21065,7 @@ def test_distributed_diagnostics_servers_view():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -21082,7 +21082,7 @@ def test_user_cloud_memory_quota_by_services():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -21107,7 +21107,7 @@ def test_crosshair_op_datastore_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -21121,7 +21121,7 @@ def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_independent_nonpersist
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         startsin: 5.7
         title: test_vm_reconfig_add_remove_disk_hot[vsphere67-nested-
@@ -21137,7 +21137,7 @@ def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_independent_persistent
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         startsin: 5.7
     """
@@ -21151,7 +21151,7 @@ def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_independent_nonpersist
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         startsin: 5.7
     """
@@ -21165,7 +21165,7 @@ def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_independent_persistent
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         startsin: 5.7
     """
@@ -21179,7 +21179,7 @@ def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_persistent_thin():
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         startsin: 5.7
     """
@@ -21193,7 +21193,7 @@ def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_persistent_thick():
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
         startsin: 5.7
     """
@@ -21228,7 +21228,7 @@ def test_custom_image_on_item_bundle_crud():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
@@ -21259,7 +21259,7 @@ def test_group_infra_storage_quota_by_lifecycle():
 
     Polarion:
         assignee: ghubale
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -21277,7 +21277,7 @@ def test_embed_tower_event_catcher_process():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -21332,7 +21332,7 @@ def test_notification_window_can_be_closed_by_clicking_x():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/15h
         startsin: 5.9
@@ -21404,7 +21404,7 @@ def test_dialog_dynamic_entry_point_should_show_full_path():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         startsin: 5.10
         title: Dialog : dynamic entry point should show full path
@@ -21425,7 +21425,7 @@ def test_verify_ldap_authentication_for_the_cfme_default_groups():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         title: verify ldap authentication for the cfme default groups.
     """
@@ -21441,7 +21441,7 @@ def test_cluster_graph_by_host_tag_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -21457,7 +21457,7 @@ def test_cluster_graph_by_host_tag_vsphere65():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -21473,7 +21473,7 @@ def test_group_infra_cpu_quota_by_services():
 
     Polarion:
         assignee: ghubale
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
@@ -21490,7 +21490,7 @@ def test_azone_memory_usage_azure():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/12h
         testtype: integration
     """
@@ -21506,7 +21506,7 @@ def test_embed_tower_add_repo_invalid_url():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
@@ -21524,7 +21524,7 @@ def test_save_and_cancel_retirement_form_for_orchestration_stack_in_g_t_l_view()
 
     Polarion:
         assignee: sshveta
-        casecomponent: stack
+        casecomponent: Stack
         caseimportance: medium
         initialEstimate: 1/16h
         startsin: 5.5
@@ -21544,7 +21544,7 @@ def test_retire_cloud_vms_notification_folder():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: prov
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -21560,7 +21560,7 @@ def test_request_check_provisioned_vm_link_on_request_page():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/16h
         startsin: 5.5
@@ -21578,7 +21578,7 @@ def test_ec2_targeted_refresh_security_group():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.9
@@ -21597,7 +21597,7 @@ def test_verify_page_landing_cloud_subnets():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/10h
         startsin: 5.6
@@ -21639,7 +21639,7 @@ def test_add_multiple_iso_datastore():
 
     Polarion:
         assignee: jhenner
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/8h
         startsin: 5.5
         title: Add multiple ISO datastore
@@ -21657,7 +21657,7 @@ def test_monitor_ansible_playbook_logging_output():
 
     Polarion:
         assignee: apagac
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.8
@@ -21674,7 +21674,7 @@ def test_black_console_ext_auth_options_skip():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
         setup: -ssh to appliance
@@ -21717,7 +21717,7 @@ def test_vm_reconfig_resize_disk_hot_vsphere65_nested_persistent_thick():
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.9
     """
@@ -21736,7 +21736,7 @@ def test_candu_collection_tab():
 
     Polarion:
         assignee: nachandr
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     pass
 
@@ -21750,7 +21750,7 @@ def test_sui_self_service_ui_should_show_pending_requests():
 
     Polarion:
         assignee: sshveta
-        casecomponent: ssui
+        casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
@@ -21786,7 +21786,7 @@ def test_embed_tower_add_machine_credentials_vault():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.8
     """
@@ -21806,7 +21806,7 @@ def test_embed_tower_add_machine_credentials_escalate_perm_sudo():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1h
         startsin: 5.8
     """
@@ -21826,7 +21826,7 @@ def test_embed_tower_add_machine_credentials_machine_root_pass():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1h
         startsin: 5.8
     """
@@ -21846,7 +21846,7 @@ def test_embed_tower_add_machine_credentials_machine_ssh_key():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1h
         startsin: 5.8
     """
@@ -21862,7 +21862,7 @@ def test_chargeback_preview():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -21882,7 +21882,7 @@ def test_verify_multi_domain_configuration_for_external_auth_ldaps():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         title: verify multi domain configuration for external auth ldaps
@@ -21916,7 +21916,7 @@ def test_azone_network_io_gce():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/12h
         startsin: 5.7
     """
@@ -21932,7 +21932,7 @@ def test_azone_network_io_azure():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/12h
         testtype: integration
     """
@@ -21951,7 +21951,7 @@ def test_saml_verify_get_user_groups_from_external_authentication_httpd__option(
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/2h
         title: saml: Verify “Get User Groups from External Authentication (httpd)” option.
     """
@@ -21967,7 +21967,7 @@ def test_rhi_overview():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         initialEstimate: 1/2h
         testtype: integration
     """
@@ -21982,7 +21982,7 @@ def test_distributed_zone_mixed_infra():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -21999,7 +21999,7 @@ def test_embed_tower_creds_tag():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.10
     """
@@ -22039,7 +22039,7 @@ def test_verify_external_auth_configuration_for_ldap_can_be_un_configured_using_
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/3h
         title: Verify external auth configuration for ldap can be un
@@ -22058,7 +22058,7 @@ def test_embed_tower_order_service_extra_vars():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -22078,7 +22078,7 @@ def test_infrastructure_provider_left_panel_titles():
 
     Polarion:
         assignee: mmojzis
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/18h
     """
@@ -22094,7 +22094,7 @@ def test_candu_graphs_host_hourly_vsphere55():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
     """
@@ -22115,7 +22115,7 @@ def test_cloud_tenant_crud_rhos():
 
     Polarion:
         assignee: ndhandre
-        casecomponent: cloud
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -22133,7 +22133,7 @@ def test_cluster_tagged_crosshair_op_vsphere65():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -22152,7 +22152,7 @@ def test_cluster_tagged_crosshair_op_vsphere6():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -22171,7 +22171,7 @@ def test_cluster_tagged_crosshair_op_vsphere55():
 
     Polarion:
         assignee: nachandr
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
@@ -22191,8 +22191,8 @@ def test_refresh_with_empty_iot_hub_azure():
     2.Refresh provider
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: anikifor
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/6h
     """
@@ -22208,7 +22208,7 @@ def test_reconfigure_vm_vmware_sockets_multiple():
 
     Polarion:
         assignee: sshveta
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
         setup: -get new configured appliance
@@ -22282,7 +22282,7 @@ def test_embed_tower_logs():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -22315,7 +22315,7 @@ def test_config_manager_job_template_refresh():
 
     Polarion:
         assignee: nachandr
-        casecomponent: ansible
+        casecomponent: Ansible
         initialEstimate: 1/2h
     """
     pass
@@ -22348,7 +22348,7 @@ def test_service_reconfigure_in_distributed_environment():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Service Reconfigure in distributed environment
@@ -22384,7 +22384,7 @@ def test_snapshot_timeline_verify_data():
 
     Polarion:
         assignee: apagac
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/3h
         testSteps:
@@ -22414,7 +22414,7 @@ def test_cfme_features_with_ldap():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1h
         testSteps:
@@ -22439,7 +22439,7 @@ def test_vmrc_console_firefox_vsphere67_rhel6x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -22488,7 +22488,7 @@ def test_vmrc_console_chrome_vsphere67_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: Steps:
                Create Windows 7 VM on vSphere5.5
@@ -22532,7 +22532,7 @@ def test_vmrc_console_firefox_vsphere65_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -22579,7 +22579,7 @@ def test_vmrc_console_firefox_vsphere6_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: Steps:
                Create Fedora 28 VM on vSphere6
@@ -22625,7 +22625,7 @@ def test_vmrc_console_firefox_vsphere6_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: Steps:
                Create Windows 7 VM on vSphere6
@@ -22672,7 +22672,7 @@ def test_vmrc_console_chrome_vsphere65_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/3h
         setup: Steps:
@@ -22716,7 +22716,7 @@ def test_vmrc_console_edge_vsphere6_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/4h
         setup: Steps:
                Create Windows 7 VM on vSphere6
@@ -22759,7 +22759,7 @@ def test_vmrc_console_chrome_vsphere55_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: Steps:
                Create Windows 7 VM on vSphere5.5
@@ -22803,7 +22803,7 @@ def test_vmrc_console_chrome_vsphere65_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -22848,7 +22848,7 @@ def test_vmrc_console_chrome_vsphere67_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -22893,7 +22893,7 @@ def test_vmrc_console_firefox_vsphere67_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: Steps:
                Create RHEL 7.x VM on vSphere65
@@ -22943,7 +22943,7 @@ def test_vmrc_console_chrome_vsphere55_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -22988,7 +22988,7 @@ def test_vmrc_console_chrome_vsphere55_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -23033,7 +23033,7 @@ def test_vmrc_console_ie11_vsphere6_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -23077,7 +23077,7 @@ def test_vmrc_console_novmrccredsinprovider():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: critical
         caseposneg: negative
         initialEstimate: 1/2h
@@ -23098,7 +23098,7 @@ def test_vmrc_console_chrome_vsphere55_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: Steps:
                Create Fedora 28 VM on vSphere5.5
@@ -23141,7 +23141,7 @@ def test_vmrc_console_firefox_vsphere65_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -23188,7 +23188,7 @@ def test_vmrc_console_firefox_vsphere65_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: Steps:
                Create RHEL 7.x VM on vSphere65
@@ -23238,7 +23238,7 @@ def test_vmrc_console_ie11_vsphere65_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -23282,7 +23282,7 @@ def test_vmrc_console_chrome_vsphere67_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/3h
         setup: Steps:
@@ -23325,7 +23325,7 @@ def test_vmrc_console_firefox_vsphere65_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: Steps:
                Create Fedora 28 VM on vSphere6.5
@@ -23371,7 +23371,7 @@ def test_vmrc_console_firefox_vsphere65_rhel6x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -23420,7 +23420,7 @@ def test_vmrc_console_firefox_vsphere6_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -23468,7 +23468,7 @@ def test_vmrc_console_chrome_vsphere65_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: Steps:
                Create Windows 7 VM on vSphere5.5
@@ -23511,7 +23511,7 @@ def test_vmrc_console_firefox_vsphere67_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: Steps:
                Create Fedora 26 VM on vSphere6.5
@@ -23557,7 +23557,7 @@ def test_vmrc_console_chrome_vsphere67_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -23602,7 +23602,7 @@ def test_vmrc_console_chrome_vsphere6_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -23647,7 +23647,7 @@ def test_vmrc_console_ie11_vsphere6_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -23691,7 +23691,7 @@ def test_vmrc_console_firefox_vsphere67_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: Steps:
                Create Windows 7 VM on vSphere5.5
@@ -23738,7 +23738,7 @@ def test_vmrc_console_chrome_vsphere67_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: Steps:
                Create Fedora 26 VM on vSphere5.5
@@ -23782,7 +23782,7 @@ def test_vmrc_console_ie11_vsphere65_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -23826,7 +23826,7 @@ def test_vmrc_console_chrome_vsphere65_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: Steps:
                Create Fedora 28 VM on vSphere6.5
@@ -23870,7 +23870,7 @@ def test_vmrc_console_firefox_vsphere55_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -23918,7 +23918,7 @@ def test_vmrc_console_edge_vsphere67_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/4h
         setup: Steps:
                Create Windows 7 VM on vSphere6
@@ -23961,7 +23961,7 @@ def test_vmrc_console_edge_vsphere65_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/4h
         setup: Steps:
                Create Windows 7 VM on vSphere6
@@ -24004,7 +24004,7 @@ def test_vmrc_console_chrome_vsphere55_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: Steps:
                Create RHEL 7.x VM on vSphere5.5
@@ -24047,7 +24047,7 @@ def test_vmrc_console_chrome_vsphere55_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -24091,7 +24091,7 @@ def test_vmrc_console_firefox_vsphere67_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -24138,7 +24138,7 @@ def test_vmrc_console_firefox_vsphere67_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -24186,7 +24186,7 @@ def test_vmrc_console_firefox_vsphere65_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -24234,7 +24234,7 @@ def test_vmrc_console_firefox_vsphere67_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -24281,7 +24281,7 @@ def test_vmrc_console_firefox_vsphere6_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -24328,7 +24328,7 @@ def test_vmrc_console_ie11_vsphere67_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -24372,7 +24372,7 @@ def test_vmrc_console_chrome_vsphere65_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -24417,7 +24417,7 @@ def test_vmrc_console_chrome_vsphere67_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -24462,7 +24462,7 @@ def test_vmrc_console_ie11_vsphere67_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -24505,7 +24505,7 @@ def test_vmrc_console_addremovevmwarecreds():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/4h
         startsin: 5.8
         testSteps:
@@ -24530,7 +24530,7 @@ def test_vmrc_console_chrome_vsphere65_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -24575,7 +24575,7 @@ def test_vmrc_console_firefox_vsphere55_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: Steps:
                Create Windows 7 VM on vSphere5.5
@@ -24621,7 +24621,7 @@ def test_vmrc_console_firefox_vsphere55_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -24668,7 +24668,7 @@ def test_vmrc_console_chrome_vsphere67_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -24712,7 +24712,7 @@ def test_vmrc_console_firefox_vsphere55_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -24759,7 +24759,7 @@ def test_vmrc_console_firefox_vsphere55_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -24807,7 +24807,7 @@ def test_vmrc_console_chrome_vsphere6_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -24852,7 +24852,7 @@ def test_vmrc_console_chrome_vsphere65_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -24896,7 +24896,7 @@ def test_vmrc_console_firefox_vsphere65_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -24943,7 +24943,7 @@ def test_vmrc_console_firefox_vsphere6_rhel6x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -24994,7 +24994,7 @@ def test_vmrc_console_chrome_vsphere6_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -25039,7 +25039,7 @@ def test_vmrc_console_chrome_vsphere6_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/3h
         setup: Steps:
@@ -25083,7 +25083,7 @@ def test_vmrc_console_firefox_vsphere65_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: Steps:
                Create Windows 7 VM on vSphere5.5
@@ -25130,7 +25130,7 @@ def test_vmrc_console_firefox_vsphere55_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: Steps:
                Create RHEL 7.x VM on vSphere55
@@ -25180,7 +25180,7 @@ def test_vmrc_console_chrome_vsphere6_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -25225,7 +25225,7 @@ def test_vmrc_console_chrome_vsphere6_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: Steps:
                Create Windows 7 VM on vSphere6
@@ -25269,7 +25269,7 @@ def test_vmrc_console_firefox_vsphere6_rhel7x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/3h
         setup: Steps:
@@ -25320,7 +25320,7 @@ def test_vmrc_console_edge_vsphere55_win10():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/4h
         setup: Steps:
                Create Windows 7 VM on vSphere6
@@ -25362,7 +25362,7 @@ def test_vmrc_console_firefox_vsphere55_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 2/3h
         setup: Steps:
                Create Fedora 27 VM on vSphere5.5
@@ -25408,7 +25408,7 @@ def test_vmrc_console_firefox_vsphere6_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -25455,7 +25455,7 @@ def test_vmrc_console_firefox_vsphere67_fedora27():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -25502,7 +25502,7 @@ def test_vmrc_console_ie11_vsphere55_win7():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -25553,7 +25553,7 @@ def test_vmrc_console_usecredwithlimitedvmrcaccess():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/2h
         startsin: 5.8
@@ -25573,7 +25573,7 @@ def test_vmrc_console_firefox_vsphere55_rhel6x():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -25623,7 +25623,7 @@ def test_vmrc_console_chrome_vsphere55_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -25668,7 +25668,7 @@ def test_vmrc_console_ie11_vsphere55_win2012():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
         setup: Steps:
@@ -25712,7 +25712,7 @@ def test_vmrc_console_chrome_vsphere6_fedora28():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         setup: Steps:
                Create Fedora 28 VM on vSphere6
@@ -25755,7 +25755,7 @@ def test_vmrc_console_firefox_vsphere6_fedora26():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 2/3h
         setup: Steps:
@@ -25798,7 +25798,7 @@ def test_black_console_ext_auth_options_all():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
         setup: -ssh to appliance
@@ -25852,7 +25852,7 @@ def test_second_dialog_dynamic_element_should_be_able_to_read_the_previous_textb
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Second dialog dynamic element should be able to read the
                previous textbox element
@@ -25869,8 +25869,8 @@ def test_username_fields_error_azure():
     3.Verify that we have Error Flash messages for both fields
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: anikifor
+        casecomponent: Cloud
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/10h
@@ -25888,7 +25888,7 @@ def test_cockpit_button_disabled_on_windows_vms():
 
     Polarion:
         assignee: sshveta
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/4h
@@ -25927,7 +25927,7 @@ def test_verify_benchmark_timings_are_correct():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
@@ -25945,7 +25945,7 @@ def test_retire_on_date_for_multiple_service():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
@@ -25963,7 +25963,7 @@ def test_order_service_after_deleting_provider():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: Order service after deleting provider
@@ -25980,7 +25980,7 @@ def test_verify_that_changing_groups_in_the_webui_updates_dashboard_items():
 
     Polarion:
         assignee: apagac
-        casecomponent: web_ui
+        casecomponent: WebUI
         initialEstimate: 1/4h
         setup: Create a user with two or more groups. The groups should have role
                permissions that grant access to different features so you can easily
@@ -26009,7 +26009,7 @@ def test_ssa_vm_files():
 
     Polarion:
         assignee: sbulage
-        casecomponent: smartst
+        casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
         testtype: integration
@@ -26028,7 +26028,7 @@ def test_automate_restrict_domain_crud():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -26044,7 +26044,7 @@ def test_vm_migrate_should_create_notifications_when_migrations_fail():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         title: VM Migrate should create notifications  when migrations fail.
@@ -26060,8 +26060,8 @@ def test_cloud_init_with_cfme():
     test cloud init payload with latest cfme image
 
     Polarion:
-        assignee: None
-        casecomponent: appl
+        assignee: jhenner
+        casecomponent: Appliance
         endsin: 5.4
         initialEstimate: 1/2h
         startsin: 5.4
@@ -26078,7 +26078,7 @@ def test_notification_notification_about_new_cfme_appliance_update_to_the_admin(
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: low
         initialEstimate: 1/4h
         title: Notification : Notification about new cfme-appliance update to the admin
@@ -26096,8 +26096,8 @@ def test_regions_gov_azure():
     https://bugzilla.redhat.com/show_bug.cgi?id=1412363
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: anikifor
+        casecomponent: Cloud
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/8h
@@ -26118,7 +26118,7 @@ def test_log_collect_all_zone_multiple_servers():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
     """
@@ -26134,7 +26134,7 @@ def test_validate_chargeback_cost_resource_average_cpu():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -26151,7 +26151,7 @@ def test_validate_chargeback_cost_resource_average_memory():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -26176,7 +26176,7 @@ def test_validate_chargeback_cost_resource_maximum_cpu():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -26193,7 +26193,7 @@ def test_validate_chargeback_cost_resource_maximum_storage():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -26210,7 +26210,7 @@ def test_validate_chargeback_cost_resource_average_stoarge():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -26227,7 +26227,7 @@ def test_validate_chargeback_cost_resource_maximum_memory():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -26242,7 +26242,7 @@ def test_vm_reconfig_resize_disk_cold_vsphere67_nested_persistent_thick():
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/6h
         startsin: 5.9
     """
@@ -26261,7 +26261,7 @@ def test_configure_ldaps_for_customized_port_eg_10636_10389_and_validate_cfme_au
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
         title: Configure  ldaps for customized port e.g 10636, 10389 and validate CFME auth
@@ -26278,7 +26278,7 @@ def test_sui_request_explorer_will_show_all_status_of_requests():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.8
@@ -26313,7 +26313,7 @@ def test_reconfigure_vm_vmware_mem_multiple():
 
     Polarion:
         assignee: sshveta
-        casecomponent: infra
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
         setup: -get new configured appliance
@@ -26353,7 +26353,7 @@ def test_embed_tower_exec_play_against_ipv6_machine():
 
     Polarion:
         assignee: sbulage
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
@@ -26375,7 +26375,7 @@ def test_nor_memory_vsphere55():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -26396,7 +26396,7 @@ def test_nor_memory_rhv41():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -26417,7 +26417,7 @@ def test_nor_memory_vsphere6():
 
     Polarion:
         assignee: tpapaioa
-        casecomponent: candu
+        casecomponent: CandU
         initialEstimate: 1/6h
     """
     pass
@@ -26437,7 +26437,7 @@ def test_check_required_button_on_all_dialog_elements():
 
     Polarion:
         assignee: sshveta
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         title: Check "Required" button on all dialog elements
     """
@@ -26476,7 +26476,7 @@ def test_custom_button_visibility():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
         startsin: 5.9
@@ -26494,7 +26494,7 @@ def test_saml_verify_multiple_appliances_can_be_added_to_the_same_realm():
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
         title: saml: Verify multiple appliances can be added to the same REALM.
@@ -26512,7 +26512,7 @@ def test_automate_embedded_method():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -26533,8 +26533,8 @@ def test_storage_volume_backup_restore_from_backup_page_openstack():
     5) check in Task whether restored or not.
 
     Polarion:
-        assignee: None
-        casecomponent: cloud
+        assignee: mmojzis
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/5h
         startsin: 5.9
@@ -26553,7 +26553,7 @@ def test_verify_cfme_login_page_redirects_to_saml_login_page_upon_successful_con
 
     Polarion:
         assignee: apagac
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
         title: Verify CFME login page redirects to SAML login page upon
                successful configuration
@@ -26568,7 +26568,7 @@ def test_search_field_at_the_top_of_a_dynamic_drop_down_dialog_element_should_di
 
     Polarion:
         assignee: nansari
-        casecomponent: services
+        casecomponent: Services
         initialEstimate: 1/4h
         startsin: 5.9
         title: search field at the top of a dynamic drop-down dialog element should display
@@ -26584,7 +26584,7 @@ def test_automate_git_verify_ssl():
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: low
         initialEstimate: 1/12h
         startsin: 5.7
@@ -26601,7 +26601,7 @@ def test_credentials_login_password_leading_whitespace():
 
     Polarion:
         assignee: apagac
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
@@ -26618,8 +26618,8 @@ def test_host_info_scvmm2016():
     the time to spot check at least one host.
 
     Polarion:
-        assignee: None
-        casecomponent: infra
+        assignee: jdupuy
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
         startsin: 5.7

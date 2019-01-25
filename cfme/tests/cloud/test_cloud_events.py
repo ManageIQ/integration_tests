@@ -24,7 +24,7 @@ def test_manage_nsg_group(appliance, provider, register_event):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/8h
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
     """
 
@@ -78,7 +78,7 @@ def test_vm_capture(appliance, request, provider, register_event):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/8h
-        casecomponent: control
+        casecomponent: Control
         caseimportance: medium
     """
 

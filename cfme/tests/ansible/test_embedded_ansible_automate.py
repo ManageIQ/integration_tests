@@ -252,7 +252,7 @@ def test_automate_ansible_playbook_method_type_crud(appliance, ansible_repositor
 
     Polarion:
         assignee: dmisharo
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -276,7 +276,7 @@ def test_automate_ansible_playbook_method_type(request, appliance, domain, names
 
     Polarion:
         assignee: dmisharo
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
     """
@@ -298,7 +298,7 @@ def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: ansible
+        casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -334,7 +334,7 @@ def test_embedded_ansible_custom_button_localhost(full_template_vm_modscope, cus
     """
     Polarion:
         assignee: mmojzis
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     with update(custom_vm_button):
         custom_vm_button.inventory = "Localhost"
@@ -357,7 +357,7 @@ def test_embedded_ansible_custom_button_target_machine(full_template_vm_modscope
     """
     Polarion:
         assignee: dmisharo
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     with update(custom_vm_button):
         custom_vm_button.inventory = "Target Machine"
@@ -380,7 +380,7 @@ def test_embedded_ansible_custom_button_specific_hosts(full_template_vm_modscope
     """
     Polarion:
         assignee: dmisharo
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     with update(custom_vm_button):
         custom_vm_button.inventory = "Specific Hosts"
@@ -405,7 +405,7 @@ def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, re
 
     Polarion:
         assignee: jdupuy
-        casecomponent: control
+        casecomponent: Control
         initialEstimate: 1/6h
     """
     added_tag = full_template_vm_modscope.add_tag()

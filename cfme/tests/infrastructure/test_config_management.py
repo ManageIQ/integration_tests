@@ -50,6 +50,7 @@ def test_config_manager_detail_config_btn(request, config_manager):
     Polarion:
         assignee: nachandr
         initialEstimate: 1/2h
+        casecomponent: Ansible
     """
     config_manager.refresh_relationships()
 
@@ -59,7 +60,7 @@ def test_config_manager_add(request, config_manager_obj):
     """
     Polarion:
         assignee: nachandr
-        casecomponent: prov
+        casecomponent: Ansible
         initialEstimate: 1/4h
     """
     request.addfinalizer(config_manager_obj.delete)
@@ -72,6 +73,7 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
     Polarion:
         assignee: nachandr
         initialEstimate: 1/15h
+        casecomponent: Ansible
     """
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.url = 'https://invalid_url'
@@ -87,6 +89,7 @@ def test_config_manager_add_invalid_creds(request, config_manager_obj):
         assignee: nachandr
         caseimportance: medium
         initialEstimate: 1/4h
+        casecomponent: Ansible
     """
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.credentials.principal = 'invalid_user'
@@ -105,6 +108,7 @@ def test_config_manager_edit(request, config_manager):
     Polarion:
         assignee: nachandr
         initialEstimate: 1/15h
+        casecomponent: Ansible
     """
     new_name = fauxfactory.gen_alpha(8)
     old_name = config_manager.name
@@ -121,6 +125,7 @@ def test_config_manager_remove(config_manager):
     Polarion:
         assignee: nachandr
         initialEstimate: 1/15h
+        casecomponent: Ansible
     """
     config_manager.delete()
 
@@ -131,8 +136,9 @@ def test_config_manager_remove(config_manager):
 def test_config_system_tag(request, config_system, tag):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Ansible
     """
     config_system.add_tag(tag=tag, details=False)
     tags = config_system.get_tags()

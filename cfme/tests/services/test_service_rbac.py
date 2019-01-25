@@ -54,8 +54,9 @@ def test_service_rbac_no_permission(appliance, role_user_group):
     """ Test service rbac without user permission
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: apagac
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     role, user = role_user_group
     error_message = ("The user's role is not authorized for any access, "
@@ -69,8 +70,9 @@ def test_service_rbac_catalog(appliance, role_user_group, catalog):
     """ Test service rbac with catalog
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: apagac
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     role, user = role_user_group
     product_features = [(['Everything'], True), (['Everything'], False)]
@@ -86,8 +88,9 @@ def test_service_rbac_service_catalog(appliance, role_user_group, catalog, catal
     """ Test service rbac with service catalog
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: apagac
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     role, user = role_user_group
     product_features = [
@@ -114,8 +117,9 @@ def test_service_rbac_catalog_item(request, appliance, role_user_group, catalog_
     """ Test service rbac with catalog item
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: apagac
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     role, user = role_user_group
     product_features = [(['Everything'], True), (['Everything'], False)]
@@ -131,8 +135,9 @@ def test_service_rbac_orchestration(appliance, role_user_group):
     """ Test service rbac with orchestration
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: apagac
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     role, user = role_user_group
     product_features = [(['Everything'], True), (['Everything'], False)]
@@ -156,8 +161,9 @@ def test_service_rbac_request(appliance, role_user_group, catalog_item):
     """ Test service rbac with only request module permissions
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: apagac
+        initialEstimate: 1/4h
+        casecomponent: Services
     """
     role, user = role_user_group
     product_features = [

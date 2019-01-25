@@ -29,8 +29,8 @@ def test_redfish_physical_server_details_stats(physical_server):
     """Navigate to the physical server details page and verify that the stats match
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_server.validate_stats(ui=True)
 

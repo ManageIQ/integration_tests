@@ -52,12 +52,7 @@ def prov_data(provider, vm_name, template_name):
 
 
 @pytest.fixture(scope='module')
-def test_domain(appliance):
-    """
-    Polarion:
-        assignee: None
-        initialEstimate: None
-    """
+def domain(appliance):
     domain = appliance.collections.domains.create('test_{}'.format(fauxfactory.gen_alphanumeric()),
                                                   'description_{}'.format(
                                                       fauxfactory.gen_alphanumeric()),
@@ -84,7 +79,7 @@ def catalog_item(appliance, provider, dialog, catalog, prov_data):
 
 
 @pytest.fixture(scope='module')
-def max_quota_test_instance(appliance, test_domain):
+def max_quota_test_instance(appliance, domain):
     miq = appliance.collections.domains.instantiate('ManageIQ')
 
     original_instance = (
@@ -93,7 +88,7 @@ def max_quota_test_instance(appliance, test_domain):
         .classes.instantiate('QuotaMethods')
         .instances.instantiate('quota_source')
     )
-    original_instance.copy_to(domain=test_domain)
+    original_instance.copy_to(domain=domain)
 
     original_instance = (
         miq.namespaces.instantiate('System')
@@ -101,10 +96,10 @@ def max_quota_test_instance(appliance, test_domain):
         .classes.instantiate('QuotaStateMachine')
         .instances.instantiate('quota')
     )
-    original_instance.copy_to(domain=test_domain)
+    original_instance.copy_to(domain=domain)
 
     instance = (
-        test_domain.namespaces.instantiate('System')
+        domain.namespaces.instantiate('System')
         .namespaces.instantiate('CommonMethods')
         .classes.instantiate('QuotaStateMachine')
         .instances.instantiate('quota')
@@ -161,7 +156,7 @@ def test_quota_tagging_cloud_via_lifecycle(request, appliance, provider, prov_da
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/6h
     """
     recursive_update(prov_data, {
@@ -193,7 +188,7 @@ def test_quota_tagging_cloud_via_services(appliance, request, provider, setup_pr
 
     Polarion:
         assignee: ghubale
-        casecomponent: cloud
+        casecomponent: Cloud
         initialEstimate: 1/6h
     """
     with appliance.context.use(context):
@@ -223,8 +218,8 @@ def test_cloud_quota_by_lifecycle(request, appliance, provider, setup_provider,
     6. Check whether instance provision 'Denied' with reason 'Quota Exceeded'
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ghubale
+        initialEstimate: 1/4h
     """
     recursive_update(prov_data, {
         'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
@@ -253,8 +248,8 @@ def test_quota_cloud_via_services(appliance, request, setup_provider, admin_emai
            5. Check whether quota is exceeded or not
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: ghubale
+        initialEstimate: 1/4h
     """
     with appliance.context.use(context):
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
@@ -263,7 +258,7 @@ def test_quota_cloud_via_services(appliance, request, setup_provider, admin_emai
         service_catalogs.order()
     # nav to requests page to check quota validation
     request_description = ("Provisioning Service [{catalog_item_name}] from [{catalog_item_name}]"
-        .format(catalog_item_name=catalog_item.name))
+                           .format(catalog_item_name=catalog_item.name))
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)

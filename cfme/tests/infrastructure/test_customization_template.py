@@ -31,7 +31,7 @@ def test_customization_template_crud(collection, script_type, image_type):
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: WebUI
         initialEstimate: 1/15h
     """
 
@@ -50,8 +50,9 @@ def test_name_required_error_validation_cust_template(collection):
     """Test to validate name in customization templates.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
 
     with pytest.raises(Exception, match='Name is required'):
@@ -67,8 +68,9 @@ def test_type_required_error_validation(collection):
     """Test to validate type in customization templates.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
 
     with pytest.raises(Exception, match='Type is required'):
@@ -85,7 +87,7 @@ def test_pxe_image_type_required_error_validation(collection):
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/6h
         upstream: yes
@@ -100,13 +102,13 @@ def test_pxe_image_type_required_error_validation(collection):
             script_data='Testing the script')
 
 
-@pytest.mark.meta(blockers=[BZ(1449116, forced_streams=['5.7', '5.8'])])
 def test_cust_template_duplicate_name_error_validation(collection):
     """Test to validate duplication in customization templates.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
 
     name = fauxfactory.gen_alphanumeric(8)
@@ -134,8 +136,9 @@ def test_name_max_character_validation(collection):
        Opens template details to verify that extra symbols were cut
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: jhenner
+        initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     template_name = collection.create(
         name=fauxfactory.gen_alphanumeric(256),
@@ -155,7 +158,7 @@ def test_customization_template_copy(collection):
 
     Polarion:
         assignee: jhenner
-        casecomponent: prov
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/15h
     """

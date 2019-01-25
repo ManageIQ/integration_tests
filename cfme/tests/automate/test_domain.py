@@ -17,7 +17,7 @@ def test_domain_crud(request, enabled, appliance):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/30h
     """
@@ -49,7 +49,7 @@ def test_domain_edit_enabled(request, appliance):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/16h
     """
     domain = appliance.collections.domains.create(
@@ -71,7 +71,7 @@ def test_domain_lock_disabled(request, appliance):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/16h
     """
@@ -91,7 +91,7 @@ def test_domain_delete_from_table(request, appliance):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: low
         initialEstimate: 1/30h
     """
@@ -114,7 +114,7 @@ def test_duplicate_domain_disallowed(request, appliance):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseposneg: negative
         initialEstimate: 1/60h
     """
@@ -136,7 +136,7 @@ def test_domain_cannot_delete_builtin(appliance):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: critical
         caseposneg: negative
         initialEstimate: 1/16h
@@ -156,7 +156,7 @@ def test_domain_cannot_edit_builtin(appliance):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: critical
         caseposneg: negative
         initialEstimate: 1/16h
@@ -175,7 +175,7 @@ def test_domain_name_wrong(appliance):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/60h
@@ -189,7 +189,7 @@ def test_domain_lock_unlock(request, appliance):
     """
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/16h
     """
     domain = appliance.collections.domains.create(
@@ -268,7 +268,7 @@ def test_domain_import_git(request, appliance, url, param_type, param_value, ver
 
     Polarion:
         assignee: dmisharo
-        casecomponent: automate
+        casecomponent: Automate
         initialEstimate: 1/20h
     """
     repo = AutomateGitRepository(url=url, verify_ssl=verify_ssl, appliance=appliance)

@@ -107,7 +107,7 @@ def test_paginator(appliance, place_info):
 
     Polarion:
         assignee: anikifor
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     place_name, place_class, place_navigation, paginator_expected_result = place_info
     if place_class:
@@ -133,7 +133,7 @@ def test_paginator_details_page(appliance, place_info, schedule):
 
     Polarion:
         assignee: anikifor
-        casecomponent: web_ui
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
     """
@@ -162,7 +162,7 @@ def test_configure_diagnostics_pages_cfme_region():
 
     Polarion:
         assignee: anikifor
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/15h
     """

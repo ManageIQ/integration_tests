@@ -89,7 +89,7 @@ def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, c
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
     """
     orig_config = small_vm.configuration.copy()
@@ -116,7 +116,7 @@ def test_vm_reconfig_add_remove_disk_cold(
     """
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
     """
     orig_config = small_vm.configuration.copy()
@@ -155,7 +155,7 @@ def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
 
     Polarion:
         assignee: nansari
-        casecomponent: infra
+        casecomponent: Infra
         initialEstimate: 1/3h
     """
     config_vm = small_vm.configuration.copy()
@@ -172,7 +172,7 @@ def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
 
 
 @pytest.mark.rhv1
-@pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider))
+@pytest.mark.provider([RHEVMProvider], required_fields=['templates'], override=True)
 @pytest.mark.parametrize('change_type', ['sockets', 'memory'])
 @pytest.mark.meta(blockers=[BZ(1632782, forced_streams=['5.10'])])
 def test_vm_reconfig_add_remove_hw_hot(provider, small_vm, ensure_vm_running, change_type):
@@ -180,8 +180,8 @@ def test_vm_reconfig_add_remove_hw_hot(provider, small_vm, ensure_vm_running, ch
         Chaning number of cores per socket on running VM is not supported by RHV.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: nansari
+        initialEstimate: 1/4h
     """
     orig_config = small_vm.configuration.copy()
     new_config = prepare_new_config(orig_config, change_type)

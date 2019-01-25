@@ -87,7 +87,7 @@ def test_custom_button_import_export(appliance, setup_groups_buttons):
         caseposneg: positive
         testtype: functional
         startsin: 5.10
-        casecomponent: custom_button
+        casecomponent: CustomButton
         tags: custom_button
         testSteps:
             1. Create custom buttons and groups

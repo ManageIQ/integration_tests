@@ -661,7 +661,7 @@ def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargebac
 
     Polarion:
         assignee: tpapaioa
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     for groups in chargeback_report_custom:
         if groups["Disk I/O Used Cost"]:

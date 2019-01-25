@@ -25,7 +25,7 @@ def test_sdn_port_detail_name(provider, appliance):
 
     Polarion:
         assignee: mmojzis
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     port_collection = NetworkPortCollection(appliance)
     ports = port_collection.all()
@@ -48,7 +48,7 @@ def test_sdn_port_net_prov(provider, appliance):
 
     Polarion:
         assignee: mmojzis
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     prov_collection = NetworkProviderCollection(appliance)
 

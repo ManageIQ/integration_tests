@@ -55,7 +55,7 @@ def test_shuffle_top_level(appliance, group, report_menus):
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/6h
     """
@@ -78,7 +78,7 @@ def test_shuffle_first_level(appliance, group, report_menus):
     """
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -111,7 +111,7 @@ def test_add_reports_to_available_reports_menu(appliance, request, group,
 
     Polarion:
         assignee: pvala
-        casecomponent: report
+        casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/10h
     """

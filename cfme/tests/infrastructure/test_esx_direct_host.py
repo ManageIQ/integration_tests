@@ -101,8 +101,9 @@ def test_validate(host_provider):
         * The provider should refresh without problems.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: kkulkarn
+        initialEstimate: 1/4h
+        casecomponent: Infra
     """
     host_provider.create()
     host_provider.refresh_provider_relationships()

@@ -22,8 +22,8 @@ def test_refresh_providers(appliance, request, scenario):
     Memory Monitor creates graphs and summary at the end of the scenario.
 
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     from_ts = int(time.time() * 1000)
     logger.debug('Scenario: {}'.format(scenario['name']))

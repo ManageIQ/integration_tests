@@ -81,7 +81,7 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
     """
     Polarion:
         assignee: jhenner
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     app = temp_appliance_extended_db
     # Download the database
@@ -136,7 +136,7 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     """
     Polarion:
         assignee: jhenner
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     app = temp_appliance_remote
     app2 = temp_appliance_global_region
@@ -198,7 +198,7 @@ def test_upgrade_single_inplace(appliance_preupdate, appliance):
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/3h
         testtype: upgrade

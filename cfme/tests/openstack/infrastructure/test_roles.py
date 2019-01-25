@@ -28,8 +28,8 @@ def roles(appliance, provider):
 def test_host_role_association(appliance, provider, soft_assert):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     host_collection = appliance.collections.hosts
     hosts = host_collection.all()
@@ -56,8 +56,8 @@ def test_host_role_association(appliance, provider, soft_assert):
 def test_roles_name(roles):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     for role in roles:
         role_name = role.name.split('-')[1]
@@ -68,8 +68,8 @@ def test_roles_name(roles):
 def test_roles_summary(roles, soft_assert):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     err_ptrn = '{} are shown incorrectly'
 
@@ -98,8 +98,8 @@ def test_roles_summary(roles, soft_assert):
 def test_role_delete(roles):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     role = choice(roles)
     role.delete()

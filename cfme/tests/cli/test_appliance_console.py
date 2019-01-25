@@ -48,7 +48,7 @@ def test_appliance_console(appliance):
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/12h
     """
@@ -75,7 +75,7 @@ def test_appliance_console_set_hostname(configured_appliance):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/6h
     """
 
@@ -108,7 +108,7 @@ def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modsc
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/6h
     """
     command_set = ('ap', '', '2') + timezone[1] + ('y', '')
@@ -125,7 +125,7 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/6h
     """
     app = temp_appliance_preconfig_funcscope
@@ -156,7 +156,7 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/4h
     """
@@ -182,7 +182,7 @@ def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope)
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/4h
     """
 
@@ -212,7 +212,7 @@ def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
         testtype: structural
     """
@@ -262,7 +262,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1h
         testtype: structural
     """
@@ -333,7 +333,7 @@ def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_cr
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/2h
         testtype: structural
@@ -371,7 +371,7 @@ def test_appliance_console_external_db_create(
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/3h
     """
 
@@ -396,7 +396,7 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/4h
     """
@@ -419,7 +419,7 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
 
     command_set = ('ap', RETURN, '10',
@@ -453,7 +453,7 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
     Polarion:
         assignee: sbulage
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     # TODO this depends on the auth_type options being disabled when the test is run
     # TODO it assumes that first switch is to true, then false.
@@ -491,7 +491,7 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
     Polarion:
         assignee: sbulage
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
@@ -531,7 +531,7 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/3h
     """
@@ -589,7 +589,7 @@ def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/6h
     """
@@ -623,7 +623,7 @@ def test_appliance_console_static_ipv4(unconfigured_appliance, soft_assert):
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/6h
     """
@@ -657,7 +657,7 @@ def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        initialEstimate: None
+        initialEstimate: 1/4h
     """
     command_set = ('ap', '', '1', '3', '1::1', '', '1::f', '', '', '', 'y')
     unconfigured_appliance.appliance_console.run_commands(command_set)
@@ -682,7 +682,7 @@ def test_appliance_console_haproxy():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
         setup: setup HA following https://mojo.redhat.com/docs/DOC-1097888
@@ -712,7 +712,7 @@ def test_appliance_console_ha_setup_dc():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/2h
         setup: provision 3 appliances
                setup HA following https://mojo.redhat.com/docs/DOC-1097888
@@ -743,7 +743,7 @@ def test_appliance_console_screen():
 
     Polarion:
         assignee: sbulage
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
         startsin: 5.9
@@ -759,7 +759,7 @@ def test_appliance_console_restart():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -775,7 +775,7 @@ def test_appliance_console_ha_dc_re_establish():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/2h
         setup: Restore network connectivity between DC1 and DC2
         startsin: 5.8
@@ -795,7 +795,7 @@ def test_appliance_console_evm_stop():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -810,7 +810,7 @@ def test_appliance_console_evm_start():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -825,7 +825,7 @@ def test_appliance_console_check_default_ip():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -841,7 +841,7 @@ def test_appliance_ssl():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -860,7 +860,7 @@ def test_appliance_console_restore_ha_standby_node():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
         setup: provision 3 appliances
@@ -884,7 +884,7 @@ def test_appliance_console_cancel():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -899,7 +899,7 @@ def test_appliance_console_network_conf():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
     """
@@ -914,7 +914,7 @@ def test_appliance_console_network_conf_negative():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
@@ -931,7 +931,7 @@ def test_appliance_console_vmdb_httpd():
 
     Polarion:
         assignee: sbulage
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/12h
@@ -947,7 +947,7 @@ def test_appliance_console_shutdown():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -962,7 +962,7 @@ def test_appliance_console_static_ip_negative():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
@@ -981,7 +981,7 @@ def test_appliance_console_ha_dc_failover():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         initialEstimate: 1/2h
         setup: Failover to DC1 standby node, drop connections between DC"s, restore
                network connectivity between DC1 and DC2 manually kill DC1 current
@@ -999,7 +999,7 @@ def test_appliance_console_logfile():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
         setup: -provision new appliance with additional disk
@@ -1021,7 +1021,7 @@ def test_appliance_console_restore_db_network_negative():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/3h
@@ -1038,7 +1038,7 @@ def test_appliance_console_packages():
 
     Polarion:
         assignee: sbulage
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/12h
         startsin: 5.10
         testtype: structural
@@ -1055,7 +1055,7 @@ def test_appliance_console_cli_rh_registration():
 
     Polarion:
         assignee: sbulage
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
         setup: Provision appliace
@@ -1073,7 +1073,7 @@ def test_appliance_console_extend_storage_negative():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/12h
@@ -1090,7 +1090,7 @@ def test_appliance_console_db_maintenance_periodic_unconfigure():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         endsin: 5.8
         initialEstimate: 1/6h
@@ -1120,7 +1120,7 @@ def test_appliance_console_static_dns():
 
     Polarion:
         assignee: sbulage
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/6h
@@ -1136,7 +1136,7 @@ def test_appliance_console_apache_reload_log_rotate():
 
     Polarion:
         assignee: sbulage
-        casecomponent: appl
+        casecomponent: Appliance
         initialEstimate: 1/12h
         startsin: 5.10
         testtype: structural
@@ -1153,7 +1153,7 @@ def test_appliance_console_db_maintenance_hourly_unconfigure():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         endsin: 5.8
         initialEstimate: 1/6h
@@ -1178,7 +1178,7 @@ def test_appliance_console_datetime_negative():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
@@ -1194,7 +1194,7 @@ def test_appliance_console_key_fetch_negative():
 
     Polarion:
         assignee: sbulage
-        casecomponent: config
+        casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
@@ -1211,7 +1211,7 @@ def test_appliance_console_negative():
 
     Polarion:
         assignee: sbulage
-        casecomponent: appl
+        casecomponent: Appliance
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/6h

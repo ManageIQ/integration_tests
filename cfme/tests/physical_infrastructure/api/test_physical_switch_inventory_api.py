@@ -13,8 +13,8 @@ pytestmark = [
 def test_get_hardware(appliance, physical_switch):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_switch.reload(attributes=['hardware'])
     assert_response(appliance)
@@ -25,8 +25,8 @@ def test_get_hardware(appliance, physical_switch):
 def test_get_hardware_attributes(appliance, physical_switch, attribute):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     expanded_attribute = 'hardware.{}'.format(attribute)
     physical_switch.reload(attributes=[expanded_attribute])
@@ -37,8 +37,8 @@ def test_get_hardware_attributes(appliance, physical_switch, attribute):
 def test_get_asset_detail(appliance, physical_switch):
     """
     Polarion:
-        assignee: None
-        initialEstimate: None
+        assignee: rhcf3_machine
+        initialEstimate: 1/4h
     """
     physical_switch.reload(attributes=['asset_detail'])
     assert_response(appliance)
