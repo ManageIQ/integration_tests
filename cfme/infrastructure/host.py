@@ -9,7 +9,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
-from cfme.common import PolicyProfileAssignable, Taggable
+from cfme.common import CustomButtonEventsMixin, PolicyProfileAssignable, Taggable
 from cfme.common.candu_views import HostInfraUtilizationView
 from cfme.common.host_views import (
     HostAddView,
@@ -36,7 +36,9 @@ from cfme.utils.wait import wait_for
 
 
 @attr.s
-class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable):
+class Host(
+    BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable, CustomButtonEventsMixin
+):
     """Model of an infrastructure host in cfme.
 
     Args:

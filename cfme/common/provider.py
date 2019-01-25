@@ -8,7 +8,7 @@ from widgetastic_patternfly import Button, Input
 
 from cfme.base.credential import (
     Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential)
-from cfme.common import Taggable
+from cfme.common import Taggable, CustomButtonEventsMixin
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, AddProviderError)
 from cfme.modeling.base import BaseEntity
@@ -79,7 +79,7 @@ def prepare_endpoints(endpoints):
 
 
 @attr.s(hash=False)
-class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity):
+class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEventsMixin):
     # List of constants that every non-abstract subclass must have defined
 
     # TODO: Navigatable is used to ensure function until the reduced get_crud is

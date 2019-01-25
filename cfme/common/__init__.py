@@ -658,3 +658,51 @@ class UtilizationMixin(object):
     # @cached_property
     # def utilization(self):
     #     return Utilization(self)
+
+
+class CustomButtonEventsView(View):
+    """Class represents common custom button events page in CFME UI"""
+
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+    table = Table('//*[@class="miq-data-table"]/table')
+
+    @property
+    def is_displayed(self):
+        return (
+            "Custom Button Events" in self.title.text
+            and self.context["object"].name in self.title.text
+        )
+
+
+class CustomButtonEventsMixin(object):
+    def get_button_events(self):
+        try:
+            view = navigate_to(self, "ButtonEvents")
+            return view.table.read()
+        except DestinationNotFound:
+            return []
+
+
+@navigator.register(CustomButtonEventsMixin, "ButtonEvents")
+class CustomButtonEvents(CFMENavigateStep):
+
+    VIEW = CustomButtonEventsView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        ent = self.prerequisite_view.entities
+        table = ent.summary("Relationships") if hasattr(ent, "summary") else ent.relationships
+
+        # ToDo: remove this workaround as BZ-1668691 fix.
+        #  This is temporary workaround to avoid inconsistency in UI.
+
+        cb_text = (
+            "Custom Button Events"
+            if "Custom Button Events" in table.fields
+            else "Custom button events"
+        )
+        if int(table.get_text_of(cb_text)) > 0:
+            table.click_at(cb_text)
+        else:
+            raise DestinationNotFound("Custom button event count 0")
