@@ -3,17 +3,15 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, TextInput, Widget
+from widgetastic.utils import WaitFillViewStrategy
 from widgetastic_patternfly import Button, Input
 
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.utils.wait import TimedOutError
 
-from selenium.common.exceptions import StaleElementReferenceException
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 from . import ControlExplorerView
 
@@ -120,6 +118,7 @@ class ConditionClassAllView(ControlExplorerView):
 
 
 class EditConditionView(ConditionFormCommon):
+    fill_strategy = WaitFillViewStrategy()
     title = Text("#explorer_title_text")
 
     save_button = Button("Save")
@@ -200,18 +199,12 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
             updates: Provided by update() context manager.
         """
         view = navigate_to(self, "Edit")
-        try:
-            view.fill(updates)
-            view.wait_displayed()
-            view.save_button.click()
-            view = self.create_view(ConditionDetailsView, override=updates, wait='10s')
-            view.flash.assert_success_message(
-            'Condition "{}" was saved'.format(updates.get("description", self.description)))
-        except (TimedOutError, StaleElementReferenceException):
-            logger.exception('Updating the condition failed waiting for view, canceling update.')
-            view.cancel_button.click()
-            view = navigate_to(self, "Details")
-
+        view.fill(updates)
+        view.save_button.click()
+        view = self.create_view(ConditionDetailsView, override=updates, wait="10s")
+        view.flash.assert_success_message(
+            'Condition "{}" was saved'.format(updates.get("description", self.description))
+        )
 
     def delete(self, cancel=False):
         """Delete this Condition in UI.
@@ -226,7 +219,7 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            view = self.create_view(ConditionClassAllView, wait='10s')
+            view = self.create_view(ConditionClassAllView, wait="10s")
             view.flash.assert_success_message('Condition "{}": Delete successful'.format(
                 self.description))
 
@@ -271,8 +264,7 @@ class ConditionCollection(BaseCollection):
         })
         view.wait_displayed()
         view.add_button.click()
-        view = condition.create_view(ConditionDetailsView)
-        assert view.is_displayed
+        view = condition.create_view(ConditionDetailsView, wait="10s")
         view.flash.assert_success_message('Condition "{}" was added'.format(condition.description))
         return condition
 
