@@ -895,6 +895,7 @@ class InfraVm(VM):
                      See VMConfiguration.get_changes_to_fill to see expected format of the data
             cancel: `False` if we want to submit the changes, `True` otherwise
         """
+        from cfme.infrastructure.provider.rhevm import RHEVMProvider
         if not new_configuration and not changes:
             raise TypeError(
                 "You must provide either new configuration or changes to apply.")
@@ -934,19 +935,24 @@ class InfraVm(VM):
 
                 row = vm_recfg.disks_table.click_add_disk()
                 row.type.fill(disk.type)
-                row.mode.fill(mode)
+                if not self.provider.one_of(RHEVMProvider):
+                    row.mode.fill(mode)
+                    row.dependent.fill(dependent)
                 row.size.fill(disk.size)
                 row.unit.fill(disk.size_unit)
-                row.dependent.fill(dependent)
                 row.actions.widget.click()
                 disk_message = 'Add Disks'
             elif action == 'delete':
                 row = vm_recfg.disks_table.row(name=disk.filename)
                 # `delete_backing` removes disk from the env
                 row.delete_backing.fill(True)
-                # second action button, delete, is column 9 on colspan
-                # https://github.com/RedHatQE/widgetastic.core/issues/95
-                row[9].widget.click()
+                if not self.provider.one_of(RHEVMProvider):
+                    # second action button, delete, is column 9 on colspan
+                    # https://github.com/RedHatQE/widgetastic.core/issues/95
+                    row[9].widget.click()
+                else:
+                    # for RHV there's only one action button
+                    row.actions.widget.click()
                 disk_message = 'Remove Disks'
             else:
                 raise ValueError("Unknown disk change action; must be one of: add, delete")
