@@ -2082,32 +2082,11 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     @property
     def advanced_settings(self):
         """Get settings from the base api/settings endpoint for appliance"""
-        if self.version > '5.9':
-            return self.rest_api.get(self.rest_api.collections.settings._href)
-        else:
-            writeout = self.ssh_client.run_rails_command(
-                '"File.open(\'/tmp/yam_dump.yaml\', \'w\') '
-                '{|f| f.write(Settings.to_hash.deep_stringify_keys.to_yaml) }"'
-            )
-            if writeout.rc:
-                logger.error("Config couldn't be found")
-                logger.error(writeout.output)
-                raise Exception('Error obtaining config')
-            base_data = self.ssh_client.run_command('cat /tmp/yam_dump.yaml')
-            if base_data.rc:
-                logger.error("Config couldn't be found")
-                logger.error(base_data.output)
-                raise Exception('Error obtaining config')
-            try:
-                return yaml.safe_load(base_data.output)
-            except Exception:
-                logger.debug(base_data.output)
-                raise
+
+        return self.rest_api.get(self.rest_api.collections.settings._href)
 
     def update_advanced_settings(self, settings_dict):
         """PATCH settings from the master server's api/server/:id/settings endpoint
-
-        Uses REST API for CFME 5.9+, uses rails console on lower versions
 
         Will automatically update existing settings dictionary with settings_dict
 
@@ -2118,32 +2097,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             ApplianceException when server_id isn't set
         """
         # Can only modify through server ID, raise if that's not set yet
-        if self.version < '5.9':
-            data_dict_base = self.advanced_settings
-            data_dict_base.update(settings_dict)
-
-            temp_yaml = NamedTemporaryFile()
-            dest_yaml = '/tmp/conf.yaml'
-            yaml.safe_dump(data_dict_base, temp_yaml, default_flow_style=False)
-            self.ssh_client.put_file(temp_yaml.name, dest_yaml)
-            # Build and send ruby script
-            dest_ruby = '/tmp/set_conf.rb'
-
-            ruby_template = data_path.join('utils', 'cfmedb_set_config.rbt')
-            ruby_replacements = {
-                'config_file': dest_yaml
-            }
-            temp_ruby = load_data_file(ruby_template.strpath, ruby_replacements)
-            self.ssh_client.put_file(temp_ruby.name, dest_ruby)
-
-            # Run it
-            result = self.ssh_client.run_rails_command(dest_ruby)
-            if not result:
-                raise Exception('Unable to set config: {!r}:{!r}'.format(result.rc, result.output))
-        else:
-            if self.server_id() is None:
-                raise ApplianceException('No server id is set, cannot modify yaml config via REST')
-            self.server.update_advanced_settings(settings_dict)
+        if self.server_id() is None:
+            raise ApplianceException('No server id is set, cannot modify yaml config via REST')
+        self.server.update_advanced_settings(settings_dict)
 
     def set_proxy(self, host, port, user=None, password=None, prov_type=None):
         vmdb_config = self.advanced_settings
