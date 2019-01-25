@@ -12,6 +12,7 @@ from widgetastic_manageiq.expression_editor import ExpressionEditor
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound
 
 from cfme.intelligence.reports.schedules import SchedulesFormCommon
+from cfme.intelligence.timelines import CloudIntelTimelinesView
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -119,6 +120,22 @@ class ReportEditView(CustomReportFormCommon):
         )
 
 
+class ReportCopyView(ReportAddView):
+    """ Class for copying a report, functionally this is the same as the ReportAddView.
+    The is_displayed function needs to be slightly modified. """
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.reports.is_opened and
+            self.report_title.text == "Adding a new Report" and
+            self.reports.tree.currently_selected == [
+                "All Reports", self.context["object"].type, self.context["object"].subtype,
+                self.context["object"].menu_name
+            ]
+        )
+
 class ReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
     reload_button = Button(title='Refresh this page')
@@ -150,6 +167,18 @@ class ReportDetailsView(CloudIntelReportsView):
             self.report_info.is_active() and
             self.reports.tree.currently_selected == expected_tree and
             self.title.text == expected_title
+        )
+
+
+class ReportTimelineView(CloudIntelTimelinesView):
+    title = Text(".//h1")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Cloud Intel', 'Timelines'] and
+            self.title.text == self.context["object"].title
         )
 
 
@@ -301,8 +330,7 @@ class Report(BaseEntity, Updateable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ReportDetailsView, override=updates)
-        assert view.is_displayed
+        view = self.create_view(ReportDetailsView, override=updates, wait="5s")
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
@@ -311,6 +339,18 @@ class Report(BaseEntity, Updateable):
             view.flash.assert_message(
                 'Edit of Report "{}" was cancelled by the user'.format(self.menu_name))
 
+    def copy(self):
+        """ Copy a report via UI and return a copy of a Report object"""
+        menu_name = "Copy of {}".format(self.menu_name)
+
+        view = navigate_to(self, "Copy")
+        view.add_button.click()
+        self.create_view(AllReportsView, wait="5s")
+
+        return self.appliance.collections.reports.instantiate(
+            type=self.company_name, subtype="Custom", menu_name=menu_name, title=self.title,
+        )
+
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
         node = view.reports.tree.expand_path("All Reports", self.company_name, "Custom")
@@ -318,14 +358,13 @@ class Report(BaseEntity, Updateable):
         view.configuration.item_select("Delete this Report from the Database",
             handle_alert=not cancel)
         if cancel:
-            assert view.is_displayed
+            view.wait_displayed()
             view.flash.assert_no_error()
         else:
             # This check is needed because after deleting the last custom report,
             # the whole "My Company (All EVM Groups)" branch in the tree will be removed.
             if custom_reports_number > 1:
-                view = self.create_view(AllCustomReportsView)
-                assert view.is_displayed
+                view = self.create_view(AllCustomReportsView, wait='5s')
             view.flash.assert_no_error()
             if not BZ(1561779, forced_streams=['5.9', '5.8']).blocks:
                 view.flash.assert_message(
@@ -419,8 +458,7 @@ class ReportsCollection(BaseCollection):
         view = navigate_to(self, "Add")
         view.fill(values)
         view.add_button.click()
-        view = self.create_view(AllReportsView)
-        assert view.is_displayed
+        view = self.create_view(AllReportsView, wait='5s')
         view.flash.assert_no_error()
         view.flash.assert_message('Report "{}" was added'.format(values["menu_name"]))
         return self.instantiate(**values)
@@ -605,6 +643,28 @@ class ReportEdit(CFMENavigateStep):
         self.prerequisite_view.configuration.item_select("Edit this Report")
 
 
+@navigator.register(Report, "Copy")
+class ReportCopy(CFMENavigateStep):
+    VIEW = ReportCopyView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select("Copy this Report")
+
+
+@navigator.register(Report, "Timeline")
+class ReportTimeline(CFMENavigateStep):
+    VIEW = ReportTimelineView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelTimelines")
+
+    def step(self):
+        self.prerequisite_view.timelines.tree.click_path(
+            self.obj.type or self.obj.company_name,
+            self.obj.subtype or "Custom",
+            self.obj.menu_name
+        )
+
+
 @navigator.register(Report, "Details")
 class ReportDetails(CFMENavigateStep):
     VIEW = ReportDetailsView
@@ -633,6 +693,7 @@ class ReportSchedule(CFMENavigateStep):
             self.obj.menu_name
         )
         self.prerequisite_view.configuration.item_select("Add a new Schedule")
+
 
 @navigator.register(SavedReport, "Details")
 class SavedReportDetails(CFMENavigateStep):

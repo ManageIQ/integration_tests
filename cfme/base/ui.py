@@ -26,6 +26,7 @@ from cfme.exceptions import BugException
 from cfme.exceptions import ZoneNotFound, DestinationNotFound
 from cfme.intelligence.chargeback import ChargebackView
 from cfme.intelligence.rss import RSSView
+from cfme.intelligence.timelines import CloudIntelTimelinesView
 from cfme.utils import conf
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
@@ -413,6 +414,15 @@ class RSS(CFMENavigateStep):
 
     def step(self):
         self.view.navigation.select('Cloud Intel', 'RSS')
+
+
+@navigator.register(Server)
+class CloudIntelTimelines(CFMENavigateStep):
+    VIEW = CloudIntelTimelinesView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        self.view.navigation.select('Cloud Intel', 'Timelines')
 
 
 @navigator.register(Server)
