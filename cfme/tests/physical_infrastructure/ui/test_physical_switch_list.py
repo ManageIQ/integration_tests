@@ -7,7 +7,7 @@ from cfme.physical.provider.lenovo import LenovoProvider
 pytestmark = [pytest.mark.tier(3), pytest.mark.provider([LenovoProvider], scope="module")]
 
 
-def test_physical_switches_view_displayed(appliance):
+def test_physical_switches_view_displayed(appliance, physical_switch):
     """Navigate to the physical switches page and verify that switches are displayed
 
     Polarion:
@@ -18,7 +18,7 @@ def test_physical_switches_view_displayed(appliance):
     assert physical_switches_view.is_displayed
 
 
-def test_physical_switches_view_dropdowns(appliance):
+def test_physical_switches_view_dropdowns(appliance, physical_switch):
     """Navigate to the physical switches page and verify that the dropdown menus are present
 
     Polarion:
