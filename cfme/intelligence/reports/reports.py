@@ -170,6 +170,18 @@ class ReportDetailsView(CloudIntelReportsView):
         )
 
 
+class ReportTimelineView(CloudIntelTimelinesView):
+    title = Text(".//h1")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Cloud Intel', 'Timelines'] and
+            self.title.text == self.context["object"].title
+        )
+
+
 class SavedReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
     table = VanillaTable(".//div[@id='report_html_div']/table")
@@ -333,10 +345,10 @@ class Report(BaseEntity, Updateable):
 
         view = navigate_to(self, "Copy")
         view.add_button.click()
-        view = self.create_view(AllReportsView, wait="5s")
+        self.create_view(AllReportsView, wait="5s")
 
         return self.appliance.collections.reports.instantiate(
-            type=self.company_name, subtype="Custom", menu_name=menu_name
+            type=self.company_name, subtype="Custom", menu_name=menu_name, title=self.title,
         )
 
     def delete(self, cancel=False):
@@ -642,7 +654,7 @@ class ReportCopy(CFMENavigateStep):
 
 @navigator.register(Report, "Timeline")
 class ReportTimeline(CFMENavigateStep):
-    VIEW = CloudIntelTimelinesView
+    VIEW = ReportTimelineView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelTimelines")
 
     def step(self):
@@ -681,6 +693,7 @@ class ReportSchedule(CFMENavigateStep):
             self.obj.menu_name
         )
         self.prerequisite_view.configuration.item_select("Add a new Schedule")
+
 
 @navigator.register(SavedReport, "Details")
 class SavedReportDetails(CFMENavigateStep):

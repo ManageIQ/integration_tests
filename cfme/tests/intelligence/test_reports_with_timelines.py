@@ -2,22 +2,39 @@
 import fauxfactory
 import pytest
 
-from cfme.cloud.provider.gce import GCEProvider
 from cfme.control.explorer import policies
 from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
-    pytest.mark.usefixtures("uses_infra_providers"),
     pytest.mark.tier(2),
-    pytest.mark.provider([InfraProvider], required_fields=["provisioning"], scope="function"),
+    pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE),
+    pytest.mark.usefixtures("setup_provider"),
+]
+
+IDS = [
+    "policy-events-week",
+    "policy-events-7days",
+    "host-mgmt-week",
+    "vm-operations",
 ]
 
 PATHS = [
-    ["Events", "Policy", "Policy Events for Last Week"],
-    ["Events", "Policy", "Policy Events for the Last 7 Days"],
-    ["Configuration Management", "Hosts", "Date brought under Management for Last Week"],
-    ["Events", "Operations", "Operations VMs Powered On/Off for Last Week"],
+    ["Events", "Policy", "Policy Events for Last Week", "Policy Events for Last Week"],
+    ["Events", "Policy", "Policy Events for the Last 7 Days", "Policy Events for the Last 7 Days"],
+    [
+        "Configuration Management",
+        "Hosts",
+        "Date brought under Management for Last Week",
+        "Hosts: Date brought under Management for Last Week",
+    ],
+    [
+        "Events",
+        "Operations",
+        "Operations VMs Powered On/Off for Last Week",
+        "Operations VM Power On/Off Events for Last Week",
+    ],
 ]
 
 UPDATES = [
@@ -50,50 +67,39 @@ UPDATES = [
 ]
 
 
-@pytest.fixture(scope="function")
-def setup_for_reports():
-    """ wrapper function for _setup_for_reports, so that it runs during test
+@pytest.fixture
+def setup_for_reports(request, appliance, provider, path, updates, vm_crud, register_event):
+    """ This function makes copies of the default reports so that we can test the timelines
+    on the CloudIntel->Timelines page
 
-    Returns:
-        unbound function object for calling during the test
+    Args:
+        request: py.test funcarg request
+        appliance: IPAppliance object
+        provider: provider object
+        path: path to the report in the tree
+        updates: updates to the default report so that it will display events
+        vm_crud: vm for Policy events
+        register_event: function for registering events
     """
-
-    def _setup_for_reports(request, appliance, provider, path, updates, vm_crud, register_event):
-        """ This function makes copies of the default reports so that we can test the timelines
-        on the CloudIntel->Timelines page
-
-        Args:
-            request: py.test funcarg request
-            appliance: IPAppliance object
-            provider: provider object
-            path: path to the report in the tree
-            updates: updates to the default report so that it will display events
-            vm_crud: vm for Policy events
-            register_event: function for registering events
-        """
-        # first perform extra steps for Policy stuff
-        if "Policy" in path:
-            generate_policy_event(request, appliance, provider, vm_crud, register_event)
-        report = appliance.collections.reports.instantiate(
-            type=path[0], subtype=path[1], menu_name=path[2]
-        )
-        # copy the default report
-        copied_report = report.copy()
-        # update the copied report
-        copied_report.update(updates)
-        # delete report at end of test
-        request.addfinalizer(copied_report.delete)
-
-        return copied_report
-
-    return _setup_for_reports
+    # first perform extra steps for Policy stuff
+    if "Policy" in path:
+        generate_policy_event(request, appliance, provider, vm_crud, register_event)
+    report = appliance.collections.reports.instantiate(
+        type=path[0], subtype=path[1], menu_name=path[2], title=path[3]
+    )
+    # copy the default report
+    copied_report = report.copy()
+    # update the copied report
+    copied_report.update(updates)
+    yield copied_report
+    # delete report at end of test
+    copied_report.delete()
 
 
-@pytest.fixture(scope="function")
-def vm_crud(provider, setup_provider, small_template):
+@pytest.fixture
+def vm_crud(provider, small_template):
     template = small_template
-    # GCE providers require the '-' instead of '_' to work properly with cleanup
-    base_name = "test-events-{}" if provider.one_of(GCEProvider) else "test_events_{}"
+    base_name = "test_events_{}"
     vm_name = base_name.format(fauxfactory.gen_alpha(length=8).lower())
 
     collection = provider.appliance.provider_based_collection(provider)
@@ -102,7 +108,11 @@ def vm_crud(provider, setup_provider, small_template):
     vm.cleanup_on_provider()
 
 
+# TODO: optimize this via a rails/rest/db injection???
 def generate_policy_event(request, appliance, provider, vm_crud, register_event):
+    """ Generate a policy event. This is a function and not a fixture so that it doesn't
+    run for every parameter, only those which require policy events.
+    """
     # create necessary objects
     action = appliance.collections.actions.create(
         fauxfactory.gen_alpha(), "Tag", dict(tag=("My Company Tags", "Environment", "Development"))
@@ -132,10 +142,8 @@ def generate_policy_event(request, appliance, provider, vm_crud, register_event)
     vm_crud.create_on_provider(find_in_cfme=True)
 
 
-@pytest.mark.parametrize("path, updates", zip(PATHS, UPDATES))
-def test_reports_with_timelines(
-    request, appliance, provider, path, updates, setup_for_reports, vm_crud, register_event
-):
+@pytest.mark.parametrize("path, updates", zip(PATHS, UPDATES), ids=IDS)
+def test_reports_with_timelines(appliance, setup_for_reports):
     """
     Test that a timeline widget is displayed for a reports.
     Note that since the default reports look at last week, to test, we modify the reports
@@ -153,9 +161,7 @@ def test_reports_with_timelines(
             5. Click on the report you created
             6. Verify that the timeline (with events) is properly displayed
     """
-    copied_report = setup_for_reports(
-        request, appliance, provider, path, updates, vm_crud, register_event
-    )
+    copied_report = setup_for_reports
     # navigate to timeline for this report
     view = navigate_to(copied_report, "Timeline")
     # assert that at least 1 event is present on the timeline chart
