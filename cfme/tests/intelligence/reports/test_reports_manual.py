@@ -244,36 +244,6 @@ def test_import_export_report():
 
 @pytest.mark.manual
 @test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_manage_report_menu_accordion_with_users():
-    """
-    Bugzilla:
-        1535023
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.8
-        setup:
-            1. Create a new report called report01
-            2. Create a new user under EvmGroup-super_administrator called
-            testuser
-            3. "Edit Report Menus" and add the report01 under EvmGroup-
-            super_administrator"s Provisioning -> Activities
-            4. Login using testuser and navigate to Reports
-        testSteps:
-            1. Check if the report01 is present under Provisioning -> Activities
-        expectedResults:
-            1. The report01 must be present under Provisioning -> Activities
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
 def test_report_menus_moving_reports():
     """
     Polarion:

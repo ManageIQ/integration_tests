@@ -180,6 +180,30 @@ class ReportMenu(BaseEntity):
             view.manager.commit()
             view.save_button.click()
 
+    def move_reports(self, group, folder, subfolder, reports):
+        """ Moves a list of reports to a given menu
+        Args:
+            group: User group
+            folder: Parent of the subfolder where reports are to be moved.
+            subfolder: Subfolder under which the reports are to be moved.
+            reports: List of reports that are to be moved.
+        """
+        if not isinstance(reports, list):
+            reports = [reports]
+
+        with self.manage_subfolder(group, folder, subfolder) as selected_menu:
+            selected_options = selected_menu.parent_view.report_select.all_options
+            for report in reports:
+                if report in selected_options:
+                    raise Exception("Report already present. Cannot move.")
+
+            # fill method replaces all the options in all_options with the value passed as argument
+            # We do not want to replace any value, we just want to move the new reports to a given
+            # menu. This is a work-around for that purpose.
+            reports.extend(selected_options)
+
+            selected_menu.parent_view.report_select.fill(reports)
+
 
 @attr.s
 class ReportMenusCollection(BaseCollection):
