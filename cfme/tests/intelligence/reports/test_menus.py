@@ -174,3 +174,45 @@ def test_rbac_move_custom_report(
             type=folder, subtype=subfolder, menu_name=get_custom_report.menu_name
         )
         assert rbac_report.exists
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(blockers=[BZ(1676638, forced_streams=["5.9", "5.10"])])
+@pytest.mark.parametrize("group", GROUPS)
+def test_reports_menu_with_duplicate_reports(
+    appliance, request, group, report_menus, custom_report_values
+):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        initialEstimate: 1/10h
+        startsin: 5.9
+        setup:
+            1.Create a custom report or copy an existing report.
+            2. Move the custom report to 'Tenants > Tenant Quotas' menu in user's current group
+        testSteps:
+            1. See if the report is available under 'Tenants > Tenant Quotas'.
+            2. Delete the custom report.
+            3. See if the report is available under 'Tenants > Tenant Quotas'.
+            4. Add a new report with the same menu_name.
+            5. See if the report is available under 'Tenants > Tenant Quotas'.
+        expectedResults:
+            1. Report must be visible.
+            2.
+            3. Report must not be visible.
+            4.
+            5. Report must not be visible.
+    """
+    custom_report_1 = appliance.collections.reports.create(**custom_report_values)
+    folder, subfolder = "Tenants", "Tenant Quotas"
+    report_menus.move_reports(group, folder, subfolder, custom_report_1.menu_name)
+    report = appliance.collections.reports.instantiate(
+        type=folder, subtype=subfolder, menu_name=custom_report_1.menu_name
+    )
+    assert report.exists
+    custom_report_1.delete()
+    assert not report.exists
+    custom_report_2 = appliance.collections.reports.create(**custom_report_values)
+    request.addfinalizer(custom_report_2.delete)
+    assert not report.exists
