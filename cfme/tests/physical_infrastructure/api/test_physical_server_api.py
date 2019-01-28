@@ -27,6 +27,8 @@ def physical_server(appliance, provider, setup_provider_modscope):
         ).all()[0]
     except IndexError:
         pytest.skip('No physical server on provider')
+    except AttributeError:
+        pytest.skip('No physical server attribute in REST collection')
     return physical_server
 
 
