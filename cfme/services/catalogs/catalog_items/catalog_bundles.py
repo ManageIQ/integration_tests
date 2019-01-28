@@ -18,7 +18,7 @@ class CatalogBundleFormView(ServicesCatalogView):
     @View.nested
     class basic_info(WaitTab):  # noqa
         TAB_NAME = 'Basic Info'
-        included_form = View.include(BasicInfoForm)
+        included_form = View.include(BasicInfoForm, use_parent=True)
 
     @View.nested
     class resources(WaitTab):  # noqa
@@ -73,7 +73,7 @@ class CatalogBundle(NonCloudInfraCatalogItem):
         view = self.create_view(DetailsCatalogItemView, override=updates, wait='10s')
         view.flash.assert_no_error()
 
-
+@attr.s
 class CatalogBundlesCollection(BaseCollection):
     ENTITY = CatalogBundle
 
@@ -95,9 +95,9 @@ class CatalogBundlesCollection(BaseCollection):
             'select_catalog': cat_name,
             'select_dialog': dialog
         })
-        if view.basic_info.field_entry_point.value == "":
-            view.basic_info.fill({'field_entry_point': ''})
-            view.basic_info.tree.click_path(
+        if view.basic_info.provisioning_entry_point.value == "":
+            view.basic_info.fill({'provisioning_entry_point': ''})
+            view.basic_info.modal.tree.click_path(
                 "Datastore", domain, "Service", "Provisioning",
                 "StateMachines", "ServiceProvision_Template", "CatalogItemInitialization")
             view.apply_button.click()
