@@ -81,6 +81,7 @@ def test_projects_dashboard_pods(provider, soft_assert, container_project_instan
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     api_pod_names = get_api_pods_names(provider)
@@ -105,6 +106,7 @@ def test_projects_dashboard_icons(provider, appliance, soft_assert, container_pr
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     api_values = get_api_object_counts(appliance, PROJECT_NAME, provider)
@@ -134,6 +136,7 @@ def test_project_has_provider(appliance, soft_assert, provider):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     projects_collection = appliance.collections.container_projects

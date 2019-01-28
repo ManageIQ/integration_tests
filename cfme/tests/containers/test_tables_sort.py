@@ -34,6 +34,7 @@ def test_tables_sort(test_item, soft_assert, appliance):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     view = navigate_to((test_item.obj if test_item.obj is ContainersProvider

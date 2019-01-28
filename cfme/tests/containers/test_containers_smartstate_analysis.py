@@ -60,6 +60,7 @@ def test_manage_policies_navigation(random_image_instance):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     random_image_instance.assign_policy_profiles('OpenSCAP profile')
@@ -71,6 +72,7 @@ def test_check_compliance(random_image_instance):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     random_image_instance.assign_policy_profiles('OpenSCAP profile')
@@ -95,6 +97,7 @@ def test_containers_smartstate_analysis(provider, test_item, soft_assert,
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     if test_item.is_openscap:
@@ -140,6 +143,7 @@ def test_containers_smartstate_analysis_api(provider, test_item, soft_assert,
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
 

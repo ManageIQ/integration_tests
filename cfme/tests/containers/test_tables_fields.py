@@ -74,6 +74,7 @@ def test_tables_fields(provider, test_item, soft_assert, appliance):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     view = navigate_to((test_item.obj if test_item.obj is ContainersProvider
@@ -104,6 +105,7 @@ def test_containers_details_view_title(appliance):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     random_container = appliance.collections.containers.all().pop()

@@ -19,6 +19,7 @@ def test_nodes_navigate(soft_assert, appliance):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     for dest in TEST_DEST:

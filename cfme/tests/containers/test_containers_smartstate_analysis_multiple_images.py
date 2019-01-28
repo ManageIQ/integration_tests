@@ -62,6 +62,7 @@ def test_check_compliance(provider, random_image_instances, appliance):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     collection = appliance.collections.container_images
@@ -95,6 +96,7 @@ def test_containers_smartstate_analysis(provider, test_item,
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     collection = appliance.collections.container_images

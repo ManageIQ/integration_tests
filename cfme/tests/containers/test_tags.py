@@ -54,6 +54,7 @@ def test_tag_container_objects(soft_assert, test_param, appliance, provider, req
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
 

@@ -35,6 +35,7 @@ def test_containers_summary_objects(provider, soft_assert):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     view = navigate_to(ContainersOverview, 'All')

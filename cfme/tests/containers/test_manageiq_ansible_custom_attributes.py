@@ -57,6 +57,7 @@ def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provi
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     setup_ansible_script(provider, script='add_custom_attributes',
@@ -84,6 +85,7 @@ def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, prov
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     setup_ansible_script(provider, script='add_custom_attributes',
@@ -112,6 +114,7 @@ def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attribu
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     setup_ansible_script(provider, script='add_custom_attributes',
@@ -142,6 +145,7 @@ def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attribut
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     setup_ansible_script(provider, script='add_custom_attributes_bad_user',
@@ -166,6 +170,7 @@ def test_manageiq_ansible_remove_custom_attributes(ansible_custom_attributes, pr
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     setup_ansible_script(provider, script='add_custom_attributes',

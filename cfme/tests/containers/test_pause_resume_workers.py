@@ -41,6 +41,7 @@ def test_pause_and_resume_provider_workers(appliance, provider):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     view = navigate_to(provider, "Details")
@@ -69,6 +70,7 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     evm_tail_disable = LogValidator('/var/www/miq/vmdb/log/evm.log',

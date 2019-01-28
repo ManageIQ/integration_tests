@@ -155,6 +155,7 @@ def test_cve_location_update_value(provider, soft_assert, delete_all_container_t
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     # Perform SSA Scan then check compliance with last know configuration
@@ -175,6 +176,7 @@ def test_image_inspector_registry_update_value(provider, soft_assert, delete_all
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     # Perform SSA Scan then check compliance with last know configuration

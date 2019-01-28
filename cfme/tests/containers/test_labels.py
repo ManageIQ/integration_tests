@@ -82,6 +82,7 @@ def test_labels_create(provider, soft_assert, random_labels):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     provider.refresh_provider_relationships()
@@ -107,6 +108,7 @@ def test_labels_remove(provider, soft_assert, random_labels):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     # Removing the labels
