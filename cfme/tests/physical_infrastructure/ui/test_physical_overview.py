@@ -3,11 +3,13 @@ import pytest
 from cfme.physical.provider.lenovo import LenovoProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 
-pytestmark = [pytest.mark.tier(3),
-    pytest.mark.provider([LenovoProvider])]
+pytestmark = [
+    pytest.mark.tier(3),
+    pytest.mark.provider([LenovoProvider]),
+    pytest.mark.usefixtures('appliance', 'provider', 'setup_provider')]
 
 
-def test_physical_overview_page(appliance, setup_provider):
+def test_physical_overview_page(appliance):
     """
     Polarion:
         assignee: rhcf3_machine

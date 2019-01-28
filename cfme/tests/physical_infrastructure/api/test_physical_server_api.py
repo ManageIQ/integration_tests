@@ -20,8 +20,15 @@ DELAY = 60
 
 
 @pytest.fixture(scope="module")
-def physical_server(setup_provider_modscope, appliance):
-    physical_server = appliance.rest_api.collections.physical_servers[0]
+def physical_server(appliance, provider, setup_provider_modscope):
+    try:
+        physical_server = appliance.rest_api.collections.physical_servers.filter(
+            {"provider": provider}
+        ).all()[0]
+    except IndexError:
+        pytest.skip('No physical server on provider')
+    except AttributeError:
+        pytest.skip('No physical server attribute in REST collection')
     return physical_server
 
 
