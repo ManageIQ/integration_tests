@@ -114,4 +114,4 @@ def test_add_vm_to_service(myservice, request, copy_domain, new_vm, appliance):
         target_object=new_vm.name,
         execute_methods=True
     )
-    myservice.check_vm_add(new_vm.name)
+    myservice.check_vm_add(new_vm)

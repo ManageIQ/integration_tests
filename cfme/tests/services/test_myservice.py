@@ -138,7 +138,7 @@ def test_download_file(appliance, context, needs_firefox, myservice, filetype):
 
 
 @pytest.mark.parametrize('context', [ViaUI])
-def test_service_link(appliance, context, myservice):
+def test_service_link(appliance, context, myservice, provider):
     """Tests service link from VM details page(BZ1443772)
 
     Polarion:
@@ -147,8 +147,13 @@ def test_service_link(appliance, context, myservice):
     """
     service_name, vm_name = myservice
     with appliance.context.use(context):
+        # TODO: Update to nav to MyService first to click entity link when widget exists
         myservice = MyService(appliance, name=service_name, vm_name=vm_name)
-        view = navigate_to(myservice, 'VMDetails')
-        view.summary('Relationships').click_at('Service')
+        vm = appliance.provider_based_collection(coll_type='vms', provider=provider).instantiate(
+            name=myservice.vm_name,
+            provider=provider
+        )
+        view = navigate_to(vm, 'Details')
+        view.entities.summary('Relationships').click_at('Service')
         new_view = myservice.create_view(MyServiceDetailView)
-        assert new_view.is_displayed
+        assert new_view.wait_displayed()
