@@ -27,28 +27,30 @@ def get_clusters(appliance, v2v_providers):
     clusters = {}
     source_cluster = v2v_providers.vmware_provider.data.get("clusters")[0]
     target_cluster = v2v_providers.rhv_provider.data.get("clusters")[0]
-    cluster = appliance.rest_api.collections.clusters.all
-    for cl in cluster:
-        if cl.name == source_cluster:
-            clusters["source"] = "/api/clusters/{}".format(cl.id)
-        elif cl.name == target_cluster:
-            clusters["destination"] = "/api/clusters/{}".format(cl.id)
+    cluster_db = {cluster.name: cluster for cluster in appliance.rest_api.collections.clusters.all}
+
+    if source_cluster in cluster_db.keys():
+        clusters['source'] = cluster_db[source_cluster].href
+    if target_cluster in cluster_db.keys():
+        clusters["destination"] = cluster_db[target_cluster].href
+    print clusters
     return clusters
 
 
 @pytest.fixture(scope="function")
 def get_datastores(appliance, v2v_providers):
     datastores = {}
-    datastore = appliance.rest_api.collections.data_stores.all
     source_ds = [
         i.name for i in v2v_providers.vmware_provider.data.datastores if i.type == "nfs"][0]
     target_ds = [
         i.name for i in v2v_providers.rhv_provider.data.datastores if i.type == "nfs"][0]
-    for ds in datastore:
-        if ds.name == source_ds:
-            datastores["source"] = "/api/data_stores/{}".format(ds.id)
-        elif ds.name == target_ds:
-            datastores["destination"] = "/api/data_stores/{}".format(ds.id)
+    datastore_db = {ds.name: ds for ds in appliance.rest_api.collections.data_stores.all}
+
+    if source_ds in datastore_db.keys():
+        datastores["source"] = datastore_db[source_ds].href
+    if target_ds in datastore_db.keys():
+        datastores["destination"] = datastore_db[target_ds].href
+    print datastores
     return datastores
 
 
@@ -57,18 +59,19 @@ def get_networks(appliance, v2v_providers):
     networks = {}
     source_network = v2v_providers.vmware_provider.data.get("vlans", [None])[0]
     target_network = v2v_providers.rhv_provider.data.get("vlans", [None])[0]
-    network = appliance.rest_api.collections.lans.all
-    for n in network:
-        if n.name == source_network:
-            networks["source"] = "/api/lans/{}".format(n.id)
-        elif n.name == target_network:
-            networks["destination"] = "/api/lans/{}".format(n.id)
+    network_db = {network.name: network for network in appliance.rest_api.collections.lans.all}
+
+    if source_network in network_db.keys():
+        networks["source"] = network_db[source_network].href
+    if target_network in network_db.keys():
+            networks["destination"] = network_db[target_network].href
+    print networks
     return networks
 
 
 def test_rest_mapping_create(request, appliance, get_clusters, get_datastores, get_networks):
     """Tests infrastructure mapping create"""
-    collection = appliance.rest_api.collections.transformation_mappings.action.create(
+    transformation_mappings = appliance.rest_api.collections.transformation_mappings.action.create(
         name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
         state="draft",
@@ -76,10 +79,10 @@ def test_rest_mapping_create(request, appliance, get_clusters, get_datastores, g
 
     @request.addfinalizer
     def _cleanup():
-        if collection.exists:
-            collection.action.delete()
+        if transformation_mappings.exists:
+            transformation_mappings.action.delete()
 
-    assert appliance.rest_api.response
+    assert transformation_mappings.exists
 
 
 def test_rest_mapping_bulk_delete_from_collection(
@@ -90,7 +93,7 @@ def test_rest_mapping_bulk_delete_from_collection(
     resource doesn't exist at the time of deletion, the corresponding result
     has "success" set to false.
     """
-    collection = appliance.rest_api.collections.transformation_mappings
+    transformation_mappings = appliance.rest_api.collections.transformation_mappings
     data = [
         {
             "name": fauxfactory.gen_alphanumeric(),
@@ -104,7 +107,7 @@ def test_rest_mapping_bulk_delete_from_collection(
         }
         for _ in range(2)
     ]
-    mapping = collection.action.create(*data)
+    mapping = transformation_mappings.action.create(*data)
 
     @request.addfinalizer
     def _cleanup():
@@ -113,7 +116,7 @@ def test_rest_mapping_bulk_delete_from_collection(
                 m.action.delete()
 
     mapping[0].action.delete()
-    collection.action.delete(*mapping)
+    transformation_mappings.action.delete(*mapping)
     assert appliance.rest_api.response
     results = appliance.rest_api.response.json()["results"]
     assert results[0]["success"] is False
