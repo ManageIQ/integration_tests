@@ -146,7 +146,7 @@ def test_advanced_search_button_displayed(param, appliance):
     Polarion:
         assignee: anikifor
         casecomponent: WebUI
-        caseimportance: medium
+        caseimportance: high
         initialEstimate: 1/30h
     """
     view = _navigation(param, appliance)
@@ -162,7 +162,7 @@ def test_can_open_advanced_search(param, appliance):
     Polarion:
         assignee: anikifor
         casecomponent: WebUI
-        caseimportance: medium
+        caseimportance: high
         initialEstimate: 1/30h
     """
     view = _navigation(param, appliance)
@@ -182,6 +182,13 @@ def test_can_open_advanced_search(param, appliance):
     or (param.collection == TemplatesImages and BZ(1626579)) or (param.collection == MyService
                                                                  and BZ(1627078)))
 def test_filter_crud(param, appliance):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: WebUI
+        caseimportance: high
+        initialEstimate: 1/10h
+    """
     filter_name = fauxfactory.gen_string('alphanumeric', 10)
     filter_value = fauxfactory.gen_string('alphanumeric', 10)
     filter_value_updated = fauxfactory.gen_string('alphanumeric', 10)
