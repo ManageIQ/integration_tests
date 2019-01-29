@@ -36,8 +36,9 @@ def ansible_custom_attributes():
     remove_tmp_files()
 
 
-def verify_custom_attributes(provider, custom_attributes_to_verify):
+def verify_custom_attributes(appliance, provider, custom_attributes_to_verify):
     view = navigate_to(provider, 'Details')
+    appliance.server.browser.refresh()
     assert view.entities.summary('Custom Attributes').is_displayed
     for custom_attribute in custom_attributes_to_verify:
         assert (
@@ -45,7 +46,7 @@ def verify_custom_attributes(provider, custom_attributes_to_verify):
                 str(custom_attribute['value'])))
 
 
-def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provider):
+def test_manageiq_ansible_add_custom_attributes(appliance, ansible_custom_attributes, provider):
     """This test checks adding a Custom Attribute using Ansible script via Manage IQ module
         Steps:
         1. 'add_custom_attributes.yml script runs against the appliance
@@ -64,7 +65,9 @@ def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provi
                          values_to_update=custom_attributes_to_add,
                          script_type='custom_attributes')
     run_ansible('add_custom_attributes')
-    verify_custom_attributes(provider, custom_attributes_to_add)
+    verify_custom_attributes(appliance=appliance,
+                             provider=provider,
+                             custom_attributes_to_verify=custom_attributes_to_add)
     setup_ansible_script(provider, script='remove_custom_attributes',
                          values_to_update=custom_attributes_to_add,
                          script_type='custom_attributes')
@@ -73,7 +76,7 @@ def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provi
     assert not view.entities.summary('Custom Attributes').is_displayed
 
 
-def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, provider):
+def test_manageiq_ansible_edit_custom_attributes(appliance, ansible_custom_attributes, provider):
     """This test checks editing a Custom Attribute using Ansible script via Manage IQ module
         Steps:
         1. 'add_custom_attributes.yml script runs against the appliance
@@ -92,7 +95,9 @@ def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, prov
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
     run_ansible('add_custom_attributes')
-    verify_custom_attributes(provider, custom_attributes_to_edit)
+    verify_custom_attributes(appliance=appliance,
+                             provider=provider,
+                             custom_attributes_to_verify=custom_attributes_to_edit)
     setup_ansible_script(provider, script='remove_custom_attributes',
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
@@ -101,7 +106,8 @@ def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, prov
     assert not view.entities.summary('Custom Attributes').is_displayed
 
 
-def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attributes, provider):
+def test_manageiq_ansible_add_custom_attributes_same_name(appliance, ansible_custom_attributes,
+                                                          provider):
     """This test checks adding a Custom Attribute with the same name
         using Ansible script via Manage IQ module
         Steps:
@@ -122,7 +128,9 @@ def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attribu
                          script_type='custom_attributes')
     run_ansible('add_custom_attributes')
     run_ansible('add_custom_attributes')
-    verify_custom_attributes(provider, custom_attributes_to_edit)
+    verify_custom_attributes(appliance=appliance,
+                             provider=provider,
+                             custom_attributes_to_verify=custom_attributes_to_edit)
     setup_ansible_script(provider, script='remove_custom_attributes',
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
@@ -131,7 +139,8 @@ def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attribu
     assert not view.entities.summary('Custom Attributes').is_displayed
 
 
-def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attributes, provider):
+def test_manageiq_ansible_add_custom_attributes_bad_user(appliance, ansible_custom_attributes,
+                                                         provider):
     """This test checks adding a Custom Attribute with a bad user name
         using Ansible script via Manage IQ module
         Steps:
@@ -154,11 +163,12 @@ def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attribut
     run_result = run_ansible('add_custom_attributes_bad_user')
     assert 'Authentication failed' in run_result
     view = refresh_and_navigate(provider, 'Details')
+    appliance.server.browser.refresh()
     assert not view.entities.summary('Custom Attributes').is_displayed
 
 
 @pytest.mark.usefixtures('setup_provider')
-def test_manageiq_ansible_remove_custom_attributes(ansible_custom_attributes, provider):
+def test_manageiq_ansible_remove_custom_attributes(appliance, ansible_custom_attributes, provider):
     """This test checks removing Custom Attribute using Ansible script via Manage IQ module
         Steps:
         1. 'remove_custom_attributes.yml script runs against the appliance
@@ -182,4 +192,5 @@ def test_manageiq_ansible_remove_custom_attributes(ansible_custom_attributes, pr
                          script_type='custom_attributes')
     run_ansible('remove_custom_attributes')
     view = refresh_and_navigate(provider, 'Details')
+    appliance.server.browser.refresh()
     assert not view.entities.summary('Custom Attributes').is_displayed
