@@ -5261,7 +5261,7 @@ class SnapshotMemorySwitch(Widget, ClickableMixin):
         return self.is_set
 
 
-class ButtonMultiBoxSelect(MultiBoxSelect):
+class MultiBoxOrderedSelect(MultiBoxSelect):
     move_into_button = Button(title=Parameter("@move_into"))
     move_from_button = Button(title=Parameter("@move_from"))
     move_up_button = Button(title=Parameter("@move_up"))
@@ -5270,12 +5270,12 @@ class ButtonMultiBoxSelect(MultiBoxSelect):
     def __init__(
         self,
         parent,
-        available_items,
-        chosen_items,
-        move_into,
-        move_from,
         move_up,
         move_down,
+        available_items="choices_chosen",
+        chosen_items="members_chosen",
+        move_into="choices_chosen_div",
+        move_from="members_chosen_div",
         logger=None,
     ):
         MultiBoxSelect.__init__(
@@ -5306,6 +5306,8 @@ class ButtonMultiBoxSelect(MultiBoxSelect):
                 self.available_options.fill(values_to_add)
                 self.move_into_button.click()
                 self.browser.plugin.ensure_page_safe()
+
+            # set order as per input values
             if values != self.all_options:
                 for ind, value in enumerate(values):
                     diff = ind - list(self.all_options).index(value)

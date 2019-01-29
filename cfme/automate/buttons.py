@@ -26,7 +26,7 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.update import Updateable
-from widgetastic_manageiq import ButtonMultiBoxSelect
+from widgetastic_manageiq import MultiBoxOrderedSelect
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import PotentiallyInvisibleTab
 from widgetastic_manageiq import RadioGroup
@@ -346,7 +346,6 @@ class DefaultButton(BaseButton):
         visibility: Visibility expression in terms of tag and its value
         enablement: Enablement expression in terms of tag and its value
     """
-
     group = attr.ib()
     text = attr.ib()
     hover = attr.ib()
@@ -381,7 +380,6 @@ class AnsiblePlaybookButton(BaseButton):
         visibility: Visibility expression in terms of tag and its value
         enablement: Enablement expression in terms of tag and its value
     """
-
     group = attr.ib()
     text = attr.ib()
     hover = attr.ib()
@@ -653,7 +651,7 @@ class ButtonGroupFormCommon(AutomateCustomizationView):
     hover = Input(name="description")
     image = FonticonPicker("button_icon")
     icon_color = ColourInput(id="button_color")
-    assign_buttons = ButtonMultiBoxSelect(
+    assign_buttons = MultiBoxOrderedSelect(
         available_items="available_fields",
         chosen_items="selected_fields",
         move_into="Move selected fields right",

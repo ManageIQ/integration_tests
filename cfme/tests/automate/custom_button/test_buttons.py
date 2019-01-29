@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import random
+
 import fauxfactory
 import pytest
 from widgetastic_patternfly import Dropdown
@@ -402,6 +404,85 @@ def test_custom_button_simulation(request, appliance, provider, setup_provider, 
         )
     except TimedOutError:
         assert False, "Requests not found in automation log"
+
+
+@pytest.mark.uncollectif(
+    lambda appliance, button_tag: appliance.version < "5.10" and button_tag == "Evm",
+    reason="Evm objects not available in lower version",
+)
+@pytest.mark.parametrize("button_tag", ["Evm", "Build"])
+@pytest.mark.provider([VMwareProvider], override=True, scope="module", selector=ONE_PER_TYPE)
+def test_custom_button_order_sort(appliance, request, provider, setup_provider, button_tag):
+    """ Test custom button order reflection on destination
+    # ToDo: Now, we are testing this against single object per group tag. If need extends for all.
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/4h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: CustomButton
+        tags: custom_button
+        testSteps:
+            1. Create [Unassigned Buttons] custom buttons
+            2. Create custom button Group with unassigned buttons
+            3. Navigate to object Details page
+            4. Check for custom button order
+            5. Update order of custom buttons
+            6. Navigate to object Details page
+            7. Check for custom button order updated or not
+    Bugzilla:
+        1628737
+    """
+    if button_tag == "Evm":
+        btn_type = "Group"
+        obj = appliance.collections.groups.instantiate(description="EvmGroup-super_administrator")
+    else:
+        btn_type = "Provider"
+        obj = provider
+
+    unassigned_gp = appliance.collections.button_groups.instantiate(
+        text="[Unassigned Buttons]", hover="Unassigned buttons", type=btn_type
+    )
+
+    buttons = []
+    for ind in range(0, 4):
+        button = unassigned_gp.buttons.create(
+            text="button_{n}_{f}".format(n=str(ind), f=fauxfactory.gen_alphanumeric(2)),
+            hover="hover_{n}_{f}".format(n=str(ind), f=fauxfactory.gen_alphanumeric(2)),
+            system="Request",
+            request="InspectMe",
+        )
+        buttons.append(button)
+
+    @request.addfinalizer
+    def _clean():
+        for btn in buttons:
+            btn.delete_if_exists()
+
+    unassigned_buttons = [btn.text for btn in buttons]
+
+    group = appliance.collections.button_groups.create(
+        text="group_{}".format(fauxfactory.gen_alphanumeric(3)),
+        hover="hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+        type=btn_type,
+        assign_buttons=unassigned_buttons,
+    )
+    request.addfinalizer(group.delete_if_exists)
+
+    view = navigate_to(obj, "Details")
+    custom_button_group = Dropdown(view, group.hover)
+    assert custom_button_group.items == unassigned_buttons
+
+    # shuffle order of buttons
+    shuffle_buttons = list(unassigned_buttons)
+    random.shuffle(shuffle_buttons, random.random)
+
+    with update(group):
+        group.assign_buttons = shuffle_buttons
+    navigate_to(obj, "Details")
+    assert custom_button_group.items == shuffle_buttons
 
 
 @pytest.mark.manual
