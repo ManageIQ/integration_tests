@@ -73,12 +73,21 @@ class CatalogBundle(NonCloudInfraCatalogItem):
         view = self.create_view(DetailsCatalogItemView, override=updates, wait='10s')
         view.flash.assert_no_error()
 
+
 @attr.s
 class CatalogBundlesCollection(BaseCollection):
     ENTITY = CatalogBundle
 
+    default_prov = (
+        "/Service/Provisioning/StateMachines/ServiceProvision_Template/CatalogBundleInitialization"
+    )
+    default_retire = (
+        "/Service/Retirement/StateMachines/ServiceRetirement/Default"
+    )
+
     def create(self, name, catalog_items=None, catalog=None, description=None, display_in=None,
-               dialog=None, domain="ManageIQ (Locked)"):
+               dialog=None, provisioning_entry_point=default_prov, reconfigure_entry_point='',
+               retirement_entry_point=default_retire, domain="ManageIQ (Locked)"):
         # TODO Move this logic into the view, the main obstacle is filling 'catalog_items'
         view = navigate_to(self, 'Add')
 
@@ -93,14 +102,12 @@ class CatalogBundlesCollection(BaseCollection):
             'description': description,
             'display': display_in,
             'select_catalog': cat_name,
-            'select_dialog': dialog
+            'select_dialog': dialog,
+            'provisioning_entry_point': provisioning_entry_point,
+            'reconfigure_entry_point': reconfigure_entry_point,
+            'retirement_entry_point': retirement_entry_point,
         })
-        if view.basic_info.provisioning_entry_point.value == "":
-            view.basic_info.fill({'provisioning_entry_point': ''})
-            view.basic_info.modal.tree.click_path(
-                "Datastore", domain, "Service", "Provisioning",
-                "StateMachines", "ServiceProvision_Template", "CatalogItemInitialization")
-            view.apply_button.click()
+
         for cat_item in catalog_items:
             view.resources.fill({'select_resource': cat_item})
         view.add_button.click()
