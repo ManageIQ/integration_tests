@@ -35,7 +35,6 @@ def get_clusters(appliance, v2v_providers):
         clusters["source"] = cluster_db[source_cluster].href
     if target_cluster in cluster_db.keys():
         clusters["destination"] = cluster_db[target_cluster].href
-    print clusters
     return clusters
 
 
@@ -54,7 +53,6 @@ def get_datastores(appliance, v2v_providers):
         datastores["source"] = datastore_db[source_ds].href
     if target_ds in datastore_db.keys():
         datastores["destination"] = datastore_db[target_ds].href
-    print datastores
     return datastores
 
 
@@ -71,7 +69,6 @@ def get_networks(appliance, v2v_providers):
         networks["source"] = network_db[source_network].href
     if target_network in network_db.keys():
         networks["destination"] = network_db[target_network].href
-    print networks
     return networks
 
 
