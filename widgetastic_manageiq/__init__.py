@@ -2720,7 +2720,12 @@ class TimelinesFilter(View):
     # todo: implement correct switch between management/policy views when switchable views done
     apply = Text(locator='.//div[contains(@class, "timeline-apply")]')
     # management controls
-    detailed_events = Checkbox(name="showDetailedEvents")
+    detailed_events = VersionPick(
+        {
+            Version.lowest(): Checkbox(name="showDetailedEvents"),
+            "5.10": BootstrapSelect(id="tl_levels_management"),
+        }
+    )
     # policy controls
     policy_event_category = BootstrapSelect(id="tl_category_policy")
     policy_event_status = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
