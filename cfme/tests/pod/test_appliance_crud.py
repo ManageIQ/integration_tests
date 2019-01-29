@@ -333,6 +333,7 @@ def test_crud_pod_appliance_ext_db(temp_extdb_pod_appliance, provider, setup_pro
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: high
         initialEstimate: 1/4h
     """
