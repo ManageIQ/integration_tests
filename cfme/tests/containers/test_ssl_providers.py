@@ -57,6 +57,7 @@ def test_add_provider_naming_conventions(provider, appliance, soft_assert, sync_
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     for provider_name in provider_names:
@@ -90,6 +91,7 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert, sync_ssl_
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     new_provider = copy(provider)
@@ -130,6 +132,7 @@ def test_add_mertics_provider_ssl(provider, appliance, test_item,
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     if not provider.endpoints.get('metrics', False):
@@ -166,6 +169,7 @@ def test_setup_with_wrong_port(provider, sec_protocol, sync_ssl_certificate):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     new_provider = copy(provider)

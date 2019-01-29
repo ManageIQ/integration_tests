@@ -18,5 +18,7 @@ def test_add_alerts_provider(provider):
     Polarion:
         assignee: juwatts
         initialEstimate: 1/4h
+        caseimportance: low
+        casecomponent: Containers
     """
     provider.setup()

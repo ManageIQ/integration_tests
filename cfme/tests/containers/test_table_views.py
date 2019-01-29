@@ -54,6 +54,7 @@ def test_default_views(appliance, random_default_views):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     for collection_name in objects_mapping.keys():
@@ -72,6 +73,7 @@ def test_table_views(appliance):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     for collection_name in objects_mapping.keys():

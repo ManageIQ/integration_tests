@@ -92,6 +92,7 @@ def test_properties(provider, appliance, test_item, soft_assert):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     instances = test_item.collection_object(appliance).all()
@@ -120,6 +121,7 @@ def test_pods_conditions(provider, appliance, soft_assert):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     selected_pods_cfme = appliance.collections.container_pods.all()

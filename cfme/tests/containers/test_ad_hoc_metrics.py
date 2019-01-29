@@ -46,6 +46,7 @@ def test_ad_hoc_metrics_overview(provider, metrics_up_and_running):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     assert is_ad_hoc_greyed(provider), (
@@ -58,6 +59,7 @@ def test_ad_hoc_metrics_select_filter(provider, metrics_up_and_running):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     view = navigate_to(provider, 'AdHoc')

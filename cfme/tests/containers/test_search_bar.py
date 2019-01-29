@@ -33,6 +33,7 @@ def test_search_bar(provider, appliance, soft_assert):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     for collection_name in COLLECTION_NAMES:

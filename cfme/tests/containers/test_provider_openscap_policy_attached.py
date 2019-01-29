@@ -68,6 +68,7 @@ def test_check_compliance_provider_policy(provider, soft_assert, delete_all_cont
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     # Perform SSA Scan then check compliance with last know configuration

@@ -274,6 +274,7 @@ def test_chargeback_rate_fixed_1(
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     abstract_test_chargeback_cost(
@@ -287,6 +288,7 @@ def test_chargeback_rate_fixed_2(
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     abstract_test_chargeback_cost(
@@ -299,6 +301,7 @@ def test_chargeback_rate_cpu_cores(
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     abstract_test_chargeback_cost(
@@ -311,6 +314,7 @@ def test_chargeback_rate_memory_used(
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     abstract_test_chargeback_cost(
@@ -326,6 +330,7 @@ def test_chargeback_rate_network_io(
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     abstract_test_chargeback_cost(

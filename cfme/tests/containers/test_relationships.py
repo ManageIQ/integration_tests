@@ -49,6 +49,7 @@ def test_relationships_tables(soft_assert, provider, has_persistent_volume, appl
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     instances = ([provider] if test_item.obj is ContainersProvider
@@ -92,6 +93,7 @@ def test_container_status_relationships_data_integrity(provider, appliance, soft
     Polarion:
         assignee: juwatts
         initialEstimate: 1/4h
+        caseimportance: medium
         casecomponent: Containers
     """
 

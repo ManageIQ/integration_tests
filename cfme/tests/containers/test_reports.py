@@ -66,6 +66,7 @@ def test_container_reports_base_on_options(soft_assert, appliance):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     view = navigate_to(appliance.collections.reports, 'Add')
@@ -95,6 +96,7 @@ def test_report_pods_per_ready_status(appliance, soft_assert, provider):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     pods_per_ready_status = provider.pods_per_ready_status()
@@ -117,6 +119,7 @@ def test_report_nodes_by_capacity(appliance, soft_assert, node_hardwares_db_data
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     report = get_report(appliance, 'Nodes By Capacity')
@@ -151,6 +154,7 @@ def test_report_nodes_by_cpu_usage(appliance, soft_assert, vporizer):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     report = get_report(appliance, 'Nodes By CPU Usage')
@@ -171,6 +175,7 @@ def test_report_nodes_by_memory_usage(appliance, soft_assert, vporizer):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     report = get_report(appliance, 'Nodes By Memory Usage')
@@ -191,6 +196,7 @@ def test_report_number_of_nodes_per_cpu_cores(appliance, soft_assert, node_hardw
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     report = get_report(appliance, 'Nodes by Number of CPU Cores')
@@ -210,6 +216,7 @@ def test_report_projects_by_number_of_pods(appliance, soft_assert):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
 
@@ -236,6 +243,7 @@ def test_report_projects_by_cpu_usage(appliance, soft_assert, vporizer):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     report = get_report(appliance, 'Projects By CPU Usage')
@@ -257,6 +265,7 @@ def test_report_projects_by_memory_usage(appliance, soft_assert, vporizer):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     report = get_report(appliance, 'Projects By Memory Usage')
@@ -278,6 +287,7 @@ def test_report_pod_counts_for_container_images_by_project(appliance, provider, 
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     report = get_report(appliance, 'Pod counts For Container Images by Project', candu=True)
@@ -312,6 +322,7 @@ def test_report_recently_discovered_pods(appliance, provider, soft_assert):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     report = get_report(appliance, 'Recently Discovered Pods')
@@ -329,6 +340,7 @@ def test_report_number_of_images_per_node(appliance, provider, soft_assert):
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     pods_api = provider.mgmt.list_pods()
@@ -354,6 +366,7 @@ def test_report_projects_by_number_of_containers(appliance, provider, soft_asser
     Polarion:
         assignee: juwatts
         caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/6h
     """
     report = get_report(appliance, 'Projects by Number of Containers')

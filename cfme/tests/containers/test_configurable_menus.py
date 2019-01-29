@@ -30,6 +30,8 @@ def test_datawarehouse_invisible(is_datawarehouse_menu_visible):
     """
     Polarion:
         assignee: juwatts
+        caseimportance: medium
+        casecomponent: Containers
         initialEstimate: 1/4h
     """
     # This should be the default state
