@@ -1944,45 +1944,6 @@ def test_template_info_scvmm2016():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_reconfigure_vm_vmware_cores_multiple():
-    """
-    Test changing the cpu cores of multiple vms at the same time.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: -get new configured appliance
-               -add vmware provider
-               -provision 2 new vms
-               -power off 1 vm
-               -select both vms
-               -configure-->reconfigure vm
-               -increase/decrease counts
-               -power on vm
-               -check changes
-        startsin: 5.6
-        testSteps:
-            1. Hot increase
-            2. Hot Decrease
-            3. Cold Increase
-            4. Cold Decrease
-            5. Hot + Cold Increase
-            6. Hot + Cold Decrease
-        expectedResults:
-            1. Action should fail
-            2. Action should fail
-            3. Action should succeed
-            4. Action should succeed
-            5. Action should fail
-            6. Action should Error
-    """
-    pass
-
 
 @pytest.mark.manual
 @test_requirements.quota
@@ -2627,24 +2588,6 @@ def test_user_cloud_memory_quota_by_lifecycle():
 
 
 @pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_reconfigure_add_disk_cold():
-    """
-    Test adding 16th disk to test how a new scsi controller is handled.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1337310
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/3h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_migration_plan_filtering_for_plans_table_list_on_overview_and_details_page():
     """
     OSP: Test Migration Plan Filtering for plans table/list on overview
@@ -3098,22 +3041,6 @@ def test_credentials_login_password_with_special_characters():
 
 
 @pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_attach_iso_vsphere67_nested():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1533728
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Infra
-        initialEstimate: 1/6h
-        startsin: 5.10
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.provision
 @pytest.mark.tier(2)
 def test_azure_instance_password_requirements_azure():
@@ -3213,19 +3140,6 @@ def test_host_tagged_crosshair_op_vsphere55():
     """
     pass
 
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_network_adapters_vsphere67_nested_vmkernel():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Infra
-        initialEstimate: 1/16h
-        startsin: 5.9
-    """
-    pass
 
 
 @pytest.mark.manual
@@ -4946,27 +4860,6 @@ def test_ec2_api_filter_limit():
         casecomponent: Cloud
         initialEstimate: 1 1/3h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_reconfigure_add_disk_cold_controller_sas():
-    """
-    Steps to Reproduce:
-    1. Add 15 disks to an existing VM with Controller type set to SAS
-    2. look at the 16th Disk Controller Type
-    Expected results: Should be SAS like exiting Controller
-    https://bugzilla.redhat.com/show_bug.cgi?id=1445874
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/3h
-        startsin: 5.3
     """
     pass
 
@@ -8401,20 +8294,6 @@ def test_automate_relationship_trailing_spaces():
         expectedResults:
             1.
             2. Logs contain no resolution errors
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_network_adapters_vsphere67_nested_dportgroup():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Infra
-        initialEstimate: 1/16h
-        startsin: 5.9
     """
     pass
 
@@ -12774,35 +12653,6 @@ def test_gap_collection_vsphere6():
 @pytest.mark.manual
 @test_requirements.reconfigure
 @pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_hw_hot_vsphere67_nested_cores_per_socket():
-    """
-    test changing vm"s cpu cores
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Infra
-        initialEstimate: 1/6h
-        setup: -get new configured appliance
-               -add vmware provider
-               -provision new vm
-               -select vm
-               -configure-->reconfigure vm
-               -increase/decrease the cpu cores
-               -check changes
-        startsin: 5.5
-        testSteps:
-            1. Increase vm cpu cores
-            2. Decrease vm cpu cores
-        expectedResults:
-            1. Changes shouldn"t succeed
-            2. Changes shouldn"t succeed
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
 def test_vm_reconfig_add_remove_hw_hot_vsphere67_nested_sockets():
     """
     test change vm"s cpu sockets
@@ -13544,20 +13394,6 @@ def test_show_tag_info_for_playbook_services():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Show tag info for playbook services
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_hot_vsphere67_nested_independent_persistent_thin():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Infra
-        initialEstimate: 1/6h
-        startsin: 5.9
     """
     pass
 
@@ -17571,20 +17407,6 @@ def test_distributed_zone_failover_provider_inventory_singleton():
 @pytest.mark.manual
 @test_requirements.reconfigure
 @pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_cold_vsphere67_nested_independent_persistent_thick():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Infra
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
 def test_vm_reconfig_resize_disk_cold_vsphere67_nested_persistent_thin():
     """
     Polarion:
@@ -21022,22 +20844,6 @@ def test_crosshair_op_datastore_vsphere6():
 @pytest.mark.manual
 @test_requirements.reconfigure
 @pytest.mark.tier(1)
-def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_independent_nonpersistent_thick():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Infra
-        initialEstimate: 1/3h
-        startsin: 5.7
-        title: test_vm_reconfig_add_remove_disk_hot[vsphere67-nested-
-               independent_nonpersistent-thick]
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
 def test_vm_reconfig_add_remove_disk_hot_vsphere67_nested_independent_persistent_thick():
     """
     Polarion:
@@ -21616,20 +21422,6 @@ def test_black_console_ext_auth_options_skip():
 
 
 @pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_hot_vsphere65_nested_persistent_thick():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Infra
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_candu_collection_tab():
     """
     Test case to cover -
@@ -22100,46 +21892,6 @@ def test_refresh_with_empty_iot_hub_azure():
         casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_reconfigure_vm_vmware_sockets_multiple():
-    """
-    Test changing the cpu sockets of multiple vms at the same time.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: -get new configured appliance
-               -add vmware provider
-               -provision 2 new vms
-               -power off 1 vm
-               -select both vms
-               -configure-->reconfigure vm
-               -increase/decrease counts
-               -power on vm
-               -check changes
-        startsin: 5.6
-        testSteps:
-            1. Hot increase
-            2. Hot Decrease
-            3. Cold Increase
-            4. Cold Decrease
-            5. Hot + Cold Increase
-            6. Hot + Cold Decrease
-        expectedResults:
-            1. Action should succeed
-            2. Action should fail
-            3. Action should succeed
-            4. Action should succeed
-            5. Action should succeed
-            6. Action should Error
     """
     pass
 
@@ -26140,18 +25892,6 @@ def test_validate_chargeback_cost_resource_maximum_memory():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_vm_reconfig_resize_disk_cold_vsphere67_nested_persistent_thick():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Infra
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
 
 
 @pytest.mark.manual
@@ -26205,46 +25945,6 @@ def test_user_should_be_able_to_change_the_order_of_values_of_the_drop_down_list
         initialEstimate: 1/16h
         startsin: 5.10
         title: User should be able to change the order of values of the drop down list
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.reconfigure
-@pytest.mark.tier(1)
-def test_reconfigure_vm_vmware_mem_multiple():
-    """
-    Test changing the memory of multiple vms at the same time.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: -get new configured appliance
-               -add vmware provider
-               -provision 2 new vms
-               -power off 1 vm
-               -select both vms
-               -configure-->reconfigure vm
-               -increase/decrease counts
-               -power on vm
-               -check changes
-        startsin: 5.6
-        testSteps:
-            1. Hot increase
-            2. Hot Decrease
-            3. Cold Increase
-            4. Cold Decrease
-            5. Hot + Cold Increase
-            6. Hot + Cold Decrease
-        expectedResults:
-            1. Action should succeed
-            2. Action should fail
-            3. Action should succeed
-            4. Action should succeed
-            5. Action should succeed
-            6. Action should Error
     """
     pass
 
