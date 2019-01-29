@@ -5259,3 +5259,61 @@ class SnapshotMemorySwitch(Widget, ClickableMixin):
 
     def read(self):
         return self.is_set
+
+
+class ButtonMultiBoxSelect(MultiBoxSelect):
+    move_into_button = Button(title=Parameter("@move_into"))
+    move_from_button = Button(title=Parameter("@move_from"))
+    move_up_button = Button(title=Parameter("@move_up"))
+    move_down_button = Button(title=Parameter("@move_down"))
+
+    def __init__(
+        self,
+        parent,
+        available_items,
+        chosen_items,
+        move_into,
+        move_from,
+        move_up,
+        move_down,
+        logger=None,
+    ):
+        MultiBoxSelect.__init__(
+            self,
+            parent=parent,
+            available_items=available_items,
+            chosen_items=chosen_items,
+            move_into=move_into,
+            move_from=move_from,
+            logger=logger,
+        )
+        self.move_up = move_up
+        self.move_down = move_down
+
+    def fill(self, values):
+        if not isinstance(values, list):
+            raise ValueError("Expecting values in list")
+        if values == self.all_options:
+            return False
+        else:
+            values_to_remove = self._values_to_remove(values)
+            values_to_add = self._values_to_add(values)
+            if values_to_remove:
+                self.chosen_options.fill(values_to_remove)
+                self.move_from_button.click()
+                self.browser.plugin.ensure_page_safe()
+            if values_to_add:
+                self.available_options.fill(values_to_add)
+                self.move_into_button.click()
+                self.browser.plugin.ensure_page_safe()
+            if values != self.all_options:
+                for ind, value in enumerate(values):
+                    diff = ind - list(self.all_options).index(value)
+                    if diff:
+                        self.chosen_options.fill(value)
+                        for _ in range(0, abs(diff)):
+                            if diff < 0:
+                                self.move_up_button.click()
+                            else:
+                                self.move_down_button.click()
+            return True

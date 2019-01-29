@@ -26,6 +26,7 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.update import Updateable
+from widgetastic_manageiq import ButtonMultiBoxSelect
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import PotentiallyInvisibleTab
 from widgetastic_manageiq import RadioGroup
@@ -652,7 +653,14 @@ class ButtonGroupFormCommon(AutomateCustomizationView):
     hover = Input(name="description")
     image = FonticonPicker("button_icon")
     icon_color = ColourInput(id="button_color")
-
+    assign_buttons = ButtonMultiBoxSelect(
+        available_items="available_fields",
+        chosen_items="selected_fields",
+        move_into="Move selected fields right",
+        move_from="Move selected fields left",
+        move_up="Move selected fields up",
+        move_down="Move selected fields down",
+    )
     cancel_button = Button("Cancel")
 
 
@@ -715,6 +723,7 @@ class ButtonGroup(BaseEntity, Updateable):
     image = attr.ib()
     display = attr.ib(default=None)
     icon_color = attr.ib(default=None)
+    assign_buttons = attr.ib(default=None)
 
     _collections = {"buttons": ButtonCollection}
 
@@ -797,18 +806,32 @@ class ButtonGroupCollection(BaseCollection):
     TEMPLATE_IMAGE = "VM Template and Image"
     VM_INSTANCE = "VM and Instance"
 
-    def instantiate(self, text, hover, type, image=None, display=None, icon_color=None):
+    def instantiate(
+        self,
+        text,
+        hover,
+        type,
+        image="fa-user",
+        display=None,
+        icon_color=None,
+        assign_buttons=None,
+    ):
         self.type = type
-        if not image:
-            image = "fa-user"
-        return self.ENTITY.from_collection(self, text, hover, type, image, display, icon_color)
+        return self.ENTITY.from_collection(
+            self, text, hover, type, image, display, icon_color, assign_buttons
+        )
 
-    def create(self, text, hover, type, image=None, display=None, icon_color=None):
+    def create(
+        self,
+        text,
+        hover,
+        type,
+        image="fa-user",
+        display=None,
+        icon_color=None,
+        assign_buttons=None,
+    ):
         self.type = type
-
-        # Icon selection is Mandatory
-        if not image:
-            image = "fa-user"
 
         view = navigate_to(self, "Add")
         view.fill(
@@ -818,6 +841,7 @@ class ButtonGroupCollection(BaseCollection):
                 "image": image,
                 "display": display,
                 "icon_color": icon_color,
+                "assign_buttons": assign_buttons,
             }
         )
         view.add_button.click()
@@ -826,7 +850,13 @@ class ButtonGroupCollection(BaseCollection):
         view.flash.assert_no_error()
         view.flash.assert_message('Button Group "{}" was added'.format(hover))
         return self.instantiate(
-            text=text, hover=hover, type=type, image=image, display=display, icon_color=icon_color
+            text=text,
+            hover=hover,
+            type=type,
+            image=image,
+            display=display,
+            icon_color=icon_color,
+            assign_buttons=assign_buttons,
         )
 
 
