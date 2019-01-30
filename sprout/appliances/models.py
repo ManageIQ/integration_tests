@@ -875,7 +875,7 @@ class Appliance(MetadataMixin):
         # TODO: change after openshift wrapanapi refactor
         if isinstance(self.provider_api, Openshift):
             try:
-                self.provider_api.set_meta_value(self.name, 'sprout_{}'.format(key), value)
+                self.provider_api.set_meta_value('sprout_{}'.format(key), value)
                 self.logger.info('Set metadata {}: {}'.format(key, repr(value)))
             except NotImplementedError:
                 pass
