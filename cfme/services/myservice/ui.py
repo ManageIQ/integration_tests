@@ -12,9 +12,10 @@ from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
-                                  BaseNonInteractiveEntitiesView, ItemsToolBarViewSelector,
-                                  BaseEntitiesView, Search, ParametrizedSummaryTable)
+from widgetastic_manageiq import (
+    Accordion, ManageIQTree, Calendar, SummaryTable, ItemsToolBarViewSelector, BaseEntitiesView,
+    Search, ParametrizedSummaryTable
+)
 
 
 class MyServiceToolbar(View):
@@ -94,7 +95,7 @@ class MyServiceDetailsEntities(View):
 class MyServiceDetailView(MyServicesView):
     title = Text('#explorer_title_text')
     toolbar = View.nested(MyServiceDetailsToolbar)
-    entities = View.nested(MyServiceDetailsEntities)
+    # entities = View.nested(BaseNonInteractiveEntitiesView)  FIXME need new entities widget here
 
     @View.nested
     class details(View):  # noqa
@@ -314,10 +315,10 @@ def edit_tags(self, tag, value):
 
 
 @MiqImplementationContext.external_for(MyService.check_vm_add, ViaUI)
-def check_vm_add(self, add_vm_name):
-    view = navigate_to(self, 'Details')
-    view.entities.get_entity(name=add_vm_name).click()
-    view.flash.assert_no_error()
+def check_vm_add(self, vm):
+    view = navigate_to(vm, 'Details')
+    assert self.name == view.entities.summary(
+        'Relationships').get_text_of('Service')
 
 
 @MiqImplementationContext.external_for(MyService.download_file, ViaUI)
@@ -356,8 +357,7 @@ class MyServiceDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        path_start = 'Active Services' if self.appliance.version > '5.8' else 'All Services'
-        self.prerequisite_view.myservice.tree.click_path(path_start, self.obj.name)
+        self.prerequisite_view.myservice.tree.click_path('Active Services', self.obj.name)
 
 
 @navigator.register(MyService, 'Edit')
@@ -396,11 +396,8 @@ class MyServiceSetRetirement(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        if self.appliance.version < '5.8':
-            self.prerequisite_view.toolbar.lifecycle.item_select('Set Retirement Date')
-        else:
-            self.prerequisite_view.toolbar.lifecycle.item_select(
-                'Set Retirement Dates for this Service')
+        self.prerequisite_view.toolbar.lifecycle.item_select(
+            'Set Retirement Dates for this Service')
 
 
 @navigator.register(MyService, 'Reconfigure')
@@ -413,13 +410,14 @@ class MyServiceReconfigure(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Reconfigure this Service')
 
 
-@navigator.register(MyService, 'VMDetails')
-class MyServiceVMDetails(CFMENavigateStep):
-    VIEW = ServiceVMDetailsView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.entities.get_entity(name=self.obj.vm_name).click()
+# FIXME: This nav destination needs a new widget for VMs on the Service details page
+# @navigator.register(MyService, 'VMDetails')
+# class MyServiceVMDetails(CFMENavigateStep):
+#     VIEW = ServiceVMDetailsView
+#     prerequisite = NavigateToSibling('Details')
+#
+#     def step(self):
+#         self.prerequisite_view.entities.get_entity(name=self.obj.vm_name).click()
 
 
 @navigator.register(MyService, 'GenericObjectInstance')

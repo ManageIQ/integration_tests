@@ -5,7 +5,9 @@ from selenium.common.exceptions import NoSuchElementException
 
 import cfme.tests.configure.test_access_control as tac
 from cfme import test_requirements
-from cfme.services.catalogs.catalog_items import AllCatalogItemView, AddCatalogItemView
+from cfme.services.catalogs.catalog_items import (
+    AllCatalogItemView, AddCatalogItemView, DetailsCatalogItemView
+)
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -91,13 +93,29 @@ def test_catalog_item_crud(appliance, dialog, catalog):
         catalog=catalog,
         dialog=dialog
     )
+
+    # CREATE
     view = cat_item.create_view(AllCatalogItemView)
     assert view.is_displayed
-    view.flash.assert_success_message('Service Catalog Item "{}" was added'.format(cat_item.name))
+    view.flash.assert_success_message('Service Catalog Item "{}" was added'
+                                      .format(cat_item.name))
     assert cat_item.exists
+
+    # EDIT
     with update(cat_item):
         cat_item.description = "my edited description"
+    view.flash.assert_success_message('Service Catalog Item "{}" was saved'
+                                      .format(cat_item.name))
+
+    view = navigate_to(cat_item, 'Edit')
+    view.cancel.click()
+    view = cat_item.create_view(DetailsCatalogItemView)
+    assert view.wait_displayed()
+    view.flash.assert_message('Edit of Service Catalog Item "{}" was cancelled by the user'
+                              .format(cat_item.description))
     assert cat_item.description == "my edited description"
+
+    # DELETE
     cat_item.delete()
     view.flash.assert_message("The selected Catalog Item was deleted")
     assert not cat_item.exists

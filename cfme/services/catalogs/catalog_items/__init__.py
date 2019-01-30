@@ -273,13 +273,6 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
             view.cancel.click()
         view = self.create_view(DetailsCatalogItemView, override=updates, wait='10s')
         view.flash.assert_no_error()
-        # TODO move these assertions to tests
-        # if changed:
-        #     view.flash.assert_message(
-        #         'Service Catalog Item "{}" was saved'.format(updates.get('name', self.name)))
-        # else:
-        #     view.flash.assert_message(
-        #         'Edit of Catalog Item"{}" was cancelled by the user'.format(self.name))
 
     def delete(self):
         view = navigate_to(self, 'Details')
@@ -528,9 +521,6 @@ class CatalogItemsCollection(BaseCollection):
         view.fill(cat_item.fill_dict)
         view.add.click()
         view = self.create_view(AllCatalogItemView, wait='10s')
-        # TODO move this assertion to tests
-        # view.flash.assert_success_message('Catalog Item "{}" was added'.format(
-        #     cat_item.name), partial=True)
         view.flash.assert_no_error()
         return cat_item
 
