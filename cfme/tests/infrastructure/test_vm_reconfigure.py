@@ -91,6 +91,7 @@ def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, c
         assignee: nansari
         casecomponent: Infra
         initialEstimate: 1/3h
+        tags: reconfigure
     """
     orig_config = small_vm.configuration.copy()
     new_config = prepare_new_config(orig_config, change_type)
@@ -118,6 +119,7 @@ def test_vm_reconfig_add_remove_disk_cold(
         assignee: nansari
         casecomponent: Infra
         initialEstimate: 1/3h
+        tags: reconfigure
     """
     orig_config = small_vm.configuration.copy()
     new_config = orig_config.copy()
@@ -157,6 +159,7 @@ def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
         assignee: nansari
         casecomponent: Infra
         initialEstimate: 1/3h
+        tags: reconfigure
     """
     config_vm = small_vm.configuration.copy()
 
@@ -182,6 +185,7 @@ def test_vm_reconfig_add_remove_hw_hot(provider, small_vm, ensure_vm_running, ch
     Polarion:
         assignee: nansari
         initialEstimate: 1/4h
+        tags: reconfigure
     """
     orig_config = small_vm.configuration.copy()
     new_config = prepare_new_config(orig_config, change_type)
@@ -191,3 +195,290 @@ def test_vm_reconfig_add_remove_hw_hot(provider, small_vm, ensure_vm_running, ch
 
     # Revert back to original config
     reconfigure_vm(small_vm, orig_config)
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.parametrize('change_type', ['sockets', 'memory'])
+def test_vm_reconfig_add_remove_hw_hot_vmware(change_type):
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.5
+        casecomponent: Infra
+        tags: reconfigure
+        testSteps:
+            1. Change number of CPU sockets and amount of memory while VM is runnng.
+            2. Go to Compute -> infrastructure -> Virtual Machines -> Select Vm
+            3. Go to VM reconfiguration
+            4.Change number of CPU sockets and amount of memory, save and submit
+            5. Check the count in VM details page
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.parametrize('disk_type', ['thin', 'thick'])
+@pytest.mark.parametrize(
+    'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
+def test_vm_reconfig_add_remove_disk_hot(disk_type, disk_mode):
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.5
+        casecomponent: Infra
+        tags: reconfigure
+        testSteps:
+            1. Add and remove the disk while VM is running
+            2. Go to Compute -> infrastructure -> Virtual Machines -> Select Vm
+            3. Go to VM reconfiguration
+            4. Click on Add Disk -> select disk_type and disk_mode , save and submit
+            5. Check the count in VM details page
+            6. Remove the disk and Check the count in VM details page
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.parametrize('disk_type', ['thin', 'thick'])
+@pytest.mark.parametrize(
+    'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
+def test_vm_reconfig_resize_disk_cold(disk_type, disk_mode):
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.9
+        casecomponent: Infra
+        tags: reconfigure
+        testSteps:
+            1. Resize the disk while VM is not running
+            2. Go to Compute -> infrastructure -> Virtual Machines -> Select Vm
+            3. Go to VM reconfiguration
+            4. Click on Add Disk -> select disk_type and disk_mode , save and submit
+            5. Go to VM reconfiguration and resize the disk
+            6. Check the changes in VM reconfiguration page
+            7. Remove the disk
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.parametrize('disk_type', ['thin', 'thick'])
+@pytest.mark.parametrize(
+    'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
+def test_vm_reconfig_resize_disk_hot(disk_type, disk_mode):
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.9
+        casecomponent: Infra
+        tags: reconfigure
+        testSteps:
+            1. Resize the disk while VM is running
+            2. Go to Compute -> infrastructure -> Virtual Machines -> Select Vm
+            3. Go to VM reconfiguration
+            4. Click on Add Disk -> select disk_type and disk_mode , save and submit
+            5. Go to VM reconfiguration and resize the disk
+            6. Check the changes in VM reconfiguration page
+            7. Remove the disk
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.parametrize(
+    'adapters_type', ['DPortGroup', 'VmNetwork', 'MgmtNetwork', 'VmKernel'])
+def test_vm_reconfig_add_remove_network_adapters(adapters_type):
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.9
+        casecomponent: Infra
+        tags: reconfigure
+        testSteps:
+            1. Go to Compute -> infrastructure -> Virtual Machines -> Select Vm
+            2. Go to VM reconfiguration
+            3. Click on Add Adapters -> select type , save and submit
+            4. Check the changes in VM reconfiguration page
+            5. Remove the Adapters
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_reconfigure_vm_vmware_mem_multiple():
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.6
+        casecomponent: Infra
+        tags: reconfigure
+        setup:
+            1. get new configured appliance ->add vmware provider
+            2. provision 2 new vms
+        testSteps:
+            1. Hot increase
+            2. Hot Decrease
+            3. Cold Increase
+            4. Cold Decrease
+            5. Hot + Cold Increase
+            6. Hot + Cold Decrease
+        expectedResults:
+            1. Action should succeed
+            2. Action should fail
+            3. Action should succeed
+            4. Action should succeed
+            5. Action should succeed
+            6. Action should Error
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream('5.9')
+def test_vm_reconfig_attach_iso_vsphere67_nested():
+    """
+
+    Bugzillas:
+        * 1533728
+
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.10
+        casecomponent: Infra
+        tags: reconfigure
+        testSteps:
+            1. Add vmware provider
+            2. provision 1 new vms
+            3. Run a Smartstate analysis on the Datastore (to get the list of ISO files)
+            4. configure-->reconfigure vm
+            5. Select an ISO (This should allow you to select an ISO to attach to the CD drive)
+            6. check changes
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_reconfigure_vm_vmware_sockets_multiple():
+    """ Test changing the cpu sockets of multiple vms at the same time.
+
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.6
+        casecomponent: Infra
+        tags: reconfigure
+        testSteps:
+            1. get new configured appliance ->add vmware provider
+            2. provision 2 new vms
+            3. power off 1 vm -> select both vms
+            4. configure-->reconfigure vm
+            5. increase/decrease counts
+            6. power on vm
+            7. check changes
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_reconfigure_vm_vmware_cores_multiple():
+    """ Test changing the cpu cores of multiple vms at the same time.
+
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.6
+        casecomponent: Infra
+        tags: reconfigure
+        setup:
+            1. get new configured appliance ->add vmware provider
+            2. provision 2 new vms
+        testSteps:
+            1. Hot increase
+            2. Hot Decrease
+            3. Cold Increase
+            4. Cold Decrease
+            5. Hot + Cold Increase
+            6. Hot + Cold Decrease
+        expectedResults:
+            1. Action should fail
+            2. Action should fail
+            3. Action should succeed
+            4. Action should succeed
+            5. Action should fail
+            6. Action should Error
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_reconfigure_add_disk_cold():
+    """ Test adding 16th disk to test how a new scsi controller is handled.
+
+    Bugzilla:
+        * 1337310
+
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.7
+        casecomponent: Infra
+        tags: reconfigure
+        testSteps:
+            1. get new configured appliance ->add vmware provider
+            2. provision a new vm with 15 disks
+            3. Add a new disk with CloudForms using the VM Reconfigure dialog
+            4. Check new SCSI controller in vm
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_reconfigure_add_disk_cold_controller_sas():
+    """
+
+    Bugzilla:
+        * 1445874
+
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.5
+        casecomponent: Infra
+        tags: reconfigure
+        testSteps:
+            1. get new configured appliance ->add vmware provider
+            2. Add 15 disks to an existing VM with Controller type set to SAS
+            3. look at the 16th Disk Controller Type
+            4. Check controller type
+            5. Should be SAS like exiting Controller
+    """
+    pass
