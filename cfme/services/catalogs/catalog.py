@@ -3,7 +3,7 @@ import attr
 from widgetastic.utils import Parameter
 from widgetastic.widget import Text
 from widgetastic_manageiq import MultiBoxSelect
-from widgetastic_patternfly import Button, Input
+from widgetastic_patternfly import Button, CandidateNotFound, Input
 from navmazing import NavigateToAttribute, NavigateToSibling
 
 from cfme.common import Taggable
@@ -120,7 +120,7 @@ class Catalog(BaseEntity, Updateable, Pretty, Taggable):
         try:
             navigate_to(self, 'Details')
             return True
-        except NameError:
+        except (NameError, CandidateNotFound):
             return False
 
 
