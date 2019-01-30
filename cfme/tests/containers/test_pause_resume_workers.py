@@ -73,6 +73,7 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
         casecomponent: Containers
         initialEstimate: 1/6h
     """
+
     evm_tail_disable = LogValidator('/var/www/miq/vmdb/log/evm.log',
                                     matched_patterns=['.*Disabling EMS \[{}\] id \[{}\].*'
                                                       .format(provider.name, str(provider.id))],
@@ -107,8 +108,12 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
                                                                    provider=provider)
     # Trigger an appliance refresh
     provider.refresh_provider_relationships()
-    soft_assert(not project.exists, 'Project {} exists even though provider has been disabled'
-                .format(project_name))
+    # Objects to appear in the GUI immediately
+    soft_assert(
+        wait_for(
+            lambda: not project.exists, delay=5, num_sec=100,
+            message="waiting for project to display"
+        ), 'Project {p} exists even though provider has been disabled'.format(p=project_name))
     evm_tail_enable = LogValidator('/var/www/miq/vmdb/log/evm.log',
                                    matched_patterns=['.*Enabling EMS \[{}\] id \[{}\].*'
                                                      .format(provider.name, str(provider.id))],
@@ -126,8 +131,12 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
     soft_assert(provider.is_provider_enabled, 'Provider {} is still disabled'.format(provider.name))
     evm_tail_enable.validate_logs()
     provider.refresh_provider_relationships()
-    soft_assert(project.exists, 'Project {} does not exists even though provider has been enabled'
-                .format(project_name))
+    soft_assert(
+        wait_for(
+            lambda: project.exists, delay=5, num_sec=100,
+            message="waiting for project to display"
+        ), 'Project {p} does not exists even though provider has been enabled'
+        .format(p=project_name))
 
 # TODO Add the following test when multi provider marker is implemented
 
