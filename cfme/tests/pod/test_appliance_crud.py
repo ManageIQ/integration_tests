@@ -14,6 +14,7 @@ from cfme.utils.appliance import stack, IPAppliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.version import get_stream
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(1),
@@ -108,6 +109,17 @@ def template(appliance):
 
 
 @pytest.fixture
+def extdb_template(appliance):
+    try:
+        api = trackerbot.api()
+        stream = get_stream(appliance.version.vstring)
+        template_data = trackerbot.latest_template(api, stream)
+        return api.template(template_data['latest_template'] + '-extdb').get()
+    except BaseException:
+        pytest.skip("trackerbot is unreachable")
+
+
+@pytest.fixture
 def template_tags(template):
     try:
         return yaml.safe_load(template['custom_data'])['TAGS']
@@ -119,6 +131,29 @@ def template_tags(template):
 def template_folder(template):
     upload_folder = conf.cfme_data['template_upload']['template_upload_openshift']['upload_folder']
     return os.path.join(upload_folder, template['name'])
+
+
+@pytest.fixture
+def create_external_database(appliance):
+    db_name = 'vmdb'
+    db_host = appliance.hostname
+    user = 'root'
+    password = appliance.user.credential.secret
+    result = appliance.ssh_client.run_command(('env PGPASSWORD={pwd} psql -t -q -d '
+                                               'vmdb_production -h {ip} -U {user} -c '
+                                               '"create database {name}"').format(pwd=password,
+                                                                                  ip=db_host,
+                                                                                  name=db_name,
+                                                                                  user=user))
+    assert result.success, "DB failed creation: {}".format(result.output)
+    yield (db_host, db_name)
+    result = appliance.ssh_client.run_command(('env PGPASSWORD={pwd} psql -t -q -d '
+                                               'vmdb_production -h {ip} -U {user} -c '
+                                               '"drop database {name}"').format(pwd=password,
+                                                                                ip=db_host,
+                                                                                name=db_name,
+                                                                                user=user))
+    assert result.success, "DB drop failed: {}".format(result.output)
 
 
 @pytest.fixture
@@ -141,6 +176,47 @@ def temp_pod_appliance(appliance, provider, appliance_data, pytestconfig):
             holder.held_appliance = appliance
             yield appliance
             stack.pop()
+
+
+@pytest.fixture
+def temp_extdb_pod_appliance(appliance, provider, extdb_template, template_tags,
+                             create_external_database, appliance_data):
+    db_host, db_name = create_external_database
+    project = 'test-pod-extdb-{t}'.format(t=fauxfactory.gen_alphanumeric().lower())
+    provision_data = {
+        'template': extdb_template['name'],
+        'tags': template_tags,
+        'vm_name': project,
+        'template_params': {'DATABASE_IP': db_host, 'DATABASE_NAME': db_name},
+        'running_pods': set(provider.mgmt.required_project_pods) - {'postgresql'}
+    }
+    try:
+        data = provider.mgmt.deploy_template(**provision_data)
+        params = appliance_data.copy()
+        params['db_host'] = data['external_ip']
+        params['project'] = project
+        params['hostname'] = data['url']
+
+        def is_api_available(appliance):
+            try:
+                return appliance.rest_api.collections.providers.all
+            except Exception:
+                pass
+
+        with IPAppliance(**params) as appliance:
+            # framework will try work with default appliance if browser restarts w/o this
+            # workaround
+            appliance.is_pod = True
+            stack.push(appliance)
+            holder = config.pluginmanager.get_plugin(PLUGIN_KEY)
+            holder.held_appliance = appliance
+            # workaround, appliance looks ready but api may return errors
+            wait_for(is_api_available, func_args=[appliance], num_sec=30)
+            yield appliance
+            stack.pop()
+    finally:
+        if provider.mgmt.does_vm_exist(project):
+            provider.mgmt.delete_vm(project)
 
 
 @pytest.fixture
@@ -249,8 +325,7 @@ def test_crud_pod_appliance_ansible_deployment(temp_pod_ansible_appliance, provi
     assert navigate_to(proj, 'Dashboard')
 
 
-@pytest.mark.manual
-def test_crud_pod_appliance_ext_db():
+def test_crud_pod_appliance_ext_db(temp_extdb_pod_appliance, provider, setup_provider):
     """
     deploys pod appliance
     checks that it is alive
@@ -258,12 +333,14 @@ def test_crud_pod_appliance_ext_db():
 
     Polarion:
         assignee: izapolsk
+        casecomponent: Containers
         caseimportance: high
         initialEstimate: 1/4h
     """
-    # add ext db templates to provider in template deployment
-    # make sprout deploy ext db appliances ? or wrapanapi enhancement ?
-    pass
+    appliance = temp_extdb_pod_appliance
+    collection = appliance.collections.container_projects
+    proj = collection.instantiate(name=appliance.project, provider=provider)
+    assert navigate_to(proj, 'Dashboard')
 
 
 @pytest.mark.manual
