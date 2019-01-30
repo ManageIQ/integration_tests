@@ -4,7 +4,7 @@ import pytest
 import tempfile
 import yaml
 
-from kubernetes.client.rest import ApiException
+from wrapanapi.systems.container.rhopenshift import ApiException
 from pytest import config
 from time import sleep
 
