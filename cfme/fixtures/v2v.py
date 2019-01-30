@@ -7,7 +7,7 @@ from collections import namedtuple
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
-from cfme.fixtures.provider import setup_or_skip
+from cfme.fixtures.provider import rhel7_minimal, setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.generators import random_vm_name

@@ -37,11 +37,8 @@ def get_migrated_vm_obj(src_vm_obj, target_provider):
     return migrated_vm
 
 
-@pytest.mark.parametrize(
-    "form_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True
-)
 def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, conversion_tags,
-                              form_data_vm_obj_single_datastore, soft_assert):
+                              form_data_vm_obj_mini, soft_assert):
     """Test policy to prevent source VM from starting if migration is complete
 
     Polarion:
@@ -50,7 +47,7 @@ def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, con
         casecomponent: V2V
     """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
+    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_mini.form_data)
 
     @request.addfinalizer
     def _cleanup():
@@ -58,12 +55,12 @@ def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, con
 
     migration_plan_collection = appliance.collections.v2v_plans
     # vm_obj is a list, with only 1 VM object, hence [0]
-    vm_obj = form_data_vm_obj_single_datastore.vm_list[0]
+    vm_obj = form_data_vm_obj_mini.vm_list[0]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore.vm_list,
+        vm_list=form_data_vm_obj_mini.vm_list,
         start_migration=True,
     )
 
