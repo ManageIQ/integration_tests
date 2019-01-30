@@ -13,6 +13,27 @@ def amazon_auth_provider():
         pytest.skip('amazon auth provider not found in auth_data.auth_providers, skipping test.')
 
 
+@pytest.fixture(scope='function')
+def ipa_auth_provider():
+    try:
+        return authutil.get_auth_crud('freeipa01')
+    except KeyError:
+        pytest.skip('ipa auth provider not found in auth_data.auth_providers, skipping test.')
+
+
+@pytest.fixture(scope='function')
+def setup_ipa_auth_provider(appliance, ipa_auth_provider):
+    """Add/Remove IPA auth provider"""
+    original_config = appliance.server.authentication.auth_settings
+    appliance.server.authentication.configure(auth_mode='external',
+                                              auth_provider=ipa_auth_provider)
+    yield
+
+    appliance.server.authentication.auth_settings = original_config
+    appliance.server.login_admin()
+    appliance.server.authentication.configure(auth_mode='database')
+
+
 @pytest.fixture(scope='module')
 def setup_aws_auth_provider(appliance, amazon_auth_provider):
     """Configure AWS IAM authentication mode"""
