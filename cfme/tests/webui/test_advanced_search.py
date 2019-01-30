@@ -98,6 +98,7 @@ params_values = [
     Param('ansible_tower_job_templates', 'All', 'ansible_tower_explorer_job_templates',
      'Job Template (Ansible Tower) : Name',
      ('sidebar.job_templates', 'All Ansible Tower Job Templates')),
+
     Param('ansible_tower_jobs', 'All', 'ansible_tower_jobs', 'Ansible Tower Job : Name', None)
 ]
 
@@ -171,6 +172,7 @@ def test_can_open_advanced_search(param, appliance):
         pytest.fail("Advanced search cannot be opened for {}_{}".format(
             param.destination, param.entity.lower())
         )
+    view.search.close_advanced_search()
 
 
 @pytest.mark.uncollectif(lambda param, appliance: (
@@ -178,7 +180,11 @@ def test_can_open_advanced_search(param, appliance):
                           'volume_snapshots') and appliance.version < '5.9') or
     (param.collection in (ConfigManager, 'ansible_tower_providers') and appliance.version > '5.10')
     or (param.filter == 'Template (Ansible Tower) : Name' and appliance.version < '5.10') or
-    (param.filter == 'Job Template (Ansible Tower) : Name' and appliance.version > '5.10'))
+    (param.filter == 'Job Template (Ansible Tower) : Name' and appliance.version > '5.10') or
+    (param.collection in ('cloud_host_aggregates', 'cloud_instances', 'cloud_images', 'infra_vms',
+                          'infra_templates', 'datastores', ConfigManager, 'ansible_tower_providers',
+                          'ansible_tower_systems', 'ansible_tower_job_templates', VmsInstances)
+    and appliance.version < '5.10'))
     or (param.collection == TemplatesImages and BZ(1626579)) or (param.collection == MyService
                                                                  and BZ(1627078)))
 def test_filter_crud(param, appliance):
