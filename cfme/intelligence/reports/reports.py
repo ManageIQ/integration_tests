@@ -175,10 +175,16 @@ class ReportTimelineView(CloudIntelTimelinesView):
 
     @property
     def is_displayed(self):
+        expected_tree = [
+            self.context["object"].type or self.context["object"].company_name,
+            self.context["object"].subtype or "Custom",
+            self.context["object"].menu_name
+        ]
+
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Cloud Intel', 'Timelines'] and
-            self.title.text == self.context["object"].title
+            self.timelines.tree.currently_selected == expected_tree
         )
 
 

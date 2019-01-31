@@ -68,7 +68,35 @@ class DynamicTableAddError(Exception):
 
 
 # TODO: replace below calls with direct calls later
-ManageIQTree = BootstrapTreeview
+class ManageIQTree(BootstrapTreeview):
+    """ Refactor of BootstrapTreeview to add currently_selected for times
+    which have more than 1 root. Also a root_items property."""
+
+    @property
+    def root_items(self):
+        return self.browser.elements(self.ROOT_ITEMS, parent=self)
+
+    @property
+    def currently_selected(self):
+        if self.selected_item is not None:
+            nodeid = self.get_nodeid(self.selected_item).split(".")
+            if self.root_item_count > 1:
+                root_ids = [self.get_nodeid(root_item).split(".") for root_item in self.root_items]
+                # find my root_id by comparing first two numbers in nodeid
+                for root_id in root_ids:
+                    if root_id[0:2] == nodeid[0:2]:
+                        root_id_len = len(root_id)
+                        break
+            else:
+                root_id_len = len(self.get_nodeid(self.root_item).split("."))
+            result = []
+            for end in range(root_id_len, len(nodeid) + 1):
+                current_nodeid = ".".join(nodeid[:end])
+                text = self.browser.text(self.get_item_by_nodeid(current_nodeid))
+                result.append(text)
+            return result
+        else:
+            return None
 
 
 class SummaryFormItem(Widget):
