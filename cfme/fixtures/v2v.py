@@ -14,7 +14,9 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
 
-FormDataVmObj = namedtuple("FormDataVmObj", ["form_data", "vm_list"])
+FormDataVmObjMapObj = namedtuple(
+    'FormDataVmObjMapObj', ['form_data', 'vm_list', 'map_obj']
+)
 
 
 @pytest.fixture(scope="module")
@@ -192,6 +194,35 @@ def _form_data(source_provider, provider):
 
 
 @pytest.fixture(scope="function")
+def form_data_vm_map_obj_mini(request, appliance, second_provider, provider):
+    """Fixture which provides minimal form_data, vm and map object structure for migration plan"""
+    form_data = _form_data(second_provider, provider)
+    source_datastores_list = second_provider.data.get("datastores", [])
+    source_datastore = [d.name for d in source_datastores_list if d.type == "nfs"][0]
+    collection = second_provider.appliance.provider_based_collection(second_provider)
+    vm_name = random_vm_name("v2v-auto")
+    vm_obj = collection.instantiate(
+        vm_name, second_provider, template_name=rhel7_minimal(second_provider)["name"]
+    )
+    vm_obj.create_on_provider(
+        timeout=2400,
+        find_in_cfme=True,
+        allow_skip="default",
+        datastore=source_datastore,
+        power_on=True
+    )
+    infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    mapping = infrastructure_mapping_collection.create(form_data)
+
+    @request.addfinalizer
+    def _cleanup():
+        vm_obj.cleanup_on_provider()
+        infrastructure_mapping_collection.delete(mapping)
+
+    return FormDataVmObjMapObj(form_data=form_data, vm_list=vm_obj, map_obj=mapping)
+
+
+@pytest.fixture(scope="function")
 def form_data_multiple_vm_obj_single_datastore(request, appliance, source_provider, provider):
     # this fixture will take list of N VM templates via request and call get_vm for each
     cluster = provider.data.get("clusters", [False])[0]
@@ -220,7 +251,7 @@ def form_data_multiple_vm_obj_single_datastore(request, appliance, source_provid
     vm_list = []
     for template_name in request.param[2]:
         vm_list.append(get_vm(request, appliance, source_provider, template_name))
-    return FormDataVmObj(form_data=form_data, vm_list=vm_list)
+    return FormDataVmObjMapObj(form_data=form_data, vm_list=vm_list, map_obj=None)
 
 
 @pytest.fixture(scope="function")
@@ -359,7 +390,7 @@ def form_data_dual_vm_obj_dual_datastore(request, appliance, source_provider, pr
     # creating 2 VMs on two different datastores and returning its object list
     vm_obj1 = get_vm(request, appliance, source_provider, request.param[0][2], request.param[0][0])
     vm_obj2 = get_vm(request, appliance, source_provider, request.param[1][2], request.param[1][0])
-    return FormDataVmObj(form_data=form_data, vm_list=[vm_obj1, vm_obj2])
+    return FormDataVmObjMapObj(form_data=form_data, vm_list=[vm_obj1, vm_obj2], map_obj=None)
 
 
 @pytest.fixture(scope="function")
@@ -405,7 +436,7 @@ def form_data_vm_obj_dual_nics(request, appliance, source_provider, provider):
         },
     )
     vm_obj = get_vm(request, appliance, source_provider, request.param[2])
-    return FormDataVmObj(form_data=form_data, vm_list=[vm_obj])
+    return FormDataVmObjMapObj(form_data=form_data, vm_list=[vm_obj], map_obj=None)
 
 
 @pytest.fixture(scope="function")
@@ -435,7 +466,7 @@ def form_data_vm_obj_single_datastore(request, appliance, source_provider, provi
         },
     )
     vm_obj = get_vm(request, appliance, source_provider, request.param[2], request.param[0])
-    return FormDataVmObj(form_data=form_data, vm_list=[vm_obj])
+    return FormDataVmObjMapObj(form_data=form_data, vm_list=[vm_obj], map_obj=None)
 
 
 @pytest.fixture(scope="function")
@@ -461,7 +492,7 @@ def form_data_vm_obj_single_network(request, appliance, source_provider, provide
         },
     )
     vm_obj = get_vm(request, appliance, source_provider, request.param[2])
-    return FormDataVmObj(form_data=form_data, vm_list=[vm_obj])
+    return FormDataVmObjMapObj(form_data=form_data, vm_list=[vm_obj], map_obj=None)
 
 
 def _form_data_mapping(selector, source_provider, provider, source_list=None, target_list=None):

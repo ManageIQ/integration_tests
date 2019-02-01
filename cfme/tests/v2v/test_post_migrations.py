@@ -38,7 +38,7 @@ def get_migrated_vm_obj(src_vm_obj, target_provider):
 
 
 def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, conversion_tags,
-                              form_data_vm_obj_mini, soft_assert):
+                              form_data_vm_map_obj_mini, soft_assert):
     """Test policy to prevent source VM from starting if migration is complete
 
     Polarion:
@@ -46,22 +46,15 @@ def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, con
         initialEstimate: 1/4h
         casecomponent: V2V
     """
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_mini.form_data)
-
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
     migration_plan_collection = appliance.collections.v2v_plans
     # vm_obj is a list, with only 1 VM object, hence [0]
-    vm_obj = form_data_vm_obj_mini.vm_list[0]
+    vm_obj = form_data_vm_map_obj_mini.vm_list[0]
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
-        infra_map=mapping.name,
-        vm_list=form_data_vm_obj_mini.vm_list,
-        start_migration=True,
+        infra_map=form_data_vm_map_obj_mini.map_obj.name,
+        vm_list=form_data_vm_map_obj_mini.vm_list,
+        start_migration=True
     )
 
     # explicit wait for spinner of in-progress status card
@@ -84,7 +77,7 @@ def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, con
         func_args=[migration_plan.name],
         message="migration plan is in progress, be patient please",
         delay=15,
-        num_sec=3600,
+        num_sec=3600
     )
     view.switch_to("Completed Plans")
     view.wait_displayed()
