@@ -976,8 +976,10 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             The credentials default to those found under ``ssh`` key in ``credentials.yaml``.
 
         """
-        if not self.is_ssh_running:
-            raise Exception('SSH is unavailable')
+        logger.debug('Waiting for SSH to %s to become connective.',
+                     self.hostname)
+        self.wait_for_ssh()
+        logger.debug('SSH to %s ready.', self.hostname)
 
         # IPAppliance.ssh_client only connects to its address
         if self.openshift_creds:
