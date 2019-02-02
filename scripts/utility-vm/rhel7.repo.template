@@ -1,0 +1,6 @@
+[rhel]
+name=RHEL 7.0
+baseurl=RHEL_REPO_BASE/latest-RHEL-7/compose/Server/x86_64/os/
+enabled=1
+gpgcheck=0
+skip_if_unavailable=False

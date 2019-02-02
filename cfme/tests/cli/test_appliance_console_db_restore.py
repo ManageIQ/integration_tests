@@ -1,6 +1,7 @@
 import fauxfactory
 import pytest
 from collections import namedtuple
+import os
 
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -51,9 +52,11 @@ def get_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
     appl1.wait_for_web_ui()
     appl2.configure(region=0)
     appl2.wait_for_web_ui()
+    logger.debug('Adding providers.')
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl1).setup()
     provider_app_crud(EC2Provider, appl1).setup()
+    logger.debug('Providers added.')
     appl1.db.backup()
     return temp_appliances_unconfig_funcscope_rhevm
 
@@ -209,12 +212,12 @@ def fetch_db_local(appl1, appl2):
     appl2.ssh_client.put_file(dump_filename, "/tmp/evm_db.backup")
 
 
-def setup_nfs_samba_backup(appl1):
+def setup_nfs_samba_backup(appl1, nfs_samba_share_vm):
     # Fetch db from first appliance and push it to nfs/samba server
     connect_kwargs = {
-        'hostname': cfme_data['network_share']['hostname'],
-        'username': credentials['ssh']['username'],
-        'password': credentials['depot_credentials']['password']
+        'hostname': nfs_samba_share_vm['hostname'],
+        'username': nfs_samba_share_vm['credentials']['username'],
+        'password': nfs_samba_share_vm['credentials']['password']
     }
     loc = cfme_data['network_share']['nfs_path']
     nfs_smb = SSHClient(**connect_kwargs)
@@ -504,6 +507,12 @@ def utility_vm():
     yield {'ip': vm.ip, 'credentials': credentials[data.credentials]}
     vm.delete()
 
+@pytest.fixture
+def utility_vm():
+    yield { 'ip': '192.168.122.226',
+            'credentials': { 'username': 'backuper',
+                             'password': 'changeme' }}
+
 
 @pytest.fixture
 def nfs_samba_share_vm(utility_vm):
@@ -512,59 +521,6 @@ def nfs_samba_share_vm(utility_vm):
         'username': utility_vm['credentials']['username'],
         'password': utility_vm['credentials']['password']
     }
-    nfs_smb = SSHClient(**connect_kwargs)
-    setup = (
-        # Common setup.
-        dedent(''' \
-        cat > /etc/yum.repos.d/rhel.repo <<EOF
-        [rhel]
-        name=RHEL 7.5-Update
-        baseurl={baseurl}
-        enabled=1
-        gpgcheck=0
-        skip_if_unavailable=False
-        EOF
-        ''').format(baseurl=cfme_data['basic_info']['rhel7_updates_url']),
-        'yum install -y nfs-utils samba',
-        'setenforce 0',
-
-        # NFS setup
-        'mkdir -p /srv/export',
-        'chmod a=rwx /srv/export',
-        'echo "/srv/export *(ro)" >> /etc/exports',
-        'firewall-cmd --add-port=2049/udp --permanent',
-        'firewall-cmd --add-port=2049/tcp --permanent',
-        'firewall-cmd --add-port=111/udp --permanent',
-        'firewall-cmd --add-port=111/tcp --permanent',
-        'firewall-cmd --reload',
-        'systemctl enable nfs',
-        'systemctl start nfs',
-        'exportfs -ra',
-
-        # SMB setup
-        'adduser backuper',
-        #'smbpasswd -a backuper', # TODO(jhenner) set the password!
-        'mkdir -p /srv/samba',
-        'chmod a=rwx /srv/samba',
-        'firewall-cmd --add-port=139/tcp --permanent',
-        'firewall-cmd --add-port=445/tcp --permanent',
-        'firewall-cmd --reload',
-        dedent('''\
-            cat >> /etc/samba/smb.conf <<EOF
-            [public]
-            comment = Public Stuff
-            path = /srv/samba
-            public = yes
-            writable = no
-            printable = no
-            write list = +staff
-            EOF
-            '''),
-        'systemctl enable smb',
-        'systemctl start smb',
-    )
-    for line in setup:
-        assert nfs_smb.run_command(line).success
     return {'hostname': utility_vm['ip'],
             'nfs_path': '/srv/export',
             'smb_path': '/srv/samba',
@@ -575,7 +531,7 @@ def nfs_samba_share_vm(utility_vm):
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
                          reason='Test only for downstream version of product')
-def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers):
+def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers, nfs_samba_share_vm):
     """ Test single appliance backup and restore through nfs, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
 
@@ -586,6 +542,7 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
         initialEstimate: 1h
     """
     appl1, appl2 = get_appliances_with_providers
+    import ipdb; ipdb.set_trace()
     host = nfs_samba_share_vm['hostname']
     loc = nfs_samba_share_vm['nfs_path']
     nfs_dump = 'nfs://{}{}'.format(host, os.path.join(loc, 'share.backup'))

@@ -1,0 +1,13 @@
+[rhel-BaseOS]
+name=RHEL 8.0
+baseurl=RHEL_REPO_BASE/latest-RHEL-8/compose/BaseOS/x86_64/os/
+enabled=1
+gpgcheck=0
+skip_if_unavailable=False
+
+[rhel-AppStream]
+name=RHEL 8.0 AppStream
+baseurl=RHEL_REPO_BASE/latest-RHEL-8/compose/AppStream/x86_64/os/
+enabled=1
+gpgcheck=0
+skip_if_unavailable=False
