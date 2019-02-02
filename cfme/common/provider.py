@@ -275,8 +275,12 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
                     self.appliance.version)
             else:
                 provider_attributes["provider_region"] = self.region
+
         if getattr(self, "project", None):
             provider_attributes["project"] = self.project
+
+        if getattr(self, "tenant_mapping", None):
+            provider_attributes["tenant_mapping_enabled"] = self.tenant_mapping
 
         if self.type_name in ('openstack_infra', 'openstack'):
             if getattr(self, 'api_version', None):
@@ -373,20 +377,61 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         Helper method for ``self.create_rest``
         """
         if "rsa_keypair" not in self.endpoints:
-            return
+            if "rsa_keypair" not in self.data.endpoints:
+                return
+            else:
+                rsa_credentials = self.get_credentials_from_config(
+                    self.data.endpoints["rsa_keypair"]["credentials"], "ssh"
+                )
+        else:
+            rsa_credentials = self.endpoints["rsa_keypair"].credentials
 
-        endpoint_rsa = self.endpoints["rsa_keypair"]
         if isinstance(provider_attributes["credentials"], dict):
             provider_attributes["credentials"] = [provider_attributes["credentials"]]
 
-        provider_attributes["credentials"].append({
-            "userid": endpoint_rsa.credentials.principal,
-            "auth_key": endpoint_rsa.credentials.secret,
-            "auth_type": "ssh_keypair",
-        })
+        provider_attributes["credentials"].append(
+            {
+                "userid": rsa_credentials.principal,
+                "password": rsa_credentials.secret,
+                "auth_type": "ssh_keypair",
+            }
+        )
+
+    def _fill_amqp_endpoint_dicts(self, provider_attributes, connection_configs):
+        """Fills dicts with AMQP events endpoint data.
+
+        Helper method for ``self.create_rest``
+        """
+        if "events" not in self.endpoints:
+            return
+
+        endpoint_events = self.endpoints["events"]
+
+        event_stream = getattr(endpoint_events, "event_stream", None)
+        if not (event_stream and event_stream.lower() == "amqp"):
+            return
+
+        if isinstance(provider_attributes["credentials"], dict):
+            provider_attributes["credentials"] = [provider_attributes["credentials"]]
+        provider_attributes["credentials"].append(
+            {
+                "userid": endpoint_events.credentials.principal,
+                "password": endpoint_events.credentials.secret,
+                "auth_type": "amqp",
+            }
+        )
+        events_connection = {
+            "endpoint": {"hostname": endpoint_events.hostname, "role": "amqp"}
+        }
+        if getattr(endpoint_events, "api_port", None):
+            events_connection["endpoint"]["port"] = endpoint_events.api_port
+        if getattr(endpoint_events, "security_protocol", None):
+            security_protocol = endpoint_events.security_protocol.lower()
+            events_connection["endpoint"]["security_protocol"] = security_protocol
+        connection_configs.append(events_connection)
 
     def _compile_connection_configurations(self, provider_attributes, connection_configs):
-        """Compiles togetger all dicts with data for ``connection_configurations``.
+        """Compiles together all dicts with data for ``connection_configurations``.
 
         Helper method for ``self.create_rest``
         """
@@ -431,6 +476,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         self._fill_default_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_candu_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_rsa_endpoint_dicts(provider_attributes, connection_configs)
+        self._fill_amqp_endpoint_dicts(provider_attributes, connection_configs)
         self._compile_connection_configurations(provider_attributes, connection_configs)
 
         try:
