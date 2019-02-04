@@ -284,7 +284,8 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        self.view.entities.search.clear_simple_search()
+        if self.view.entities.search.is_displayed:
+            self.view.entities.search.clear_simple_search()
         self.view.toolbar.view_selector.select("List View")
 
 
