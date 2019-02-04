@@ -203,9 +203,10 @@ class ApplianceConsoleCli(object):
     def __init__(self, appliance):
         self.appliance = appliance
 
-    def _run(self, appliance_console_cli_command):
+    def _run(self, appliance_console_cli_command, timeout=10):
         return self.appliance.ssh_client.run_command(
-            "appliance_console_cli {}".format(appliance_console_cli_command))
+            "appliance_console_cli {}".format(appliance_console_cli_command),
+            timeout)
 
     def set_hostname(self, hostname):
         return self._run("--host {host}".format(host=hostname))
@@ -230,7 +231,7 @@ class ApplianceConsoleCli(object):
         self._run("--region {region} --internal --hostname {dbhostname} --username {username}"
             " --password {password} --dbname {dbname} --verbose --dbdisk {dbdisk}".format(
                 region=region, dbhostname=dbhostname, username=username, password=password,
-                dbname=dbname, dbdisk=dbdisk))
+                dbname=dbname, dbdisk=dbdisk), timeout='4m')
 
     def configure_appliance_internal_fetch_key(self, region, dbhostname,
             username, password, dbname, dbdisk, fetch_key, sshlogin, sshpass):

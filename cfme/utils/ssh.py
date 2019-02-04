@@ -25,6 +25,7 @@ from cfme.utils.quote import quote
 from cfme.utils.timeutil import parsetime
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
+from cfme.utils.wait import wait_for
 
 # Default blocking time before giving up on an ssh command execution,
 # in seconds (float)
@@ -222,7 +223,7 @@ class SSHClient(paramiko.SSHClient):
 
         if not self.connected:
             self._connect_kwargs.update(kwargs)
-            self._check_port()
+            wait_for(self._check_port, timeout='2m', delay=5)
             # Only install ssh keys if they aren't installed (or currently being installed)
             conn = super(SSHClient, self).connect(**self._connect_kwargs)
         else:
