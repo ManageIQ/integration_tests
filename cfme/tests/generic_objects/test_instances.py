@@ -243,9 +243,10 @@ def test_generic_objects_tag_rest(appliance, generic_object, tags):
         test_flag: rest
 
     Polarion:
-        assignee: jdupuy
         initialEstimate: 1/4h
-        casecomponent: GenericObjects
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
     """
     tag = tags[0]
     with appliance.context.use(ViaREST):
