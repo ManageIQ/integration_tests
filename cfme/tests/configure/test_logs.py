@@ -61,11 +61,11 @@ def test_provider_log_rotate(appliance, provider, log_exists):
     """
     assert log_exists, "Log file {}.log doesn't exist".format(provider.log_name)
     appliance.ssh_client.run_command("logrotate -f /etc/logrotate.d/miq_logs.conf")
-    logs_count = int(appliance.ssh_client.run_command(
-        "ls -l /var/www/miq/vmdb/log/{}.log*|wc -l".format(
-            provider.log_name
-        )
-    ).output.rstrip())
+    logs_count = int(
+        appliance.ssh_client.run_command(
+            "ls -l /var/www/miq/vmdb/log/{}.log*|wc -l".format(provider.log_name)
+        ).output.rstrip()
+    )
     assert logs_count > 1, "{}.log wasn't rotated by default miq_logs.conf".format(
         provider.log_name
     )
@@ -105,14 +105,20 @@ def test_provider_log_updated(appliance, provider, log_exists):
     assert log_before != log_after, "Log hashes are the same"
 
 
-@pytest.mark.meta(blockers=[BZ(1633656,
-                               unblock=lambda provider: provider.one_of(AzureProvider, EC2Provider),
-                               forced_streams=["5.9", "5.10", "upstream"]),
-                            BZ(1640718,
-                               unblock=lambda provider: not provider.one_of(AzureProvider),
-                               forced_streams=["5.9"])
-                            ]
-                  )
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1633656,
+            unblock=lambda provider: provider.one_of(AzureProvider, EC2Provider),
+            forced_streams=["5.9", "5.10", "upstream"],
+        )
+    ]
+)
+@pytest.mark.uncollectif(
+    lambda provider, appliance: provider.one_of(AzureProvider)
+    and appliance.version < "5.10",
+    reason="BZ1640718 will not be fixed for 5.9",
+)
 def test_provider_log_level(appliance, provider, log_exists):
     """
     Tests that log level in advanced settings affects log files
@@ -132,14 +138,22 @@ def test_provider_log_level(appliance, provider, log_exists):
         casecomponent: Configuration
     """
     assert log_exists, "Log file {}.log doesn't exist".format(provider.log_name)
-    log_level = appliance.server.advanced_settings['log']['level_{}'.format(provider.log_name)]
+    log_level = appliance.server.advanced_settings["log"][
+        "level_{}".format(provider.log_name)
+    ]
     # set log level to debug
-    wait_for(lambda: appliance.server.update_advanced_settings(
-        {'log': {'level_{}'.format(provider.log_name): 'debug'}}), timeout=300)
+    wait_for(
+        lambda: appliance.server.update_advanced_settings(
+            {"log": {"level_{}".format(provider.log_name): "debug"}}
+        ),
+        timeout=300,
+    )
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     debug_in_logs = appliance.ssh_client.run_command(
-        "cat /var/www/miq/vmdb/log/{}.log | grep DEBUG".format(provider.log_name))
+        "cat /var/www/miq/vmdb/log/{}.log | grep DEBUG".format(provider.log_name)
+    )
     # set log level back
     appliance.server.update_advanced_settings(
-        {'log': {'level_{}'.format(provider.log_name): log_level}})
+        {"log": {"level_{}".format(provider.log_name): log_level}}
+    )
     assert debug_in_logs.success
