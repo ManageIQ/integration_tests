@@ -2269,7 +2269,7 @@ def process_docker_images_from_url_group(self, group_id, version, docker_version
     if group.template_obsolete_days is not None:
         today = datetime.now().date()
         age = today - date
-        if age > group.template_obsolete_days:
+        if age.days > group.template_obsolete_days:
             self.logger.info('Ignoring old template {} (age {} days)'.format(pull_url, age))
             return
     for provider in Provider.objects.filter(working=True, disabled=False):
