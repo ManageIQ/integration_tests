@@ -116,3 +116,357 @@ def test_dynamicdropdown_dialog(appliance, dialog, catalog):
         dialog=dialog)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_submit_or_cancelation_btns_in_dd_dialogs_tied_to_a_service_button_should_be_visble():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.9
+        tags: service
+        tags: service
+
+    Bugzilla:
+        1611527
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_drop_down_dialog_should_honor_the_order_of_values_as_they_are_inputted():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        testtype: functional
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1593874
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_dynamic_dropdowns_should_show_value_only_once():
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.9
+        tags: service
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_dd_multiselect_default_element_is_shouldnt_be_blank_when_loaded_by_another_element():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        testtype: functional
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1645555
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_expression_method_definitions_should_not_fail_with_script_error_in_a_dialog():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.10
+        tags: service
+
+    Bugzilla:
+        1558926
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_dialog_text_box_triggers_fields_shouldnt_refresh_too_soon_often():
+    """
+    https://bugzilla.redhat.com/show_bug.cgi?id=1614321
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        testtype: functional
+        startsin: 5.10
+        tags: service
+
+    Bugzilla:
+        1614321
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_dynamic_check_box_does_not_update_in_classic_ui():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.8
+        tags: service
+
+    Bugzilla:
+        1570152
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_ssui_dd_values_are_not_loaded_in_dropdown_unless_refresh_button_is_pressed():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/8h
+        startsin: 5.8
+        tags: service
+
+    Bugzilla:
+        1322594
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_in_dynamic_multi_select_dialog_elements_the_first_element_shouldnt_be_selected():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1322594
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_textbox_value_should_update_with_automate_method():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1613443
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_when_clicking_refresh_for_text_field_2_only_text_field_2_should_refreshed():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.9
+        tags: service
+        testSteps:
+            1.  create a dialog with two text fields with no refresh relation between them
+                showing their refresh buttons.
+            2. associate each to a different method that just logs "Refreshing X"
+            3. associating the dialog to a catalog item
+            4. tail -f log/automation.log | grep "Refreshing"
+            5. load the dialog
+            6. click "refresh" for field 2
+
+    Bugzilla:
+        1559999
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_second_dialog_dynamic_element_should_be_able_to_read_the_previous_textbox_element():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        tags: service
+        testSteps:
+            1. import example automate domain
+            2. import example service dialog
+            3. create a generic catalog item with the dialog service dialog provided
+
+    Bugzilla:
+        1576107
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_automation_executed_on_field_refresh_are_called_twice_in_self_service_dialogs():
+    """
+    https://bugzilla.redhat.com/show_bug.cgi?id=1576873
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+
+    Bugzilla:
+        1576873
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_dynamic_drop_down_dialog_should_work_with_automate_expression_method():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1583694
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_drop_down_list_dialog_does_should_keep_default_value_for_integer_type_in_dialogs():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        testtype: functional
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1554780
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_dynamic_dropdown_values_should_load_correctly():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.9
+        tags: service
+        testSteps:
+            1. Import the dialog and domain attached
+            2. Select Contract A . Contract B gets selected
+            3. In Location no values are loaded
+
+    Bugzilla:
+        1581996
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_child_dialog_should_update_with_new_options_based_on_option_of_parent_dialog_upon_ref():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1580535
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_value_input_into_service_dialog_element():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/16h
+        startsin: 5.5
+
+    Bugzilla:
+        1364407
+
+    """
+    pass

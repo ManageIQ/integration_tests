@@ -118,3 +118,435 @@ def test_tagdialog_catalog_item(appliance, provider, catalog_item, request):
     provision_request.wait_for_request()
     msg = "Request failed with the message {}".format(provision_request.rest.message)
     assert provision_request.is_succeeded(), msg
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_dialogs_should_only_run_once():
+    """ Dialogs should only run once
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        startsin: 5.9
+        initialEstimate: 1/4h
+        tags: service
+
+    Bugzilla:
+        1595776
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_dialog_dropdown_elements_should_honour_defaults():
+    """ Dialog dropdown elements should honour defaults
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.8
+        tags: service 
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_triggered_refresh_shouldnt_occurs_for_dialog_after_changing_type_to_static():
+    """ Triggered Refresh shouldn't Occurs for Dialog After Changing Type to Static
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1614436
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_timepicker_should_show_date_when_chosen_once():
+    """ Timepicker should show date when chosen once
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.7
+        tags: service
+
+    Bugzilla:
+        1638079
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_check_default_value_setting_for_all_options_in_dialog():
+    """ Check default value setting for all options in Dialog
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.7
+        tags: service
+
+    Bugzilla:
+        1471964 
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_default_dialog_entries_should_localized_when_ordering_catalog_item_in_french():
+    """ Default dialog entries should localized when ordering catalog item in French
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/16h
+        startsin: 5.7
+        tags: service 
+
+    Bugzilla:
+        1592573
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_in_dynamic_dropdown_list_the_default_value_should_not_contain_all_the_value_of_the_list():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.10
+        tags: service
+
+    Bugzilla:
+        1568440
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_saving_service_dialog_with_multi_select_drop_down_populated_by_expression_method():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1559030
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_cui_should_check_dialog_field_associations():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/6h
+        startsin: 5.10
+        tags: service
+
+    Bugzilla:
+        1559382
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_generic_object_should_be_visible_in_service_view():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        testtype: functional
+        startsin: 5.8
+        tags: service
+
+    Bugzilla:
+        1515945
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_reconfigure_service_for_dialogs_with_timeout_values():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.7
+
+    Bugzilla:
+        1442920
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_timepicker_should_pass_correct_timing_on_service_order():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.9
+        tags: service
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_should_be_able_to_see_requests_if_our_users_are_in_groups_with_managed_tags():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        testtype: functional
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1596738
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_user_should_be_able_to_change_the_order_of_values_of_the_drop_down_list():
+    """
+
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/16h
+        casecomponent: Services
+        testtype: functional
+        startsin: 5.10
+        tags: service
+
+    Bugzilla:
+        1594301
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_search_field_at_the_top_of_a_dynamic_drop_down_dialog_element_should_display():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1553347
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_default_selection_of_dropdown_list_is_should_display_properly():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/6h
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1579405
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_service_dialog_saving_elements_when_switching_elements():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.8
+        tags: service
+
+    Bugzilla:
+        1454428
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_entries_shouldnt_be_mislabeled_for_dropdown_element_in_dialog_editor():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        testtype: functional
+        startsin: 5.10
+        tags: service
+
+    Bugzilla:
+        1597802
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_automate_methods_from_dynamic_dialog_should_run_as_per_designed():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/16h
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1571000
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_reconfigure_existing_duplicate_orders():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.9
+        tags: service
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_should_be_able_to_access_services_requests_as_user():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1576129
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_dialog_dropdown_ui_values_in_the_dropdown_should_be_visible_in_edit_mode():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/16h
+        startsin: 5.9
+        tags: service
+
+    Bugzilla:
+        1557508
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_service_dialog_default_values_should_be_rendered_in_dialog_fields():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/8h
+        startsin: 5.7
+        tags: service
+        testSteps:
+            1. Create a dialog .set default value
+            2. Use the dialog in a catalog .
+            3. Order catalog.
+            4. Default values should be shown
+
+    Bugzilla:
+        1385898
+    """
+    pass

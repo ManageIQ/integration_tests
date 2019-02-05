@@ -136,23 +136,6 @@ def test_embed_tower_exec_play_against_vmware():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_check_service_link_from_vm_detail_page():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1443772
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Check service link from VM detail page
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(1)
 def test_embed_tower_dashboard():
@@ -165,40 +148,6 @@ def test_embed_tower_dashboard():
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_dialogs_should_only_run_once():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1595776
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Dialogs should only run once
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_rbac_assigning_multiple_tags_from_same_category_to_catalog_item():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1339382
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: low
-        initialEstimate: 1/8h
-        startsin: 5.5
-        title: RBAC : Assigning multiple tags from same category to catalog Item
     """
     pass
 
@@ -242,23 +191,6 @@ def test_crosshair_op_cluster_vsphere65():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_dialog_dropdown_elements_should_honour_defaults():
-    """
-    desc
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        startsin: 5.8
-        title: Dialog dropdown elements should honour defaults
     """
     pass
 
@@ -647,41 +579,6 @@ def test_childtenant_cloud_vm_quota_by_enforce():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_cockpit_connected():
-    """
-    Prerequisitiies:
-    Appliance connected to provider
-    Installed Cockpit on VM present on connected provider
-    VM running
-    Cockpit accesible on vm_ip:9090
-    Navigate to Compute > Infrastructure > Virtual Machines
-    Find VM with Cockpit running and accessible and go to its detail
-    Navigate to Access > Web console
-    # Web Console is active
-    Select Web Console
-    # browser is redirected to Cockpit web page on VM
-    Go to VM and disable Cockpit daemon
-    Go to appliance, find VM with Cockpit running and accessible and go to
-    its detail
-    Navigate to Access > Web console
-    # Web Console is disabled
-    Go to VM and enable Cockpit daemon
-    Go to appliance, find VM with Cockpit running and accessible and go to
-    its detail
-    Navigate to Access > Web console
-    # Web Console is enabled
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(2)
 def test_copy_provisioning_dialog():
@@ -715,30 +612,6 @@ def test_user_cloud_storage_quota_by_services():
         caseimportance: low
         initialEstimate: 1/2h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_export_all_existing_dialogs_almost_100_dialogs():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1570298
-    Steps to Reproduce:
-    1. Go to Automation -> Automate -> Customization -> Select Import
-    Export
-    2. Select all existing dialogs (almost 100 dialogs)
-    3. Press the button "Export"
-    4. After some time, the error 502 appears.
-    5. Individual or sometimes a group of dialogs can be exported
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Export all existing dialogs (almost 100 dialogs
     """
     pass
 
@@ -1307,23 +1180,6 @@ def test_retire_infra_vms_folder():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_email_should_be_sent_when_service_approval_is_set_to_manual():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1380197
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Email should be sent when service approval is set to manual
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
 def test_group_infra_storage_quota_by_services():
@@ -1384,24 +1240,6 @@ def test_sui_should_allow_selecting_multiple_items_in_a_service_dialog_element_w
         initialEstimate: 1/16h
         title: SUI should allow selecting multiple items in a Service
                Dialog element with Multiselect enabled
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(1)
-def test_provision_more_than_15_vms_for_gce():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1337646
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.5
-        title: provision more than 15 VM's  for GCE
     """
     pass
 
@@ -2144,23 +1982,6 @@ def test_distributed_add_provider_to_remote_zone():
 
 
 @pytest.mark.manual
-def test_role_configured_with_the_option_only_user_or_group_owned_should_allow_to_access_to_se():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1554775
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.9
-        title: Role configured with the option "only user or group owned"
-               should allow to access to service catalogs and items
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
 def test_group_cloud_cpu_quota_by_services():
@@ -2316,40 +2137,6 @@ def test_embed_tower_add_scm_credentials():
 
 
 @pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(3)
-def test_generic_objects_class_accordion_should_display_when_locale_is_french():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1594480
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.10
-        title: Generic objects class accordion should display when locale is french
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_triggered_refresh_shouldnt_occurs_for_dialog_after_changing_type_to_static():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1614436
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Triggered Refresh shouldn't Occurs for Dialog After Changing Type to Static
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
 def test_childtenant_cloud_storage_quota_by_enforce():
@@ -2361,24 +2148,6 @@ def test_childtenant_cloud_storage_quota_by_enforce():
         casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_notification_banner_vm_provisioning_notification_and_service_request_should_be_in_syn():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1389312
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Notification Banner - VM Provisioning Notification and
-               Service Request should be in  Sync
     """
     pass
 
@@ -2521,23 +2290,6 @@ def test_osp_test_migrating_a_vm_using_migration_plan_with_name_which_has_all_sp
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_timepicker_should_show_date_when_chosen_once():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1638079
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Timepicker should show date when chosen once
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rep
 @pytest.mark.tier(1)
 def test_distributed_field_zone_description_long():
@@ -2641,23 +2393,6 @@ def test_embed_tower_monitor_resources():
         caseimportance: medium
         initialEstimate: 1/10h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_check_default_value_setting_for_all_options_in_dialog():
-    """
-    Cannot set default option for static dropdown list in Service Dialog -
-    https://bugzilla.redhat.com/show_bug.cgi?id=1471964
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Check default value setting for all options in Dialog
     """
     pass
 
@@ -4696,23 +4431,6 @@ def test_group_infra_memory_quota_by_lifecycle():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_default_dialog_entries_should_localized_when_ordering_catalog_item_in_french():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1592573
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/16h
-        title: Default dialog entries should localized when ordering catalog item in French
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_targeted_refresh_instance():
     """
     Instance CREATE
@@ -5227,91 +4945,6 @@ def test_osp_test_creating_multiple_migration_plans_with_same_name():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_database_wildcard_should_work_and_be_included_in_the_query():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1581853
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.10
-        title: Database wildcard should work and be included in the query
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_user_should_be_able_to_see_requests_irrespective_of_tags_assigned():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1641012
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        startsin: 5.9
-        title: User should be able to see requests irrespective of tags assigned
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(2)
-def test_ssui_myservice_myrequests_and_service_catalog_filter_links():
-    """
-    Filter Links of all pages
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        endsin: 5.6
-        initialEstimate: 1/8h
-        startsin: 5.5
-        title: SSUI : MyService, MyRequests and Service Catalog - Filter Links
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_refresh_ssui_page():
-    """
-    Upon logging into the SSUI, Hit F5, the page should refresh, but
-    previously this action logged the user out.
-
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_create_generic_class():
-    """
-    Automation - automate - Generic Object - create new generic class .
-    test Generic class with different associations , attributes and
-    methods .
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: create generic class
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 def test_embed_tower_exec_play_against_rhos():
     """
@@ -5547,23 +5180,6 @@ def test_upgrade_single_inplace_ipv6():
     pass
 
 
-
-@pytest.mark.manual
-def test_in_dynamic_dropdown_list_the_default_value_should_not_contain_all_the_values_of_the_l():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1568440
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: In dynamic dropdown list, the default value should not
-               contain ALL the values of the list
-    """
-    pass
-
-
 @pytest.mark.manual
 @test_requirements.ssui
 @pytest.mark.tier(3)
@@ -5578,23 +5194,6 @@ def test_sui_snapshots_for_vm_create_edit_delete():
         initialEstimate: 1/4h
         startsin: 5.8
         title: SUI : Snapshots for VM (Create/Edit/delete)
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_submit_or_cancelation_buttons_in_dynamic_dialogs_tied_to_a_service_button_should_be_v():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1611527
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/6h
-        title: Submit or cancelation buttons in dynamic dialogs tied to a
-               Service button should be visble
     """
     pass
 
@@ -5691,31 +5290,6 @@ def test_osp_test_ssh_creds_can_be_added_while_adding_osp_provider():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test SSH Creds can be added while adding OSP provider
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_change_provider_template_in_catalog_item():
-    """
-    test_change_provider_template_in_catalog_item
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.5
-        testSteps:
-            1. Create a catalog item and select template for a provider in catalog tab
-            2. Select datastore etc in environment tab
-            3. In catalog tab change template from one provider to another
-        expectedResults:
-            1.
-            2.
-            3. Validation message should be shown
     """
     pass
 
@@ -5828,23 +5402,6 @@ def test_provider_specific_vm():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_new_dialog_editor_all_element_types_ui_and_validations():
-    """
-    Check all element types for the new dialog editor
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        startsin: 5.9
-        title: New dialog editor - All element types UI and validations
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(3)
 def test_embed_tower_refresh_provider_repo_list():
@@ -5920,7 +5477,6 @@ def test_distributed_field_zone_name_special():
 
 
 @pytest.mark.manual
-@test_requirements.service
 @pytest.mark.tier(3)
 def test_delete_orchestration_template_in_use():
     """
@@ -5929,7 +5485,7 @@ def test_delete_orchestration_template_in_use():
     Polarion:
         assignee: sshveta
         casecomponent: Services
-        caseimportance: low
+        testtype: functional
         initialEstimate: 1/16h
         setup: Create a orchestration template and provision a stack from it .
                Delete the template
@@ -6014,25 +5570,6 @@ def test_storage_object_store_object_remove():
 
 
 @pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(3)
-def test_sui_order_and_request_should_be_sorted_by_time():
-    """
-    desc
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: SelfServiceUI
-        caseimportance: low
-        initialEstimate: 1/8h
-        startsin: 5.8
-        title: SUI : Order and Request should be sorted by time
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
 @pytest.mark.tier(2)
 def test_notification_show_notification_when_tenant_quota_is_reached():
     """
@@ -6041,27 +5578,10 @@ def test_notification_show_notification_when_tenant_quota_is_reached():
     Polarion:
         assignee: ghubale
         casecomponent: Services
-        caseimportance: medium
+        testtype: functional
         initialEstimate: 1/4h
         startsin: 5.8
         title: Notification : Show notification when tenant quota is reached
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(2)
-def test_in_the_self_service_portal_reconfigure_service_should_shows_available_provisioning_di():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1633453
-
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        initialEstimate: 1/2h
-        title: In the self service portal, reconfigure service should shows
-               available Provisioning Dialog
     """
     pass
 
@@ -6168,23 +5688,6 @@ def test_puma_server():
         assignee: mmojzis
         casecomponent: WebUI
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_saving_a_service_dialog_with_a_multi_select_drop_down_populated_by_expression_method_():
-    """
-    Saving a service dialog with a multi-select drop-down populated by
-    expression method gives a 500 internal server error
-    https://bugzilla.redhat.com/show_bug.cgi?id=1559030
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Saving a service dialog with a multi-select drop-down
-               populated by expression method should not error
     """
     pass
 
@@ -7321,23 +6824,6 @@ def test_ssa_vm_actions():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_drop_down_dialog_should_honor_the_order_of_values_as_they_are_inputted():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1593874
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/16h
-        startsin: 5.9
-        title: Drop Down Dialog should Honor the Order of Values as they are Inputted
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_customize_request_security_group():
     """
@@ -7474,19 +6960,6 @@ def test_verify_external_auth_details_updated_in_appliance_console_ipa_():
 
 
 @pytest.mark.manual
-def test_dynamic_dropdowns_should_show_value_only_once():
-    """
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Dynamic dropdowns should show value only once
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ssui
 @pytest.mark.tier(2)
 def test_snapshot_timeline_group_actions():
@@ -7518,40 +6991,6 @@ def test_snapshot_timeline_group_actions():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_dynamic_dropdown_multiselect_default_element_is_shouldnt_be_blank_when_loaded_by_anot():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1645555
-    https://bugzilla.redhat.com/show_bug.cgi?id=1645555
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/16h
-        title: Dynamic Dropdown Multiselect: Default element is shouldn't
-               be blank when loaded by another element
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_expression_method_definitions_should_not_fail_with_script_error_in_a_dialog():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1558926
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/6h
-        startsin: 5.10
-        title: Expression method definitions should not fail with "" in a dialog
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_if_no_password_is_exposed_in_logs_during_migration():
     """
     OSP: Test if no password is exposed in logs during migration
@@ -7563,23 +7002,6 @@ def test_osp_test_if_no_password_is_exposed_in_logs_during_migration():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test if no password is exposed in logs during migration
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(3)
-def test_sui_test_all_language_translations():
-    """
-    desc
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: SUI : Test all Language translations
     """
     pass
 
@@ -7685,23 +7107,6 @@ def test_verify_saml_sso_works_fine_check_both_enable_disable_options():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_dialog_text_box_triggers_fields_shouldnt_refresh_too_soon_often():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1614321
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        startsin: 5.10
-        title: Dialog text box triggers fields shouldn't refresh too soon / often
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rep
 @pytest.mark.tier(1)
 def test_distributed_zone_mixed_appliance_ip_versions():
@@ -7729,23 +7134,6 @@ def test_appliance_scsi_control_vmware():
         casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_dynamic_check_box_does_not_update_in_classic_ui():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1570152
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: critical
-        initialEstimate: 1/4h
-        startsin: 5.8
-        title: Dynamic check box does not update in Classic UI
     """
     pass
 
@@ -7783,23 +7171,6 @@ def test_automate_git_import_multiple_domains():
         caseposneg: negative
         initialEstimate: 1/12h
         startsin: 5.10
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_cui_should_check_dialog_field_associations():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1559382
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/6h
-        title: CUI Should check dialog field associations
     """
     pass
 
@@ -7882,22 +7253,6 @@ def test_osp_vmware60_test_vm_migration_from_ubuntu():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware60-Test VM migration from ubuntu
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_changing_action_order_in_catalog_bundle_should_not_removes_resource():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1615853
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/16h
-        title: Changing action order in catalog bundle should not removes resource
     """
     pass
 
@@ -8086,25 +7441,6 @@ def test_playbook_with_already_existing_dialogs_name():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_notification_banner_service_event_should_be_shown_in_notification_bell():
-    """
-    1) OPS UI  and SSUI service requests should create an event in
-    notification bell
-    2) Also check , Clear All and "MArk as read" in notification bell
-    3) Number of events shown in notification bell
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Notification Banner : Service event should be shown in notification bell
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.retirement
 @pytest.mark.tier(2)
 def test_retire_cloud_vms_date_folder():
@@ -8117,21 +7453,6 @@ def test_retire_cloud_vms_date_folder():
         casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_create_generic_instance():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1577395
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Create generic Instance
     """
     pass
 
@@ -8220,22 +7541,6 @@ def test_black_console_ext_auth_options_disable():
             1. check changes in ui
             2. check changes in ui
             3. check changes in ui
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_reconfigure_service_fields_empty_after_deploying_service():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1580987
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Reconfigure service fields empty after deploying service
     """
     pass
 
@@ -8409,25 +7714,6 @@ def test_osp_test_migration_plan_can_be_unscheduled():
 
 
 @pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(3)
-def test_ssui_dynamic_dropdown_values_are_not_loaded_in_dropdown_unless_refresh_button_is_pres():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1322594
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.5
-        title: SSUI : Dynamic dropdown values are not loaded in dropdown
-               unless refresh button is pressed
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.control
 @pytest.mark.tier(3)
 def test_control_policy_simulation_displayed():
@@ -8567,19 +7853,6 @@ def test_distributed_zone_failover_cu_data_collector():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_dialog_value_type_integer_string_check_in_dropdown_elements():
-    """
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Dialog : value type(Integer/string) check in dropdown elements
     """
     pass
 
@@ -8981,24 +8254,6 @@ def test_api_edit_user_no_groups():
 
 
 @pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(3)
-def test_generic_object_should_be_visible_in_service_view():
-    """
-    Generic object should be visible in service view
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        setup: https://bugzilla.redhat.com/show_bug.cgi?id=1515945
-        startsin: 5.9
-        title: Generic object should be visible in service view
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
 def test_custom_service_dialog_quota_flavors():
@@ -9077,23 +8332,6 @@ def test_storage_ebs_volume_detach():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_in_dynamic_multi_select_dialog_elements_the_first_element_shouldnt_be_selected_when_n():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1576288
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/6h
-        title: In Dynamic multi select dialog elements the first element
-               shouldn't be selected when nil default is specified
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_machine_credentials_service_details_opsui():
@@ -9148,25 +8386,6 @@ def test_osp_test_associated_tags_before_and_after_migration_department_accounti
                (Department:Accounting kind)
     """
     pass
-
-
-@pytest.mark.manual
-def test_default_view_settings_should_apply_for_service_catalogs():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1553337
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.9
-        title: Default view settings should apply for service catalogs
-    """
-    pass
-
-
-
 
 
 @pytest.mark.manual
@@ -9283,7 +8502,6 @@ def test_ssui_test_snapshot_vm_memory_checkbox_when_creating_snapshot_for_powere
 
 
 @pytest.mark.manual
-@test_requirements.service
 @pytest.mark.tier(2)
 def test_heat_stacks_in_non_admin_tenants_shall_also_be_collected():
     """
@@ -9503,22 +8721,6 @@ def test_rightsize_memory_values_correct_rhv41():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_dialog_fields_should_update_after_hitting_save_in_dialog_editor():
-    """
-    de
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Dialog fields should update after hitting save in dialog editor
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_vpc_env_selection():
     """
     Test selection of components in environment page of cloud instances
@@ -9629,24 +8831,6 @@ def test_osp_test_create_migration_plan_create_and_read():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_it_should_add_new_service_catalog_item_when_display_in_catalog_selected_and_no_catalo():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1630385
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        startsin: 5.9
-        title: It should add new Service Catalog Item when "Display in
-               Catalog" selected and no Catalog chosen
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_warnings_after_bad_failed_imports():
     """
     OSP: Test warnings after bad/failed imports
@@ -9742,23 +8926,6 @@ def test_proxy_override_azure():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_rbac_user_with_no_permissions_should_not_be_able_to_create_catalog_item():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1460891
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: RBAC : User with no permissions should not be able to create catalog item
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_zone_credentials_windows():
     """
@@ -9796,19 +8963,6 @@ def test_storage_object_store_object_edit_tag_openstack():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_able_to_add_long_description_for_playbook_catalog_items():
-    """
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Able to add long description for playbook catalog items
     """
     pass
 
@@ -9876,7 +9030,6 @@ def test_ec2_deploy_instance_with_ssh_addition_template():
 
 
 @pytest.mark.manual
-@test_requirements.service
 @pytest.mark.tier(3)
 def test_add_cloud_key_pair():
     """
@@ -9891,22 +9044,6 @@ def test_add_cloud_key_pair():
         initialEstimate: 1/16h
         startsin: 5.5
         title: Add Cloud Key pair
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_textbox_value_should_update_with_automate_method():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1613443
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: TextBox value should update with automate method
     """
     pass
 
@@ -10100,31 +9237,6 @@ def test_embed_tower_add_gce_credentials():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_when_clicking_refresh_for_text_field_2_only_text_field_2_should_refreshed_of_service_():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1559999
-    Steps to Reproduce:
-    1. create a dialog with two text fields with no refresh relation
-    between them, showing their refresh buttons.
-    2. associate each to a different method that just logs "Refreshing X"
-    3. associating the dialog to a catalog item
-    4. tail -f log/automation.log | grep "Refreshing"
-    5. load the dialog
-    6. click "refresh" for field 2
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: When clicking refresh for text field 2 only text field 2
-               should refreshed of service dialog
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_disable_local_login_option_works_fine_verify_enable_disable_option():
@@ -10206,27 +9318,6 @@ def test_nor_cpu_vsphere55():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_dialogs_including_a_tag_control_element_should_submit_the_dialog():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1569470
-    1. create a dialog with a tag control element
-    2. configure the tag control element to be required
-    3. associated the dialog with a service
-    4. log into self-service to load the dialog
-    5. Submit the dialog
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Dialogs including a tag control element should submit the dialog
     """
     pass
 
@@ -10333,23 +9424,6 @@ def test_verify_that_users_can_access_help_documentation():
             2. Help documents are visible
             3. User created
             4. Help document are visible
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_reconfigure_service_for_dialogs_with_timeout_values():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1442920
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: low
-        initialEstimate: 1/4h
-        title: Test reconfigure service for dialogs with timeout values
     """
     pass
 
@@ -11120,24 +10194,6 @@ def test_embed_tower_add_public_repo():
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(2)
-def test_disable_toast_notifications_by_role_in_sui():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1496233
-
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.9
-        title: Disable toast notifications by role in SUI
     """
     pass
 
@@ -12038,22 +11094,6 @@ def test_embed_tower_add_amazon_credentials():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_timepicker_should_pass_correct_timing_on_service_order():
-    """
-    Timepicker doesn"t pass correct timing on service order
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Timepicker should pass correct timing on service order
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_candu_graphs_cluster_hourly_vsphere55():
@@ -12065,35 +11105,6 @@ def test_candu_graphs_cluster_hourly_vsphere55():
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_should_be_able_to_see_requests_if_our_users_are_in_groups_with_managed_tags():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1596738
-    rootTenant
-    |
-    subTenant
-    /           |               \
-    sub2Tenant sub2Tenant2 sub2Tenant3
-    usiness_group, can be: team1, team2, team3
-    business_unit, can be: fr, de, uk
-    We have 3 user groups:
-    groupA, attached to rootTenant and no filter, custom role full access
-    groupB, attached to rootTenant and filter business_unit=fr, custom
-    role access to catalog, services and machines
-    groupC, attached to sub2Tenant and filter business_unit=fr &
-    business_group=teamC, custom role access to catalog, services and
-    machines (same as for groupB)
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Should be able to see requests if our users are in groups with managed tags
     """
     pass
 
@@ -12195,34 +11206,6 @@ def test_automate_git_import_without_master():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_edit_catalog_item_after_remove_resource_pool():
-    """
-    Create catalog item with a resource pool , Remove resource pool from
-    the provider and then edit catalog item.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: low
-        initialEstimate: 1/8h
-        startsin: 5.5
-        testSteps:
-            1. Create a catalog item
-            2. Select cluster and resource pool and Save
-            3. Remove resource pool from provider
-            4. Edit catalog
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Validation message should be shown
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_optimize_memory_usage_by_making_object_in_hash():
     """
@@ -12255,22 +11238,6 @@ def test_key_pairs_quadicon():
         casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/20h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_disabling_dashboard_under_service_ui_for_a_role_shall_disable_the_dashboard():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1589409
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Disabling "Dashboard" under service UI for a role shall disable the dashboard
     """
     pass
 
@@ -12404,7 +11371,6 @@ def test_drift_analysis_vpshere6_rhel():
 
 
 @pytest.mark.manual
-@test_requirements.service
 @pytest.mark.tier(2)
 def test_bundle_stack_deployment():
     """
@@ -12535,26 +11501,6 @@ def test_credentials_login_password_blank():
         caseposneg: negative
         initialEstimate: 1/8h
         tags: rbac
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_value_input_into_service_dialog_element():
-    """
-    A value input into a service dialog element is not always visible to
-    another dynamic element that is set to auto refresh
-    https://bugzilla.redhat.com/show_bug.cgi?id=1364407
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.5
-        title: test value input into service dialog element
     """
     pass
 
@@ -12741,24 +11687,6 @@ def test_embed_tower_api_auth():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_service_retirement_requests_shall_be_run_by_the_user():
-    """
-    Create a request from non-admin user. Request shall be run by user.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.5
-        title: service retirement requests shall be run by the user
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_tagvis_tag_and_vm_combination():
     """
@@ -12805,23 +11733,6 @@ def test_embed_tower_exec_play_against_gce():
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_new_dialog_editor_entry_point_should_be_mandatory_for_dynamic_elements():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1488579
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        startsin: 5.9
-        title: New dialog editor : Entry point should be mandatory for dynamic elements
     """
     pass
 
@@ -13050,48 +11961,6 @@ def test_project_cloud_vm_quota_by_enforce():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_service_dialog_default_values_should_be_rendered_in_dialog_fields():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1385898
-    Create a dialog .set default value
-    Use the dialog in a catalog .
-    Order catalog.
-    Default values should be shown
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/8h
-        title: Service Dialog : Default values should be rendered in dialog fields
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_service_dialog_elements_with_regex_validation_should_be_validated():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1518971
-    Steps to Reproduce:
-    1. Create a Service Dialog
-    2. Add an element such as a text box and add a validation regex
-    3. Create a Catalog Item using the previously created Service Dialog
-    4. Order the Catalog Item
-    5. Enter data that fails to validate against the regex
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Service Dialog Elements with regex validation should be validated
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_verify_smart_mgmt_orchest_template():
     """
@@ -13122,23 +11991,6 @@ def test_osp_vmware60_test_vm_with_multiple_disks():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware60-Test VM with multiple Disks
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_child_dialog_should_update_with_new_options_based_on_option_of_parent_dialog_upon_ref():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1580535
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Child dialog should update with new options based on option
-               of parent dialog upon refreshing
     """
     pass
 
@@ -13177,26 +12029,6 @@ def test_osp_test_migration_plan_can_be_scheduled_to_run_at_later_date_time():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test migration plan can be scheduled to run at later date/time
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_dynamic_dropdown_values_should_load_correctly():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1581996
-    Steps to Reproduce:
-    1. Import the dialog and domain attached .
-    2. Select Contract A . Contract B gets selected .
-    3. In Location no values are loaded .
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Dynamic dropdown Values should load correctly
     """
     pass
 
@@ -13520,23 +12352,6 @@ def test_sui_rbac_see_catalogs_and_orders_as_user_with_permissions():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_dialog_dropdown_ui_values_in_the_dropdown_should_be_visible_in_edit_mode():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1557508
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/16h
-        title: Dialog dropdown UI values in the dropdown should be visible in edit mode
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(3)
 def test_embed_tower_credentials():
@@ -13826,38 +12641,6 @@ def test_vm_tempate_ownership_nogroup():
 
 
 @pytest.mark.manual
-def test_should_be_able_to_access_services_requests_as_user():
-    """
-    Unexpected Error when accessing SERVICE -> REQUESTS (undefined method
-    find_tags_by_grouping)
-    https://bugzilla.redhat.com/show_bug.cgi?id=1576129
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Should be able to access services - requests as user
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_drop_down_list_dialog_does_should_keep_default_value_for_integer_type_in_dialogs():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1554780
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        startsin: 5.9
-        title: Drop Down List Dialog does should keep default value for Integer type in dialogs
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware67_test_vm_with_multiple_disks():
     """
     OSP: vmware67-Test VM with multiple Disks
@@ -13870,22 +12653,6 @@ def test_osp_vmware67_test_vm_with_multiple_disks():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware67-Test VM with multiple Disks
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_dynamic_drop_down_dialog_should_work_with_automate_expression_method():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1583694
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/6h
-        title: Dynamic Drop Down Dialog should work with Automate Expression Method
     """
     pass
 
@@ -14161,25 +12928,6 @@ def test_verify_that_when_modifying_rbac_roles_existing_enabled_disabled_product
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_check_all_availability_zones_for_amazon_provider():
-    """
-    Check if all availability zones can be selected while creating catalog
-    item.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.5
-        title: Check all availability zones for amazon provider
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ssui
 @pytest.mark.tier(2)
 def test_sui_timeline_should_display_snapshots_at_the_time_of_creation():
@@ -14363,23 +13111,6 @@ def test_service_ansible_linked_vms_opsui_sui():
         casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_request_filter_on_request_page():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1498237
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: low
-        initialEstimate: 1/4h
-        title: Test Request filter on Request page
     """
     pass
 
@@ -14674,21 +13405,6 @@ def test_change_the_search_base_for_user_and_groups_lookup_at_domain_component_(
 
 
 @pytest.mark.manual
-def test_automation_executed_on_field_refresh_are_called_twice_in_self_service_dialogs():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1576873
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: automation executed on field refresh are called twice in self service dialogs
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rep
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_smartstate_analysis():
@@ -14940,22 +13656,6 @@ def test_osp_vmware60_test_vm_migration_from_nfs_storage_in_vmware_to_osp():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_remove_catalog_items_from_catalog_bundle_resource_list():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1639557
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: remove catalog items from Catalog Bundle resource list
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_automate_state_method():
     """
@@ -15102,23 +13802,6 @@ def test_external_auth_configuration_with_ipa():
 
 
 @pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(3)
-def test_sui_auto_refresh_of_pages_of_sui_request_and_service_explorer_and_myorders():
-    """
-    https://www.pivotaltracker.com/story/show/134430901
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: SUI : Auto-refresh of pages of SUI (Request and Service Explorer and MyOrders)
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_automate_requests_tab_exposed():
     """
@@ -15177,25 +13860,6 @@ def test_verify_retrieve_ldaps_groups_works_fine_for_ldap_user_from_cfme_webui()
 
 
 @pytest.mark.manual
-@test_requirements.service
-def test_retire_ansible_service_bundle():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1363897
-    Retirement state machine does not handle Ansible Tower services when
-    part of a bundle
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.5
-        title: test retire ansible service bundle
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
 def test_quota_calculation_using_service_dialog_overrides():
@@ -15243,23 +13907,6 @@ def test_retire_infra_vms_date_folder():
         casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_generic_object_details_displayed_from_a_service_do_not_include_associations_of_that_g():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1576828
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Generic object details displayed from a service do not
-               include associations of that generic object
     """
     pass
 
@@ -15335,24 +13982,6 @@ def test_satellite_credential_validation_times_out_with_error_message():
         caseimportance: medium
         initialEstimate: 1/6h
         title: Satellite credential validation times out with error message
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_azure_provisioning_service_owner():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1352903
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.5
-        title: Test azure provisioning service owner
     """
     pass
 
@@ -15490,24 +14119,6 @@ def test_verify_user_groups_can_be_retrieved_from_trusted_forest():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_catalog_item_changing_the_provider_template_after_filling_all_tabs():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1240443
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.5
-        title: Catalog Item : Changing the provider(template) after filling all tabs
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(1)
 def test_embed_tower_ha():
@@ -15552,32 +14163,6 @@ def test_embed_tower_add_azure_credentials():
         casecomponent: Ansible
         initialEstimate: 1/2h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(1)
-def test_service_dialog_import():
-    """
-    Steps:
-    1. Navigate to Automation > Automate > Customization
-    2. In `Import/Export` accordion, try to upload sample service dialog
-    How to check dialog uploaded successful?
-    Recheck it from `Export` table on same page or from `Service Dialogs`
-    accordion
-    Note:
-    CFME don"t support export from a version N to a version N-1
-    Additional info:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1535419
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        upstream: yes
     """
     pass
 
@@ -16060,24 +14645,6 @@ def test_chargeback_report_filter_tag():
 
 
 @pytest.mark.manual
-def test_sui_while_ordering_service_catalog_the_dynamic_drop_down_dialogs_fields_should_auto_r():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1568342
-    SUI - While ordering service catalog, the dynamic drop-down dialogs
-    fields do not auto-refreshed
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: SUI - While ordering service catalog, the dynamic drop-down
-               dialogs fields should auto-refresh
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_storage_ebs_volume_attach():
     """
     Requires:
@@ -16258,24 +14825,6 @@ def test_vms_retirement_state_field_is_capitalized_correctly():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_catalog_item_for_ansible_playbook():
-    """
-    desc
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: critical
-        initialEstimate: 1/4h
-        startsin: 5.8
-        title: Catalog Item for Ansible Playbook
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(1)
 def test_embed_ansible_catalog_items():
@@ -16382,24 +14931,6 @@ def test_service_infra_tenant_quota_cpu_default_entry_point():
 
 
 @pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(3)
-def test_service_ui_should_not_time_outs_after_10_mins_even_if_you_are_interacting_with_it():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1591436
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/16h
-        startsin: 5.8
-        title: Service UI should not time-outs after 10 mins even if you
-               are interacting with it
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.html5
 @pytest.mark.tier(2)
 def test_html5_console_disabled_vsphere65_opsui_ssui():
@@ -16469,20 +15000,6 @@ def test_chargeback_report_monthly():
         assignee: tpapaioa
         casecomponent: CandU
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_edit_catalog_bundle():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1631040
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Edit catalog bundle
     """
     pass
 
@@ -17098,23 +15615,6 @@ def test_service_ansible_playbook_order_non_ascii():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_entries_shouldnt_be_mislabeled_for_dropdown_element_in_dialog_editor():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1597802
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/16h
-        startsin: 5.10
-        title: Entries Shouldn't be Mislabeled for Dropdown element in Dialog Editor
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_credentials_change_password_leading_whitespace():
@@ -17279,22 +15779,6 @@ def test_active_tasks_get_timed_out_when_they_run_too_long():
         initialEstimate: 1/2h
         startsin: 5.7
         title: active tasks get timed out when they run too long
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(2)
-def test_reconfigure_existing_duplicate_orders():
-    """
-    decs
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
     """
     pass
 
@@ -17569,40 +16053,6 @@ def test_evmgroup_self_service_user_can_access_the_self_service_ui():
         expectedResults:
             1. User created successfully
             2. SSUI access granted
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(2)
-def test_notifications_should_appear_in_sui_after_enableing_embedded_ansible_role():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1637512
-
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        caseimportance: medium
-        initialEstimate: 1/16h
-        title: Notifications should appear in SUI after Enableing Embedded Ansible Role
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(3)
-def test_able_to_access_openstack_instance_console_from_self_service_portal():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1624573
-
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        initialEstimate: 1/2h
-        startsin: 5.9
-        title: Able to access Openstack instance console from self service portal
     """
     pass
 
@@ -20311,23 +18761,6 @@ def test_automate_user_has_groups():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_automate_methods_from_dynamic_dialog_should_run_as_per_designed():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1571000
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/16h
-        startsin: 5.9
-        title: Automate Methods from Dynamic Dialog should Run as per Designed
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_vmware_storage_profile_provision():
     """
@@ -20470,25 +18903,6 @@ def test_self_service_ui_should_honor_some_service_dialog_settings():
 
 
 @pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(3)
-def test_sui_service_explorer_will_also_show_child_services():
-    """
-    Login in SSUI
-    Service explorer should show child services if any.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: SUI : Service Explorer will also show child services
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(1)
 def test_dialog_items_default_values_on_different_screens():
@@ -20622,26 +19036,6 @@ def test_osp_test_security_group_can_be_selected_while_creating_migration_plan()
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_generic_objects_class_crud():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1650137
-    1.Create Generic Objects Class
-    2.Add button group
-    3.Go to Generic Objects Class details page
-    4.Delete the Generic Objects Class
-
-    Polarion:
-        assignee: nansari
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/16h
-        title: Generic Objects Class Crud
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
 def test_service_cloud_tenant_quota_cpu_default_entry_point():
@@ -20654,23 +19048,6 @@ def test_service_cloud_tenant_quota_cpu_default_entry_point():
         casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_service_dialog_saving_elements_when_switching_elements():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1454428
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Test service dialog saving elements when switching elements
     """
     pass
 
@@ -20765,21 +19142,6 @@ def test_credentials_change_password_with_special_characters():
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_default_selection_of_dropdown_list_is_should_display_properly():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1579405
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/6h
-        title: Default selection of dropdown list is should display properly
     """
     pass
 
@@ -20923,40 +19285,6 @@ def test_osp_test_migration_plan_delete():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test migration plan delete
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_custom_image_on_item_bundle_crud():
-    """
-    test_custom_image_on_item_bundle_crud
-    Upload image and test if the uploaded icon/image shows up in the table
-    .
-    https://bugzilla.redhat.com/show_bug.cgi?id=1487056
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.5
-        testSteps:
-            1. Create a catalog item
-            2. Upload custom image
-            3. remove custom image
-            4. Create a catalog  bundle
-            5. Upload a custom image
-            6. Change custom image
-        expectedResults:
-            1.
-            2. No error seen
-            3.
-            4.
-            5. No error seen
-            6.
     """
     pass
 
@@ -21108,22 +19436,6 @@ def test_osp_test_earlier_infra_mapping_can_be_viewed_in_migration_plan_wizard()
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_dialog_dynamic_entry_point_should_show_full_path():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1553846
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        startsin: 5.10
-        title: Dialog : dynamic entry point should show full path
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(1)
 def test_verify_ldap_authentication_for_the_cfme_default_groups():
@@ -21258,24 +19570,6 @@ def test_retire_cloud_vms_notification_folder():
         casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_request_check_provisioned_vm_link_on_request_page():
-    """
-    Provision a VM and click on the Provisioned VM Link on request page.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.5
-        title: Request : Check Provisioned VM link on Request page
     """
     pass
 
@@ -21991,24 +20285,6 @@ def test_osp_test_networking_before_and_after_migration_ip_address():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test networking before and after migration (IP Address)
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(1)
-def test_service_reconfigure_in_distributed_environment():
-    """
-    Create master and child appliance.
-    raise provisioning request in master and reconfigure in child.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Service Reconfigure in distributed environment
     """
     pass
 
@@ -25496,28 +23772,6 @@ def test_osp_vmware67_test_vm_migration_with_windows_2012_server():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_second_dialog_dynamic_element_should_be_able_to_read_the_previous_textbox_element():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1576107 Steps to
-    Reproduce:
-    1. import example automate domain
-    2. import example service dialog
-    3. create a generic catalog item with the dialog service dialog
-    provided
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Second dialog dynamic element should be able to read the
-               previous textbox element
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_username_fields_error_azure():
     """
@@ -25594,41 +23848,6 @@ def test_verify_benchmark_timings_are_correct():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_retire_on_date_for_multiple_service():
-    """
-    Retire on date for multiple service
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.5
-        title: Retire on date for multiple service
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_order_service_after_deleting_provider():
-    """
-    Order service
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Order service after deleting provider
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_verify_that_changing_groups_in_the_webui_updates_dashboard_items():
     """
@@ -25693,23 +23912,6 @@ def test_automate_restrict_domain_crud():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_vm_migrate_should_create_notifications_when_migrations_fail():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1478462
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: VM Migrate should create notifications  when migrations fail.
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.cloud_init
 @pytest.mark.tier(1)
 def test_cloud_init_with_cfme():
@@ -25722,23 +23924,6 @@ def test_cloud_init_with_cfme():
         endsin: 5.4
         initialEstimate: 1/2h
         startsin: 5.4
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_notification_notification_about_new_cfme_appliance_update_to_the_admin():
-    """
-    desc
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: low
-        initialEstimate: 1/4h
-        title: Notification : Notification about new cfme-appliance update to the admin
     """
     pass
 
@@ -25915,41 +24100,6 @@ def test_configure_ldaps_for_customized_port_eg_10636_10389_and_validate_cfme_au
 
 
 @pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(3)
-def test_sui_request_explorer_will_show_all_status_of_requests():
-    """
-    desc
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.8
-        title: SUI: Request explorer will show all status of requests
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_user_should_be_able_to_change_the_order_of_values_of_the_drop_down_list():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1594301
-
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/16h
-        startsin: 5.10
-        title: User should be able to change the order of values of the drop down list
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 def test_embed_tower_exec_play_against_ipv6_machine():
     """
@@ -26024,27 +24174,6 @@ def test_nor_memory_vsphere6():
         assignee: tpapaioa
         casecomponent: CandU
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_check_required_button_on_all_dialog_elements():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1512398
-    Steps to Reproduce:
-    1. Create a dialog with some entries and "required" button turned ON.
-    2. Create a catalog item that uses this dialog.
-    3. When we order that catalog item the order is submitted without
-    selecting any item in the dropdown.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        initialEstimate: 1/4h
-        title: Check "Required" button on all dialog elements
     """
     pass
 
@@ -26162,21 +24291,6 @@ def test_verify_cfme_login_page_redirects_to_saml_login_page_upon_successful_con
         initialEstimate: 1/4h
         title: Verify CFME login page redirects to SAML login page upon
                successful configuration
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_search_field_at_the_top_of_a_dynamic_drop_down_dialog_element_should_display():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1553347
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        startsin: 5.9
-        title: search field at the top of a dynamic drop-down dialog element should display
     """
     pass
 

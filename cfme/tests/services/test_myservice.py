@@ -157,3 +157,19 @@ def test_service_link(appliance, context, myservice, provider):
         view.entities.summary('Relationships').click_at('Service')
         new_view = myservice.create_view(MyServiceDetailView)
         assert new_view.wait_displayed()
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_retire_on_date_for_multiple_service():
+    """
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/8h
+        startsin: 5.5
+        tags: service
+    """
+    pass
