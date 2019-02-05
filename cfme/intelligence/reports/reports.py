@@ -336,7 +336,7 @@ class Report(BaseEntity, Updateable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ReportDetailsView, override=updates, wait="5s")
+        view = self.create_view(ReportDetailsView, override=updates, wait="60s")
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(

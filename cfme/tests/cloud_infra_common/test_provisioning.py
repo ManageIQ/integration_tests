@@ -261,12 +261,14 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
         BZ(
             1662638,
             forced_streams=["5.9", "5.10", "upstream"],
-            unblock=lambda provider: provider.one_of(VMwareProvider)
-            and provider.version == "6.5",
+            unblock=not (
+                lambda provider: provider.one_of(VMwareProvider)
+                and provider.version == 6.5
+            ),
         )
     ]
 )
-@pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
+@pytest.mark.parametrize('auto', [False], ids=["Manual"])
 def test_provision_from_template_using_rest(appliance, request, provider, vm_name, auto):
     """ Tests provisioning from a template using the REST API.
 

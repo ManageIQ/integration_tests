@@ -89,8 +89,10 @@ def clean_vm(appliance, provider, vm_name):
         BZ(
             1662638,
             forced_streams=["5.9", "5.10", "upstream"],
-            unblock=lambda provider: provider.one_of(VMwareProvider)
-            and provider.version == "6.5",
+            unblock=not (
+                lambda provider: provider.one_of(VMwareProvider)
+                and provider.version == 6.5
+            ),
         )
     ]
 )
@@ -193,8 +195,10 @@ def test_provision_vlan(request, appliance, provision_data, vnic_profile, provid
         BZ(
             1662638,
             forced_streams=["5.9", "5.10", "upstream"],
-            unblock=lambda provider: provider.one_of(VMwareProvider)
-            and provider.version == "6.5",
+            unblock=not (
+                lambda provider: provider.one_of(VMwareProvider)
+                and provider.version == 6.5
+            ),
         )
     ]
 )
