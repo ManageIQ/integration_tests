@@ -8,6 +8,7 @@ from cfme.cloud.availability_zone import ProviderAvailabilityZoneAllView
 from cfme.cloud.flavor import ProviderFlavorAllView
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider import CloudProviderImagesView, CloudProviderInstancesView
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.stack import ProviderStackAllView
 from cfme.cloud.tenant import ProviderTenantAllView
@@ -220,12 +221,13 @@ def prov_child_visibility(appliance, provider, request, tag, user_restricted):
         provider.add_tag(tag=tag)
         rel_cls = getattr(appliance.collections, relationship)
         actual_visibility = _check_actual_visibility(rel_cls)
-        if not actual_visibility:
-            pytest.skip("There are no relationships for {}".format(relationship))
 
         @request.addfinalizer
         def _finalize():
             provider.remove_tag(tag=tag)
+
+        if not actual_visibility:
+            pytest.skip("There are no relationships for {}".format(relationship))
 
         with user_restricted:
             actual_visibility = _check_actual_visibility(rel_cls)
@@ -274,20 +276,20 @@ def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, r
 
 
 @pytest.mark.parametrize("relationship", cloud_test_items)
-@pytest.mark.provider([OpenStackProvider], selector=ONE)
-# used OpenStackProvider to cover all relationship as they have each of them
+@pytest.mark.provider(classes=[OpenStackProvider, EC2Provider], selector=ONE)
 def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, relationship):
     """ Tests that provider child's should not be visible for restricted user
     Prerequisites:
         Catalog, tag, role, group and restricted user should be created
 
-    Steps:
-        1. As admin add tag to provider
-        2. Login as restricted user, providers child not visible for user
-
     Polarion:
         assignee: anikifor
         initialEstimate: 1/8h
+        casecomponent: Cloud
+        caseimportance: high
+        testSteps:
+            1. As admin add tag to provider
+            2. Login as restricted user, providers child not visible for user
     """
     prov_child_visibility(relationship, visibility=False)
 
