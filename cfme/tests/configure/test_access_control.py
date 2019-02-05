@@ -1654,9 +1654,8 @@ def test_tenant_automation_domains():
     pass
 
 
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-def test_superadmin_child_tenant_delete_parent_catalog():
+@pytest.mark.tier(2)
+def test_superadmin_child_tenant_delete_parent_catalog(appliance, group_collection, request):
     """
     Child superadmin tenant should able to delete catalog belonging to
     superadmin in parent tenant. This is by design tenancy has not been
@@ -1678,7 +1677,33 @@ def test_superadmin_child_tenant_delete_parent_catalog():
         initialEstimate: 1/2h
         startsin: 5.5
     """
-    pass
+    tenant_collection = appliance.collections.tenants
+    root_tenant = tenant_collection.get_root_tenant()
+    catalog_name = fauxfactory.gen_alphanumeric()
+    cat = appliance.collections.catalogs.create(name=catalog_name, description='my catalog')
+    new_tenant = tenant_collection.create(
+        name="tenant{}".format(fauxfactory.gen_alpha(4)),
+        description=fauxfactory.gen_alphanumeric(16),
+        parent=root_tenant)
+
+    group = group_collection.create(description='grp{}'.format(fauxfactory.gen_alphanumeric()),
+                                    role="EvmRole-super_administrator",
+                                    tenant="{}/{}".format(root_tenant.name, new_tenant.name))
+    user = new_user(appliance, [group])
+
+    @request.addfinalizer
+    def _delete_user_group_tenant():
+        for item in [user, group, new_tenant]:
+            if item.exists:
+                item.delete()
+
+    try:
+        with user:
+            navigate_to(appliance.server, 'LoggedIn')
+            cat.delete()
+            assert not cat.exists
+    finally:
+        user.appliance.server.login_admin()
 
 
 @pytest.mark.manual
