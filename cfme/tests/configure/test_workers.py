@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import pytest
 
 from cfme.utils.blockers import BZ
@@ -9,13 +8,14 @@ from cfme.utils.wait import wait_for
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @pytest.mark.nondestructive
-@pytest.mark.meta(blockers=[BZ(1531524, forced_streams=["5.9", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1672758)])
 def test_restart_workers(appliance):
     """
     Polarion:
-        assignee: mmojzis
-        caseimportance: low
+        assignee: anikifor
+        caseimportance: high
         initialEstimate: 1/4h
+        casecomponent: Configuration
     """
     worker = appliance.collections.diagnostic_workers.instantiate(name="Generic Worker")
     pids = worker.reload_worker()
