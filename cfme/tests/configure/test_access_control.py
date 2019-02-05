@@ -1576,9 +1576,8 @@ def test_tenant_ssui_users_can_see_their_services():
     pass
 
 
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-def test_tenant_unique_automation_domain_name_on_parent_level():
+@pytest.mark.tier(3)
+def test_tenant_unique_automation_domain_name_on_parent_level(appliance, request):
     """
     Automation domain name is unique across parent tenants and cannot be
     used twice.
@@ -1590,7 +1589,24 @@ def test_tenant_unique_automation_domain_name_on_parent_level():
         initialEstimate: 1/2h
         startsin: 5.5
     """
-    pass
+    domain_name = fauxfactory.gen_alphanumeric()
+    domain1 = appliance.collections.domains.create(name=domain_name, enabled=True)
+    msg = "Name has already been taken"
+
+    with pytest.raises(Exception, match=msg):
+        domain2 = appliance.collections.domains.create(name=domain_name, enabled=True)
+
+    domain1.delete()
+
+    @request.addfinalizer
+    def _delete_domain():
+        if domain1.exists:
+            domain1.delete()
+        try:
+            if domain2.exists:
+                domain2.delete()
+        except NameError:
+            pass
 
 
 @pytest.mark.manual
