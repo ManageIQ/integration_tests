@@ -31,6 +31,14 @@ class EntryPoint(Input):
             return True
         return False
 
+    def click(self):
+        # After clicking on widget - 'retirement_entry_point', 'reconfigure_entry_point' or
+        # 'provisioning_entry_point'; 'Select Entry Point Instance'(pop up) occures which
+        # helps to select provided paths using tree structure.
+        # 'Click' property is added to these widgets because some tests are selecting provided
+        # paths only via modal tree(using pop up).
+        self.browser.click(self)
+
 
 # Views
 class BasicInfoForm(ServicesCatalogView):

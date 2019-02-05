@@ -64,7 +64,7 @@ def test_automate_git_domain_displayed_in_service(appliance, imported_domain, br
     collection = appliance.collections.catalog_items
     cat_item = collection.instantiate(collection.GENERIC, "test")
     view = navigate_to(cat_item, "Add")
-    view.field_entry_point.fill("")
+    view.provisioning_entry_point.click()
     view.modal.tree.click_path(
         "Datastore",
         "{0} ({1}) ({0}) (Locked)".format(imported_domain.name, branch),
@@ -76,5 +76,5 @@ def test_automate_git_domain_displayed_in_service(appliance, imported_domain, br
     )
     view.modal.include_domain.fill(True)
     view.modal.apply.click()
-    assert view.field_entry_point.value == ("/{}/Service/Provisioning/StateMachines/"
+    assert view.provisioning_entry_point.value == ("/{}/Service/Provisioning/StateMachines/"
         "ServiceProvision_Template/CatalogItemInitialization".format(imported_domain.name))
