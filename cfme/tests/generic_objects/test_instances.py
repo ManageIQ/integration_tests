@@ -76,12 +76,12 @@ def add_generic_object_to_service(appliance, service, generic_object):
 
 @pytest.fixture(scope="module")
 def categories(request, appliance):
-    return rest_gen_data.categories(request, appliance.rest_api, 3)
+    return rest_gen_data.categories(request, appliance, 3)
 
 
 @pytest.fixture(scope="module")
 def tags(request, appliance, categories):
-    return rest_gen_data.tags(request, appliance.rest_api, categories)
+    return rest_gen_data.tags(request, appliance, categories)
 
 
 @pytest.fixture(scope="module")
@@ -220,6 +220,7 @@ def test_generic_objects_tag_ui(appliance, generic_object, tag_place):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: GenericObjects
     """
     with appliance.context.use(ViaUI):
         assigned_tag = generic_object.add_tag(details=tag_place)
@@ -242,8 +243,9 @@ def test_generic_objects_tag_rest(appliance, generic_object, tags):
         test_flag: rest
 
     Polarion:
-        assignee: anikifor
+        assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: GenericObjects
     """
     tag = tags[0]
     with appliance.context.use(ViaREST):
