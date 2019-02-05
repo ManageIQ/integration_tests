@@ -262,7 +262,7 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
 
     @property
     def button_icon_name(self):
-        return 'Button Image 1' if self.appliance.version < '5.9' else 'broom'
+        return 'broom'
 
     def update(self, updates):
         view = navigate_to(self, 'Edit')

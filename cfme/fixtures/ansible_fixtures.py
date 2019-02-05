@@ -28,10 +28,7 @@ def ansible_repository(appliance, wait_for_ansible):
     except KeyError:
         pytest.skip("Skipping since no such key found in yaml")
     view = navigate_to(repository, "Details")
-    if appliance.version < "5.9":
-        refresh = view.browser.refresh
-    else:
-        refresh = view.toolbar.refresh.click
+    refresh = view.toolbar.refresh.click
     wait_for(
         lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
         timeout=60,
