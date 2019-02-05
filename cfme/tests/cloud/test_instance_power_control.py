@@ -195,12 +195,12 @@ def wait_for_instance_state(soft_assert, instance, state):
 def test_quadicon_terminate_cancel(provider, testing_instance, ensure_vm_running, soft_assert):
     """ Tests terminate cancel
 
-    Metadata:
-        test_flag: power_control, provision
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
+        casecomponent: Cloud
+        caseimportance: high
+        tags: power
     """
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE,
                                              cancel=True,
@@ -211,12 +211,12 @@ def test_quadicon_terminate_cancel(provider, testing_instance, ensure_vm_running
 def test_quadicon_terminate(appliance, provider, testing_instance, ensure_vm_running, soft_assert):
     """ Tests terminate instance
 
-    Metadata:
-        test_flag: power_control, provision
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
+        casecomponent: Cloud
+        caseimportance: high
+        tags: power
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE, from_details=False)
@@ -256,12 +256,12 @@ def test_stop(appliance, provider, testing_instance, ensure_vm_running, soft_ass
 def test_start(appliance, provider, testing_instance, ensure_vm_stopped, soft_assert):
     """ Tests instance start
 
-    Metadata:
-        test_flag: power_control, provision
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
+        casecomponent: Cloud
+        caseimportance: high
+        tags: power
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_OFF,
                                                     timeout=900)
@@ -351,12 +351,12 @@ def test_power_on_or_off_multiple(provider, testing_instance, testing_instance2,
 def test_hard_reboot(appliance, provider, testing_instance, ensure_vm_running, soft_assert):
     """ Tests instance hard reboot
 
-    Metadata:
-        test_flag: power_control, provision
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
+        casecomponent: Cloud
+        caseimportance: high
+        tags: power
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     view = navigate_to(testing_instance, 'Details')
@@ -375,12 +375,12 @@ def test_hard_reboot_unsupported(appliance, testing_instance):
     """
     Tests that hard reboot throws an 'unsupported' error message on an Azure instance
 
-    Metadata:
-        test_flag: power_control, provision
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/8h
+        casecomponent: Cloud
+        caseimportance: high
+        tags: power
     """
     testing_instance.power_control_from_cfme(option=testing_instance.HARD_REBOOT,
                                              from_details=False)
@@ -397,12 +397,12 @@ def test_hard_reboot_unsupported(appliance, testing_instance):
 def test_suspend(appliance, provider, testing_instance, ensure_vm_running, soft_assert):
     """ Tests instance suspend
 
-    Metadata:
-        test_flag: power_control, provision
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
+        casecomponent: Cloud
+        caseimportance: high
+        tags: power
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.SUSPEND)
@@ -419,12 +419,12 @@ def test_suspend(appliance, provider, testing_instance, ensure_vm_running, soft_
 def test_unpause(appliance, provider, testing_instance, ensure_vm_paused, soft_assert):
     """ Tests instance unpause
 
-    Metadata:
-        test_flag: power_control, provision
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
+        casecomponent: Cloud
+        caseimportance: high
+        tags: power
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_PAUSED)
     testing_instance.power_control_from_cfme(option=testing_instance.START)
@@ -439,12 +439,12 @@ def test_unpause(appliance, provider, testing_instance, ensure_vm_paused, soft_a
 def test_resume(appliance, provider, testing_instance, ensure_vm_suspended, soft_assert):
     """ Tests instance resume
 
-    Metadata:
-        test_flag: power_control, provision
-
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
+        casecomponent: Cloud
+        caseimportance: high
+        tags: power
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_SUSPENDED)
     testing_instance.power_control_from_cfme(option=testing_instance.START)
@@ -456,14 +456,14 @@ def test_resume(appliance, provider, testing_instance, ensure_vm_suspended, soft
 
 
 def test_terminate(provider, testing_instance, ensure_vm_running, soft_assert, appliance):
-    """ Tests instance terminate
-
-    Metadata:
-        test_flag: power_control, provision
+    """Tests instance terminate
 
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
+        casecomponent: Cloud
+        caseimportance: high
+        tags: power
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE)
@@ -478,13 +478,12 @@ def test_terminate(provider, testing_instance, ensure_vm_running, soft_assert, a
 def test_instance_power_options_from_on(provider, testing_instance, ensure_vm_running, soft_assert):
     """ Tests available power options from ON state
 
-    Metadata:
-        test_flag: power_control
-
     Polarion:
         assignee: ghubale
         casecomponent: Cloud
         initialEstimate: 1/10h
+        caseimportance: high
+        tags: power
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     check_power_options(soft_assert, testing_instance, 'on')
@@ -492,15 +491,14 @@ def test_instance_power_options_from_on(provider, testing_instance, ensure_vm_ru
 
 def test_instance_power_options_from_off(provider, testing_instance,
                                          ensure_vm_stopped, soft_assert):
-    """ Tests available power options from OFF state
-
-    Metadata:
-        test_flag: power_control
+    """Tests available power options from OFF state
 
     Polarion:
         assignee: ghubale
         casecomponent: Cloud
         initialEstimate: 1/10h
+        caseimportance: high
+        tags: power
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_OFF,
                                                     timeout=1200)

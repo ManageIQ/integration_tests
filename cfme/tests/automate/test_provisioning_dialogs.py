@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.utils.blockers import BZ
 from cfme.automate.provisioning_dialogs import ProvisioningDialogsCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
@@ -16,9 +15,11 @@ from cfme.utils.update import update
 def test_provisioning_dialog_crud(appliance):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         initialEstimate: 1/10h
+        caseimportance: medium
+        tags: automate
     """
     # CREATE
     collection = appliance.collections.provisioning_dialogs
@@ -70,6 +71,7 @@ def test_provisioning_dialogs_sorting(appliance, name, by, order):
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/30h
+        tags: automate
     """
     view = navigate_to(appliance.collections.provisioning_dialogs, 'All')
     view.sidebar.provisioning_dialogs.tree.click_path("All Dialogs", name)

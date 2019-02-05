@@ -87,22 +87,20 @@ def testing_vm(setup_provider, provider):
 def test_vmware_vimapi_hotadd_disk(
         appliance, request, testing_group, provider, testing_vm, domain, cls):
     """ Tests hot adding a disk to vmware vm.
-
     This test exercises the ``VMware_HotAdd_Disk`` method, located in ``/Integration/VMware/VimApi``
 
-    Steps:
-        * It creates an instance in ``System/Request`` that can be accessible from eg. a button.
-        * Then it creates a button, that refers to the ``VMware_HotAdd_Disk`` in ``Request``. The
-            button shall belong in the VM and instance button group.
-        * After the button is created, it goes to a VM's summary page, clicks the button.
-        * The test waits until the capacity of disks is raised.
-
-    Metadata:
-        test_flag: hotdisk, provision
-
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         initialEstimate: 1/8h
+        casecomponent: Automate
+        caseimportance: critical
+        tags: automate
+        testSteps:
+            1. It creates an instance in ``System/Request`` that can be accessible from eg. button
+            2. Then it creates a button, that refers to the ``VMware_HotAdd_Disk`` in ``Request``.
+               The button shall belong in the VM and instance button group.
+            3. After the button is created, it goes to a VM's summary page, clicks the button.
+            4. The test waits until the capacity of disks is raised.
     """
     meth = cls.methods.create(
         name='load_value_{}'.format(fauxfactory.gen_alpha()),

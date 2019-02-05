@@ -35,10 +35,11 @@ def parent_namespace(request, domain):
 def test_namespace_crud(request, parent_namespace):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/16h
+        tags: automate
     """
     ns = parent_namespace.namespaces.create(
         name=fauxfactory.gen_alpha(),
@@ -58,10 +59,11 @@ def test_namespace_crud(request, parent_namespace):
 def test_namespace_delete_from_table(request, parent_namespace):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/30h
+        tags: automate
     """
     generated = []
     for _ in range(3):
@@ -79,10 +81,11 @@ def test_namespace_delete_from_table(request, parent_namespace):
 def test_duplicate_namespace_disallowed(request, parent_namespace):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseposneg: negative
         initialEstimate: 1/16h
+        tags: automate
     """
     ns = parent_namespace.namespaces.create(
         name=fauxfactory.gen_alpha(),

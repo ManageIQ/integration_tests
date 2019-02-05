@@ -16,10 +16,11 @@ pytestmark = [test_requirements.automate]
 def test_domain_crud(request, enabled, appliance):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/30h
+        tags: automate
     """
     domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
@@ -48,9 +49,11 @@ def test_domain_crud(request, enabled, appliance):
 def test_domain_edit_enabled(request, appliance):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         initialEstimate: 1/16h
+        caseimportance: high
+        tags: automate
     """
     domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
@@ -70,10 +73,11 @@ def test_domain_edit_enabled(request, appliance):
 def test_domain_lock_disabled(request, appliance):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/16h
+        tags: automate
     """
     domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
@@ -90,10 +94,11 @@ def test_domain_lock_disabled(request, appliance):
 def test_domain_delete_from_table(request, appliance):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: low
         initialEstimate: 1/30h
+        tags: automate
     """
     generated = []
     for _ in range(3):
@@ -113,10 +118,11 @@ def test_domain_delete_from_table(request, appliance):
 def test_duplicate_domain_disallowed(request, appliance):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseposneg: negative
         initialEstimate: 1/60h
+        tags: automate
     """
     domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
@@ -135,11 +141,12 @@ def test_duplicate_domain_disallowed(request, appliance):
 def test_domain_cannot_delete_builtin(appliance):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: critical
         caseposneg: negative
         initialEstimate: 1/16h
+        tags: automate
     """
     manageiq_domain = appliance.collections.domains.instantiate(name='ManageIQ')
     details_view = navigate_to(manageiq_domain, 'Details')
@@ -155,11 +162,12 @@ def test_domain_cannot_delete_builtin(appliance):
 def test_domain_cannot_edit_builtin(appliance):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: critical
         caseposneg: negative
         initialEstimate: 1/16h
+        tags: automate
     """
     manageiq_domain = appliance.collections.domains.instantiate(name='ManageIQ')
     details_view = navigate_to(manageiq_domain, 'Details')
@@ -174,11 +182,12 @@ def test_domain_cannot_edit_builtin(appliance):
 def test_domain_name_wrong(appliance):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/60h
+        tags: automate
     """
     with pytest.raises(Exception, match='Name may contain only'):
         appliance.collections.domains.create(name='with space')
@@ -188,9 +197,11 @@ def test_domain_name_wrong(appliance):
 def test_domain_lock_unlock(request, appliance):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         initialEstimate: 1/16h
+        caseimportance: medium
+        tags: automate
     """
     domain = appliance.collections.domains.create(
         name=fauxfactory.gen_alpha(),
@@ -267,9 +278,11 @@ def test_domain_import_git(request, appliance, url, param_type, param_value, ver
     """Verifies that a domain can be imported from git.
 
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         initialEstimate: 1/20h
+        caseimportance: medium
+        tags: automate
     """
     repo = AutomateGitRepository(url=url, verify_ssl=verify_ssl, appliance=appliance)
     domain = repo.import_domain_from(**{param_type: param_value})

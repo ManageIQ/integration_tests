@@ -18,19 +18,17 @@ pytestmark = [
 def test_domain_present(domain_name, soft_assert, appliance):
     """This test verifies presence of domains that are included in the appliance.
 
-    Prerequisities:
-        * Clean appliance.
-
-    Steps:
-        * Open the Automate Explorer.
-        * Verify that all of the required domains are present.
-
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/60h
         testtype: functional
+        tags: automate
+        testSteps:
+            1. Clean appliance.
+            2. Open the Automate Explorer.
+            3. Verify that all of the required domains are present.
     """
     dc = DomainCollection(appliance)
     domain = dc.instantiate(name=domain_name)

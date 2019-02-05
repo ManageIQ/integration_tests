@@ -43,10 +43,11 @@ def klass(request, namespace):
 def test_method_crud(klass):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/16h
+        tags: automate
     """
     method = klass.methods.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -72,9 +73,11 @@ def test_method_crud(klass):
 def test_automate_method_inputs_crud(klass):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         initialEstimate: 1/8h
+        caseimportance: critical
+        tags: automate
     """
     method = klass.methods.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -110,10 +113,12 @@ def test_automate_method_inputs_crud(klass):
 def test_duplicate_method_disallowed(request, klass):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseposneg: negative
         initialEstimate: 1/10h
+        caseimportance: critical
+        tags: automate
     """
     name = fauxfactory.gen_alpha()
     klass.methods.create(

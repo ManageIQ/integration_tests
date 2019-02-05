@@ -143,7 +143,9 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
     Polarion:
         assignee: ghubale
         casecomponent: Infra
+        caseimportance: high
         initialEstimate: 1/8h
+        tags: quota
     """
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
@@ -183,13 +185,12 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, provider, se
                                                 custom_prov_data, catalog_item):
     """Tests quota enforcement via service infra
 
-    Metadata:
-        test_flag: quota
-
     Polarion:
         assignee: ghubale
         casecomponent: Infra
+        caseimportance: high
         initialEstimate: 1/8h
+        tags: quota
     """
     with appliance.context.use(context):
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
@@ -208,12 +209,11 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, provider, se
         catalog_item.delete()
 
 
-@pytest.mark.rhv2
-@pytest.mark.meta(blockers=[BZ(1626232, forced_streams=['5.10'])])
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
 # indirect is the list where we define which fixtures are to be passed values indirectly.
+@pytest.mark.rhv2
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data'],
     [
@@ -228,13 +228,12 @@ def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_ro
                                      small_vm, custom_prov_data):
     """Tests quota with vm reconfigure
 
-    Metadata:
-        test_flag: quota
-
     Polarion:
         assignee: ghubale
         casecomponent: Infra
+        caseimportance: high
         initialEstimate: 1/6h
+        tags: quota
     """
     original_config = small_vm.configuration.copy()
     new_config = small_vm.configuration.copy()
@@ -257,10 +256,13 @@ def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_ro
 def test_setting_child_quota_more_than_parent(appliance, tenants_setup, parent_quota, child_quota,
                                               flash_text):
     """
+
     Polarion:
         assignee: ghubale
         casecomponent: Provisioning
+        caseimportance: high
         initialEstimate: 1/12h
+        tags: quota
     """
     test_parent, test_child = tenants_setup
     view = navigate_to(test_parent, 'ManageQuotas')
@@ -298,20 +300,19 @@ def test_setting_child_quota_more_than_parent(appliance, tenants_setup, parent_q
 def test_vm_migration_after_assigning_tenant_quota(appliance, setup_provider, small_vm,
                                                    set_roottenant_quota,
                                                    custom_prov_data, provider):
-    """prerequisite: Provider should be added
-
-    steps:
-
-    1. Create VM
-    2. Assign tenant quota
-    3. Migrate VM
-    4. Check whether migration is successfully done
-
+    """
 
     Polarion:
         assignee: ghubale
         casecomponent: Infra
+        caseimportance: high
         initialEstimate: 1/6h
+        tags: quota
+        testSteps:
+            1. Create VM
+            2. Assign tenant quota
+            3. Migrate VM
+            4. Check whether migration is successfully done
     """
 
     migrate_to = check_hosts(small_vm, provider)
