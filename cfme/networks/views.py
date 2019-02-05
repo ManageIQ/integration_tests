@@ -1,5 +1,6 @@
 from widgetastic.widget import View, Text, Select
 from widgetastic_patternfly import (
+    BootstrapNav,
     Dropdown,
     Accordion,
     Button,
@@ -90,6 +91,13 @@ class NetworkProviderView(BaseLoggedInPage):
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
                 self.entities.title.text == 'Network Managers')
 
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
+
 
 class NetworkProviderDetailsView(BaseLoggedInPage):
     """ Represents detail view of network provider """
@@ -174,6 +182,13 @@ class BalancerView(BaseLoggedInPage):
                 self.navigation.currently_selected == ['Networks', 'Load Balancers'] and
                 self.entities.title.text == 'Load Balancers')
 
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
+
 
 class BalancerDetailsView(BaseLoggedInPage):
     """ Represents detail view of network provider """
@@ -245,6 +260,13 @@ class CloudNetworkView(BaseLoggedInPage):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Networks'] and
                 self.entities.title.text == 'Cloud Networks')
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class CloudNetworkDetailsView(BaseLoggedInPage):
@@ -344,6 +366,13 @@ class NetworkPortView(BaseLoggedInPage):
                 self.navigation.currently_selected == ['Networks', 'Network Ports'] and
                 self.entities.title.text == 'Network Ports')
 
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
+
 
 class NetworkPortDetailsView(BaseLoggedInPage):
     """ Represents detail view of network provider """
@@ -416,6 +445,13 @@ class NetworkRouterView(BaseLoggedInPage):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Network Routers'] and
                 self.entities.title.text == 'Network Routers')
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class NetworkRouterDetailsView(BaseLoggedInPage):
@@ -521,6 +557,13 @@ class SecurityGroupView(BaseLoggedInPage):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Security Groups'] and
                 self.entities.title.text == 'Security Groups')
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class ProviderSecurityGroupAllView(SecurityGroupView):
@@ -632,6 +675,13 @@ class SubnetView(BaseLoggedInPage):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Subnets'] and
                 self.entities.title.text == 'Cloud Subnets')
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class SubnetDetailsView(BaseLoggedInPage):
@@ -828,6 +878,13 @@ class FloatingIpView(BaseLoggedInPage):
     def is_displayed(self):
         return (self.navigation.currently_selected == ['Networks', 'Floating IPs'] and
                 self.entities.title.text == 'Floating IPs')
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class FloatingIpDetailsView(BaseLoggedInPage):

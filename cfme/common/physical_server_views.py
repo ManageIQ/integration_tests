@@ -2,12 +2,12 @@
 from lxml.html import document_fromstring
 from widgetastic.utils import Parameter
 from widgetastic.widget import ParametrizedView, Text, View
+from cfme.base.login import BaseLoggedInPage
 from widgetastic_manageiq import (
     BaseEntitiesView, JSBaseEntity, BootstrapTreeview, Button, ItemsToolBarViewSelector, Search,
     SummaryTable, TimelinesView, BaseNonInteractiveEntitiesView, ManageIQTree)
-from widgetastic_patternfly import BreadCrumb, Dropdown, Accordion
-
-from cfme.base.login import BaseLoggedInPage
+from widgetastic_patternfly import (
+    BootstrapNav, BreadCrumb, Dropdown, Accordion)
 
 
 class ComputePhysicalInfrastructureServersView(BaseLoggedInPage):
@@ -167,6 +167,13 @@ class PhysicalServersView(ComputePhysicalInfrastructureServersView):
     def is_displayed(self):
         return (self.in_compute_physical_infrastructure_servers and
                 self.title.text == "Physical Servers")
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class PhysicalServerNetworkDevicesView(ComputePhysicalInfrastructureServersView):

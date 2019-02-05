@@ -14,6 +14,7 @@ from widgetastic.widget import (
     Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
 from widgetastic_patternfly import (
     Button,
+    BootstrapNav,
     BootstrapSelect,
     BootstrapSwitch,
     CheckableBootstrapTreeview,
@@ -210,6 +211,12 @@ class VmsOnlyAllView(InfraVmView):
     sidebar = View.nested(VmsTemplatesAccordion)
     search = View.nested(Search)
     including_entities = View.include(VMEntities, use_parent=True)
+
+    @View.nested
+    class filters(Accordion):  # noqa
+        ACCORDION_NAME = "All VMs"
+
+        tree = ManageIQTree()
 
     @property
     def is_displayed(self):

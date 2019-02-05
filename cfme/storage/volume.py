@@ -3,7 +3,7 @@ import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import TextInput
-from widgetastic_patternfly import BreadCrumb, Button, Dropdown, Input
+from widgetastic_patternfly import BootstrapNav, BreadCrumb, Button, Dropdown, Input
 from widgetastic_manageiq import Search
 
 from widgetastic.widget import View, Text, NoSuchElementException
@@ -74,6 +74,13 @@ class VolumeAllView(VolumeView):
             self.in_volume and
             self.entities.title.text == 'Cloud Volumes'
         )
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class VolumeDetailsView(VolumeView):

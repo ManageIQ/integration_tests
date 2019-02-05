@@ -9,6 +9,7 @@ from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.version import Version, VersionPicker
 
 
 class TowerExplorerAccordion(View):
@@ -24,7 +25,7 @@ class TowerExplorerAccordion(View):
 
     @View.nested
     class job_templates(Accordion):  # noqa
-        ACCORDION_NAME = 'Job Templates'
+        ACCORDION_NAME = VersionPicker({Version.lowest(): 'Job Templates', '5.10': 'Templates'})
         tree = ManageIQTree()
 
 
@@ -62,7 +63,7 @@ class TowerExplorerProvidersAllView(TowerExplorerView):
         return (
             self.in_tower_explorer and
             self.title.text == 'All Ansible Tower Providers' and
-            self.sidebar.tower_explorer_providers.is_opened
+            self.sidebar.providers.is_opened
         )
 
 
@@ -74,7 +75,7 @@ class TowerExplorerSystemsAllView(TowerExplorerView):
         return (
             self.in_tower_explorer and
             self.title.text == 'All Ansible Tower Configured Systems' and
-            self.sidebar.tower_explorer_systems.is_opened
+            self.sidebar.configured_systems.is_opened
         )
 
 
@@ -85,8 +86,9 @@ class TowerExplorerJobTemplatesAllView(TowerExplorerView):
     def is_displayed(self):
         return (
             self.in_tower_explorer and
-            self.title.text == 'All Ansible Tower Job Templates' and
-            self.sidebar.tower_explorer_job_templates.is_opened
+            self.title.text == VersionPicker({Version.lowest(): 'All Ansible Tower Job Templates',
+                '5.10': 'All Ansible Tower Templates'}).pick(self.browser.product_version) and
+            self.sidebar.job_templates.is_opened
         )
 
 
@@ -127,6 +129,7 @@ class AnsibleTowerExplorer(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
+        self.view.sidebar.providers.tree.click_path('All Ansible Tower Providers')
 
 
 @navigator.register(AnsibleTowerProvidersCollection, 'All')
@@ -153,4 +156,6 @@ class TowerExplorerJobTemplatesAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'AnsibleTowerExplorer')
 
     def step(self, *args, **kwargs):
-        self.view.sidebar.job_templates.tree.click_path('All Ansible Tower Job Templates')
+        self.view.sidebar.job_templates.tree.click_path(VersionPicker({Version.lowest():
+            'All Ansible Tower Job Templates', '5.10': 'All Ansible Tower Templates'}).pick(
+            self.view.browser.product_version))

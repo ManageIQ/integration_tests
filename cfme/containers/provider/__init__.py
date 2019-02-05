@@ -11,7 +11,7 @@ from widgetastic_manageiq import (
     WaitTab
 )
 from widgetastic_patternfly import (
-    BreadCrumb, SelectorDropdown, Dropdown, BootstrapSelect, Input, Button)
+    BootstrapNav, BreadCrumb, SelectorDropdown, Dropdown, BootstrapSelect, Input, Button)
 from widgetastic.widget import Text, View, TextInput
 
 from cfme.base.credential import TokenCredential
@@ -533,6 +533,13 @@ class ContainerObjectAllBaseView(ProvidersView):
     download = Dropdown('Download')
     toolbar = View.nested(ProviderToolBar)
     SUMMARY_TEXT = None
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
     @property
     def summary_text(self):

@@ -2,14 +2,15 @@
 from lxml.html import document_fromstring
 from widgetastic.utils import Version
 
-from widgetastic_patternfly import BreadCrumb, Dropdown, BootstrapSelect
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View, Text, ConditionalSwitchableView
+from widgetastic_patternfly import Accordion, BootstrapNav, BreadCrumb, Dropdown, BootstrapSelect
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.host_views import HostEntitiesView
 from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import (
+    Accordion,
     ParametrizedSummaryTable,
     Button,
     TimelinesView,
@@ -22,7 +23,8 @@ from widgetastic_manageiq import (
     JSBaseEntity,
     Search,
     ParametrizedStatusBox,
-    WaitTab
+    WaitTab,
+    ManageIQTree
 )
 
 
@@ -310,6 +312,13 @@ class ProvidersView(BaseLoggedInPage):
     sidebar = View.nested(ProviderSideBar)
     search = View.nested(Search)
     including_entities = View.include(ProviderEntitiesView, use_parent=True)
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class ContainerProvidersView(ProvidersView):

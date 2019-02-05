@@ -20,7 +20,8 @@ from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for, TimedOutError
 from widgetastic_manageiq import (
     Accordion, BootstrapSelect, ItemsToolBarViewSelector, PaginationPane,
-    SummaryTable, Table, Text, BaseNonInteractiveEntitiesView, BaseEntitiesView, Search)
+    SummaryTable, Table, Text, BaseNonInteractiveEntitiesView, BaseEntitiesView, Search,
+    ManageIQTree)
 
 
 class TenantToolbar(View):
@@ -95,6 +96,13 @@ class TenantAllView(TenantView):
     including_entities = View.include(TenantEntities, use_parent=True)
     paginator = PaginationPane()
     search = View.nested(Search)
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
     @property
     def is_displayed(self):

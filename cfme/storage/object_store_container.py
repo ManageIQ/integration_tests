@@ -2,7 +2,7 @@
 import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_patternfly import BreadCrumb, Button, Dropdown
+from widgetastic_patternfly import BootstrapNav, BreadCrumb, Button, Dropdown
 from widgetastic_manageiq import Search
 from widgetastic.widget import View, Text, NoSuchElementException
 
@@ -71,6 +71,13 @@ class ObjectStoreContainerAllView(ObjectStoreContainerView):
         return (
             self.in_container and
             self.title.text == 'Cloud Object Store Containers')
+
+    @View.nested
+    class my_filters(Accordion):  # noqa
+        ACCORDION_NAME = "My Filters"
+
+        navigation = BootstrapNav('.//div/ul')
+        tree = ManageIQTree()
 
 
 class ObjectStoreContainerDetailsView(ObjectStoreContainerView):
