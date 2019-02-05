@@ -1909,25 +1909,6 @@ def test_osp_vmware_67_test_vm_name_with_punycode_characters():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_template_info_scvmm2016():
-    """
-    The purpose of this test is to verify that the same number of
-    templates in scvmm are in cfme.  Take the time to spot check a random
-    template and check that the details correspond to SCVMM details.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
-    """
-    pass
-
-
-
-@pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
 def test_group_cloud_memory_quota_by_services():
@@ -2206,28 +2187,6 @@ def test_osp_kill_the_v2v_process_in_the_middle_restart_evmserverd_should_resume
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_shutdown_guest_scvmm():
-    """
-    This test performs the Shutdown Guest from the LifeCycle menu which
-    invokes the Hyper-V Guest Services Integration command.  This
-    gracefully exits the Windows OS rather than just powering off.
-    From collections page, select the VM and click "Shut down guest"
-    On SCVMM powershell, use "$vm = Get-VM -name "name_of_vm"; Find-SCJob
-    -objectId $vm.id -recent" to verify VM history shows "Shut down
-    virtual machine" instead of "power off"
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.4
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_storage_ebs_volume_crud():
     """
     Requires:
@@ -2360,25 +2319,6 @@ def test_notification_banner_vm_provisioning_notification_and_service_request_sh
         initialEstimate: 1/4h
         title: Notification Banner - VM Provisioning Notification and
                Service Request should be in  Sync
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_retirement_now_scvmm():
-    """
-    Verify that a VM can be retired immediately.  This should work whether
-    the VM is running or not, so repeat this test with a vm that is
-    running and a vm that is off.  Note that the VM is no longer removed
-    with later versions
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.4
     """
     pass
 
@@ -2842,23 +2782,6 @@ def test_service_chargeback_multiple_vms():
         assignee: nachandr
         casecomponent: CandU
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_vm_mac_scvmm():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1514461
-    Test case covers this BZ - we can"t get MAC ID of VM at the moment
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/20h
-        setup: https://bugzilla.redhat.com/show_bug.cgi?id=1514461
     """
     pass
 
@@ -7322,24 +7245,6 @@ def test_embed_tower_repo_tag():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_create_appliance_on_scvmm_using_the_vhd_image():
-    """
-    Log into qeblade33 and download the VHD appliance image.  Create a new
-    VM, attach the VHD disk, and boot system.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Appliance
-        initialEstimate: 1/4h
-        subtype1: usability
-        title: Create Appliance on SCVMM using the VHD image.
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.config_management
 def test_satellite_host_groups_show_up_as_configuration_profiles_satellite_62():
     """
@@ -9323,23 +9228,6 @@ def test_verify_passwords_are_not_registered_in_plain_text_in_auth_logs():
         caseimportance: medium
         initialEstimate: 1/4h
         title: verify passwords are not registered in plain text in auth logs.
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_set_retirement_date_scvmm():
-    """
-    Verify that the retirement of a vm can be set in the future and that
-    it actually gets retired.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.4
     """
     pass
 
@@ -12484,24 +12372,6 @@ def test_group_by_tag_azone_gce():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_template_info_scvmm():
-    """
-    The purpose of this test is to verify that the same number of
-    templates in scvmm are in cfme.  Take the time to spot check a random
-    template and check that the details correspond to SCVMM details.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.4
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.snapshot
 @pytest.mark.tier(1)
 def test_snapshot_tree_view_functionality():
@@ -12545,67 +12415,6 @@ def test_superadmin_child_tenant_delete_parent_catalog():
         casecomponent: Configuration
         initialEstimate: 1/2h
         startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_provider_summary_scvmm2016():
-    """
-    The purpose of this test is to verify that the information on the
-    provider summary is substantially the same as what is on SCVMM.
-    Since SCVMM-2016 only has a short sequence of test cases, you must use
-    this test case as the catch all to go in and spend 15-30 minutes and
-    check as many links from this page and verify both the navigation and
-    the content.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_provider_summary_scvmm():
-    """
-    The purpose of this test is to verify that the information on the
-    provider summary is substantially the same as what is on SCVMM.
-    Since SCVMM-SP1 only has a short sequence of test cases, you must use
-    this test case as the catch all to go in and spend 15-30 minutes and
-    check as many links from this page and verify both the navigation and
-    the content.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.4
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_vm_relationship_datastore_fileshare_scvmm():
-    """
-    Valid for SCVMM with Host which have Fileshare storage
-    1.Provision Vm into fileshare linked to the host
-    2.Check VM"s relationships - Datastore
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.7
-        upstream: yes
     """
     pass
 
@@ -13646,24 +13455,6 @@ def test_verify_the_authentication_mode_is_displayed_correctly_for_new_trusted_f
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_host_info_scvmm():
-    """
-    The purpose of this test is to verify that SCVMM-SP1 hosts are not
-    only added, but that the host information details are correct.  Take
-    the time to spot check at least one host.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.4
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_policy_to_prevent_source_vm_from_starting_if_migration_is_comaplete():
     """
     OSP: Test policy to prevent source VM from starting if migration is
@@ -13858,23 +13649,6 @@ def test_ec2_targeted_refresh_load_balancer():
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.power
-@pytest.mark.tier(2)
-def test_suspend_scvmm2016_from_collection():
-    """
-    Test the a VM can be Suspended, or Saved, from the Collection Page
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
     """
     pass
 
@@ -14904,27 +14678,6 @@ def test_default_value_on_dropdown_inside_dialog():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Test default value on Dropdown inside Dialog
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.snapshot
-@pytest.mark.tier(1)
-def test_check_disk_allocation_size_scvmm():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1490440
-    Steps to Reproduce:
-    1.Provision VM and check it"s "Total Datastore Used Space"
-    2.go to VMM and create Vm"s Checkpoint
-    3.open VM Details check - "Total Datastore Used Space"
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/2h
-        title: Check disk allocation size [SCVMM]
     """
     pass
 
@@ -16277,53 +16030,6 @@ def test_embed_tower_repo_url_validation():
 
 
 @pytest.mark.manual
-@test_requirements.power
-@pytest.mark.tier(2)
-def test_restart_guest_scvmm2016():
-    """
-    This test performs the Restart Guest from the LifeCycle menu which
-    invokes the Hyper-V Guest Services Integration command.  This
-    gracefully exits and restarts the Windows OS rather than just powering
-    off and back on.
-    From collections page, select the VM and click "Restart Guest"
-    On SCVMM powershell, use "$vm = Get-VM -name "name_of_vm"; Find-SCJob
-    -objectId $vm.id -recent" to verify VM history shows "Shut down
-    virtual machine" instead of "power off"
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_restart_guest_scvmm():
-    """
-    This test performs the Restart Guest from the LifeCycle menu which
-    invokes the Hyper-V Guest Services Integration command.  This
-    gracefully exits and restarts the Windows OS rather than just powering
-    off and back on.
-    From collections page, select the VM and click "Restart Guest"
-    On SCVMM powershell, use "$vm = Get-VM -name "name_of_vm"; Find-SCJob
-    -objectId $vm.id -recent" to verify VM history shows "Shut down
-    virtual machine" instead of "power off"
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.4
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(3)
 def test_crosshair_op_host_vsphere65():
@@ -16951,26 +16657,6 @@ def test_osp_test_migration_logs_from_conversion_host_can_be_retrieved_from_miq_
         subcomponent: OSP
         title: OSP: Test migration logs from conversion host can be
                retrieved from miq appliance
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_vm_volume_specchar1_scvmm():
-    """
-    Special Test to verify that VMs that have Volumes with no drive letter
-    assigned don"t cause systemic SCVMM provider errors.  This is a low
-    priority test.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1353285
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/4h
-        startsin: 5.6.1
-        upstream: no
     """
     pass
 
@@ -25488,23 +25174,5 @@ def test_credentials_login_password_leading_whitespace():
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_host_info_scvmm2016():
-    """
-    The purpose of this test is to verify that SCVMM-2016 hosts are not
-    only added, but that the host information details are correct.  Take
-    the time to spot check at least one host.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/12h
-        startsin: 5.7
     """
     pass
