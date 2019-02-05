@@ -64,3 +64,20 @@ def test_vm_migrate(appliance, new_vm, provider):
     migrate_request.wait_for_request(method='ui')
     msg = "Request failed with the message {}".format(migrate_request.row.last_message.text)
     assert migrate_request.is_succeeded(method='ui'), msg
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_vm_migrate_should_create_notifications_when_migrations_fail():
+    """
+    Polarion:
+        assignee: mdnadeem
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.10
+        tags: service
+    Bugzilla:
+        1478462
+    """
+    pass

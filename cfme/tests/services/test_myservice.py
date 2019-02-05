@@ -68,8 +68,10 @@ def test_retire_service_ui(appliance, context, myservice):
         test_flag: provision
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
+        casecomponent: Services
         initialEstimate: 1/4h
+        tags: service
     """
     service_name, vm_name = myservice
     with appliance.context.use(context):
@@ -85,8 +87,10 @@ def test_retire_service_on_date(appliance, context, myservice):
         test_flag: provision
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
+        casecomponent: Services
         initialEstimate: 1/4h
+        tags: service
     """
     service_name, vm_name = myservice
     with appliance.context.use(context):
@@ -103,8 +107,10 @@ def test_crud_set_ownership_and_edit_tags(appliance, context, myservice):
         test_flag: provision
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
+        casecomponent: Services
         initialEstimate: 1/4h
+        tags: service
     """
 
     service_name, vm_name = myservice
@@ -129,7 +135,9 @@ def test_download_file(appliance, context, needs_firefox, myservice, filetype):
 
     Polarion:
         assignee: nansari
+        casecomponent: Services
         initialEstimate: 1/16h
+        tags: service
     """
     service_name, vm_name = myservice
     with appliance.context.use(context):
@@ -142,8 +150,10 @@ def test_service_link(appliance, context, myservice, provider):
     """Tests service link from VM details page(BZ1443772)
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
+        casecomponent: Services
         initialEstimate: 1/4h
+        tags: service
     """
     service_name, vm_name = myservice
     with appliance.context.use(context):
@@ -157,3 +167,18 @@ def test_service_link(appliance, context, myservice, provider):
         view.entities.summary('Relationships').click_at('Service')
         new_view = myservice.create_view(MyServiceDetailView)
         assert new_view.wait_displayed()
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_retire_on_date_for_multiple_service():
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/8h
+        startsin: 5.5
+        tags: service
+    """
+    pass

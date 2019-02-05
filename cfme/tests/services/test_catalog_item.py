@@ -311,8 +311,78 @@ def test_catalog_all_page_after_deleting_selected_template():
                completing process.
             6. Go to service > catalogs > service catalogs or catalog items
             7. Click on catalog item you created or ordered
-
     Bugzilla:
         1652858
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_rbac_assigning_multiple_tags_from_same_category_to_catalog_item():
+    """ RBAC : Assigning multiple tags from same category to catalog Item
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/8h
+        startsin: 5.5
+        tags: service
+    Bugzilla:
+        1339382
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_change_provider_template_in_catalog_item():
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/8h
+        startsin: 5.5
+        tags: service
+        testSteps:
+            1. Create a catalog item and select template for a provider in catalog tab
+            2. Select datastore etc in environment tab
+            3. In catalog tab change template from one provider to another
+        expectedResults:
+            3. Validation message should be shown
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_able_to_add_long_description_for_playbook_catalog_items():
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.9
+        tags: service
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_service_reconfigure_in_distributed_environment():
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.10
+        tags: service
+        testSteps:
+            1. Create master and child appliance.
+            2. raise provisioning request in master and reconfigure in child.
     """
     pass
