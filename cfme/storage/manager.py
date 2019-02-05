@@ -6,7 +6,7 @@ from widgetastic_manageiq import Accordion, ManageIQTree, PaginationPane, Summar
 from widgetastic_patternfly import BreadCrumb, Button, Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, Taggable, PolicyProfileAssignable
+from cfme.common import CustomButtonEventsMixin, TagPageView, Taggable, PolicyProfileAssignable
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -105,7 +105,7 @@ class StorageManagerDetailsView(StorageManagerView):
 
 
 @attr.s
-class StorageManager(BaseEntity, Taggable, PolicyProfileAssignable):
+class StorageManager(BaseEntity, CustomButtonEventsMixin, Taggable, PolicyProfileAssignable):
     """ Model of an storage manager in cfme
 
     Args:

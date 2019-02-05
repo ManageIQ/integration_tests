@@ -2,7 +2,7 @@ import attr
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 
-from cfme.common import Taggable
+from cfme.common import CustomButtonEventsMixin, Taggable
 from cfme.exceptions import ItemNotFound, DestinationNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.networks import ValidateStatsMixin
@@ -16,7 +16,7 @@ from cfme.utils.wait import wait_for
 
 
 @attr.s
-class NetworkRouter(Taggable, BaseEntity, ValidateStatsMixin):
+class NetworkRouter(Taggable, BaseEntity, CustomButtonEventsMixin, ValidateStatsMixin):
     """ Class representing network ports in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'

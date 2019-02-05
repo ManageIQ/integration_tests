@@ -9,6 +9,7 @@ from widgetastic_manageiq import (
 from widgetastic_patternfly import Dropdown, Button
 
 from cfme.base.ui import BaseLoggedInPage
+from cfme.common import CustomButtonEventsMixin
 from cfme.exceptions import ItemNotFound, SecurityGroupsNotFound
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
@@ -110,7 +111,7 @@ class SecurityGroupAddView(SecurityGroupView):
 
 
 @attr.s
-class SecurityGroup(BaseEntity):
+class SecurityGroup(BaseEntity, CustomButtonEventsMixin):
     """ Automate Model page of SecurityGroup
 
     Args:
