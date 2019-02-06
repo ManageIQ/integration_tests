@@ -7,11 +7,9 @@ from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.version import LATEST
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])]),
     pytest.mark.provider([AzureProvider, EC2Provider, GCEProvider, OpenStackProvider],
                          scope="module")
 ]
@@ -56,9 +54,6 @@ def handle_extra_tabs(view):
 
 @pytest.mark.parametrize("filetype", extensions_mapping.keys())
 @pytest.mark.parametrize("collection_type", OBJECTCOLLECTIONS)
-@pytest.mark.uncollectif(
-    lambda appliance, filetype: appliance.version == LATEST and filetype == 'pdf'
-)
 def test_download_lists_base(filetype, collection_type, appliance):
     """ Download the items from base lists.
 
@@ -75,9 +70,6 @@ def test_download_lists_base(filetype, collection_type, appliance):
     download(collection, filetype)
 
 
-@pytest.mark.uncollectif(
-    lambda appliance: appliance.version == LATEST
-)
 @pytest.mark.parametrize("collection_type", OBJECTCOLLECTIONS)
 def test_download_pdf_summary(appliance, collection_type, provider):
     """ Download the summary details of specific object
