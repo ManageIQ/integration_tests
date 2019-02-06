@@ -5025,6 +5025,7 @@ class MigrationProgressBar(Widget):
     ERROR_LOCATOR = './/div/span[contains(@class,"pficon-error-circle-o")]'
     PROGRESS_BARS = './/div[@class="progress-bar"]'
     PROGRESS_DESCRIPTION = './/div[contains(@class,"progress-description")]'
+    CARD_INFO = './/p[contains(@class, "blank-slate-pf-info")]'
 
     def __init__(self, parent, locator, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -5072,12 +5073,14 @@ class MigrationProgressBar(Widget):
         text = self.browser.text(self.VMS_LOCATOR, parent=el)
         return re.findall(r"\d+", text)[1]
 
-    def is_plan_started(self, plan_name):
-        """Returns true if migration plan card is shown in-progress state, spinners are gone"""
+    def get_card_info(self, plan_name):
+        """Returns card info from migration plan card"""
         el = self._get_card_element(plan_name)
         spinner_displayed = self.browser.is_displayed(self.SPINNER_LOCATOR, parent=el)
         timer_displayed = self.browser.is_displayed(self.TIMER_LOCATOR, parent=el)
         error_displayed = self.browser.is_displayed(self.ERROR_LOCATOR, parent=el)
+        card_info = self.browser.text(self.CARD_INFO, parent=el)
+
         self.logger.info(
             "spinner_displayed is %s, timer_displayed is %s and error_displayed is %s",
             spinner_displayed,
@@ -5085,10 +5088,18 @@ class MigrationProgressBar(Widget):
             error_displayed,
         )
         if error_displayed:
-            return False
+            return "Error"
         if timer_displayed and not spinner_displayed:
+            return "Started"
+        return card_info
+
+    def is_plan_started(self, plan_name):
+        """Returns true if migration plan card is shown in-progress state, spinners are gone"""
+        card_info = self.get_card_info(plan_name)
+        if card_info == "Started":
             return True
-        return False
+        else:
+            return False
 
     def is_plan_visible(self, plan_name):
         """Returns true if migration plan card is shown in-progress section, else False"""
