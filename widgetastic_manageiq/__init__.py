@@ -67,9 +67,8 @@ class DynamicTableAddError(Exception):
     pass
 
 
-# TODO: replace below calls with direct calls later
 class ManageIQTree(BootstrapTreeview):
-    """ Refactor of BootstrapTreeview to add currently_selected for times
+    """ Refactor of BootstrapTreeview to add currently_selected for tree-views
     which have more than 1 root. Also a root_items property."""
 
     @property
