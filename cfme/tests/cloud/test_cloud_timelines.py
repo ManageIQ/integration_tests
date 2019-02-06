@@ -106,9 +106,9 @@ class InstEvent(object):
             'emit_cmd': '_power_off'
         },
         'rename': {
-            'tl_event': 'AWS_EC2_Instance_UPDATE',
+            'tl_event': 'AWS_EC2_Instance_CREATE',
             'tl_category': 'Creation/Addition',
-            'db_event_type': 'AWS_EC2_Instance_UPDATE',
+            'db_event_type': 'AWS_EC2_Instance_CREATE',
             'emit_cmd': '_rename_vm'
         },
         'delete': {
@@ -157,6 +157,10 @@ class InstEvent(object):
         return self.inst.mgmt.stop()
 
     def _power_off_power_on(self):
+        self.inst.mgmt.stop()
+        return self.inst.mgmt.start()
+
+    def _restart(self):
         return self.inst.mgmt.restart()
 
     def _rename_vm(self):
@@ -204,7 +208,8 @@ class InstEvent(object):
                 timeline_filter.policy_event_category.select_by_visible_text(self.tl_category)
                 timeline_filter.policy_event_status.fill('Both')
             else:
-                timeline_filter.detailed_events.fill(True)
+                if timelines_view.browser.product_version < "5.10":
+                    timeline_filter.detailed_events.fill(True)
                 for selected_option in timeline_filter.event_category.all_selected_options:
                     timeline_filter.event_category.select_by_visible_text(selected_option)
                 timeline_filter.event_category.select_by_visible_text(self.tl_category)
@@ -254,6 +259,10 @@ class InstEvent(object):
                     evt=self.event, tgt=target))
 
 
+@pytest.mark.meta(blockers=[BZ(1670550, forced_streams=['5.10']),
+                            BZ(1671521,
+                               unblock=lambda provider: not provider.one_of(AzureProvider),
+                               forced_streams=['5.9', '5.10'])])
 def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
     """
     Metadata:
@@ -271,7 +280,9 @@ def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.meta(blockers=[BZ(1542962, forced_streams=['5.8'])])
+@pytest.mark.meta(blockers=[BZ(1670474,
+                               unblock=lambda provider: not provider.one_of(EC2Provider),
+                               forced_streams=['5.9', '5.10'])])
 def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
     """
     Metadata:
@@ -289,6 +300,10 @@ def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
     inst_event.catch_in_timelines(soft_assert, targets, policy_events=True)
 
 
+@pytest.mark.meta(blockers=[BZ(1670550, forced_streams=['5.10']),
+                            BZ(1671521,
+                               unblock=lambda provider: not provider.one_of(AzureProvider),
+                               forced_streams=['5.9', '5.10'])])
 def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
     """
     Metadata:
@@ -306,6 +321,10 @@ def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
+@pytest.mark.meta(blockers=[BZ(1670550, forced_streams=['5.10']),
+                            BZ(1671521,
+                               unblock=lambda provider: not provider.one_of(AzureProvider),
+                               forced_streams=['5.9', '5.10'])])
 def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
     """
     Metadata:
@@ -323,6 +342,9 @@ def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
+@pytest.mark.meta(blockers=[BZ(1671521,
+                               unblock=lambda provider: not provider.one_of(AzureProvider),
+                               forced_streams=['5.9', '5.10'])])
 def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_assert):
     """Check Configuration/diagnostic/timelines.
 
@@ -340,7 +362,7 @@ def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_asse
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.meta(blockers=[BZ(1537520, forced_streams=['5.8'])])
+@pytest.mark.meta(blockers=[BZ(1670550, forced_streams=['5.10'])])
 @pytest.mark.provider([EC2Provider], override=True, scope='function')
 def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
     """
@@ -359,6 +381,10 @@ def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
+@pytest.mark.meta(blockers=[BZ(1670550, forced_streams=['5.10']),
+                            BZ(1671521,
+                               unblock=lambda provider: not provider.one_of(AzureProvider),
+                               forced_streams=['5.9', '5.10'])])
 @pytest.mark.uncollectif(lambda provider, appliance: provider.one_of(EC2Provider) and
                          appliance.version < "5.9")
 def test_cloud_timeline_delete_event(new_instance, soft_assert, azone):
