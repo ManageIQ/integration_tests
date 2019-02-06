@@ -16,6 +16,7 @@ from widgetastic.widget import (
 from widgetastic.xpath import quote
 from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound, Input
 
+from cfme.base.ui import AutomateSimulationView
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.update import Updateable
@@ -268,6 +269,47 @@ class BaseButton(BaseEntity, Updateable):
             view.flash.assert_no_error()
             view.flash.assert_message('Button "{}": Delete successful'.format(self.hover))
 
+    def simulate(
+        self,
+        target_object,
+        reset=False,
+        instance="Request",
+        message="create",
+        request="InspectMe",
+        execute_methods=True,
+        attributes_values=None,
+    ):
+        # ToDo: remove this workaround as BZ-1535215 fix. 3 tries without waiting for view display.
+        for _ in range(0, 3):
+            view = navigate_to(self, "simulate", wait_for_view=0)
+            if view.is_displayed:
+                break
+        assert view.is_displayed
+
+        # Group and User are EVM type objects
+        target_type = (
+            "EVM {}".format(self.group.type)
+            if self.group.type in ["Group", "User"]
+            else self.group.type
+        )
+
+        view.fill(
+            {
+                "instance": instance,
+                "message": message,
+                "request": request,
+                "target_type": target_type,
+                "target_object": target_object,
+                "execute_methods": execute_methods,
+                "avp": attributes_values,
+            }
+        )
+
+        if reset:
+            view.reset_button.click()
+        else:
+            view.submit_button.click()
+
     @property
     def exists(self):
         try:
@@ -299,6 +341,7 @@ class DefaultButton(BaseButton):
         visibility: Visibility expression in terms of tag and its value
         enablement: Enablement expression in terms of tag and its value
     """
+
     group = attr.ib()
     text = attr.ib()
     hover = attr.ib()
@@ -333,6 +376,7 @@ class AnsiblePlaybookButton(BaseButton):
         visibility: Visibility expression in terms of tag and its value
         enablement: Enablement expression in terms of tag and its value
     """
+
     group = attr.ib()
     text = attr.ib()
     hover = attr.ib()
@@ -542,6 +586,15 @@ class ButtonEdit(CFMENavigateStep):
 
     def step(self):
         self.view.configuration.item_select("Edit this Button")
+
+
+@navigator.register(BaseButton, "simulate")
+class ButtonSimulation(CFMENavigateStep):
+    VIEW = AutomateSimulationView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select("Simulate")
 
 
 # Button group
