@@ -40,8 +40,12 @@ class AutomateExplorer(CFMENavigateStep):
         self.view.navigation.select(*automate_menu_name(self.obj.appliance) + ['Explorer'])
 
 
-def check_tree_path(actual, desired):
-    if len(actual) != len(desired):
+def check_tree_path(actual, desired, partial=False):
+    # keyword argument - 'partial'  is introduced here because of unexpected behaviour of automate
+    # tree accordions. In this case, actual and desired trees will not be same which creates problem
+    # For more details please refer:
+    # https://github.com/ManageIQ/integration_tests/pull/8358#discussion_r247770688
+    if len(actual) != len(desired) and not partial:
         return False
     # We don't care about icons because we also match titles, which give the type away
     for actual_item, desired_item in zip(actual, without_icons(desired)):

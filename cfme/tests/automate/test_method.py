@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
+from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
@@ -22,7 +23,7 @@ def domain(appliance):
 
 
 @pytest.fixture(scope="module")
-def namespace(request, domain):
+def namespace(domain):
     return domain.namespaces.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha()
@@ -30,7 +31,7 @@ def namespace(request, domain):
 
 
 @pytest.fixture(scope="module")
-def klass(request, namespace):
+def klass(namespace):
     return namespace.classes.create(
         name=fauxfactory.gen_alpha(),
         display_name=fauxfactory.gen_alpha(),
@@ -55,6 +56,8 @@ def test_method_crud(klass):
         location='inline',
         script='$evm.log(:info, ":P")',
     )
+    view = method.create_view(ClassDetailsView)
+    view.flash.assert_message('Automate Method "{}" was added'.format(method.name))
     assert method.exists
     origname = method.name
     with update(method):
@@ -70,7 +73,7 @@ def test_method_crud(klass):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_automate_method_inputs_crud(klass):
+def test_automate_method_inputs_crud(appliance, klass):
     """
     Polarion:
         assignee: ghubale

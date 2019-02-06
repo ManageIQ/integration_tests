@@ -299,12 +299,9 @@ class DomainCollection(BaseCollection):
         else:
             add_page.add_button.click()
             add_page.flash.assert_no_error()
-            if self.appliance.version >= '5.8.2':
-                add_page.flash.assert_message(
-                    'Automate Domain "{}" was added'.format(description or name))
-            else:
-                add_page.flash.assert_message(
-                    'Automate Domain "{}" was added'.format(name))
+            add_page.flash.assert_message(
+                'Automate Domain "{}" was added'.format(description or name))
+
             if enabled is None:
                 # Assume
                 enabled = False
