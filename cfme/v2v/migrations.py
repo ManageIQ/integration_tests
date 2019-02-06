@@ -11,7 +11,7 @@ from widgetastic.utils import ParametrizedLocator
 from widgetastic_manageiq import (
     InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList, Paginator,
     Table, MigrationPlanRequestDetailsList, RadioGroup, HiddenFileInput, MigrationProgressBar,
-    MigrationDashboardStatusCard
+    MigrationDashboardStatusCard, Stepper
 )
 from widgetastic_patternfly import (Text, TextInput, Button, BootstrapSelect, SelectorDropdown,
                                     Dropdown)
@@ -677,6 +677,17 @@ class MigrationPlanRequestDetailsView(View):
         return not any(migration_plan_in_progress_tracker)
 
 
+class MigrationSettingsView(BaseLoggedInPage):
+    title = Text('//div[contains(@class, "migration-settings")]/h2')
+    max_limit = Stepper(locator='//div[contains(@class, "bootstrap-touchspin-injected")]')
+    apply_btn = Button('Apply')
+
+    @property
+    def is_displayed(self):
+        return (self.navigation.currently_selected == ['Compute', 'Migration', 'Migration Settings']
+                and self.title.text == 'Concurrent Migrations')
+
+
 # Collections Entities
 
 
@@ -904,3 +915,12 @@ class MigrationPlanRequestDetails(CFMENavigateStep):
                     self.obj.ENTITY.name)
             except NoSuchElementException:
                 self.prerequisite_view.progress_card.select_plan(self.obj.ENTITY.name)
+
+
+@navigator.register(InfrastructureMapping, 'MigrationSettings')
+class MigrationSettings(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = MigrationSettingsView
+
+    def step(self):
+        self.prerequisite_view.navigation.select('Compute', 'Migration', 'Migration Settings')
