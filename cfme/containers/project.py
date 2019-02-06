@@ -95,7 +95,8 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        self.view.toolbar.view_selector.select("List View")
+        if self.view.toolbar.view_selector.is_displayed:
+            self.view.toolbar.view_selector.select("List View")
         if self.view.paginator.is_displayed:
             self.view.paginator.reset_selection()
 
@@ -113,7 +114,8 @@ class Details(CFMENavigateStep):
         self.view.toolbar.view_selector.select("Summary View")
 
     def resetter(self):
-        if self.appliance.version.is_in_series('5.9'):
+        if (self.appliance.version.is_in_series('5.9') and
+                self.view.toolbar.view_selector.is_displayed):
             self.view.toolbar.view_selector.select("Summary View")
 
 
@@ -129,7 +131,8 @@ class Dashboard(CFMENavigateStep):
                                                    use_search=search_visible).click()
 
     def resetter(self):
-        self.view.toolbar.view_selector.select("Dashboard View")
+        if self.view.toolbar.view_selector.is_displayed:
+            self.view.toolbar.view_selector.select("Dashboard View")
 
 
 @navigator.register(Project, 'EditTags')
