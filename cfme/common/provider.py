@@ -377,25 +377,17 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         Helper method for ``self.create_rest``
         """
         if "rsa_keypair" not in self.endpoints:
-            if "rsa_keypair" not in self.data.endpoints:
-                return
-            else:
-                rsa_credentials = self.get_credentials_from_config(
-                    self.data.endpoints["rsa_keypair"]["credentials"], "ssh"
-                )
-        else:
-            rsa_credentials = self.endpoints["rsa_keypair"].credentials
+            return
 
+        endpoint_rsa = self.endpoints["rsa_keypair"]
         if isinstance(provider_attributes["credentials"], dict):
             provider_attributes["credentials"] = [provider_attributes["credentials"]]
 
-        provider_attributes["credentials"].append(
-            {
-                "userid": rsa_credentials.principal,
-                "password": rsa_credentials.secret,
-                "auth_type": "ssh_keypair",
-            }
-        )
+        provider_attributes["credentials"].append({
+            "userid": endpoint_rsa.credentials.principal,
+            "auth_key": endpoint_rsa.credentials.secret,
+            "auth_type": "ssh_keypair",
+        })
 
     def _fill_amqp_endpoint_dicts(self, provider_attributes, connection_configs):
         """Fills dicts with AMQP events endpoint data.
