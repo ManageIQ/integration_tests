@@ -17,6 +17,7 @@ def testing_vm_without_dvd(provider, small_template):
     vm.cleanup_on_provider()
 
 
+@pytest.mark.tier(0)
 @pytest.mark.meta(blockers=[1178961])
 @pytest.mark.provider([SCVMMProvider], scope="module")
 def test_no_dvd_ruins_refresh(provider, testing_vm_without_dvd):
@@ -25,6 +26,7 @@ def test_no_dvd_ruins_refresh(provider, testing_vm_without_dvd):
         assignee: jdupuy
         initialEstimate: 1/4h
         casecomponent: Infra
+        caseimportance: high
     """
     provider.refresh_provider_relationships()
     testing_vm_without_dvd.wait_to_appear()
