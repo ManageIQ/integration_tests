@@ -8,7 +8,7 @@ from cfme.fixtures.v2v import _form_data
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION, ONE_PER_TYPE
-from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -376,3 +376,120 @@ def test_migration_with_edited_mapping(request, appliance, v2v_providers, edited
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
     migrated_vm = get_migrated_vm_obj(src_vm_obj, v2v_providers.rhv_provider)
     assert src_vm_obj.mac_address == migrated_vm.mac_address
+
+
+@pytest.mark.tier(3)
+@pytest.mark.ignore_stream('5.9')
+@pytest.mark.parametrize('form_data_multiple_vm_obj_single_datastore',
+                         [['nfs', 'nfs', [rhel7_minimal, rhel7_minimal]]], indirect=True)
+def test_concurrent_migrations(request, appliance, v2v_providers, host_creds, conversion_tags,
+                               form_data_multiple_vm_obj_single_datastore):
+    """
+    Test concurrent migrations with two vms on single conversion host
+
+    Polarion:
+        assignee: ytale
+        casecomponent: V2V
+        subcomponent: RHV
+        caseimportance: medium
+        initialEstimate: 1/8h
+        tags: V2V
+    """
+    infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    mapping = infrastructure_mapping_collection.create(
+        form_data_multiple_vm_obj_single_datastore.form_data
+    )
+
+    migration_plan_collection = appliance.collections.v2v_plans
+    migration_plan1 = migration_plan_collection.create(
+        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        infra_map=mapping.name,
+        vm_list=[form_data_multiple_vm_obj_single_datastore.vm_list[0]],
+        start_migration=True
+    )
+
+    settings_view = navigate_to(mapping, "MigrationSettings")
+    settings_view.max_limit.set_value(1)
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+        settings_view.max_limit.set_value(10)
+
+    migration_plan2 = migration_plan_collection.create(
+        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        infra_map=mapping.name,
+        vm_list=[form_data_multiple_vm_obj_single_datastore.vm_list[1]],
+        start_migration=True
+    )
+
+    view = appliance.browser.create_view(
+        navigator.get_class(migration_plan_collection, "All").VIEW.pick()
+    )
+
+    def _card_info(plan):
+        if view.progress_card.is_plan_started:
+            return False
+        else:
+            card_info = view.progress_card.get_card_info(plan)
+            info_msg = "Waiting for an available conversion host"
+            assert info_msg in card_info
+            return True
+
+    # explicit wait to detect info state from second plan
+    wait_for(
+        func=_card_info,
+        func_args=[migration_plan2.name],
+        delay=5,
+        num_sec=1800,
+        message="migration plan {migration_plan2} is in progress, be patient please".format(
+            migration_plan2.name)
+    )
+
+    # wait until first plan is in progress
+    wait_for(
+        func=view.plan_in_progress,
+        func_args=[migration_plan1.name],
+        delay=5,
+        num_sec=1800,
+        message="migration plan {migration_plan1} is in progress, be patient please".format(
+            migration_plan1.name)
+    )
+    view.switch_to("Completed Plans")
+    view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan1.name)
+
+    # explicit wait for spinner of second in-progress status card
+    view.switch_to("In Progress Plans")
+    wait_for(
+        func=view.progress_card.is_plan_started,
+        func_args=[migration_plan2.name],
+        delay=5,
+        num_sec=150,
+        handle_exception=True,
+        fail_cond=False,
+        message="migration plan {migration_plan2} is in progress, be patient please".format(
+            migration_plan2.name)
+    )
+
+    # wait until second plan is in progress
+    wait_for(
+        func=view.plan_in_progress,
+        func_args=[migration_plan2.name],
+        delay=5,
+        num_sec=1800,
+        message="migration plan {migration_plan2} is in progress, be patient please".format(
+            migration_plan2.name)
+    )
+    view.switch_to("Completed Plans")
+    view.wait_displayed()
+    migration_plan_collection.find_completed_plan(migration_plan2)
+    logger.info(
+        "For plan %s, migration status after completion: %s, total time elapsed: %s",
+        migration_plan2.name,
+        view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan2.name),
+        view.migration_plans_completed_list.get_clock(migration_plan2.name),
+    )
+    assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan2.name)
