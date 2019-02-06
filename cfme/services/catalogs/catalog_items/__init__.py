@@ -3,7 +3,7 @@ import fauxfactory
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Checkbox, View
+from widgetastic.widget import Text, Checkbox, ClickableMixin, View
 from widgetastic.utils import WaitFillViewStrategy
 from widgetastic_manageiq import FonticonPicker, ManageIQTree, WaitTab
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound
@@ -19,7 +19,7 @@ from cfme.utils.version import LOWEST, VersionPicker
 from cfme.utils.wait import wait_for
 
 
-class EntryPoint(Input):
+class EntryPoint(Input, ClickableMixin):
     def fill(self, value):
         if super(EntryPoint, self).fill(value):
             self.parent_view.modal.cancel.click()
@@ -30,14 +30,6 @@ class EntryPoint(Input):
             # So to ignore this pop up clicking on cancel button is required.
             return True
         return False
-
-    def click(self):
-        # After clicking on widget - 'retirement_entry_point', 'reconfigure_entry_point' or
-        # 'provisioning_entry_point'; 'Select Entry Point Instance'(pop up) occures which
-        # helps to select provided paths using tree structure.
-        # 'Click' property is added to these widgets because some tests are selecting provided
-        # paths only via modal tree(using pop up).
-        self.browser.click(self)
 
 
 # Views
