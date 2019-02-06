@@ -16,12 +16,14 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.provider(
         classes=[RHEVMProvider],
-        selector=ONE_PER_VERSION
+        selector=ONE_PER_VERSION,
+        scope="module"
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
         selector=ONE_PER_TYPE,
-        fixture_name='second_provider'
+        fixture_name='source_provider',
+        scope="module"
     )
 ]
 
@@ -95,11 +97,11 @@ def valid_vm(appliance, infra_map):
 
 
 @pytest.fixture(scope="function")
-def archived_vm(appliance, second_provider):
+def archived_vm(appliance, source_provider):
     """Fixture to create archived vm"""
     vm_obj = appliance.collections.infra_vms.instantiate(
-        random_vm_name(context='v2v-auto'), second_provider)
-    if not second_provider.mgmt.does_vm_exist(vm_obj.name):
+        random_vm_name(context='v2v-auto'), source_provider)
+    if not source_provider.mgmt.does_vm_exist(vm_obj.name):
         vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
     vm_obj.mgmt.delete()
     vm_obj.wait_for_vm_state_change(desired_state='archived', timeout=900,
