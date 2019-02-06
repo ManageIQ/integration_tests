@@ -5,11 +5,19 @@ import pytest
 from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
+from cfme.base.ui import AutomateSimulationView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.tests.automate.custom_button import OBJ_TYPE, OBJ_TYPE_59, TextInputDialogView
+from cfme.tests.automate.custom_button import (
+    log_request_check,
+    OBJ_TYPE,
+    OBJ_TYPE_59,
+    TextInputDialogView,
+)
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
+from cfme.utils.wait import TimedOutError, wait_for
 
 pytestmark = [test_requirements.automate, pytest.mark.usefixtures("uses_infra_providers")]
 
@@ -326,23 +334,30 @@ def test_custom_button_quotes(appliance, provider, setup_provider, dialog, reque
     assert custom_button_group.has_item(button.text)
     custom_button_group.item_select(button.text)
 
-    dialog_view = view.browser.create_view(TextInputDialogView, wait='60s')
+    dialog_view = view.browser.create_view(TextInputDialogView, wait="60s")
     dialog_view.service_name.fill("Custom Button Execute")
 
     dialog_view.submit.click()
     view.flash.assert_message("Order Request was Submitted")
 
 
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_custom_button_simulation():
+@pytest.mark.tier(2)
+@pytest.mark.meta(
+    blockers=[BZ(1535215, forced_streams=["5.10"], unblock=lambda button_tag: button_tag != "Evm")]
+)
+@pytest.mark.uncollectif(
+    lambda appliance, button_tag: appliance.version < "5.10" and button_tag == "Evm",
+    reason="for lower version evm custom button object not supported",
+)
+@pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE_PER_TYPE)
+@pytest.mark.parametrize("button_tag", ["Evm", "Build"])
+def test_custom_button_simulation(request, appliance, provider, setup_provider, button_tag):
     """ Test whether custom button works with simulation option
 
     Polarion:
         assignee: ndhandre
         initialEstimate: 1/4h
-        caseimportance: low
-        caseposneg: positive
+        caseimportance: medium
         testtype: functional
         startsin: 5.9
         casecomponent: CustomButton
@@ -351,7 +366,44 @@ def test_custom_button_simulation():
     Bugzilla:
         1535215
     """
-    pass
+    if button_tag == "Evm":
+        btn_type = "User"
+        obj = appliance.collections.users.instantiate(name="Administrator")
+    else:
+        btn_type = "Provider"
+        obj = provider
+
+    gp = appliance.collections.button_groups.instantiate(
+        text="[Unassigned Buttons]", hover="Unassigned buttons", type=btn_type
+    )
+
+    button = gp.buttons.create(
+        text="Btn_{}".format(fauxfactory.gen_alphanumeric(2)),
+        hover="Hover_{}".format(fauxfactory.gen_alphanumeric(2)),
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    # Clear the automation log
+    assert appliance.ssh_client.run_command('echo -n "" > /var/www/miq/vmdb/log/automation.log')
+
+    # Simulate button
+    button.simulate(target_object=obj.name, instance=button.system, request=button.request)
+    view = appliance.browser.create_view(AutomateSimulationView)
+    view.flash.assert_message("Automation Simulation has been run")
+
+    # Check in evm log
+    try:
+        wait_for(
+            log_request_check,
+            [appliance, 1],
+            timeout=600,
+            message="Check for expected request count",
+            delay=20,
+        )
+    except TimedOutError:
+        assert False, "Requests not found in automation log"
 
 
 @pytest.mark.manual

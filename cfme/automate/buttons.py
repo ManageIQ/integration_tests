@@ -272,19 +272,15 @@ class BaseButton(BaseEntity, Updateable):
     def simulate(
         self,
         target_object,
-        reset=False,
         instance="Request",
         message="create",
         request="InspectMe",
         execute_methods=True,
         attributes_values=None,
+        reset=False,
+        cancel=False,
     ):
-        # ToDo: remove this workaround as BZ-1535215 fix. 3 tries without waiting for view display.
-        for _ in range(0, 3):
-            view = navigate_to(self, "simulate", wait_for_view=0)
-            if view.is_displayed:
-                break
-        assert view.is_displayed
+        view = navigate_to(self, "simulate")
 
         # Group and User are EVM type objects
         target_type = (
@@ -293,7 +289,7 @@ class BaseButton(BaseEntity, Updateable):
             else self.group.type
         )
 
-        view.fill(
+        changed = view.fill(
             {
                 "instance": instance,
                 "message": message,
@@ -305,10 +301,16 @@ class BaseButton(BaseEntity, Updateable):
             }
         )
 
-        if reset:
-            view.reset_button.click()
-        else:
-            view.submit_button.click()
+        if cancel:
+            view.cancel_button.click()
+            return None
+
+        if changed:
+            if reset:
+                view.reset_button.click()
+            else:
+                view.submit_button.click()
+            view.flash.assert_no_error()
 
     @property
     def exists(self):

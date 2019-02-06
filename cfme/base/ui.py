@@ -1639,6 +1639,7 @@ class AutomateSimulationView(BaseLoggedInPage):
 
     submit_button = Button(title='Submit Automation Simulation with the specified options')
     reset_button = Button(title="Reset all options")
+    cancel_button = Button(title="Cancel Simulation to go back to Button details")
 
     result_tree = ManageIQTree(tree_id='ae_simulation_treebox')
 
