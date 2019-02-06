@@ -2,24 +2,25 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.manager import StorageManagerDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
-
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.storage,
-    pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([OpenStackProvider], scope='function')
+    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.provider([EC2Provider, OpenStackProvider], scope="module"),
+    pytest.mark.uncollectif(
+        lambda manager, provider: provider.one_of(EC2Provider) and "object_manager" in manager,
+        reason="Object Storage not supported by EC2Provider",
+    ),
 ]
 
 
-MANAGER_TYPE = ['Swift Manager', 'Cinder Manager']
-
-
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def provider_cleanup(provider):
     yield
     if provider.exists:
@@ -27,12 +28,12 @@ def provider_cleanup(provider):
         provider.wait_for_delete()
 
 
-@pytest.fixture(params=MANAGER_TYPE, ids=['object_manager', 'block_manager'])
-def manager(request, openstack_provider, appliance):
-    if request.param == 'Swift Manager':
-        collection = appliance.collections.object_managers.filter({"provider": openstack_provider})
+@pytest.fixture(params=["object_manager", "block_manager"])
+def manager(request, appliance, provider):
+    if request.param == "object_manger":
+        collection = appliance.collections.object_managers.filter({"provider": provider})
     else:
-        collection = appliance.collections.block_managers.filter({"provider": openstack_provider})
+        collection = appliance.collections.block_managers.filter({"provider": provider})
     yield collection.all()[0]
 
 
@@ -43,10 +44,10 @@ def test_manager_navigation(manager):
         initialEstimate: 1/4h
         casecomponent: Cloud
     """
-    view = navigate_to(manager.parent, 'All')
+    view = navigate_to(manager.parent, "All")
     assert view.is_displayed
 
-    view = navigate_to(manager, 'Details')
+    view = navigate_to(manager, "Details")
     assert view.is_displayed
 
     manager.refresh()
@@ -100,7 +101,6 @@ def test_storage_manager_delete(manager, provider_cleanup):
     manager.delete()
     view = manager.create_view(StorageManagerDetailsView)
     view.flash.assert_success_message(
-        'Delete initiated for 1 Storage Manager from the CFME Database')
+        "Delete initiated for 1 Storage Manager from the CFME Database"
+    )
     assert not manager.exists
-    # BZ-1613420
-    manager.provider.delete(cancel=False)
