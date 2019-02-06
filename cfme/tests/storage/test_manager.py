@@ -4,7 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.storage.manager import StorageManagerDetailsView
+from cfme.storage.manager import StorageManagerDetailsView, ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
@@ -43,6 +43,7 @@ def test_manager_navigation(manager):
         assignee: mmojzis
         initialEstimate: 1/4h
         casecomponent: Cloud
+        caseimportance: critical
     """
     view = navigate_to(manager.parent, "All")
     assert view.is_displayed
@@ -60,14 +61,14 @@ def test_storage_manager_edit_tag(manager):
     prerequisites:
         * Storage provider
 
-    Steps:
-        * Add tag and check
-        * Remove tag and check
-
     Polarion:
         assignee: mmojzis
         initialEstimate: 1/4h
         casecomponent: Cloud
+        caseimportance: medium
+        testSteps:
+            * Add tag and check
+            * Remove tag and check
     """
 
     # add tag with category Department and tag communication
@@ -88,15 +89,15 @@ def test_storage_manager_delete(manager, provider_cleanup):
     prerequisites:
         * Storage provider
 
-    Steps:
-        * Delete storage manager from inventory
-        * Assert flash message
-        * Check storage manager exists or not
-
     Polarion:
         assignee: mmojzis
         initialEstimate: 1/4h
         casecomponent: Cloud
+        caseimportance: medium
+        testSteps:
+            * Delete storage manager from inventory
+            * Assert flash message
+            * Check storage manager exists or not
     """
     manager.delete()
     view = manager.create_view(StorageManagerDetailsView)
@@ -104,3 +105,33 @@ def test_storage_manager_delete(manager, provider_cleanup):
         "Delete initiated for 1 Storage Manager from the CFME Database"
     )
     assert not manager.exists
+
+
+def test_storage_manager_navigation_from_cloudprovider(manager, provider):
+    """ Test whether Storage Manager is accessible from Cloud Provider
+
+    prerequisites:
+        * Storage provider
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Cloud
+        caseimportance: high
+        testSteps:
+            * Go to Cloud Provider summary
+            * Check whether Cloud Provider has any Storage Managers
+            * Click on Storage managers
+            * Select Storage Manager from list
+            * Check whether Storage Manager's Summary is displayed correctly
+    """
+    view = navigate_to(provider, 'Details')
+    manager_count = int(view.entities.summary("Relationships").get_text_of("Storage Managers"))
+    assert manager_count > 0
+    view.entities.summary("Relationships").click_at("Storage Managers")
+    storage_view = view.browser.create_view(ProviderStorageManagerAllView)
+    assert storage_view.entities.table.row_count == manager_count
+    storage_view.paginator.find_row_on_pages(storage_view.entities.table,
+                                             Name=manager.name).click()
+    storage_detail_view = storage_view.browser.create_view(StorageManagerDetailsView)
+    assert storage_detail_view.title.text == "{} (Summary)".format(manager.name)
