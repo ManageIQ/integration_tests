@@ -10,11 +10,13 @@ pytestmark = [
     pytest.mark.provider(
         classes=[RHEVMProvider],
         selector=ONE_PER_TYPE,
+        scope="module"
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
         selector=ONE_PER_TYPE,
-        fixture_name='second_provider',
+        fixture_name='source_provider',
+        scope="module"
     )
 ]
 

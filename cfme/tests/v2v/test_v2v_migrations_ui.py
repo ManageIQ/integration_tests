@@ -20,13 +20,15 @@ pytestmark = [
     pytest.mark.provider(
         classes=[RHEVMProvider],
         selector=ONE_PER_VERSION,
-        required_flags=['v2v']
+        required_flags=['v2v'],
+        scope="module"
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
         selector=ONE_PER_TYPE,
-        fixture_name='second_provider',
-        required_flags=['v2v']
+        fixture_name='source_provider',
+        required_flags=['v2v'],
+        scope="module"
     )
 ]
 
