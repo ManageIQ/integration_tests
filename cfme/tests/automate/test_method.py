@@ -41,7 +41,7 @@ def klass(namespace):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_method_crud(appliance, klass):
+def test_method_crud(klass):
     """
     Polarion:
         assignee: ghubale
@@ -56,7 +56,7 @@ def test_method_crud(appliance, klass):
         location='inline',
         script='$evm.log(:info, ":P")',
     )
-    view = appliance.browser.create_view(ClassDetailsView)
+    view = method.create_view(ClassDetailsView)
     view.flash.assert_message('Automate Method "{}" was added'.format(method.name))
     assert method.exists
     origname = method.name
