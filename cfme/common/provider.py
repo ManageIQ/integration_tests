@@ -385,7 +385,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
 
         provider_attributes["credentials"].append({
             "userid": endpoint_rsa.credentials.principal,
-            "auth_key": endpoint_rsa.credentials.secret,
+            "password": endpoint_rsa.credentials.secret,
             "auth_type": "ssh_keypair",
         })
 

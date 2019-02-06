@@ -3,7 +3,8 @@ from wrapanapi.systems import OpenstackSystem
 
 from . import CloudProvider
 from cfme.cloud.instance.openstack import OpenStackInstance
-from cfme.common.provider import EventsEndpoint, SSHEndpoint
+from cfme.common.provider import EventsEndpoint
+from cfme.common.provider import SSHEndpoint
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.provider.openstack_infra import OpenStackInfraEndpointForm
 from cfme.infrastructure.provider.openstack_infra import RHOSEndpoint
@@ -98,7 +99,7 @@ class OpenStackProvider(CloudProvider):
 
         rsa_endpoint_config = prov_config['endpoints'].get(SSHEndpoint.name, {})
         if rsa_endpoint_config:
-            endpoints[SSHEndpoint.name] = EventsEndpoint(**rsa_endpoint_config)
+            endpoints[SSHEndpoint.name] = SSHEndpoint(**rsa_endpoint_config)
 
         from cfme.utils.providers import get_crud
         infra_prov_key = prov_config.get('infra_provider_key')
