@@ -210,9 +210,6 @@ def test_domain_lock_unlock(request, appliance):
     meth = cls.methods.create(name='meth', script='$evm')
     # Lock the domain
     domain.lock()
-    navigate_to(appliance.server, 'Dashboard')
-    # Check that nothing is editable
-    # namespaces
     details = navigate_to(ns1, 'Details')
     assert not details.configuration.is_displayed
     details = navigate_to(ns2, 'Details')

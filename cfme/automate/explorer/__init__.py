@@ -40,8 +40,8 @@ class AutomateExplorer(CFMENavigateStep):
         self.view.navigation.select(*automate_menu_name(self.obj.appliance) + ['Explorer'])
 
 
-def check_tree_path(actual, desired):
-    if len(actual) != len(desired):
+def check_tree_path(actual, desired, partial=False):
+    if len(actual) != len(desired) and not partial:
         return False
     # We don't care about icons because we also match titles, which give the type away
     for actual_item, desired_item in zip(actual, without_icons(desired)):
