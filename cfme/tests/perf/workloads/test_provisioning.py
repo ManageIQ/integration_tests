@@ -77,9 +77,7 @@ def test_provisioning(appliance, request, scenario):
     Memory Monitor creates graphs and summary at the end of each scenario.
 
     Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: high
+        assignee: rhcf3_machine
         initialEstimate: 1/4h
     """
 
