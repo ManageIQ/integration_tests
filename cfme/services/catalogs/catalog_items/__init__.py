@@ -3,7 +3,7 @@ import fauxfactory
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Checkbox, View
+from widgetastic.widget import Text, Checkbox, ClickableMixin, View
 from widgetastic.utils import WaitFillViewStrategy
 from widgetastic_manageiq import FonticonPicker, ManageIQTree, WaitTab
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound
@@ -19,7 +19,7 @@ from cfme.utils.version import LOWEST, VersionPicker
 from cfme.utils.wait import wait_for
 
 
-class EntryPoint(Input):
+class EntryPoint(Input, ClickableMixin):
     def fill(self, value):
         if super(EntryPoint, self).fill(value):
             self.parent_view.modal.cancel.click()
