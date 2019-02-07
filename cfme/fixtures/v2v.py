@@ -298,8 +298,7 @@ def form_data_dual_vm_obj_dual_datastore(request, appliance, source_provider, pr
                 format(request.param[0][0],
                        request.param[0][1],
                        request.param[1][0],
-                       request.param[1][1],
-                )
+                       request.param[1][1],)
             },
             "datastore": {
                 "mappings": [
@@ -355,8 +354,7 @@ def form_data_vm_obj_dual_nics(request, appliance, source_provider, provider):
                 format(request.param[0][0],
                        request.param[0][1],
                        request.param[1][0],
-                       request.param[1][1],
-                )
+                       request.param[1][1],)
             },
             "network": {
                 "mappings": [
