@@ -7,8 +7,9 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.tests.candu import compare_data
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.wait import wait_for
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [
@@ -37,6 +38,10 @@ def azone(appliance, provider):
 
 @pytest.mark.parametrize("interval", INTERVAL)
 @pytest.mark.parametrize("graph_type", GRAPHS)
+@pytest.mark.meta(
+    blockers=[BZ(1671580, forced_streams=["5.9", "5.10"],
+    unblock=lambda provider: not provider.one_of(AzureProvider))]
+)
 def test_graph_screen(provider, azone, graph_type, interval, enable_candu):
     """Test Availibility zone graphs for Hourly
 
