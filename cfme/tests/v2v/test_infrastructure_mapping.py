@@ -9,14 +9,14 @@ from cfme.utils.appliance.implementations.ui import navigator
 
 pytestmark = [
     pytest.mark.provider(
-        classes=[RHEVMProvider], selector=ONE_PER_VERSION, required_flags=["v2v"], scope= "module"
+        classes=[RHEVMProvider], selector=ONE_PER_VERSION, required_flags=["v2v"], scope="module"
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
         selector=ONE_PER_TYPE,
         fixture_name="source_provider",
         required_flags=["v2v"],
-        scope= "module"
+        scope="module",
     ),
     pytest.mark.usefixtures("v2v_providers", "host_creds", "conversion_tags"),
 ]
@@ -25,11 +25,7 @@ pytestmark = [
 @pytest.mark.parametrize(
     "form_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True
 )
-def test_infrastructure_maping_crud(
-    request,
-    appliance,
-    form_data_vm_obj_single_datastore,
-):
+def test_infrastructure_maping_crud(request, appliance, form_data_vm_obj_single_datastore):
     """ Test create and delete for Infra Mapping
     Polarion:
         assignee: sshveta
@@ -46,7 +42,8 @@ def test_infrastructure_maping_crud(
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
     view = appliance.browser.create_view(
-        navigator.get_class(infrastructure_mapping_collection, 'Add').VIEW)
+        navigator.get_class(infrastructure_mapping_collection, "Add").VIEW
+    )
     assert view.result.success_icon.is_displayed
 
     @request.addfinalizer

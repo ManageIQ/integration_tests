@@ -50,6 +50,7 @@ class InfraMappingCommonButtons(InfrastructureMappingView):
 
 class InfrastructureMappingForm(InfrastructureMappingView):
     """All infrastructure mapping View"""
+
     title = Text(locator='.//h4[contains(@class,"modal-title")]')
 
     @View.nested
@@ -67,7 +68,7 @@ class InfrastructureMappingForm(InfrastructureMappingView):
     @View.nested
     class cluster(InfraMappingCommonButtons):  # noqa
         @View.nested
-        class cluster_mapping(InfraMappingCommonButtons): # noqa
+        class cluster_mapping(InfraMappingCommonButtons):  # noqa
             source_cluster = MultiSelectList("source_clusters")
             target_cluster = MultiSelectList("target_clusters")
             fill_strategy = WaitFillViewStrategy()
@@ -91,10 +92,10 @@ class InfrastructureMappingForm(InfrastructureMappingView):
     @View.nested
     class datastore(InfraMappingCommonButtons):  # noqa
         @View.nested
-        class datastore_mapping(InfraMappingCommonButtons): # noqa
+        class datastore_mapping(InfraMappingCommonButtons):  # noqa
             source_datastore = MultiSelectList("source_datastores")
             target_datastore = MultiSelectList("target_datastores")
-            fill_strategy = WaitFillViewStrategy(wait_widget='15s')
+            fill_strategy = WaitFillViewStrategy(wait_widget="15s")
 
             def after_fill(self, was_change):
                 if not self.add_mapping.disabled:
@@ -115,7 +116,7 @@ class InfrastructureMappingForm(InfrastructureMappingView):
     @View.nested
     class network(InfraMappingCommonButtons):  # noqa
         @View.nested
-        class network_mapping(InfraMappingCommonButtons): # noqa
+        class network_mapping(InfraMappingCommonButtons):  # noqa
             source_network = MultiSelectList("source_networks")
             target_network = MultiSelectList("target_networks")
             fill_strategy = WaitFillViewStrategy()
