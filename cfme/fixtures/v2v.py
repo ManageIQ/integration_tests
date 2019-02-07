@@ -58,11 +58,12 @@ def host_creds(request, v2v_providers):
 
             rhv_hosts = rhv_provider.hosts.all()
             for host in rhv_hosts:
-                host_data, = [data for data in rhv_provider.data["hosts"]
-                              if data["name"] == host.name]
+                host_data, = [
+                    data for data in rhv_provider.data["hosts"] if data["name"] == host.name
+                ]
                 host.update_credentials_rest(credentials=host_data["credentials"])
         except ValueError as error:
-            pytest.skip('Host data invalid for provider: {}'.format(error.msg))
+            pytest.skip("Host data invalid for provider: {}".format(error.msg))
     except Exception:
         # if above throws ValueError or TypeError or other exception, just skip the test
         logger.exception("Exception when trying to add the host credentials.")
@@ -172,20 +173,12 @@ def _form_data(source_provider, provider):
         },
         "cluster": {"mappings": [_form_data_mapping("clusters", source_provider, provider)]},
         "datastore": {
-            "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                "mappings": [
-                    _form_data_mapping("datastores", source_provider, provider, "nfs", "nfs")
-                ]
-            }
+            "mappings": [_form_data_mapping("datastores", source_provider, provider, "nfs", "nfs")]
         },
         "network": {
-            "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                "mappings": [
-                    _form_data_mapping(
-                        "vlans", source_provider, provider, "VM Network", "ovirtmgmt"
-                    )
-                ]
-            }
+            "mappings": [
+                _form_data_mapping("vlans", source_provider, provider, "VM Network", "ovirtmgmt")
+            ]
         },
     }
     return form_data
@@ -207,13 +200,11 @@ def form_data_multiple_vm_obj_single_datastore(request, appliance, source_provid
                 " {ds_type2},".format(ds_type1=request.param[0], ds_type2=request.param[1])
             },
             "network": {
-                "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                    "mappings": [
-                        _form_data_mapping(
-                            "vlans", source_provider, provider, "VM Network", "ovirtmgmt"
-                        )
-                    ]
-                }
+                "mappings": [
+                    _form_data_mapping(
+                        "vlans", source_provider, provider, "VM Network", "ovirtmgmt"
+                    )
+                ]
             },
         },
     )
@@ -234,17 +225,11 @@ def form_data_single_datastore(request, source_provider, provider):
                 " {ds_type2},".format(ds_type1=request.param[0], ds_type2=request.param[1])
             },
             "datastore": {
-                "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                    "mappings": [
-                        _form_data_mapping(
-                            "datastores",
-                            source_provider,
-                            provider,
-                            request.param[0],
-                            request.param[1],
-                        )
-                    ]
-                }
+                "mappings": [
+                    _form_data_mapping(
+                        "datastores", source_provider, provider, request.param[0], request.param[1]
+                    )
+                ]
             },
         },
     )
@@ -263,13 +248,11 @@ def form_data_single_network(request, source_provider, provider):
                 )
             },
             "network": {
-                "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                    "mappings": [
-                        _form_data_mapping(
-                            "vlans", source_provider, provider, request.param[0], request.param[1]
-                        )
-                    ]
-                }
+                "mappings": [
+                    _form_data_mapping(
+                        "vlans", source_provider, provider, request.param[0], request.param[1]
+                    )
+                ]
             },
         },
     )
@@ -283,20 +266,16 @@ def edited_form_data(source_provider, provider):
         "general": {"description": "my edited description"},
         "cluster": {},
         "datastore": {
-            "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                "mappings": [
-                    _form_data_mapping("datastores", source_provider, provider, "iscsi", "iscsi")
-                ]
-            }
+            "mappings": [
+                _form_data_mapping("datastores", source_provider, provider, "iscsi", "iscsi")
+            ]
         },
         "network": {
-            "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                "mappings": [
-                    _form_data_mapping(
-                        "vlans", source_provider, provider, "DPortGroup", "Storage - VLAN 33"
-                    )
-                ]
-            }
+            "mappings": [
+                _form_data_mapping(
+                    "vlans", source_provider, provider, "DPortGroup", "Storage - VLAN 33"
+                )
+            ]
         },
     }
     return form_data, edited_form_data
@@ -319,40 +298,37 @@ def form_data_dual_vm_obj_dual_datastore(request, appliance, source_provider, pr
                 format(request.param[0][0],
                        request.param[0][1],
                        request.param[1][0],
-                       request.param[1][1])
+                       request.param[1][1],
+                )
             },
             "datastore": {
-                "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                    "mappings": [
-                        _form_data_mapping(
-                            "datastores",
-                            source_provider,
-                            provider,
-                            request.param[0][0],
-                            request.param[0][1],
-                        ),
-                        _form_data_mapping(
-                            "datastores",
-                            source_provider,
-                            provider,
-                            request.param[1][0],
-                            request.param[1][1],
-                        ),
-                    ]
-                }
+                "mappings": [
+                    _form_data_mapping(
+                        "datastores",
+                        source_provider,
+                        provider,
+                        request.param[0][0],
+                        request.param[0][1],
+                    ),
+                    _form_data_mapping(
+                        "datastores",
+                        source_provider,
+                        provider,
+                        request.param[1][0],
+                        request.param[1][1],
+                    ),
+                ]
             },
             "network": {
-                "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                    "mappings": [
-                        _form_data_mapping(
-                            "vlans",
-                            source_provider,
-                            provider,
-                            source_provider.data.get("vlans")[0],
-                            provider.data.get("vlans")[0],
-                        )
-                    ]
-                }
+                "mappings": [
+                    _form_data_mapping(
+                        "vlans",
+                        source_provider,
+                        provider,
+                        source_provider.data.get("vlans")[0],
+                        provider.data.get("vlans")[0],
+                    )
+                ]
             },
         },
     )
@@ -379,28 +355,26 @@ def form_data_vm_obj_dual_nics(request, appliance, source_provider, provider):
                 format(request.param[0][0],
                        request.param[0][1],
                        request.param[1][0],
-                       request.param[1][1]
-                       )
+                       request.param[1][1],
+                )
             },
             "network": {
-                "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                    "mappings": [
-                        _form_data_mapping(
-                            "vlans",
-                            source_provider,
-                            provider,
-                            request.param[0][0],
-                            request.param[0][1],
-                        ),
-                        _form_data_mapping(
-                            "vlans",
-                            source_provider,
-                            provider,
-                            request.param[1][0],
-                            request.param[1][1],
-                        ),
-                    ]
-                }
+                "mappings": [
+                    _form_data_mapping(
+                        "vlans",
+                        source_provider,
+                        provider,
+                        request.param[0][0],
+                        request.param[0][1],
+                    ),
+                    _form_data_mapping(
+                        "vlans",
+                        source_provider,
+                        provider,
+                        request.param[1][0],
+                        request.param[1][1],
+                    ),
+                ]
             },
         },
     )
@@ -420,17 +394,11 @@ def form_data_vm_obj_single_datastore(request, appliance, source_provider, provi
                 format(ds_type1=request.param[0], ds_type2=request.param[1])
             },
             "datastore": {
-                "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                    "mappings": [
-                        _form_data_mapping(
-                            "datastores",
-                            source_provider,
-                            provider,
-                            request.param[0],
-                            request.param[1],
-                        )
-                    ]
-                }
+                "mappings": [
+                    _form_data_mapping(
+                        "datastores", source_provider, provider, request.param[0], request.param[1]
+                    )
+                ]
             },
         },
     )
@@ -450,13 +418,11 @@ def form_data_vm_obj_single_network(request, appliance, source_provider, provide
                 )
             },
             "network": {
-                "Cluster ({})".format(provider.data.get("clusters")[0]): {
-                    "mappings": [
-                        _form_data_mapping(
-                            "vlans", source_provider, provider, request.param[0], request.param[1]
-                        )
-                    ]
-                }
+                "mappings": [
+                    _form_data_mapping(
+                        "vlans", source_provider, provider, request.param[0], request.param[1]
+                    )
+                ]
             },
         },
     )
@@ -471,13 +437,16 @@ def _form_data_mapping(selector, source_provider, provider, source_list=None, ta
         source = source_data if source_data else None
         target = target_data if target_data else None
         skip_test = not source or not target
+        type = "cluster"
     else:
         if selector is "datastores":
             source = [d.name for d in source_data if d.type == source_list]
             target = [d.name for d in target_data if d.type == target_list]
+            type = "datastore"
         else:
             source = [v for v in source_data if v == source_list]
             target = [v for v in target_data if v == target_list]
+            type = "network"
         skip_test = not (source_data and target_data and source and target)
 
     if skip_test:
@@ -485,4 +454,8 @@ def _form_data_mapping(selector, source_provider, provider, source_list=None, ta
     else:
         _source, _target = partial_match(source[0]), partial_match(target[0])
 
-    return {"sources": [_source], "target": [_target]}
+    return {
+        "cluster_selector": "Cluster ({})".format(provider.data.get("clusters")[0]),
+        "source_{}".format(type): [_source],
+        "target_{}".format(type): [_target],
+    }
