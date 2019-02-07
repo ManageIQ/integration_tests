@@ -49,7 +49,6 @@ def config_manager(config_manager_obj):
 
 @pytest.fixture(scope="function")
 def catalog_item(appliance, request, config_manager, dialog, catalog, job_type):
-    # template = job_type
     config_manager_obj = config_manager
     provider_name = config_manager_obj.yaml_data.get('name')
     template = config_manager_obj.yaml_data['provisioning_data'][job_type]
