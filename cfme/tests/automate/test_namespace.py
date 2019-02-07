@@ -85,3 +85,25 @@ def test_duplicate_namespace_disallowed(parent_namespace):
         parent_namespace.namespaces.create(
             name=ns.name,
             description=ns.description)
+
+
+@pytest.mark.tier(2)
+def test_namespace_name_wrong(appliance, domain):
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/60h
+        tags: automate
+        testSteps:
+            1. Navigate to Automation> Automate> Explorer
+            2. Try to create namespace with name `Dummy Domain` (I put space which is invalid)
+            3. Should give proper flash message
+
+    Bugzilla:
+        1650071
+    """
+    with pytest.raises(Exception, match='Name may contain only'):
+        domain.namespaces.create(name='with space')

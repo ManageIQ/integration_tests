@@ -1207,31 +1207,6 @@ def test_generate_widget_content_by_automate():
 @pytest.mark.manual
 @test_requirements.automate
 @pytest.mark.tier(1)
-def test_valid_names_of_domain_namespace():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.9
-        casecomponent: Automate
-        tags: automate
-        testSteps:
-            1. Navigate to Automation> Automate> Explorer
-            2. Try to create Domain with name `Dummy Domain` (I put space which is invalid)
-            3. Should give proper flash message
-
-    Bugzilla:
-        1650071
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.automate
-@pytest.mark.tier(1)
 def test_method_for_log_and_notify():
     """
     Polarion:
