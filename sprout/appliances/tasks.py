@@ -408,12 +408,15 @@ def poke_trackerbot(self):
             if build_date <= (parsetime.today() - timedelta(days=group.template_obsolete_days)):
                 # It is already obsolete, so ignore it
                 continue
-        provider, create = Provider.objects.get_or_create(id=template["provider"]["key"])
+        if conf.cfme_data.management_systems.get(template["provider"]["key"], {}).get(
+                "use_for_sprout", False
+        ):  # only create provider in db if it is marked to use for sprout
+            provider, create = Provider.objects.get_or_create(id=template["provider"]["key"])
+        else:
+            continue
         if not provider.is_working:
             continue
         if "sprout" not in provider.provider_data:
-            continue
-        if not provider.provider_data.get("use_for_sprout", False):
             continue
         if not provider.provider_type:
             provider.provider_type = provider.provider_data.get('type')
@@ -507,7 +510,12 @@ def poke_trackerbot(self):
     # If any of the templates becomes unusable, let sprout know about it
     # Similarly if some of them becomes usable ...
     for provider_id, template_name, usability in template_usability:
-        provider, create = Provider.objects.get_or_create(id=provider_id)
+        if conf.cfme_data.management_systems.get(provider_id, {}).get(
+                "use_for_sprout", False
+        ):  # only create provider in db if it is marked to use for sprout
+            provider, create = Provider.objects.get_or_create(id=provider_id)
+        else:
+            continue
         if not provider.working or provider.disabled:
             continue
         with transaction.atomic():
