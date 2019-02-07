@@ -49,15 +49,10 @@ def config_manager(config_manager_obj):
 
 @pytest.fixture(scope="function")
 def catalog_item(appliance, request, config_manager, dialog, catalog, job_type):
+    # template = job_type
     config_manager_obj = config_manager
     provider_name = config_manager_obj.yaml_data.get('name')
-    provisioning_data = config_manager_obj.yaml_data['provisioning_data']
-    if job_type == 'template':
-        item_type, provider_type, template = map(provisioning_data.get,
-                                            ('item_type', 'provider_type', 'template'))
-    else:
-        item_type, provider_type, template = map(provisioning_data.get,
-                                            ('item_type', 'provider_type', 'workflow'))
+    template = config_manager_obj.yaml_data['provisioning_data'][job_type]
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_TOWER,
         name=dialog.label,
