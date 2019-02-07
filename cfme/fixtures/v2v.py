@@ -171,15 +171,11 @@ def _form_data(source_provider, provider):
             "description": "Single Datastore migration of VM from {ds_type1} to"
             " {ds_type2}".format(ds_type1="nfs", ds_type2="nfs"),
         },
-        "cluster": {"mappings": [_form_data_mapping("clusters", source_provider, provider)]},
-        "datastore": {
-            "mappings": [_form_data_mapping("datastores", source_provider, provider, "nfs", "nfs")]
-        },
-        "network": {
-            "mappings": [
-                _form_data_mapping("vlans", source_provider, provider, "VM Network", "ovirtmgmt")
-            ]
-        },
+        "cluster": [_form_data_mapping("clusters", source_provider, provider)],
+        "datastore": [_form_data_mapping("datastores", source_provider, provider, "nfs", "nfs")],
+        "network": [
+            _form_data_mapping("vlans", source_provider, provider, "VM Network", "ovirtmgmt")
+        ],
     }
     return form_data
 
@@ -199,13 +195,9 @@ def form_data_multiple_vm_obj_single_datastore(request, appliance, source_provid
                 "description": "Single Datastore migration of VM from {ds_type1} to"
                 " {ds_type2},".format(ds_type1=request.param[0], ds_type2=request.param[1])
             },
-            "network": {
-                "mappings": [
-                    _form_data_mapping(
-                        "vlans", source_provider, provider, "VM Network", "ovirtmgmt"
-                    )
-                ]
-            },
+            "network": [
+                _form_data_mapping("vlans", source_provider, provider, "VM Network", "ovirtmgmt")
+            ],
         },
     )
     vm_list = []
@@ -224,13 +216,11 @@ def form_data_single_datastore(request, source_provider, provider):
                 "description": "Single Datastore migration of VM from {ds_type1} to"
                 " {ds_type2},".format(ds_type1=request.param[0], ds_type2=request.param[1])
             },
-            "datastore": {
-                "mappings": [
-                    _form_data_mapping(
-                        "datastores", source_provider, provider, request.param[0], request.param[1]
-                    )
-                ]
-            },
+            "datastore": [
+                _form_data_mapping(
+                    "datastores", source_provider, provider, request.param[0], request.param[1]
+                )
+            ],
         },
     )
     return form_data
@@ -247,13 +237,11 @@ def form_data_single_network(request, source_provider, provider):
                     vlan1=request.param[0], vlan2=request.param[1]
                 )
             },
-            "network": {
-                "mappings": [
-                    _form_data_mapping(
-                        "vlans", source_provider, provider, request.param[0], request.param[1]
-                    )
-                ]
-            },
+            "network": [
+                _form_data_mapping(
+                    "vlans", source_provider, provider, request.param[0], request.param[1]
+                )
+            ],
         },
     )
     return form_data
@@ -265,18 +253,14 @@ def edited_form_data(source_provider, provider):
     edited_form_data = {
         "general": {"description": "my edited description"},
         "cluster": {},
-        "datastore": {
-            "mappings": [
-                _form_data_mapping("datastores", source_provider, provider, "iscsi", "iscsi")
-            ]
-        },
-        "network": {
-            "mappings": [
-                _form_data_mapping(
-                    "vlans", source_provider, provider, "DPortGroup", "Storage - VLAN 33"
-                )
-            ]
-        },
+        "datastore": [
+            _form_data_mapping("datastores", source_provider, provider, "iscsi", "iscsi")
+        ],
+        "network": [
+            _form_data_mapping(
+                "vlans", source_provider, provider, "DPortGroup", "Storage - VLAN 33"
+            )
+        ],
     }
     return form_data, edited_form_data
 
@@ -294,41 +278,38 @@ def form_data_dual_vm_obj_dual_datastore(request, appliance, source_provider, pr
         form_data,
         {
             "general": {
-                "description": "Dual Datastore migration of VM from {} to {},& from {} to {}".
-                format(request.param[0][0],
-                       request.param[0][1],
-                       request.param[1][0],
-                       request.param[1][1],)
+                "description": "Dual Datastore migration of VM from {} to {},& from {} to {}".format(
+                    request.param[0][0],
+                    request.param[0][1],
+                    request.param[1][0],
+                    request.param[1][1],
+                )
             },
-            "datastore": {
-                "mappings": [
-                    _form_data_mapping(
-                        "datastores",
-                        source_provider,
-                        provider,
-                        request.param[0][0],
-                        request.param[0][1],
-                    ),
-                    _form_data_mapping(
-                        "datastores",
-                        source_provider,
-                        provider,
-                        request.param[1][0],
-                        request.param[1][1],
-                    ),
-                ]
-            },
-            "network": {
-                "mappings": [
-                    _form_data_mapping(
-                        "vlans",
-                        source_provider,
-                        provider,
-                        source_provider.data.get("vlans")[0],
-                        provider.data.get("vlans")[0],
-                    )
-                ]
-            },
+            "datastore": [
+                _form_data_mapping(
+                    "datastores",
+                    source_provider,
+                    provider,
+                    request.param[0][0],
+                    request.param[0][1],
+                ),
+                _form_data_mapping(
+                    "datastores",
+                    source_provider,
+                    provider,
+                    request.param[1][0],
+                    request.param[1][1],
+                ),
+            ],
+            "network": [
+                _form_data_mapping(
+                    "vlans",
+                    source_provider,
+                    provider,
+                    source_provider.data.get("vlans")[0],
+                    provider.data.get("vlans")[0],
+                )
+            ],
         },
     )
     # creating 2 VMs on two different datastores and returning its object list
@@ -350,30 +331,21 @@ def form_data_vm_obj_dual_nics(request, appliance, source_provider, provider):
         form_data,
         {
             "general": {
-                "description": "Dual Datastore migration of VM from {} to {},& from {} to {}".
-                format(request.param[0][0],
-                       request.param[0][1],
-                       request.param[1][0],
-                       request.param[1][1],)
+                "description": "Dual Datastore migration of VM from {} to {},& from {} to {}".format(
+                    request.param[0][0],
+                    request.param[0][1],
+                    request.param[1][0],
+                    request.param[1][1],
+                )
             },
-            "network": {
-                "mappings": [
-                    _form_data_mapping(
-                        "vlans",
-                        source_provider,
-                        provider,
-                        request.param[0][0],
-                        request.param[0][1],
-                    ),
-                    _form_data_mapping(
-                        "vlans",
-                        source_provider,
-                        provider,
-                        request.param[1][0],
-                        request.param[1][1],
-                    ),
-                ]
-            },
+            "network": [
+                _form_data_mapping(
+                    "vlans", source_provider, provider, request.param[0][0], request.param[0][1]
+                ),
+                _form_data_mapping(
+                    "vlans", source_provider, provider, request.param[1][0], request.param[1][1]
+                ),
+            ],
         },
     )
     vm_obj = get_vm(request, appliance, source_provider, request.param[2])
@@ -388,16 +360,15 @@ def form_data_vm_obj_single_datastore(request, appliance, source_provider, provi
         form_data,
         {
             "general": {
-                "description": "Single Datastore migration of VM from {ds_type1} to {ds_type2},".
-                format(ds_type1=request.param[0], ds_type2=request.param[1])
+                "description": "Single Datastore migration of VM from {ds_type1} to {ds_type2},".format(
+                    ds_type1=request.param[0], ds_type2=request.param[1]
+                )
             },
-            "datastore": {
-                "mappings": [
-                    _form_data_mapping(
-                        "datastores", source_provider, provider, request.param[0], request.param[1]
-                    )
-                ]
-            },
+            "datastore": [
+                _form_data_mapping(
+                    "datastores", source_provider, provider, request.param[0], request.param[1]
+                )
+            ],
         },
     )
     vm_obj = get_vm(request, appliance, source_provider, request.param[2], request.param[0])
@@ -415,13 +386,11 @@ def form_data_vm_obj_single_network(request, appliance, source_provider, provide
                     vlan1=request.param[0], vlan2=request.param[1]
                 )
             },
-            "network": {
-                "mappings": [
-                    _form_data_mapping(
-                        "vlans", source_provider, provider, request.param[0], request.param[1]
-                    )
-                ]
-            },
+            "network": [
+                _form_data_mapping(
+                    "vlans", source_provider, provider, request.param[0], request.param[1]
+                )
+            ],
         },
     )
     vm_obj = get_vm(request, appliance, source_provider, request.param[2])

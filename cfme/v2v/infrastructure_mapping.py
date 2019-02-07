@@ -18,8 +18,6 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 from cfme.utils.update import Updateable
 from cfme.utils.version import Version, VersionPicker
 
-# from cfme.v2v.migration_plans import MigrationPlanView
-
 
 class InfrastructureMappingView(BaseLoggedInPage):
     title = Text("#explorer_title_text")
@@ -68,7 +66,7 @@ class InfrastructureMappingForm(InfrastructureMappingView):
     @View.nested
     class cluster(InfraMappingCommonButtons):  # noqa
         @View.nested
-        class cluster_mapping(InfraMappingCommonButtons):  # noqa
+        class fill_cluster_mapping(InfraMappingCommonButtons):  # noqa
             source_cluster = MultiSelectList("source_clusters")
             target_cluster = MultiSelectList("target_clusters")
             fill_strategy = WaitFillViewStrategy()
@@ -79,8 +77,8 @@ class InfrastructureMappingForm(InfrastructureMappingView):
 
         def fill(self, values):
             was_change = True
-            for mapping in values.get("mappings", []) if isinstance(values, dict) else []:
-                self.cluster_mapping.fill(mapping)
+            for mapping in values:
+                self.fill_cluster_mapping.fill(mapping)
             else:
                 was_change = False
             self.after_fill(was_change)
@@ -92,7 +90,7 @@ class InfrastructureMappingForm(InfrastructureMappingView):
     @View.nested
     class datastore(InfraMappingCommonButtons):  # noqa
         @View.nested
-        class datastore_mapping(InfraMappingCommonButtons):  # noqa
+        class fill_datastore_mapping(InfraMappingCommonButtons):  # noqa
             source_datastore = MultiSelectList("source_datastores")
             target_datastore = MultiSelectList("target_datastores")
             fill_strategy = WaitFillViewStrategy(wait_widget="15s")
@@ -103,8 +101,8 @@ class InfrastructureMappingForm(InfrastructureMappingView):
 
         def fill(self, values):
             was_change = True
-            for mapping in values.get("mappings", []) if isinstance(values, dict) else []:
-                self.datastore_mapping.fill(mapping)
+            for mapping in values:
+                self.fill_datastore_mapping.fill(mapping)
             else:
                 was_change = False
             self.after_fill(was_change)
@@ -116,7 +114,7 @@ class InfrastructureMappingForm(InfrastructureMappingView):
     @View.nested
     class network(InfraMappingCommonButtons):  # noqa
         @View.nested
-        class network_mapping(InfraMappingCommonButtons):  # noqa
+        class fill_network_mapping(InfraMappingCommonButtons):  # noqa
             source_network = MultiSelectList("source_networks")
             target_network = MultiSelectList("target_networks")
             fill_strategy = WaitFillViewStrategy()
@@ -127,8 +125,8 @@ class InfrastructureMappingForm(InfrastructureMappingView):
 
         def fill(self, values):
             was_change = True
-            for mapping in values.get("mappings", []) if isinstance(values, dict) else []:
-                self.network_mapping.fill(mapping)
+            for mapping in values:
+                self.fill_network_mapping.fill(mapping)
             else:
                 was_change = False
             self.after_fill(was_change)
@@ -197,12 +195,45 @@ class EditInfrastructureMappingView(InfrastructureMappingForm):
 
 
 @attr.s
+class clusters(object):  # noqa
+
+    source_cluster = attr.ib(default=None)
+    target_cluster = attr.ib(default=None)
+
+    def get_mappings(self):
+        cluster_mappings = [
+            {"source_cluster": [self.source_cluster], "target_cluster": [self.target_cluster]}
+        ]
+        return cluster_mappings
+
+
+@attr.s
+class datastores(object):  # noqa
+
+    source_datastore = attr.ib(default=None)
+    target_datastore = attr.ib(default=None)
+    datastore_mappings = [
+        {"source_datastore": [source_datastore], "target_datastore": [target_datastore]}
+    ]
+
+
+@attr.s
+class networks(object):  # noqa
+
+    source_network = attr.ib(default=None)
+    target_network = attr.ib(default=None)
+    network_mappings = [{"source_network": [source_network], "target_network": [target_network]}]
+
+
+@attr.s
 class InfrastructureMapping(BaseEntity, Updateable):
     """Class representing v2v infrastructure mappings"""
 
     name = attr.ib()
     description = attr.ib(default=None)
-    form_data = attr.ib(default=None)
+    cluster_mapping = attr.ib(default=None)
+    datastore_mapping = attr.ib(default=None)
+    network_mapping = attr.ib(default=None)
 
     def update(self, updates):
         view = navigate_to(self, "Edit", wait_for_view=20)
@@ -215,13 +246,54 @@ class InfrastructureMappingCollection(BaseCollection):
 
     ENTITY = InfrastructureMapping
 
+    def form_values(self, form_data):
+        name = form_data["general"]["name"]
+        description = form_data["general"].get("description", "")
+
+        cluster_list = []
+        cluster = form_data.get("cluster", [])
+        if cluster:
+            for mapping in cluster:
+                if isinstance(mapping, dict):
+                    clusters.source_cluster = mapping.get("source_cluster")
+                    clusters.target_cluster = mapping.get("target_cluster")
+                    cluster_list.append(mapping)
+
+        datastore_list = []
+        datastore = form_data.get("datastore", [])
+        if datastore:
+            for mapping in datastore:
+                if isinstance(mapping, dict):
+                    datastores.source_datastore = mapping.get("source_datastore")
+                    datastores.target_datastore = mapping.get("target_datastore")
+                    datastore_list.append(mapping)
+
+        network_list = []
+        network = form_data.get("network", [])
+        if network:
+            for mapping in network:
+                if isinstance(mapping, dict):
+                    networks.source_network = mapping.get("source_network").pop
+                    networks.target_network = mapping.get("target_network").pop
+                    network_list.append(mapping)
+
+        return {
+            "general": {"name": name, "description": description},
+            "cluster": cluster_list,
+            "datastore": datastore_list,
+            "network": network_list,
+        }
+
     def create(self, form_data):
         view = navigate_to(self, "Add")
-        view.fill(form_data)
+        fill_form_data = self.form_values(form_data)
+        view.fill(self.form_values(form_data))
         return self.instantiate(
-            name=form_data["general"]["name"],
-            description=form_data["general"].get("description", ""),
-            form_data=form_data,
+            name=fill_form_data["general"]["name"],
+            description=fill_form_data["general"].get("description", ""),
+            cluster_mapping=fill_form_data["cluster"],
+            datastore_mapping=fill_form_data["datastore"],
+            network_mapping=fill_form_data["network"],
         )
 
     def find_mapping(self, mapping):

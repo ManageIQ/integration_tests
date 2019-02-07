@@ -5,7 +5,6 @@ from cfme.fixtures.provider import rhel7_minimal
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION, ONE_PER_TYPE
-from cfme.utils.appliance.implementations.ui import navigator
 
 pytestmark = [
     pytest.mark.provider(
@@ -41,11 +40,8 @@ def test_infrastructure_maping_crud(request, appliance, form_data_vm_obj_single_
 
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
-    view = appliance.browser.create_view(
-        navigator.get_class(infrastructure_mapping_collection, "Add").VIEW
-    )
-    assert view.result.success_icon.is_displayed
-
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
+
+
