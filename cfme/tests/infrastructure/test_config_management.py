@@ -1,6 +1,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.testgen import config_managers
 from cfme.utils.testgen import generate
 from cfme.utils.update import update
@@ -134,6 +135,7 @@ def test_config_manager_remove(config_manager):
 
 # Disable this test for Tower, no Configuration profiles can be retrieved from Tower side yet
 @pytest.mark.tier(3)
+@test_requirements.tag
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
 def test_config_system_tag(request, config_system, tag):
     """
@@ -144,9 +146,36 @@ def test_config_system_tag(request, config_system, tag):
     """
     config_system.add_tag(tag=tag, details=False)
     tags = config_system.get_tags()
-    assert '{}: {}'.format(tag.category.display_name, tag.display_name) in \
-        ['{}: {}'.format(t.category.display_name, t.display_name) for t in tags], \
-        "Failed to setup a configuration system's tag"
+    msg = "Failed to setup a configuration system's tag"
+    tag_info = '{}: {}'.format(tag.category.display_name, tag.display_name)
+    assert tag_info in ['{}: {}'.format(t.category.display_name, t.display_name) for t in tags], msg
+
+
+@pytest.mark.tier(3)
+@test_requirements.tag
+@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type != "Ansible Tower")
+def test_ansible_tower_job_templates_tag(request, config_manager, tag):
+    """
+    Polarion:
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Ansible
+        caseimportance: high
+
+    Bugzilla:
+        1673104
+    """
+    collection = config_manager.appliance.collections.ansible_tower_job_templates
+    try:
+        job_template = collection.all()[0]
+    except IndexError:
+        pytest.skip("No job template was found")
+    job_template.add_tag(tag=tag, details=False)
+    request.addfinalizer(lambda: job_template.remove_tag(tag=tag))
+    tags = job_template.get_tags()
+    msg = "Failed to setup a configuration system's tag"
+    tag_info = '{}: {}'.format(tag.category.display_name, tag.display_name)
+    assert tag_info in ['{}: {}'.format(t.category.display_name, t.display_name) for t in tags], msg
 
 
 # def test_config_system_reprovision(config_system):

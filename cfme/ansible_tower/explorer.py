@@ -7,17 +7,23 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import Taggable
+from cfme.common import TaggableCollection
+from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import Button
 from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
 
 
 class TowerExplorerAccordion(View):
@@ -89,14 +95,34 @@ class TowerExplorerSystemsAllView(TowerExplorerView):
 
 class TowerExplorerJobTemplatesAllView(TowerExplorerView):
     toolbar = View.nested(TowerExplorerSystemJobTemplatesToolbar)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
     @property
     def is_displayed(self):
         return (
-            self.in_tower_explorer and
-            self.title.text == VersionPicker({Version.lowest(): 'All Ansible Tower Job Templates',
-                '5.10': 'All Ansible Tower Templates'}).pick(self.browser.product_version) and
-            self.sidebar.job_templates.is_opened
+            self.in_tower_explorer
+            and self.title.text == "All Ansible Tower Templates"
+            and self.sidebar.job_templates.is_opened
+        )
+
+
+class TowerExplorerJobTemplateDetailsEntities(View):
+    properties = SummaryTable(title="Properties")
+    variables = SummaryTable(title="Variables")
+    smart_management = SummaryTable(title="Smart Management")
+
+
+class TowerExplorerJobTemplateDetailsView(TowerExplorerView):
+    toolbar = View.nested(TowerExplorerSystemJobTemplatesToolbar)
+    entities = View.nested(TowerExplorerJobTemplateDetailsEntities)
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_tower_explorer
+            and self.title.text
+            == 'Job Template (Ansible Tower) "{}"'.format(self.context["object"].name)
+            and self.sidebar.job_templates.is_opened
         )
 
 
@@ -121,16 +147,21 @@ class AnsibleTowerSystemsCollection(BaseCollection):
 
 
 @attr.s
-class AnsibleTowerJobTemplate(BaseEntity):
-    pass
+class AnsibleTowerJobTemplate(BaseEntity, Taggable):
+    name = attr.ib()
 
 
 @attr.s
-class AnsibleTowerJobTemplatesCollection(BaseCollection):
+class AnsibleTowerJobTemplatesCollection(BaseCollection, TaggableCollection):
     ENTITY = AnsibleTowerJobTemplate
 
+    def all(self):
+        """Return entities for all items in Ansible Job templates collection"""
+        view = navigate_to(self, "All")
+        return [self.instantiate(e) for e in view.entities.all_entity_names]
 
-@navigator.register(Server, 'AnsibleTowerExplorer')
+
+@navigator.register(Server, "AnsibleTowerExplorer")
 class AnsibleTowerExplorer(CFMENavigateStep):
     VIEW = TowerExplorerProvidersAllView
     prerequisite = NavigateToSibling('LoggedIn')
@@ -164,6 +195,18 @@ class TowerExplorerJobTemplatesAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'AnsibleTowerExplorer')
 
     def step(self, *args, **kwargs):
-        self.view.sidebar.job_templates.tree.click_path(VersionPicker({Version.lowest():
-            'All Ansible Tower Job Templates', '5.10': 'All Ansible Tower Templates'}).pick(
-            self.view.browser.product_version))
+        self.view.sidebar.job_templates.tree.click_path('All Ansible Tower Templates')
+
+
+@navigator.register(AnsibleTowerJobTemplate, 'Details')
+class TowerExplorerJobTemplateDetails(CFMENavigateStep):
+    VIEW = TowerExplorerJobTemplateDetailsView
+    prerequisite = NavigateToAttribute('parent', 'All')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        try:
+            row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
+        except ItemNotFound:
+            raise ItemNotFound('Could not locate template "{}"'.format(self.obj.name))
+        row.click()
