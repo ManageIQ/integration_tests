@@ -134,8 +134,6 @@ docker-pycreds==0.3.0
 docutils==0.14
 dogpile.cache==0.6.7
 dump2polarion==0.36
-polarion-docstrings==0.15
-pytest-polarion-collect==0.10
 entrypoints==0.2.3
 enum34==1.1.6
 fauxfactory==3.0.2
@@ -211,8 +209,8 @@ oslo.config==6.6.2
 oslo.i18n==3.22.1
 oslo.serialization==2.28.1
 oslo.utils==3.37.1
-ovirt-engine-sdk-python==4.2.9
-packaging==18.0
+ovirt-engine-sdk-python==4.3.0
+packaging==19.0
 pandocfilters==1.4.2
 paramiko==2.4.2
 parsedatetime==2.4
@@ -224,6 +222,7 @@ pickleshare==0.7.5
 pika==0.12.0
 Pillow==5.3.0
 pluggy==0.6.0
+polarion-docstrings==0.16
 prettytable==0.7.2
 progress==1.4
 prometheus-client==0.4.2
@@ -246,6 +245,7 @@ pyparsing==2.2.2
 pyperclip==1.7.0
 pytesseract==0.2.5
 pytest==3.4.1
+pytest-polarion-collect==0.11
 python-bugzilla==2.2.0
 python-cinderclient==4.1.0
 python-dateutil==2.7.5
@@ -285,7 +285,7 @@ selenium==3.12.0
 selenium-smart-locator==0.2.0
 Send2Trash==1.5.0
 sentaku==0.6.4
-setuptools-scm==3.1.0
+setuptools-scm==3.2.0
 shyaml==0.5.2
 simplegeneric==0.8.1
 simplejson==3.16.0
