@@ -72,10 +72,6 @@ class ManageIQTree(BootstrapTreeview):
     which have more than 1 root. Also a root_items property."""
 
     @property
-    def root_items(self):
-        return self.browser.elements(self.ROOT_ITEMS, parent=self)
-
-    @property
     def currently_selected(self):
         if self.selected_item is not None:
             nodeid = self.get_nodeid(self.selected_item).split(".")
