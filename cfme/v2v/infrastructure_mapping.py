@@ -296,7 +296,7 @@ class InfrastructureMappingCollection(BaseCollection):
             network_mapping=fill_form_data["network"],
         )
 
-    def find_mapping(self, mapping):
+    def mapping_exists(self, mapping):
         view = navigate_to(self, "All")
         if self.appliance.version >= "5.10":
             view.items_on_page.item_select("15")
@@ -304,7 +304,7 @@ class InfrastructureMappingCollection(BaseCollection):
 
     def delete(self, mapping):
         view = navigate_to(self, "All", wait_for_view=20)
-        if self.find_mapping(mapping):
+        if self.mapping_exists(mapping):
             mapping_list = view.infra_mapping_list
             mapping_list.delete_mapping(mapping.name)
 
