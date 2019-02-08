@@ -37,11 +37,10 @@ def test_infrastructure_maping_crud(request, appliance, form_data_vm_obj_single_
             2. Authenticate Host and conversion tags
             3. create mapping with nfs source and nfs target datastore
     """
-
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
+    assert infrastructure_mapping_collection.mapping_exists(mapping)
+
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
-
-
