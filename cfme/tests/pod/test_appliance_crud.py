@@ -17,7 +17,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.auth import auth_user_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
 from cfme.utils.version import get_stream
 from cfme.utils.wait import wait_for
 
@@ -344,6 +343,7 @@ def test_crud_pod_appliance(temp_pod_appliance, provider, setup_provider):
     assert navigate_to(proj, 'Dashboard')
 
 
+@pytest.mark.ignore_stream('5.10')
 def test_crud_pod_appliance_ansible_deployment(temp_pod_ansible_appliance, provider,
                                                setup_provider):
     """
@@ -359,6 +359,7 @@ def test_crud_pod_appliance_ansible_deployment(temp_pod_ansible_appliance, provi
         casecomponent: Containers
         caseimportance: high
         initialEstimate: 1/2h
+        endsin: 5.9
     """
     appliance = temp_pod_ansible_appliance
     collection = appliance.collections.container_projects
@@ -572,7 +573,7 @@ def test_pod_appliance_db_backup_restore(temp_pod_appliance, provider, setup_pro
     # check that appliance is running and provider is available again
     collection = appliance.collections.container_projects
     proj = collection.instantiate(name=appliance.project, provider=provider)
-    assert navigate_to(proj, 'Dashboard')
+    assert navigate_to(proj, 'Dashboard', wait_for_view=120)
 
 
 def test_pod_appliance_basic_ipa_auth(temp_pod_appliance, provider, setup_provider,

@@ -71,7 +71,7 @@ def test_infra_mapping_ui_assertions(appliance, v2v_providers, form_data_single_
     rhv_prov = v2v_providers.rhv_provider
     host = rhv_prov.hosts.all()[0]
     host.refresh(cancel=True)
-    view = navigate_to(infrastructure_mapping_collection, 'All', wait_for_view=True)
+    view = navigate_to(infrastructure_mapping_collection, 'All')
     mapping_list = view.infra_mapping_list
     soft_assert(mapping_list.get_map_source_networks(mapping.name) != [])
     soft_assert(mapping_list.get_map_target_networks(mapping.name) != [])
