@@ -23,7 +23,7 @@ class ProjectDetailsView(ContainerObjectDetailsBaseView):
     SUMMARY_TEXT = 'Container Projects'
 
 
-class ProjectDashboardView(ContainerObjectDetailsBaseView):
+class ProjectDashboardView(ProjectDetailsView):
 
     @property
     def is_displayed(self):
@@ -111,11 +111,9 @@ class Details(CFMENavigateStep):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    surf_pages=not search_visible,
                                                    use_search=search_visible).click()
-        self.view.toolbar.view_selector.select("Summary View")
 
     def resetter(self):
-        if (self.appliance.version.is_in_series('5.9') and
-                self.view.toolbar.view_selector.is_displayed):
+        if self.view.toolbar.view_selector.is_displayed:
             self.view.toolbar.view_selector.select("Summary View")
 
 
@@ -135,10 +133,19 @@ class Dashboard(CFMENavigateStep):
             self.view.toolbar.view_selector.select("Dashboard View")
 
 
-@navigator.register(Project, 'EditTags')
-class EditTags(CFMENavigateStep):
+@navigator.register(Project, 'EditTagsFromDetails')
+class EditTagsFromDetails(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+
+
+@navigator.register(Project, 'EditTagsFromDashboard')
+class EditTagsFromDashboard(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Dashboard')
 
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

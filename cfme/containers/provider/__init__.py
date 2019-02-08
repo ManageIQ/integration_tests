@@ -149,6 +149,15 @@ class ContainerProviderDetailsView(ProviderDetailsView, LoggingableView):
         return self.SUMMARY_TEXT
 
 
+class ContainersProviderDashboardView(ContainerProviderDetailsView):
+
+    @property
+    def is_displayed(self):
+        return (
+            super(ContainerProviderDetailsView, self).is_displayed and
+            'Dashboard' in self.breadcrumb.active_location)
+
+
 @attr.s(hash=False)
 class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     PLURAL = 'Providers'
@@ -408,6 +417,14 @@ class Details(CFMENavigateStep):
         self.view.toolbar.view_selector.select("Summary View")
 
 
+@navigator.register(ContainersProvider, 'Dashboard')
+class Dashboard(Details):
+    VIEW = ContainersProviderDashboardView
+
+    def resetter(self):
+        self.view.toolbar.view_selector.select("Dashboard View")
+
+
 @navigator.register(ContainersProvider, 'Edit')
 class Edit(CFMENavigateStep):
     VIEW = ContainerProviderEditViewUpdated
@@ -443,6 +460,15 @@ class EditTags(CFMENavigateStep):
 class EditTagsFromDetails(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+
+
+@navigator.register(ContainersProvider, 'EditTagsFromDashboard')
+class EditTagsFromDashboard(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Dashboard')
 
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
