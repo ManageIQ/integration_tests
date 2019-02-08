@@ -320,7 +320,7 @@ webencodings==0.5.1
 websocket-client==0.40.0
 Werkzeug==0.14.1
 widgetastic.core==0.32.1
-widgetastic.patternfly==0.0.40
+widgetastic.patternfly==0.0.41
 widgetsnbextension==3.4.2
 wrapanapi==3.0.39
 wrapt==1.10.11
