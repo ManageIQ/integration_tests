@@ -391,6 +391,7 @@ def poke_trackerbot(self):
             # 1) It will prevent adding this template if not added
             # 2) It'll mark the template as unusable if it already exists
             template["usable"] = False
+
         template_usability.append(
             (
                 template["provider"]["key"],
@@ -456,11 +457,16 @@ def poke_trackerbot(self):
                     # First 3 fields of version get parsed as a zstream
                     # therefore ... makes it a "nil" stream
                     template_version = "...{}".format(template_info.datestamp.strftime("%Y%m%d"))
+
+                    # openshift has two templates bound to one build version
+                    # sometimes sprout tries using second template -extdb that's wrong
+                    # so, such template has to be marked as not usable inside sprout
+                    usable = not template_name.endswith('-extdb')
                 with transaction.atomic():
                     tpl = Template(
                         provider=provider, template_group=group, original_name=template_name,
                         name=template_name, preconfigured=False, date=template_info.datestamp,
-                        ready=True, exists=True, usable=True, version=template_version)
+                        ready=True, exists=True, usable=usable, version=template_version)
                     tpl.save()
                     if provider.provider_type == 'openshift':
                         tpl.custom_data = processed_custom_data
