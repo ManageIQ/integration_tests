@@ -11,6 +11,11 @@ from cfme.utils.log import logger
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
+    pytest.mark.parametrize('job_type', ['template', 'workflow'],
+        ids=['template_job', 'workflow_job'], scope='module'),
+    pytest.mark.ignore_stream('upstream'),
+    pytest.mark.uncollectif(lambda appliance,
+        job_type: appliance.version < '5.10' and job_type == 'workflow'),
     pytest.mark.meta(blockers=[1491704])]
 
 
@@ -43,13 +48,10 @@ def config_manager(config_manager_obj):
 
 
 @pytest.fixture(scope="function")
-def catalog_item(appliance, request, config_manager, dialog, catalog):
+def catalog_item(appliance, request, config_manager, dialog, catalog, job_type):
     config_manager_obj = config_manager
     provider_name = config_manager_obj.yaml_data.get('name')
-    provisioning_data = config_manager_obj.yaml_data['provisioning_data']
-    item_type, provider_type, template = map(provisioning_data.get,
-                                            ('item_type', 'provider_type', 'template'))
-
+    template = config_manager_obj.yaml_data['provisioning_data'][job_type]
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_TOWER,
         name=dialog.label,
@@ -63,17 +65,16 @@ def catalog_item(appliance, request, config_manager, dialog, catalog):
     return catalog_item
 
 
-@pytest.mark.tier(2)
-@pytest.mark.ignore_stream('upstream')
-def test_order_tower_catalog_item(appliance, catalog_item, request):
-    """Tests order catalog item
+def test_order_tower_catalog_item(appliance, catalog_item, request, job_type):
+    """Tests ordering of catalog items for Ansible Template and Workflow jobs
     Metadata:
         test_flag: provision
 
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         initialEstimate: 1/4h
         casecomponent: Services
+        caseimportance: high
     """
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
@@ -87,17 +88,15 @@ def test_order_tower_catalog_item(appliance, catalog_item, request):
                                                               'List View')
 
 
-@pytest.mark.tier(2)
-@pytest.mark.ignore_stream('upstream')
-def test_retire_ansible_service(appliance, catalog_item, request):
-    """Tests order catalog item
+def test_retire_ansible_service(appliance, catalog_item, request, job_type):
+    """Tests retiring of catalog items for Ansible Template and Workflow jobs
     Metadata:
         test_flag: provision
 
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         casecomponent: Services
-        caseimportance: low
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
