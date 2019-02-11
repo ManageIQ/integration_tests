@@ -86,11 +86,8 @@ def catalog_item(request, appliance, machine_credential, ansible_repository, pla
     return cat_item
 
 
-@pytest.mark.parametrize(
-    "form_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True
-)
 def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conversion_tags,
-                             ansible_repository, form_data_vm_obj_single_datastore):
+                             ansible_repository, form_data_vm_map_obj_mini):
     """Test for migrating vms with pre and post playbooks"""
     creds = credentials[v2v_providers.vmware_provider.data.templates.get("rhel7_minimal").creds]
     CREDENTIALS = (
@@ -114,24 +111,15 @@ def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conv
         request, appliance, credential.name, ansible_repository, "retire"
     )
 
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(
-        form_data_vm_obj_single_datastore.form_data
-    )
-
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
     # vm_obj is a list, with only 1 VM object, hence [0]
-    src_vm_obj = form_data_vm_obj_single_datastore.vm_list[0]
+    src_vm_obj = form_data_vm_map_obj_mini.vm_list[0]
 
     migration_plan_collection = appliance.collections.v2v_plans
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
-        infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore.vm_list,
+        infra_map=form_data_vm_map_obj_mini.map_obj.name,
+        vm_list=form_data_vm_map_obj_mini.vm_list,
         start_migration=True,
         pre_playbook=provision_catalog.name,
         post_playbook=retire_catalog.name,
