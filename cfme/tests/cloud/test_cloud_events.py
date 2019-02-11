@@ -24,7 +24,7 @@ def test_manage_nsg_group(appliance, provider, register_event):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/8h
-        casecomponent: Control
+        casecomponent: Events
         caseimportance: medium
     """
 
@@ -38,10 +38,20 @@ def test_manage_nsg_group(appliance, provider, register_event):
         # In 5.9 version `y` is a dict, not a yaml stream.
         data = yaml.safe_load(y) if appliance.version < '5.9' else y
 
-        return (data['resourceId'].endswith(nsg_name) and
-                (data['status']['value'] == 'Accepted' and
-                 data['subStatus']['value'] == 'Created') or
-                data['status']['value'] == 'Succeeded')
+        # In 5.10 data does not have 'status' or 'subStatus' key
+        if appliance.version < '5.10':
+            compare = (
+                data['resourceId'].endswith(nsg_name) and
+                (
+                    data['status']['value'] == 'Accepted' and
+                    data['subStatus']['value'] == 'Created'
+                ) or
+                data['status']['value'] == 'Succeeded'
+            )
+        else:
+            compare = data['resourceId'].endswith(nsg_name)
+
+        return compare
 
     fd_add_attr = {'full_data': 'will be ignored',
                    'cmp_func': add_cmp}
@@ -54,7 +64,13 @@ def test_manage_nsg_group(appliance, provider, register_event):
         # In 5.9 version `y` is a dict, not a yaml stream.
         data = yaml.safe_load(y) if appliance.version < '5.9' else y
 
-        return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Succeeded'
+        if appliance.version < '5.10':
+            compare = (data['resourceId'].endswith(nsg_name) and
+                       data['status']['value'] == 'Succeeded')
+        else:
+            compare = data['resourceId'].endswith(nsg_name)
+
+        return compare
 
     fd_rm_attr = {'full_data': 'will be ignored',
                   'cmp_func': rm_cmp}
@@ -78,7 +94,7 @@ def test_vm_capture(appliance, request, provider, register_event):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/8h
-        casecomponent: Control
+        casecomponent: Events
         caseimportance: medium
     """
 
@@ -96,7 +112,13 @@ def test_vm_capture(appliance, request, provider, register_event):
         # In 5.9 version `y` is a dict, not a yaml stream.
         data = yaml.safe_load(y) if appliance.version < '5.9' else y
 
-        return data['resourceId'].endswith(vm.name) and data['status']['value'] == 'Succeeded'
+        if appliance.version < '5.10':
+            compare = (data['resourceId'].endswith(vm.name) and
+                       data['status']['value'] == 'Succeeded')
+        else:
+            compare = data['resourceId'].endswith(vm.name)
+
+        return compare
 
     full_data_attr = {'full_data': 'will be ignored',
                       'cmp_func': cmp_function}
