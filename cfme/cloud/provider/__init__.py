@@ -221,7 +221,7 @@ class All(CFMENavigateStep):
     def resetter(self, *args, **kwargs):
         self.appliance.browser.widgetastic.browser.refresh()
         tb = self.view.toolbar
-        if 'Grid View' not in tb.view_selector.selected:
+        if tb.view_selector.is_displayed and 'Grid View' not in tb.view_selector.selected:
             tb.view_selector.select('Grid View')
         self.view.entities.paginator.reset_selection()
 

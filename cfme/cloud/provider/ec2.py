@@ -11,6 +11,7 @@ from cfme.common.candu_views import AzoneCloudUtilizationView
 from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
+from cfme.common.provider import SmartStateDockerEndpoint
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.services.catalogs.catalog_items import AmazonCatalogItem
 from cfme.utils.version import Version
@@ -37,12 +38,13 @@ class EC2EndpointForm(View):
         TAB_NAME = 'Default'
 
     @View.nested
-    class smart_state_docker(WaitTab, BeforeFillMixin):  # NOQA
+    class smartstate(WaitTab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'SmartState Docker'
 
         username = Input(id='smartstate_docker_userid')
         password = Input(id='smartstate_docker_password')
-        change_pass = Text('//div[@id="smartstate_docker"]//a[1]')
+        change_password = Text(
+            locator='.//a[normalize-space(.)="Change stored SmartState Docker password"]')
 
         validate = Button('Validate')
 
@@ -98,7 +100,12 @@ class EC2Provider(CloudProvider):
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
         """Returns the EC" object from configuration"""
-        endpoint = EC2Endpoint(**prov_config['endpoints']['default'])
+        endpoints = {}
+        for endp in prov_config['endpoints']:
+            for expected_endpoint in (EC2Endpoint, SmartStateDockerEndpoint):
+                if expected_endpoint.name == endp:
+                    endpoints[endp] = expected_endpoint(**prov_config['endpoints'][endp])
+
         region_name = prov_config["region_name"]
         # Note: for Version 5.10 "Northern" replace with "N." like US West (N. California)
         if cls.appliance.version >= "5.10":
@@ -109,7 +116,7 @@ class EC2Provider(CloudProvider):
             name=prov_config['name'],
             region=prov_config['region'],
             region_name=region_name,
-            endpoints={endpoint.name: endpoint},
+            endpoints=endpoints,
             zone=prov_config['server_zone'],
             key=prov_key)
 

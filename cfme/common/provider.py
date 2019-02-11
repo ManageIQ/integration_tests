@@ -526,8 +526,8 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
                 # if credentials are different
                 cur_endpoint = self.endpoints[endpoint.name]
                 if hasattr(endpoint, 'credentials'):
-                    if not hasattr(cur_endpoint, 'credentials') or \
-                            endpoint.credentials != cur_endpoint.credentials:
+                    if (not hasattr(cur_endpoint, 'credentials') or
+                            endpoint.credentials != cur_endpoint.credentials):
                         if hasattr(endp_view, 'change_password'):
                             endp_view.change_password.click()
                         elif hasattr(endp_view, 'change_key'):
@@ -1210,6 +1210,15 @@ class CANDUEndpoint(DefaultEndpoint):
         return {'hostname': self.hostname,
                 'api_port': getattr(self, 'api_port', None),
                 'database_name': self.database}
+
+
+class SmartStateDockerEndpoint(DefaultEndpoint):
+    credential_class = Credential
+    name = 'smartstate'
+
+    @property
+    def view_value_mapping(self):
+        return {}
 
 
 class EventsEndpoint(DefaultEndpoint):

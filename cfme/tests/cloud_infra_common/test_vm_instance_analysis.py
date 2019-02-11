@@ -1,4 +1,3 @@
-import time
 from datetime import datetime
 
 import fauxfactory
@@ -10,7 +9,6 @@ from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider.ec2 import EC2EndpointForm
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm_views import DriftAnalysis
@@ -189,28 +187,6 @@ def set_agent_creds(appliance, request, provider):
         }
     }
     appliance.update_advanced_settings(agent_data)
-
-    # Adding SmartState Docker credentials
-    data = provider.data.endpoints
-    username = credentials[data['ssa_agent']['credentials']]['username']
-    password = credentials[data['ssa_agent']['credentials']]['password']
-    view = navigate_to(provider, "Edit")
-    ssa_agent_view = view.browser.create_view(EC2EndpointForm)
-    ssa_agent_view.smart_state_docker.fill({'username': username, 'password': password})
-    ssa_agent_view.default.validate.click()
-    # TODO: Remove time.sleep asap BZ fix.
-    if BZ(1608023, forced_streams=['5.9', '5.10']).blocks:
-        time.sleep(35)
-    view.save.click()
-    view.browser.refresh()
-
-    @request.addfinalizer
-    def _remove_docker_creds():
-        view = navigate_to(provider, "Edit")
-        ssa_agent_view = view.browser.create_view(EC2EndpointForm)
-        ssa_agent_view.smart_state_docker.fill({'username': ""})
-        ssa_agent_view.smart_state_docker.change_pass.click()
-        view.save.click()
 
 
 @pytest.fixture(scope="module")

@@ -2,6 +2,7 @@ import os
 import tempfile
 from time import sleep
 
+import docker
 import fauxfactory
 import pytest
 import yaml
@@ -18,6 +19,7 @@ from cfme.utils.appliance import IPAppliance
 from cfme.utils.appliance import stack
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.auth import auth_user_data
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.version import get_stream
@@ -75,6 +77,8 @@ openshift_management_template_parameters={{'FRONTEND_APPLICATION_IMG_NAME': '{ap
 {host} openshift_node_labels="{{'region': 'infra', 'zone': 'default'}}" openshift_schedulable=true
 """  # noqa
 
+SSA_IMAGE_STREAM = 'ssa-images'
+
 
 @pytest.fixture
 def appliance_data(provider):
@@ -99,7 +103,7 @@ def read_host_file(appliance, path):
     """ Read file on the host """
     out = appliance.ssh_client.run_command('cat {}'.format(path), ensure_host=True)
     if out.failed:
-        pytest.fail("Can't read pvc file")
+        pytest.fail("Can't read host file")
 
     return out.output
 
@@ -185,7 +189,8 @@ def temp_pod_appliance(appliance, provider, appliance_data, pytestconfig):
             preconfigured=False,
             provider_type='openshift',
             provider=provider.key,
-            template_type='openshift_pod'
+            template_type='openshift_pod',
+            wait_time='1800'
     ) as appliances:
         with appliances[0] as appliance:
             appliance.openshift_creds = appliance_data['openshift_creds']
@@ -323,6 +328,98 @@ def ipa_user(temp_pod_appliance, ipa_auth_provider):
     yield user
 
     appliance.server.login_admin()
+
+
+@pytest.fixture
+def aws_provider(temp_pod_appliance):
+    from cfme.utils.providers import get_crud
+    prov = get_crud('ec2west')
+
+    registry_data = prov.mgmt.get_registry_data()
+    prov.endpoints['smartstate'].credentials.principal = registry_data['username']
+    prov.endpoints['smartstate'].credentials.secret = registry_data['password']
+
+    prov.create()
+    yield prov
+    prov.delete_if_exists()
+
+
+@pytest.fixture
+def new_ssa_image(temp_pod_appliance, template_folder, aws_provider):
+    # read smartstate image url
+    appliance = temp_pod_appliance
+    image_data = read_host_file(appliance, os.path.join(template_folder, 'cfme-amazon-smartstate'))
+    image_url = image_data.strip().split()[-1]
+    ss_image_url, ss_image_version = image_url.rsplit(':', 1)
+    logger.info("smart state image url: %s, version %s", ss_image_url, ss_image_version)
+
+    registry_data = aws_provider.mgmt.get_registry_data()
+    docker_client = docker.from_env()
+
+    # pull image
+    result = docker_client.pull(repository=ss_image_url, tag=ss_image_version)
+    logger.info("Pull image: %s", result)
+    assert result
+
+    # tag image
+    registry_host = registry_data['registry'].split('://')[-1]
+    dst_url = "{}/{}".format(registry_host, SSA_IMAGE_STREAM)
+    result = docker_client.tag(image=image_url,
+                               repository=dst_url,
+                               tag=ss_image_version)
+    logger.info("Tag image: %s", result)
+    assert result
+
+    # push image
+    result = docker_client.push(repository=dst_url,
+                                tag=ss_image_version,
+                                auth_config={'username': registry_data['username'],
+                                             'password': registry_data['password']})
+    logger.info("Push image: %s", result)
+    assert result
+
+    yield {'registry': registry_host,
+           'version': ss_image_version}
+
+
+@pytest.fixture
+def ssa_vm(aws_provider):
+    """Single vm with assigned profile"""
+    # always available vm
+    collection = aws_provider.appliance.provider_based_collection(aws_provider)
+    vm_name = aws_provider.data['cap_and_util']['capandu_vm']
+    vm = collection.instantiate(vm_name, aws_provider)
+    yield vm
+
+
+@pytest.fixture
+def temp_ssa_pod_appliance(request, temp_pod_appliance, new_ssa_image):
+    appliance = temp_pod_appliance
+    ssa_data = new_ssa_image
+
+    backup_settings = appliance.advanced_settings['ems']['ems_amazon']
+    request.addfinalizer(lambda: appliance.update_advanced_settings(backup_settings))
+
+    appliance.update_server_roles({role: True for role in ['smartproxy', 'smartstate', 'automate']})
+
+    # update aws image data
+    ssa_settings = {'ems': {
+        'ems_amazon': {
+            'agent_coordinator': {
+                'docker_image': '{stream}:{version}'.format(stream=SSA_IMAGE_STREAM,
+                                                            version=ssa_data['version']),
+                'docker_registry': ssa_data['registry'],
+            }
+        }
+    }}
+    if BZ(1684203, forced_streams=['5.9', '5.10']).blocks:
+        # there is an issue with AMI which is used by CloudForms by default
+        # this is temporary workaround
+        new_ami = 'RHEL-Atomic_7.6_HVM_GA-20190306-x86_64-0-Access2-GP2'
+        ssa_settings['ems']['ems_amazon']['agent_coordinator']['agent_ami_name'] = new_ami
+
+    appliance.update_advanced_settings(ssa_settings)
+    return appliance
 
 
 def test_crud_pod_appliance(temp_pod_appliance, provider, setup_provider):
@@ -482,8 +579,7 @@ def test_pod_appliance_scale():
     pass
 
 
-@pytest.mark.manual
-def test_aws_smartstate_pod():
+def test_aws_smartstate_pod(temp_ssa_pod_appliance, ssa_vm, provider, aws_provider):
     """
     deploy aws smartstate pod and that it works
 
@@ -492,8 +588,36 @@ def test_aws_smartstate_pod():
         casecomponent: Containers
         caseimportance: medium
         initialEstimate: 1h
+        testSteps:
+          1. pull smartstate image from registry
+          2. tag it accordingly and push to externally available registry
+          3. setup appliance to use that image for smartstate in aws
+          4. add aws provider
+          5. find 24/7 vm in aws and perform smartstate analysis
     """
-    pass
+    appliance = temp_ssa_pod_appliance
+
+    if BZ(1684203, forced_streams=['5.9', '5.10']).blocks:
+        logger.info("stopping & starting appliance in order to re-read new AMI name")
+        provider.mgmt.stop_vm(appliance.project)
+        provider.mgmt.start_vm(appliance.project)
+        provider.mgmt.wait_vm_running(appliance.project)
+        for _ in range(3):
+            try:
+                # there is issue caused by unexpected log out and etc. this is workaround
+                # it will be removed along with above BZ when it is fixed
+                navigate_to(aws_provider, 'Details')
+                break
+            except Exception as e:
+                logger.warn("attempt to go to aws_provider failed with '{e}'".format(e=e.message))
+
+    # run SSA against cu24x7 vm
+    ssa_vm.smartstate_scan(wait_for_task_result=True)
+
+    # check SSA has been run and there are some results
+    c_lastanalyzed = ssa_vm.last_analysed
+
+    assert c_lastanalyzed != 'Never', "Last Analyzed is set to Never"
 
 
 def test_pod_appliance_db_backup_restore(temp_pod_appliance, provider, setup_provider,
@@ -589,12 +713,12 @@ def test_pod_appliance_basic_ipa_auth(temp_pod_appliance, provider, setup_provid
         initialEstimate: 1/2h
         casecomponent: Containers
         testSteps:
-          - enable external httpd authentication in appliance
-          - deploy latest configmap generator
-          - generate new configuration
-          - deploy new httpd configmap configuration
-          - restart httpd pod
-          - to login to appliance using external credentials
+          1. enable external httpd authentication in appliance
+          2. deploy latest configmap generator
+          3. generate new configuration
+          4. deploy new httpd configmap configuration
+          5. restart httpd pod
+          6. to login to appliance using external credentials
     """
     appliance = temp_pod_appliance
     auth_prov = ipa_auth_provider
