@@ -415,6 +415,7 @@ def test_concurrent_migrations(request, appliance, v2v_providers, host_creds, co
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
+        settings_view = navigate_to(mapping, "MigrationSettings")
         settings_view.max_limit.set_value(10)
 
     migration_plan2 = migration_plan_collection.create(
