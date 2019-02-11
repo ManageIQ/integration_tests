@@ -194,15 +194,15 @@ def _form_data(source_provider, provider):
 
 
 @pytest.fixture(scope="function")
-def form_data_vm_map_obj_mini(request, appliance, second_provider, provider):
+def form_data_vm_map_obj_mini(request, appliance, source_provider, provider):
     """Fixture which provides minimal form_data, vm and map object structure for migration plan"""
-    form_data = _form_data(second_provider, provider)
-    source_datastores_list = second_provider.data.get("datastores", [])
+    form_data = _form_data(source_provider, provider)
+    source_datastores_list = source_provider.data.get("datastores", [])
     source_datastore = [d.name for d in source_datastores_list if d.type == "nfs"][0]
-    collection = second_provider.appliance.provider_based_collection(second_provider)
+    collection = source_provider.appliance.provider_based_collection(source_provider)
     vm_name = random_vm_name("v2v-auto")
     vm_obj = collection.instantiate(
-        vm_name, second_provider, template_name=rhel7_minimal(second_provider)["name"]
+        vm_name, source_provider, template_name=rhel7_minimal(source_provider)["name"]
     )
     vm_obj.create_on_provider(
         timeout=2400,
