@@ -13,6 +13,7 @@ from cfme.modeling.base import parent_of_type
 from cfme.networks import ValidateStatsMixin
 from cfme.networks.subnet import SubnetCollection
 from cfme.networks.views import NetworkEntitySubnetView
+from cfme.networks.views import NetworkRouterAddCloudSubnetView
 from cfme.networks.views import NetworkRouterAddInterfaceView
 from cfme.networks.views import NetworkRouterAddView
 from cfme.networks.views import NetworkRouterDetailsView
@@ -54,6 +55,17 @@ class NetworkRouter(Taggable, BaseEntity, CustomButtonEventsMixin, ValidateStats
         success_msg = 'Subnet "{subnet}" added to Router "{router}"'.format(subnet=subnet_name,
                                                                             router=self.name)
         view.flash.assert_success_message(success_msg)
+
+    def add_subnet(self, subnet_name, address, netmask, gateway):
+        view = navigate_to(self, 'AddSubnet')
+        subnet = self.collections.subnets.instantiate(name=subnet_name)
+        view.fill({'subnet_name': subnet_name,
+                   'address': address,
+                   'netmask': netmask,
+                   'gateway': gateway})
+        view.add.click()
+        view.flash.assert_no_error()
+        return subnet
 
     def delete(self):
         """Deletes current cloud router"""
@@ -225,6 +237,15 @@ class EditRouter(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Router')
+
+
+@navigator.register(NetworkRouter, 'AddSubnet')
+class AddSubnet(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+    VIEW = NetworkRouterAddCloudSubnetView
+
+    def step(self):
+        self.prerequisite_view.toolbar.edit.item_select('Create L3 Cloud Subnet')
 
 
 @navigator.register(NetworkRouter, 'AddInterface')
