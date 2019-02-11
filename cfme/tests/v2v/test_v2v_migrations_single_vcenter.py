@@ -38,13 +38,9 @@ def get_migrated_vm_obj(src_vm_obj, target_provider):
     return migrated_vm
 
 
-@pytest.mark.parametrize('form_data_vm_obj_single_datastore', [['nfs', 'nfs', rhel7_minimal]],
-    indirect=True)
 @pytest.mark.parametrize('power_state', ['RUNNING', 'STOPPED'])
 def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v_providers,
-                                    host_creds, conversion_tags,
-                                    form_data_vm_obj_single_datastore,
-                                    power_state):
+                    host_creds, conversion_tags, form_data_vm_map_obj_mini, power_state):
     """
     Polarion:
         assignee: kkulkarn
@@ -55,7 +51,7 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
     """
     # Test VM migration power state and tags are preserved
     # as this is single_vm_migration it only has one vm_obj, which we extract on next line
-    src_vm = form_data_vm_obj_single_datastore.vm_list[0]
+    src_vm = form_data_vm_map_obj_mini.vm_list[0]
     if power_state not in src_vm.mgmt.state:
         if power_state == 'RUNNING':
             src_vm.mgmt.start()
@@ -66,18 +62,11 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
     src_vm.add_tag(tag)
     src_vm.set_retirement_date(offset={'hours': 1})
 
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(form_data_vm_obj_single_datastore.form_data)
-
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
     migration_plan_collection = appliance.collections.v2v_plans
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
-        .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=True)
+        .format(fauxfactory.gen_alphanumeric()), infra_map=form_data_vm_map_obj_mini.map_obj.name,
+        vm_list=form_data_vm_map_obj_mini.vm_list, start_migration=True)
 
     # explicit wait for spinner of in-progress status card
     view = appliance.browser.create_view(
