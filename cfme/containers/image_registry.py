@@ -83,10 +83,10 @@ class ImageRegistryAll(CFMENavigateStep):
     VIEW = ImageRegistryAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Image Registries')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         # Reset view and selection
         self.view.toolbar.view_selector.select("List View")
         self.view.paginator.reset_selection()
@@ -97,7 +97,7 @@ class ImageRegistryDetails(CFMENavigateStep):
     VIEW = ImageRegistryDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         search_visible = self.prerequisite_view.entities.search.is_displayed
         self.prerequisite_view.entities.get_entity(host=self.obj.host,
                                                    surf_pages=not search_visible,
@@ -109,5 +109,5 @@ class ImageRegistryEditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

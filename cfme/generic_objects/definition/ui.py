@@ -118,7 +118,7 @@ class All(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Automation', 'Automate', 'Generic Objects')
 
     def resetter(self, *args, **kwargs):
@@ -131,7 +131,7 @@ class Add(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Generic Object Class')
 
 
@@ -141,7 +141,7 @@ class Details(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
@@ -151,7 +151,7 @@ class Edit(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit this Generic Object Class')
 
 
@@ -161,5 +161,5 @@ class Instances(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.summary('Relationships').click_at('Instances')

@@ -407,7 +407,7 @@ class AnsibleCredentials(CFMENavigateStep):
     VIEW = CredentialsListView
     prerequisite = NavigateToSibling("LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.navigation.select("Automation", "Ansible", "Credentials")
 
 
@@ -416,7 +416,7 @@ class Details(CFMENavigateStep):
     VIEW = CredentialDetailsView
     prerequisite = NavigateToAttribute("appliance.server", "AnsibleCredentials")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         credentials = self.prerequisite_view.credentials
         for row in credentials:
             if row["Name"].text == self.obj.name:
@@ -431,7 +431,7 @@ class Add(CFMENavigateStep):
     VIEW = CredentialAddView
     prerequisite = NavigateToAttribute("appliance.server", "AnsibleCredentials")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Add New Credential")
 
 
@@ -440,7 +440,7 @@ class Edit(CFMENavigateStep):
     VIEW = CredentialEditView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Edit this Credential")
 
 
@@ -450,7 +450,7 @@ class EditTagsFromListCollection(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute("appliance.server", "AnsibleCredentials")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             row = self.prerequisite_view.paginator.find_row_on_pages(
                 table=self.prerequisite_view.credentials,

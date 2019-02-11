@@ -203,10 +203,10 @@ class All(CFMENavigateStep):
     VIEW = CloudProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Providers')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         self.appliance.browser.widgetastic.browser.refresh()
         tb = self.view.toolbar
         if 'Grid View' not in tb.view_selector.selected:
@@ -220,7 +220,7 @@ class New(CFMENavigateStep):
     VIEW = CloudProviderAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a New Cloud Provider')
 
 
@@ -230,7 +230,7 @@ class Discover(CFMENavigateStep):
     VIEW = CloudProvidersDiscoverView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Discover Cloud Providers')
 
 
@@ -243,7 +243,7 @@ class Details(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """Reset view to summary"""
         view_selector = self.view.toolbar.view_selector
         if view_selector.is_displayed and view_selector.selected != 'Summary View':
@@ -255,7 +255,7 @@ class Edit(CFMENavigateStep):
     VIEW = ProviderEditView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         try:
             self.prerequisite_view.toolbar.configuration.item_select('Edit Selected Cloud Provider')
@@ -269,7 +269,7 @@ class EditFromDetails(CFMENavigateStep):
     VIEW = ProviderEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Cloud Provider')
 
 
@@ -278,7 +278,7 @@ class EditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         try:
             self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
@@ -292,7 +292,7 @@ class Timelines(CFMENavigateStep):
     VIEW = CloudProviderTimelinesView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         mon = self.prerequisite_view.toolbar.monitoring
         try:
             mon.item_select('Timelines')

@@ -645,7 +645,7 @@ class MySettingsStep(CFMENavigateStep):
     VIEW = MySettingsView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         """Go to the My Settings view"""
         self.prerequisite_view.settings.select_item('My Settings')
 
@@ -655,10 +655,10 @@ class VisualStep(CFMENavigateStep):
     VIEW = MySettingsView
     prerequisite = NavigateToSibling('MySettings')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.tabs.visual.select()
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         self.view.tabs.visual.select()
 
 
@@ -667,10 +667,10 @@ class DefaultViewsStep(CFMENavigateStep):
     VIEW = MySettingsView
     prerequisite = NavigateToSibling('MySettings')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.tabs.default_views.select()
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         self.view.tabs.default_views.select()
 
 
@@ -679,10 +679,10 @@ class DefaultFiltersStep(CFMENavigateStep):
     VIEW = MySettingsView
     prerequisite = NavigateToSibling('MySettings')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.tabs.default_filters.select()
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         self.view.tabs.default_filters.select()
 
 
@@ -691,10 +691,10 @@ class TimeProfileCollectionAll(CFMENavigateStep):
     VIEW = MySettingsView
     prerequisite = NavigateToAttribute('appliance.user.my_settings', 'MySettings')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.tabs.time_profiles.select()
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         self.view.tabs.time_profiles.select()
 
 
@@ -703,7 +703,7 @@ class TimeProfileAdd(CFMENavigateStep):
     VIEW = TimeProfileAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.tabs.time_profiles.select()
         self.prerequisite_view.configuration.item_select('Add a new Time Profile')
 
@@ -713,7 +713,7 @@ class TimeProfileEdit(CFMENavigateStep):
     VIEW = TimeProfileEditView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.entities.table.row(Description=self.obj.description)[0].check()
         self.view.configuration.item_select('Edit selected Time Profile')
 
@@ -723,6 +723,6 @@ class TimeProfileCopy(CFMENavigateStep):
     VIEW = TimeProfileAddView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.entities.table.row(Description=self.obj.description)[0].check()
         self.view.configuration.item_select('Copy selected Time Profile')

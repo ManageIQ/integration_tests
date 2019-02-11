@@ -51,5 +51,5 @@ class All(CFMENavigateStep):
     VIEW = UtilizationView
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select("Optimize", "Utilization")

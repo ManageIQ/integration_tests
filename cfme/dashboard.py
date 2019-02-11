@@ -466,5 +466,5 @@ class DashboardDetails(CFMENavigateStep):
     VIEW = ParticularDashboardView
     prerequisite = NavigateToAttribute('appliance.server', 'Dashboard')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.dashboards(title=self.obj.name).select()

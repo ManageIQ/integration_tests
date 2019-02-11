@@ -1224,7 +1224,7 @@ class VmAllWithTemplates(CFMENavigateStep):
     VIEW = VmsTemplatesAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Virtual Machines')
         self.view.sidebar.vmstemplates.tree.click_path('All VMs & Templates')
 
@@ -1271,7 +1271,7 @@ class VmAllWithTemplatesDetails(CFMENavigateStep):
     VIEW = InfraVmDetailsView
     prerequisite = NavigateToSibling('AllForProvider')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             entity_item = self.prerequisite_view.entities.get_entity(
                 name=self.obj.name, surf_pages=True)
@@ -1290,7 +1290,7 @@ class ArchiveDetails(CFMENavigateStep):
     VIEW = InfraVmDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             entity_item = self.prerequisite_view.entities.get_entity(
                 name=self.obj.name, surf_pages=True)
@@ -1395,7 +1395,7 @@ class VmPublish(CFMENavigateStep):
     VIEW = PublishVmView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.lifecycle.item_select("Publish this VM to a Template")
 
 
@@ -1446,7 +1446,7 @@ class Timelines(CFMENavigateStep):
     VIEW = InfraVmTimelinesView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
 
@@ -1455,7 +1455,7 @@ class VmReconfigure(CFMENavigateStep):
     VIEW = InfraVmReconfigureView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Reconfigure this VM')
 
 
@@ -1464,7 +1464,7 @@ class VmEdit(CFMENavigateStep):
     VIEW = EditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this VM')
 
 
@@ -1473,7 +1473,7 @@ class VmEngineRelationship(CFMENavigateStep):
     VIEW = ManagementEngineView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select(
             'Edit Management Engine Relationship')
 
@@ -1506,5 +1506,5 @@ class VmUtilization(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Utilization')

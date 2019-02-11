@@ -423,12 +423,12 @@ class AnalysisProfileAll(CFMENavigateStep):
     VIEW = AnalysisProfileAllView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         server_region = self.obj.appliance.server_region_string()
         self.prerequisite_view.accordions.settings.tree.click_path(
             server_region, "Analysis Profiles")
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         self.view.browser.refresh()
 
 
@@ -437,7 +437,7 @@ class AnalysisProfileVmAdd(CFMENavigateStep):
     VIEW = AnalysisProfileAddVmView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Add VM Analysis Profile")
 
 
@@ -446,7 +446,7 @@ class AnalysisProfileHostAdd(CFMENavigateStep):
     VIEW = AnalysisProfileAddHostView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Add Host Analysis Profile")
 
 
@@ -455,7 +455,7 @@ class AnalysisProfileDetails(CFMENavigateStep):
     VIEW = AnalysisProfileDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         server_region = self.obj.appliance.server_region_string()
         self.prerequisite_view.sidebar.accordions.settings.tree.click_path(
             server_region, "Analysis Profiles", self.obj.name)
@@ -466,7 +466,7 @@ class AnalysisProfileEdit(CFMENavigateStep):
     VIEW = AnalysisProfileEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Edit this Analysis Profile")
 
 
@@ -475,6 +475,6 @@ class AnalysisProfileCopy(CFMENavigateStep):
     VIEW = AnalysisProfileCopyView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select(
             'Copy this selected Analysis Profile')

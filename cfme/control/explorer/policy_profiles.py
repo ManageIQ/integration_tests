@@ -167,7 +167,7 @@ class PolicyProfileAll(CFMENavigateStep):
     VIEW = PolicyProfilesAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.policy_profiles.tree.click_path("All Policy Profiles")
 
 
@@ -176,7 +176,7 @@ class PolicyProfileNew(CFMENavigateStep):
     VIEW = NewPolicyProfileView
     prerequisite = NavigateToSibling("All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Add a New Policy Profile")
 
 
@@ -185,7 +185,7 @@ class PolicyProfileEdit(CFMENavigateStep):
     VIEW = EditPolicyProfileView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit this Policy Profile")
 
 
@@ -194,7 +194,7 @@ class PolicyProfileDetails(CFMENavigateStep):
     VIEW = PolicyProfileDetailsView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.policy_profiles.tree.click_path(
             "All Policy Profiles",
             self.obj.description

@@ -217,7 +217,7 @@ class Add(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('parent.parent', 'Add')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.dd.drag_and_drop("Text Box", self.obj.parent.box_label)
 
 
@@ -227,6 +227,5 @@ class Edit(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('dialog', 'Edit')
 
-    def step(self):
-        def step(self):
-            self.prerequisite_view.element.edit_element("Text Box")
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.element.edit_element("Text Box")

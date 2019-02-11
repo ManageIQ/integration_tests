@@ -79,5 +79,5 @@ class Add(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('parent.parent', 'Add')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.create_tab.click()

@@ -349,7 +349,7 @@ class All(CFMENavigateStep):
         """Go to the all page"""
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Stacks')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """Reset the view"""
         self.view.toolbar.view_selector.select('Grid View')
         self.view.paginator.reset_selection()
@@ -373,7 +373,7 @@ class RelationshipsSecurityGroups(CFMENavigateStep):
     VIEW = StackSecurityGroupsView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.sidebar.relationships.open()
         try:
             self.prerequisite_view.sidebar.relationships.nav.select(
@@ -387,7 +387,7 @@ class RelationshipParameters(CFMENavigateStep):
     VIEW = StackParametersView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.sidebar.relationships.open()
         try:
             self.prerequisite_view.sidebar.relationships.nav.select(title='Show all Parameters')
@@ -400,7 +400,7 @@ class RelationshipOutputs(CFMENavigateStep):
     VIEW = StackOutputsView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.sidebar.relationships.open()
         try:
             self.prerequisite_view.sidebar.relationships.nav.select(title='Show all Outputs')
@@ -413,7 +413,7 @@ class RelationshipResources(CFMENavigateStep):
     VIEW = StackResourcesView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.sidebar.relationships.open()
         try:
             self.prerequisite_view.sidebar.relationships.nav.select(title='Show all Resources')

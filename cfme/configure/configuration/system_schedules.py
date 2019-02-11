@@ -369,7 +369,7 @@ class ScheduleAll(CFMENavigateStep):
     VIEW = ScheduleAllView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         server_region = self.appliance.server.zone.region.settings_string
         self.prerequisite_view.accordions.settings.tree.click_path(server_region, "Schedules")
 
@@ -379,7 +379,7 @@ class ScheduleAdd(CFMENavigateStep):
     VIEW = ScheduleAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Add a new Schedule")
 
 
@@ -388,7 +388,7 @@ class ScheduleDetails(CFMENavigateStep):
     VIEW = ScheduleDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         row = self.prerequisite_view.paginator.find_row_on_pages(
             self.prerequisite_view.table, name=self.obj.name)
         row.click()
@@ -399,5 +399,5 @@ class ScheduleEdit(CFMENavigateStep):
     VIEW = ScheduleEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Edit this Schedule")

@@ -215,5 +215,5 @@ class Utilization(CFMENavigateStep):
     VIEW = AzoneCloudUtilizationView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Utilization')

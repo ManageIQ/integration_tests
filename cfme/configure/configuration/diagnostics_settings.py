@@ -119,7 +119,7 @@ class AllDiagnosticWorkers(CFMENavigateStep):
     VIEW = DiagnosticServerWorkersView
     prerequisite = NavigateToAttribute('appliance.server', 'Diagnostics')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.workers.select()
 
 
@@ -506,7 +506,7 @@ class DiagnosticsSummary(CFMENavigateStep):
     VIEW = ServerDiagnosticsView
     prerequisite = NavigateToAttribute('appliance.server', 'Diagnostics')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.summary.select()
 
 
@@ -515,7 +515,7 @@ class DiagnosticsCollectLogs(CFMENavigateStep):
     VIEW = ServerCollectLogsMasterView
     prerequisite = NavigateToAttribute('appliance.server', 'Diagnostics')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         # navigate to the master server
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.appliance.server_region_string(),
@@ -530,7 +530,7 @@ class DiagnosticsCollectLogsSlave(CFMENavigateStep):
     VIEW = ServerCollectLogsSlaveView
     prerequisite = NavigateToAttribute('appliance.server', 'Diagnostics')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         # navigate to the slave server
         slave_server = self.appliance.server.slave_servers[0]
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
@@ -547,7 +547,7 @@ class DiagnosticsCollectLogsEdit(CFMENavigateStep):
     VIEW = ServerCollectLogsEditView
     prerequisite = NavigateToSibling('DiagnosticsCollectLogs')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.edit.click()
 
 
@@ -556,7 +556,7 @@ class DiagnosticsCollectLogsEditSlave(CFMENavigateStep):
     VIEW = ServerCollectLogsEditView
     prerequisite = NavigateToSibling('DiagnosticsCollectLogsSlave')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.edit.click()
 
 
@@ -565,5 +565,5 @@ class ZoneDiagnosticsCollectLogs(CFMENavigateStep):
     VIEW = ZoneDiagnosticsCollectLogsView
     prerequisite = NavigateToAttribute('appliance.server.zone', 'Diagnostics')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.collectlogs.select()

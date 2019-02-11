@@ -344,7 +344,7 @@ class PXEServerAll(CFMENavigateStep):
     VIEW = PXEServersView
     prerequisite = NavigateToSibling('PXEMainPage')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.sidebar.servers.tree.click_path('All PXE Servers')
 
 
@@ -353,7 +353,7 @@ class PXEServerAdd(CFMENavigateStep):
     VIEW = PXEServerAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a New PXE Server')
 
 
@@ -362,7 +362,7 @@ class PXEServerDetails(CFMENavigateStep):
     VIEW = PXEServerDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.sidebar.servers.tree.click_path('All PXE Servers', self.obj.name)
 
 
@@ -371,7 +371,7 @@ class PXEServerEdit(CFMENavigateStep):
     VIEW = PXEServerEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this PXE Server')
 
 
@@ -580,7 +580,7 @@ class CustomizationTemplateAll(CFMENavigateStep):
     VIEW = PXECustomizationTemplatesView
     prerequisite = NavigateToSibling('PXEMainPage')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.sidebar.templates.tree.click_path(('All Customization Templates - '
                                                      'System Image Types'))
 
@@ -590,7 +590,7 @@ class CustomizationTemplateAdd(CFMENavigateStep):
     VIEW = PXECustomizationTemplateAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a New Customization Template')
 
 
@@ -599,7 +599,7 @@ class CustomizationTemplateDetails(CFMENavigateStep):
     VIEW = PXECustomizationTemplateDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         tree = self.view.sidebar.templates.tree
         tree.click_path('All Customization Templates - System Image Types', self.obj.image_type,
                         self.obj.name)
@@ -610,7 +610,7 @@ class CustomizationTemplateCopy(CFMENavigateStep):
     VIEW = PXECustomizationTemplateCopyView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.toolbar.configuration.item_select("Copy this Customization Template")
 
 
@@ -619,7 +619,7 @@ class CustomizationTemplateEdit(CFMENavigateStep):
     VIEW = PXECustomizationTemplateEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Customization Template')
 
 
@@ -718,7 +718,7 @@ class SystemImageDetails(CFMENavigateStep):
     VIEW = PXESystemImageDeatilsView
     prerequisite = NavigateToSibling('PXEMainPage')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.sidebar.datastores.tree.click_path(
             'All ISO Datastores',
             self.view.context['object'].datastore.provider,
@@ -731,7 +731,7 @@ class SystemImageEdit(CFMENavigateStep):
     VIEW = PXESystemImageEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.toolbar.configuration.item_select('Edit this ISO Image')
 
 
@@ -840,7 +840,7 @@ class SystemImageTypeAll(CFMENavigateStep):
     VIEW = PXESystemImageTypesView
     prerequisite = NavigateToSibling('PXEMainPage')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.sidebar.image_types.tree.click_path('All System Image Types')
 
 
@@ -849,7 +849,7 @@ class SystemImageTypeAdd(CFMENavigateStep):
     VIEW = PXESystemImageTypeAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new System Image Type')
 
 
@@ -858,7 +858,7 @@ class SystemImageTypeDetails(CFMENavigateStep):
     VIEW = PXESystemImageTypeDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.sidebar.image_types.tree.click_path('All System Image Types',
                                                                    self.obj.name)
 
@@ -868,7 +868,7 @@ class SystemImageTypeEdit(CFMENavigateStep):
     VIEW = PXESystemImageTypeEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this System Image Type')
 
 
@@ -1031,7 +1031,7 @@ class ISODatastoreAll(CFMENavigateStep):
     VIEW = PXEDatastoresView
     prerequisite = NavigateToSibling('PXEMainPage')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.sidebar.datastores.tree.click_path("All ISO Datastores")
 
 
@@ -1040,7 +1040,7 @@ class ISODatastoreAdd(CFMENavigateStep):
     VIEW = PXEDatastoreAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a New ISO Datastore')
 
 
@@ -1049,7 +1049,7 @@ class ISODatastoreDetails(CFMENavigateStep):
     VIEW = PXEDatastoreDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.sidebar.datastores.tree.click_path("All ISO Datastores", self.obj.provider)
 
 
@@ -1061,7 +1061,7 @@ class ISODatastoreDetails(CFMENavigateStep):
 class PXEMainPage(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
 
 

@@ -214,7 +214,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
     VIEW = ProvDiagAllView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.provisioning_dialogs.tree.click_path('All Dialogs')
 
 
@@ -223,7 +223,7 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
     VIEW = ProvDiagAddView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Add a new Dialog")
 
 
@@ -232,7 +232,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = ProvDiagDetailsView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         accordion_tree = self.prerequisite_view.sidebar.provisioning_dialogs.tree
         accordion_tree.click_path("All Dialogs", self.obj.diag_type, self.obj.description)
 
@@ -242,5 +242,5 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
     VIEW = ProvDiagEditView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Edit this Dialog")

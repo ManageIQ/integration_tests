@@ -277,7 +277,7 @@ class AllConditions(CFMENavigateStep):
     VIEW = ConditionsAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.conditions.tree.click_path("All Conditions")
 
 
@@ -286,7 +286,7 @@ class ConditionNew(CFMENavigateStep):
     VIEW = NewConditionView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.conditions.tree.click_path(
             "All Conditions",
             "{} Conditions".format(self.obj.TREE_NODE)
@@ -300,7 +300,7 @@ class ConditionEdit(CFMENavigateStep):
     VIEW = EditConditionView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.conditions.tree.click_path(
             "All Conditions",
             "{} Conditions".format(self.obj.TREE_NODE),
@@ -314,7 +314,7 @@ class ConditionDetails(CFMENavigateStep):
     VIEW = ConditionDetailsView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.conditions.tree.click_path(
             "All Conditions",
             "{} Conditions".format(self.obj.TREE_NODE),
@@ -327,7 +327,7 @@ class PolicyConditionDetails(CFMENavigateStep):
     VIEW = ConditionPolicyDetailsView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.policies.tree.click_path(
             "All Policies",
             "{} Policies".format(self.obj.context_policy.TYPE),

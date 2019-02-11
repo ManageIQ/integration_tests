@@ -124,7 +124,7 @@ class All(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
 
-    def step(self):
+    def step(self, *args, **kwargs):
             self.view.service_dialogs.tree.click_path(*self.obj.tree_path)
 
 
@@ -134,7 +134,7 @@ class Add(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Add a new Dialog')
 
 
@@ -144,7 +144,7 @@ class Details(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.service_dialogs.tree.click_path(*self.obj.tree_path)
 
 
@@ -154,5 +154,5 @@ class Edit(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit this Dialog")

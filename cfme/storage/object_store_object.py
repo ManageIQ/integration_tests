@@ -159,7 +159,7 @@ class ObjectStoreObjectAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select(
             'Storage', 'Object Storage', 'Object Store Objects')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         self.view.toolbar.view_selector.select("List View")
 
 

@@ -122,10 +122,10 @@ class ContainerAll(CFMENavigateStep):
     VIEW = ContainerAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Containers')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """Reset view and selection"""
         self.view.Filters.Navigation.select('ALL (Default)')
         self.view.toolbar.view_selector.select("List View")
@@ -137,7 +137,7 @@ class ContainerDetails(CFMENavigateStep):
     VIEW = ContainerDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         search_visible = self.prerequisite_view.entities.search.is_displayed
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    pod_name=self.obj.pod,
@@ -150,7 +150,7 @@ class ContainerEditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
@@ -158,7 +158,7 @@ class ContainerEditTags(CFMENavigateStep):
 class ContainerTimeLines(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
 
@@ -166,5 +166,5 @@ class ContainerTimeLines(CFMENavigateStep):
 class ContainerUtilization(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Utilization')

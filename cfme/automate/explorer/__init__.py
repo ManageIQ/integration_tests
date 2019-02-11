@@ -36,7 +36,7 @@ class AutomateExplorer(CFMENavigateStep):
     VIEW = AutomateExplorerView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.navigation.select(*automate_menu_name(self.obj.appliance) + ['Explorer'])
 
 

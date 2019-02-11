@@ -188,7 +188,7 @@ class EditReportMenus(CFMENavigateStep):
     VIEW = EditReportMenusView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.edit_report_menus.tree.click_path(
             "All EVM Groups",
             self.obj.group

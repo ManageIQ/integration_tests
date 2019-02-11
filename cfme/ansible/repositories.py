@@ -315,7 +315,7 @@ class AnsibleRepositories(CFMENavigateStep):
     VIEW = RepositoryAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.navigation.select("Automation", "Ansible", "Repositories")
 
 
@@ -324,7 +324,7 @@ class Details(CFMENavigateStep):
     VIEW = RepositoryDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             row = self.prerequisite_view.paginator.find_row_on_pages(
                 table=self.prerequisite_view.entities,
@@ -340,7 +340,7 @@ class Add(CFMENavigateStep):
     VIEW = RepositoryAddView
     prerequisite = NavigateToSibling("All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         # workaround for disabled Dropdown
         dropdown = self.prerequisite_view.toolbar.configuration
         wait_for(
@@ -357,7 +357,7 @@ class Edit(CFMENavigateStep):
     VIEW = RepositoryEditView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Edit this Repository")
 
 
@@ -367,7 +367,7 @@ class EditTagsFromListCollection(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             row = self.prerequisite_view.paginator.find_row_on_pages(
                 table=self.prerequisite_view.entities,

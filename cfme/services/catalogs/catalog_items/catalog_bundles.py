@@ -124,7 +124,7 @@ class All(CFMENavigateStep):
     VIEW = AllCatalogItemView
     prerequisite = NavigateToAttribute('appliance.server', 'ServicesCatalog')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.catalog_items.tree.click_path('All Catalog Items')
 
 
@@ -133,7 +133,7 @@ class BundleAdd(CFMENavigateStep):
     VIEW = AddCatalogBundleView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Add a New Catalog Bundle')
 
 
@@ -142,5 +142,5 @@ class BundleEdit(CFMENavigateStep):
     VIEW = EditCatalogBundleView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit this Item')

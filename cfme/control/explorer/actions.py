@@ -261,7 +261,7 @@ class ActionsAll(CFMENavigateStep):
     VIEW = ActionsAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.actions.tree.click_path("All Actions")
 
 
@@ -270,7 +270,7 @@ class ActionNew(CFMENavigateStep):
     VIEW = NewActionView
     prerequisite = NavigateToSibling("All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Add a new Action")
 
 
@@ -279,7 +279,7 @@ class ActionEdit(CFMENavigateStep):
     VIEW = EditActionView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit this Action")
 
 
@@ -288,5 +288,5 @@ class ActionDetails(CFMENavigateStep):
     VIEW = ActionDetailsView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.actions.tree.click_path("All Actions", self.obj.description)

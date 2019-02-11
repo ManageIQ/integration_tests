@@ -243,7 +243,7 @@ class ComputeRateAll(CFMENavigateStep):
     VIEW = RatesView
     prerequisite = NavigateToAttribute('appliance.server', 'IntelChargeback')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.rates.tree.click_path(
             "Rates",
             "Compute"
@@ -255,7 +255,7 @@ class ComputeRateNew(CFMENavigateStep):
     VIEW = AddComputeChargebackView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.toolbar.configuration.item_select("Add a new Chargeback Rate")
 
 
@@ -264,7 +264,7 @@ class ComputeRateDetails(CFMENavigateStep):
     VIEW = RatesDetailView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             self.view.rates.tree.click_path(
                 "Rates",
@@ -281,7 +281,7 @@ class ComputeRateCopy(CFMENavigateStep):
     VIEW = AddComputeChargebackView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.toolbar.configuration.item_select('Copy this Chargeback Rate')
 
 
@@ -290,7 +290,7 @@ class ComputeRateEdit(CFMENavigateStep):
     VIEW = EditComputeChargebackView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.toolbar.configuration.item_select("Edit this Chargeback Rate")
 
 
@@ -299,7 +299,7 @@ class StorageRateAll(CFMENavigateStep):
     VIEW = RatesView
     prerequisite = NavigateToAttribute('appliance.server', 'IntelChargeback')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.rates.tree.click_path(
             "Rates",
             "Storage"
@@ -311,7 +311,7 @@ class StorageRateNew(CFMENavigateStep):
     VIEW = AddStorageChargebackView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.toolbar.configuration.item_select("Add a new Chargeback Rate")
 
 
@@ -320,7 +320,7 @@ class StorageRateDetails(CFMENavigateStep):
     VIEW = RatesDetailView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             self.view.rates.tree.click_path(
                 "Rates",
@@ -337,5 +337,5 @@ class StorageRateEdit(CFMENavigateStep):
     VIEW = EditStorageChargebackView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.toolbar.configuration.item_select("Edit this Chargeback Rate")

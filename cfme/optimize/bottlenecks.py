@@ -95,7 +95,7 @@ class All(CFMENavigateStep):
 
     VIEW = BottlenecksTabsView
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """ Set values to default """
         self.view.report.event_groups.fill('<ALL>')
         self.view.report.show_host_events.fill(False)

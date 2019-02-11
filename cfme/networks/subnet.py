@@ -170,10 +170,10 @@ class All(CFMENavigateStep):
     VIEW = SubnetView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Networks', 'Subnets')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """Reset the view"""
         self.view.browser.refresh()
 
@@ -191,7 +191,7 @@ class OpenCloudNetworks(CFMENavigateStep):
         else:
             return navigate_to(self.obj.parent, 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
@@ -200,7 +200,7 @@ class AddSubnet(CFMENavigateStep):
     VIEW = SubnetAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Cloud Subnet')
 
 
@@ -209,5 +209,5 @@ class EditSubnet(CFMENavigateStep):
     VIEW = SubnetEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Cloud Subnet')

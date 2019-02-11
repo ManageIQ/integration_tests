@@ -108,7 +108,7 @@ class AnsiblePlaybooks(CFMENavigateStep):
     VIEW = PlaybooksView
     prerequisite = NavigateToSibling("LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select("Automation", "Ansible", "Playbooks")
 
 
@@ -117,7 +117,7 @@ class Details(CFMENavigateStep):
     VIEW = PlaybookDetailsView
     prerequisite = NavigateToAttribute("appliance.server", "AnsiblePlaybooks")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
@@ -127,6 +127,6 @@ class EditTagsFromListCollection(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute("appliance.server", "AnsiblePlaybooks")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(surf_pages=True, name=self.obj.name).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

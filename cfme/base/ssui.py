@@ -169,7 +169,7 @@ class LoggedIn(SSUINavigateStep):
     VIEW = SSUIBaseLoggedInPage
     prerequisite = NavigateToSibling('LoginScreen')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         with self.obj.appliance.context.use(ViaSSUI):
             self.obj.login()
 
@@ -181,7 +181,7 @@ class LoginScreen(SSUINavigateStep):
     def prerequisite(self):
         ensure_browser_open(self.obj.appliance.server.address())
 
-    def step(self):
+    def step(self, *args, **kwargs):
         # Can be either blank or logged in
         del self.view  # In order to unbind the browser
         quit()

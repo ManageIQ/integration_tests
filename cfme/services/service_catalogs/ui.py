@@ -100,7 +100,7 @@ class ServiceCatalogsDefault(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Services', 'Catalogs')
 
 
@@ -110,7 +110,7 @@ class ServiceCatalogsAll(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Services', 'Catalogs')
         self.view.service_catalogs.tree.click_path("All Services")
 
@@ -121,7 +121,7 @@ class ServiceCatalogDetails(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.service_catalogs.tree.click_path(
             "All Services",
             self.obj.catalog.name,
@@ -135,5 +135,5 @@ class ServiceCatalogOrder(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.order_button.click()

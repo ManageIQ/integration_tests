@@ -116,7 +116,7 @@ class TagsAll(CFMENavigateStep):
     VIEW = CompanyTagsAllView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if self.obj.appliance.version < '5.9':
             self.prerequisite_view.company_tags.select()
         else:
@@ -303,7 +303,7 @@ class CategoryAll(CFMENavigateStep):
     VIEW = CompanyCategoriesAllView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if self.obj.appliance.version < '5.9':
             self.prerequisite_view.company_categories.select()
         else:
@@ -315,7 +315,7 @@ class CategoryAdd(CFMENavigateStep):
     VIEW = CompanyCategoriesAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.add_button.click()
 
 
@@ -324,7 +324,7 @@ class CategoryEdit(CFMENavigateStep):
     VIEW = CompanyCategoriesEditView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.table.row(name=self.obj.name).click()
 
 
@@ -475,7 +475,7 @@ class MapTagsAll(CFMENavigateStep):
     VIEW = MapTagsAllView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if self.obj.appliance.version < '5.9':
             self.prerequisite_view.map_tags.select()
         else:
@@ -487,7 +487,7 @@ class MapTagsAdd(CFMENavigateStep):
     VIEW = MapTagsAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.add_button.click()
 
 
@@ -496,7 +496,7 @@ class MapTagsEdit(CFMENavigateStep):
     VIEW = MapTagsEditView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.table.row(tag_category=self.obj.category).click()
 
 
@@ -829,7 +829,7 @@ class Details(CFMENavigateStep):
     VIEW = RedHatUpdatesView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.redhat_updates.select()
 
 
@@ -838,7 +838,7 @@ class Edit(CFMENavigateStep):
     VIEW = RedHatUpdatesEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.edit_registration.click()
 
 
@@ -909,7 +909,7 @@ class CANDUCollectionDetails(CFMENavigateStep):
     VIEW = CANDUCollectionView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.candu_collection.select()
 
 
@@ -1062,7 +1062,7 @@ class ReplicationDetails(CFMENavigateStep):
     VIEW = ReplicationView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.replication.select()
 
 
@@ -1071,7 +1071,7 @@ class ReplicationGlobalSetup(CFMENavigateStep):
     VIEW = ReplicationGlobalView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.replication_type.fill('Global')
 
 
@@ -1080,7 +1080,7 @@ class ReplicationGlobalAdd(CFMENavigateStep):
     VIEW = ReplicationGlobalAddView
     prerequisite = NavigateToSibling('Global')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if not self.view.accept_button.is_displayed:
             self.prerequisite_view.add_subscription.click()
 
@@ -1090,5 +1090,5 @@ class ReplicationRemoteAdd(CFMENavigateStep):
     VIEW = ReplicationRemoteView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.replication_type.fill('Remote')

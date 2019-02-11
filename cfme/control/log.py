@@ -30,5 +30,5 @@ class ControlLog(CFMENavigateStep):
     VIEW = ControlLogView
     prerequisite = NavigateToSibling("LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.navigation.select("Control", "Log")

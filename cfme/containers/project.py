@@ -90,10 +90,10 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
     VIEW = ProjectAllView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Projects')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         # Reset view and selection
         if self.view.toolbar.view_selector.is_displayed:
             self.view.toolbar.view_selector.select("List View")
@@ -106,13 +106,13 @@ class Details(CFMENavigateStep):
     VIEW = ProjectDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         search_visible = self.prerequisite_view.entities.search.is_displayed
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    surf_pages=not search_visible,
                                                    use_search=search_visible).click()
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         if self.view.toolbar.view_selector.is_displayed:
             self.view.toolbar.view_selector.select("Summary View")
 
@@ -122,13 +122,13 @@ class Dashboard(CFMENavigateStep):
     VIEW = ProjectDashboardView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         search_visible = self.prerequisite_view.entities.search.is_displayed
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    surf_pages=not search_visible,
                                                    use_search=search_visible).click()
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         if self.view.toolbar.view_selector.is_displayed:
             self.view.toolbar.view_selector.select("Dashboard View")
 
@@ -138,7 +138,7 @@ class EditTagsFromDetails(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
@@ -147,5 +147,5 @@ class EditTagsFromDashboard(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Dashboard')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

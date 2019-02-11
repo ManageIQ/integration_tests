@@ -232,7 +232,7 @@ class All(CFMENavigateStep):
 
     VIEW = OrchestrationTemplatesView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Services', 'Catalogs')
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates")
 
@@ -243,7 +243,7 @@ class Details(CFMENavigateStep):
 
     VIEW = DetailsTemplateView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates",
                                                           self.obj.template_group,
                                                           self.obj.template_name)
@@ -255,7 +255,7 @@ class TemplateType(CFMENavigateStep):
 
     VIEW = TemplateTypeView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates",
                                                           self.obj.template_group)
 
@@ -266,7 +266,7 @@ class AddDialog(CFMENavigateStep):
 
     VIEW = AddDialogView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item_name = 'Create Service Dialog from Orchestration Template'
         self.view.toolbar.configuration.item_select(item_name)
 
@@ -277,7 +277,7 @@ class Edit(CFMENavigateStep):
 
     VIEW = EditTemplateView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.toolbar.configuration.item_select("Edit this Orchestration Template")
 
 
@@ -287,7 +287,7 @@ class AddTemplate(CFMENavigateStep):
 
     VIEW = AddTemplateView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.toolbar.configuration.item_select("Create new Orchestration Template")
 
 
@@ -297,5 +297,5 @@ class CopyTemplate(CFMENavigateStep):
 
     VIEW = CopyTemplateView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.toolbar.configuration.item_select("Copy this Orchestration Template")

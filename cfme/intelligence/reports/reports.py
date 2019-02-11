@@ -626,7 +626,7 @@ class ReportsAll(CFMENavigateStep):
     VIEW = AllReportsView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.reports.tree.click_path("All Reports")
 
 
@@ -635,7 +635,7 @@ class ReportsNew(CFMENavigateStep):
     VIEW = ReportAddView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.reports.tree.click_path("All Reports")
         self.prerequisite_view.configuration.item_select("Add a new Report")
 
@@ -645,7 +645,7 @@ class ReportEdit(CFMENavigateStep):
     VIEW = ReportEditView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit this Report")
 
 
@@ -654,7 +654,7 @@ class ReportCopy(CFMENavigateStep):
     VIEW = ReportCopyView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Copy this Report")
 
 
@@ -663,7 +663,7 @@ class ReportTimeline(CFMENavigateStep):
     VIEW = ReportTimelineView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelTimelines")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.timelines.tree.click_path(
             self.obj.type or self.obj.company_name,
             self.obj.subtype or "Custom",
@@ -676,7 +676,7 @@ class ReportDetails(CFMENavigateStep):
     VIEW = ReportDetailsView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.reports.tree.click_path(
             "All Reports",
             self.obj.type or self.obj.company_name,
@@ -691,7 +691,7 @@ class ReportSchedule(CFMENavigateStep):
     VIEW = ReportScheduleView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.reports.tree.click_path(
             "All Reports",
             self.obj.type or self.obj.company_name,
@@ -706,7 +706,7 @@ class SavedReportDetails(CFMENavigateStep):
     VIEW = SavedReportDetailsView
     prerequisite = NavigateToAttribute("report", "Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.reports.tree.click_path(
             "All Reports",
             self.obj.report.type or self.obj.report.company_name,

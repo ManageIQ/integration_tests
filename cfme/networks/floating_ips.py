@@ -56,10 +56,10 @@ class All(CFMENavigateStep):
     VIEW = FloatingIpView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Networks', 'Floating IPs')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """Reset the view"""
         self.view.browser.refresh()
 
@@ -69,7 +69,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = FloatingIpDetailsView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             self.prerequisite_view.entities.get_entity(address=self.obj.address,
                                                        surf_pages=True).click()

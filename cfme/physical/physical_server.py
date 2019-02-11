@@ -352,7 +352,7 @@ class All(CFMENavigateStep):
     VIEW = PhysicalServersView
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select("Compute", "Physical Infrastructure", "Servers")
 
 
@@ -361,7 +361,7 @@ class ManagePoliciesCollection(CFMENavigateStep):
     VIEW = PhysicalServerManagePoliciesView
     prerequisite = NavigateToSibling("All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select("Manage Policies")
 
 
@@ -370,7 +370,7 @@ class EditTagsCollection(CFMENavigateStep):
     VIEW = PhysicalServerEditTagsView
     prerequisite = NavigateToSibling("All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select("Edit Tags")
 
 
@@ -379,7 +379,7 @@ class ProvisionCollection(CFMENavigateStep):
     VIEW = PhysicalServerProvisionView
     prerequisite = NavigateToSibling("All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.lifecycle.item_select("Provision Physical Server")
 
 
@@ -388,7 +388,7 @@ class Details(CFMENavigateStep):
     VIEW = PhysicalServerDetailsView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
@@ -397,7 +397,7 @@ class ManagePolicies(CFMENavigateStep):
     VIEW = PhysicalServerManagePoliciesView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select("Manage Policies")
 
 
@@ -406,7 +406,7 @@ class Provision(CFMENavigateStep):
     VIEW = PhysicalServerProvisionView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.lifecycle.item_select("Provision Physical Server")
 
 
@@ -415,7 +415,7 @@ class Timelines(CFMENavigateStep):
     VIEW = PhysicalServerTimelinesView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select("Timelines")
 
 
@@ -424,7 +424,7 @@ class NetworkDevices(CFMENavigateStep):
     VIEW = PhysicalServerNetworkDevicesView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.properties.click_at("Network Devices")
 
 
@@ -433,5 +433,5 @@ class StorageDevices(CFMENavigateStep):
     VIEW = PhysicalServerStorageDevicesView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.properties.click_at("Storage Devices")

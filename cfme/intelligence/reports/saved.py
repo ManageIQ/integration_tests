@@ -87,7 +87,7 @@ class CustomReportAll(CFMENavigateStep):
     VIEW = AllSavedReportsView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.saved_reports.tree.click_path("All Saved Reports")
 
 
@@ -96,7 +96,7 @@ class ScheduleDetails(CFMENavigateStep):
     VIEW = SavedReportDetailsView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.saved_reports.tree.click_path(
             "Saved Reports",
             "All Saved Reports",

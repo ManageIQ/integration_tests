@@ -23,5 +23,5 @@ class All(CFMENavigateStep):
     VIEW = NetworkTopologyView
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.navigation.select("Networks", "Topology")
