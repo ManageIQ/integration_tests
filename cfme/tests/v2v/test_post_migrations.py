@@ -103,33 +103,20 @@ def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, con
     soft_assert(vm_state == "off")
 
 
-@pytest.mark.parametrize(
-    "form_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True
-)
 def test_migrations_vm_attributes(request, appliance, v2v_providers, host_creds, conversion_tags,
-                                  form_data_vm_obj_single_datastore):
+                                  form_data_vm_map_obj_mini):
     """Tests cpu, socket, core, memory attributes on migrated vm"""
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(
-        form_data_vm_obj_single_datastore.form_data
-    )
-
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
+    migration_plan_collection = appliance.collections.v2v_plans
     # vm_obj is a list, with only 1 VM object, hence [0]
-    src_vm_obj = form_data_vm_obj_single_datastore.vm_list[0]
+    src_vm_obj = form_data_vm_map_obj_mini.vm_list[0]
     source_view = navigate_to(src_vm_obj, "Details")
     summary = source_view.entities.summary("Properties").get_text_of("Container")
     source_cpu, source_socket, source_core, source_memory = re.findall("\d+", summary)
-
-    migration_plan_collection = appliance.collections.v2v_plans
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
-        infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore.vm_list,
+        infra_map=form_data_vm_map_obj_mini.map_obj.name,
+        vm_list=form_data_vm_map_obj_mini.vm_list,
         start_migration=True
     )
 
