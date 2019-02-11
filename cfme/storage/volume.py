@@ -35,6 +35,7 @@ from widgetastic_manageiq import BootstrapSelect
 from widgetastic_manageiq import BootstrapSwitch
 from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
 
@@ -83,6 +84,7 @@ class VolumeView(BaseLoggedInPage):
 class VolumeAllView(VolumeView):
     toolbar = View.nested(VolumeToolbar)
     search = View.nested(Search)
+    paginator = PaginationPane()
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
     @property
@@ -98,6 +100,14 @@ class VolumeAllView(VolumeView):
 
         navigation = BootstrapNav('.//div/ul')
         tree = ManageIQTree()
+
+
+class StorageManagerVolumeAllView(VolumeAllView):
+    @property
+    def is_displayed(self):
+        return (
+            self.entities.title.text == "{} (All Cloud Volumes)".format(self.context['object'].name)
+        )
 
 
 class VolumeDetailsView(VolumeView):
@@ -126,10 +136,13 @@ class VolumeAddEntities(View):
 
 class VolumeAddForm(View):
     storage_manager = BootstrapSelect(name='storage_manager_id')
-    tenant = BootstrapSelect(name='cloud_tenant_id')
+    tenant = BootstrapSelect(name='cloud_tenant_id')  # is for openstack block storage only
     volume_name = TextInput(name='name')
     volume_type = BootstrapSelect(name='volume_type')
-    size = TextInput(name='size')
+    volume_size = TextInput(name='size')
+    az = BootstrapSelect(name='aws_availability_zone_id')  # is for ec2 block storage only
+    iops = TextInput(name='aws_iops')  # is for ec2 block storage only
+    encryption = BootstrapSwitch(name="aws_encryption")  # is for ec2 block storage only
     add = Button('Add')
     cancel = Button('Cancel')
 
@@ -151,6 +164,7 @@ class VolumeEditView(VolumeView):
     is_displayed = displayed_not_implemented
 
     volume_name = TextInput(name='name')
+    volume_size = TextInput(name='size')
     save = Button('Save')
 
 
@@ -254,11 +268,10 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
     def update(self, updates):
         """Edit cloud volume"""
         view = navigate_to(self, 'Edit')
-        view.fill({'volume_name': updates.get('name')})
+        view.fill(updates)
 
         view.save.click()
-
-        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(updates.get('name')))
+        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(updates.get('volume_name')))
         wait_for(lambda: not self.exists, delay=20, timeout=500, fail_func=self.refresh)
 
     def delete(self, wait=True):
@@ -313,8 +326,13 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
                 view.save.click()
                 return snapshot_collection.instantiate(name, self.provider)
 
-    def attach_instance(self, name, mountpoint=None, cancel=False, reset=False):
-        view = navigate_to(self, 'AttachInstance')
+    def attach_instance(self, name, mountpoint=None, cancel=False, reset=False, storage_manager=None):
+        if storage_manager:
+            view = navigate_to(storage_manager, 'Volumes')
+            view.entities.get_entity(name=self.name).check()
+            view = navigate_to(storage_manager, 'VolumeAttachInstance')
+        else:
+            view = navigate_to(self, 'AttachInstance')
 
         # Reset and Attach buttons are only active when view is changed
         changed = view.fill({'instance': name, 'mountpoint': mountpoint})
@@ -332,8 +350,13 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
                 view = self.create_view(VolumeDetailsView)
                 view.flash.assert_no_error()
 
-    def detach_instance(self, name, cancel=False):
-        view = navigate_to(self, 'DetachInstance')
+    def detach_instance(self, name, cancel=False, storage_manager=None):
+        if storage_manager:
+            view = navigate_to(storage_manager, 'Volumes')
+            view.entities.get_entity(name=self.name).check()
+            view = navigate_to(storage_manager, 'VolumeDetachInstance')
+        else:
+            view = navigate_to(self, 'AttachInstance')
 
         # Detach button is only active when view is changed
         changed = view.instance.fill(name)
@@ -355,6 +378,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         """
         view = navigate_to(self.parent, 'All')
         view.toolbar.view_selector.select("List View")
+        view.browser.refresh()
 
         for item in view.entities.elements.read():
             if self.name in item['Name']:
@@ -368,6 +392,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
             :py:class:`str` size of volume.
         """
         view = navigate_to(self, 'Details')
+        view.browser.refresh()
         return view.entities.properties.get_text_of('Size')
 
     @property
@@ -416,16 +441,8 @@ class VolumeCollection(BaseCollection, TaggableCollection):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     ENTITY = Volume
 
-    def create(
-        self,
-        name,
-        storage_manager,
-        tenant,
-        provider,
-        volume_type=None,
-        size=1,
-        cancel=False
-    ):
+    def create(self, name, storage_manager, provider, tenant=None, volume_type=None, volume_size=1,
+               cancel=False, az=None, from_manager=False):
         """Create new storage volume
 
         Args:
@@ -439,15 +456,19 @@ class VolumeCollection(BaseCollection, TaggableCollection):
         Returns:
             object for the :py:class: cfme.storage.volume.Volume
         """
-
-        view = navigate_to(self, 'Add')
+        if from_manager:
+            view = navigate_to(storage_manager, 'VolumesAdd')
+        else:
+            view = navigate_to(self, 'Add')
 
         if not cancel:
-            view.form.fill({'storage_manager': storage_manager,
+            view.form.fill({'storage_manager': storage_manager.name,
                             'tenant': tenant,
                             'volume_name': name,
                             'volume_type': volume_type,
-                            'size': size})
+                            'volume_size': volume_size,
+                            'az': az,
+                            })
             view.form.add.click()
             base_message = 'Cloud Volume "{}" created'
             view.flash.assert_success_message(base_message.format(name))
@@ -482,9 +503,12 @@ class VolumeCollection(BaseCollection, TaggableCollection):
         else:
             raise ItemNotFound('No Cloud Volume for Deletion')
 
-    def all(self):
+    def all(self, storage_manager=None):
         """returning all Volumes objects for respective storage manager type"""
-        view = navigate_to(self, 'All')
+        if storage_manager:
+            view = navigate_to(storage_manager, 'Volumes')
+        else:
+            view = navigate_to(self, 'All')
         view.toolbar.view_selector.select("List View")
         volumes = []
         try:

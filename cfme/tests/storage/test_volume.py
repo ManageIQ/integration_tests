@@ -2,11 +2,18 @@
 import fauxfactory
 import pytest
 
+from wrapanapi import VmState
+
 from cfme import test_requirements
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.volume import VolumeAllView
+from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.utils.update import update
+from cfme.utils.wait import wait_for
+from cfme.storage.manager import StorageManagerVolumesAll
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
@@ -15,7 +22,7 @@ pytestmark = [
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider(
-        [OpenStackProvider],
+        [OpenStackProvider, EC2Provider],
         scope='module',
         required_fields=[['provisioning', 'cloud_tenant']]
     ),
@@ -24,16 +31,18 @@ pytestmark = [
 STORAGE_SIZE = 1
 
 
+@pytest.fixture(params=["from_manager", "from_volume"])
+def from_manager(request):
+    if request.param == "from_manager":
+        return True
+    else:
+        return False
+
+
 @pytest.fixture(scope='module')
 def volume(appliance, provider):
     # create new volume
-    volume_collection = appliance.collections.volumes
-    manager_name = '{} Cinder Manager'.format(provider.name)
-    volume = volume_collection.create(name=fauxfactory.gen_alpha(),
-                                      storage_manager=manager_name,
-                                      tenant=provider.data['provisioning']['cloud_tenant'],
-                                      size=STORAGE_SIZE,
-                                      provider=provider)
+    create_volume(appliance, provider, from_manager=False, should_assert=False)
     yield volume
 
     try:
@@ -45,7 +54,47 @@ def volume(appliance, provider):
             msg=str(e)))
 
 
-def test_storage_volume_create_cancelled_validation(appliance, provider):
+@pytest.fixture(scope="function")
+def instance_fixture(appliance, provider, small_template):
+    instance = appliance.collections.cloud_instances.instantiate(random_vm_name('stor'),
+                                                                 provider,
+                                                                 small_template.name)
+    if not instance.exists_on_provider:
+        instance.create_on_provider(allow_skip="default", find_in_cfme=True)
+    elif instance.provider.one_of(EC2Provider) and instance.mgmt.state == VmState.DELETED:
+        instance.mgmt.rename('test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
+        instance.create_on_provider(allow_skip="default", find_in_cfme=True)
+    yield instance
+    instance.cleanup_on_provider()
+
+
+def create_volume(appliance, provider, is_from_manager, az="us-west-1a", cancel=False,
+                  should_assert=False):
+    volume_collection = appliance.collections.volumes
+    manager = appliance.collections.block_managers.filter({"provider": provider}).all()[0]
+    if provider.one_of(OpenStackProvider):
+        volume = volume_collection.create(name=fauxfactory.gen_alpha(),
+                                          storage_manager=manager,
+                                          tenant=provider.data['provisioning']['cloud_tenant'],
+                                          volume_size=STORAGE_SIZE,
+                                          provider=provider,
+                                          cancel=cancel,
+                                          from_manager=is_from_manager)
+    elif provider.one_of(EC2Provider):
+        volume = volume_collection.create(name=fauxfactory.gen_alpha(),
+                                          storage_manager=manager,
+                                          volume_type='General Purpose SSD (GP2)',
+                                          volume_size=STORAGE_SIZE,
+                                          provider=provider,
+                                          az=az,
+                                          from_manager=is_from_manager,
+                                          cancel=cancel)
+    if should_assert:
+        assert volume.exists
+    return volume
+
+
+def test_storage_volume_create_cancelled_validation(appliance, provider, from_manager):
     """ Test Attach instance to storage volume cancelled
 
     prerequisites:
@@ -62,20 +111,14 @@ def test_storage_volume_create_cancelled_validation(appliance, provider):
         casecomponent: Cloud
     """
     volume_collection = appliance.collections.volumes
-    manager_name = '{} Cinder Manager'.format(provider.name)
-    volume_collection.create(name=fauxfactory.gen_alpha(),
-                             storage_manager=manager_name,
-                             tenant=provider.data['provisioning']['cloud_tenant'],
-                             size=STORAGE_SIZE,
-                             provider=provider,
-                             cancel=True)
+    create_volume(appliance, provider, from_manager, cancel=True)
 
     view = volume_collection.create_view(VolumeAllView)
     view.flash.assert_message('Add of new Cloud Volume was cancelled by the user')
 
 
 @pytest.mark.tier(1)
-def test_storage_volume_crud(appliance, provider):
+def test_storage_volume_crud(appliance, provider, from_manager):
     """ Test storage volume crud
 
     prerequisites:
@@ -91,27 +134,44 @@ def test_storage_volume_crud(appliance, provider):
         casecomponent: Cloud
     """
     # create volume
-    volume_collection = appliance.collections.volumes
-    manager_name = '{} Cinder Manager'.format(provider.name)
-    volume = volume_collection.create(name=fauxfactory.gen_alpha(),
-                                      storage_manager=manager_name,
-                                      tenant=provider.data['provisioning']['cloud_tenant'],
-                                      size=STORAGE_SIZE,
-                                      provider=provider)
-    assert volume.exists
+    volume = create_volume(appliance, provider, from_manager, should_assert=True)
+    # print volume_collection.__dict__
+    # v = volume_collection.all(manager)
+    # for vo in v:
+    #     print(vo.__dict__)
 
     # update volume
     old_name = volume.name
     new_name = fauxfactory.gen_alpha()
-    with update(volume):
-        volume.name = new_name
+    updates = {'volume_name': new_name, 'volume_size': STORAGE_SIZE + 1}
+    volume = volume.update(updates)
+    # volume = Volume(new_name, provider)
+    wait_for(lambda: volume.size == '{} GB'.format(volume.volume_size), delay=15, timeout=900)
 
-    with update(volume):
-        volume.name = old_name
+    updates = {'volume_name': old_name}
+    volume = volume.update(updates)
 
     # delete volume
     volume.delete(wait=True)
     assert not volume.exists
+
+
+@pytest.mark.tier(1)
+def test_storage_volume_attach_detach(appliance, provider, instance_fixture, from_manager):
+    volume = create_volume(appliance, provider, from_manager, az=instance_fixture.
+                           vm_default_args["environment"]["availability_zone"], should_assert=True)
+    if from_manager:
+        storage_manager = appliance.collections.block_managers.filter({"provider": provider}).all()[0]
+    else:
+        storage_manager = None
+    # attach
+    volume.attach_instance(name=instance_fixture.name, mountpoint='/dev/sdm',
+                           storage_manager=storage_manager)
+    wait_for(lambda: volume.status == 'in-use', delay=15, timeout=600)
+
+    # detach
+    volume.detach_instance(name=instance_fixture.name, storage_manager=storage_manager)
+    wait_for(lambda: volume.status == 'available', delay=15, timeout=600)
 
 
 def test_storage_volume_edit_tag(volume):
