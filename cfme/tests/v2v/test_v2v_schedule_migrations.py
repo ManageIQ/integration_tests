@@ -41,7 +41,7 @@ def test_single_vm_scheduled_migration(request, appliance, v2v_providers, host_c
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=form_data_vm_map_obj_mini.map_obj.name,
-        vm_list=form_data_vm_map_obj_mini.vm_list, start_migration=False)
+        vm_list=[form_data_vm_map_obj_mini.vm_list], start_migration=False)
     view = navigate_to(migration_plan_collection, 'All')
 
     # Test scheduled Migration

@@ -51,7 +51,7 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
     """
     # Test VM migration power state and tags are preserved
     # as this is single_vm_migration it only has one vm_obj, which we extract on next line
-    src_vm = form_data_vm_map_obj_mini.vm_list[0]
+    src_vm = form_data_vm_map_obj_mini.vm_list
     if power_state not in src_vm.mgmt.state:
         if power_state == 'RUNNING':
             src_vm.mgmt.start()
@@ -66,7 +66,7 @@ def test_single_vm_migration_power_state_tags_retirement(request, appliance, v2v
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=form_data_vm_map_obj_mini.map_obj.name,
-        vm_list=form_data_vm_map_obj_mini.vm_list, start_migration=True)
+        vm_list=[form_data_vm_map_obj_mini.vm_list], start_migration=True)
 
     # explicit wait for spinner of in-progress status card
     view = appliance.browser.create_view(
@@ -189,7 +189,7 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
     migration_plan = migration_plan_collection.create(
         name="{}".format(fauxfactory.gen_special()), description="desc_{}"
         .format(fauxfactory.gen_alphanumeric()), infra_map=form_data_vm_map_obj_mini.map_obj.name,
-        vm_list=form_data_vm_map_obj_mini.vm_list, start_migration=True)
+        vm_list=[form_data_vm_map_obj_mini.vm_list], start_migration=True)
 
     # explicit wait for spinner of in-progress status card
     view = appliance.browser.create_view(
@@ -212,7 +212,7 @@ def test_migration_special_char_name(request, appliance, v2v_providers, host_cre
             migration_plan.name))
     # validate MAC address matches between source and target VMs
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
-    src_vm = form_data_vm_map_obj_mini.vm_list[0]
+    src_vm = form_data_vm_map_obj_mini.vm_list
     migrated_vm = get_migrated_vm_obj(src_vm, v2v_providers.rhv_provider)
     assert src_vm.mac_address == migrated_vm.mac_address
 
@@ -310,18 +310,17 @@ def test_migration_with_edited_mapping(request, appliance, v2v_providers, edited
             caseimportance: medium
             initialEstimate: 1/4h
         """
-    # vm_obj is a list, with only 1 VM object, hence [0]
-    src_vm_obj = form_data_vm_map_obj_mini.vm_list[0]
+    src_vm_obj = form_data_vm_map_obj_mini.vm_list
     _form_data, edited_form_data = edited_form_data
-
+    mapping = form_data_vm_map_obj_mini.map_obj
     mapping.update(edited_form_data)
 
     migration_plan_collection = appliance.collections.v2v_plans
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
-        infra_map=form_data_vm_map_obj_mini.map_obj.name,
-        vm_list=form_data_vm_map_obj_mini.vm_list,
+        infra_map=mapping.name,
+        vm_list=[form_data_vm_map_obj_mini.vm_list],
         start_migration=True)
 
     # explicit wait for spinner of in-progress status card

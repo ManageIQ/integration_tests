@@ -47,13 +47,12 @@ def test_migration_policy_tag(request, appliance, v2v_providers, host_creds, con
         casecomponent: V2V
     """
     migration_plan_collection = appliance.collections.v2v_plans
-    # vm_obj is a list, with only 1 VM object, hence [0]
-    vm_obj = form_data_vm_map_obj_mini.vm_list[0]
+    vm_obj = form_data_vm_map_obj_mini.vm_list
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=form_data_vm_map_obj_mini.map_obj.name,
-        vm_list=form_data_vm_map_obj_mini.vm_list,
+        vm_list=[form_data_vm_map_obj_mini.vm_list],
         start_migration=True
     )
 
@@ -107,8 +106,7 @@ def test_migrations_vm_attributes(request, appliance, v2v_providers, host_creds,
                                   form_data_vm_map_obj_mini):
     """Tests cpu, socket, core, memory attributes on migrated vm"""
     migration_plan_collection = appliance.collections.v2v_plans
-    # vm_obj is a list, with only 1 VM object, hence [0]
-    src_vm_obj = form_data_vm_map_obj_mini.vm_list[0]
+    src_vm_obj = form_data_vm_map_obj_mini.vm_list
     source_view = navigate_to(src_vm_obj, "Details")
     summary = source_view.entities.summary("Properties").get_text_of("Container")
     source_cpu, source_socket, source_core, source_memory = re.findall("\d+", summary)
@@ -116,7 +114,7 @@ def test_migrations_vm_attributes(request, appliance, v2v_providers, host_creds,
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=form_data_vm_map_obj_mini.map_obj.name,
-        vm_list=form_data_vm_map_obj_mini.vm_list,
+        vm_list=[form_data_vm_map_obj_mini.vm_list],
         start_migration=True
     )
 
