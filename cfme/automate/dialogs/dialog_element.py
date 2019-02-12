@@ -16,6 +16,7 @@ from cfme.modeling.base import parent_of_type
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import DialogBootstrapSwitch
 from widgetastic_manageiq import DialogButton
 from widgetastic_manageiq import DialogElement
@@ -192,10 +193,8 @@ class ElementCollection(BaseCollection):
             view.fill(element)
             view.ele_save_button.click()
         view.save_button.click()
-        try:
-            view.flash.assert_no_error()
-        except AssertionError:
-            raise
+        wait_for(lambda: view.flash.is_displayed, timeout=5, delay=0.2, silent_failure=True)
+        view.flash.assert_no_error()
         return self.instantiate(element_data=element_data)
 
     def set_element_type(self, view, element):
