@@ -98,6 +98,7 @@ ssa_expect_files = [
 
 
 def pytest_generate_tests(metafunc):
+
     argnames, argvalues, idlist = testgen.providers_by_class(
         metafunc, [CloudProvider, InfraProvider], required_fields=['vm_analysis_new'])
     argnames.append('analysis_type')
@@ -106,11 +107,18 @@ def pytest_generate_tests(metafunc):
     for index, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
         vma_data = args['provider'].data.vm_analysis_new
-        vms = vma_data.vms
-        for vm_analysis_key in vms:
-            # Set VM name here
-            new_idlist.append('{}-{}'.format(idlist[index], vm_analysis_key))
-            new_argvalues.append([args["provider"], vm_analysis_key])
+        if 'vms' in vma_data:
+            vms = vma_data.vms
+            for vm_analysis_key in vms:
+                # Set VM name here
+                new_idlist.append('{}-{}'.format(idlist[index], vm_analysis_key))
+                new_argvalues.append([args["provider"], vm_analysis_key])
+        else:
+            # TODO FIXME
+            logger.error("Provider %s does not have the correct keys in the yaml",
+                         args['provider'].name)
+            continue
+
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
