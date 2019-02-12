@@ -606,9 +606,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             self.fix_httpd_issue(log_callback=log_callback)
 
             self.deploy_merkyl(start=True, log_callback=log_callback)
-            if fix_ntp_clock and not self.is_pod:
-                self.fix_ntp_clock(log_callback=log_callback)
-                # TODO: Handle external DB setup
+
+            # TODO: Handle external DB setup
             # This is workaround for appliances to use only one disk for the VMDB
             # If they have been provisioned with a second disk in the infra,
             # 'self.unpartitioned_disks' should exist and therefore this won't run.
@@ -637,6 +636,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             if restart_evm:
                 self.evmserverd.restart(log_callback=log_callback)
             self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+
+            if fix_ntp_clock and not self.is_pod:
+                self.set_ntp_sources(log_callback=log_callback)
 
     def configure_gce(self, log_callback=None):
         # Force use of IPAppliance's configure method
@@ -1081,9 +1083,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         # 3000, 4000, and 80 at this point, and waiting a reasonable amount of time
         # before exploding if any of them don't appear in time after evm restarts.
 
-    @logger_wrap("Fix NTP Clock: {}")
-    def fix_ntp_clock(self, log_callback=None):
-        """Fixes appliance time using ntpdate on appliance"""
+    @logger_wrap("Set NTP Sources: {}")
+    def set_ntp_sources(self, log_callback=None):
+        """Sets NTP sources for running appliance from cfme_data.clock_servers"""
         log_callback('Fixing appliance clock')
         client = self.ssh_client
 
@@ -1100,43 +1102,28 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             self.chronyd.daemon_reload()
 
         # Retrieve time servers from yamls
-        server_template = 'server {srv} iburst'
-        time_servers = set()
         try:
             logger.debug('obtaining clock servers from config file')
-            clock_servers = conf.cfme_data.get('clock_servers')
-            for clock_server in clock_servers:
-                time_servers.add(server_template.format(srv=clock_server))
-        except TypeError:
+            time_servers = conf.cfme_data.clock_servers
+            assert time_servers
+        except (KeyError, AttributeError, AssertionError):
             msg = 'No clock servers configured in cfme_data.yaml'
             log_callback(msg)
             raise ApplianceException(msg)
 
-        filename = '/etc/chrony.conf'
-        chrony_conf = set(client.run_command("cat {f}".format(f=filename)).output.strip()
-                    .split('\n'))
+        ntp_servers = {
+            'ntp_server_{n}'.format(n=i + 1): time_servers[i]
+            for i in range(0, len(time_servers))
+        }
+        logger.info('Setting NTP servers from config file: %s', ntp_servers)
 
-        modified_chrony_conf = chrony_conf.union(time_servers)
-        if modified_chrony_conf != chrony_conf:
-            modified_chrony_conf = "\n".join(list(modified_chrony_conf))
-            client.run_command('echo "{txt}" > {f}'.format(txt=modified_chrony_conf, f=filename))
-            logger.info("chrony's config file updated")
-            conf_file_updated = True
-        else:
-            logger.info("chrony's config file hasn't been changed")
-            conf_file_updated = False
-
-        if conf_file_updated or not self.chronyd.running:
-            logger.debug('restarting chronyd')
-            self.chronyd.restart()
+        self.server.settings.update_ntp_servers(ntp_servers)
 
         # check that chrony is running correctly now
-        result = client.run_command('chronyc tracking')
-        if result.success:
-            logger.info('chronyc is running correctly')
-        else:
-            raise ApplianceException("chrony doesn't work. "
-                                     "Error message: {e}".format(e=result.output))
+        chrony_check = client.run_command('chronyc tracking')
+        if not chrony_check.success:
+            raise ApplianceException("chrony doesn't work. tracking output: {e}"
+                                     .format(e=chrony_check.output))
 
     @property
     def is_miqqe_patch_candidate(self):
@@ -2637,8 +2624,6 @@ class Appliance(IPAppliance):
         db_name = kwargs.get('db_name')
         on_openstack = kwargs.pop('on_openstack', False)
 
-        if kwargs.get('fix_ntp_clock', True) is True:
-            self.fix_ntp_clock(log_callback=log_callback)
         if self.is_downstream:
             # Upstream already has one.
             if kwargs.get('db_address') is None:
@@ -2655,6 +2640,9 @@ class Appliance(IPAppliance):
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         if kwargs.get('loosen_pgssl', True) is True:
             self.db.loosen_pgssl()
+
+        if kwargs.get('fix_ntp_clock', True) is True:
+            self.set_ntp_sources(log_callback=log_callback)
 
         name_to_set = kwargs.get('name_to_set')
         if name_to_set is not None and name_to_set != self.name:
@@ -2873,10 +2861,11 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
 
     Usage:
         my_appliance = provision_appliance('5.5.1.8', 'my_tests')
-        my_appliance.fix_ntp_clock()
         ...other configuration...
         my_appliance.db.enable_internal()
         my_appliance.wait_for_web_ui()
+        my_appliance.set_ntp_sources()
+
         or
         my_appliance = provision_appliance('5.5.1.8', 'my_tests')
         my_appliance.configure()

@@ -1203,9 +1203,6 @@ def appliance_power_on(self, appliance_id):
                 # VM is running now.
                 sync_appliance_hw.delay(appliance.id)
                 sync_provider_hw.delay(appliance.template.provider.id)
-                # fixes time synchronization
-                if not appliance.is_openshift:
-                    appliance.ipapp.fix_ntp_clock()
                 return
             else:
                 # IP not present yet
