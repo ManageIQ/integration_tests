@@ -24,7 +24,7 @@ These tests do not check registration results in the web UI, only through SSH.
 
 
 def pytest_generate_tests(metafunc):
-    if metafunc.function in {test_rh_updates}:
+    if metafunc.function in {test_rh_updates, test_rhsm_registration_check_repo_names}:
         return
     """ Generates tests specific to RHSM or SAT6 with proxy-on or off """
     argnames = ['reg_method', 'reg_data', 'proxy_url', 'proxy_creds']
@@ -37,8 +37,10 @@ def pytest_generate_tests(metafunc):
         all_reg_data = conf.cfme_data.get('redhat_updates', {})['streams'][stream]
     except KeyError:
         logger.warning('Could not find rhsm data for stream in yaml')
-        pytest.mark.uncollect(
-            metafunc.function, message='Could not find rhsm data for stream in yaml')
+        metafunc.parametrize(argnames, [
+            pytest.param(
+                None, None, None, None,
+                marks=pytest.mark.uncollect("Could not find rhsm data for stream in yaml"))])
         return
 
     if 'reg_method' in metafunc.fixturenames:
@@ -62,7 +64,7 @@ def pytest_generate_tests(metafunc):
             argid = '{}-{}'.format(reg_method, 'proxy_off')
             idlist.append(argid)
             argvalues.append(argval)
-        metafunc.parametrize(argnames, argvalues, ids=idlist, scope="function")
+        return metafunc.parametrize(argnames, argvalues, ids=idlist, scope="function")
 
 
 @pytest.fixture(scope="function")
