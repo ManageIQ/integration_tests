@@ -411,12 +411,14 @@ def test_concurrent_migrations(request, appliance, v2v_providers, host_creds, co
 
     settings_view = navigate_to(mapping, "MigrationSettings")
     settings_view.max_limit.set_value(1)
+    settings_view.apply_btn.click()
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
         settings_view = navigate_to(mapping, "MigrationSettings")
         settings_view.max_limit.set_value(10)
+        settings_view.apply_btn.click()
 
     migration_plan2 = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
@@ -426,9 +428,7 @@ def test_concurrent_migrations(request, appliance, v2v_providers, host_creds, co
         start_migration=True
     )
 
-    view = appliance.browser.create_view(
-        navigator.get_class(migration_plan_collection, "All").VIEW.pick()
-    )
+    view = navigate_to(migration_plan_collection, 'All')
 
     def _card_info(plan):
         if view.progress_card.is_plan_started:
@@ -446,7 +446,7 @@ def test_concurrent_migrations(request, appliance, v2v_providers, host_creds, co
         delay=5,
         num_sec=1800,
         message="migration plan {migration_plan2} is in progress, be patient please".format(
-            migration_plan2.name)
+            migration_plan2=migration_plan2.name)
     )
 
     # wait until first plan is in progress

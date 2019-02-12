@@ -14,7 +14,7 @@ from widgetastic_manageiq import (
     MigrationDashboardStatusCard, Stepper
 )
 from widgetastic_patternfly import (Text, TextInput, Button, BootstrapSelect, SelectorDropdown,
-                                    Dropdown)
+                                    Dropdown, BreadCrumb)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
@@ -329,16 +329,12 @@ class MigrationDashboardView(BaseLoggedInPage):
     paginator_view = View.include(v2vPaginatorPane, use_parent=True)
     search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
     clear_filters = Text(".//a[text()='Clear All Filters']")
+    breadcrumb = BreadCrumb()
 
     @property
     def is_displayed(self):
-        # TODO: Remove next line, after fix for https://github.com/ManageIQ/manageiq-v2v/issues/726
-        # has been backported to downstream 510z
-        return ((self.navigation.currently_selected == ['Compute', 'Migration'] or
-            self.navigation.currently_selected == ['Compute', 'Migration', 'Migration Plans']) and
-            (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0) and
-            (len(self.browser.elements('.//div[contains(@class,"card-pf")]')) > 0) and
-            len(self.browser.elements(".//div[contains(@class,'pficon-warning-triangle-o')]")) < 1)
+        return (self.breadcrumb.active_location == 'Migration' and
+                self.navigation.currently_selected == ['Compute', 'Migration', 'Migration Plans'])
 
     def switch_to(self, section):
         """Switches to Not Started, In Progress, Complete or Archived Plans section."""
