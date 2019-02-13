@@ -60,7 +60,7 @@ RH_BASE = (
     " python2-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel"
     " zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel"
     " libffi-devel python-devel tesseract freetype-devel"
-    " python2-debuginfo python3-debuginfo "
+    " python2-debuginfo python3-debuginfo git"
 )
 
 RH_BASE_NEW = RH_BASE.replace("zeromq3-devel", "zeromq-devel")
@@ -85,7 +85,7 @@ DEB_PKGS = (
     " python-virtualenv gcc postgresql libxml2-dev"
     " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
     " g++ openssl libffi-dev python-dev libtesseract-dev"
-    " libpng-dev libfreetype6-dev libssl-dev python-dbg"
+    " libpng-dev libfreetype6-dev libssl-dev python-dbg git"
 )
 
 OS_PACKAGES_SPECS = [
