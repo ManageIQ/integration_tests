@@ -1,7 +1,6 @@
 import pytest
 
 from cfme.containers.provider import ContainersProvider
-from cfme.containers.provider import refresh_and_navigate
 from cfme.utils.ansible import create_tmp_directory
 from cfme.utils.ansible import fetch_miq_ansible_module
 from cfme.utils.ansible import remove_tmp_files
@@ -41,8 +40,7 @@ def ansible_custom_attributes():
 
 
 def verify_custom_attributes(appliance, provider, custom_attributes_to_verify):
-    view = navigate_to(provider, 'Details')
-    appliance.server.browser.refresh()
+    view = navigate_to(provider, 'Details', force=True)
     assert view.entities.summary('Custom Attributes').is_displayed
     for custom_attribute in custom_attributes_to_verify:
         assert (
@@ -76,7 +74,7 @@ def test_manageiq_ansible_add_custom_attributes(appliance, ansible_custom_attrib
                          values_to_update=custom_attributes_to_add,
                          script_type='custom_attributes')
     run_ansible('remove_custom_attributes')
-    view = refresh_and_navigate(provider, 'Details')
+    view = navigate_to(provider, 'Details', force=True)
     assert not view.entities.summary('Custom Attributes').is_displayed
 
 
@@ -106,7 +104,7 @@ def test_manageiq_ansible_edit_custom_attributes(appliance, ansible_custom_attri
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
     run_ansible('remove_custom_attributes')
-    view = refresh_and_navigate(provider, 'Details')
+    view = navigate_to(provider, 'Details', force=True)
     assert not view.entities.summary('Custom Attributes').is_displayed
 
 
@@ -139,7 +137,7 @@ def test_manageiq_ansible_add_custom_attributes_same_name(appliance, ansible_cus
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
     run_ansible('remove_custom_attributes')
-    view = refresh_and_navigate(provider, 'Details')
+    view = navigate_to(provider, 'Details', force=True)
     assert not view.entities.summary('Custom Attributes').is_displayed
 
 
@@ -166,8 +164,7 @@ def test_manageiq_ansible_add_custom_attributes_bad_user(appliance, ansible_cust
                          script_type='custom_attributes')
     run_result = run_ansible('add_custom_attributes_bad_user')
     assert 'Authentication failed' in run_result
-    view = refresh_and_navigate(provider, 'Details')
-    appliance.server.browser.refresh()
+    view = navigate_to(provider, 'Details', force=True)
     assert not view.entities.summary('Custom Attributes').is_displayed
 
 
@@ -195,6 +192,5 @@ def test_manageiq_ansible_remove_custom_attributes(appliance, ansible_custom_att
                          values_to_update=custom_attributes_to_add,
                          script_type='custom_attributes')
     run_ansible('remove_custom_attributes')
-    view = refresh_and_navigate(provider, 'Details')
-    appliance.server.browser.refresh()
+    view = navigate_to(provider, 'Details', force=True)
     assert not view.entities.summary('Custom Attributes').is_displayed

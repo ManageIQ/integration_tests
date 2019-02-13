@@ -398,7 +398,7 @@ class UserCollection(BaseCollection):
         assert view.is_displayed
 
         # To ensure tree update
-        view.browser.refresh()
+        navigate_to(self, 'All', force=True)
         return user
 
 
@@ -904,7 +904,7 @@ class GroupCollection(BaseCollection):
         view.flash.assert_success_message(flash_message)
 
         # To ensure that the group list is updated
-        view.browser.refresh()
+        navigate_to(self, 'All', force=True)
         return group
 
 

@@ -9,8 +9,8 @@ import pytest
 from manageiq_client.api import APIException
 
 from cfme.containers.provider import ContainersProvider
-from cfme.containers.provider import refresh_and_navigate
 from cfme.containers.provider.openshift import CustomAttribute
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
@@ -40,7 +40,7 @@ VALUE_UPDATES = ['2018-07-12', 'ADF231VRWQ1', '1']
 @pytest.fixture(scope='function')
 def add_delete_custom_attributes(provider):
     provider.add_custom_attributes(*ATTRIBUTES_DATASET)
-    view = refresh_and_navigate(provider, 'Details')
+    view = navigate_to(provider, 'Details', force=True)
     assert view.entities.summary('Custom Attributes').is_displayed
     yield
     try:
@@ -64,7 +64,7 @@ def test_add_static_custom_attributes(add_delete_custom_attributes, provider):
         initialEstimate: 1/6h
     """
 
-    view = refresh_and_navigate(provider, 'Details')
+    view = navigate_to(provider, 'Details', force=True)
     custom_attr_ui = view.entities.summary('Custom Attributes')
     for attr in ATTRIBUTES_DATASET:
         assert attr.name in custom_attr_ui.fields
@@ -93,7 +93,7 @@ def test_edit_static_custom_attributes(provider):
     for ii, value in enumerate(VALUE_UPDATES):
         edited_attribs[ii].value = value
     provider.edit_custom_attributes(*edited_attribs)
-    view = refresh_and_navigate(provider, 'Details')
+    view = navigate_to(provider, 'Details', force=True)
     custom_attr_ui = view.entities.summary('Custom Attributes')
     for attr in edited_attribs:
         assert attr.name in custom_attr_ui.fields
@@ -118,7 +118,7 @@ def test_delete_static_custom_attributes(add_delete_custom_attributes, request, 
     """
 
     provider.delete_custom_attributes(*ATTRIBUTES_DATASET)
-    view = refresh_and_navigate(provider, 'Details')
+    view = navigate_to(provider, 'Details', force=True)
     if view.entities.summary('Custom Attributes').is_displayed:
         for attr in ATTRIBUTES_DATASET:
             assert attr.name not in view.entities.summary('Custom Attributes').fields
@@ -165,7 +165,7 @@ def test_add_attribute_with_empty_name(provider):
         )
         pytest.fail('You have added custom attribute with empty name'
                     'and didn\'t get an error!')
-    view = refresh_and_navigate(provider, 'Details')
+    view = navigate_to(provider, 'Details', force=True)
     if view.entities.summary('Custom Attributes').is_displayed:
         assert "" not in view.entities.summary('Custom Attributes').fields
 
@@ -185,7 +185,7 @@ def test_add_date_attr_with_wrong_value(provider):
         pytest.fail('You have added custom attribute of type'
                     '{} with value of {} and didn\'t get an error!'
                     .format(ca.field_type, ca.value))
-    view = refresh_and_navigate(provider, 'Details')
+    view = navigate_to(provider, 'Details', force=True)
     if view.entities.summary('Custom Attributes').is_displayed:
         assert 'nondate' not in view.entities.summary('Custom Attributes').fields
 
@@ -267,7 +267,7 @@ def test_very_long_name_with_special_characters(request, provider):
     ca = CustomAttribute(get_random_string(1000), 'very_long_name', None)
     request.addfinalizer(lambda: provider.delete_custom_attributes(ca))
     provider.add_custom_attributes(ca)
-    view = refresh_and_navigate(provider, 'Details')
+    view = navigate_to(provider, 'Details', force=True)
     assert ca.name in view.entities.summary('Custom Attributes').fields
 
 
@@ -283,5 +283,5 @@ def test_very_long_value_with_special_characters(request, provider):
     ca = CustomAttribute('very long value', get_random_string(1000), None)
     request.addfinalizer(lambda: provider.delete_custom_attributes(ca))
     provider.add_custom_attributes(ca)
-    view = refresh_and_navigate(provider, 'Details')
+    view = navigate_to(provider, 'Details', force=True)
     assert ca.value == view.entities.summary('Custom Attributes').get_text_of(ca.name)

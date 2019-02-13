@@ -12,7 +12,6 @@ from cfme.containers.pod import PodCollection
 from cfme.containers.project import Project
 from cfme.containers.project import ProjectCollection
 from cfme.containers.provider import ContainersProvider
-from cfme.containers.provider import refresh_and_navigate
 from cfme.containers.replicator import Replicator
 from cfme.containers.replicator import ReplicatorCollection
 from cfme.containers.route import Route
@@ -21,6 +20,7 @@ from cfme.containers.service import Service
 from cfme.containers.service import ServiceCollection
 from cfme.containers.template import Template
 from cfme.containers.template import TemplateCollection
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -45,7 +45,7 @@ TEST_OBJECTS = (
 
 
 def check_labels_in_ui(instance, name, expected_value):
-    view = refresh_and_navigate(instance, 'Details')
+    view = navigate_to(instance, 'Details', force=True)
     if view.entities.labels.is_displayed:
         try:
             return view.entities.labels.get_text_of(name) == str(expected_value)

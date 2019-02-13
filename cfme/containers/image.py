@@ -14,7 +14,6 @@ from cfme.containers.provider import ContainerObjectDetailsEntities
 from cfme.containers.provider import GetRandomInstancesMixin
 from cfme.containers.provider import Labelable
 from cfme.containers.provider import LoadDetailsMixin
-from cfme.containers.provider import refresh_and_navigate
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -123,7 +122,7 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
 
     @property
     def compliance_status(self):
-        view = refresh_and_navigate(self, 'Details')
+        view = navigate_to(self, 'Details', force=True)
         return view.entities.compliance.read().get('Status').strip()
 
     @property
