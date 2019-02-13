@@ -613,3 +613,43 @@ def get_dialog_service_name(appliance, service_request, *item_names):
             raise ValueError('Could not match name from items in given service request message')
 
     return _regex_parse_name(item_names, service_request.message)
+
+
+def custom_button_sets(request, appliance, button_type, icon="fa-user", color="#4727ff", num=1):
+    data = []
+    for _ in range(num):
+        data_dict = {
+            "name": "gp_{}".format(fauxfactory.gen_alphanumeric(3)),
+            "description": "disc_{}".format(fauxfactory.gen_alphanumeric(3)),
+            "set_data": {
+                "button_icon": "ff {}".format(icon),
+                "button_color": color,
+                "display": True,
+                "applies_to_class": button_type,
+            },
+        }
+        data.append(data_dict)
+
+    return _creating_skeleton(request, appliance, "custom_button_sets", data)
+
+
+def custom_buttons(
+    request, appliance, button_type, icon="fa-user", color="#4727ff", display=True, num=1
+):
+    data = []
+    for _ in range(num):
+        data_dict = {
+            "applies_to_class": button_type,
+            "description": "btn_{}".format(fauxfactory.gen_alphanumeric(3)),
+            "name": "disc_{}".format(fauxfactory.gen_alphanumeric(3)),
+            "options": {
+                "button_color": color,
+                "button_icon": "ff {}".format(icon),
+                "display": display,
+            },
+            "resource_action": {"ae_class": "PROCESS", "ae_namespace": "SYSTEM"},
+            "visibility": {"roles": ["_ALL_"]},
+        }
+        data.append(data_dict)
+
+    return _creating_skeleton(request, appliance, "custom_buttons", data)
