@@ -196,7 +196,7 @@ class EditInfrastructureMappingView(InfrastructureMappingForm):
 
 @attr.s
 class clusters(object):  # noqa
-    clusters = {"source_cluster": ['source_cluster'], "target_cluster": ['target_cluster']}
+    clusters = {"source_cluster": ["source_cluster"], "target_cluster": ["target_cluster"]}
 
     source_cluster = attr.ib(default=None)
     target_cluster = attr.ib(default=None)
@@ -205,10 +205,11 @@ class clusters(object):  # noqa
         self.source_cluster = source_cluster
         self.target_cluster = target_cluster
 
+
 @attr.s
 class datastores(object):  # noqa
     datastore_mappings = [
-        {"source_datastore": ['source_datastore'], "target_datastore": ['target_datastore']}
+        {"source_datastore": ["source_datastore"], "target_datastore": ["target_datastore"]}
     ]
 
     source_datastore = attr.ib(default=None)
@@ -221,7 +222,9 @@ class datastores(object):  # noqa
 
 @attr.s
 class networks(object):  # noqa
-    network_mappings = [{"source_network": ['source_network'], "target_network": ['target_network']}]
+    network_mappings = [
+        {"source_network": ["source_network"], "target_network": ["target_network"]}
+    ]
 
     source_network = attr.ib(default=None)
     target_network = attr.ib(default=None)
