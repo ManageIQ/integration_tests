@@ -196,33 +196,39 @@ class EditInfrastructureMappingView(InfrastructureMappingForm):
 
 @attr.s
 class clusters(object):  # noqa
+    clusters = {"source_cluster": ['source_cluster'], "target_cluster": ['target_cluster']}
 
     source_cluster = attr.ib(default=None)
     target_cluster = attr.ib(default=None)
 
-    def get_mappings(self):
-        cluster_mappings = [
-            {"source_cluster": [self.source_cluster], "target_cluster": [self.target_cluster]}
-        ]
-        return cluster_mappings
-
+    def __init__(self, source_cluster, target_cluster):
+        self.source_cluster = source_cluster
+        self.target_cluster = target_cluster
 
 @attr.s
 class datastores(object):  # noqa
+    datastore_mappings = [
+        {"source_datastore": ['source_datastore'], "target_datastore": ['target_datastore']}
+    ]
 
     source_datastore = attr.ib(default=None)
     target_datastore = attr.ib(default=None)
-    datastore_mappings = [
-        {"source_datastore": [source_datastore], "target_datastore": [target_datastore]}
-    ]
+
+    def __init__(self, source_datastore, target_datastore):
+        self.source_datastore = source_datastore
+        self.target_datastore = target_datastore
 
 
 @attr.s
 class networks(object):  # noqa
+    network_mappings = [{"source_network": ['source_network'], "target_network": ['target_network']}]
 
     source_network = attr.ib(default=None)
     target_network = attr.ib(default=None)
-    network_mappings = [{"source_network": [source_network], "target_network": [target_network]}]
+
+    def __init__(self, source_network, target_network):
+        self.source_network = source_network
+        self.target_network = target_network
 
 
 @attr.s
@@ -255,8 +261,7 @@ class InfrastructureMappingCollection(BaseCollection):
         if cluster:
             for mapping in cluster:
                 if isinstance(mapping, dict):
-                    clusters.source_cluster = mapping.get("source_cluster")
-                    clusters.target_cluster = mapping.get("target_cluster")
+                    clusters(mapping.get("source_datastore"), mapping.get("target_datastore"))
                     cluster_list.append(mapping)
 
         datastore_list = []
@@ -264,8 +269,7 @@ class InfrastructureMappingCollection(BaseCollection):
         if datastore:
             for mapping in datastore:
                 if isinstance(mapping, dict):
-                    datastores.source_datastore = mapping.get("source_datastore")
-                    datastores.target_datastore = mapping.get("target_datastore")
+                    datastores(mapping.get("source_datastore"), mapping.get("target_datastore"))
                     datastore_list.append(mapping)
 
         network_list = []
@@ -273,8 +277,7 @@ class InfrastructureMappingCollection(BaseCollection):
         if network:
             for mapping in network:
                 if isinstance(mapping, dict):
-                    networks.source_network = mapping.get("source_network").pop
-                    networks.target_network = mapping.get("target_network").pop
+                    networks(mapping.get("source_network"), mapping.get("target_network"))
                     network_list.append(mapping)
 
         return {
