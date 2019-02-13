@@ -416,7 +416,8 @@ def test_codename_in_log(appliance):
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
+        initialEstimate: 1/60h
     """
     log = '/var/www/miq/vmdb/log/evm.log'
     appliance.ssh_client.run_command('echo > {}'.format(log))
@@ -435,7 +436,8 @@ def test_codename_in_stdout(appliance):
 
     Polarion:
         assignee: jhenner
-        casecomponent: appl
+        casecomponent: Appliance
+        initialEstimate: 1/60h
     """
     cursor = appliance.ssh_client.run_command(
         'journalctl -u evmserverd --show-cursor | tail -n1').output.split('-- cursor: ')[1]
