@@ -521,7 +521,7 @@ class CFMENavigateStep(NavigateStep):
         )
 
     def go(self, _tries=0, *args, **kwargs):
-        nav_args = {'use_resetter': True, 'wait_for_view': 10}
+        nav_args = {'use_resetter': True, 'wait_for_view': 10, 'force_nav': False}
         self.log_message("Beginning Navigation...", level="info")
         start_time = time.time()
         if _tries > 2:
@@ -547,7 +547,7 @@ class CFMENavigateStep(NavigateStep):
         except Exception as e:
             self.log_message(
                 "Exception raised [{}] whilst checking if already here".format(e), level="error")
-        if not here:
+        if not here or nav_args['force_nav']:
             self.log_message("Prerequisite Needed")
             self.prerequisite_view = self.prerequisite()
             try:
