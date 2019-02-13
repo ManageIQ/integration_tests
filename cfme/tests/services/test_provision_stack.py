@@ -7,6 +7,7 @@ from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ
@@ -20,7 +21,7 @@ pytestmark = [
     test_requirements.stack,
     pytest.mark.tier(2),
     pytest.mark.usefixtures("setup_provider_modscope"),
-    pytest.mark.provider([CloudProvider],
+    pytest.mark.provider([CloudProvider], selector=ONE_PER_TYPE,
                          required_fields=[['provisioning', 'stack_provisioning']],
                          scope='module'),
 ]

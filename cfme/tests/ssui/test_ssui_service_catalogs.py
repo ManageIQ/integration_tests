@@ -5,7 +5,7 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.markers.env_markers.provider import providers
+from cfme.markers.env_markers.provider import providers, ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.blockers import BZ
@@ -16,9 +16,13 @@ pytestmark = [
     test_requirements.ssui,
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.provider(gen_func=providers,
-                         filters=[ProviderFilter(classes=[InfraProvider, CloudProvider],
-                                                 required_fields=['provisioning'])])
+    pytest.mark.provider(
+        selector=ONE_PER_TYPE,
+        gen_func=providers,
+        filters=[ProviderFilter(
+            classes=[InfraProvider, CloudProvider],
+            required_fields=['provisioning'])]
+    )
 ]
 
 

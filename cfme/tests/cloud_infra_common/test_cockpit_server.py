@@ -4,6 +4,7 @@ import pytest
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
@@ -24,9 +25,8 @@ def new_vm(appliance, provider, request):
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(
-    lambda appliance, provider: appliance.version < "5.9" or provider.one_of(GCEProvider))
-@pytest.mark.provider([CloudProvider, InfraProvider])
+@pytest.mark.uncollectif(lambda provider: provider.one_of(GCEProvider))
+@pytest.mark.provider([CloudProvider, InfraProvider], selector=ONE_PER_TYPE)
 @pytest.mark.parametrize('enable', [False, True], ids=['disabled', 'enabled'])
 def test_cockpit_server_role(appliance, provider, setup_provider, new_vm, enable):
     """ The test checks the cockpit "Web Console" button enable and disabled working.

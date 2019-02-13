@@ -6,6 +6,7 @@ from widgetastic.utils import partial_match
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -19,7 +20,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,
-    pytest.mark.provider([InfraProvider],
+    pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE,
                          required_fields=[['provisioning', 'template'],
                                           ['provisioning', 'host'],
                                           ['provisioning', 'datastore']],

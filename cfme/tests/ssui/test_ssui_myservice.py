@@ -8,14 +8,12 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import providers
+from cfme.markers.env_markers.provider import providers, ONE_PER_TYPE
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ssui import DetailsMyServiceView
 from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -25,9 +23,12 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.ssui,
     pytest.mark.long_running,
-    pytest.mark.provider(gen_func=providers,
-                         filters=[ProviderFilter(classes=[InfraProvider, CloudProvider],
-                                                 required_fields=['provisioning'])])
+    pytest.mark.provider(
+        selector=ONE_PER_TYPE,
+        gen_func=providers,
+        filters=[ProviderFilter(
+            classes=[InfraProvider, CloudProvider],
+            required_fields=['provisioning'])])
 ]
 
 
