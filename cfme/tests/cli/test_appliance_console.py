@@ -53,7 +53,8 @@ def test_appliance_console(appliance):
         initialEstimate: 1/12h
     """
     command_set = ('ap | tee -a /tmp/opt.txt', 'ap')
-    appliance.appliance_console.run_commands(command_set)
+    appliance.appliance_console.run_commands(command_set, timeout=120)
+    logger.info(appliance.ssh_client.run_command("cat /tmp/opt.txt"))
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep '{} Virtual Appliance'"
                                             .format(appliance.product_name))
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep '{} Database:'"
