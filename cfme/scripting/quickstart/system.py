@@ -82,7 +82,7 @@ REDHAT_PACKAGES_SPECS = [
 
 
 DEB_PKGS = (
-    " python-virtualenv gcc postgresql libxml2-dev"
+    " python-virtualenv python3-virtualenv gcc postgresql libxml2-dev"
     " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
     " g++ openssl libffi-dev python-dev libtesseract-dev"
     " libpng-dev libfreetype6-dev libssl-dev python-dbg git"
