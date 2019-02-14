@@ -1123,9 +1123,7 @@ class SSUIlist(Widget, ClickableMixin):
     @ParametrizedView.nested
     class list(ParametrizedView):  # noqa
         PARAMETERS = ("item_name",)
-        list_item = Text(
-            ParametrizedLocator(".//div/span/*[normalize-space(.)={item_name|quote}]")
-        )
+        list_item = Text(ParametrizedLocator(".//div/span/*[normalize-space(.)={item_name|quote}]"))
 
         def list_click(self):
             """Clicks the list item with this name."""
@@ -1583,11 +1581,7 @@ class ReportDataControllerMixin(object):
             # js api compares values in lower case but don't replace space with underscore
             updated_keys[key.replace("_", " ")] = str(updated_keys.pop(key))
 
-        raw_data = {
-            "controller": "reportDataController",
-            "action": "query",
-            "data": [updated_keys],
-        }
+        raw_data = {"controller": "reportDataController", "action": "query", "data": [updated_keys]}
         js_cmd = ("sendDataWithRx({data}); " "return ManageIQ.qe.gtl.result").format(
             data=json.dumps(raw_data)
         )
@@ -2263,9 +2257,7 @@ class AdvancedFilterLoad(View):
 class AdvancedFilterUserInput(View):
     """ View for Advanced Filter user input """
 
-    USER_INPUT_FIELD = (
-        '//div[@id="user_input_filter"]//div[contains(normalize-space(.), {})]/input'
-    )
+    USER_INPUT_FIELD = '//div[@id="user_input_filter"]//div[contains(normalize-space(.), {})]/input'
     user_input_cancel = Button("Cancel")
     user_input_apply = Button(title="Apply the current filter (Enter)")
     # We have different close button for user input
@@ -3369,8 +3361,7 @@ class DashboardWidgetsPicker(View):
         @classmethod
         def all(cls, browser):
             return [
-                (e.get_attribute("title").split('"')[1],)
-                for e in browser.elements(cls.ALL_WIDGETS)
+                (e.get_attribute("title").split('"')[1],) for e in browser.elements(cls.ALL_WIDGETS)
             ]
 
     def add_dashboard_widget(self, widget):
@@ -3560,9 +3551,7 @@ class DynamicTable(VanillaTable):
             raise DynamicTableAddError(
                 'DynamicTable action_row index "{}" not found in table'.format(self.action_row)
             )
-        return self._process_negative_index(
-            nindex=-1
-        )  # use process_negative_index to get last row
+        return self._process_negative_index(nindex=-1)  # use process_negative_index to get last row
 
 
 class FolderManager(Widget):
@@ -3803,9 +3792,7 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
                 return self.entity_class(parent=self, entity_id=entity_id)
             else:
                 try:
-                    return self.entity_class(
-                        parent=self, entity_id=self.get_ids_by_keys(**keys)[0]
-                    )
+                    return self.entity_class(parent=self, entity_id=self.get_ids_by_keys(**keys)[0])
                 except IndexError:
                     pass
         return None
@@ -4507,9 +4494,7 @@ class MigrationPlansList(Widget):
     def get_plan_description(self, plan_name):
         try:
             el = self._get_plan_element(plan_name)
-            return self.browser.text(
-                self.browser.element(self.ITEM_DESCRIPTION_LOCATOR, parent=el)
-            )
+            return self.browser.text(self.browser.element(self.ITEM_DESCRIPTION_LOCATOR, parent=el))
         except NoSuchElementException:
             # Plan with no description
             return ""
@@ -4652,9 +4637,7 @@ class InfraMappingList(Widget):
     TARGET_ITEMS_LIST_LOCATOR = './/div[contains(@class,"infra-mapping-item-target")]'
     ITEM_EXPAND_LOCATOR = './span[contains(@class,"fa-angle-down")]'
     ITEM_COLLAPSE_DETAILS_BUTTON_LOCATOR = './/span[contains(@class, "pficon-close")]'
-    ITEM_PROMPT_DELETE_BUTTON_LOCATOR = (
-        './/div[@role="document"]//button[@class="btn btn-primary"]'
-    )
+    ITEM_PROMPT_DELETE_BUTTON_LOCATOR = './/div[@role="document"]//button[@class="btn btn-primary"]'
     ITEM_PROMPT_CANCEL_BUTTON_LOCATOR = (
         './/div[@role="document"]' '//button[@class="btn-cancel btn btn-default"]'
     )
@@ -5198,9 +5181,7 @@ class MigrationDropdown(Dropdown):
     ROOT = './/div[contains(@class, "dropdown") and .//button[contains(@id, "dropdown-filter")]]'
     BUTTON_LOCATOR = './/button[contains(@id, "dropdown-filter")]'
     ITEMS_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a'
-    ITEM_LOCATOR = (
-        './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a[normalize-space(.)={}]'
-    )
+    ITEM_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a[normalize-space(.)={}]'
 
 
 class MonitorStatusCard(ParametrizedView):
