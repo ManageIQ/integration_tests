@@ -47,7 +47,7 @@ class TestCustomButtonRESTAPI(object):
             caseposneg: positive
             testtype: functional
             startsin: 5.9
-            casecomponent: CustomButton
+            casecomponent: Rest
             tags: custom_button
         """
         response, _ = buttons_groups
@@ -66,7 +66,7 @@ class TestCustomButtonRESTAPI(object):
             caseposneg: positive
             testtype: functional
             startsin: 5.9
-            casecomponent: CustomButton
+            casecomponent: Rest
             tags: custom_button
         """
         entities, _type = buttons_groups
@@ -89,7 +89,7 @@ class TestCustomButtonRESTAPI(object):
             caseposneg: positive
             testtype: functional
             startsin: 5.9
-            casecomponent: CustomButton
+            casecomponent: Rest
             tags: custom_button
         """
         entities, _ = buttons_groups
@@ -108,7 +108,7 @@ class TestCustomButtonRESTAPI(object):
             caseposneg: positive
             testtype: functional
             startsin: 5.9
-            casecomponent: CustomButton
+            casecomponent: Rest
             tags: custom_button
         """
         entities, _ = buttons_groups
@@ -128,7 +128,7 @@ class TestCustomButtonRESTAPI(object):
             caseposneg: positive
             testtype: functional
             startsin: 5.9
-            casecomponent: CustomButton
+            casecomponent: Rest
             tags: custom_button
         """
 
