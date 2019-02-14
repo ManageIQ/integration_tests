@@ -346,7 +346,7 @@ def provider_app_crud(provider_class, appliance):
         prov.appliance = appliance
         return prov
     except IndexError:
-        pytest.skip("No {} providers available (required)".format(provider_class.type))
+        pytest.skip("No {} providers available (required)".format(provider_class.type_name))
 
 
 def provision_vm(request, provider):
