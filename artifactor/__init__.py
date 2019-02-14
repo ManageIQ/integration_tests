@@ -228,12 +228,13 @@ def merge_artifacts(old_artifacts, artifacts, artifactor_config, artifact_dir, r
     This is extremely important and merges the old_Artifacts from a composite-uncollect build
     with the new artifacts for this run
     """
-    run_type = artifactor_config.get('per_run')
-    overwrite = artifactor_config.get('reuse_dir', False)
-    report_path = setup_report_dir(root_dir=artifact_dir, run_type=run_type, run_id=run_id,
-                                   overwrite=overwrite)
+    run_type = artifactor_config.get("per_run")
+    overwrite = artifactor_config.get("reuse_dir", False)
+    report_path = setup_report_dir(
+        root_dir=artifact_dir, run_type=run_type, run_id=run_id, overwrite=overwrite
+    )
     old_artifacts.update(artifacts)
-    return {'old_artifacts': old_artifacts, 'report_path': report_path}, None
+    return {"old_artifacts": old_artifacts, "report_path": report_path}, None
 
 
 def parse_setup_dir(test_name, test_location, artifactor_config, artifact_dir, run_id):
@@ -260,11 +261,12 @@ def parse_build_dir(artifactor_config, artifact_dir, run_id):
     """
     Convenience fire_hook for built in hook
     """
-    run_type = artifactor_config.get('per_run')
-    overwrite = artifactor_config.get('reuse_dir', False)
-    report_path = setup_report_dir(root_dir=artifact_dir, run_type=run_type, run_id=run_id,
-                                   overwrite=overwrite)
-    return {'report_path': report_path}, None
+    run_type = artifactor_config.get("per_run")
+    overwrite = artifactor_config.get("reuse_dir", False)
+    report_path = setup_report_dir(
+        root_dir=artifact_dir, run_type=run_type, run_id=run_id, overwrite=overwrite
+    )
+    return {"report_path": report_path}, None
 
 
 def setup_report_dir(root_dir=None, run_type=None, run_id=None, overwrite=True):

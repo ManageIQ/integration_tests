@@ -334,15 +334,15 @@ class ReporterBase(object):
 
 class Reporter(ArtifactorBasePlugin, ReporterBase):
     def plugin_initialize(self):
-        self.register_plugin_hook('report_test', self.report_test)
-        self.register_plugin_hook('finish_session', self.run_report)
-        self.register_plugin_hook('build_report', self.run_report)
-        self.register_plugin_hook('start_test', self.start_test)
-        self.register_plugin_hook('skip_test', self.skip_test)
-        self.register_plugin_hook('finish_test', self.finish_test)
-        self.register_plugin_hook('session_info', self.session_info)
-        self.register_plugin_hook('composite_pump', self.composite_pump)
-        self.register_plugin_hook('tb_info', self.tb_info)
+        self.register_plugin_hook("report_test", self.report_test)
+        self.register_plugin_hook("finish_session", self.run_report)
+        self.register_plugin_hook("build_report", self.run_report)
+        self.register_plugin_hook("start_test", self.start_test)
+        self.register_plugin_hook("skip_test", self.skip_test)
+        self.register_plugin_hook("finish_test", self.finish_test)
+        self.register_plugin_hook("session_info", self.session_info)
+        self.register_plugin_hook("composite_pump", self.composite_pump)
+        self.register_plugin_hook("tb_info", self.tb_info)
 
     def configure(self):
         self.only_failed = self.data.get("only_failed", False)
