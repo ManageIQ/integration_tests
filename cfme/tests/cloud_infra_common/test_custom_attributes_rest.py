@@ -286,12 +286,6 @@ class TestCustomAttributesRESTAPI(object):
         _uncollectif(appliance, provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
-    @pytest.mark.meta(blockers=[
-        BZ(
-            1516762,
-            forced_streams=['5.9', 'upstream'],
-            unblock=lambda collection_name: collection_name not in ('vms', 'instances')
-        )])
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_bad_section_edit(self, request, from_detail, collection_name, appliance, get_resource):
         """Test that editing custom attributes using REST API and adding invalid section fails.
@@ -329,12 +323,6 @@ class TestCustomAttributesRESTAPI(object):
         _uncollectif(appliance, provider, collection_name)
     )
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
-    @pytest.mark.meta(blockers=[
-        BZ(
-            1516762,
-            forced_streams=['5.9', 'upstream'],
-            unblock=lambda collection_name: collection_name not in ('vms', 'instances')
-        )])
     def test_bad_section_add(self, request, collection_name, appliance, get_resource):
         """Test adding custom attributes with invalid section to resource using REST API.
 
