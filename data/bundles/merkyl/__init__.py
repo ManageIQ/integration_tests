@@ -1,16 +1,17 @@
-from bottle import request, route, run, template
-import os
-import subprocess
-import tempfile
-import sys
 import cgi
 import signal
+import subprocess
+import sys
+import tempfile
+
+import os
+from bottle import request, route, run, template
 
 try:
     with open(sys.argv[2], "r") as f:
         allowed_files = f.readlines()
 except IOError:
-    print "allowed.files not found, exiting"
+    print("allowed.files not found, exiting")
     sys.exit(127)
 allowed_files = [path.strip("\n") for path in allowed_files]
 

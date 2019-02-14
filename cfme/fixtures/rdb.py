@@ -31,7 +31,8 @@ Note:
     This is very insecure, and should be used as a last resort for debugging elusive failures.
 
 """
-import os
+from __future__ import print_function
+
 import signal
 import smtplib
 import socket
@@ -41,6 +42,8 @@ from email.mime.text import MIMEText
 from importlib import import_module
 from pdb import Pdb
 from textwrap import dedent
+
+import os
 
 from cfme.fixtures.pytest_store import store, write_line
 from cfme.utils import conf
@@ -103,7 +106,10 @@ class Rdb(Pdb):
     do_c = do_cont = do_continue
 
     def interaction(self, *args, **kwargs):
-        print >>self.stdout, self._prompt_msg
+        if sys.version_info.major == 3:
+            print(self._prompt_msg, stream=self.stdout)
+        else:
+            print >> self.stdout, self._prompt_msg
         Pdb.interaction(self, *args, **kwargs)
 
     def set_trace(self, *args, **kwargs):
