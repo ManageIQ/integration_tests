@@ -11,6 +11,8 @@ IMAGE_SPEC = [
     ('fedora:25', PYTHON_RPM.format(cmd="dnf")),
     ('fedora:26', PYTHON_RPM.format(cmd="dnf")),
     ('fedora:27', PYTHON_RPM.format(cmd="dnf")),
+    ('fedora:28', PYTHON_RPM.format(cmd="dnf")),
+    ('fedora:29', PYTHON_RPM.format(cmd="dnf")),
     ('centos:7', PYTHON_RPM.format(cmd="yum")),
     ('debian:stable', PYTHON_DEB),
     ('ubuntu:artful', PYTHON_DEB),
@@ -47,21 +49,21 @@ def yamls_volume():
 ])
 @pytest.mark.long_running
 def test_quickstart_run(image, python, prepare, root_volume, yamls_volume, check_docker):
-    subprocess.check_call(
-        "docker run --rm "
-        "--volume {root_volume}:/cfme/cfme_tests "
-        "--volume {yamls_volume}:/cfme/cfme-qe-yamls "
-        "--tty -w /cfme/cfme_tests "
-        "-e DEBIAN_FRONTEND=noninteractive "
-        "-e CFME_QUICKSTART_DEBUG=1 "
-        ""
-        "{image} "
-        "bash -c '{prepare} &&"
-        "{python} -m cfme.scripting.quickstart --mk-virtualenv ../test_venv && "
-        "{python} -m cfme.scripting.quickstart --mk-virtualenv ../test_venv'"
-
-        .format(**locals()),
-        shell=True)
+    cmd = ("docker run --rm "
+           "--volume {root_volume}:/cfme/cfme_tests "
+           "--volume {yamls_volume}:/cfme/cfme-qe-yamls "
+           "--tty -w /cfme/cfme_tests "
+           "-e DEBIAN_FRONTEND=noninteractive "
+           "-e CFME_QUICKSTART_DEBUG=1 "
+           ""
+           "{image} "
+           "bash -c '{prepare} &&"
+           "{python} -m cfme.scripting.quickstart --mk-virtualenv ../test_venv && "
+           "{python} -m cfme.scripting.quickstart --mk-virtualenv ../test_venv'").format(**locals())
+    try:
+        subprocess.check_call(cmd, shell=True)
+    except subprocess.CalledProcessError as e:
+        pytest.fail(e)
 
 
 @pytest.mark.parametrize("old, new, expected_changes", [
