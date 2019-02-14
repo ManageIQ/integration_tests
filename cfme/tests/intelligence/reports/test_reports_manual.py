@@ -240,31 +240,6 @@ def test_reports_create_schedule_send_report():
 
 @pytest.mark.manual
 @test_requirements.report
-@pytest.mark.tier(3)
-def test_report_fullscreen_enabled():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: low
-        initialEstimate: 1/12h
-        setup:
-            1. Navigate to Cloud > Intel > Reports > All Reports
-        testSteps:
-            1. Select a report that would generate a populated report on queueing.
-                Queue it, navigate to it's `Details` page, click on Configuration and check the `Show Fullscreen Report` option.
-            2. Select a report that would generate an empty report on queueing.
-                Queue it, navigate to it's `Details` page, click on Configuration and check the `Show Fullscreen Report` option.
-        expectedResults:
-            1. `Show Fullscreen Report` option is Enabled.
-            2. `Show Fullscreen Report` option is Disabled.
-
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
 @pytest.mark.tier(1)
 def test_date_should_be_change_in_editing_reports_scheduled():
     """
