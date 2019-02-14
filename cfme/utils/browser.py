@@ -179,11 +179,11 @@ class WharfFactory(BrowserFactory):
             # chrome uses containers to sandbox the browser, and we use containers to
             # run chrome in wharf, so disable the sandbox if running chrome in wharf
             co = browser_kwargs['desired_capabilities'].get('chromeOptions', {})
-            arg = '--no-sandbox'
+            args = ['--no-sandbox', '--start-maximized', '--disable-extensions', 'disable-infobars']
             if 'args' not in co:
-                co['args'] = [arg]
-            elif arg not in co['args']:
-                co['args'].append(arg)
+                co['args'] = args
+            else:
+                co['args'] = list(set(co['args'].extend(args)))
             browser_kwargs['desired_capabilities']['chromeOptions'] = co
 
     def processed_browser_args(self):
@@ -257,7 +257,10 @@ class BrowserManager(object):
                             'desired_capabilities']['browserName'].lower() == 'chrome':
                     browser_kwargs['desired_capabilities']['chromeOptions'] = {}
                     browser_kwargs[
-                        'desired_capabilities']['chromeOptions']['args'] = ['--no-sandbox']
+                        'desired_capabilities']['chromeOptions']['args'] = ['--no-sandbox',
+                                                                            '--start-maximized',
+                                                                            '--disable-extensions',
+                                                                            'disable-infobars']
                     browser_kwargs['desired_capabilities'].pop('marionette', None)
                 if browser_conf[
                         'webdriver_options'][
