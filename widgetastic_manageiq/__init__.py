@@ -5114,8 +5114,8 @@ class MigrationDashboardStatusCard(AggregateStatusCard):
 class V2VPaginator(Paginator):
     """ Represents Paginator control for V2V."""
 
-    PAGINATOR_CTL = './/div[contains(@class,"form-group")][./ul]'
-    './input[contains(@class,"pagination-pf-page")]'
+    PAGINATOR_CTL = ('.//div[contains(@class,"form-group")][./ul]'
+                     './input[contains(@class,"pagination-pf-page")]')
     CUR_PAGE_CTL = './/span[./span[contains(@class,"pagination-pf-items-current")]]'
     PAGE_BUTTON_CTL = ".//li/a[contains(@title,{})]"
 
