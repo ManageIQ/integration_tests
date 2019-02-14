@@ -324,10 +324,7 @@ class Report(BaseEntity, Updateable):
 
     @company_name.default
     def company_name_default(self):
-        if self.appliance.version < "5.9":
-            return "My Company (All EVM Groups)"
-        else:
-            return "My Company (All Groups)"
+        return "My Company (All Groups)"
 
     def update(self, updates):
         view = navigate_to(self, "Edit")
