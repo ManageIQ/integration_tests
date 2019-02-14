@@ -56,6 +56,7 @@ from widgetastic_patternfly import (
     Tab,
     BreadCrumb,
     AggregateStatusCard,
+    SelectorDropdown,
 )
 
 from cfme.exceptions import ItemNotFound
@@ -5123,9 +5124,64 @@ class MigrationDashboardStatusCard(AggregateStatusCard):
     ROOT = ParametrizedLocator(
         './/div[contains(@class, "card-pf-aggregate-status")'
         ' and not(contains(@class, "card-pf-aggregate-status-mini")) and'
-        ' h2[contains(@class,"card-pf-title")  and contains(.,{@name|quote})]]'
+        ' h2[contains(@class,"card-pf-title")  and contains(normalize-space(.),{@name|quote})]]'
     )
-    TITLE_ANCHOR = ".//h2"
+    TITLE_ANCHOR = "./h2"
+
+    @property
+    def is_active(self):
+        return "active" in self.root_browser.classes(self.ROOT or self.__locator__)
+
+
+class V2VPaginator(Paginator):
+    """ Represents Paginator control for V2V."""
+
+    PAGINATOR_CTL = (
+        './/div[contains(@class,"form-group")][./ul]'
+        './input[contains(@class,"pagination-pf-page")]'
+    )
+    CUR_PAGE_CTL = './/span[./span[contains(@class,"pagination-pf-items-current")]]'
+    PAGE_BUTTON_CTL = ".//li/a[contains(@title,{})]"
+
+    def next_page(self):
+        self._click_button("Next Page")
+
+    def prev_page(self):
+        self._click_button("Previous Page")
+
+    def last_page(self):
+        self._click_button("Last Page")
+
+    def first_page(self):
+        self._click_button("First Page")
+
+    def page_info(self):
+        return self.browser.text(self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator))
+
+
+class V2VPaginationDropup(SelectorDropdown):
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class, "dropup") and ./button[@{@b_attr}={@b_attr_value|quote}]]'
+    )
+
+
+class V2VPaginatorPane(View):
+    """ Represents Paginator Pane for V2V."""
+
+    items_on_page = V2VPaginationDropup("id", "pagination-row-dropdown")
+    paginator = V2VPaginator()
+
+
+class MigrationDropdown(Dropdown):
+    """Represents the migration plan dropdown of v2v.
+    Args:
+        text: Text of the button, can be inner text or the title attribute.
+    """
+
+    ROOT = './/div[contains(@class, "dropdown") and .//button[contains(@id, "dropdown-filter")]]'
+    BUTTON_LOCATOR = './/button[contains(@id, "dropdown-filter")]'
+    ITEMS_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a'
+    ITEM_LOCATOR = './/ul[contains(@aria-labelledby,"dropdown-filter")]/li/a[normalize-space(.)={}]'
 
 
 class MonitorStatusCard(ParametrizedView):
