@@ -121,8 +121,7 @@ def test_reports_disable_enable_schedule(schedule_data, appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1653796, forced_streams=["5.9", "5.10"]),
-                            BZ(1667064, forced_streams=["5.10"])])
+@pytest.mark.meta(blockers=[BZ(1653796), BZ(1667064)])
 def test_menuwidget_crud(appliance):
     """
     Polarion:
@@ -150,8 +149,7 @@ def test_menuwidget_crud(appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1656413, forced_streams=['5.10']),
-                            BZ(1667064, forced_streams=["5.10"])])
+@pytest.mark.meta(blockers=[BZ(1656413), BZ(1667064)])
 def test_reportwidget_crud(appliance):
     """
     Polarion:
@@ -180,8 +178,7 @@ def test_reportwidget_crud(appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1653796, forced_streams=["5.9", "5.10"]),
-                            BZ(1667064, forced_streams=["5.10"])])
+@pytest.mark.meta(blockers=[BZ(1653796), BZ(1667064)])
 def test_chartwidget_crud(appliance):
     """
     Polarion:
@@ -207,8 +204,7 @@ def test_chartwidget_crud(appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1653796, forced_streams=["5.9", "5.10"]),
-                            BZ(1667064, forced_streams=["5.10"])])
+@pytest.mark.meta(blockers=[BZ(1653796), BZ(1667064)])
 def test_rssfeedwidget_crud(appliance):
     """
     Polarion:
@@ -245,7 +241,7 @@ def test_rssfeedwidget_crud(appliance):
 @pytest.mark.rhel_testing
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1667064, forced_streams=["5.10"])])
+@pytest.mark.meta(blockers=[BZ(1667064)])
 def test_dashboard_crud(appliance):
     """
     Polarion:
