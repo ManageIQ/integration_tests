@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
+from datetime import datetime
 
 import fauxfactory
 import pytest
@@ -7,13 +8,15 @@ from widgetastic.widget import Text
 
 from cfme import test_requirements
 from cfme.control.explorer import ControlExplorerView
+from cfme.control.explorer.alert_profiles import ServerAlertProfile
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
 from cfme.exceptions import CFMEExceptionOccured
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
-from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import TimedOutError, wait_for
+
 
 pytestmark = [
     test_requirements.control,
@@ -145,6 +148,51 @@ def hardware_reconfigured_alert(alert_collection):
     )
     yield alert
     alert.delete()
+
+
+@pytest.fixture
+def setup_disk_usage_alert(appliance):
+    # get the current time
+    timestamp = datetime.now()
+    # setup the DB query
+    table = appliance.db.client['miq_alert_statuses']
+    query = appliance.db.client.session.query(table.description, table.evaluated_on)
+    # configure the advanced settings and place a large file on the appliance
+    # disk usage above 1 % will now trigger a disk_usage event
+    appliance.update_advanced_settings(
+        {"server": {"events": {"disk_usage_gt_percent": 1}}}
+    )
+    # create a 1 GB file on /var/www/miq/vmdb/log
+
+    result = appliance.ssh_client.run_command(
+        "dd if=/dev/zero of=/var/www/miq/vmdb/log/delete_me.txt count=1024 bs=1048576"
+    )
+    # verify that the command was successful
+    assert not result.failed
+    # setup the alert for firing
+    expression = {"expression": "fill_count(Server.EVM Workers, >, 0)"}
+    alert = appliance.collections.alerts.create(
+        fauxfactory.gen_alpha(),
+        based_on='Server',
+        evaluate=("Expression (Custom)", expression),
+        driving_event="Appliance Operation: Server High /var/www/miq/vmdb/log Disk Usage",
+        notification_frequency="1 Minute",
+    )
+    alert_profile = appliance.collections.alert_profiles.create(
+        ServerAlertProfile,
+        "Alert profile for {}".format(alert.description),
+        alerts=[alert]
+    )
+    alert_profile.assign_to("Selected Servers", selections=["Servers", "EVM"])
+    yield alert, timestamp, query
+    alert_profile.delete()
+    alert.delete()
+    appliance.update_advanced_settings(
+        {"server": {"events": {"disk_usage_gt_percent": "<<reset>>"}}}
+    )
+    result = appliance.ssh_client.run_command("rm /var/www/miq/vmdb/log/delete_me.txt")
+    # verify that the command was successful
+    assert not result.failed
 
 
 @pytest.mark.meta(blockers=[1155284])
@@ -352,3 +400,63 @@ def test_alert_ram_reconfigured(hardware_reconfigured_alert):
     view = navigate_to(hardware_reconfigured_alert, "Details")
     attr = view.hardware_reconfigured_parameters.get_text_of("Hardware Attribute")
     assert attr == "RAM Increased"
+
+
+@pytest.mark.tier(2)
+@test_requirements.alert
+@pytest.mark.ignore_stream("5.9")
+def test_alert_for_disk_usage(setup_disk_usage_alert):
+        """
+        Bugzillas:
+            * 1658670, 1672698
+        Polarion:
+            assignee: jdupuy
+            casecomponent: Control
+            caseimportance: medium
+            initialEstimate: 1/6hr
+            testSteps:
+                1. Go to Control > Explorer > Alerts
+                2. Configuration > Add new alert
+                3. Based on = Server
+                4. What to evaluate = Expression (Custom)
+                5. Driving Event =
+                    "Appliance Operation: Server High /var/www/miq/vmdb/log Disk Usage"
+                6. Assign the alert to a Alert Profile
+                7. Assign the Alert Profile to the Server
+                8. In advanced config, change:
+                      events:
+                      :disk_usage_gt_percent: 80
+                    to:
+                      events:
+                      :disk_usage_gt_percent: 1
+                9. dd a file in /var/www/miq/vmdb/log large enough to trigger 1% disk usage
+            expectedResults:
+                1.
+                2.
+                3.
+                4.
+                5.
+                6.
+                7.
+                8.
+                9. the alert should fire, and the event of type
+                    "evm_server_log_disk_usage" should trigger
+        """
+        alert, timestamp, query = setup_disk_usage_alert
+
+        def _check_query():
+            query_result = query.all()
+            if query_result:
+                # here query_result[0][0] and query_result[0][1] correspond to the description and
+                # timestamp pulled from the database, respectively
+                return alert.description == query_result[0][0] and timestamp < query_result[0][1]
+            else:
+                return False
+
+        # wait for the alert to appear in the miq_alert_statuses table
+        wait_for(
+            _check_query,
+            delay=5,
+            num_sec=600,
+            message="Waiting for alert {} to appear in DB".format(alert.description)
+        )
