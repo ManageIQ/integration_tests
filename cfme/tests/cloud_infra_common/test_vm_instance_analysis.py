@@ -19,6 +19,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.provisioning import do_vm_provisioning
+from cfme.utils import conf
 from cfme.utils import safe_string
 from cfme.utils import ssh
 from cfme.utils import testgen
@@ -33,6 +34,7 @@ from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.tier(3),
+    pytest.mark.long_running,
     test_requirements.smartstate,
 ]
 
@@ -197,7 +199,8 @@ def set_agent_creds(appliance, request, provider):
 def local_setup_provider(request, setup_provider_modscope, provider, appliance):
     # TODO: allow for vddk parameterization
     if provider.one_of(VMwareProvider):
-        appliance.install_vddk()
+        vddk_url = conf.cfme_data.get("basic_info").get("vddk_url").get('v6_0')
+        appliance.install_vddk(vddk_url=vddk_url)
         request.addfinalizer(appliance.uninstall_vddk)
 
     if provider.one_of(EC2Provider):
@@ -511,7 +514,6 @@ def compare_windows_vm_data(soft_assert):
 
 @pytest.mark.rhv2
 @pytest.mark.tier(1)
-@pytest.mark.long_running
 def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_provisioning_data,
                       appliance, ssa_vm, compare_windows_vm_data):
     """ Tests SSA can be performed on a template
@@ -522,7 +524,9 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
     Polarion:
         assignee: sbulage
         casecomponent: SmartState
+        caseimportance: high
         initialEstimate: 1/2h
+        tags: smartstate
     """
     template_name = vm_analysis_provisioning_data['image']
     template_collection = appliance.provider_based_collection(provider=provider,
@@ -556,7 +560,6 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 
 
 @pytest.mark.tier(2)
-@pytest.mark.long_running
 def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
                         soft_assert, appliance, vm_system_type):
     """ Tests SSA can be performed and returns sane results
@@ -567,7 +570,9 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
     Polarion:
         assignee: sbulage
         casecomponent: SmartState
-        initialEstimate: 1/3h
+        caseimportance: high
+        initialEstimate: 1/2h
+        tags: smartstate
     """
     ssa_vm.smartstate_scan(wait_for_task_result=True)
     task = appliance.collections.tasks.instantiate(
@@ -595,9 +600,6 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
 
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
-@pytest.mark.long_running
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8157',
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
     """ Tests SSA can be performed and returns sane results
 
@@ -609,6 +611,7 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
         casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/2h
+        tags: smartstate
     """
     # Check release and quadicon
     quadicon_os_icon = ssa_vm.find_quadicon().data['os']
@@ -634,7 +637,6 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
 
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
-@pytest.mark.long_running
 def test_ssa_vm(ssa_vm, soft_assert, vm_system_type):
     """ Tests SSA can be performed and returns sane results
 
@@ -644,7 +646,9 @@ def test_ssa_vm(ssa_vm, soft_assert, vm_system_type):
     Polarion:
         assignee: sbulage
         casecomponent: SmartState
+        caseimportance: high
         initialEstimate: 1/2h
+        tags: smartstate
     """
     ssa_vm.smartstate_scan(wait_for_task_result=True)
     # Check release and quadricon
@@ -670,7 +674,6 @@ def test_ssa_vm(ssa_vm, soft_assert, vm_system_type):
 
 
 @pytest.mark.rhv3
-@pytest.mark.long_running
 def test_ssa_users(ssa_vm):
     """ Tests SSA fetches correct results for users list
 
@@ -680,8 +683,9 @@ def test_ssa_users(ssa_vm):
     Polarion:
         assignee: sbulage
         casecomponent: SmartState
+        caseimportance: high
         initialEstimate: 1/2h
-        testtype: integration
+        tags: smartstate
     """
 
     username = fauxfactory.gen_alphanumeric()
@@ -715,7 +719,6 @@ def test_ssa_users(ssa_vm):
 
 
 @pytest.mark.rhv3
-@pytest.mark.long_running
 def test_ssa_groups(ssa_vm):
     """ Tests SSA fetches correct results for groups
 
@@ -725,7 +728,9 @@ def test_ssa_groups(ssa_vm):
     Polarion:
         assignee: sbulage
         casecomponent: SmartState
+        caseimportance: high
         initialEstimate: 1/2h
+        tags: smartstate
     """
 
     group = fauxfactory.gen_alphanumeric()
@@ -769,7 +774,9 @@ def test_ssa_packages(ssa_vm):
     Polarion:
         assignee: sbulage
         casecomponent: SmartState
+        caseimportance: high
         initialEstimate: 1/2h
+        tags: smartstate
     """
 
     if ssa_vm.system_type == WINDOWS:
@@ -813,7 +820,9 @@ def test_ssa_files(ssa_vm):
     Polarion:
         assignee: sbulage
         casecomponent: SmartState
-        initialEstimate: 1/3h
+        caseimportance: high
+        initialEstimate: 1/2h
+        tags: smartstate
     """
 
     if ssa_vm.system_type == WINDOWS:
@@ -837,7 +846,6 @@ def test_ssa_files(ssa_vm):
 
 @pytest.mark.rhv2
 @pytest.mark.tier(2)
-@pytest.mark.long_running
 def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
     """ Tests drift analysis is correct
 
@@ -847,7 +855,9 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
     Polarion:
         assignee: sbulage
         casecomponent: SmartState
-        initialEstimate: 1/3h
+        caseimportance: high
+        initialEstimate: 1/2h
+        tags: smartstate
     """
 
     ssa_vm.load_details()
@@ -928,7 +938,9 @@ def test_ssa_multiple_vms(ssa_multiple_vms, soft_assert, appliance, compare_linu
     Polarion:
         assignee: sbulage
         casecomponent: SmartState
+        caseimportance: high
         initialEstimate: 1/2h
+        tags: smartstate
     """
 
     view = navigate_to(ssa_multiple_vms[0], 'AllForProvider')
