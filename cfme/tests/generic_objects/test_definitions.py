@@ -14,12 +14,15 @@ pytestmark = [test_requirements.generic_objects]
 
 
 @pytest.mark.sauce
+@pytest.mark.tier(0)
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
 def test_generic_object_definition_crud(appliance, context, soft_assert):
     """
     Polarion:
-        assignee: dmisharo
-        initialEstimate: 1/30h
+        assignee: jdupuy
+        casecomponent: GenericObjects
+        caseimportance: high
+        initialEstimate: 1/12h
         tags: 5.9
     """
     with appliance.context.use(context):
@@ -71,27 +74,5 @@ def test_generic_objects_class_accordion_should_display_when_locale_is_french():
         tags: service
     Bugzilla:
         1594480
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_generic_objects_class_crud():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: WebUI
-        testtype: functional
-        initialEstimate: 1/16h
-        startsin: 5.9
-        tags: service
-        testSteps:
-            1.Create Generic Objects Class
-            2.Add button group
-            3.Go to Generic Objects Class details page
-            4.Delete the Generic Objects Class
-    Bugzilla:
-        1650137
     """
     pass
