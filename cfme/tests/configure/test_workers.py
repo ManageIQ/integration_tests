@@ -1,8 +1,35 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
+
+DROPDOWNS = [
+    'generic_worker_threshold',
+    'cu_data_collector_worker_threshold',
+    'event_monitor_worker_threshold',
+    'connection_broker_worker_threshold',
+    'reporting_worker_threshold',
+    'web_service_worker_threshold',
+    'priority_worker_threshold',
+    'cu_data_processor_worker_threshold',
+    'refresh_worker_threshold',
+    'vm_analysis_collectors_worker_threshold'
+]
+
+IDS = [
+    'generic',
+    'cu_data_coll',
+    'event_monitor',
+    'conn_broker',
+    'reporting',
+    'web_service',
+    'priority',
+    'cu_data_proc',
+    'refresh',
+    'vm_analysis'
+]
 
 
 @pytest.mark.tier(3)
@@ -29,9 +56,10 @@ def test_restart_workers(appliance):
              message="Wait for all original workers are back online")
 
 
-@pytest.mark.manual
 @pytest.mark.tier(0)
-def test_set_memory_threshold_in_ui():
+@pytest.mark.parametrize("dropdown", DROPDOWNS, ids=IDS)
+@pytest.mark.meta(blockers=[BZ(1656873)])
+def test_set_memory_threshold_in_ui(appliance, dropdown):
     """
     Bugzillas:
         * 1656873
@@ -44,16 +72,24 @@ def test_set_memory_threshold_in_ui():
         testSteps:
             1. Navigate to Configuration
             2. Select the workers tab
-            3. Set memory threshold of "Generic Workers" to a value above 1 GB
+            3. Set memory threshold of any dropdown to a value above 1 GB
             4. Hit save
-            5. Set the memory threshold of "Event Monitor" to a value above 1 GB
-            6. Hit save
         expectedResults:
             1.
             2.
             3.
             4. the change should be reflected in the dropdown
-            5.
-            6. same as 4.
     """
-    pass
+    view = navigate_to(appliance.server, 'Workers')
+    mem_threshold = getattr(view.workers, dropdown)
+    before = mem_threshold.selected_option
+    mem_threshold.select_by_visible_text("1.1 GB")
+    view.workers.save.click()
+    view.wait_displayed()
+    after = mem_threshold.selected_option
+
+    assert before != after
+    assert after == "1.1 GB"
+
+    # reset the mem threshold after the test
+    view.workers.reset.click()
