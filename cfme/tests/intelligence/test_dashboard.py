@@ -66,6 +66,7 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
 
 @pytest.mark.rhel_testing
 @pytest.mark.parametrize("number_dashboards", range(1, 4))
+@pytest.mark.meta(blockers=[BZ(1666712, forced_streams=['5.10'])])
 def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, appliance):
     """Create some custom dashboards and check their presence. Then check their contents.
 
@@ -92,6 +93,7 @@ def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, 
     try:
         for dash in dashboards.all():
             soft_assert(dash.name in dash_dict, "Dashboard {} not found!".format(dash.name))
+            dash.dashboard_view.click()
             if dash.name in dash_dict:
                 for widget in dash.collections.widgets.all():
                     soft_assert(widget.name in dash_dict[dash.name].widgets,

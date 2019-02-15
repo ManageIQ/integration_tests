@@ -193,7 +193,7 @@ class Bugzilla(object):
         for bug in filtered:
             if (isinstance(bug.version, Version) and
                 isinstance(bug.target_release, Version) and
-                check_fixed_in(bug.fixed_in, version_series) and
+                not check_fixed_in(bug.fixed_in, version_series) and
                 (bug.version.is_in_series(version_series) or
                  bug.target_release.is_in_series(version_series))):
                 return bug
@@ -207,7 +207,7 @@ class Bugzilla(object):
 def check_fixed_in(fixed_in, version_series):
     # used to check if the bug belongs to that series
     if fixed_in is None:
-        return True
+        return False
     if not isinstance(fixed_in, Version):
         fixed_in = Version(fixed_in)
     return fixed_in.is_in_series(version_series)
