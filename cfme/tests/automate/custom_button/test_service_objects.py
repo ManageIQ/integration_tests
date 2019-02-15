@@ -408,7 +408,7 @@ def test_custom_button_expression(appliance, context, objects, button_group, vis
             obj.remove_tag(tag)
 
     with appliance.context.use(context):
-        view = navigate_to(obj, dest_name)
+        view = navigate_to(obj, dest_name, wait_for_view=15)
         custom_button_group = (
             CustomButtonSSUIDropdwon(view, group.text)
             if context is ViaSSUI
