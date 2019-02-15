@@ -305,13 +305,6 @@ def group_names(self):
     return view.group_names if view.logged_in else None
 
 
-def automate_menu_name(appliance):
-    if appliance.version < '5.8':
-        return ['Automate']
-    else:
-        return ['Automation', 'Automate']
-
-
 # ######################## SERVER NAVS ################################
 
 @navigator.register(Server)
@@ -1626,8 +1619,8 @@ class AutomateSimulationView(BaseLoggedInPage):
     def is_displayed(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == automate_menu_name(
-                self.context['object'].appliance) + ['Simulation'])
+            self.navigation.currently_selected == ["Automation", "Automate", "Simulation"]
+        )
 
     instance = BootstrapSelect('instance_name')
     message = Input(name='object_message')
@@ -1650,8 +1643,7 @@ class AutomateSimulation(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.navigation.select(
-            *automate_menu_name(self.obj.appliance) + ['Simulation'])
+        self.prerequisite_view.navigation.select(*["Automation", "Automate", "Simulation"])
 
 
 class AutomateImportExportBaseView(BaseLoggedInPage):
@@ -1664,9 +1656,9 @@ class AutomateImportExportBaseView(BaseLoggedInPage):
     def in_import_export(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == automate_menu_name(
-                self.context['object'].appliance) + ['Import / Export'] and
-            self.title.text == 'Import / Export')
+            self.navigation.currently_selected == ["Automation", "Automate", "Import / Export"] and
+            self.title.text == "Import / Export"
+        )
 
     @property
     def is_displayed(self):
@@ -1708,5 +1700,4 @@ class AutomateImportExport(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.navigation.select(
-            *automate_menu_name(self.obj.appliance) + ['Import / Export'])
+        self.prerequisite_view.navigation.select(*["Automation", "Automate", "Import / Export"])
