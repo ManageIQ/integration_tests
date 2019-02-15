@@ -461,10 +461,10 @@ def poke_trackerbot(self):
                     # therefore ... makes it a "nil" stream
                     template_version = "...{}".format(template_info.datestamp.strftime("%Y%m%d"))
 
-                    # openshift has two templates bound to one build version
-                    # sometimes sprout tries using second template -extdb that's wrong
-                    # so, such template has to be marked as not usable inside sprout
-                    usable = not template_name.endswith('-extdb')
+                # openshift has two templates bound to one build version
+                # sometimes sprout tries using second template -extdb that's wrong
+                # so, such template has to be marked as not usable inside sprout
+                usable = not template_name.endswith('-extdb')
                 with transaction.atomic():
                     tpl = Template(
                         provider=provider, template_group=group, original_name=template_name,
