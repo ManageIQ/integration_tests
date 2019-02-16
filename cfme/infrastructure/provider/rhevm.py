@@ -53,7 +53,7 @@ class RHEVMVMUtilizationView(VMUtilizationView):
     vm_network = LineChart(id='miq_chart_parent_candu_3')
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class RHEVMProvider(InfraProvider):
     SNAPSHOT_TITLE = 'description'  # Different for RHEV providers than other infra
     catalog_item_type = RHVCatalogItem

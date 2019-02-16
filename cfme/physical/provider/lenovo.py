@@ -21,7 +21,7 @@ class LenovoEndpointForm(DefaultEndpointForm):
     api_port = Input('default_api_port')
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class LenovoProvider(PhysicalProvider):
     type_name = 'lenovo'
     endpoints_form = LenovoEndpointForm

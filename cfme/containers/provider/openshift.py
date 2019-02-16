@@ -79,7 +79,7 @@ class AlertsEndpoint(ServiceBasedEndpoint):
     name = 'alerts'
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class OpenshiftProvider(ContainersProvider, ConsoleMixin):
     num_route = ['num_route']
     STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route

@@ -44,7 +44,7 @@ class RedfishEndpointForm(DefaultEndpointForm):
     api_port = Input('default_api_port')
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class RedfishProvider(PhysicalProvider):
     STATS_TO_MATCH = ['num_server', 'num_chassis', 'num_racks']
     type_name = 'redfish'

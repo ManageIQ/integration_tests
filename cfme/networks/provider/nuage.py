@@ -47,7 +47,7 @@ class NuageEndpointForm(View):
         validate = Button('Validate')
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class NuageProvider(NetworkProvider):
     """ Class representing network provider in sdn
 

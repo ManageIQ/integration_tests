@@ -55,7 +55,7 @@ class OpenStackInfraEndpointForm(View):
         change_key = Text(locator='.//a[normalize-space(.)="Change stored private key"]')
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class OpenstackInfraProvider(InfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_host']
     type_name = "openstack_infra"

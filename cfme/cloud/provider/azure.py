@@ -31,7 +31,7 @@ class AzureInstanceUtilizationView(RHEVMVMUtilizationView):
     pass
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class AzureProvider(CloudProvider):
     """
      BaseProvider->CloudProvider->AzureProvider class.

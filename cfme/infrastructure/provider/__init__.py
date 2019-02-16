@@ -42,7 +42,7 @@ class ProviderClustersView(ClusterView):
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class InfraProvider(BaseProvider, CloudInfraProviderMixin, Pretty, Fillable,
                     PolicyProfileAssignable, Taggable):
     """
