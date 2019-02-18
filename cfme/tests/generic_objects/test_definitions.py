@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-
 import fauxfactory
 import pytest
 
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils.appliance import ViaREST, ViaUI
-from cfme.utils.update import update
+from cfme.utils.appliance import ViaREST
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.update import update
 
 pytestmark = [test_requirements.generic_objects]
 

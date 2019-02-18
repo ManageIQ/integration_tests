@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 import attr
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 
-from navmazing import NavigateToSibling, NavigateToAttribute
-
-from cfme.common import Taggable, TagPageView
-from cfme.containers.provider import (ContainerObjectAllBaseView,
-                                      ContainerObjectDetailsBaseView,
-                                      GetRandomInstancesMixin)
+from cfme.common import Taggable
+from cfme.common import TagPageView
+from cfme.containers.provider import ContainerObjectAllBaseView
+from cfme.containers.provider import ContainerObjectDetailsBaseView
+from cfme.containers.provider import GetRandomInstancesMixin
 from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.providers import get_crud_by_name
 
 

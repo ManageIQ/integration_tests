@@ -1,16 +1,22 @@
 # -*- coding: utf-8 -*-
 import attr
-
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Table, Text, TextInput
-from widgetastic_manageiq import MultiBoxSelect
-from widgetastic_patternfly import Button, Input
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import Table
+from widgetastic.widget import Text
+from widgetastic.widget import TextInput
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
 from . import ControlExplorerView
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from widgetastic_manageiq import MultiBoxSelect
 
 
 class PolicyProfileFormCommon(ControlExplorerView):

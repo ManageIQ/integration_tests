@@ -1,7 +1,9 @@
 # Common stuff for custom button testing
-
-from widgetastic.widget import View, Text, TextInput
-from widgetastic_patternfly import Button, Dropdown
+from widgetastic.widget import Text
+from widgetastic.widget import TextInput
+from widgetastic.widget import View
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
 
 OBJ_TYPE_59 = [

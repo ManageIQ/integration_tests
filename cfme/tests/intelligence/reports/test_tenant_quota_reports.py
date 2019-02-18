@@ -1,4 +1,5 @@
 import pytest
+
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 

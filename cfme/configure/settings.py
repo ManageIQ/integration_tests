@@ -1,19 +1,31 @@
-import attr
 import re
 
-from navmazing import NavigateToAttribute, NavigateToSibling
+import attr
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.widget import View
-from widgetastic_patternfly import (
-    BreadCrumb, BootstrapSwitch, Button, CheckableBootstrapTreeview, Dropdown, Input)
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CheckableBootstrapTreeview
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Input
 
-from cfme.base import BaseEntity, BaseCollection
+from cfme.base import BaseCollection
+from cfme.base import BaseEntity
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance import NavigatableMixin
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from widgetastic_manageiq import Table, BootstrapSelect, Text, ViewButtonGroup, WaitTab
+from widgetastic_manageiq import BootstrapSelect
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import Text
+from widgetastic_manageiq import ViewButtonGroup
+from widgetastic_manageiq import WaitTab
 
 
 class TimeProfileForm(View):

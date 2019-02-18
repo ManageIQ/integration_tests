@@ -1,19 +1,23 @@
 import attr
-
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.utils import Parameter
 from widgetastic.widget import Text
-from widgetastic_manageiq import MultiBoxSelect
-from widgetastic_patternfly import Button, CandidateNotFound, Input
-from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import Input
 
+from . import ServicesCatalogView
 from cfme.common import Taggable
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-
-from . import ServicesCatalogView
+from widgetastic_manageiq import MultiBoxSelect
 
 
 class CatalogsMultiBoxSelect(MultiBoxSelect):

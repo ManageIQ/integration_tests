@@ -1,10 +1,9 @@
 #!/usr/bin/env python2
-
 """Run yum updates against a given repo
 """
-
 import argparse
 import sys
+
 from cfme.utils.appliance import IPAppliance
 
 

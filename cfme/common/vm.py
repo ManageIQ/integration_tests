@@ -1,31 +1,42 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
-from datetime import datetime, date, timedelta
+import json
+from datetime import date
+from datetime import datetime
+from datetime import timedelta
 
 import attr
-import json
 from cached_property import cached_property
 from riggerlib import recursive_update
 
+from . import PolicyProfileAssignable
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import Taggable, CustomButtonEventsMixin
+from cfme.common import CustomButtonEventsMixin
+from cfme.common import Taggable
 from cfme.common.vm_console import ConsoleMixin
-from cfme.common.vm_views import DriftAnalysis, DriftHistory, VMPropertyDetailView
-from cfme.exceptions import CFMEException, VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.common.vm_views import DriftAnalysis
+from cfme.common.vm_views import DriftHistory
+from cfme.common.vm_views import VMPropertyDetailView
+from cfme.exceptions import CFMEException
+from cfme.exceptions import ItemNotFound
+from cfme.exceptions import OptionNotAvailable
+from cfme.exceptions import VmOrInstanceNotFound
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.services.requests import RequestsView
 from cfme.utils import ParamClassName
-from cfme.utils.appliance.implementations.ui import navigate_to, navigator
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.rest import assert_response
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
-from cfme.utils.version import LOWEST, VersionPicker
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
-from . import PolicyProfileAssignable
 
 
 def base_types(template=False):

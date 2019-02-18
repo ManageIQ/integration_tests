@@ -1,9 +1,10 @@
 import fauxfactory
 import pytest
+
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.blockers import BZ
-from cfme.utils.update import update
 from cfme.utils.log import logger
+from cfme.utils.update import update
 
 pytestmark = [pytest.mark.provider([OpenStackProvider], scope='module')]
 

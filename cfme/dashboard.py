@@ -1,22 +1,31 @@
 # -*- coding: utf-8 -*-
-import attr
-
 import re
 
+import attr
 from cached_property import cached_property
 from navmazing import NavigateToAttribute
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.timeutil import parsetime
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.wait import wait_for
-
-from widgetastic.utils import ParametrizedLocator, ParametrizedString, Parameter
-from widgetastic.widget import ParametrizedView, Text, View, Widget, ConditionalSwitchableView
+from widgetastic.utils import Parameter
+from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedString
+from widgetastic.widget import ConditionalSwitchableView
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic.widget import Widget
 from widgetastic.xpath import quote
-from widgetastic_patternfly import Button, Dropdown
-from widgetastic_manageiq import Table, WaitTab
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
 from .base.login import BaseLoggedInPage
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.timeutil import parsetime
+from cfme.utils.wait import wait_for
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import WaitTab
 
 
 # TODO: Move this into widgetastic_patternfly

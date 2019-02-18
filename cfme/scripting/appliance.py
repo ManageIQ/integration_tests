@@ -12,7 +12,8 @@ from functools import partial
 import click
 from cached_property import cached_property
 
-from cfme.utils.conf import cfme_data, env
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import env
 
 
 def get_appliance(appliance_ip):

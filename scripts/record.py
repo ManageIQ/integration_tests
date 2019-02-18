@@ -5,7 +5,9 @@
 Use when you want to record something separately
 """
 import time
-from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from argparse import ArgumentParser
+from argparse import RawDescriptionHelpFormatter
+
 from cfme.utils.video import Recorder
 
 

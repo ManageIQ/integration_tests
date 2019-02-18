@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
-
-from wrapanapi.exceptions import NotFoundError, MultipleItemsError
+from wrapanapi.exceptions import MultipleItemsError
+from wrapanapi.exceptions import NotFoundError
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
@@ -10,12 +10,10 @@ from cfme.rest.gen_data import mark_vm_as_template
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
-from cfme.utils.rest import (
-    assert_response,
-    delete_resources_from_collection,
-    delete_resources_from_detail,
-    query_resource_attributes,
-)
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.rest import delete_resources_from_detail
+from cfme.utils.rest import query_resource_attributes
 
 pytestmark = [
     test_requirements.rest,

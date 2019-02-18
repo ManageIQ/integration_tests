@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """ Tests to validate chargeback costs for daily, weekly, monthly rates.
 
 All infra and cloud providers support chargeback reports.

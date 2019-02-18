@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-
 from widgetastic_patternfly import DropdownItemNotFound
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.log import logger
 
 pytestmark = [

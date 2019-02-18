@@ -1,20 +1,25 @@
 # -*- coding: utf-8 -*-
 import attr
-
 from cached_property import cached_property
-
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.widget import Text
-from widgetastic_manageiq import Table
-from widgetastic_patternfly import CandidateNotFound, Input, Button
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import Input
 
+from . import AutomateExplorerView
+from . import check_tree_path
+from .domain import Domain
+from .domain import DomainDetailsView
 from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
-
-from . import AutomateExplorerView, check_tree_path
-from .domain import DomainDetailsView, Domain
+from widgetastic_manageiq import Table
 
 
 class NamespaceDetailsView(AutomateExplorerView):

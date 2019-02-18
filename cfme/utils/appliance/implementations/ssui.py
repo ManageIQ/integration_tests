@@ -1,19 +1,22 @@
+import os
 import time
 from inspect import isclass
 
-import os
 from cached_property import cached_property
 from jsmin import jsmin
-from navmazing import Navigate, NavigateStep
+from navmazing import Navigate
+from navmazing import NavigateStep
 from selenium.common.exceptions import NoSuchElementException
-from widgetastic.browser import Browser, DefaultPlugin
+from widgetastic.browser import Browser
+from widgetastic.browser import DefaultPlugin
 
-from cfme import exceptions
-from cfme.utils.browser import manager
-from cfme.utils.log import logger, create_sublogger
-from cfme.utils.wait import wait_for
-from cfme.fixtures.pytest_store import store
 from . import Implementation
+from cfme import exceptions
+from cfme.fixtures.pytest_store import store
+from cfme.utils.browser import manager
+from cfme.utils.log import create_sublogger
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 class MiqSSUIBrowser(Browser):

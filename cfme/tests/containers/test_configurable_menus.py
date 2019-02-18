@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.containers.provider import ContainersProvider
 from cfme.base.login import BaseLoggedInPage
+from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.version import current_version
 

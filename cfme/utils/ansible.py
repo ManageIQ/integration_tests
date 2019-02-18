@@ -1,17 +1,24 @@
-import tempfile
-from os import listdir, mkdir, makedirs, path
-from shutil import copy, copyfile, rmtree
-from subprocess import check_output, CalledProcessError, STDOUT
 import sys
+import tempfile
+from os import listdir
+from os import makedirs
+from os import mkdir
+from os import path
+from shutil import copy
+from shutil import copyfile
+from shutil import rmtree
+from subprocess import CalledProcessError
+from subprocess import check_output
+from subprocess import STDOUT
+
 from fauxfactory import gen_alphanumeric
+from git import Repo
+from yaml import load
+from yaml import safe_dump
 
 from cfme.utils import conf
-from cfme.utils.providers import providers_data
 from cfme.utils.appliance import current_appliance
-
-
-from git import Repo
-from yaml import load, safe_dump
+from cfme.utils.providers import providers_data
 
 local_git_repo = "manageiq_ansible_module"
 yml_path = path.join(path.dirname(__file__), local_git_repo)

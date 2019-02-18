@@ -1,26 +1,38 @@
 """ A model of a Cloud Provider in CFME
 """
 import attr
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.widget import View
-from widgetastic_patternfly import Dropdown, BreadCrumb
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.instance.image import Image
 from cfme.cloud.tenant import ProviderTenantAllView
-from cfme.common import TagPageView, PolicyProfileAssignable, Taggable
-from cfme.common.provider import BaseProvider, provider_types, CloudInfraProviderMixin
-from cfme.common.provider_views import (
-    CloudProviderAddView, CloudProviderDetailsView, CloudProvidersView,
-    CloudProvidersDiscoverView, ProviderEditView)
-from cfme.common.vm_views import VMToolbar, VMEntities
+from cfme.common import PolicyProfileAssignable
+from cfme.common import Taggable
+from cfme.common import TagPageView
+from cfme.common.provider import BaseProvider
+from cfme.common.provider import CloudInfraProviderMixin
+from cfme.common.provider import provider_types
+from cfme.common.provider_views import CloudProviderAddView
+from cfme.common.provider_views import CloudProviderDetailsView
+from cfme.common.provider_views import CloudProvidersDiscoverView
+from cfme.common.provider_views import CloudProvidersView
+from cfme.common.provider_views import ProviderEditView
+from cfme.common.vm_views import VMEntities
+from cfme.common.vm_views import VMToolbar
 from cfme.modeling.base import BaseCollection
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import TimelinesView, ItemsToolBarViewSelector
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import TimelinesView
 
 
 class CloudProviderTimelinesView(TimelinesView, BaseLoggedInPage):

@@ -1,5 +1,4 @@
 #!/usr/bin/env python2
-
 """This script takes various parameters specified in
 cfme_data['template_upload']['template_upload_vsphere'] and/or by command-line arguments.
 Parameters specified by command-line have higher priority, and override data in cfme_data.
@@ -8,17 +7,21 @@ This script is designed to run either as a standalone vsphere template uploader,
 together with template_upload_all script. This is why all the function calls, which would
 normally be placed in main function, are located in function run(**kwargs).
 """
-
 import argparse
-import fauxfactory
-from threading import Lock, Thread
+from threading import Lock
+from threading import Thread
 
-from cfme.utils import net, trackerbot
-from cfme.utils.conf import cfme_data, credentials
-from cfme.utils.log import logger, add_stdout_handler
+import fauxfactory
+from wrapanapi import VMWareSystem
+
+from cfme.utils import net
+from cfme.utils import trackerbot
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
+from cfme.utils.log import add_stdout_handler
+from cfme.utils.log import logger
 from cfme.utils.providers import list_provider_keys
 from cfme.utils.ssh import SSHClient
-from wrapanapi import VMWareSystem
 
 # ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.
 NUM_OF_TRIES_OVFTOOL = 5

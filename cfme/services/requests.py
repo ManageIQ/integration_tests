@@ -2,20 +2,34 @@
 from copy import copy
 
 import attr
-
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Table, Checkbox, View
-from widgetastic_manageiq import SummaryForm, SummaryFormItem, PaginationPane, Button, WaitTab
-from widgetastic_patternfly import BreadCrumb, Input, BootstrapTreeview
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import Checkbox
+from widgetastic.widget import Table
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapTreeview
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Input
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm_views import ProvisionView, BasicProvisionFormView
-from cfme.exceptions import RequestException, ItemNotFound
+from cfme.common.vm_views import BasicProvisionFormView
+from cfme.common.vm_views import ProvisionView
+from cfme.exceptions import ItemNotFound
+from cfme.exceptions import RequestException
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import Button
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import SummaryForm
+from widgetastic_manageiq import SummaryFormItem
+from widgetastic_manageiq import WaitTab
 
 
 @attr.s

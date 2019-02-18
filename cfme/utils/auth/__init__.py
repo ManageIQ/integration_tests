@@ -1,14 +1,17 @@
+from copy import deepcopy
+
 import attr
 from cached_property import cached_property
-from copy import deepcopy
 from six import iteritems
 
-from cfme.configure.configuration.server_settings import (
-    AmazonAuthenticationView, LdapAuthenticationView, LdapsAuthenticationView,
-    ExternalAuthenticationView, USER_TYPES
-)
+from cfme.configure.configuration.server_settings import AmazonAuthenticationView
+from cfme.configure.configuration.server_settings import ExternalAuthenticationView
+from cfme.configure.configuration.server_settings import LdapAuthenticationView
+from cfme.configure.configuration.server_settings import LdapsAuthenticationView
+from cfme.configure.configuration.server_settings import USER_TYPES
 from cfme.exceptions import UnknownProviderType
-from cfme.utils.conf import credentials, auth_data
+from cfme.utils.conf import auth_data
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 
 auth_prov_data = auth_data.get("auth_providers", {})  # setup on module import

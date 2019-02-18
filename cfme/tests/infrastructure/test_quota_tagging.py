@@ -9,7 +9,8 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils.appliance import ViaSSUI, ViaUI
+from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance import ViaUI
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.update import update

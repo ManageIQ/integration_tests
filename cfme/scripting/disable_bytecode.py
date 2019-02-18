@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 from __future__ import print_function
-from os import path
+
 import distutils
+from os import path
 
 
 DISABLE_BYTECODE = "import sys\nsys.dont_write_bytecode = True\n"

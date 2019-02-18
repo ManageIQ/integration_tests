@@ -5,7 +5,8 @@ from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
 from cfme import test_requirements
 from cfme.common.provider_views import NetworkProvidersView
-from cfme.networks.provider.nuage import NuageProvider, NetworkProvider
+from cfme.networks.provider.nuage import NetworkProvider
+from cfme.networks.provider.nuage import NuageProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 

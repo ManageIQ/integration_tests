@@ -1,14 +1,27 @@
 import attr
 from navmazing import NavigateToAttribute
-from widgetastic.widget import Text, View, Select
+from widgetastic.widget import Select
+from widgetastic.widget import Text
+from widgetastic.widget import View
 from widgetastic.xpath import quote
-from widgetastic_patternfly import Button, Input, BootstrapSwitch
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
-from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from widgetastic_manageiq import (ManageIQTree, DialogButton, DragandDrop,
-                                  DialogBootstrapSwitch, DialogElement, WaitTab)
-from . import AutomateCustomizationView, AddBoxView
+from . import AddBoxView
+from . import AutomateCustomizationView
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.modeling.base import parent_of_type
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import DialogBootstrapSwitch
+from widgetastic_manageiq import DialogButton
+from widgetastic_manageiq import DialogElement
+from widgetastic_manageiq import DragandDrop
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import WaitTab
 
 
 class ElementForm(AddBoxView):

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-import pytest
 import random
+
+import pytest
 import yaml
 
 from cfme import test_requirements

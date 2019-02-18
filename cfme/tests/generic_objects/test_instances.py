@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import fauxfactory
 import pytest
 
@@ -7,7 +6,8 @@ import cfme.rest.gen_data as rest_gen_data
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
 from cfme.services.myservice import MyService
-from cfme.utils.appliance import ViaREST, ViaUI
+from cfme.utils.appliance import ViaREST
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.rest import assert_response
 from cfme.utils.update import update

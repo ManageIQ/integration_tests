@@ -3,10 +3,10 @@
 """
 import pytest
 
+from cfme.fixtures.pytest_store import store
 from cfme.utils import trackerbot
 from cfme.utils.conf import env
 from cfme.utils.providers import list_provider_keys
-from cfme.fixtures.pytest_store import store
 
 TEMPLATES = {}
 

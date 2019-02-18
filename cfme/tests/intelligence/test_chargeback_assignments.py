@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-import cfme.intelligence.chargeback.assignments as cb
-import pytest
 import random
 
-from cfme.intelligence.chargeback.assignments import AssignmentsView
+import pytest
+
+import cfme.intelligence.chargeback.assignments as cb
 from cfme import test_requirements
+from cfme.intelligence.chargeback.assignments import AssignmentsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [

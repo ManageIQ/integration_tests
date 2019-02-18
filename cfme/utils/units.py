@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+import functools
 import math
 import re
 from collections import namedtuple
-import functools
+
 import six
 
 

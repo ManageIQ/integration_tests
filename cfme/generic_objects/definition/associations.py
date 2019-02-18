@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 # TODO: add more association types
 _ASSOCIATION_TYPES_MAPPING = {
     'Service': {'rest_collection': 'services'},

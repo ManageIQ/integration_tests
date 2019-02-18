@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 import pytest
-
 from fauxfactory import gen_alphanumeric
 from six import iteritems
 
 from cfme.base.credential import Credential
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.auth import ActiveDirectoryAuthProvider
+from cfme.utils.auth import AmazonAuthProvider
 from cfme.utils.auth import auth_user_data
-from cfme.utils.auth import (
-    OpenLDAPAuthProvider, OpenLDAPSAuthProvider, ActiveDirectoryAuthProvider, FreeIPAAuthProvider,
-    AmazonAuthProvider
-)
-from cfme.utils.blockers import GH, BZ
-from cfme.utils.conf import auth_data, credentials
+from cfme.utils.auth import FreeIPAAuthProvider
+from cfme.utils.auth import OpenLDAPAuthProvider
+from cfme.utils.auth import OpenLDAPSAuthProvider
+from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
+from cfme.utils.conf import auth_data
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 

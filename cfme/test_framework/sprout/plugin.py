@@ -1,18 +1,21 @@
+import random
 import re
 from threading import Timer
 
-import pytest
-import random
 import attr
+import pytest
 from cached_property import cached_property
 from six.moves.urllib.parse import urlparse
 
-from cfme.utils import at_exit, conf
-# todo: use own logger after logfix merge
+from .client import AuthException
+from .client import SproutClient
+from .client import SproutException
+from cfme.utils import at_exit
+from cfme.utils import conf
 from cfme.utils.log import logger as log
 from cfme.utils.path import project_path
-from .client import SproutClient, SproutException, AuthException
 from cfme.utils.wait import wait_for
+# todo: use own logger after logfix merge
 
 
 _appliance_help = '''specify appliance URLs to use for distributed testing.

@@ -1,5 +1,4 @@
 #!/usr/bin/env python2
-
 """
 Script to upload iso/qcow2 images to Glance server
 
@@ -20,10 +19,12 @@ Note : If disk_format is not passed, it defaults to qcow2.
 import argparse
 import sys
 
-from cfme.utils.conf import cfme_data, credentials
+from glanceclient import Client
 from keystoneauth1 import loading
 from keystoneauth1 import session
-from glanceclient import Client
+
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
 
 
 def parse_cmd_line():

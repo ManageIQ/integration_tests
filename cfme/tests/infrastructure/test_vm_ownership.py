@@ -4,7 +4,8 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name

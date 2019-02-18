@@ -5,9 +5,10 @@ import zmq
 from py.path import local
 
 import cfme.utils
+from cfme.fixtures.log import _format_nodeid
+from cfme.fixtures.log import _test_status
 from cfme.utils import log
 from cfme.utils.appliance import find_appliance
-from cfme.fixtures.log import _test_status, _format_nodeid
 
 SLAVEID = None
 

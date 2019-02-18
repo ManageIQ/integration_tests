@@ -1,8 +1,9 @@
 import pytest
 
 from cfme.infrastructure import pxe
+from cfme.utils.testgen import generate
+from cfme.utils.testgen import pxe_servers
 from cfme.utils.update import update
-from cfme.utils.testgen import generate, pxe_servers
 
 
 pytest_generate_tests = generate(gen_func=pxe_servers)

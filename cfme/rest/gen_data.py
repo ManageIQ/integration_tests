@@ -3,6 +3,7 @@ import re
 
 import fauxfactory
 from widgetastic.utils import partial_match
+from wrapanapi import VmState
 
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -10,8 +11,6 @@ from cfme.utils.log import logger
 from cfme.utils.rest import create_resource
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
-
-from wrapanapi import VmState
 
 TEMPLATE_TORSO = """{
   "AWSTemplateFormatVersion" : "2010-09-09",

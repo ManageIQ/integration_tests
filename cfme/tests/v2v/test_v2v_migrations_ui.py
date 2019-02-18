@@ -1,16 +1,18 @@
 """Test to validate basic navigations.Later to be replaced with End-to-End functional testing."""
 import fauxfactory
 import pytest
-
 from widgetastic.exceptions import NoSuchElementException
 
 from cfme.exceptions import ItemNotFound
 from cfme.fixtures.provider import small_template
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE_PER_VERSION, ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE_PER_VERSION
+from cfme.tests.services.test_service_rbac import new_group
+from cfme.tests.services.test_service_rbac import new_role
+from cfme.tests.services.test_service_rbac import new_user
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.tests.services.test_service_rbac import new_user, new_group, new_role
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 from cfme.v2v.migrations import MigrationPlanRequestDetailsView

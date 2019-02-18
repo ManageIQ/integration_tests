@@ -1,17 +1,29 @@
 import attr
-
 from navmazing import NavigateToSibling
-from widgetastic.widget import View, Text
-from widgetastic_patternfly import Input, BootstrapSelect, Button
-from widgetastic_manageiq import Checkbox, RadioGroup, FileInput, Table, WaitTab
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 from wrapanapi.systems import OpenstackInfraSystem
 
-from cfme.common.provider import EventsEndpoint, SSHEndpoint, DefaultEndpoint, DefaultEndpointForm
-from cfme.common.provider_views import BeforeFillMixin, ProviderNodesView
+from cfme.common.provider import DefaultEndpoint
+from cfme.common.provider import DefaultEndpointForm
+from cfme.common.provider import EventsEndpoint
+from cfme.common.provider import SSHEndpoint
+from cfme.common.provider_views import BeforeFillMixin
+from cfme.common.provider_views import ProviderNodesView
 from cfme.exceptions import displayed_not_implemented
 from cfme.infrastructure.openstack_node import OpenstackNodeCollection
 from cfme.infrastructure.provider import InfraProvider
-from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import Checkbox
+from widgetastic_manageiq import FileInput
+from widgetastic_manageiq import RadioGroup
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import WaitTab
 
 
 class RHOSEndpoint(DefaultEndpoint):

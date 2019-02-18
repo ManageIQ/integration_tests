@@ -1,18 +1,31 @@
 # -*- coding: utf-8 -*-
 import attr
-
-from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_patternfly import BootstrapNav, BreadCrumb, Button, Dropdown
-from widgetastic_manageiq import Search
-from widgetastic.widget import View, Text, NoSuchElementException
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import NoSuchElementException
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapNav
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import CustomButtonEventsMixin, TagPageView, Taggable
+from cfme.common import CustomButtonEventsMixin
+from cfme.common import Taggable
+from cfme.common import TagPageView
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.modeling.base import BaseCollection, BaseEntity
-from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable)
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
 
 
 class ObjectStoreContainerToolbar(View):

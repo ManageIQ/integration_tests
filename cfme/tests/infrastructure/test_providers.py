@@ -1,19 +1,22 @@
 # -*- coding: utf-8 -*-
 import uuid
-from copy import copy, deepcopy
+from copy import copy
+from copy import deepcopy
 
 import fauxfactory
 import pytest
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.common.provider_views import (InfraProviderAddView,
-                                        InfraProvidersView,
-                                        InfraProvidersDiscoverView)
+from cfme.common.provider_views import InfraProviderAddView
+from cfme.common.provider_views import InfraProvidersDiscoverView
+from cfme.common.provider_views import InfraProvidersView
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider, RHEVMEndpoint
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
+from cfme.infrastructure.provider.rhevm import RHEVMEndpoint
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.virtualcenter import VirtualCenterEndpoint
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update

@@ -23,7 +23,8 @@ import time
 from copy import deepcopy
 
 import six
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
 from py.path import local
 
 from artifactor import ArtifactorBasePlugin

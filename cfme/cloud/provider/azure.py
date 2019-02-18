@@ -1,13 +1,13 @@
 import attr
-
 from wrapanapi.systems import AzureSystem
 
+from . import CloudProvider
 from cfme.cloud.instance.azure import AzureInstance
-from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from cfme.common.provider import DefaultEndpoint
+from cfme.common.provider import DefaultEndpointForm
 from cfme.infrastructure.provider.rhevm import RHEVMVMUtilizationView
 from cfme.services.catalogs.catalog_items import AzureCatalogItem
 from cfme.utils.version import VersionPicker
-from . import CloudProvider
 
 
 class AzureEndpoint(DefaultEndpoint):

@@ -49,10 +49,12 @@ Default match algorithm is ==. Event also accepts match function in order to cha
 match type.
 """
 import logging
+
 import pytest
 
 from cfme.utils.log import setup_logger
-from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 # xxx better logger name

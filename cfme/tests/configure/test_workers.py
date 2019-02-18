@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+from collections import namedtuple
+
 import pytest
 
-from collections import namedtuple
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for

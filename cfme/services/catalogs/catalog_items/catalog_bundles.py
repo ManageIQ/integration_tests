@@ -1,14 +1,22 @@
 import attr
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
 
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, View
-from widgetastic_patternfly import Button, BootstrapSelect
-
+from . import AllCatalogItemView
+from . import BasicInfoForm
+from . import DetailsCatalogItemView
+from . import NonCloudInfraCatalogItem
+from . import ServicesCatalogView
 from cfme.modeling.base import BaseCollection
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from . import (AllCatalogItemView, BasicInfoForm, DetailsCatalogItemView, NonCloudInfraCatalogItem,
-    ServicesCatalogView)
-from cfme.utils.version import LOWEST, VersionPicker
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import WaitTab
 
 

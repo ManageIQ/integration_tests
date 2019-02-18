@@ -1,15 +1,17 @@
+import time
+from datetime import datetime
+
 import fauxfactory
 import pytest
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import time
-from widgetastic_patternfly import NoSuchElementException
 from widgetastic.utils import partial_match
+from widgetastic_patternfly import NoSuchElementException
 from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider.ec2 import EC2Provider, EC2EndpointForm
+from cfme.cloud.provider.ec2 import EC2EndpointForm
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm_views import DriftAnalysis
 from cfme.control.explorer.policies import VMControlPolicy
@@ -19,13 +21,17 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.provisioning import do_vm_provisioning
-from cfme.utils import ssh, safe_string, testgen
+from cfme.utils import safe_string
+from cfme.utils import ssh
+from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ, GH
+from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.virtual_machines import deploy_template
-from cfme.utils.wait import wait_for, wait_for_decorator
+from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.tier(3),

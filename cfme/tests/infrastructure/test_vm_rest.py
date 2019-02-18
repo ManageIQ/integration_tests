@@ -7,13 +7,12 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.blockers import BZ
-from cfme.utils.rest import (
-    assert_response,
-    delete_resources_from_collection,
-    delete_resources_from_detail,
-    query_resource_attributes,
-)
-from cfme.utils.wait import wait_for, wait_for_decorator
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.rest import delete_resources_from_detail
+from cfme.utils.rest import query_resource_attributes
+from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     test_requirements.provision,

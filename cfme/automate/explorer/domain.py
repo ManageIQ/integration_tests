@@ -1,21 +1,27 @@
 # -*- coding: utf-8 -*-
 import attr
-
 from cached_property import cached_property
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.xpath import quote
-from widgetastic.widget import Text, Checkbox
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.utils import Fillable
-from widgetastic_manageiq import Table, UpDownSelect
-from widgetastic_patternfly import CandidateNotFound, Input, Button
-
-from cfme.exceptions import ItemNotFound
-from cfme.utils import clear_property_cache
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.wait import TimedOutError
+from widgetastic.widget import Checkbox
+from widgetastic.widget import Text
+from widgetastic.xpath import quote
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import Input
 
 from . import AutomateExplorerView
+from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils import clear_property_cache
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.wait import TimedOutError
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import UpDownSelect
 
 
 def generate_updown(title):

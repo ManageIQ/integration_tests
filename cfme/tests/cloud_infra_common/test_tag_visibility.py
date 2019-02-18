@@ -5,7 +5,8 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.exceptions import VmOrInstanceNotFound
 from cfme.infrastructure.provider import InfraProvider
-from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [

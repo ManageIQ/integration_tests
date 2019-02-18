@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-
 from cfme.generic_objects.definition.associations import get_rest_resource
-from cfme.generic_objects.instance import (
-    GenericObjectInstance,
-    GenericObjectInstanceCollection
-)
+from cfme.generic_objects.instance import GenericObjectInstance
+from cfme.generic_objects.instance import GenericObjectInstanceCollection
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.rest import ViaREST
-from cfme.utils.rest import assert_response, create_resource
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import create_resource
 
 
 def _get_associations_dict(appliance, associations, definition):

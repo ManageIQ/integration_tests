@@ -1,21 +1,28 @@
 # -*- coding: utf-8 -*-
-
 """ Module dealing with Configure/Tasks section.
 """
-import attr
 import re
 
+import attr
 from navmazing import NavigateToAttribute
 from widgetastic.exceptions import RowNotFound
 from widgetastic.widget import View
-from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table, WaitTab
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
+from widgetastic_manageiq import BootstrapSelect
+from widgetastic_manageiq import Button
+from widgetastic_manageiq import CheckboxSelect
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import WaitTab
 
 
 class TasksView(BaseLoggedInPage):

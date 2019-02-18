@@ -5,6 +5,7 @@ import uuid
 
 import fauxfactory
 import pytest
+from wait_for import wait_for
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
 from cfme import test_requirements
@@ -13,24 +14,19 @@ from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
-from cfme.cloud.provider.openstack import OpenStackProvider, RHOSEndpoint
-from cfme.common.provider_views import (
-    CloudProviderAddView, CloudProvidersView, CloudProvidersDiscoverView)
-from cfme.markers.env_markers.provider import ONE
-from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
-from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
-from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.providers import list_providers, ProviderFilter
-from cfme.utils.rest import (
-    assert_response,
-    delete_resources_from_collection,
-    delete_resources_from_detail,
-)
-from cfme.utils.update import update
-from cfme.utils.wait import TimedOutError
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider.openstack import RHOSEndpoint
+from cfme.common.provider_views import CloudProviderAddView
+from cfme.common.provider_views import CloudProvidersView
 from cfme.fixtures.provider import enable_provider_regions
 from cfme.fixtures.pytest_store import store
-from wait_for import wait_for
+from cfme.markers.env_markers.provider import ONE
+from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.providers import list_providers
+from cfme.utils.providers import ProviderFilter
+from cfme.utils.rest import assert_response
+from cfme.utils.update import update
 
 pytestmark = [pytest.mark.provider([CloudProvider], scope="function")]
 

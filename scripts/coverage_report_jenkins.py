@@ -1,23 +1,26 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+import os
+import re
+import subprocess
+import time
+from collections import namedtuple
+
 import click
 import diaper
 import jenkins
-import os
 import py
-import re
 import requests
-import subprocess
-import time
-
-from collections import namedtuple
 from requests.auth import HTTPBasicAuth
-from six.moves.urllib.parse import urlsplit, urlunsplit
+from six.moves.urllib.parse import urlsplit
+from six.moves.urllib.parse import urlunsplit
 
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.appliance import IPAppliance
-from cfme.utils.conf import credentials, env
-from cfme.utils.log import logger, add_stdout_handler
+from cfme.utils.conf import credentials
+from cfme.utils.conf import env
+from cfme.utils.log import add_stdout_handler
+from cfme.utils.log import logger
 from cfme.utils.path import log_path
 from cfme.utils.quote import quote
 from cfme.utils.version import Version

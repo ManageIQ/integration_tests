@@ -6,12 +6,10 @@ from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.blockers import BZ
-from cfme.utils.rest import (
-    assert_response,
-    delete_resources_from_collection,
-    delete_resources_from_detail,
-    query_resource_attributes,
-)
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.rest import delete_resources_from_detail
+from cfme.utils.rest import query_resource_attributes
 from cfme.utils.wait import wait_for
 
 

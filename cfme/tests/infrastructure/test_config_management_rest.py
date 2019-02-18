@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
-import fauxfactory
-
 from cfme import test_requirements
-from cfme.utils.rest import assert_response, query_resource_attributes
-from cfme.utils.testgen import config_managers, generate
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import query_resource_attributes
+from cfme.utils.testgen import config_managers
+from cfme.utils.testgen import generate
 from cfme.utils.wait import wait_for
 
 

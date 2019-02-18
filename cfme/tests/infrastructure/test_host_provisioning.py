@@ -1,7 +1,8 @@
 import pytest
 
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
+from cfme.infrastructure.pxe import get_pxe_server_from_config
+from cfme.infrastructure.pxe import get_template_from_config
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data

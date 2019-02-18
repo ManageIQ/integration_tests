@@ -2,8 +2,9 @@
 import attr
 from riggerlib import recursive_update
 
+from . import Instance
+from . import InstanceCollection
 from cfme.exceptions import OptionNotAvailable
-from . import Instance, InstanceCollection
 
 
 @attr.s

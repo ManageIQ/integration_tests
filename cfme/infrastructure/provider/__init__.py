@@ -1,31 +1,46 @@
 """ A model of an Infrastructure Provider in CFME
 """
 import attr
-
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.utils import Fillable
 from widgetastic_patternfly import BreadCrumb
 
 from cfme.base.ui import Server
-from cfme.common import TagPageView, Taggable, PolicyProfileAssignable
+from cfme.common import PolicyProfileAssignable
+from cfme.common import Taggable
+from cfme.common import TagPageView
 from cfme.common.host_views import ProviderAllHostsView
-from cfme.common.provider import BaseProvider, provider_types, CloudInfraProviderMixin
-from cfme.common.provider_views import (
-    InfraProviderAddView, InfraProviderDetailsView, InfraProvidersDiscoverView,
-    InfraProvidersView, ProviderEditView, ProviderNodesView,
-    ProviderTemplatesView, ProviderTimelinesView, ProviderVmsView)
+from cfme.common.provider import BaseProvider
+from cfme.common.provider import CloudInfraProviderMixin
+from cfme.common.provider import provider_types
+from cfme.common.provider_views import InfraProviderAddView
+from cfme.common.provider_views import InfraProviderDetailsView
+from cfme.common.provider_views import InfraProvidersDiscoverView
+from cfme.common.provider_views import InfraProvidersView
+from cfme.common.provider_views import ProviderEditView
+from cfme.common.provider_views import ProviderNodesView
+from cfme.common.provider_views import ProviderTemplatesView
+from cfme.common.provider_views import ProviderTimelinesView
+from cfme.common.provider_views import ProviderVmsView
 from cfme.exceptions import DestinationNotFound
-from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
+from cfme.infrastructure.cluster import ClusterToolbar
+from cfme.infrastructure.cluster import ClusterView
 from cfme.infrastructure.host import HostsCollection
-from cfme.infrastructure.virtual_machines import InfraVm, InfraTemplate
+from cfme.infrastructure.virtual_machines import InfraTemplate
+from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.modeling.base import BaseCollection
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import BaseEntitiesView, View, NoSuchElementException
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import NoSuchElementException
+from widgetastic_manageiq import View
 
 
 class ProviderClustersView(ClusterView):

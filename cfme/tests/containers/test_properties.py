@@ -1,21 +1,29 @@
 # -*- coding: utf-8 -*-
 import pytest
-
 from wrapanapi.utils import eval_strings
 
-from cfme.containers.provider import ContainersProvider, ContainersTestItem
-from cfme.containers.image import Image, ImageCollection
-from cfme.containers.image_registry import (ImageRegistry,
-                                            ImageRegistryCollection)
-from cfme.containers.node import Node, NodeCollection
-from cfme.containers.pod import Pod, PodCollection
-from cfme.containers.project import Project, ProjectCollection
-from cfme.containers.route import Route, RouteCollection
-from cfme.containers.service import Service, ServiceCollection
-from cfme.containers.template import Template, TemplateCollection
-from cfme.containers.volume import Volume, VolumeCollection
-from cfme.containers.container import Container, ContainerCollection
-
+from cfme.containers.container import Container
+from cfme.containers.container import ContainerCollection
+from cfme.containers.image import Image
+from cfme.containers.image import ImageCollection
+from cfme.containers.image_registry import ImageRegistry
+from cfme.containers.image_registry import ImageRegistryCollection
+from cfme.containers.node import Node
+from cfme.containers.node import NodeCollection
+from cfme.containers.pod import Pod
+from cfme.containers.pod import PodCollection
+from cfme.containers.project import Project
+from cfme.containers.project import ProjectCollection
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersTestItem
+from cfme.containers.route import Route
+from cfme.containers.route import RouteCollection
+from cfme.containers.service import Service
+from cfme.containers.service import ServiceCollection
+from cfme.containers.template import Template
+from cfme.containers.template import TemplateCollection
+from cfme.containers.volume import Volume
+from cfme.containers.volume import VolumeCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 

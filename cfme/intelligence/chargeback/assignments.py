@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 # Page model for Intel->Chargeback->Assignments.
-
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.widget import Text
-from widgetastic_patternfly import BootstrapSelect, Button
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
 
+from . import ChargebackView
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from widgetastic_manageiq import Table
 from widgetastic_manageiq.hacks import BootstrapSelectByLocator
-from . import ChargebackView
 
 
 class AssignmentsAllView(ChargebackView):

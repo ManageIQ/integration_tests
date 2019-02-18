@@ -1,13 +1,14 @@
-import pytest
 import fauxfactory
-
+import pytest
 from widgetastic_patternfly import Dropdown
 
-from cfme.tests.automate.custom_button import log_request_check, TextInputDialogView
+from cfme.tests.automate.custom_button import log_request_check
+from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
-from cfme.utils.wait import TimedOutError, wait_for
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [pytest.mark.tier(2)]

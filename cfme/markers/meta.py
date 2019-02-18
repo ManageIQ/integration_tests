@@ -48,11 +48,10 @@ It has a command-line option that allows you to disable certain plugins. Just sp
 
 """
 from collections import namedtuple
-from kwargify import kwargify
 from types import FunctionType
 
 import pytest
-
+from kwargify import kwargify
 from lya import AttrDict
 
 

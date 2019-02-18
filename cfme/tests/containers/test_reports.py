@@ -6,8 +6,8 @@ import pytest
 from wrapanapi.utils import eval_strings
 
 from cfme.containers.provider import ContainersProvider
-from cfme.utils.blockers import BZ
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import TimedOutError
 
 

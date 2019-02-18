@@ -6,10 +6,12 @@ from widgetastic.utils import partial_match
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
+from cfme.infrastructure.pxe import get_pxe_server_from_config
+from cfme.infrastructure.pxe import get_template_from_config
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
-from cfme.utils.blockers import BZ, GH
+from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
 from cfme.utils.conf import cfme_data
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger

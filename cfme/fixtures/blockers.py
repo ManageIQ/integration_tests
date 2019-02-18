@@ -13,7 +13,9 @@ All of them are converted to the :py:class:`utils.blockers.Blocker` instances
 import pytest
 
 from cfme.fixtures.pytest_store import store
-from cfme.utils.blockers import Blocker, BZ, GH
+from cfme.utils.blockers import Blocker
+from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
 
 
 @pytest.fixture(scope="function")

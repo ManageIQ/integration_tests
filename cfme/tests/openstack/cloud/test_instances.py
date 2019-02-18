@@ -1,5 +1,4 @@
 """Tests for Openstack cloud instances"""
-
 import fauxfactory
 import pytest
 from selenium.common.exceptions import TimeoutException
@@ -10,10 +9,12 @@ from wrapanapi.entities import VmState
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
-from cfme.utils.wait import wait_for, wait_for_decorator
+from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.usefixtures("setup_provider_modscope"),

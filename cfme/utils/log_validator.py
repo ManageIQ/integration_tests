@@ -1,4 +1,5 @@
 import re
+
 import pytest
 
 from .ssh import SSHTail

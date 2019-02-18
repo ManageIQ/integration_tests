@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-import pytest
 import random
+
+import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.blockers import BZ

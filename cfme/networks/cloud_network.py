@@ -1,15 +1,25 @@
 import attr
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import Version, VersionPick
+from widgetastic.utils import Version
+from widgetastic.utils import VersionPick
 
-from cfme.common import CustomButtonEventsMixin, Taggable
+from cfme.common import CustomButtonEventsMixin
+from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
-from cfme.networks.views import (CloudNetworkAddView, CloudNetworkEditView, CloudNetworkDetailsView,
-                                 CloudNetworkView)
-from cfme.utils import providers, version
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.modeling.base import parent_of_type
+from cfme.networks.views import CloudNetworkAddView
+from cfme.networks.views import CloudNetworkDetailsView
+from cfme.networks.views import CloudNetworkEditView
+from cfme.networks.views import CloudNetworkView
+from cfme.utils import providers
+from cfme.utils import version
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.wait import wait_for
 
 

@@ -1,5 +1,7 @@
 from cfme.utils.log import logger
-from cfme.utils.providers import global_filters, list_providers, ProviderFilter
+from cfme.utils.providers import global_filters
+from cfme.utils.providers import list_providers
+from cfme.utils.providers import ProviderFilter
 
 
 def pytest_addoption(parser):

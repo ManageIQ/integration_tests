@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
-from datetime import date, datetime
+from datetime import date
+from datetime import datetime
 
-from miq_version import (  # noqa
-    Version, LOWEST, LATEST, UPSTREAM, SPTuple, get_version,
-    version_stream_product_mapping
-)
+from miq_version import get_version
+from miq_version import LATEST  # noqa: F401
+from miq_version import LOWEST  # noqa: F401
+from miq_version import SPTuple  # noqa: F401
+from miq_version import UPSTREAM  # noqa: F401
+from miq_version import Version
+from miq_version import version_stream_product_mapping  # noqa: F401
 from widgetastic.utils import VersionPick
 from widgetastic.widget import Widget
 

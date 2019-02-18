@@ -3,11 +3,11 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.automate.explorer.domain import DomainCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.automate.explorer.domain import DomainCollection
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.update import update

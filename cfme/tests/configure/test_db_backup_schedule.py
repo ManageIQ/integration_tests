@@ -6,7 +6,8 @@ import pytest
 from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlparse
 
-from cfme.utils import conf, testgen
+from cfme.utils import conf
+from cfme.utils import testgen
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud
 from cfme.utils.ssh import SSHClient

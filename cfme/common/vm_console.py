@@ -2,19 +2,21 @@
 """
 Module containing classes with common behaviour for consoles of both VMs and Instances of all types.
 """
-
 import base64
 import re
 import tempfile
 import time
 
-from cfme.exceptions import ItemNotFound
-from PIL import Image, ImageFilter
+from PIL import Image
+from PIL import ImageFilter
 from pytesseract import image_to_string
 from selenium.webdriver.common.keys import Keys
+from wait_for import TimedOutError
+from wait_for import wait_for
+
+from cfme.exceptions import ItemNotFound
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
-from wait_for import wait_for, TimedOutError
 
 
 class ConsoleMixin(object):

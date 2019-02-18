@@ -3,11 +3,11 @@ from os import path as os_path
 import pytest
 from wait_for import wait_for
 
-from cfme.utils import conf
 from cfme.base.ui import navigate_to
 from cfme.utils.appliance import ApplianceException
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 
 pytestmark = [pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="rails server")]

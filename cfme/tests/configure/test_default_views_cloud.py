@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-import pytest
 import random
+
+import pytest
 from six import string_types
 
 from cfme import test_requirements

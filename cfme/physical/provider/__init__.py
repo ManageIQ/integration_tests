@@ -1,17 +1,21 @@
 import attr
-
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import Fillable
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.utils import Fillable
+
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import Server
-from cfme.common.provider import BaseProvider, provider_types
-from cfme.common.provider_views import (PhysicalProviderAddView,
-                                        PhysicalProvidersView,
-                                        PhysicalProviderDetailsView,
-                                        ProviderEditView)
+from cfme.common.provider import BaseProvider
+from cfme.common.provider import provider_types
+from cfme.common.provider_views import PhysicalProviderAddView
+from cfme.common.provider_views import PhysicalProviderDetailsView
+from cfme.common.provider_views import PhysicalProvidersView
+from cfme.common.provider_views import ProviderEditView
 from cfme.modeling.base import BaseCollection
-from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.net import resolve_hostname
 from cfme.utils.pretty import Pretty

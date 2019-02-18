@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 import json
 import os
-import requests
 
 import attr
+import requests
 
-from cfme.utils.version import get_stream
-from cfme.utils.appliance import current_appliance, IPAppliance
-from cfme.utils.conf import credentials, env
-# TODO: use custom wait_for logger fitting sprout
+from cfme.utils.appliance import current_appliance
+from cfme.utils.appliance import IPAppliance
+from cfme.utils.conf import credentials
+from cfme.utils.conf import env
 from cfme.utils.log import logger
+from cfme.utils.version import get_stream
 from cfme.utils.wait import wait_for
+# TODO: use custom wait_for logger fitting sprout
 
 
 class SproutException(Exception):

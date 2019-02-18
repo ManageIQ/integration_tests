@@ -1,24 +1,41 @@
 # -*- coding: utf-8 -*-
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import Checkbox, TextInput, Text, View
-from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
-    Table, Search, WaitTab)
-from widgetastic_patternfly import BootstrapSelect, Dropdown
+from widgetastic.widget import Checkbox
+from widgetastic.widget import Text
+from widgetastic.widget import TextInput
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import Taggable, TagPageView
+from cfme.common import Taggable
+from cfme.common import TagPageView
 from cfme.exceptions import displayed_not_implemented
-from cfme.utils import conf, ParamClassName
+from cfme.utils import conf
+from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.utils.version import LATEST, LOWEST, VersionPicker
+from cfme.utils.version import LATEST
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import Button
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import WaitTab
 
 
 class ConfigManagementToolbar(View):

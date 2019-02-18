@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """This module contains REST API specific tests."""
-
 import random
 
 import fauxfactory
@@ -13,13 +12,12 @@ from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.blockers import BZ
-from cfme.utils.rest import (
-    assert_response,
-    delete_resources_from_collection,
-    delete_resources_from_detail,
-    query_resource_attributes,
-)
-from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.rest import delete_resources_from_detail
+from cfme.utils.rest import query_resource_attributes
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.rest,

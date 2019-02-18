@@ -9,8 +9,9 @@ from utils.tracer import trace::
 
 """
 import sys
-from cfme.utils.log import logger
 from functools import wraps
+
+from cfme.utils.log import logger
 
 
 class FileStore(object):

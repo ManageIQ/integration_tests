@@ -12,7 +12,9 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.control.explorer import alert_profiles, conditions, policies
+from cfme.control.explorer import alert_profiles
+from cfme.control.explorer import conditions
+from cfme.control.explorer import policies
 from cfme.control.explorer.alert_profiles import AlertProfileDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ

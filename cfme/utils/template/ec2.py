@@ -1,10 +1,12 @@
 import os
 import re
 
-from cfme.utils.log import logger
-from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
-from cfme.utils.wait import wait_for
 from wrapanapi.systems.ec2 import EC2Image
+
+from cfme.utils.log import logger
+from cfme.utils.template.base import log_wrap
+from cfme.utils.template.base import ProviderTemplateUpload
+from cfme.utils.wait import wait_for
 
 
 class EC2TemplateUpload(ProviderTemplateUpload):

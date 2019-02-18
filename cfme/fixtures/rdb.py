@@ -33,6 +33,7 @@ Note:
 """
 from __future__ import print_function
 
+import os
 import signal
 import smtplib
 import socket
@@ -43,9 +44,8 @@ from importlib import import_module
 from pdb import Pdb
 from textwrap import dedent
 
-import os
-
-from cfme.fixtures.pytest_store import store, write_line
+from cfme.fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import write_line
 from cfme.utils import conf
 from cfme.utils.log import logger
 

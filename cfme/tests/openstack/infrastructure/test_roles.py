@@ -1,5 +1,6 @@
-import pytest
 from random import choice
+
+import pytest
 
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to

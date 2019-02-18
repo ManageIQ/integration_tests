@@ -10,11 +10,10 @@ Yaml example:
                display: ":99"
                quality: 10
 """
-
-import os
 import os.path
-import pytest
 import re
+
+import pytest
 
 from cfme.utils.conf import env
 from cfme.utils.path import log_path

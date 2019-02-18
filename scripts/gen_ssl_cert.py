@@ -6,8 +6,9 @@
 #          https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signed-certificate-using-pyopenssl/
 import argparse
 import os
-from OpenSSL import crypto
 from socket import gethostname
+
+from OpenSSL import crypto
 
 # Defaults
 default_country = 'US'

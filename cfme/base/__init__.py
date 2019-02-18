@@ -4,7 +4,8 @@ import attr
 import importscan
 import sentaku
 
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger

@@ -1,15 +1,18 @@
-import pytest
 import fauxfactory
-
+import pytest
 from widgetastic_patternfly import Dropdown
 
 from cfme.services.myservice import MyService
-from cfme.tests.automate.custom_button import CustomButtonSSUIDropdwon, log_request_check
-from cfme.utils.appliance import ViaREST, ViaUI, ViaSSUI
-from cfme.utils.appliance.implementations.ui import navigate_to as ui_nav
+from cfme.tests.automate.custom_button import CustomButtonSSUIDropdwon
+from cfme.tests.automate.custom_button import log_request_check
+from cfme.utils.appliance import ViaREST
+from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
+from cfme.utils.appliance.implementations.ui import navigate_to as ui_nav
 from cfme.utils.blockers import BZ
-from cfme.utils.wait import TimedOutError, wait_for
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [pytest.mark.tier(2)]

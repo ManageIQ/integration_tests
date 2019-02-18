@@ -1,9 +1,9 @@
+import diaper
 import pytest
 
-import diaper
 from cfme.fixtures.pytest_store import store
-from cfme.utils.log import logger
 from cfme.utils import ssh
+from cfme.utils.log import logger
 
 
 @pytest.mark.hookwrapper

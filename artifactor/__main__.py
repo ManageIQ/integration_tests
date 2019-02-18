@@ -4,8 +4,15 @@ from __future__ import print_function
 import bottle
 import click
 
-from artifactor import Artifactor, initialize
-from artifactor.plugins import filedump, logger, merkyl, ostriz, post_result, reporter, video
+from artifactor import Artifactor
+from artifactor import initialize
+from artifactor.plugins import filedump
+from artifactor.plugins import logger
+from artifactor.plugins import merkyl
+from artifactor.plugins import ostriz
+from artifactor.plugins import post_result
+from artifactor.plugins import reporter
+from artifactor.plugins import video
 from cfme.utils.conf import env
 from cfme.utils.net import random_port
 from cfme.utils.path import log_path

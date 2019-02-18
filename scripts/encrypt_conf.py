@@ -8,6 +8,7 @@ Usage:
    scripts/encrypt_conf.py credentials
 """
 import argparse
+
 import yaycl_crypt
 
 from cfme.utils import conf

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-
 """Library for event testing.
 
 """
-
+from threading import Event as ThreadEvent
+from threading import Thread
 from time import sleep
-from threading import Thread, Event as ThreadEvent
+
+from manageiq_client.filters import Q
 
 from cfme.utils.log import create_sublogger
-from manageiq_client.filters import Q
 
 logger = create_sublogger('events')
 

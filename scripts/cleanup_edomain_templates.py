@@ -1,18 +1,19 @@
 #!/usr/bin/env python2
-
 """This script takes an provider and edomain as optional parameters, and
 searches for old templates on specified provider's export domain and deletes
 them. In case of no --provider parameter specified then this script
 traverse all the rhevm providers in cfme_data.
 """
-
 import argparse
 import datetime
+from threading import Lock
+from threading import Thread
+
 import pytz
-from threading import Lock, Thread
 
 from cfme.utils import net
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient

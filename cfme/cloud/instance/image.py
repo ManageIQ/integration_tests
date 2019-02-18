@@ -1,17 +1,31 @@
 import attr
-from navmazing import NavigateToAttribute, NavigateToSibling, NavigationDestinationNotFound
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from navmazing import NavigationDestinationNotFound
 from widgetastic.widget import View
-from widgetastic_patternfly import Button, Dropdown
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
-from cfme.common.vm import Template, TemplateCollection
-from cfme.common.vm_views import (
-    EditView, SetOwnershipView, PolicySimulationView, BasicProvisionFormView,
-    VMDetailsEntities, VMEntities)
-from cfme.exceptions import ImageNotFound, DestinationNotFound
-from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
+from . import CloudInstanceView
+from . import InstanceAccordion
+from cfme.common.vm import Template
+from cfme.common.vm import TemplateCollection
+from cfme.common.vm_views import BasicProvisionFormView
+from cfme.common.vm_views import EditView
+from cfme.common.vm_views import PolicySimulationView
+from cfme.common.vm_views import SetOwnershipView
+from cfme.common.vm_views import VMDetailsEntities
+from cfme.common.vm_views import VMEntities
+from cfme.exceptions import DestinationNotFound
+from cfme.exceptions import ImageNotFound
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.providers import get_crud_by_name
-from widgetastic_manageiq import ItemsToolBarViewSelector, SummaryTable, ItemNotFound, Search
-from . import CloudInstanceView, InstanceAccordion
+from widgetastic_manageiq import ItemNotFound
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
 
 
 class ImageToolbar(View):

@@ -5,8 +5,10 @@ from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.blockers import BZ
-from cfme.utils.rest import assert_response, query_resource_attributes
-from cfme.utils.version import VersionPicker, LOWEST
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import query_resource_attributes
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
 

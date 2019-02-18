@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
+from wrapanapi import VmState
 
 from cfme.exceptions import CFMEException
 from cfme.utils import ports
 from cfme.utils.generators import random_vm_name
 from cfme.utils.net import net_check
 from cfme.utils.wait import wait_for
-
-from wrapanapi import VmState
 
 
 def _create_vm(request, template, provider, vm_name):

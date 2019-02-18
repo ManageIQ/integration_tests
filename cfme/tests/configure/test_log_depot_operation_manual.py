@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-
 # Manual tests for log depot
-
 import pytest
 
 from cfme import test_requirements

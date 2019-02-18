@@ -9,7 +9,6 @@ be found by inspecting the request.node.nodeid attribute inside the required
 test item.
 
 """
-
 import pytest
 
 _no_mark_arg_err = '{} mark required test name or nodeid as first argument'

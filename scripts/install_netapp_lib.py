@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 """SSH into a running appliance and install Netapp SDK
 """
-
 import argparse
-from cfme.utils.appliance import IPAppliance, get_or_create_current_appliance
+
+from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.appliance import IPAppliance
 from cfme.utils.conf import cfme_data
 
 

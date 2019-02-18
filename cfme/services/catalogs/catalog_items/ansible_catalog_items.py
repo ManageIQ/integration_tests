@@ -1,19 +1,26 @@
 import attr
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.utils import Parameter
+from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedString
+from widgetastic.widget import Checkbox
+from widgetastic.widget import Table
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect as VanillaBootstrapSelect
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import Parameter, ParametrizedLocator, ParametrizedString
-from widgetastic.widget import Checkbox, Table, Text, View
-from widgetastic_manageiq import FileInput, SummaryForm, SummaryTable, WaitTab
-from widgetastic_patternfly import (
-    BootstrapSelect as VanillaBootstrapSelect,
-    BootstrapSwitch,
-    Button,
-    Input
-)
-
-from cfme.services.catalogs import ServicesCatalogView
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from . import BaseCatalogItem
+from cfme.services.catalogs import ServicesCatalogView
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import FileInput
+from widgetastic_manageiq import SummaryForm
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import WaitTab
 
 
 class BootstrapSelect(VanillaBootstrapSelect):

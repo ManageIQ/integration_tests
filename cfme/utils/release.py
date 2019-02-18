@@ -1,16 +1,18 @@
 #!/usr/bin/env python2
 from __future__ import print_function
 
-from collections import defaultdict
 import datetime
 import re
-import textwrap
-import git
-import click
-import github
-from cfme.utils.conf import docker
 import sys
+import textwrap
+from collections import defaultdict
+
+import click
+import git
+import github
 import tabulate
+
+from cfme.utils.conf import docker
 
 LINE_FMT = "{pr:<{pr_len}} | {label:<{label_len}} | "
 

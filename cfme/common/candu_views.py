@@ -1,7 +1,11 @@
-from widgetastic.widget import ConditionalSwitchableView, Table, Text, View
+from widgetastic.widget import ConditionalSwitchableView
+from widgetastic.widget import Table
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import DatePicker
 
 from widgetastic_manageiq import LineChart
-from widgetastic_patternfly import BootstrapSelect, DatePicker
 
 
 class OptionForm(View):

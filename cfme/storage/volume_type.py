@@ -1,18 +1,27 @@
 # -*- coding: utf-8 -*-
 import attr
-
-from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_patternfly import BreadCrumb, Button, Dropdown
-from widgetastic.widget import View, Text, NoSuchElementException
+from navmazing import NavigateToAttribute
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import TaggableCollection, Taggable
-from cfme.exceptions import ItemNotFound, VolumeTypeNotFoundError
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.common import Taggable
+from cfme.common import TaggableCollection
+from cfme.exceptions import ItemNotFound
+from cfme.exceptions import VolumeTypeNotFoundError
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.storage.volume import VolumeToolbar
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.update import Updateable
-from widgetastic_manageiq import Search, BaseEntitiesView, SummaryTable
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
 
 
 class VolumeTypeView(BaseLoggedInPage):

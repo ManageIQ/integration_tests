@@ -1,14 +1,21 @@
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic_manageiq import Accordion, ManageIQTree
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import Text
+from widgetastic.widget import View
 from widgetastic_patternfly import Button
-from widgetastic.widget import Text, View
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.services.requests import RequestsView
-from cfme.services.service_catalogs import ServiceCatalogs, BaseOrderForm
+from cfme.services.service_catalogs import BaseOrderForm
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import MiqImplementationContext
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.appliance.implementations.ui import ViaUI
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import ManageIQTree
 
 
 class ServicesCatalogsView(BaseLoggedInPage):

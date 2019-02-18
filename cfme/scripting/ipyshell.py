@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import click
-
 from IPython.terminal.interactiveshell import TerminalInteractiveShell
 
 IMPORTS = [

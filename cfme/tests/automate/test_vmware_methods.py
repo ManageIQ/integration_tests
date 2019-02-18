@@ -4,8 +4,8 @@ from textwrap import dedent
 
 import fauxfactory
 import pytest
-from widgetastic_patternfly import Dropdown
 from widgetastic.widget import View
+from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection

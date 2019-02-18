@@ -2,8 +2,13 @@ import pytest
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
-from cfme.networks.views import (CloudNetworkView, SubnetView, NetworkRouterView, SecurityGroupView,
-                                 NetworkPortView, BalancerView, FloatingIpView)
+from cfme.networks.views import BalancerView
+from cfme.networks.views import CloudNetworkView
+from cfme.networks.views import FloatingIpView
+from cfme.networks.views import NetworkPortView
+from cfme.networks.views import NetworkRouterView
+from cfme.networks.views import SecurityGroupView
+from cfme.networks.views import SubnetView
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [

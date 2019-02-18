@@ -1,16 +1,22 @@
 import attr
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import View, Text
-from widgetastic_patternfly import Input, BootstrapSwitch, Button
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 from wrapanapi.systems import RHEVMSystem
 
+from . import InfraProvider
 from cfme.common.candu_views import VMUtilizationView
-from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpointForm
+from cfme.common.provider import CANDUEndpoint
+from cfme.common.provider import DefaultEndpoint
+from cfme.common.provider import DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.exceptions import ItemNotFound
 from cfme.services.catalogs.catalog_items import RHVCatalogItem
-from widgetastic_manageiq import LineChart, WaitTab
-from . import InfraProvider
+from widgetastic_manageiq import LineChart
+from widgetastic_manageiq import WaitTab
 
 
 class RHEVMEndpoint(DefaultEndpoint):

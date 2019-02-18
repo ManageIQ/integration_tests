@@ -1,17 +1,13 @@
 import attr
 import pytest
-
-
 import requests
 
+from cfme.fixtures.pytest_store import store
+from cfme.fixtures.rdb import Rdb
 from cfme.utils import ports
+from cfme.utils.conf import rdb
 from cfme.utils.net import net_check
 from cfme.utils.wait import TimedOutError
-from cfme.utils.conf import rdb
-
-from cfme.fixtures.pytest_store import store
-
-from cfme.fixtures.rdb import Rdb
 
 
 @attr.s

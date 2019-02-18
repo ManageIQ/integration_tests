@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 import attr
-
 from navmazing import NavigateToAttribute
-from widgetastic.widget import Text, Checkbox, Table, View
+from widgetastic.widget import Checkbox
+from widgetastic.widget import Table
+from widgetastic.widget import Text
+from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
-from widgetastic_manageiq import TimelinesChart, WaitTab
-
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import BottlenecksView
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import TimelinesChart
+from widgetastic_manageiq import WaitTab
 
 
 class BottlenecksTabsView(BottlenecksView):

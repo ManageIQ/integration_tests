@@ -2,8 +2,13 @@ from collections import Mapping
 from contextlib import contextmanager
 
 from cached_property import cached_property
-from sqlalchemy import MetaData, create_engine, event, inspect
-from sqlalchemy.exc import ArgumentError, DisconnectionError, InvalidRequestError
+from sqlalchemy import create_engine
+from sqlalchemy import event
+from sqlalchemy import inspect
+from sqlalchemy import MetaData
+from sqlalchemy.exc import ArgumentError
+from sqlalchemy.exc import DisconnectionError
+from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool

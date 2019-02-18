@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+import re
 from random import sample
 
 import fauxfactory
 import pytest
-import re
 import requests
 
 from cfme import test_requirements

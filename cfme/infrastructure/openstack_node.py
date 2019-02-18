@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """A model of an Openstack Infrastructure Node in CFME."""
-
 import attr
 
-from cfme.infrastructure.host import Host, HostsCollection
+from cfme.infrastructure.host import Host
+from cfme.infrastructure.host import HostsCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 

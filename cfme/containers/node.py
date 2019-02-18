@@ -1,23 +1,31 @@
 # -*- coding: utf-8 -*-
 # added new list_tbl definition
 import attr
-
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_patternfly import BreadCrumb
 
-from cfme.common import Taggable, TagPageView, PolicyProfileAssignable
-from cfme.common.vm_console import ConsoleMixin
-from cfme.containers.provider import (Labelable,
-    ContainerObjectAllBaseView, LoggingableView, ContainerObjectDetailsBaseView,
-    GetRandomInstancesMixin)
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import (CFMENavigateStep, navigator,
-                                                     navigate_to)
+from cfme.common import PolicyProfileAssignable
+from cfme.common import Taggable
+from cfme.common import TagPageView
 from cfme.common.provider_views import ProviderDetailsToolBar
+from cfme.common.vm_console import ConsoleMixin
+from cfme.containers.provider import ContainerObjectAllBaseView
+from cfme.containers.provider import ContainerObjectDetailsBaseView
+from cfme.containers.provider import GetRandomInstancesMixin
+from cfme.containers.provider import Labelable
+from cfme.containers.provider import LoggingableView
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.providers import get_crud_by_name
-from widgetastic_manageiq import Button, Text, TimelinesView
+from widgetastic_manageiq import Button
+from widgetastic_manageiq import Text
+from widgetastic_manageiq import TimelinesView
 
 
 class NodeDetailsToolBar(ProviderDetailsToolBar):

@@ -132,15 +132,18 @@ Members
 """
 import inspect
 import logging
+import os
 import sys
 import warnings
 from time import time
-from traceback import extract_tb, format_tb
+from traceback import extract_tb
+from traceback import format_tb
 
-from cfme.utils import conf, safe_string
-from cfme.utils.path import get_rel_path, log_path, project_path
-
-import os
+from cfme.utils import conf
+from cfme.utils import safe_string
+from cfme.utils.path import get_rel_path
+from cfme.utils.path import log_path
+from cfme.utils.path import project_path
 
 MARKER_LEN = 80
 

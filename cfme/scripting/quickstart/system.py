@@ -1,9 +1,8 @@
 from __future__ import print_function
 
-import time
-
 import os
 import re
+import time
 
 from . import run_cmd_or_exit
 

@@ -8,15 +8,21 @@ from functools import partial
 
 import six
 from selenium.common.exceptions import NoSuchElementException
-from widgetastic.utils import Version, VersionPick, WaitFillViewStrategy
-from widgetastic.widget import Text, View
+from widgetastic.utils import Version
+from widgetastic.utils import VersionPick
+from widgetastic.utils import WaitFillViewStrategy
+from widgetastic.widget import Text
+from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect as VanillaBootstrapSelect
-from widgetastic_patternfly import Button, Input
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
 from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
-from cfme.utils.wait import TimedOutError, wait_for
-from widgetastic_manageiq import Calendar, Checkbox
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
+from widgetastic_manageiq import Calendar
+from widgetastic_manageiq import Checkbox
 
 
 class ExpressionButton(Button):

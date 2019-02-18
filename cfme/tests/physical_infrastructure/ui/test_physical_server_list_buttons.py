@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import collections
+
 import pytest
 
 from cfme.common.physical_server_views import PhysicalServersView

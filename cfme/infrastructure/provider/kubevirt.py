@@ -1,8 +1,8 @@
 import attr
 
-from cfme.utils.providers import get_crud
-from cfme.containers.provider.openshift import VirtualizationEndpoint
 from . import InfraProvider
+from cfme.containers.provider.openshift import VirtualizationEndpoint
+from cfme.utils.providers import get_crud
 
 
 @attr.s(cmp=False)

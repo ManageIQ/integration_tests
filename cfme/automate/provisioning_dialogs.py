@@ -1,17 +1,28 @@
 # -*- coding: utf-8 -*-
 import attr
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import Text
+from widgetastic.widget import TextInput
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import Dropdown
 
-from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.widget import View, Text, TextInput
-from widgetastic_patternfly import Dropdown, BootstrapSelect, CandidateNotFound
-from widgetastic_manageiq import Button, Table, PaginationPane, SummaryForm, ScriptBox
-
+from . import AutomateCustomizationView
 from cfme.base.login import BaseLoggedInPage
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from . import AutomateCustomizationView
+from widgetastic_manageiq import Button
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import ScriptBox
+from widgetastic_manageiq import SummaryForm
+from widgetastic_manageiq import Table
 
 group_title = 'Basic Information'
 

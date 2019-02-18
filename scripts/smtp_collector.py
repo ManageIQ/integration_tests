@@ -1,14 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """Script used to catch and expose e-mails from CFME"""
-
-from bottle import route, run, response, request
-from collections import namedtuple
-from datetime import datetime
-from jinja2 import Environment, FileSystemLoader
-from smtpd import SMTPServer
-from cfme.utils.path import log_path, template_path
-from cfme.utils.timeutil import parsetime
 import asyncore
 import email
 import json
@@ -16,6 +8,20 @@ import re
 import sqlite3
 import sys
 import threading
+from collections import namedtuple
+from datetime import datetime
+from smtpd import SMTPServer
+
+from bottle import request
+from bottle import response
+from bottle import route
+from bottle import run
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
+
+from cfme.utils.path import log_path
+from cfme.utils.path import template_path
+from cfme.utils.timeutil import parsetime
 
 
 TIME_FORMAT = "%Y-%m-%d-%H-%M-%S"

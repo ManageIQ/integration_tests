@@ -1,15 +1,15 @@
 import fauxfactory
 import pytest
 import pytz
-from dateutil import parser, relativedelta
+from dateutil import parser
+from dateutil import relativedelta
 
-from cfme.utils import conf
 from cfme.base.ui import BaseLoggedInPage
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.wait import wait_for
 from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.provider([VMwareProvider], required_fields=['hosts'], selector=ONE, scope='module'),

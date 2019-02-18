@@ -10,10 +10,13 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.fixtures.appliance import sprout_appliances
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.test_framework.sprout.client import SproutClient, SproutException
+from cfme.test_framework.sprout.client import SproutClient
+from cfme.test_framework.sprout.client import SproutException
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import credentials, auth_data, cfme_data
+from cfme.utils.conf import auth_data
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import list_providers_by_class
 from cfme.utils.version import Version

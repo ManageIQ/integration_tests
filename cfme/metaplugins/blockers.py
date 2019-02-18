@@ -37,14 +37,13 @@ will get called if the blocker blocks. if the action does nothing, then it conti
 actions etc., until it gets to the point that it skips the test because there are blockers.
 """
 import pytest
-
 from kwargify import kwargify as _kwargify
 
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.markers.meta import plugin
+from cfme.utils.appliance import find_appliance
 from cfme.utils.blockers import Blocker
 from cfme.utils.pytest_shortcuts import extract_fixtures_values
-from cfme.utils.appliance import find_appliance
 
 
 def kwargify(f):

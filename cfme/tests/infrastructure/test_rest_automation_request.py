@@ -9,7 +9,8 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import automation_requests_data as _automation_requests_data
 from cfme.rest.gen_data import vm as _vm
-from cfme.utils.rest import assert_response, query_resource_attributes
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import query_resource_attributes
 from cfme.utils.wait import wait_for
 
 pytestmark = [

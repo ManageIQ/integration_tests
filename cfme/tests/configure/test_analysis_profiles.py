@@ -2,7 +2,8 @@
 import fauxfactory
 import pytest
 
-from cfme.utils.appliance.implementations.ui import navigate_to, navigator
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 

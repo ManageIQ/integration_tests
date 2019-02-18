@@ -11,10 +11,8 @@ Configuration for this module + fixture:
           quality: 10
 
 """
-
 import os
 import subprocess
-
 from signal import SIGINT
 
 from cfme.utils.conf import env

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
 import re
+
+import fauxfactory
 
 
 def random_vm_name(context=None, max_length=15):

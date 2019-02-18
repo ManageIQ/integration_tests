@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """Chargeback reports are supported for all infra and cloud providers.
 
 Chargeback reports report costs based on 1)resource usage, 2)resource allocation
@@ -27,7 +26,8 @@ test, despite the fact that these fixtures are module scoped.So, the tests have 
 parameterized.
 """
 import math
-from datetime import date, timedelta
+from datetime import date
+from datetime import timedelta
 
 import fauxfactory
 import pytest

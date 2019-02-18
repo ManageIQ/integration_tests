@@ -2,7 +2,8 @@ import pytest
 
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
-from cfme.utils.testgen import auth_groups, generate
+from cfme.utils.testgen import auth_groups
+from cfme.utils.testgen import generate
 
 pytest_generate_tests = generate(gen_func=auth_groups, auth_mode='ldap')
 

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
-import pytest
 from random import sample
 
+import fauxfactory
+import pytest
+
 import cfme.utils
+from cfme import test_requirements
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import get_crud_by_name
-from cfme import test_requirements
 
 
 @pytest.fixture(scope="function")

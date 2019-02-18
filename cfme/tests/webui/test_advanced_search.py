@@ -1,15 +1,16 @@
-import fauxfactory
 import operator
+from collections import namedtuple
+
+import fauxfactory
 import pytest
 import six
 
-
+from cfme.infrastructure.config_management import ConfigManager
+from cfme.infrastructure.config_management import ConfigSystem
 from cfme.services.myservice import MyService
-from cfme.services.workloads import VmsInstances, TemplatesImages
-from cfme.infrastructure.config_management import ConfigManager, ConfigSystem
+from cfme.services.workloads import TemplatesImages
+from cfme.services.workloads import VmsInstances
 from cfme.utils.appliance.implementations.ui import navigate_to
-
-from collections import namedtuple
 from cfme.utils.blockers import BZ
 
 Param = namedtuple("Param", ["collection", "destination", "entity", "filter", "my_filters"])

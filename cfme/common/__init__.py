@@ -1,18 +1,32 @@
 # -*- coding: utf-8 -*-
-import six
 import random
-from navmazing import NavigateToSibling, NavigationDestinationNotFound
-from widgetastic.exceptions import NoSuchElementException, RowNotFound
-from widgetastic_patternfly import (
-    BreadCrumb, BootstrapSelect, Button, CheckableBootstrapTreeview, DropdownItemNotFound,
-    SelectItemNotFound)
-from widgetastic.widget import Table, Text, View
+
+import six
+from navmazing import NavigateToSibling
+from navmazing import NavigationDestinationNotFound
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic.exceptions import RowNotFound
+from widgetastic.widget import Table
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CheckableBootstrapTreeview
+from widgetastic_patternfly import DropdownItemNotFound
+from widgetastic_patternfly import SelectItemNotFound
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.exceptions import DestinationNotFound, ItemNotFound, displayed_not_implemented
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from cfme.utils.wait import wait_for, TimedOutError
+from cfme.exceptions import DestinationNotFound
+from cfme.exceptions import displayed_not_implemented
+from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView
 
 

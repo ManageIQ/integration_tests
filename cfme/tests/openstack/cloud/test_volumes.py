@@ -1,13 +1,13 @@
 """Tests for Openstack cloud volumes"""
-
 import fauxfactory
 import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils.appliance.implementations.ui import navigate_to, navigator
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.update import update
-from cfme.utils.wait import wait_for, wait_for_decorator
+from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.usefixtures("setup_provider_modscope"),

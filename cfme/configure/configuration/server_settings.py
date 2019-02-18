@@ -2,10 +2,18 @@
 from copy import copy
 
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import Text, Checkbox, View, ConditionalSwitchableView
-from widgetastic_patternfly import Input, Button, BootstrapSelect, BootstrapSwitch, FlashMessages
+from widgetastic.widget import Checkbox
+from widgetastic.widget import ConditionalSwitchableView
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import FlashMessages
+from widgetastic_patternfly import Input
 
-from cfme.exceptions import ConsoleNotSupported, ConsoleTypeNotSupported
+from cfme.exceptions import ConsoleNotSupported
+from cfme.exceptions import ConsoleTypeNotSupported
 from cfme.utils import conf
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigate_to

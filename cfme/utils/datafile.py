@@ -3,7 +3,8 @@ import os
 from string import Template
 from tempfile import NamedTemporaryFile
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
 
 from cfme.utils.path import template_path
 

@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """This module contains tests that test the universally applicable canned methods in Automate."""
+from datetime import date
+from datetime import timedelta
+
 import fauxfactory
 import pytest
 
-from datetime import timedelta, date
-
 from cfme import test_requirements
-from cfme.infrastructure.virtual_machines import InfraVmSummaryView
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.virtual_machines import InfraVmSummaryView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name

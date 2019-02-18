@@ -8,8 +8,8 @@ import traceback
 import warnings
 from copy import copy
 from datetime import datetime
-from time import sleep, time
-from urllib3.exceptions import ConnectionError
+from time import sleep
+from time import time
 
 import attr
 import dateutil.parser
@@ -21,28 +21,43 @@ import six
 import yaml
 from cached_property import cached_property
 from debtcollector import removals
-from manageiq_client.api import APIException, ManageIQClient as VanillaMiqApi
+from manageiq_client.api import APIException
+from manageiq_client.api import ManageIQClient as VanillaMiqApi
 from six.moves.urllib.parse import urlparse
-from werkzeug.local import LocalStack, LocalProxy
+from urllib3.exceptions import ConnectionError
+from werkzeug.local import LocalProxy
+from werkzeug.local import LocalStack
 from wrapanapi import VmState
 from wrapanapi.exceptions import VMInstanceNotFound
 
-from cfme.fixtures import ui_coverage
-from cfme.fixtures.pytest_store import store
-from cfme.utils import clear_property_cache
-from cfme.utils import conf, ssh, ports
-from cfme.utils.conf import hidden
-from cfme.utils.log import logger, create_sublogger, logger_wrap
-from cfme.utils.net import net_check, resolve_hostname
-from cfme.utils.path import data_path, patches_path, scripts_path, conf_path
-from cfme.utils.ssh import SSHTail
-from cfme.utils.version import Version, get_stream, VersionPicker
-from cfme.utils.wait import wait_for, TimedOutError
 from .db import ApplianceDB
 from .implementations.rest import ViaREST
 from .implementations.ssui import ViaSSUI
 from .implementations.ui import ViaUI
-from .services import SystemdService, SystemdException
+from .services import SystemdException
+from .services import SystemdService
+from cfme.fixtures import ui_coverage
+from cfme.fixtures.pytest_store import store
+from cfme.utils import clear_property_cache
+from cfme.utils import conf
+from cfme.utils import ports
+from cfme.utils import ssh
+from cfme.utils.conf import hidden
+from cfme.utils.log import create_sublogger
+from cfme.utils.log import logger
+from cfme.utils.log import logger_wrap
+from cfme.utils.net import net_check
+from cfme.utils.net import resolve_hostname
+from cfme.utils.path import conf_path
+from cfme.utils.path import data_path
+from cfme.utils.path import patches_path
+from cfme.utils.path import scripts_path
+from cfme.utils.ssh import SSHTail
+from cfme.utils.version import get_stream
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # EMS types recognized by IP or credentials

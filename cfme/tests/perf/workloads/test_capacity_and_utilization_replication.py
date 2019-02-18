@@ -1,14 +1,18 @@
 """Runs Capacity and Utilization with Replication Workload."""
+import time
+
+import pytest
+
 from cfme.utils.appliance import IPAppliance
 from cfme.utils.conf import cfme_performance
 from cfme.utils.grafana import get_scenario_dashboard_urls
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud
-from cfme.utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
-from cfme.utils.ssh import SSHClient, SSHTail
+from cfme.utils.smem_memory_monitor import add_workload_quantifiers
+from cfme.utils.smem_memory_monitor import SmemMemoryMonitor
+from cfme.utils.ssh import SSHClient
+from cfme.utils.ssh import SSHTail
 from cfme.utils.workloads import get_capacity_and_utilization_replication_scenarios
-import time
-import pytest
 
 roles_cap_and_util_rep = ['automate', 'database_operations', 'database_synchronization',
                       'ems_inventory', 'ems_metrics_collector', 'ems_metrics_coordinator',

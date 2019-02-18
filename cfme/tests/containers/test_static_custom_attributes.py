@@ -1,13 +1,15 @@
-from string import digits, ascii_letters
-from random import choice
-from os import path
-from copy import deepcopy
 import re
-import pytest
+from copy import deepcopy
+from os import path
+from random import choice
+from string import ascii_letters
+from string import digits
 
+import pytest
 from manageiq_client.api import APIException
 
-from cfme.containers.provider import ContainersProvider, refresh_and_navigate
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import refresh_and_navigate
 from cfme.containers.provider.openshift import CustomAttribute
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger

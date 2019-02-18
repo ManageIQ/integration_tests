@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-
 """ This module should contain all things associated with time or date that can be shared.
 
 """
-
-from datetime import datetime as _datetime
 import time
+from datetime import datetime as _datetime
+
 import tzlocal
 
 local_tz = tzlocal.get_localzone()

@@ -2,8 +2,10 @@
 from navmazing import NavigateToAttribute
 
 from cfme.common import TopologyMixin
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 
 
 class Topology(TopologyMixin, Navigatable):

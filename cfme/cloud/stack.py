@@ -1,19 +1,32 @@
 import attr
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import View, Text
-from widgetastic_patternfly import Button, Dropdown, BootstrapNav, BreadCrumb
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapNav
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.exceptions import CandidateNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    Accordion, ItemsToolBarViewSelector, PaginationPane, SummaryTable, Table, BaseEntitiesView,
-    Search, ManageIQTree)
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import Table
 
 class StackToolbar(View):
     """The toolbar on the stacks page"""

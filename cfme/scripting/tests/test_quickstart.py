@@ -1,8 +1,10 @@
 # using subprocess because its a better docker api
 # than the docker-py 1.10 we hard depend on
 import subprocess
-from cfme.utils import path
+
 import pytest
+
+from cfme.utils import path
 
 PYTHON_DEB = 'apt-get -y update && apt-get -y install python python3'
 PYTHON_RPM = '{cmd} -yq update && {cmd} -yq install python python3'

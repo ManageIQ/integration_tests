@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
-from datetime import date, timedelta, datetime
+from datetime import date
+from datetime import datetime
+from datetime import timedelta
 
 import pytest
 
@@ -8,15 +10,17 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to
+from cfme.markers.env_markers.provider import providers
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.timeutil import parsetime
-from cfme.utils.version import VersionPicker, LOWEST
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
-from cfme.markers.env_markers.provider import providers
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),

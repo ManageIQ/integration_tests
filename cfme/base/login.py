@@ -1,9 +1,11 @@
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
-from widgetastic_manageiq import SettingsNavDropdown
-from widgetastic_patternfly import NavDropdown, VerticalNavigation, FlashMessages
+from widgetastic_patternfly import FlashMessages
+from widgetastic_patternfly import NavDropdown
+from widgetastic_patternfly import VerticalNavigation
 
 from cfme.exceptions import CFMEException
+from widgetastic_manageiq import SettingsNavDropdown
 
 
 class BaseLoggedInPage(View):

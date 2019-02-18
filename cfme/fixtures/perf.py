@@ -1,7 +1,8 @@
 """Fixtures specifically for performance tests."""
-from cfme.utils.perf import set_rails_loglevel
-from cfme.utils.perf import get_worker_pid
 import pytest
+
+from cfme.utils.perf import get_worker_pid
+from cfme.utils.perf import set_rails_loglevel
 
 
 @pytest.fixture(scope='session')

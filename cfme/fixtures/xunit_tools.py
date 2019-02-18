@@ -1,15 +1,14 @@
 # pylint: disable=broad-except
-
-import re
 import datetime
-
-from lxml import etree
+import re
 
 import pytest
+from lxml import etree
 
-# pylint: disable=no-name-in-module
-from cfme.utils.conf import xunit, cfme_data
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import xunit
 from cfme.utils.pytest_shortcuts import extract_fixtures_values
+# pylint: disable=no-name-in-module
 
 
 whitelist = [

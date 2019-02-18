@@ -1,19 +1,21 @@
+import base64
 import os
 import re
-import base64
 from textwrap import dedent
 from types import FunctionType
 
-from six import iteritems
-from sphinx.ext.napoleon import _skip_member, Config
-from sphinx.ext.napoleon import docstring
-from sphinx.ext.napoleon.docstring import NumpyDocstring
+import pytest
+import six
 import sphinx
 import yaml
-import six
-import pytest
+from six import iteritems
+from sphinx.ext.napoleon import _skip_member
+from sphinx.ext.napoleon import Config
+from sphinx.ext.napoleon import docstring
+from sphinx.ext.napoleon.docstring import NumpyDocstring
 
-from cfme.utils.log import get_rel_path, logger
+from cfme.utils.log import get_rel_path
+from cfme.utils.log import logger
 
 config = Config(napoleon_use_param=True, napoleon_use_rtype=True)
 

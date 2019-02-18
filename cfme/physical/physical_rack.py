@@ -1,35 +1,35 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure PhysicalRack in CFME."""
 import attr
-
 from lxml.html import document_fromstring
 from navmazing import NavigateToAttribute
-from widgetastic_patternfly import Dropdown, Accordion
-from widgetastic.widget import Text, View
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Accordion
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
-from cfme.exceptions import (
-    ItemNotFound,
-    StatsDoNotMatch,
-    RackStatsDoesNotContain,
-    ProviderHasNoProperty
-)
-from cfme.modeling.base import BaseEntity, BaseCollection
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
+from cfme.exceptions import ItemNotFound
+from cfme.exceptions import ProviderHasNoProperty
+from cfme.exceptions import RackStatsDoesNotContain
+from cfme.exceptions import StatsDoNotMatch
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    BaseEntitiesView,
-    JSBaseEntity,
-    BreadCrumb,
-    ItemsToolBarViewSelector,
-    SummaryTable,
-    ManageIQTree
-)
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import BreadCrumb
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import JSBaseEntity
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import SummaryTable
 
 
 @attr.s

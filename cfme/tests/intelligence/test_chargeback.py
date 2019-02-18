@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 import random
+
 import fauxfactory
 import pytest
-
 
 import cfme.intelligence.chargeback.rates as cb
 from cfme import test_requirements
 from cfme.rest.gen_data import rates as _rates
-from cfme.utils.rest import (
-    assert_response,
-    delete_resources_from_collection,
-    delete_resources_from_detail,
-)
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.rest import delete_resources_from_detail
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
-from cfme.utils.appliance.implementations.ui import navigator
 
 
 pytestmark = [

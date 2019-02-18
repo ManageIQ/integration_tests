@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-import pytest
-
-from widgetastic.utils import partial_match
 import miq_version
+import pytest
+from widgetastic.utils import partial_match
+
 from cfme import test_requirements
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
-from cfme.utils import testgen
 
 pytestmark = [
     test_requirements.smartstate,

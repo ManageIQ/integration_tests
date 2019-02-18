@@ -1,10 +1,10 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.common.candu_views import UtilizationZoomView
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.common.candu_views import UtilizationZoomView
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE

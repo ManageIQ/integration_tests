@@ -1,12 +1,13 @@
 #!/usr/bin/env python2
-
 """SSH into a running appliance and install VMware VDDK.
 """
-
 import argparse
 import sys
+
 from six.moves.urllib.parse import urlparse
-from cfme.utils.appliance import IPAppliance, get_or_create_current_appliance
+
+from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.appliance import IPAppliance
 
 
 def log(message):

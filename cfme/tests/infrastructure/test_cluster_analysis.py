@@ -3,9 +3,9 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
-from cfme.markers.env_markers.provider import ONE_PER_TYPE
 
 
 pytestmark = [

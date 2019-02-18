@@ -1,15 +1,17 @@
-import pytest
-import fauxfactory
 from textwrap import dedent
 
+import fauxfactory
+import pytest
 from widgetastic_patternfly import Dropdown
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.tests.automate.custom_button import log_request_check, TextInputDialogView
+from cfme.tests.automate.custom_button import log_request_check
+from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.wait import TimedOutError, wait_for
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

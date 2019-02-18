@@ -4,7 +4,8 @@ import sys
 from datetime import datetime
 
 from cfme.utils.path import log_path
-from cfme.utils.providers import list_provider_keys, get_mgmt
+from cfme.utils.providers import get_mgmt
+from cfme.utils.providers import list_provider_keys
 
 
 def parse_cmd_line():

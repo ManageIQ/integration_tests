@@ -5,11 +5,12 @@ not be difficult to extend the parametrizer.
 """
 import pytest
 
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
+from cfme.infrastructure.provider.virtualcenter import VirtualCenterEndpoint
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
+from cfme.utils.appliance import find_appliance
 from cfme.utils.net import resolve_hostname
 from cfme.utils.version import Version
-from cfme.utils.appliance import find_appliance
 
 
 def pytest_generate_tests(metafunc):

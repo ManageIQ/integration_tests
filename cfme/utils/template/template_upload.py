@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import argparse
 import sys
 from threading import Thread
@@ -7,16 +6,19 @@ from threading import Thread
 from miq_version import TemplateName
 
 from cfme.utils.conf import cfme_data
-from cfme.utils.log import logger, add_stdout_handler
+from cfme.utils.log import add_stdout_handler
+from cfme.utils.log import logger
 from cfme.utils.providers import list_provider_keys
-from cfme.utils.template.base import TemplateUploadException, PROVIDER_TYPES, ALL_STREAMS
+from cfme.utils.template.base import ALL_STREAMS
+from cfme.utils.template.base import PROVIDER_TYPES
+from cfme.utils.template.base import TemplateUploadException
 from cfme.utils.template.ec2 import EC2TemplateUpload
 from cfme.utils.template.gce import GoogleCloudTemplateUpload
 from cfme.utils.template.openstack import OpenstackTemplateUpload
 from cfme.utils.template.rhevm import RHEVMTemplateUpload
+from cfme.utils.template.rhopenshift import OpenshiftTemplateUpload
 from cfme.utils.template.scvmm import SCVMMTemplateUpload
 from cfme.utils.template.virtualcenter import VMWareTemplateUpload
-from cfme.utils.template.rhopenshift import OpenshiftTemplateUpload
 
 CLASS_MAP = {
     'openstack': OpenstackTemplateUpload,

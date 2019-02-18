@@ -9,7 +9,8 @@ from cfme.containers.node import NodeAllView
 from cfme.containers.overview import ContainersOverviewView
 from cfme.containers.pod import PodAllView
 from cfme.containers.project import ProjectAllView
-from cfme.containers.provider import ContainersProvider, ContainerProvidersView
+from cfme.containers.provider import ContainerProvidersView
+from cfme.containers.provider import ContainersProvider
 from cfme.containers.replicator import ReplicatorAllView
 from cfme.containers.route import RouteAllView
 from cfme.containers.service import ServiceAllView

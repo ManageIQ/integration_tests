@@ -1,5 +1,4 @@
 #!/usr/bin/env python2
-
 """SSH into a running appliance and configure security.
 
 Configures security on appliance(s) according to this document:
@@ -23,12 +22,12 @@ Example usage:
    configure_security.py 10.0.0.1 -c 10.0.0.2 -c 10.0.0.3
 
 """
-
 import argparse
-import fauxfactory
 import re
 import socket
 import sys
+
+import fauxfactory
 
 from cfme.utils.conf import credentials
 from cfme.utils.ssh import SSHClient

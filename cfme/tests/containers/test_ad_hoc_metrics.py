@@ -1,10 +1,10 @@
 import pytest
 import requests
 
-from cfme.utils.log import logger
 from cfme.containers.provider import ContainersProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 
 pytestmark = [

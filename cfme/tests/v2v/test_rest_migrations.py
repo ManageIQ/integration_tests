@@ -4,7 +4,8 @@ import pytest
 
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE_PER_VERSION, ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE_PER_VERSION
 
 
 pytestmark = [

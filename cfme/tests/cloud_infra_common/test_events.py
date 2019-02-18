@@ -3,10 +3,10 @@
 import fauxfactory
 import pytest
 
-from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider import CloudProvider
-from cfme.infrastructure.provider import InfraProvider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.control.explorer.policies import VMControlPolicy
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for

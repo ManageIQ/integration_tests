@@ -1,6 +1,6 @@
 import pytest
-
 from wrapanapi.utils.random import random_name
+
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 

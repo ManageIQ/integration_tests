@@ -1,29 +1,30 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure PhysicalServer in CFME."""
 import attr
-from navmazing import NavigateToSibling, NavigateToAttribute
 from cached_property import cached_property
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from wrapanapi.systems import LenovoSystem
 
-from cfme.common import PolicyProfileAssignable, Taggable
-from cfme.common.physical_server_views import (
-    PhysicalServerDetailsView,
-    PhysicalServerManagePoliciesView,
-    PhysicalServersView,
-    PhysicalServerProvisionView,
-    PhysicalServerTimelinesView,
-    PhysicalServerEditTagsView,
-    PhysicalServerNetworkDevicesView,
-    PhysicalServerStorageDevicesView
-)
-from cfme.exceptions import (
-    ItemNotFound,
-    StatsDoNotMatch,
-    HostStatsNotContains,
-    ProviderHasNoProperty
-)
-from cfme.modeling.base import BaseEntity, BaseCollection
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
+from cfme.common import PolicyProfileAssignable
+from cfme.common import Taggable
+from cfme.common.physical_server_views import PhysicalServerDetailsView
+from cfme.common.physical_server_views import PhysicalServerEditTagsView
+from cfme.common.physical_server_views import PhysicalServerManagePoliciesView
+from cfme.common.physical_server_views import PhysicalServerNetworkDevicesView
+from cfme.common.physical_server_views import PhysicalServerProvisionView
+from cfme.common.physical_server_views import PhysicalServerStorageDevicesView
+from cfme.common.physical_server_views import PhysicalServersView
+from cfme.common.physical_server_views import PhysicalServerTimelinesView
+from cfme.exceptions import HostStatsNotContains
+from cfme.exceptions import ItemNotFound
+from cfme.exceptions import ProviderHasNoProperty
+from cfme.exceptions import StatsDoNotMatch
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name

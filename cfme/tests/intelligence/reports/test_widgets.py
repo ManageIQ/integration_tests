@@ -2,10 +2,10 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.intelligence.reports.dashboards import DefaultDashboard
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
-from cfme import test_requirements
 
 
 @pytest.fixture(scope="module")

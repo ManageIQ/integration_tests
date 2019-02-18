@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-
 from widgetastic.utils import partial_match
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
+from cfme.infrastructure.pxe import get_template_from_config
+from cfme.infrastructure.pxe import ISODatastore
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import testgen
 from cfme.utils.blockers import GH

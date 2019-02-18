@@ -13,10 +13,10 @@ The availability of these objects varies during a test run, but
 all should be available in the collection and testing phases of a test run.
 
 """
-import fauxfactory
 import os
 import sys
 
+import fauxfactory
 from _pytest.terminal import TerminalReporter
 from cached_property import cached_property
 from py.io import TerminalWriter

@@ -89,9 +89,11 @@ import pytest
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.config_management import get_config_manager_from_config
 from cfme.roles import group_data
-from cfme.utils.conf import cfme_data, auth_data
+from cfme.utils.conf import auth_data
+from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
-from cfme.utils.providers import ProviderFilter, list_providers
+from cfme.utils.providers import list_providers
+from cfme.utils.providers import ProviderFilter
 
 
 def _param_check(metafunc, argnames, argvalues):

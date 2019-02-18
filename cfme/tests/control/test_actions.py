@@ -15,11 +15,15 @@ from functools import partial
 
 import fauxfactory
 import pytest
+from wrapanapi import VmState
 
+from . import do_scan
+from . import wait_for_ssa_enabled
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.control.explorer import conditions, policies
+from cfme.control.explorer import conditions
+from cfme.control.explorer import policies
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -31,10 +35,8 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import update
 from cfme.utils.virtual_machines import deploy_template
-from cfme.utils.wait import wait_for, TimedOutError
-from . import do_scan, wait_for_ssa_enabled
-
-from wrapanapi import VmState
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,

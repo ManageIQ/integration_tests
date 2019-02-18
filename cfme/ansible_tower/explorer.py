@@ -1,15 +1,23 @@
 import attr
-
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, View
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import Text
+from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
-from widgetastic_manageiq import Search, ItemsToolBarViewSelector, Button, Accordion, ManageIQTree
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
-from cfme.utils.version import Version, VersionPicker
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import Button
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import Search
 
 
 class TowerExplorerAccordion(View):

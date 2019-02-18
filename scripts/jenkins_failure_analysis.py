@@ -1,9 +1,13 @@
 #!/usr/bin/env python
-import requests
 from collections import defaultdict
-from jinja2 import Environment, FileSystemLoader
-from cfme.utils.path import template_path, log_path
+
+import requests
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
+
 from cfme.utils.conf import jenkins
+from cfme.utils.path import log_path
+from cfme.utils.path import template_path
 
 
 def get_json(run):

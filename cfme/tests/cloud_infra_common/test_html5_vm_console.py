@@ -1,22 +1,23 @@
 # -*- coding: utf-8 -*-
 """Test for HTML5 Remote Consoles of VMware/RHEV/RHOSP Providers."""
-import pytest
 import imghdr
-import time
 import re
+import time
+
+import pytest
+from wait_for import wait_for
 
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.utils import ssh
 from cfme.utils.blockers import BZ
-from cfme.utils.log import logger
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
-from wait_for import wait_for
-from cfme.markers.env_markers.provider import providers
 
 
 pytestmark = [

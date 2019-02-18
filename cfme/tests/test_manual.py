@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: skip-file
 """Manual tests"""
-
 import pytest
 
 from cfme import test_requirements

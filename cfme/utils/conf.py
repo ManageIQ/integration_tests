@@ -1,11 +1,7 @@
 import sys
 
-from cfme.test_framework.config import (
-    global_configuration,
-    DeprecatedConfigWrapper,
-)
-
-
+from cfme.test_framework.config import DeprecatedConfigWrapper
+from cfme.test_framework.config import global_configuration
 from cfme.utils import path
 
 global_configuration.configure(

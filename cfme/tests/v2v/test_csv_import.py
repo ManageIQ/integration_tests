@@ -1,13 +1,14 @@
-import fauxfactory
-import pytest
 import tempfile
 
+import fauxfactory
+import pytest
 from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme.fixtures.v2v import _form_data
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE_PER_VERSION, ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name

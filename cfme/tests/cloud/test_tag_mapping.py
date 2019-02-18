@@ -1,4 +1,5 @@
 import pytest
+from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
@@ -6,8 +7,6 @@ from cfme.exceptions import ItemNotFound
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
-
-from widgetastic.utils import partial_match
 
 pytestmark = [
     pytest.mark.provider([AzureProvider], selector=ONE_PER_CATEGORY, scope='function'),

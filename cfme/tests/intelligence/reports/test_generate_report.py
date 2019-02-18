@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
-
 """ This test generate one default report for each category under reports accordion
 
 """
-
 import pytest
 
-# from selenium.common.exceptions import NoSuchElementException
-
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme import test_requirements
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+# from selenium.common.exceptions import NoSuchElementException
 # from utils.log import logger
 
 

@@ -10,7 +10,6 @@ artifactor:
             enabled: True
             plugin: filedump
 """
-
 import base64
 import os
 import re
@@ -18,7 +17,8 @@ import re
 import six
 
 from artifactor import ArtifactorBasePlugin
-from cfme.utils import normalize_text, safe_string
+from cfme.utils import normalize_text
+from cfme.utils import safe_string
 
 
 class Filedump(ArtifactorBasePlugin):

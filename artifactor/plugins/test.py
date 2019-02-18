@@ -1,5 +1,4 @@
 """ Test plugin for Artifactor """
-
 import time
 
 from artifactor import ArtifactorBasePlugin

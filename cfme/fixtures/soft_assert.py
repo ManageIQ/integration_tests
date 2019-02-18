@@ -20,22 +20,22 @@ list by the context manager. Because the store is a :py:func:`list <python:list>
 will be reported in the order that they failed.
 
 """
+import base64
+import sys
+import traceback
 from contextlib import contextmanager
-from threading import local
 from functools import partial
+from threading import local
 
 import fauxfactory
 import pytest
 
+import cfme.utils
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
+from cfme.utils.appliance import DummyAppliance
+from cfme.utils.appliance import find_appliance
 from cfme.utils.log import nth_frame_info
 from cfme.utils.path import get_rel_path
-import sys
-import traceback
-import cfme.utils
-from cfme.utils.appliance import DummyAppliance, find_appliance
-
-import base64
 
 
 # Use a thread-local store for failed soft asserts, making it thread-safe

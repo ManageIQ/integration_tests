@@ -1,19 +1,24 @@
+from os import path
+
 import attr
 from cached_property import cached_property
-from os import path
 from six.moves.urllib.error import URLError
 from wrapanapi.systems.container import Openshift
 
+from . import ContainersProvider
+from . import ContainersProviderDefaultEndpoint
+from . import ContainersProviderEndpointsForm
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.vm_console import ConsoleMixin
-from cfme.control.explorer.alert_profiles import ProviderAlertProfile, NodeAlertProfile
+from cfme.control.explorer.alert_profiles import NodeAlertProfile
+from cfme.control.explorer.alert_profiles import ProviderAlertProfile
 from cfme.utils import ssh
-from cfme.utils.log import logger
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 from cfme.utils.ocp_cli import OcpCli
 from cfme.utils.varmeth import variable
-from cfme.utils.wait import wait_for, TimedOutError
-from . import ContainersProvider, ContainersProviderDefaultEndpoint, ContainersProviderEndpointsForm
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 class CustomAttribute(object):

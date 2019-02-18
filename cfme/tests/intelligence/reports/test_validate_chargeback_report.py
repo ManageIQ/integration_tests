@@ -19,7 +19,6 @@ The tests in this module validate costs for resource usage.
 The tests for resource allocation are in :
 cfme/tests/intelligence/chargeback/test_resource_allocation.py
 """
-
 import math
 import re
 from datetime import date
@@ -27,6 +26,7 @@ from functools import partial
 
 import fauxfactory
 import pytest
+from wrapanapi import VmState
 
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
@@ -42,8 +42,6 @@ from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
-
-from wrapanapi import VmState
 
 pf1 = ProviderFilter(classes=[CloudProvider, InfraProvider],
     required_fields=[(['cap_and_util', 'test_chargeback'], True)])

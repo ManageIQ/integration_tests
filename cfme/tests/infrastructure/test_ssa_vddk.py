@@ -1,15 +1,14 @@
 import fauxfactory
 import pytest
+from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.markers.env_markers.provider import ONE_PER_VERSION
-
-from wrapanapi import VmState
 
 pytestmark = [
     pytest.mark.tier(3),

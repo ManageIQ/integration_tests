@@ -1,16 +1,12 @@
 # from cfme.modeling.base import parent_of_type
 # from cfme.utils.appliance import ViaREST, MiqImplementationContext
 # from . import RegionCollection, ZoneCollection, ServerCollection, Server, Zone, Region
-
-
 # @MiqImplementationContext.external_for(RegionCollection.all, ViaREST)
 # def region_all(self):
 #     self.appliance.rest_api.collections.regions.reload()
 #     region_collection = self.appliance.rest_api.collections.regions
 #     regions = [self.instantiate(region.region) for region in region_collection]
 #     return regions
-
-
 # @MiqImplementationContext.external_for(ZoneCollection.all, ViaREST)
 # def zone_all(self):
 #     zone_collection = self.appliance.rest_api.collections.zones
@@ -25,8 +21,6 @@
 #         ))
 #     # TODO: This code needs a refactor once the attributes can be loaded from the collection
 #     return zones
-
-
 # @MiqImplementationContext.external_for(ServerCollection.all, ViaREST)
 # def server_all(self):
 #     server_collection = self.appliance.rest_api.collections.servers
@@ -42,15 +36,11 @@
 #         servers.append(self.instantiate(name=server.name, sid=server.id))
 #     # TODO: This code needs a refactor once the attributes can be loaded from the collection
 #     return servers
-
-
 # @MiqImplementationContext.external_for(ServerCollection.get_master, ViaREST)
 # def get_master(self):
 #     server_collection = self.appliance.rest_api.collections.servers
 #     server = server_collection.find_by(is_master=True)[0]
 #     return self.instantiate(name=server.name, sid=server.id)
-
-
 # @MiqImplementationContext.external_for(Server.zone, ViaREST)
 # def zone(self):
 #     possible_parent = parent_of_type(self, Zone)
@@ -68,13 +58,9 @@
 #         )
 #         self._zone = zone_obj
 #     return self._zone
-
-
 # @MiqImplementationContext.external_for(Server.slave_servers, ViaREST)
 # def slave_servers(self):
 #     return self.zone.collections.servers.filter({'slave': True}).all()
-
-
 # @MiqImplementationContext.external_for(Zone.region, ViaREST)
 # def region(self):
 #     possible_parent = parent_of_type(self, Region)

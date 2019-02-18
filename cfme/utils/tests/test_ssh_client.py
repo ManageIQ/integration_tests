@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+
 from cfme.utils.appliance import DummyAppliance
 pytestmark = [
     pytest.mark.nondestructive,

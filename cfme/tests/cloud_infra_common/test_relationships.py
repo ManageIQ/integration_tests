@@ -7,23 +7,29 @@ from navmazing import NavigationDestinationNotFound
 from cfme.cloud.availability_zone import ProviderAvailabilityZoneAllView
 from cfme.cloud.flavor import ProviderFlavorAllView
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider import CloudProviderImagesView, CloudProviderInstancesView
+from cfme.cloud.provider import CloudProviderImagesView
+from cfme.cloud.provider import CloudProviderInstancesView
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.stack import ProviderStackAllView
 from cfme.cloud.tenant import ProviderTenantAllView
 from cfme.common.host_views import ProviderAllHostsView
 from cfme.common.provider_views import InfraProviderDetailsView
-from cfme.common.vm_views import HostAllVMsView, ProviderAllVMsView
-from cfme.infrastructure.cluster import ClusterDetailsView, ProviderAllClustersView
-from cfme.infrastructure.datastore import HostAllDatastoresView, ProviderAllDatastoresView
+from cfme.common.vm_views import HostAllVMsView
+from cfme.common.vm_views import ProviderAllVMsView
+from cfme.infrastructure.cluster import ClusterDetailsView
+from cfme.infrastructure.cluster import ProviderAllClustersView
+from cfme.infrastructure.datastore import HostAllDatastoresView
+from cfme.infrastructure.datastore import ProviderAllDatastoresView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import (
-    HostTemplatesOnlyAllView, ProviderTemplatesOnlyAllView)
-from cfme.markers.env_markers.provider import ONE, ONE_PER_TYPE
+from cfme.infrastructure.virtual_machines import HostTemplatesOnlyAllView
+from cfme.infrastructure.virtual_machines import ProviderTemplatesOnlyAllView
+from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.networks.provider import NetworkProvider
-from cfme.networks.views import NetworkProviderDetailsView, ProviderSecurityGroupAllView
+from cfme.networks.views import NetworkProviderDetailsView
+from cfme.networks.views import ProviderSecurityGroupAllView
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger

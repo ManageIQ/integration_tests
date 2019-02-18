@@ -1,22 +1,41 @@
 import attr
-from navmazing import NavigateToSibling, NavigateToAttribute, NavigationDestinationNotFound
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from navmazing import NavigationDestinationNotFound
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic_patternfly import CheckableBootstrapTreeview, Dropdown, Button
 from widgetastic.utils import partial_match
 from widgetastic.widget import View
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CheckableBootstrapTreeview
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm import VM, VMCollection
-from cfme.common.vm_views import (
-    ProvisionView, VMToolbar, VMEntities, VMDetailsEntities, EditView,
-    SetOwnershipView, ManagementEngineView, PolicySimulationView, RetirementViewWithOffset)
-from cfme.exceptions import (InstanceNotFound, ItemNotFound, DestinationNotFound)
-from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
+from cfme.common.vm import VM
+from cfme.common.vm import VMCollection
+from cfme.common.vm_views import EditView
+from cfme.common.vm_views import ManagementEngineView
+from cfme.common.vm_views import PolicySimulationView
+from cfme.common.vm_views import ProvisionView
+from cfme.common.vm_views import RetirementViewWithOffset
+from cfme.common.vm_views import SetOwnershipView
+from cfme.common.vm_views import VMDetailsEntities
+from cfme.common.vm_views import VMEntities
+from cfme.common.vm_views import VMToolbar
+from cfme.exceptions import DestinationNotFound
+from cfme.exceptions import InstanceNotFound
+from cfme.exceptions import ItemNotFound
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (ManageIQTree, TimelinesView, Accordion, CompareToolBarActionsView,
-                                  Search, SummaryTable)
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import CompareToolBarActionsView
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import TimelinesView
 
 
 class InstanceDetailsToolbar(View):

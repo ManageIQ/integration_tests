@@ -1,14 +1,16 @@
 from collections import defaultdict
+from distutils.version import LooseVersion
 
 import attr
 import pytest
 import six
-from distutils.version import LooseVersion
 
 from cfme.markers.env import EnvironmentMarker
 from cfme.utils import conf
 from cfme.utils.log import logger
-from cfme.utils.providers import ProviderFilter, list_providers, all_types
+from cfme.utils.providers import all_types
+from cfme.utils.providers import list_providers
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.pytest_shortcuts import fixture_filter
 from cfme.utils.version import Version
 

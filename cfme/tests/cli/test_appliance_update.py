@@ -3,10 +3,13 @@ from collections import namedtuple
 import fauxfactory
 import pytest
 
-from cfme.fixtures.cli import (provider_app_crud, provision_vm, update_appliance,
-                               do_appliance_versions_match)
+from cfme.fixtures.cli import do_appliance_versions_match
+from cfme.fixtures.cli import provider_app_crud
+from cfme.fixtures.cli import provision_vm
+from cfme.fixtures.cli import update_appliance
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.test_framework.sprout.client import SproutClient, SproutException
+from cfme.test_framework.sprout.client import SproutClient
+from cfme.test_framework.sprout.client import SproutException
 from cfme.utils.appliance import find_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data

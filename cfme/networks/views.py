@@ -1,27 +1,27 @@
-from widgetastic.widget import View, Text, Select
-from widgetastic_patternfly import (
-    BootstrapNav,
-    Dropdown,
-    Accordion,
-    Button,
-    TextInput,
-    BootstrapSwitch,
-    BootstrapSelect
-)
+from widgetastic.widget import Select
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Accordion
+from widgetastic_patternfly import BootstrapNav
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import TextInput
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.provider_views import ProviderAddView, ProviderEditView
+from cfme.common.provider_views import ProviderAddView
+from cfme.common.provider_views import ProviderEditView
 from cfme.exceptions import displayed_not_implemented
-from cfme.utils.version import VersionPicker, Version
-from widgetastic_manageiq import (
-    ManageIQTree,
-    SummaryTable,
-    ItemsToolBarViewSelector,
-    BaseEntitiesView,
-    ParametrizedSummaryTable,
-    Search,
-    Table
-)
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import ParametrizedSummaryTable
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import Table
 
 
 class NetworkProviderToolBar(View):

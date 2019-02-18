@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Manual tests"""
-
 import pytest
 
 from cfme import test_requirements

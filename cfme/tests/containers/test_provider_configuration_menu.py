@@ -1,7 +1,7 @@
 import pytest
 
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.containers.provider import ContainersProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

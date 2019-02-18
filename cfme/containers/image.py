@@ -1,23 +1,32 @@
 # -*- coding: utf-8 -*-
 import attr
 from cached_property import cached_property
-
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.widget import View
 
-from cfme.common import (Taggable, TagPageView, PolicyProfileAssignable)
-from cfme.containers.provider import (ContainerObjectAllBaseView,
-                                      ContainerObjectDetailsBaseView,
-                                      ContainerObjectDetailsEntities, GetRandomInstancesMixin,
-                                      Labelable, LoadDetailsMixin,
-                                      refresh_and_navigate)
+from cfme.common import PolicyProfileAssignable
+from cfme.common import Taggable
+from cfme.common import TagPageView
+from cfme.containers.provider import ContainerObjectAllBaseView
+from cfme.containers.provider import ContainerObjectDetailsBaseView
+from cfme.containers.provider import ContainerObjectDetailsEntities
+from cfme.containers.provider import GetRandomInstancesMixin
+from cfme.containers.provider import Labelable
+from cfme.containers.provider import LoadDetailsMixin
+from cfme.containers.provider import refresh_and_navigate
 from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
-from cfme.utils.wait import TimedOutError, wait_for
-from widgetastic_manageiq import BaseEntitiesView, SummaryTable
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import SummaryTable
 
 
 class ImageAllView(ContainerObjectAllBaseView):

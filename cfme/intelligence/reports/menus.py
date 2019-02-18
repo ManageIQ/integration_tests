@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 """Module handling report menus contents"""
-import attr
-
 from contextlib import contextmanager
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from widgetastic.widget import Text
-from widgetastic_manageiq import ManageIQTree, FolderManager
-from widgetastic_patternfly import Button
-from navmazing import NavigateToAttribute
 
-from . import CloudIntelReportsView, ReportsMultiBoxSelect
+import attr
+from navmazing import NavigateToAttribute
+from widgetastic.widget import Text
+from widgetastic_patternfly import Button
+
+from . import CloudIntelReportsView
+from . import ReportsMultiBoxSelect
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import FolderManager
+from widgetastic_manageiq import ManageIQTree
 
 
 class EditReportMenusView(CloudIntelReportsView):

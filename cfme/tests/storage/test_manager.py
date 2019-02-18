@@ -4,7 +4,8 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.storage.manager import StorageManagerDetailsView, ProviderStorageManagerAllView
+from cfme.storage.manager import ProviderStorageManagerAllView
+from cfme.storage.manager import StorageManagerDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 

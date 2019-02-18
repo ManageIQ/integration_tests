@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-from widgetastic.widget import Text, Checkbox, View
 from widgetastic.utils import Fillable
-from widgetastic_manageiq import Input
-from widgetastic_patternfly import BootstrapSelect, Button
+from widgetastic.widget import Checkbox
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
 
 from cfme.utils.appliance.implementations.ui import navigate_to
-
 from cfme.utils.blockers import BZ
+from widgetastic_manageiq import Input
 
 
 class CopyViewBase(View):

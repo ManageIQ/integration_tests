@@ -3,8 +3,10 @@ import os
 import pytest
 
 from cfme.fixtures.terminalreporter import reporter
-from cfme.utils.datafile import data_path_for_filename, load_data_file
-from cfme.utils.path import data_path, log_path
+from cfme.utils.datafile import data_path_for_filename
+from cfme.utils.datafile import load_data_file
+from cfme.utils.path import data_path
+from cfme.utils.path import log_path
 
 # Collection for storing unique combinations of data file paths
 # and filenames for usage reporting after a completed test run

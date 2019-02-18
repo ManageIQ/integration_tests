@@ -5,8 +5,10 @@ import sys
 
 from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.utils.appliance import DummyAppliance
-from cfme.utils.providers import list_providers, ProviderFilter
-from cfme.utils.log import logger, add_stdout_handler
+from cfme.utils.log import add_stdout_handler
+from cfme.utils.log import logger
+from cfme.utils.providers import list_providers
+from cfme.utils.providers import ProviderFilter
 
 add_stdout_handler(logger)
 

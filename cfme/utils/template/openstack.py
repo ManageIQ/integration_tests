@@ -1,6 +1,7 @@
 import re
 
-from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
+from cfme.utils.template.base import log_wrap
+from cfme.utils.template.base import ProviderTemplateUpload
 
 
 class OpenstackTemplateUpload(ProviderTemplateUpload):

@@ -1,18 +1,28 @@
 # -*- coding: utf-8 -*-
 """Page model for Automation/Anisble/Playbooks"""
 import attr
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, View
-from widgetastic_patternfly import BreadCrumb, Button, Dropdown
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import Taggable, TagPageView
+from cfme.common import Taggable
+from cfme.common import TagPageView
 from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from widgetastic_manageiq import (
-    BaseEntitiesView, ItemsToolBarViewSelector, PaginationPane, SummaryTable)
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import SummaryTable
 
 
 class PlaybookBaseView(BaseLoggedInPage):

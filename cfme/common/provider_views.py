@@ -1,31 +1,33 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
-from widgetastic.utils import Version
-
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import View, Text, ConditionalSwitchableView
-from widgetastic_patternfly import Accordion, BootstrapNav, BreadCrumb, Dropdown, BootstrapSelect
+from widgetastic.utils import Version
+from widgetastic.widget import ConditionalSwitchableView
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapNav
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.host_views import HostEntitiesView
 from cfme.utils.version import VersionPicker
-from widgetastic_manageiq import (
-    Accordion,
-    ParametrizedSummaryTable,
-    Button,
-    TimelinesView,
-    DetailsToolBarViewSelector,
-    ItemsToolBarViewSelector,
-    Checkbox,
-    Input,
-    BaseEntitiesView,
-    PaginationPane,
-    JSBaseEntity,
-    Search,
-    ParametrizedStatusBox,
-    WaitTab,
-    ManageIQTree
-)
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import Button
+from widgetastic_manageiq import Checkbox
+from widgetastic_manageiq import DetailsToolBarViewSelector
+from widgetastic_manageiq import Input
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import JSBaseEntity
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import ParametrizedStatusBox
+from widgetastic_manageiq import ParametrizedSummaryTable
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import TimelinesView
+from widgetastic_manageiq import WaitTab
 
 
 class ProviderEntity(JSBaseEntity):

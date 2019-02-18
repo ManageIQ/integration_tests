@@ -1,20 +1,29 @@
 import attr
-
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic_patternfly import Input, BootstrapSelect, Button, Dropdown
-from widgetastic_manageiq import SummaryFormItem, Table
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import RowNotFound
-from widgetastic.widget import View, Text
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Input
 
-from cfme.base.ui import ServerDiagnosticsView, prepare_server_name
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.base.ui import prepare_server_name
+from cfme.base.ui import ServerDiagnosticsView
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance import NavigatableMixin
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import SummaryFormItem
+from widgetastic_manageiq import Table
 
 
 # ============================ Diagnostic Server Workers ===========================

@@ -4,13 +4,12 @@
 # only resource usage and not costs.
 #
 # Metering Reports have been introduced in 59.
-
 import math
+import re
 from datetime import date
 
 import fauxfactory
 import pytest
-import re
 from wrapanapi import VmState
 
 from cfme import test_requirements

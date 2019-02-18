@@ -26,23 +26,22 @@ The Workflow
   shut down
 
 """
-from itertools import groupby
-
-
 import difflib
 import json
 import os
 import signal
 import subprocess
-from collections import defaultdict, deque, namedtuple
+from collections import defaultdict
+from collections import deque
+from collections import namedtuple
 from datetime import datetime
 from itertools import count
+from itertools import groupby
+from threading import Thread
+from time import sleep
+from time import time
 
 import attr
-
-from threading import Thread
-from time import sleep, time
-
 import pytest
 import zmq
 from _pytest import runner
@@ -50,9 +49,10 @@ from _pytest import runner
 from cfme.fixtures import terminalreporter
 from cfme.fixtures.parallelizer import remote
 from cfme.fixtures.pytest_store import store
-from cfme.utils import at_exit, conf
-from cfme.utils.log import create_sublogger
 from cfme.test_framework.appliance import PLUGIN_KEY as APPLIANCE_PLUGIN
+from cfme.utils import at_exit
+from cfme.utils import conf
+from cfme.utils.log import create_sublogger
 
 # Initialize slaveid to None, indicating this as the master process
 # slaves will set this to a unique string when they're initialized

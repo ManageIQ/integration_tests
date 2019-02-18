@@ -1,20 +1,35 @@
 # -*- coding: utf-8 -*-
-import attr
 from copy import deepcopy
 
-from navmazing import NavigateToSibling, NavigateToAttribute, NavigationDestinationNotFound
-from widgetastic.widget import View, Text, ConditionalSwitchableView
-from widgetastic_patternfly import Dropdown, Button, CandidateNotFound, TextInput
-from widgetastic_manageiq import (
-    Table, PaginationPane, SummaryFormItem, Checkbox, CheckboxSelect, DynamicTable, WaitTab)
+import attr
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from navmazing import NavigationDestinationNotFound
+from widgetastic.widget import ConditionalSwitchableView
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import TextInput
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import ConfigurationView
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.exceptions import OptionNotAvailable
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.exceptions import OptionNotAvailable
+from widgetastic_manageiq import Checkbox
+from widgetastic_manageiq import CheckboxSelect
+from widgetastic_manageiq import DynamicTable
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import SummaryFormItem
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import WaitTab
 
 
 table_button_classes = [Button.DEFAULT, Button.SMALL, Button.BLOCK]

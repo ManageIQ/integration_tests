@@ -1,18 +1,26 @@
 # -*- coding: utf-8 -*-
 import attr
 from navmazing import NavigateToSibling
-from widgetastic.widget import View, NoSuchElementException
-from widgetastic_patternfly import Button, BootstrapSelect
+from widgetastic.utils import partial_match
+from widgetastic.widget import NoSuchElementException
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
 
+from . import CloudInstanceView
+from . import Instance
+from . import InstanceCollection
+from cfme.common.vm_views import RightSizeView
+from cfme.exceptions import DestinationNotFound
+from cfme.exceptions import displayed_not_implemented
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import CheckboxSelect, Select, Input
-from widgetastic.utils import partial_match
-
-from cfme.exceptions import DestinationNotFound, displayed_not_implemented
-from cfme.common.vm_views import RightSizeView
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from . import Instance, InstanceCollection, CloudInstanceView
+from widgetastic_manageiq import CheckboxSelect
+from widgetastic_manageiq import Input
+from widgetastic_manageiq import Select
 
 @attr.s
 class OpenStackInstance(Instance):

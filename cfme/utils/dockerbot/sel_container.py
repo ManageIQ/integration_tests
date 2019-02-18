@@ -1,14 +1,15 @@
 #!/usr/bin/env python2
-import click
-import subprocess
 import socket
+import subprocess
 import sys
 
-from wait_for import wait_for, TimedOutError
+import click
+from wait_for import TimedOutError
+from wait_for import wait_for
 
 from .dockerbot import SeleniumDocker
-from cfme.utils.net import random_port
 from cfme.utils.conf import docker as docker_conf
+from cfme.utils.net import random_port
 
 
 def vnc_ready(addr, port):

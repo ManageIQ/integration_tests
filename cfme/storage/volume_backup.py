@@ -2,21 +2,36 @@
 import random
 
 import attr
-from navmazing import NavigateToSibling, NavigateToAttribute
-
-from widgetastic.widget import View, Text, NoSuchElementException
-from widgetastic_patternfly import BootstrapNav, BreadCrumb, BootstrapSelect, Button, Dropdown
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import NoSuchElementException
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapNav
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, Taggable
-from cfme.exceptions import BackupNotFoundError, ItemNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.common import Taggable
+from cfme.common import TagPageView
+from cfme.exceptions import BackupNotFoundError
+from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, ItemsToolBarViewSelector, ManageIQTree, SummaryTable, Search)
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
 
 
 class VolumeBackupToolbar(View):

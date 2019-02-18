@@ -1,6 +1,6 @@
-from cfme.utils.wait import wait_for
-
 import pytest
+
+from cfme.utils.wait import wait_for
 
 
 @pytest.mark.tier(3)

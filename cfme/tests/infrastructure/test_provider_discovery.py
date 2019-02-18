@@ -1,13 +1,14 @@
-import pytest
 from itertools import combinations
 
-from cfme.utils import testgen
-from cfme.utils.providers import get_crud
-from cfme.utils.wait import wait_for_decorator
+import pytest
+
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils import testgen
+from cfme.utils.providers import get_crud
+from cfme.utils.wait import wait_for_decorator
 
 
 def generate_signature(combination):

@@ -1,5 +1,4 @@
 #!/usr/bin/env python2
-
 """This script takes an url to a web directory containing links to CFME *.ova images, and runs
 whatever uploader script is needed to upload the image & make a template from it. When this ends,
 you should have template ready for deploying on respective providers.
@@ -16,20 +15,21 @@ The scripts for respective providers are:
     - template_upload_scvmm.py
     - template_upload_vsphere.py
 """
-
 import argparse
-import re
 import datetime
+import re
 import sys
-import cfme.utils
-from six.moves.urllib.parse import urljoin
 from contextlib import closing
-from urllib2 import urlopen, HTTPError
 
 from miq_version import TemplateName
+from six.moves.urllib.parse import urljoin
+from urllib2 import HTTPError
+from urllib2 import urlopen
 
+import cfme.utils
 from cfme.utils.conf import cfme_data
-from cfme.utils.log import logger, add_stdout_handler
+from cfme.utils.log import add_stdout_handler
+from cfme.utils.log import logger
 
 CFME_BREW_ID = "cfme"
 NIGHTLY_MIQ_ID = "manageiq"

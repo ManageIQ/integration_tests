@@ -1,29 +1,35 @@
 # -*- coding: utf-8 -*-
 import json
+import os
 import time
 from inspect import isclass
 from time import sleep
 
-import os
 from cached_property import cached_property
 from jsmin import jsmin
-from navmazing import Navigate, NavigateStep
-from selenium.common.exceptions import (
-    ErrorInResponseException, InvalidSwitchToTargetException,
-    InvalidElementStateException, WebDriverException, UnexpectedAlertPresentException,
-    NoSuchElementException, StaleElementReferenceException)
-
-from widgetastic.browser import Browser, DefaultPlugin
+from navmazing import Navigate
+from navmazing import NavigateStep
+from selenium.common.exceptions import ErrorInResponseException
+from selenium.common.exceptions import InvalidElementStateException
+from selenium.common.exceptions import InvalidSwitchToTargetException
+from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import UnexpectedAlertPresentException
+from selenium.common.exceptions import WebDriverException
+from widgetastic.browser import Browser
+from widgetastic.browser import DefaultPlugin
 from widgetastic.utils import VersionPick
-from widgetastic.widget import Text, View
+from widgetastic.widget import Text
+from widgetastic.widget import View
 
+from . import Implementation
 from cfme import exceptions
 from cfme.fixtures.pytest_store import store
 from cfme.utils.browser import manager
-from cfme.utils.log import logger, create_sublogger
+from cfme.utils.log import create_sublogger
+from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-from . import Implementation
 
 VersionPick.VERSION_CLASS = Version
 

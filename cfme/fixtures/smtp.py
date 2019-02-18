@@ -8,15 +8,18 @@ about the collector.
 """
 import logging
 import os
-import pytest
 import signal
 import subprocess
 import time
 
+import pytest
+
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.utils.conf import env
 from cfme.utils.log import setup_logger
-from cfme.utils.net import random_port, my_ip_address, net_check_remote
+from cfme.utils.net import my_ip_address
+from cfme.utils.net import net_check_remote
+from cfme.utils.net import random_port
 from cfme.utils.path import scripts_path
 from cfme.utils.smtp_collector_client import SMTPCollectorClient
 

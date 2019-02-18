@@ -1,6 +1,7 @@
 """Core functionality for starting, restarting, and stopping a selenium browser."""
 import atexit
 import json
+import os
 import threading
 import time
 from collections import namedtuple
@@ -8,12 +9,11 @@ from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
 
-import os
 import requests
-import warnings
 from cached_property import cached_property
 from selenium import webdriver
-from selenium.common.exceptions import UnexpectedAlertPresentException, WebDriverException
+from selenium.common.exceptions import UnexpectedAlertPresentException
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common import keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
@@ -21,8 +21,11 @@ from selenium.webdriver.remote.file_detector import UselessFileDetector
 from six.moves.urllib_error import URLError
 from werkzeug.local import LocalProxy
 
-from cfme.fixtures.pytest_store import store, write_line
-from cfme.utils import conf, tries, clear_property_cache
+from cfme.fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import write_line
+from cfme.utils import clear_property_cache
+from cfme.utils import conf
+from cfme.utils import tries
 from cfme.utils.log import logger as log  # TODO remove after artifactor handler
 from cfme.utils.path import data_path
 

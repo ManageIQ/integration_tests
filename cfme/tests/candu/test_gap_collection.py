@@ -1,5 +1,7 @@
+from datetime import datetime
+from datetime import timedelta
+
 import pytest
-from datetime import datetime, timedelta
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider

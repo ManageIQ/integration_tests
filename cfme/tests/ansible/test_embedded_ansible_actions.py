@@ -4,13 +4,14 @@ import pytest
 from cfme import test_requirements
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
-from cfme.markers.env_markers.provider import ONE_PER_TYPE
 
 
 pytestmark = [

@@ -1,17 +1,19 @@
 #!/usr/bin/env python2
-from cfme.utils.conf import docker as docker_conf
-from cfme.utils.net import random_port, my_ip_address
 import argparse
-import fauxfactory
-import requests
-import os
 import os.path
-import docker
 import re
 import subprocess
 import sys
+
+import docker
+import fauxfactory
+import requests
 import yaml
 from six.moves.urllib.parse import urlsplit
+
+from cfme.utils.conf import docker as docker_conf
+from cfme.utils.net import my_ip_address
+from cfme.utils.net import random_port
 
 
 def _dgci(d, key):

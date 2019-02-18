@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
-from widgetastic.widget import Text, View
-from widgetastic_manageiq import Accordion, ManageIQTree, DialogButton, DragandDropElements
-from widgetastic_patternfly import Button, Dropdown, Input
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Input
 
 from cfme.base.login import BaseLoggedInPage
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import DialogButton
+from widgetastic_manageiq import DragandDropElements
+from widgetastic_manageiq import ManageIQTree
 
 
 class AutomateCustomizationView(BaseLoggedInPage):

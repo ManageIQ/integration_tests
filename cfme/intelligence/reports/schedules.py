@@ -1,20 +1,28 @@
 # -*- coding: utf-8 -*-
 """Module handling schedules"""
 import attr
-
-from navmazing import NavigateToSibling, NavigateToAttribute
-
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import Text, Checkbox, TextInput
-from widgetastic_manageiq import Calendar, AlertEmail, Table, PaginationPane
-from widgetastic_patternfly import Button, BootstrapSelect, FlashMessages
-
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.update import Updateable
-from cfme.utils.pretty import Pretty
+from widgetastic.widget import Checkbox
+from widgetastic.widget import Text
+from widgetastic.widget import TextInput
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import FlashMessages
 
 from . import CloudIntelReportsView
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
+from widgetastic_manageiq import AlertEmail
+from widgetastic_manageiq import Calendar
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import Table
 
 
 class SchedulesAllView(CloudIntelReportsView):

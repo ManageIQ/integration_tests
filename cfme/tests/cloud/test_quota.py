@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 from riggerlib import recursive_update
-
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements

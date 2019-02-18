@@ -1,30 +1,45 @@
-import attr
 import csv
 import tempfile
 import time
 
-from navmazing import NavigateToAttribute, NavigateToSibling
+import attr
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.keys import Keys
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import Checkbox, View
 from widgetastic.utils import ParametrizedLocator
-from widgetastic_manageiq import (
-    InfraMappingTreeView, MultiSelectList, MigrationPlansList, InfraMappingList, Paginator,
-    Table, MigrationPlanRequestDetailsList, RadioGroup, HiddenFileInput, MigrationProgressBar,
-    MigrationDashboardStatusCard
-)
-from widgetastic_patternfly import (Text, TextInput, Button, BootstrapSelect, SelectorDropdown,
-                                    Dropdown)
+from widgetastic.widget import Checkbox
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import SelectorDropdown
+from widgetastic_patternfly import Text
+from widgetastic_patternfly import TextInput
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.update import Updateable
-from cfme.utils.version import Version, VersionPicker
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
-
-from selenium.common.exceptions import StaleElementReferenceException
+from widgetastic_manageiq import HiddenFileInput
+from widgetastic_manageiq import InfraMappingList
+from widgetastic_manageiq import InfraMappingTreeView
+from widgetastic_manageiq import MigrationDashboardStatusCard
+from widgetastic_manageiq import MigrationPlanRequestDetailsList
+from widgetastic_manageiq import MigrationPlansList
+from widgetastic_manageiq import MigrationProgressBar
+from widgetastic_manageiq import MultiSelectList
+from widgetastic_manageiq import Paginator
+from widgetastic_manageiq import RadioGroup
+from widgetastic_manageiq import Table
 
 
 # Widgets

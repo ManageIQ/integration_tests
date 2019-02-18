@@ -10,12 +10,14 @@ from cfme import test_requirements
 from cfme.control.explorer import ControlExplorerView
 from cfme.control.explorer.alert_profiles import ServerAlertProfile
 from cfme.control.explorer.conditions import VMCondition
-from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
+from cfme.control.explorer.policies import VMCompliancePolicy
+from cfme.control.explorer.policies import VMControlPolicy
 from cfme.exceptions import CFMEExceptionOccured
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
-from cfme.utils.wait import TimedOutError, wait_for
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

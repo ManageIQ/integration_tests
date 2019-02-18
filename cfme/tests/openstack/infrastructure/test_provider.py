@@ -1,5 +1,4 @@
 """Common tests for infrastructure provider"""
-
 import pytest
 
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider

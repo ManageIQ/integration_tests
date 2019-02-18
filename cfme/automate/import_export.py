@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-from cfme.base.ui import AutomateImportExportBaseView, AutomateImportExportView
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+
+from cfme.base.ui import AutomateImportExportBaseView
+from cfme.base.ui import AutomateImportExportView
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to
-
-from widgetastic_patternfly import BootstrapSelect, Button
 
 
 class GitImportSelectorView(AutomateImportExportBaseView):

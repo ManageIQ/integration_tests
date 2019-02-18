@@ -1,6 +1,6 @@
-from datetime import datetime
 import re
 from collections import namedtuple
+from datetime import datetime
 from random import random
 
 import pytest

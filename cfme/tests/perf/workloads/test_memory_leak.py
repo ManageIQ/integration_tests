@@ -1,14 +1,16 @@
 import time
+
 import pytest
 
+from cfme.markers.env_markers.provider import providers
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.grafana import get_scenario_dashboard_urls
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
-from cfme.utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
+from cfme.utils.smem_memory_monitor import add_workload_quantifiers
+from cfme.utils.smem_memory_monitor import SmemMemoryMonitor
 from cfme.utils.workloads import get_memory_leak_scenarios
-from cfme.markers.env_markers.provider import providers
 
 
 roles_memory_leak = ['automate', 'database_operations', 'ems_inventory', 'ems_metrics_collector',

@@ -1,26 +1,39 @@
 # -*- coding: utf-8 -*-
-import attr
-
 import re
-from cached_property import cached_property
 from copy import copy
 
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import ParametrizedLocator, ParametrizedString
-from widgetastic.widget import Checkbox, Text, ParametrizedView
-from widgetastic_manageiq import Table, WaitTab
-from widgetastic_patternfly import BootstrapSelect, CandidateNotFound, Input, Button
+import attr
+from cached_property import cached_property
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedString
+from widgetastic.widget import Checkbox
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Text
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import Input
 
-from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import Navigatable
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.blockers import BZ
-from cfme.utils.version import Version, VersionPicker, LOWEST
-
-from . import AutomateExplorerView, check_tree_path
-from .common import Copiable, CopyViewBase
+from . import AutomateExplorerView
+from . import check_tree_path
+from .common import Copiable
+from .common import CopyViewBase
 from .namespace import NamespaceDetailsView
+from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
+from cfme.utils.version import LOWEST
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import WaitTab
 
 
 class ClassCopyView(AutomateExplorerView, CopyViewBase):

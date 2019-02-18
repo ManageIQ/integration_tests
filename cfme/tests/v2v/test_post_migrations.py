@@ -1,16 +1,20 @@
 """Test contains all post migration usecases"""
+import re
+
 import fauxfactory
 import pytest
-import re
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.fixtures.provider import rhel7_minimal
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE_PER_VERSION, ONE_PER_TYPE
-from cfme.utils.appliance.implementations.ui import navigate_to, navigator
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE_PER_VERSION
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
-from cfme.utils.wait import TimedOutError, wait_for
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

@@ -2,9 +2,16 @@
 import fauxfactory
 import pytest
 
-from cfme.fixtures.provider import (dual_network_template, dual_disk_template,
- dportgroup_template, win7_template, win10_template, win2016_template, rhel69_template,
- win2012_template, ubuntu16_template, rhel7_minimal)
+from cfme.fixtures.provider import dportgroup_template
+from cfme.fixtures.provider import dual_disk_template
+from cfme.fixtures.provider import dual_network_template
+from cfme.fixtures.provider import rhel69_template
+from cfme.fixtures.provider import rhel7_minimal
+from cfme.fixtures.provider import ubuntu16_template
+from cfme.fixtures.provider import win10_template
+from cfme.fixtures.provider import win2012_template
+from cfme.fixtures.provider import win2016_template
+from cfme.fixtures.provider import win7_template
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION

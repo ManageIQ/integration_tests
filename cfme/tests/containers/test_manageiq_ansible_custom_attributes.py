@@ -1,8 +1,12 @@
 import pytest
 
-from cfme.containers.provider import ContainersProvider, refresh_and_navigate
-from cfme.utils.ansible import (setup_ansible_script, run_ansible,
-    fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files)
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import refresh_and_navigate
+from cfme.utils.ansible import create_tmp_directory
+from cfme.utils.ansible import fetch_miq_ansible_module
+from cfme.utils.ansible import remove_tmp_files
+from cfme.utils.ansible import run_ansible
+from cfme.utils.ansible import setup_ansible_script
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [

@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 import atexit
-# import diaper for backward compatibility
-import diaper
 import os
 import re
-import six
 import subprocess
 from functools import partial
 
+import diaper
+import six
 from cached_property import cached_property
 from werkzeug.local import LocalProxy
+# import diaper for backward compatibility
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 

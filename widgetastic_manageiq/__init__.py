@@ -5,7 +5,9 @@ import math
 import os
 import re
 from collections import namedtuple
-from datetime import date, datetime, timedelta
+from datetime import date
+from datetime import datetime
+from datetime import timedelta
 from math import ceil
 from tempfile import NamedTemporaryFile
 
@@ -14,50 +16,46 @@ from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
-from wait_for import TimedOutError, wait_for
-from widgetastic.exceptions import NoSuchElementException, WidgetOperationFailed
+from wait_for import TimedOutError
+from wait_for import wait_for
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic.exceptions import WidgetOperationFailed
 from widgetastic.log import logged
-from widgetastic.utils import (
-    ParametrizedLocator,
-    Parameter,
-    ParametrizedString,
-    attributize_string,
-    VersionPick,
-    Version,
-    partial_match,
-)
-from widgetastic.widget import (
-    FileInput as BaseFileInput,
-    Table as VanillaTable,
-    TableColumn as VanillaTableColumn,
-    TableRow as VanillaTableRow,
-    Widget,
-    View,
-    Select,
-    TextInput,
-    Text,
-    Checkbox,
-    ParametrizedView,
-    ClickableMixin,
-    ConditionalSwitchableView,
-    do_not_read_this_widget,
-)
+from widgetastic.utils import attributize_string
+from widgetastic.utils import Parameter
+from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedString
+from widgetastic.utils import partial_match
+from widgetastic.utils import Version
+from widgetastic.utils import VersionPick
+from widgetastic.widget import Checkbox
+from widgetastic.widget import ClickableMixin
+from widgetastic.widget import ConditionalSwitchableView
+from widgetastic.widget import do_not_read_this_widget
+from widgetastic.widget import FileInput as BaseFileInput
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Select
+from widgetastic.widget import Table as VanillaTable
+from widgetastic.widget import TableColumn as VanillaTableColumn
+from widgetastic.widget import TableRow as VanillaTableRow
+from widgetastic.widget import Text
+from widgetastic.widget import TextInput
+from widgetastic.widget import View
+from widgetastic.widget import Widget
 from widgetastic.xpath import quote
-from widgetastic_patternfly import (
-    Accordion as PFAccordion,
-    BootstrapSwitch,
-    BootstrapTreeview,
-    BootstrapSelect,
-    Button,
-    Dropdown,
-    Input,
-    VerticalNavigation,
-    NavDropdown,
-    Tab,
-    BreadCrumb,
-    AggregateStatusCard,
-    SelectorDropdown,
-)
+from widgetastic_patternfly import Accordion as PFAccordion
+from widgetastic_patternfly import AggregateStatusCard
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import BootstrapTreeview
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Input
+from widgetastic_patternfly import NavDropdown
+from widgetastic_patternfly import SelectorDropdown
+from widgetastic_patternfly import Tab
+from widgetastic_patternfly import VerticalNavigation
 
 from cfme.exceptions import ItemNotFound
 

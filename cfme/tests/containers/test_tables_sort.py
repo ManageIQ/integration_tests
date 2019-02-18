@@ -1,8 +1,8 @@
 import pytest
-
 from widgetastic.utils import attributize_string
 
-from cfme.containers.provider import ContainersProvider, ContainersTestItem
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersTestItem
 from cfme.containers.replicator import Replicator
 from cfme.containers.route import Route
 from cfme.utils.appliance.implementations.ui import navigate_to

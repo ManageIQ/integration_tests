@@ -1,9 +1,9 @@
-from collections import defaultdict
-import socket
 import os
 import re
-from cfme.fixtures.pytest_store import store
+import socket
+from collections import defaultdict
 
+from cfme.fixtures.pytest_store import store
 from cfme.utils.log import logger
 
 _ports = defaultdict(dict)

@@ -1,13 +1,16 @@
 import pytest
 from deepdiff import DeepDiff
 
-from cfme.roles import role_access_ui_59z, role_access_ui_510z
-from cfme.utils.appliance import ViaUI, find_appliance
+from cfme.roles import role_access_ui_510z
+from cfme.roles import role_access_ui_59z
+from cfme.utils.appliance import find_appliance
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
-from cfme.utils.version import VersionPicker, Version
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 
 
 def pytest_generate_tests(metafunc):

@@ -8,11 +8,14 @@ If no providers specified, it will cleanup all of them.
 
 """
 import sys
+from datetime import datetime
+from datetime import timedelta
+
 import iso8601
 import tzlocal
-from datetime import datetime, timedelta
 
-from cfme.utils.providers import list_provider_keys, get_mgmt
+from cfme.utils.providers import get_mgmt
+from cfme.utils.providers import list_provider_keys
 
 local_tz = tzlocal.get_localzone()
 GRACE_TIME = timedelta(hours=2)

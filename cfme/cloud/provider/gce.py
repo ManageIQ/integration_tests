@@ -1,14 +1,14 @@
 import attr
-
 from widgetastic.widget import View
-from widgetastic_patternfly import Button, Input
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 from wrapanapi.systems import GoogleCloudSystem
 
+from . import CloudProvider
 from cfme.base.credential import ServiceAccountCredential
 from cfme.cloud.instance.gce import GCEInstance
 from cfme.common.provider import DefaultEndpoint
 from cfme.services.catalogs.catalog_items import GoogleCatalogItem
-from . import CloudProvider
 
 
 class GCEEndpoint(DefaultEndpoint):

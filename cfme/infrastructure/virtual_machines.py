@@ -2,68 +2,73 @@
 """A model of Infrastructure Virtual Machines area of CFME.  This includes the VMs explorer tree,
 quadicon lists, and VM details page.
 """
+import re
 from collections import namedtuple
 from copy import copy
 
 import attr
 import fauxfactory
-import re
-from navmazing import NavigateToSibling, NavigationDestinationNotFound, NavigateToAttribute
-from widgetastic.utils import partial_match, Parameter
-from widgetastic.widget import (
-    Text, View, TextInput, Checkbox, NoSuchElementException, ParametrizedView)
-from widgetastic_patternfly import (
-    Button,
-    BootstrapNav,
-    BootstrapSelect,
-    BootstrapSwitch,
-    CheckableBootstrapTreeview,
-    Dropdown,
-    Input as WInput
-)
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from navmazing import NavigationDestinationNotFound
+from widgetastic.utils import Parameter
+from widgetastic.utils import partial_match
+from widgetastic.widget import Checkbox
+from widgetastic.widget import NoSuchElementException
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Text
+from widgetastic.widget import TextInput
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CheckableBootstrapTreeview
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Input as WInput
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm import VM, Template, VMCollection, TemplateCollection
-from cfme.common.vm_views import (
-    ManagementEngineView,
-    CloneVmView,
-    MigrateVmView,
-    ProvisionView,
-    EditView,
-    PublishVmView,
-    RetirementViewWithOffset,
-    VMDetailsEntities,
-    VMToolbar,
-    VMEntities,
-    SetOwnershipView,
-    RenameVmView
-)
-from cfme.exceptions import (
-    DestinationNotFound,
-    ItemNotFound,
-    VmOrInstanceNotFound,
-    displayed_not_implemented
-)
+from cfme.common.vm import Template
+from cfme.common.vm import TemplateCollection
+from cfme.common.vm import VM
+from cfme.common.vm import VMCollection
+from cfme.common.vm_views import CloneVmView
+from cfme.common.vm_views import EditView
+from cfme.common.vm_views import ManagementEngineView
+from cfme.common.vm_views import MigrateVmView
+from cfme.common.vm_views import ProvisionView
+from cfme.common.vm_views import PublishVmView
+from cfme.common.vm_views import RenameVmView
+from cfme.common.vm_views import RetirementViewWithOffset
+from cfme.common.vm_views import SetOwnershipView
+from cfme.common.vm_views import VMDetailsEntities
+from cfme.common.vm_views import VMEntities
+from cfme.common.vm_views import VMToolbar
+from cfme.exceptions import DestinationNotFound
+from cfme.exceptions import displayed_not_implemented
+from cfme.exceptions import ItemNotFound
+from cfme.exceptions import VmOrInstanceNotFound
 from cfme.services.requests import RequestsView
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
-from cfme.utils.version import UPSTREAM, Version, VersionPicker
+from cfme.utils.version import UPSTREAM
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    Accordion,
-    ConditionalSwitchableView,
-    ManageIQTree,
-    PaginationPane,
-    SummaryTable,
-    Table,
-    TimelinesView,
-    CompareToolBarActionsView,
-    Search,
-    SnapshotMemorySwitch
-)
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import CompareToolBarActionsView
+from widgetastic_manageiq import ConditionalSwitchableView
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SnapshotMemorySwitch
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import TimelinesView
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 

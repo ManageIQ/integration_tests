@@ -1,20 +1,33 @@
-import attr
 import re
 
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic_patternfly import Input, BootstrapSelect, Button, BootstrapSwitch
+import attr
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import RowNotFound
-from widgetastic_manageiq import VanillaTable, SummaryFormItem, Table, Dropdown, DynamicTable
-from widgetastic.widget import Checkbox, Text
+from widgetastic.widget import Checkbox
+from widgetastic.widget import Text
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
 from cfme.base.ui import RegionView
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.utils import conf
-from cfme.utils.appliance import Navigatable, NavigatableMixin
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from widgetastic_manageiq import Dropdown
+from widgetastic_manageiq import DynamicTable
+from widgetastic_manageiq import SummaryFormItem
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import VanillaTable
 
 
 # =======================================TAGS=============================================

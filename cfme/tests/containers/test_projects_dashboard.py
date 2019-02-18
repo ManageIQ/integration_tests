@@ -1,8 +1,8 @@
 import pytest
 
-from cfme.containers.provider import ContainersProvider
 from cfme.containers.container import Container
 from cfme.containers.image import Image
+from cfme.containers.provider import ContainersProvider
 from cfme.containers.service import Service
 from cfme.utils.appliance.implementations.ui import navigate_to
 
