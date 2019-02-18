@@ -9,7 +9,7 @@ from humanfriendly import parse_size, tokenize
 import pytest
 
 from cfme.containers.provider import ContainersProvider
-from cfme.intelligence.chargeback import assignments, rates
+from cfme.intelligence.chargeback import rates
 
 from cfme.utils.log import logger
 from cfme.utils.units import CHARGEBACK_HEADER_NAMES, parse_number
@@ -124,7 +124,7 @@ def gen_report_base(appliance, obj_type, provider, rate_desc, rate_interval):
     return report
 
 
-def assign_custom_compute_rate(obj_type, chargeback_rate, provider):
+def assign_custom_compute_rate(appliance, obj_type, chargeback_rate, provider):
     """Assign custom Compute rate for Labeled Container Images
     Args:
         :py:type:`str` obj_type: Object being tested; only 'Project' and 'Image' are supported
@@ -132,7 +132,8 @@ def assign_custom_compute_rate(obj_type, chargeback_rate, provider):
         :py:class:`ContainersProvider` provider: The containers provider
     """
     if obj_type == 'Image':
-        compute_assign = assignments.ComputeAssign(
+        compute_assign = appliance.collections.assignments.instantiate(
+            assign_type="Compute",
             assign_to="Labeled Container Images",
             docker_labels="architecture",
             selections={
@@ -140,7 +141,8 @@ def assign_custom_compute_rate(obj_type, chargeback_rate, provider):
             })
         logger.info('ASSIGNING COMPUTE RATE FOR LABELED CONTAINER IMAGES')
     elif obj_type == 'Project':
-        compute_assign = assignments.ComputeAssign(
+        compute_assign = appliance.collections.assignments.instantiate(
+            assign_type="Compute",
             assign_to="Selected Providers",
             selections={
                 provider.name: {'Rate': chargeback_rate.description}
@@ -182,10 +184,11 @@ def compute_rate(appliance, rate_type, interval):
 
 
 @pytest.fixture(scope='module')
-def assign_compute_rate(obj_type, compute_rate, provider):
-    assign_custom_compute_rate(obj_type, compute_rate, provider)
+def assign_compute_rate(appliance, obj_type, compute_rate, provider):
+    assign_custom_compute_rate(appliance, obj_type, compute_rate, provider)
     yield compute_rate
-    assignments.ComputeAssign(assign_to="<Nothing>").assign()
+    appliance.collections.assignments.instantiate(assign_type="Compute",
+                                                  assign_to="<Nothing>").assign()
 
 
 @pytest.fixture(scope='module')

@@ -13,7 +13,6 @@ import fauxfactory
 import pytest
 from wrapanapi import VmState
 
-import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -97,28 +96,31 @@ def enable_candu(appliance):
 
 
 @pytest.fixture(scope="module")
-def assign_custom_rate(new_compute_rate):
+def assign_custom_rate(appliance, new_compute_rate):
     """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
     description = new_compute_rate
     # TODO Move this to a global fixture
-    for klass in (cb.ComputeAssign, cb.StorageAssign):
-        enterprise = klass(
+    for assign_type in ("Compute", "Storage"):
+        assign_obj = appliance.collections.assignments.instantiate(
+            assign_type=assign_type,
             assign_to="The Enterprise",
             selections={
                 'Enterprise': {'Rate': description}
             })
-        enterprise.assign()
-    logger.info('Assigning CUSTOM Compute rate')
+        assign_obj.assign()
+        logger.info('Assigning CUSTOM {} rate'.format(assign_type))
     yield
 
     # Resetting the Chargeback rate assignment
-    for klass in (cb.ComputeAssign, cb.StorageAssign):
-        enterprise = klass(
+    for assign_type in ("Compute", "Storage"):
+        assign_obj = appliance.collections.assignments.instantiate(
+            assign_type=assign_type,
             assign_to="The Enterprise",
             selections={
                 'Enterprise': {'Rate': '<Nothing>'}
             })
-        enterprise.assign()
+        assign_obj.assign()
+        logger.info('Re-setting {} rate to <Nothing>'.format(assign_type))
 
 
 def verify_records_rollups_table(appliance, provider):

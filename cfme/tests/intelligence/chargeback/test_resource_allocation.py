@@ -33,7 +33,6 @@ import fauxfactory
 import pytest
 from wrapanapi import VmState
 
-import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -115,28 +114,31 @@ def enable_candu(provider, appliance):
 
 
 @pytest.yield_fixture(scope="module")
-def assign_custom_rate(new_chargeback_rate, provider):
+def assign_custom_rate(appliance, new_chargeback_rate):
     """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
     description = new_chargeback_rate
     # TODO Move this to a global fixture
-    for klass in (cb.ComputeAssign, cb.StorageAssign):
-        enterprise = klass(
+    for assign_type in ("Compute", "Storage"):
+        assign_obj = appliance.collections.assignments.instantiate(
+            assign_type=assign_type,
             assign_to="The Enterprise",
             selections={
                 'Enterprise': {'Rate': description}
             })
-        enterprise.assign()
-    logger.info('Assigning CUSTOM Compute rate')
+        assign_obj.assign()
+        logger.info('Assigning CUSTOM {} rate'.format(assign_type))
     yield
 
     # Resetting the Chargeback rate assignment
-    for klass in (cb.ComputeAssign, cb.StorageAssign):
-        enterprise = klass(
+    for assign_type in ("Compute", "Storage"):
+        assign_obj = appliance.collections.assignments.instantiate(
+            assign_type=assign_type,
             assign_to="The Enterprise",
             selections={
                 'Enterprise': {'Rate': '<Nothing>'}
             })
-        enterprise.assign()
+        assign_obj.assign()
+        logger.info('Re-setting {} rate to <Nothing>'.format(assign_type))
 
 
 def verify_vm_uptime(appliance, provider):
@@ -435,8 +437,8 @@ def generic_test_resource_alloc(resource_alloc, chargeback_report_custom, column
         allocated_resource = resource_alloc[resource]
         if 'GB' in chargeback_report_custom[0][column] and column == 'Memory Allocated over Time Period':
             allocated_resource = allocated_resource * math.pow(2, -10)
-        resource_from_report = chargeback_report_custom[0][column].replace('MB', '').replace('GB', ''). \
-            replace(' ', '')
+        resource_from_report = chargeback_report_custom[0][column].replace('MB', ''). \
+            replace('GB', '').replace(' ', '')
         soft_assert(allocated_resource - RESOURCE_ALLOC_DEVIATION <=
             float(resource_from_report) <= allocated_resource + RESOURCE_ALLOC_DEVIATION,
             'Estimated resource allocation and report resource allocation do not match')

@@ -4,7 +4,6 @@ from datetime import date, timedelta
 import fauxfactory
 import pytest
 
-import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -52,26 +51,29 @@ def new_compute_rate(enable_candu):
 
 
 @pytest.fixture(scope="module")
-def assign_chargeback_rate(new_compute_rate):
+def assign_chargeback_rate(appliance, new_compute_rate):
     """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
     # TODO Move this to a global fixture
-    for klass in (cb.ComputeAssign, cb.StorageAssign):
-        enterprise = klass(
+    for assign_type in ("Compute", "Storage"):
+        assign_obj = appliance.collections.assignments.instantiate(
+            assign_type=assign_type,
             assign_to="The Enterprise",
             selections={
                 'Enterprise': {'Rate': new_compute_rate}
             })
-        enterprise.assign()
-    logger.info('Assigning CUSTOM Compute and Storage rates')
+        assign_obj.assign()
+        logger.info('Assigning CUSTOM {} rate'.format(assign_type))
     yield
     # Resetting the Chargeback rate assignment
-    for klass in (cb.ComputeAssign, cb.StorageAssign):
-        enterprise = klass(
+    for assign_type in ("Compute", "Storage"):
+        assign_obj = appliance.collections.assignments.instantiate(
+            assign_type=assign_type,
             assign_to="The Enterprise",
             selections={
                 'Enterprise': {'Rate': '<Nothing>'}
             })
-        enterprise.assign()
+        assign_obj.assign()
+        logger.info('Re-setting {} rate to <Nothing>'.format(assign_type))
 
 
 def verify_vm_uptime(appliance, provider, vmname):
