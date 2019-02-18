@@ -93,7 +93,7 @@ OS_PACKAGES_SPECS = [
     ("Ubuntu", "16.04.3 LTS (Xenial Xerus)", "openssl", DEB_PKGS),
     ("Ubuntu", "16.04.4 LTS (Xenial Xerus)", "openssl", DEB_PKGS),
     ("Ubuntu", "17.10 (Artful Aardvark)", "openssl", DEB_PKGS),
-    ("Ubuntu", "18.04 LTS (Bionic Beaver)", "openssl", DEB_PKGS),
+    ("Ubuntu", "18.04.1 LTS (Bionic Beaver)", "openssl", DEB_PKGS),
     ("Debian GNU/Linux", "9 (stretch)", "openssl", DEB_PKGS),
 ]
 
