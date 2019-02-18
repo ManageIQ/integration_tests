@@ -368,14 +368,19 @@ def automation_requests_data(vm, requests_collection=False, approve=True, num=4)
     return [data for _ in range(num)]
 
 
-def groups(request, appliance, role, tenant, num=1):
+def groups(request, appliance, role, tenant, num=1, **kwargs):
     data = []
     for _ in range(num):
-        data.append({
-            "description": "group_description_{}".format(fauxfactory.gen_alphanumeric()),
-            "role": {"href": role.href},
-            "tenant": {"href": tenant.href}
-        })
+        data.append(
+            {
+                "description": kwargs.get(
+                    "description",
+                    "group_description_{}".format(fauxfactory.gen_alphanumeric()),
+                ),
+                "role": {"href": role.href},
+                "tenant": {"href": tenant.href},
+            }
+        )
 
     groups = _creating_skeleton(request, appliance, "groups", data)
     if num == 1:
@@ -383,10 +388,14 @@ def groups(request, appliance, role, tenant, num=1):
     return groups
 
 
-def roles(request, appliance, num=1):
+def roles(request, appliance, num=1, **kwargs):
     data = []
     for _ in range(num):
-        data.append({"name": "role_name_{}".format(fauxfactory.gen_alphanumeric())})
+        data.append(
+            {
+                "name": kwargs("name", "role_name_{}".format(fauxfactory.gen_alphanumeric()))
+            }
+        )
 
     roles = _creating_skeleton(request, appliance, "roles", data)
     if num == 1:
@@ -412,16 +421,16 @@ def copy_role(appliance, orig_name, new_name=None):
     return new_role[0]
 
 
-def tenants(request, appliance, num=1):
+def tenants(request, appliance, num=1, **kwargs):
     parent = appliance.rest_api.collections.tenants.get(name='My Company')
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric()
         data.append({
-            'description': 'test_tenants_{}'.format(uniq),
-            'name': 'test_tenants_{}'.format(uniq),
-            'divisible': 'true',
-            'use_config_for_attributes': 'false',
+            'description': kwargs.get("description", 'test_tenants_{}'.format(uniq)),
+            'name': kwargs.get("name", 'test_tenants_{}'.format(uniq)),
+            'divisible': kwargs.get("divisible", 'true'),
+            'use_config_for_attributes': kwargs.get("use_config_for_attributes", 'false'),
             'parent': {'href': parent.href}
         })
 
@@ -431,20 +440,22 @@ def tenants(request, appliance, num=1):
     return tenants
 
 
-def users(request, appliance, num=1):
+def users(request, appliance, num=1, **kwargs):
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(4).lower()
-        data.append({
-            "userid": "user_{}".format(uniq),
-            "name": "name_{}".format(uniq),
-            "password": fauxfactory.gen_alphanumeric(),
-            "email": "user@example.com",
-            "group": {"description": "EvmGroup-user_self_service"}
-        })
+        data.append(
+            {
+                "userid": kwargs.get("userid", "user_{}".format(uniq)),
+                "name": kwargs.get("name", "name_{}".format(uniq)),
+                "password": kwargs.get("password", fauxfactory.gen_alphanumeric()),
+                "email": kwargs.get("email", "user@example.com"),
+                "group": {"description": kwargs.get("group", "EvmGroup-user_self_service")},
+            }
+        )
 
-    resources = _creating_skeleton(request, appliance, "users", data)
-    return resources, data
+    users = _creating_skeleton(request, appliance, "users", data)
+    return users, data
 
 
 def _creating_skeleton(request, appliance, col_name, col_data, col_action='create',
@@ -486,17 +497,6 @@ def mark_vm_as_template(appliance, provider, vm_name):
     return appliance.rest_api.collections.templates.get(name=vm_name)
 
 
-def arbitration_settings(request, appliance, num=2):
-    data = []
-    for _ in range(num):
-        uniq = fauxfactory.gen_alphanumeric(5)
-        data.append({
-            'name': 'test_settings_{}'.format(uniq),
-            'display_name': 'Test Settings {}'.format(uniq)})
-
-    return _creating_skeleton(request, appliance, 'arbitration_settings', data)
-
-
 def orchestration_templates(request, appliance, num=2):
     data = []
     for _ in range(num):
@@ -523,36 +523,6 @@ def arbitration_profiles(request, appliance, provider, num=2):
         })
 
     return _creating_skeleton(request, appliance, 'arbitration_profiles', data)
-
-
-def arbitration_rules(request, appliance, num=2):
-    data = []
-    for _ in range(num):
-        data.append({
-            'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),
-            'operation': 'inject',
-            'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
-        })
-
-    return _creating_skeleton(request, appliance, 'arbitration_rules', data)
-
-
-def blueprints(request, appliance, num=2):
-    data = []
-    for _ in range(num):
-        uniq = fauxfactory.gen_alphanumeric(5)
-        data.append({
-            'name': 'test_blueprint_{}'.format(uniq),
-            'description': 'Test Blueprint {}'.format(uniq),
-            'ui_properties': {
-                'service_catalog': {},
-                'service_dialog': {},
-                'automate_entrypoints': {},
-                'chart_data_model': {}
-            }
-        })
-
-    return _creating_skeleton(request, appliance, 'blueprints', data)
 
 
 def conditions(request, appliance, num=2):

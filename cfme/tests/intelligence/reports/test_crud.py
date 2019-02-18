@@ -4,15 +4,12 @@ import pytest
 import yaml
 
 from cfme import test_requirements
-from cfme.intelligence.reports.schedules import NewScheduleView
 from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.path import data_path
-from cfme.utils.rest import assert_response
 from cfme.utils.update import update
-from cfme.utils.wait import wait_for_decorator
 
+pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 
 report_crud_dir = data_path.join("reports_crud")
 schedules_crud_dir = data_path.join("schedules_crud")
@@ -58,10 +55,7 @@ def get_custom_report(appliance, custom_report_values):
 
 
 @pytest.mark.rhel_testing
-@pytest.mark.sauce
-@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1531600, forced_streams=["5.9"])])
-@test_requirements.report
 def test_custom_report_crud(custom_report_values, appliance):
     """
     Polarion:
@@ -69,6 +63,7 @@ def test_custom_report_crud(custom_report_values, appliance):
         casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/16h
+        tags: report
     """
     custom_report = appliance.collections.reports.create(**custom_report_values)
     with update(custom_report):
@@ -79,10 +74,7 @@ def test_custom_report_crud(custom_report_values, appliance):
     custom_report.delete()
 
 
-@pytest.mark.sauce
-@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1202412])
-@test_requirements.report
 def test_schedule_crud(schedule_data, appliance):
     """
     Polarion:
@@ -90,6 +82,7 @@ def test_schedule_crud(schedule_data, appliance):
         casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/16h
+        tags: report
     """
     schedule = appliance.collections.schedules.create(**schedule_data)
     with update(schedule):
@@ -98,29 +91,6 @@ def test_schedule_crud(schedule_data, appliance):
     schedule.delete()
 
 
-@pytest.mark.rhel_testing
-@pytest.mark.sauce
-@pytest.mark.tier(3)
-@test_requirements.report
-def test_reports_disable_enable_schedule(schedule_data, appliance):
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: high
-        initialEstimate: 1/10h
-    """
-    schedules = appliance.collections.schedules
-    schedule = schedules.create(**schedule_data)
-    schedules.disable_schedules(schedule)
-    assert not schedule.enabled
-    schedules.enable_schedules(schedule)
-    assert schedule.enabled
-    schedule.delete()
-
-
-@pytest.mark.sauce
-@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1653796), BZ(1667064)])
 def test_menuwidget_crud(appliance):
     """
@@ -138,7 +108,7 @@ def test_menuwidget_crud(appliance):
             "Services / Catalogs": fauxfactory.gen_alphanumeric(),
             "Cloud Intel / Dashboard": fauxfactory.gen_alphanumeric(),
         },
-        visibility="<To All Users>"
+        visibility="<To All Users>",
     )
     view = w.create_view(AllDashboardWidgetsView)
     view.flash.assert_message('Widget "{}" was saved'.format(w.title))
@@ -147,8 +117,6 @@ def test_menuwidget_crud(appliance):
     w.delete()
 
 
-@pytest.mark.sauce
-@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1656413), BZ(1667064)])
 def test_reportwidget_crud(appliance):
     """
@@ -166,18 +134,16 @@ def test_reportwidget_crud(appliance):
         columns=["VM Name", "Message"],
         rows="10",
         timer={"run": "Hourly", "hours": "Hour"},
-        visibility="<To All Users>"
+        visibility="<To All Users>",
     )
     view = w.create_view(AllDashboardWidgetsView)
     view.flash.assert_message('Widget "{}" was saved'.format(w.title))
-    if not BZ(1653796, forced_streams=['5.9']).blocks:
+    if not BZ(1653796, forced_streams=["5.9"]).blocks:
         with update(w):
             w.active = False
     w.delete()
 
 
-@pytest.mark.sauce
-@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1653796), BZ(1667064)])
 def test_chartwidget_crud(appliance):
     """
@@ -193,7 +159,7 @@ def test_chartwidget_crud(appliance):
         active=True,
         filter="Configuration Management/Virtual Machines/Vendor and Guest OS",
         timer={"run": "Hourly", "hours": "Hour"},
-        visibility="<To All Users>"
+        visibility="<To All Users>",
     )
     view = w.create_view(AllDashboardWidgetsView)
     view.flash.assert_message('Widget "{}" was saved'.format(w.title))
@@ -202,8 +168,6 @@ def test_chartwidget_crud(appliance):
     w.delete()
 
 
-@pytest.mark.sauce
-@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1653796), BZ(1667064)])
 def test_rssfeedwidget_crud(appliance):
     """
@@ -220,7 +184,7 @@ def test_rssfeedwidget_crud(appliance):
         type="Internal",
         feed="Administrative Events",
         rows="8",
-        visibility="<To All Users>"
+        visibility="<To All Users>",
     )
     view = w.create_view(AllDashboardWidgetsView)
     view.flash.assert_message('Widget "{}" was saved'.format(w.title))
@@ -239,8 +203,6 @@ def test_rssfeedwidget_crud(appliance):
 
 
 @pytest.mark.rhel_testing
-@pytest.mark.sauce
-@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1667064)])
 def test_dashboard_crud(appliance):
     """
@@ -254,7 +216,7 @@ def test_dashboard_crud(appliance):
         "EvmGroup-administrator",
         title=fauxfactory.gen_alphanumeric(),
         locked=False,
-        widgets=["Top CPU Consumers (weekly)", "Vendor and Guest OS Chart"]
+        widgets=["Top CPU Consumers (weekly)", "Vendor and Guest OS Chart"],
     )
     with update(d):
         d.locked = True
@@ -265,91 +227,6 @@ def test_dashboard_crud(appliance):
     d.delete()
 
 
-@pytest.mark.tier(2)
-@test_requirements.report
-def test_run_report(appliance):
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/16h
-    """
-    report = appliance.rest_api.collections.reports.get(name='VM Disk Usage')
-    response = report.action.run()
-    assert_response(appliance)
-
-    @wait_for_decorator(timeout="5m", delay=5)
-    def rest_running_report_finishes():
-        response.task.reload()
-        if "error" in response.task.status.lower():
-            pytest.fail("Error when running report: `{}`".format(response.task.message))
-        return response.task.state.lower() == 'finished'
-
-    result = appliance.rest_api.collections.results.get(id=response.result_id)
-    assert result.name == report.name
-
-
-@pytest.mark.tier(3)
-@test_requirements.report
-def test_import_report(appliance):
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/16h
-    """
-    menu_name = 'test_report_{}'.format(fauxfactory.gen_alphanumeric())
-    data = {
-        'report': {
-            'menu_name': menu_name,
-            'col_order': ['col1', 'col2', 'col3'],
-            'cols': ['col1', 'col2', 'col3'],
-            'rpt_type': 'Custom',
-            'title': 'Test Report',
-            'db': 'My::Db',
-            'rpt_group': 'Custom',
-        },
-        'options': {'save': 'true'}
-    }
-    response, = appliance.rest_api.collections.reports.action.execute_action("import", data)
-    assert_response(appliance)
-    assert response['message'] == 'Imported Report: [{}]'.format(menu_name)
-    report = appliance.rest_api.collections.reports.get(name=menu_name)
-    assert report.name == menu_name
-
-    response, = appliance.rest_api.collections.reports.action.execute_action("import", data)
-    assert_response(appliance)
-    assert response['message'] == 'Skipping Report (already in DB): [{}]'.format(menu_name)
-
-
-@pytest.mark.sauce
-@pytest.mark.tier(3)
-def test_reports_delete_saved_report(appliance, request):
-    """The test case selects reports from the Saved Reports list and deletes them.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: high
-        initialEstimate: 1/16h
-    """
-    report = appliance.collections.reports.instantiate(
-        type="Configuration Management",
-        subtype="Virtual Machines",
-        menu_name="Hardware Information for VMs",
-    ).queue(wait_for_finish=True)
-    view = navigate_to(appliance.collections.saved_reports, 'All')
-    # iterates through every row and checks if the 'Name' column matches the given value
-    for row in view.table.rows():
-        if row.name.text == report.report.menu_name:
-            row[0].check()
-    view.configuration.item_select(
-        item='Delete selected Saved Reports', handle_alert=True)
-    assert not report.exists
-
-
 @pytest.mark.tier(1)
 def test_reports_crud_schedule_for_base_report_once(appliance, request):
     """
@@ -358,6 +235,7 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
         casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/16h
+        tags: report
     """
     report = appliance.collections.reports.instantiate(
         type="Configuration Management",
@@ -381,7 +259,9 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
     assert not schedule.exists
 
 
-def test_crud_custom_report_schedule(appliance, request, get_custom_report, schedule_data):
+def test_crud_custom_report_schedule(
+    appliance, request, get_custom_report, schedule_data
+):
     """This test case creates a schedule for custom reports and tests if it was created
     successfully.
 
@@ -390,6 +270,7 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
         casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/10h
+        tags: report
     """
     schedule_data["filter"] = (
         "My Company (All Groups)",
@@ -399,20 +280,3 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
     custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
     assert custom_report_schedule.exists
     custom_report_schedule.delete(cancel=False)
-
-
-@pytest.mark.ignore_stream('5.9')
-def test_report_schedules_invalid_email(appliance, schedule_data):
-    """
-        Polarion:
-            assignee: pvala
-            casecomponent: Reporting
-            initialEstimate: 1/12h
-    """
-    schedule_data["emails"] = (fauxfactory.gen_alpha(), fauxfactory.gen_alpha())
-    schedule_data["from_email"] = fauxfactory.gen_alpha()
-    with pytest.raises(AssertionError):
-        appliance.collections.schedules.create(**schedule_data)
-    view = appliance.collections.schedules.create_view(NewScheduleView)
-    view.flash.assert_message("One of e-mail addresses 'To' is not valid")
-    view.flash.assert_message("E-mail address 'From' is not valid")
