@@ -42,7 +42,7 @@ class VmwareCloudEndpointForm(View):
         api_port = Input('default_api_port')
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class VmwareCloudProvider(CloudProvider):
     STATS_TO_MATCH = ['num_availability_zone', 'num_orchestration_stack', 'num_vm']
     in_version = ('5.9', version.LATEST)

@@ -76,7 +76,7 @@ class CloudProviderImagesView(BaseLoggedInPage):
     including_entities = View.include(VMEntities, use_parent=True)
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class CloudProvider(BaseProvider, CloudInfraProviderMixin, Pretty, PolicyProfileAssignable,
                     Taggable):
     """

@@ -5,7 +5,7 @@ from cfme.containers.provider.openshift import VirtualizationEndpoint
 from . import InfraProvider
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class KubeVirtProvider(InfraProvider):
     type_name = "kubevirt"
     settings_key = 'ems_kubevirt'

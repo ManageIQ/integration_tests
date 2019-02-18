@@ -21,7 +21,7 @@ class SCVMMEndpointForm(DefaultEndpointForm):
     realm = Input('realm')  # appears when Kerberos is chosen in security_protocol
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class SCVMMProvider(InfraProvider):
     catalog_item_type = SCVMMCatalogItem
     STATS_TO_MATCH = ['num_template', 'num_vm']

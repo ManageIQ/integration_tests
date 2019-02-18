@@ -47,7 +47,7 @@ class EC2InstanceUtilizationView(VMUtilizationView):
     vm_network = LineChart(id='miq_chart_parent_candu_2')
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class EC2Provider(CloudProvider):
     """
      BaseProvider->CloudProvider->EC2Provider class.

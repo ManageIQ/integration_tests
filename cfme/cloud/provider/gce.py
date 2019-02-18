@@ -30,7 +30,7 @@ class GCEEndpointForm(View):
     validate = Button('Validate')
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class GCEProvider(CloudProvider):
     """
      BaseProvider->CloudProvider->GCEProvider class.

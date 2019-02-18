@@ -19,7 +19,7 @@ from cfme.utils.varmeth import variable
 from widgetastic_manageiq import StatusBox
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class PhysicalProvider(Pretty, BaseProvider, Fillable):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.

@@ -12,7 +12,7 @@ from cfme.utils.log import logger
 from . import CloudProvider
 
 
-@attr.s(hash=False)
+@attr.s(cmp=False)
 class OpenStackProvider(CloudProvider):
     """
      BaseProvider->CloudProvider->OpenStackProvider class.
