@@ -227,22 +227,6 @@ def test_embed_tower_playbook_links():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_childtenant_cloud_memory_quota_by_enforce():
-    """
-    test memory quota for child tenant for cloud instance by enforcement
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_ldap_password_being_logged_in_plain_text_in_evm_log():
     """
@@ -522,61 +506,6 @@ def test_appliance_terminates_unresponsive_worker_process():
         initialEstimate: 1/2h
         startsin: 5.8
         title: Appliance terminates unresponsive worker process
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_childtenant_cloud_vm_quota_by_enforce():
-    """
-    test no of vms quota for child tenant for cloud instance by
-    enforcement
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_copy_provisioning_dialog():
-    """
-    Automate - customization - provisioning dialog
-    Create a new dialog. Save
-    Configuration - Copy this dialog .
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.5
-        title: Copy provisioning dialog
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_user_cloud_storage_quota_by_services():
-    """
-    test user storage quota for cloud instance provision by ordering
-    services
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
     """
     pass
 
@@ -1145,23 +1074,6 @@ def test_retire_infra_vms_folder():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_infra_storage_quota_by_services():
-    """
-    test group storage for infra vm provision by ordering services
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_infrastructure_hosts_icons_states():
     """
     Requirement: Added a RHEVM provider
@@ -1279,24 +1191,6 @@ def test_sui_create_snapshot_from_vm_details_page_snapshot_page_and_service_deta
         startsin: 5.9
         title: SUI : Create snapshot from vm details page, snapshot page
                and service details page
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_cloud_storage_quota_by_lifecycle():
-    """
-    test group storage quota for cloud instance provision by Automate
-    model
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Cloud
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
     """
     pass
 
@@ -1659,44 +1553,6 @@ def test_validate_chargeback_cost_monthly_rate_memory_cost():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(2)
-def test_quota_with_invalid_service_request():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1531914 Test quotas with
-    various regions and invalid service requests
-    This bug contains the steps to follow:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1534589
-    To reproduce this issue: (You"ll need to have the RedHat Automate
-    domain)
-    1. Setup multiple zones.(You can use a single appliance and just add a
-    "test" zone)
-    2. Add VMWare provider and configure it to the "test" zone.
-    3. Create a VMWare Service Item.
-    4. Order the Service.
-    5. Delete the Service Template used in the Service creation in step 3.
-    6. Modify the VMWare provider to use the default zone. (This should
-    leave the existing Service request(s) in the queue for the "test" zone
-    and the service_template will be invalid)
-    7. Provision a VMWare VM.
-    You should see the following error in the log:
-    "[----] E, [2018-01-06T11:11:20.073924 #13027:e0ffc4] ERROR -- :
-    Q-task_id([miq_provision_787]) MiqAeServiceModelBase.ar_method raised:
-    <NoMethodError>: <undefined method `service_resources" for
-    nil:NilClass>
-    [----] E, [2018-01-06T11:11:20.074019 #13027:e0ffc4] ERROR -- :
-    Q-task_id([miq_provision_787]) "
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Control
-        initialEstimate: 1/4h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware_67_test_vm_name_with_punycode_characters():
     """
     OSP: vmware 67- Test VM name with Punycode characters
@@ -1708,23 +1564,6 @@ def test_osp_vmware_67_test_vm_name_with_punycode_characters():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware 67- Test VM name with Punycode characters
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_cloud_memory_quota_by_services():
-    """
-    test group memory quota for cloud instance provision by ordering
-    services
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.8
     """
     pass
 
@@ -1797,23 +1636,6 @@ def test_service_ansible_retirement_remove_resources():
     Polarion:
         assignee: sbulage
         casecomponent: Ansible
-        initialEstimate: 1/4h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_user_quota_vm_reconfigure():
-    """
-    Create User quota
-    assign some quota limitations
-    recongifure VM over limit.
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -1905,23 +1727,6 @@ def test_distributed_add_provider_to_remote_zone():
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_cloud_cpu_quota_by_services():
-    """
-    test group cpu quota for cloud instance provision by ordering services
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
     """
     pass
 
@@ -2038,22 +1843,6 @@ def test_embed_tower_add_scm_credentials():
         casecomponent: Ansible
         initialEstimate: 1/4h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_childtenant_cloud_storage_quota_by_enforce():
-    """
-    test storage quota for child tenant for cloud instance by enforcement
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.5
     """
     pass
 
@@ -2209,23 +1998,6 @@ def test_osp_test_flavors_can_be_selected_creating_migration_plan():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_user_cloud_memory_quota_by_lifecycle():
-    """
-    test user memory quota for cloud instance provision by Automate model
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_migration_plan_filtering_for_plans_table_list_on_overview_and_details_page():
     """
     OSP: Test Migration Plan Filtering for plans table/list on overview
@@ -2294,27 +2066,6 @@ def test_distributed_zone_add_provider_to_nondefault_zone():
         casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.general_ui
-@pytest.mark.tier(1)
-def test_automate_buttons_requests():
-    """
-    Navigate to Automate -> Requests
-    Check whether these buttons are displayed:
-    Reload
-    Apply
-    Reset
-    Default
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: low
-        initialEstimate: 1/18h
     """
     pass
 
@@ -4264,23 +4015,6 @@ def test_osp_vmware60_test_vm_migration_with_windows_2012_server():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_infra_memory_quota_by_lifecycle():
-    """
-    test group memory quota for infra vm provision by Automate model
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Cloud
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_targeted_refresh_instance():
     """
     Instance CREATE
@@ -4569,24 +4303,6 @@ def test_cluster_graph_by_vm_tag_vsphere6():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_cloud_storage_quota_by_services():
-    """
-    test group storage quota for cloud instance provision by ordering
-    services
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_can_add_project_to_tenant():
     """
@@ -4606,25 +4322,6 @@ def test_can_add_project_to_tenant():
         casecomponent: Configuration
         initialEstimate: 1/10h
         tags: rbac
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-def test_service_bundle_provsioning_with_quota_enabled():
-    """
-    test_service_bundle_provsioning_with_quota_enabled
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Provisioning
-        initialEstimate: 1/4h
-        setup: 1.create a catalog item of type vmware
-               2.create a catalog bundle by adding the above resource.
-               3.make sure CloudForms quotas are enabled
-               4.provision the bundle
-        startsin: 5.8
     """
     pass
 
@@ -4783,23 +4480,6 @@ def test_embed_tower_exec_play_against_rhos():
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-def test_simultaneous_tenant_quota():
-    """
-    Test multiple tenant quotas simultaneously
-    https://bugzilla.redhat.com/show_bug.cgi?id=1456819
-    https://bugzilla.redhat.com/show_bug.cgi?id=1401251
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Provisioning
-        initialEstimate: 1/6h
-        startsin: 5.8
     """
     pass
 
@@ -5378,24 +5058,6 @@ def test_storage_object_store_object_remove():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(2)
-def test_notification_show_notification_when_tenant_quota_is_reached():
-    """
-    when quota is soon to be reached,CFME should notify affected users
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.8
-        title: Notification : Show notification when tenant quota is reached
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_networking_before_and_after_migration_mac_address():
     """
     OSP: Test networking before and after migration (MAC Address)
@@ -5413,23 +5075,6 @@ def test_osp_test_networking_before_and_after_migration_mac_address():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_service_infra_tenant_quota_storage_default_entry_point():
-    """
-    tenant service storage quota validation for infra provider using
-    default entry point
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.smartstate
 @pytest.mark.tier(1)
 def test_ssa_vm_groups():
@@ -5442,23 +5087,6 @@ def test_ssa_vm_groups():
         caseimportance: medium
         initialEstimate: 1/2h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_service_cloud_tenant_quota_memory_default_entry_point():
-    """
-    tenant service memory quota validation for cloud provider using
-    default entry point
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.8
     """
     pass
 
@@ -7070,28 +6698,6 @@ def test_embed_tower_exec_play_against_amazon():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_show_quota_used_on_tenant_quota_screen_even_when_no_quotas_are_set():
-    """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1415792
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        initialEstimate: 1/6h
-        startsin: 5.9
-        title: Test show quota used on tenant quota screen even when no quotas are set
-        testSteps:
-            1. Add multiple providers and check the tenant quota screen
-               and check in use quota
-        expectedResults:
-            1. quota  in "In use" column should reflect the correct count
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_storage_ebs_snapshot_create():
     """
     Requires: An ec2 provider
@@ -7526,22 +7132,6 @@ def test_distributed_zone_failover_cu_data_collector():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_cloud_memory_quota_by_lifecycle():
-    """
-    test group memory quota for cloud instance provision by Automate model
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_rhi_inventory():
     """
@@ -7551,22 +7141,6 @@ def test_rhi_inventory():
         assignee: sbulage
         casecomponent: SmartState
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_project_cloud_storage_quota_by_enforce():
-    """
-    test storage quota for project for cloud instance by enforcement
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.5
     """
     pass
 
@@ -7815,23 +7389,6 @@ def test_api_edit_user_no_groups():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_custom_service_dialog_quota_flavors():
-    """
-    Test quota with instance_type in custom dialog
-    https://bugzilla.redhat.com/show_bug.cgi?id=1499193
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_order_credentials_usecredsfromservicedialog():
@@ -7950,23 +7507,6 @@ def test_osp_test_associated_tags_before_and_after_migration_department_accounti
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_user_cloud_cpu_quota_by_services():
-    """
-    test user cpu quota for cloud instance provision by ordering services
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_targeted_refresh_stack():
     """
     Stack CREATE
@@ -8012,30 +7552,6 @@ def test_embed_tower_repos_available():
         caseimportance: critical
         initialEstimate: 1/6h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(3)
-def test_quota_for_simultaneous_service_catalog_request_with_different_users():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1456819
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Provisioning
-        initialEstimate: 1/4h
-        startsin: 5.8
-        title: test quota for simultaneous service catalog request with different users
-        testSteps:
-            1.Create a service catalog with vm_name, instance_type &
-              number_of_vms as fields. Set quotas threshold values for
-              number_of_vms to 5. 2.Create two users from same group try
-              to provision service catalog from different web-sessions
-        expectedResults:
-            1. Quota exceeded message should be displayed
     """
     pass
 
@@ -8994,22 +8510,6 @@ def test_requests_in_ui_and_api():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_childtenant_cloud_cpu_quota_by_enforce():
-    """
-    test cpu quota for child tenant for cloud instance by enforcement
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_add_ec2_provider_with_instance_without_name():
     """
     1) Add an ec2 provider with instance without name
@@ -9728,23 +9228,6 @@ def test_verify_ldap_user_login_when_email_has_an_apostrophe_character():
         caseimportance: low
         initialEstimate: 1/3h
         title: verify ldap user login when email has an apostrophe character
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_user_quota_via_ssui():
-    """
-    Create user quota
-    assign some quota limitations
-    try to provision over limit via ssui
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.8
     """
     pass
 
@@ -10791,37 +10274,6 @@ def test_bundle_stack_deployment():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_project_cloud_memory_quota_by_enforce():
-    """
-    test memory quota for project for cloud instance by enforcement
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        setup: Prerequisities:
-               * A provider set up, supporting provisioning in CFME
-        startsin: 5.5
-        testSteps:
-            1. Set the project tenant quota for cpu by UI enforcement
-            2. Open the provisioning dialog.
-            3. Apart from the usual provisioning settings, set memory
-               greater then tenant quota memory
-            4. Submit the provisioning request and wait for it to finish.
-            5. Visit the requests page. The last message should state quota validation message
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5.
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_provider_refresh_via_api():
     """
@@ -11147,22 +10599,6 @@ def test_superadmin_child_tenant_delete_parent_catalog():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(2)
-def test_instance_quota_reconfigure_with_flavors():
-    """
-    Test reconfiguration of instance using flavors after setting quota
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Cloud
-        initialEstimate: 1/6h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rep
 @pytest.mark.tier(3)
 def test_distributed_zone_create_new():
@@ -11190,22 +10626,6 @@ def test_osp_vmware60_test_vm_migration_with_rhel_74_5():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware60-Test VM migration with RHEL 7.4/5
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_project_cloud_vm_quota_by_enforce():
-    """
-    test no of vms quota for project for cloud instance by enforcement
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.5
     """
     pass
 
@@ -11353,30 +10773,6 @@ def test_ssa_with_snapshot_scvmm2():
         initialEstimate: 1h
         startsin: 5.6.1
         upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_quota_vm_reconfigure():
-    """
-    Steps:
-    1)Copy Automation-->Automate-->Explorer-->ManageIQ-->system-->CommonMe
-    thods-->QuotaStateMachine-->quota
-    as Automation-->Automate-->Explorer-->quota_test-->system-->CommonMeth
-    ods-->QuotaStateMachine-->quota
-    2) Create a Vm with in the limits of quota defined
-    3) Try to reconfigure the Vm with values above quota set in Automation
-    -->Automate-->Explorer-->quota_test-->system-->CommonMethods-->QuotaSt
-    ateMachine-->quota
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        initialEstimate: 1/6h
-        startsin: 5.8
     """
     pass
 
@@ -11916,23 +11312,6 @@ def test_automated_locale_switching():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_user_cloud_cpu_quota_by_lifecycle():
-    """
-    test user cpu quota for cloud instance provision by Automate model
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_stack_template_azure():
     """
@@ -12014,27 +11393,6 @@ def test_configure_ldap_authentication():
             2. validation is expected to be successful with valid credentials
             3. the ldap authentication mode is expected to be successful
                after specifying the valid details.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_quota_for_ansible_service():
-    """
-    test quota for ansible service
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/4h
-        setup: Quota check causes errors for service provisioning when using Ansible
-               Tower service types
-               https://bugzilla.redhat.com/show_bug.cgi?id=1363901
-        startsin: 5.5
-        title: test quota for ansible service
     """
     pass
 
@@ -12535,23 +11893,6 @@ def test_osp_vmware_60_test_vm_name_with_punycode_characters():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_user_cloud_storage_quota_by_lifecycle():
-    """
-    test user storage quota for cloud instance provision by Automate model
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(2)
 def test_multiple_stack_deployment():
@@ -12565,23 +11906,6 @@ def test_multiple_stack_deployment():
         initialEstimate: 1/8h
         startsin: 5.5
         title: Multiple Stack deployment
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_infra_memory_quota_by_services():
-    """
-    test group memory for infra vm provision by ordering services
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
     """
     pass
 
@@ -12699,38 +12023,6 @@ def test_edit_vm():
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-def test_project_cloud_cpu_quota_by_enforce():
-    """
-    test cpu quota for project for cloud instance by enforcement
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_cloud_cpu_quota_by_lifecycle():
-    """
-    test group cpu quota for cloud instance provision by Automate model
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Cloud
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
     """
     pass
 
@@ -12881,41 +12173,6 @@ def test_verify_retrieve_ldaps_groups_works_fine_for_ldap_user_from_cfme_webui()
         casecomponent: Configuration
         initialEstimate: 1/4h
         title: verify retrieve ldaps groups works fine for ldap user from CFME webui.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_quota_calculation_using_service_dialog_overrides():
-    """
-    Bz- https://bugzilla.redhat.com/show_bug.cgi?id=1492158
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        initialEstimate: 1/6h
-        startsin: 5.8
-        title: Test Quota calculation using service dialog overrides.
-        testSteps:
-            1. create a new domain quota_test
-            2.Using the Automate Explorer, copy the
-              ManageIQ/System/CommonMethods/QuotaMethods/requested method
-              to the quota_test domain.
-            3. Import the attached dialog . create catalog and catalog
-               item using this dialog
-            4. create a child tenant and set quota. create new group and
-               user for this tenant.
-            5. login with this user and provision by overidding values
-            6. Also test the same for user and group quota source type
-        expectedResults:
-            1.
-            2. quota should be denied
-            3.
-            4.
-            5.
-            6.
     """
     pass
 
@@ -13680,23 +12937,6 @@ def test_set_hostname_from_appliance_console_and_configure_external_auth():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_infra_cpu_quota_by_lifecycle():
-    """
-    test group cpu quota for infra vm provision by Automate model
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Cloud
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.tag
 @pytest.mark.tier(2)
 def test_restricted_user_rbac_for_access_control():
@@ -13888,23 +13128,6 @@ def test_public_ip_reuse_azure():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_service_infra_tenant_quota_cpu_default_entry_point():
-    """
-    tenant service cpu quota validation for infra provider using default
-    entry point
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.html5
 @pytest.mark.tier(2)
 def test_html5_console_disabled_vsphere65_opsui_ssui():
@@ -13992,23 +13215,6 @@ def test_duplicate_groups_when_setting_ownership_to_multiple_items():
         caseimportance: medium
         initialEstimate: 1/6h
         title: Test duplicate groups when setting ownership to multiple items
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_service_cloud_tenant_quota_storage_default_entry_point():
-    """
-    tenant service storage quota validation for cloud provider using
-    default entry point
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.8
     """
     pass
 
@@ -14623,29 +13829,6 @@ def test_active_tasks_get_timed_out_when_they_run_too_long():
 
 
 @pytest.mark.manual
-@test_requirements.power
-@pytest.mark.tier(2)
-def test_power_controls_on_archived_vm():
-    """
-    1)add any Cloud provider
-    2)provision VM
-    3)delete it (we need Archived VM)
-    4)open Archived Vms/or All Vms and find your VM
-    5)select it"s Quadicon and/or open it"s Details
-    6)power menu should be Disabled
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Cloud
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/10h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_replication_central_admin_adhoc_provision_template():
     """
@@ -14870,43 +14053,6 @@ def test_tagvis_configuration_management_configured_system():
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_service_infra_tenant_quota_memory_default_entry_point():
-    """
-    tenant service memory quota validation for infra provider using
-    default entry point
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.power
-@pytest.mark.tier(2)
-def test_power_contols_on_vm_in_stack_cloud():
-    """
-    1.Provision a VM via Service (Orchestration template - azure/ec2/rhos)
-    2.Navigate to cloud->stacks->select a stack
-    3.click on the instance in relationship section of stack summary page
-    4.check power controls
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/3h
-        startsin: 5.6
     """
     pass
 
@@ -17539,30 +16685,6 @@ def test_osp_test_cpu_cores_and_sockets_pre_vs_post_migration():
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(3)
-def test_service_template_provisioning_quota_for_number_of_vms_using_custom_dialog():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1455844
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Provisioning
-        initialEstimate: 1/4h
-        startsin: 5.8
-        title: test service template provisioning quota for number of vm's using custom dialog
-        testSteps:
-            1. Create a service catalog with vm_name, instance_type &
-               number_of_vms as fields. Set quotas threshold values for
-               number_of_vms to 5 and provision service catalog with vm
-               count as 10.
-        expectedResults:
-            1. should get quota exceeded message
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(3)
 def test_verify_external_authentication_with_openldap_proxy_to_3_different_domains():
@@ -17636,24 +16758,6 @@ def test_verify_user_authentication_works_fine_if_default_evm_groups_are_already
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(3)
-def test_quota_enforcement_for_cloud_volumes():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1455349
-    test quota enforcement for cloud volumes
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Provisioning
-        initialEstimate: 1/4h
-        startsin: 5.8
-        title: test quota enforcement for cloud volumes
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(1)
 def test_embed_tower_api_on_url():
@@ -17711,23 +16815,6 @@ def test_osp_test_security_group_can_be_selected_while_creating_migration_plan()
 
 
 @pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_service_cloud_tenant_quota_cpu_default_entry_point():
-    """
-    tenant service cpu quota validation for cloud provider using default
-    entry point
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_saml_configuration_works_fine_for_cfme():
@@ -17741,30 +16828,6 @@ def test_verify_saml_configuration_works_fine_for_cfme():
         casecomponent: Configuration
         initialEstimate: 1/2h
         title: Verify SAML configuration works fine for CFME
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.power
-@pytest.mark.tier(2)
-def test_power_operations_from_global_region():
-    """
-    This test case is to check power operations from Global region
-    Setup is 2 or more appliances(DB should be configured manually). One
-    is Global region, others are Remote
-    To get this working on 5.6.4 you need to specify the :webservices =>
-    :remote_miq_api user (username) and password values in the global
-    region"s advanced settings for the server with the user interface
-    role.
-    Or Enable Central Admin for 5.7 or later
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Control
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.6
     """
     pass
 
@@ -17797,24 +16860,6 @@ def test_distributed_diagnostics_servers_view():
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_user_cloud_memory_quota_by_services():
-    """
-    test user memory quota for cloud instance provision by ordering
-    services
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
     """
     pass
 
@@ -17854,23 +16899,6 @@ def test_osp_test_migration_plan_delete():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test migration plan delete
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_infra_storage_quota_by_lifecycle():
-    """
-    test group storage quota for infra vm provision by Automate model
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
     """
     pass
 
@@ -18052,23 +17080,6 @@ def test_cluster_graph_by_host_tag_vsphere65():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
-def test_group_infra_cpu_quota_by_services():
-    """
-    test group cpu quota for infra vm provision by ordering services
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.8
     """
     pass
 
