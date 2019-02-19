@@ -6,11 +6,11 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import BaseProvider
+from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
-from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
 
 
 pytestmark = [

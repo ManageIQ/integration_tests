@@ -4,8 +4,8 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
@@ -18,7 +18,6 @@ pytestmark = [
     test_requirements.rest,
     pytest.mark.tier(1),
     pytest.mark.provider([CloudProvider, InfraProvider]),
-    pytest.mark.uncollectif(lambda provider: provider.one_of(KubeVirtProvider))
 ]
 
 
@@ -48,6 +47,7 @@ def provider_rest(request, appliance, provider):
 
 
 @pytest.mark.rhv1
+@pytest.mark.uncollectif(lambda provider: provider.one_of(KubeVirtProvider))
 def test_query_provider_attributes(provider, provider_rest, soft_assert):
     """Tests access to attributes of /api/providers.
 
@@ -82,7 +82,6 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 def test_provider_options(appliance):
     """Tests that provider settings are present in OPTIONS listing.
 
@@ -100,6 +99,7 @@ def test_provider_options(appliance):
 
 
 @pytest.mark.rhv3
+@pytest.mark.uncollectif(lambda provider: provider.one_of(KubeVirtProvider))
 def test_create_provider(provider_rest):
     """Tests creating provider using REST API.
 
@@ -116,6 +116,7 @@ def test_create_provider(provider_rest):
 
 
 @pytest.mark.rhv1
+@pytest.mark.uncollectif(lambda provider: provider.one_of(KubeVirtProvider))
 def test_provider_refresh(provider_rest, appliance):
     """Test checking that refresh invoked from the REST API works.
 
@@ -153,6 +154,7 @@ def test_provider_refresh(provider_rest, appliance):
 
 
 @pytest.mark.rhv3
+@pytest.mark.uncollectif(lambda provider: provider.one_of(KubeVirtProvider))
 def test_provider_edit(request, provider_rest, appliance):
     """Test editing a provider using REST API.
 
@@ -175,6 +177,7 @@ def test_provider_edit(request, provider_rest, appliance):
 
 
 @pytest.mark.rhv3
+@pytest.mark.uncollectif(lambda provider: provider.one_of(KubeVirtProvider))
 @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
 def test_provider_delete_from_detail(provider_rest, method):
     """Tests deletion of the provider from detail using REST API.
@@ -194,6 +197,7 @@ def test_provider_delete_from_detail(provider_rest, method):
 
 
 @pytest.mark.rhv3
+@pytest.mark.uncollectif(lambda provider: provider.one_of(KubeVirtProvider))
 def test_provider_delete_from_collection(provider_rest):
     """Tests deletion of the provider from collection using REST API.
 

@@ -12,12 +12,12 @@ from cfme.common.provider_views import InfraProviderAddView
 from cfme.common.provider_views import InfraProvidersDiscoverView
 from cfme.common.provider_views import InfraProvidersView
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
 from cfme.infrastructure.provider.rhevm import RHEVMEndpoint
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VirtualCenterEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
@@ -219,8 +219,6 @@ def test_api_port_max_character_validation_infra(appliance):
 @pytest.mark.rhv1
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.uncollectif(lambda provider: provider.one_of(KubeVirtProvider))
-@pytest.mark.meta(blockers=[BZ(1559796, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.tier(1)
 def test_providers_discovery(request, appliance, provider):
     """Tests provider discovery
