@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module tests only cloud specific events"""
 import pytest
-import yaml
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.utils.generators import random_vm_name
@@ -35,8 +34,7 @@ def test_manage_nsg_group(appliance, provider, register_event):
     # we need to check raw data by regexps, since many azure events aren't parsed by CFME yet
 
     def add_cmp(_, y):
-        # In 5.9 version `y` is a dict, not a yaml stream.
-        data = yaml.safe_load(y) if appliance.version < '5.9' else y
+        data = y
 
         # In 5.10 data does not have 'status' or 'subStatus' key
         if appliance.version < '5.10':
@@ -61,8 +59,7 @@ def test_manage_nsg_group(appliance, provider, register_event):
                    event_type='networkSecurityGroups_write_EndRequest')
 
     def rm_cmp(_, y):
-        # In 5.9 version `y` is a dict, not a yaml stream.
-        data = yaml.safe_load(y) if appliance.version < '5.9' else y
+        data = y
 
         if appliance.version < '5.10':
             compare = (data['resourceId'].endswith(nsg_name) and
@@ -109,8 +106,7 @@ def test_vm_capture(appliance, request, provider, register_event):
     request.addfinalizer(vm.cleanup_on_provider)
 
     def cmp_function(_, y):
-        # In 5.9 version `y` is a dict, not a yaml stream.
-        data = yaml.safe_load(y) if appliance.version < '5.9' else y
+        data = y
 
         if appliance.version < '5.10':
             compare = (data['resourceId'].endswith(vm.name) and
