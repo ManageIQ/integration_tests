@@ -8,8 +8,8 @@ import traceback
 import warnings
 from copy import copy
 from datetime import datetime
-from tempfile import NamedTemporaryFile
 from time import sleep, time
+from urllib3.exceptions import ConnectionError
 
 import attr
 import dateutil.parser
@@ -31,9 +31,7 @@ from cfme.fixtures import ui_coverage
 from cfme.fixtures.pytest_store import store
 from cfme.utils import clear_property_cache
 from cfme.utils import conf, ssh, ports
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import hidden
-from cfme.utils.datafile import load_data_file
 from cfme.utils.log import logger, create_sublogger, logger_wrap
 from cfme.utils.net import net_check, resolve_hostname
 from cfme.utils.path import data_path, patches_path, scripts_path, conf_path
@@ -633,12 +631,15 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             if self.version >= '5.8':
                 self.configure_vm_console_cert(log_callback=log_callback)
                 restart_evm = True
+
+            if fix_ntp_clock and not self.is_pod:
+                self.wait_for_web_ui(log_callback=log_callback)
+                self.set_ntp_sources(log_callback=log_callback)
+                restart_evm = True
+
             if restart_evm:
                 self.evmserverd.restart(log_callback=log_callback)
             self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-
-            if fix_ntp_clock and not self.is_pod:
-                self.set_ntp_sources(log_callback=log_callback)
 
     def configure_gce(self, log_callback=None):
         # Force use of IPAppliance's configure method
@@ -855,7 +856,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def product_name(self):
         try:
             return self.rest_api.product_info['name']
-        except (AttributeError, KeyError, IOError):
+        except (AttributeError, KeyError, IOError, ConnectionError):
             self.log.exception(
                 'appliance.product_name could not be retrieved from REST, falling back')
             try:
@@ -1111,13 +1112,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             log_callback(msg)
             raise ApplianceException(msg)
 
-        ntp_servers = {
-            'ntp_server_{n}'.format(n=i + 1): time_servers[i]
-            for i in range(0, len(time_servers))
-        }
-        logger.info('Setting NTP servers from config file: %s', ntp_servers)
+        logger.info('Setting NTP servers from config file: %s', time_servers)
 
-        self.server.settings.update_ntp_servers(ntp_servers)
+        self.update_advanced_settings({'ntp': {'server': time_servers}})
 
         # check that chrony is running correctly now
         chrony_check = client.run_command('chronyc tracking')
@@ -2637,16 +2634,23 @@ class Appliance(IPAppliance):
             else:
                 self.db.enable_external(
                     db_address, region, db_name, db_username, db_password)
-        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         if kwargs.get('loosen_pgssl', True) is True:
             self.db.loosen_pgssl()
 
+        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+
+        restart_evm = False
+
         if kwargs.get('fix_ntp_clock', True) is True:
             self.set_ntp_sources(log_callback=log_callback)
+            restart_evm = True
 
         name_to_set = kwargs.get('name_to_set')
         if name_to_set is not None and name_to_set != self.name:
             self.rename(name_to_set)
+            restart_evm = True
+
+        if restart_evm:
             self.evmserverd.restart(log_callback=log_callback)
             self.wait_for_web_ui(log_callback=log_callback)
 

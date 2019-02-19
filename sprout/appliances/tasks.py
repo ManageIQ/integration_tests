@@ -697,6 +697,7 @@ def prepare_template_verify_version(self, template_id):
         # Run the task to mail the problem
         mailer_version_mismatch.delay()
         raise Exception("Detected version mismatch!")
+    template.set_status("Version verification is over")
 
 
 @singleton_task()
