@@ -5,11 +5,12 @@ import pytest
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
+from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme import test_requirements
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -20,7 +21,7 @@ pytestmark = [
     test_requirements.service,
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.tier(2),
-    pytest.mark.provider([CloudProvider],
+    pytest.mark.provider([CloudProvider], selector=ONE_PER_TYPE,
                          required_fields=[['provisioning', 'image']],
                          scope="module"),
 ]

@@ -5,6 +5,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ui import MyServiceDetailView
 from cfme.services.service_catalogs import ServiceCatalogs
@@ -22,7 +23,7 @@ pytestmark = [
     pytest.mark.long_running,
     test_requirements.service,
     pytest.mark.tier(2),
-    pytest.mark.provider([VMwareProvider], scope="module"),
+    pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, scope="module"),
 ]
 
 

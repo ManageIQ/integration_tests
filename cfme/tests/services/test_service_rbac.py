@@ -2,11 +2,12 @@ import fauxfactory
 import pytest
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'setup_provider'),
-    pytest.mark.provider([VMwareProvider], scope="module")
+    pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, scope="module")
 ]
 
 

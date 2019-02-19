@@ -4,12 +4,13 @@ from datetime import date, timedelta
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.dashboard import Dashboard
-from cfme import test_requirements
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.blockers import GH
 from cfme.utils.log import logger
@@ -23,7 +24,7 @@ pytestmark = [
     test_requirements.ssui,
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.provider([InfraProvider],
+    pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE,
                          required_fields=[['provisioning', 'template'],
                                           ['provisioning', 'host'],
                                           ['provisioning', 'datastore']],
