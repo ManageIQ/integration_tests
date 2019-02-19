@@ -122,10 +122,10 @@ This is how the artifact_path is returned. This hook can be removed, by running 
 
 """
 import logging
-import os
-import re
 import sys
 
+import os
+import re
 from py.path import local
 from riggerlib import Rigger, RiggerBasePlugin, RiggerClient
 
@@ -201,6 +201,9 @@ def initialize(artifactor):
         "finish_test", "pre", parse_setup_dir, name="default_finish_test"
     )
     artifactor.register_hook_callback(
+        "build_report", "pre", parse_build_dir, name="default_build_report"
+    )
+    artifactor.register_hook_callback(
         "start_session", "pre", start_session, name="default_start_session"
     )
     artifactor.register_hook_callback(
@@ -209,6 +212,7 @@ def initialize(artifactor):
     artifactor.register_hook_callback(
         "finish_session", "pre", merge_artifacts, name="merge_artifacts"
     )
+
     artifactor.initialized = True
 
 
@@ -219,13 +223,18 @@ def start_session(run_id=None):
     return None, {"run_id": run_id}
 
 
-def merge_artifacts(old_artifacts, artifacts):
+def merge_artifacts(old_artifacts, artifacts, artifactor_config, artifact_dir, run_id):
     """
     This is extremely important and merges the old_Artifacts from a composite-uncollect build
     with the new artifacts for this run
     """
+    run_type = artifactor_config.get("per_run")
+    overwrite = artifactor_config.get("reuse_dir", False)
+    report_path = setup_report_dir(
+        root_dir=artifact_dir, run_type=run_type, run_id=run_id, overwrite=overwrite
+    )
     old_artifacts.update(artifacts)
-    return {"old_artifacts": old_artifacts}, None
+    return {"old_artifacts": old_artifacts, "report_path": report_path}, None
 
 
 def parse_setup_dir(test_name, test_location, artifactor_config, artifact_dir, run_id):
@@ -246,6 +255,43 @@ def parse_setup_dir(test_name, test_location, artifactor_config, artifact_dir, r
     else:
         raise Exception("Not enough information to create artifact")
     return {"artifact_path": path}, None
+
+
+def parse_build_dir(artifactor_config, artifact_dir, run_id):
+    """
+    Convenience fire_hook for built in hook
+    """
+    run_type = artifactor_config.get("per_run")
+    overwrite = artifactor_config.get("reuse_dir", False)
+    report_path = setup_report_dir(
+        root_dir=artifact_dir, run_type=run_type, run_id=run_id, overwrite=overwrite
+    )
+    return {"report_path": report_path}, None
+
+
+def setup_report_dir(root_dir=None, run_type=None, run_id=None, overwrite=True):
+    """
+    Sets up the artifact dir and returns it.
+    """
+    orig_path = os.path.abspath(root_dir)
+
+    p_args = [orig_path]
+    if run_id and run_type in ["run", "test"]:
+        p_args.append(str(run_id))
+    path = os.path.join(*p_args)
+
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno == 17 and overwrite:
+            pass
+        elif not overwrite:
+            print("Directories already existed and overwrite is set to False")
+            sys.exit(127)
+        else:
+            raise
+
+    return path
 
 
 def setup_artifact_dir(
