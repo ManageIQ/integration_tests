@@ -1,5 +1,6 @@
-import pytest
 from time import sleep
+
+import pytest
 
 import cfme.utils.auth as authutil
 from cfme.utils.log import logger

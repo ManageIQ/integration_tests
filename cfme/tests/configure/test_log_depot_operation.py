@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
-
 """ Tests used to check the operation of log collecting.
 
 Author: Milan Falešník <mfalesni@redhat.com>
 Since: 2013-02-20
 """
-from datetime import datetime, timedelta
+import re
+from datetime import datetime
 from ftplib import FTP
-from pytz import timezone
-from wait_for import TimedOutError
 
 import fauxfactory
 import pytest
-import re
+from pytz import timezone
+from wait_for import TimedOutError
 
 from cfme import test_requirements
 from cfme.configure.configuration.diagnostics_settings import CollectLogsBase
-from cfme.utils import conf, testgen
+from cfme.utils import conf
+from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClient
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update

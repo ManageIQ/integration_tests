@@ -15,7 +15,6 @@ artifactor:
                 - /var/www/miq/vmdb/log/production.log
                 - /var/www/miq/vmdb/log/automation.log
 """
-
 import os.path
 
 import requests

@@ -1,5 +1,4 @@
 """tests for Openstack cloud Keypairs"""
-
 import fauxfactory
 import pytest
 

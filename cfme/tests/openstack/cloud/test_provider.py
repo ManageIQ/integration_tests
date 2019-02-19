@@ -1,5 +1,4 @@
 """Tests for Openstack cloud provider"""
-
 import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider

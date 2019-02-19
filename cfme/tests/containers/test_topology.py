@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 # import time
 # from random import choice
-
 import pytest
 
+from cfme.containers.provider import ContainersProvider
 # from cfme.utils.blockers import BZ
 # from cfme.utils.wait import wait_for
 # from cfme.utils.browser import WithZoom
-
-from cfme.containers.provider import ContainersProvider
 # from cfme.containers.topology import Topology as ContainerTopology
 # from cfme.fixtures.pytest_selenium import is_displayed_text
 

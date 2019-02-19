@@ -1,7 +1,9 @@
 import pytest
 
-from cfme.containers.provider import ContainersProvider, ContainersTestItem
-from cfme.containers.node import Node, NodeCollection
+from cfme.containers.node import Node
+from cfme.containers.node import NodeCollection
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersTestItem
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.providers import ProviderFilter

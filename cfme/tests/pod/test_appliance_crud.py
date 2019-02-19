@@ -1,18 +1,21 @@
-import fauxfactory
 import os
-import pytest
 import tempfile
-import yaml
-
-from wrapanapi.systems.container.rhopenshift import ApiException
-from pytest import config
 from time import sleep
+
+import fauxfactory
+import pytest
+import yaml
+from pytest import config
+from wrapanapi.systems.container.rhopenshift import ApiException
 
 from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.fixtures.appliance import sprout_appliances
 from cfme.test_framework.appliance import PLUGIN_KEY
-from cfme.utils import ssh, trackerbot, conf
-from cfme.utils.appliance import stack, IPAppliance
+from cfme.utils import conf
+from cfme.utils import ssh
+from cfme.utils import trackerbot
+from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import stack
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.auth import auth_user_data
 from cfme.utils.conf import credentials

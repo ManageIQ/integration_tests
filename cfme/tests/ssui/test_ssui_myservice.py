@@ -4,12 +4,13 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import providers, ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import providers
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ssui import DetailsMyServiceView
 from cfme.utils import ssh

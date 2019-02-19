@@ -1,11 +1,13 @@
+import random
+from collections import namedtuple
+
 import dateparser
 import pytest
-import random
 
-from collections import namedtuple
 from cfme.containers.image import Image
-from cfme.containers.provider import (ContainersProvider, ContainersTestItem,
-                                      refresh_and_navigate)
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersTestItem
+from cfme.containers.provider import refresh_and_navigate
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for

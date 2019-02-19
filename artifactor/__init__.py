@@ -122,12 +122,14 @@ This is how the artifact_path is returned. This hook can be removed, by running 
 
 """
 import logging
-import sys
-
 import os
 import re
+import sys
+
 from py.path import local
-from riggerlib import Rigger, RiggerBasePlugin, RiggerClient
+from riggerlib import Rigger
+from riggerlib import RiggerBasePlugin
+from riggerlib import RiggerClient
 
 from cfme.utils.net import random_port
 from cfme.utils.path import log_path

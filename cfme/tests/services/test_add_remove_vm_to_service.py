@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.log import logger
 
 

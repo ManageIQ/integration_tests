@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 import importscan
 
 to_check = 'cfme artifactor fixtures markers utils'

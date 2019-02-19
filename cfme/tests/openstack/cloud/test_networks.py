@@ -1,12 +1,12 @@
 """Tests for Openstack cloud networks, subnets and routers"""
-
 import fauxfactory
 import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

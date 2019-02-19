@@ -1,14 +1,14 @@
 """Tests for Openstack cloud Flavors"""
-
 import fauxfactory
 import pytest
+from widgetastic.utils import partial_match
 
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
-from widgetastic.utils import partial_match
 
 pytestmark = [
     pytest.mark.usefixtures("setup_provider"),

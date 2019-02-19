@@ -1,10 +1,12 @@
 import attr
 from cached_property import cached_property
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 
 from cfme.cloud.tenant import ProviderTenantAllView
 from cfme.common import Taggable
-from cfme.common.provider import BaseProvider, prepare_endpoints
+from cfme.common.provider import BaseProvider
+from cfme.common.provider import prepare_endpoints
 from cfme.exceptions import DestinationNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.networks.balancer import BalancerCollection
@@ -14,21 +16,21 @@ from cfme.networks.network_router import NetworkRouterCollection
 from cfme.networks.security_group import SecurityGroupCollection
 from cfme.networks.subnet import SubnetCollection
 from cfme.networks.topology import NetworkTopologyView
-from cfme.networks.views import (
-    NetworkProviderDetailsView,
-    NetworkProviderView,
-    NetworkProviderAddView,
-    OneProviderBalancerView,
-    OneProviderCloudNetworkView,
-    OneProviderFloatingIpView,
-    OneProviderNetworkPortView,
-    OneProviderNetworkRouterView,
-    OneProviderSecurityGroupView,
-    OneProviderSubnetView,
-    NetworkProviderEditView
-)
+from cfme.networks.views import NetworkProviderAddView
+from cfme.networks.views import NetworkProviderDetailsView
+from cfme.networks.views import NetworkProviderEditView
+from cfme.networks.views import NetworkProviderView
+from cfme.networks.views import OneProviderBalancerView
+from cfme.networks.views import OneProviderCloudNetworkView
+from cfme.networks.views import OneProviderFloatingIpView
+from cfme.networks.views import OneProviderNetworkPortView
+from cfme.networks.views import OneProviderNetworkRouterView
+from cfme.networks.views import OneProviderSecurityGroupView
+from cfme.networks.views import OneProviderSubnetView
 from cfme.utils import version
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 

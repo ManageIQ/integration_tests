@@ -1,7 +1,7 @@
 import pytest
 
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

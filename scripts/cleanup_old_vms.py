@@ -6,7 +6,8 @@ import re
 import sys
 from collections import namedtuple
 from datetime import timedelta
-from multiprocessing import Manager, Pool
+from multiprocessing import Manager
+from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
 from operator import attrgetter
 from textwrap import dedent
@@ -16,9 +17,12 @@ from tabulate import tabulate
 from wrapanapi.exceptions import VMInstanceNotFound
 
 from cfme.utils.appliance import DummyAppliance
-from cfme.utils.log import logger, add_stdout_handler
+from cfme.utils.log import add_stdout_handler
+from cfme.utils.log import logger
 from cfme.utils.path import log_path
-from cfme.utils.providers import get_mgmt, list_providers, ProviderFilter
+from cfme.utils.providers import get_mgmt
+from cfme.utils.providers import list_providers
+from cfme.utils.providers import ProviderFilter
 
 # Constant strings for the report
 PASS = 'PASS'

@@ -1,27 +1,42 @@
 # -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Reports"""
 import attr
-
 from cached_property import cached_property
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedLocator
-from widgetastic.widget import Text, Checkbox, View, ParametrizedView, Table as VanillaTable
-from widgetastic_manageiq import (PaginationPane, Table, ReportToolBarViewSelector, WaitTab)
-from widgetastic_manageiq.expression_editor import ExpressionEditor
-from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound
+from widgetastic.widget import Checkbox
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Table as VanillaTable
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import Input
 
+from . import CloudIntelReportsView
+from . import ReportsMultiBoxSelect
 from cfme.intelligence.reports.schedules import SchedulesFormCommon
 from cfme.intelligence.timelines import CloudIntelTimelinesView
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.utils import ParamClassName
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
-from cfme.utils.wait import wait_for, TimedOutError
-from . import CloudIntelReportsView, ReportsMultiBoxSelect
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import ReportToolBarViewSelector
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import WaitTab
+from widgetastic_manageiq.expression_editor import ExpressionEditor
 
 
 class CustomReportFormCommon(CloudIntelReportsView):

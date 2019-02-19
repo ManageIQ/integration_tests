@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from weakref import WeakKeyDictionary, proxy
+from weakref import proxy
+from weakref import WeakKeyDictionary
 
 import attr
 from cached_property import cached_property

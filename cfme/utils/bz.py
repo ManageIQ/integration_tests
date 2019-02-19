@@ -4,12 +4,16 @@ from collections import Sequence
 
 import six
 from bugzilla import Bugzilla as _Bugzilla
-from miq_version import Version, LATEST
-
 from cached_property import cached_property
-from cfme.utils.conf import credentials, env
+from miq_version import LATEST
+from miq_version import Version
+
+from cfme.utils.conf import credentials
+from cfme.utils.conf import env
 from cfme.utils.log import logger
-from cfme.utils.version import current_version, appliance_build_datetime, appliance_is_downstream
+from cfme.utils.version import appliance_build_datetime
+from cfme.utils.version import appliance_is_downstream
+from cfme.utils.version import current_version
 
 NONE_FIELDS = {"---", "undefined", "unspecified"}
 

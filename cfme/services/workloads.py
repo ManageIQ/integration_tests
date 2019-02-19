@@ -2,13 +2,19 @@
 """ A model of Workloads page in CFME
 """
 from navmazing import NavigateToAttribute
-from widgetastic.widget import Text, View
-from widgetastic_patternfly import Button, Dropdown
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
-from widgetastic_manageiq import Accordion, ManageIQTree, Search, ItemsToolBarViewSelector
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import Search
 
 
 class WorkloadsToolbar(View):

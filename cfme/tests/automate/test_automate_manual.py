@@ -1,5 +1,4 @@
 """Manual tests"""
-
 import pytest
 
 from cfme import test_requirements

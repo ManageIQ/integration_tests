@@ -12,10 +12,10 @@ import os
 import random
 import re
 import warnings
-
 from collections import namedtuple
 
 from manageiq_client.api import ManageIQClient as MiqApi
+
 from cfme.utils import conf
 from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.path import log_path

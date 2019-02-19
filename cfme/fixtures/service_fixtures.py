@@ -1,23 +1,22 @@
 # -*- coding: utf-8 -*-
 import pytest
-
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
-from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.cloud.provider import CloudProvider
+from cfme.fixtures.provider import console_template
 from cfme.infrastructure.provider import InfraProvider
 from cfme.rest.gen_data import dialog as _dialog
 from cfme.rest.gen_data import service_catalog_obj as _catalog
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.utils.blockers import BZ
-from cfme.fixtures.provider import console_template
 
 
 @pytest.fixture(scope="function")

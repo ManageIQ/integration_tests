@@ -1,11 +1,9 @@
 #!/usr/bin/env python2
-
 import argparse
+import re
 import subprocess
 import sys
 from collections import defaultdict
-
-import re
 
 
 def main():

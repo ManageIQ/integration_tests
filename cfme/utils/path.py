@@ -6,8 +6,8 @@ Paths rendered below will be different in your local environment.
 
 .. _py.path.local: http://pylib.readthedocs.org/en/latest/path.html
 """
-
 import imp
+
 from py.path import local
 
 _cfme_package_dir = local(imp.find_module('cfme')[1])

@@ -4,19 +4,15 @@ import pytest
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
-from cfme.rest.gen_data import (
-    categories as _categories,
-    service_templates as _service_templates,
-    tags as _tags,
-    tenants as _tenants,
-    vm as _vm,
-)
+from cfme.rest.gen_data import categories as _categories
+from cfme.rest.gen_data import service_templates as _service_templates
+from cfme.rest.gen_data import tags as _tags
+from cfme.rest.gen_data import tenants as _tenants
+from cfme.rest.gen_data import vm as _vm
 from cfme.utils.blockers import BZ
-from cfme.utils.rest import (
-    assert_response,
-    delete_resources_from_collection,
-    delete_resources_from_detail,
-)
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.rest import delete_resources_from_detail
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 

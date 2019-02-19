@@ -5,9 +5,12 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.base.ui import LoginPage
 from cfme.utils import conf
-from cfme.utils.appliance import ViaSSUI, ViaUI
+from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance import ViaUI
 from cfme.utils.blockers import BZ
-from cfme.utils.version import LOWEST, UPSTREAM, VersionPicker
+from cfme.utils.version import LOWEST
+from cfme.utils.version import UPSTREAM
+from cfme.utils.version import VersionPicker
 
 pytestmark = pytest.mark.usefixtures('browser')
 

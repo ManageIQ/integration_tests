@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-import pytest
 import random
+
+import pytest
 from six import string_types
 
 from cfme import test_requirements
 from cfme.exceptions import ItemNotFound
 from cfme.services.myservice import MyService
-from cfme.services.workloads import VmsInstances, TemplatesImages
+from cfme.services.workloads import TemplatesImages
+from cfme.services.workloads import VmsInstances
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [pytest.mark.tier(3),

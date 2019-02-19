@@ -1,17 +1,20 @@
-import pytest
-from py.error import ENOENT
 import base64
+
+import pytest
 import six
+from py.error import ENOENT
 from six.moves.urllib_error import URLError
 
 import cfme.utils.browser
-from cfme.utils import browser as browser_module, safe_string
+from cfme.fixtures.artifactor_plugin import fire_art_test_hook
+from cfme.utils import browser as browser_module
+from cfme.utils import safe_string
+from cfme.utils.appliance import find_appliance
 from cfme.utils.browser import take_screenshot
 from cfme.utils.datafile import template_env
 from cfme.utils.log import logger
-from cfme.utils.path import log_path, project_path
-from cfme.fixtures.artifactor_plugin import fire_art_test_hook
-from cfme.utils.appliance import find_appliance
+from cfme.utils.path import log_path
+from cfme.utils.path import project_path
 browser_fixtures = {'browser'}
 
 failed_test_tracking = {

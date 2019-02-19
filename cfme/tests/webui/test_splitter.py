@@ -1,15 +1,9 @@
-from xml.sax.saxutils import quoteattr, unescape
+from xml.sax.saxutils import quoteattr
+from xml.sax.saxutils import unescape
 
 import pytest
 from wait_for import TimedOutError
 
-# from cfme.cloud.instance import Instance
-# from cfme.infrastructure.config_management import ConfigManager
-# from cfme.infrastructure.datastore import DatastoreCollection
-# from cfme.infrastructure.pxe import ISODatastore
-# from cfme.infrastructure.virtual_machines import InfraVm
-# from cfme.intelligence.chargeback.rates import ComputeRate
-# from cfme.intelligence.reports.reports import CustomReport
 from cfme.base.ui import Server
 from cfme.exceptions import CannotScrollException
 from cfme.infrastructure.networking import InfraNetworkingCollection
@@ -20,6 +14,13 @@ from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from widgetastic_manageiq import Splitter
+# from cfme.cloud.instance import Instance
+# from cfme.infrastructure.config_management import ConfigManager
+# from cfme.infrastructure.datastore import DatastoreCollection
+# from cfme.infrastructure.pxe import ISODatastore
+# from cfme.infrastructure.virtual_machines import InfraVm
+# from cfme.intelligence.chargeback.rates import ComputeRate
+# from cfme.intelligence.reports.reports import CustomReport
 
 # LOCATIONS = [
 #     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),

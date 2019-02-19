@@ -20,10 +20,11 @@ from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
-from cfme.utils.providers import ProviderFilter
 from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
-from cfme.utils.version import VersionPicker, LOWEST
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
 pytestmark = [

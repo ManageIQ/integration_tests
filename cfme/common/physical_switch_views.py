@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
-from widgetastic_manageiq import (
-    BaseEntitiesView,
-    JSBaseEntity,
-    BreadCrumb,
-    ItemsToolBarViewSelector,
-    SummaryTable,
-    TimelinesView,
-    ManageIQTree
-)
-from widgetastic_patternfly import Dropdown, Accordion
 from widgetastic.utils import Parameter
-from widgetastic.widget import ParametrizedView, Text, View
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Accordion
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import BreadCrumb
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import JSBaseEntity
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import TimelinesView
 
 
 class ComputePhysicalInfrastructureSwitchesView(BaseLoggedInPage):

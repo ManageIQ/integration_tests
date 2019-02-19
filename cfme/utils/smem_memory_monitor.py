@@ -1,12 +1,12 @@
 """Monitor Memory on a CFME/Miq appliance and builds report&graphs displaying usage per process."""
 import json
+import os
 import time
 import traceback
 from collections import OrderedDict
 from datetime import datetime
 from threading import Thread
 
-import os
 import six
 import yaml
 from yaycl import AttrDict

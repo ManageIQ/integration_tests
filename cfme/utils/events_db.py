@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-
 """Library for event testing.
 """
-
-from cached_property import cached_property
-from contextlib import contextmanager
 from collections import Iterable
+from contextlib import contextmanager
 from datetime import datetime
 from numbers import Number
-from sqlalchemy.sql.expression import func
+from threading import Event as ThreadEvent
+from threading import Thread
 from time import sleep
-from threading import Thread, Event as ThreadEvent
+
+from cached_property import cached_property
+from sqlalchemy.sql.expression import func
 
 from cfme.utils.log import create_sublogger
 

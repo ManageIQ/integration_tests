@@ -1,12 +1,17 @@
-import xml.etree.ElementTree as ET
-from jinja2 import Environment, FileSystemLoader
-from cfme.utils.path import template_path, log_path, data_path
-import re
 import base64
-import os
-import shutil
-import yaml
 import copy
+import os
+import re
+import shutil
+import xml.etree.ElementTree as ET
+
+import yaml
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
+
+from cfme.utils.path import data_path
+from cfme.utils.path import log_path
+from cfme.utils.path import template_path
 
 
 def create_groupings(input_list):

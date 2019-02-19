@@ -2,30 +2,37 @@
 """
 import attr
 from lxml.html import document_fromstring
-
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, View
-from widgetastic_patternfly import Accordion, Dropdown
-from widgetastic_manageiq import (
-    BaseEntitiesView,
-    ItemsToolBarViewSelector,
-    JSBaseEntity,
-    ManageIQTree,
-    Search,
-    SummaryTable,
-)
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Accordion
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import CustomButtonEventsMixin, Taggable
+from cfme.common import CustomButtonEventsMixin
+from cfme.common import Taggable
 from cfme.common.candu_views import DatastoreInfraUtilizationView
 from cfme.common.host_views import HostsView
-from cfme.exceptions import ItemNotFound, MenuItemNotFound, displayed_not_implemented
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.exceptions import displayed_not_implemented
+from cfme.exceptions import ItemNotFound
+from cfme.exceptions import MenuItemNotFound
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.utils import ParamClassName
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
-from cfme.utils.wait import TimedOutError, wait_for
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import JSBaseEntity
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
 
 
 class DatastoreToolBar(View):

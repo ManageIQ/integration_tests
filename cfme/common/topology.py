@@ -1,11 +1,17 @@
-import attr
 import re
+
+import attr
 from widgetastic.utils import ParametrizedLocator
-from widgetastic.widget import Checkbox, ParametrizedView, Text, View
-from widgetastic_patternfly import Button, Input
+from widgetastic.widget import Checkbox
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 

@@ -1,14 +1,26 @@
 from navmazing import NavigateToAttribute
-from widgetastic.widget import Text, View, ParametrizedView, ParametrizedString, ParametrizedLocator
-from widgetastic_patternfly import Dropdown, CandidateNotFound, Button
-from widgetastic_manageiq import (ItemsToolBarViewSelector, BaseEntitiesView,
-    ParametrizedSummaryTable)
+from widgetastic.widget import ParametrizedLocator
+from widgetastic.widget import ParametrizedString
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import Dropdown
 
+from . import GenericObjectInstance
+from . import GenericObjectInstanceCollection
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import Taggable, TagPageView
+from cfme.common import Taggable
+from cfme.common import TagPageView
 from cfme.utils.appliance import MiqImplementationContext
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
-from . import GenericObjectInstance, GenericObjectInstanceCollection
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.appliance.implementations.ui import ViaUI
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ParametrizedSummaryTable
 
 
 class GenericObjectInstanceToolbar(View):

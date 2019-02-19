@@ -1,27 +1,43 @@
 import attr
 import six
-
-from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.widget import Checkbox, View, Text, ConditionalSwitchableView
-from widgetastic_patternfly import (
-    BootstrapSelect, Button, Input, CheckableBootstrapTreeview as CbTree,
-    BootstrapSwitch, CandidateNotFound, Dropdown)
-from widgetastic_manageiq import (
-    UpDownSelect, PaginationPane, SummaryFormItem, Table, SummaryForm, WaitTab)
-from widgetastic_manageiq.expression_editor import GroupTagExpressionEditor
-from widgetastic.utils import Version, VersionPick
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.utils import Version
+from widgetastic.utils import VersionPick
+from widgetastic.widget import Checkbox
+from widgetastic.widget import ConditionalSwitchableView
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import CheckableBootstrapTreeview as CbTree
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Input
 
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
 from cfme.common import Taggable
-from cfme.exceptions import CFMEException, RBACOperationBlocked
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.exceptions import CFMEException
+from cfme.exceptions import RBACOperationBlocked
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import SummaryForm
+from widgetastic_manageiq import SummaryFormItem
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import UpDownSelect
+from widgetastic_manageiq import WaitTab
+from widgetastic_manageiq.expression_editor import GroupTagExpressionEditor
 
 
 EVM_DEFAULT_GROUPS = [

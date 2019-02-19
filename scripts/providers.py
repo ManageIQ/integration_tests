@@ -27,7 +27,9 @@ error will happen.
 import argparse
 import os
 import sys
-from cfme.utils import iterate_pairs, process_shell_output
+
+from cfme.utils import iterate_pairs
+from cfme.utils import process_shell_output
 from cfme.utils.providers import get_mgmt
 
 # Make sure the parent dir is on the path before importing get_mgmt

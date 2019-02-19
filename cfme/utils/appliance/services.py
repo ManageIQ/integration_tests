@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import attr
 
+from .plugin import AppliancePlugin
+from .plugin import AppliancePluginException
 from cfme.utils.log import logger_wrap
 from cfme.utils.quote import quote
 from cfme.utils.wait import wait_for
-from .plugin import AppliancePlugin, AppliancePluginException
 
 
 class SystemdException(AppliancePluginException):

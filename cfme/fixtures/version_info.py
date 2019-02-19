@@ -1,10 +1,12 @@
-from cfme.utils.log import logger
+import glob
 import os
 import time
+
+import pytest
+
+from cfme.utils.log import logger
 from cfme.utils.path import results_path
 from cfme.utils.ssh import SSHClient
-import glob
-import pytest
 
 
 def find_nth_pos(string, substring, n):

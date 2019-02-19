@@ -1,10 +1,9 @@
 #!/usr/bin/env python2
-
 """SSH into a running appliance and install SNMP listener."""
-
 import argparse
-import requests
 import sys
+
+import requests
 
 from cfme.utils.conf import credentials
 from cfme.utils.path import scripts_data_path

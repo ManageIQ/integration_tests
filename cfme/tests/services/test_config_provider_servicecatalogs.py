@@ -1,9 +1,8 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
 from cfme.utils.log import logger
 

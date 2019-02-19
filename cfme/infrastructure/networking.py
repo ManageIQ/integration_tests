@@ -4,9 +4,13 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
-from widgetastic_manageiq import PaginationPane, ItemsToolBarViewSelector, Text
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import Text
 
 
 class InfraNetworking(BaseEntity):

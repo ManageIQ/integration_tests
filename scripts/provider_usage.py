@@ -1,11 +1,15 @@
 #! /usr/bin/env python2
-from collections import defaultdict
-from cfme.utils.providers import get_mgmt
-from cfme.utils.conf import cfme_data, jenkins
-from cfme.utils import appliance
-from jinja2 import Environment, FileSystemLoader
-from cfme.utils.path import template_path
 import json
+from collections import defaultdict
+
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
+
+from cfme.utils import appliance
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import jenkins
+from cfme.utils.path import template_path
+from cfme.utils.providers import get_mgmt
 
 li = cfme_data['management_systems']
 users = jenkins['nicks']

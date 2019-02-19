@@ -1,26 +1,30 @@
 # TO DO - remove sleep when BZ 1496233 is fixed
 import time
 
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Select
-from widgetastic_patternfly import Input, Button
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import Select
+from widgetastic.widget import Text
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
+from . import MyService
 from cfme.base.ssui import SSUIBaseLoggedInPage
 from cfme.dashboard import Kebab
 from cfme.utils.appliance import MiqImplementationContext
-from cfme.utils.appliance.implementations.ssui import (
-    navigator, SSUINavigateStep, navigate_to, ViaSSUI
-)
-from cfme.utils.version import Version, VersionPicker, LOWEST
+from cfme.utils.appliance.implementations.ssui import navigate_to
+from cfme.utils.appliance.implementations.ssui import navigator
+from cfme.utils.appliance.implementations.ssui import SSUINavigateStep
+from cfme.utils.appliance.implementations.ssui import ViaSSUI
+from cfme.utils.version import LOWEST
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    Notification,
-    SSUIAppendToBodyDropdown,
-    SSUIDropdown,
-    SSUIlist,
-    SSUIPaginationPane,
-)
-from . import MyService
+from widgetastic_manageiq import Notification
+from widgetastic_manageiq import SSUIAppendToBodyDropdown
+from widgetastic_manageiq import SSUIDropdown
+from widgetastic_manageiq import SSUIlist
+from widgetastic_manageiq import SSUIPaginationPane
 
 
 class MyServicesView(SSUIBaseLoggedInPage):

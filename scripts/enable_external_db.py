@@ -1,5 +1,4 @@
 #!/usr/bin/env python2
-
 """Set up an external DB on an appliance over SSH.
 
 Appliance address and database address are required.
@@ -14,7 +13,6 @@ Example usage:
     enable_external_db.py 10.0.0.1 20.0.0.1 --database cfme_db --region 1
 
 """
-
 import argparse
 import sys
 

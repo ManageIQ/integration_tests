@@ -4,9 +4,10 @@ import six
 
 from cfme import test_requirements
 from cfme.cloud.availability_zone import AvailabilityZoneAllView
-from cfme.cloud.provider import CloudProvider, CloudProvidersView
 from cfme.cloud.flavor import FlavorAllView
 from cfme.cloud.keypairs import KeyPairAllView
+from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider import CloudProvidersView
 from cfme.cloud.stack import StackAllView
 from cfme.cloud.tenant import TenantAllView
 from cfme.utils.appliance.implementations.ui import navigate_to

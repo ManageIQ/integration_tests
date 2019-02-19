@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-
-import pytest
 import time
 
+import pytest
+
 from cfme import test_requirements
-from cfme.fixtures.pytest_store import store
 from cfme.common.provider import BaseProvider
 from cfme.containers.provider import ContainersProvider
 from cfme.fixtures.provider import setup_or_skip
+from cfme.fixtures.pytest_store import store
 from cfme.utils import conf
 from cfme.utils.log import logger
 

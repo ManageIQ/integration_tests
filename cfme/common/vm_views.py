@@ -2,20 +2,38 @@
 import os
 
 from lxml.html import document_fromstring
-from widgetastic.widget import (
-    View, TableRow, Text, TextInput, ParametrizedView, Image, ConditionalSwitchableView)
-from widgetastic_patternfly import (
-    BreadCrumb, Dropdown, BootstrapSelect, Input, CheckableBootstrapTreeview)
+from widgetastic.widget import ConditionalSwitchableView
+from widgetastic.widget import Image
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import TableRow
+from widgetastic.widget import Text
+from widgetastic.widget import TextInput
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import CheckableBootstrapTreeview
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Input
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.exceptions import TemplateNotFound, displayed_not_implemented
+from cfme.exceptions import displayed_not_implemented
+from cfme.exceptions import TemplateNotFound
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    Calendar, Checkbox, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, RadioGroup,
-    BaseEntitiesView, JSBaseEntity, BaseNonInteractiveEntitiesView, PaginationPane, DriftComparison,
-    ParametrizedSummaryTable, WaitTab
-)
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import BaseNonInteractiveEntitiesView
+from widgetastic_manageiq import Button
+from widgetastic_manageiq import Calendar
+from widgetastic_manageiq import Checkbox
+from widgetastic_manageiq import DriftComparison
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import JSBaseEntity
+from widgetastic_manageiq import MultiBoxSelect
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import ParametrizedSummaryTable
+from widgetastic_manageiq import RadioGroup
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import WaitTab
 
 
 class InstanceEntity(JSBaseEntity):

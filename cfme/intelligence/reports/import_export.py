@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
-from widgetastic_manageiq import Table
-from widgetastic_patternfly import Button, Input
-from widgetastic.widget import Select, ClickableMixin, Checkbox, Text
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
-from cfme.base.ui import Server
 from navmazing import NavigateToAttribute
+from widgetastic.widget import Checkbox
+from widgetastic.widget import ClickableMixin
+from widgetastic.widget import Select
+from widgetastic.widget import Text
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
+
 from . import CloudIntelReportsView
+from cfme.base.ui import Server
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import Table
 
 
 class InputButton(Input, ClickableMixin):

@@ -1,12 +1,13 @@
 """
 NOT TESTED YET
 """
-
 import re
 
 from cfme.utils.conf import cfme_data
-from cfme.utils.template.base import ProviderTemplateUpload, log_wrap, TemplateUploadException
 from cfme.utils.log import logger
+from cfme.utils.template.base import log_wrap
+from cfme.utils.template.base import ProviderTemplateUpload
+from cfme.utils.template.base import TemplateUploadException
 
 
 class RHEVMTemplateUpload(ProviderTemplateUpload):

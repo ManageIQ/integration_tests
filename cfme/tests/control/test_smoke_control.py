@@ -2,7 +2,8 @@
 """This test contains necessary smoke tests for the Control."""
 import pytest
 
-from cfme import control, test_requirements
+from cfme import control
+from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [

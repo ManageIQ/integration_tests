@@ -3,15 +3,15 @@
 appliance.
 """
 import csv
+import os
+import re
 import subprocess
 from datetime import datetime
 from datetime import timedelta
 from time import time
 
 import dateutil.parser as du_parser
-import os
 import pygal
-import re
 
 from cfme.utils.log import logger
 from cfme.utils.path import log_path

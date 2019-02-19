@@ -1,19 +1,24 @@
 # -*- coding: utf-8 -*-
 import attr
-
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, TextInput, Widget
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.utils import WaitFillViewStrategy
-from widgetastic_patternfly import Button, Input
+from widgetastic.widget import Text
+from widgetastic.widget import TextInput
+from widgetastic.widget import Widget
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
-from cfme.modeling.base import BaseCollection, BaseEntity
+from . import ControlExplorerView
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.utils import ParamClassName
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-
 from widgetastic_manageiq.expression_editor import ExpressionEditor
-from . import ControlExplorerView
 
 
 class Expression(Widget):

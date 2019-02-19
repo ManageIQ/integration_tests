@@ -1,7 +1,9 @@
 from navmazing import NavigateToAttribute
 
-from cfme.common.topology import BaseTopologyElementsCollection, BaseTopologyView
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.common.topology import BaseTopologyElementsCollection
+from cfme.common.topology import BaseTopologyView
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator
 
 
 class NetworkTopologyView(BaseTopologyView):

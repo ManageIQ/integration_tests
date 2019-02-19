@@ -1,5 +1,6 @@
-import pytest
 from collections import namedtuple
+
+import pytest
 
 from cfme.containers.container import Container
 from cfme.containers.image_registry import ImageRegistry

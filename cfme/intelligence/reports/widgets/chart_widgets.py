@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboard Widgets / Charts"""
 import attr
-from widgetastic_manageiq import Calendar
 from widgetastic_patternfly import BootstrapSelect
 
+from . import BaseDashboardReportWidget
+from . import BaseDashboardWidgetFormCommon
+from . import BaseEditDashboardWidgetStep
+from . import BaseEditDashboardWidgetView
+from . import BaseNewDashboardWidgetStep
+from . import BaseNewDashboardWidgetView
 from cfme.utils.appliance.implementations.ui import navigator
-from . import (
-    BaseDashboardReportWidget,
-    BaseDashboardWidgetFormCommon,
-    BaseEditDashboardWidgetStep,
-    BaseEditDashboardWidgetView,
-    BaseNewDashboardWidgetStep,
-    BaseNewDashboardWidgetView
-)
+from widgetastic_manageiq import Calendar
 
 
 class ChartWidgetFormCommon(BaseDashboardWidgetFormCommon):

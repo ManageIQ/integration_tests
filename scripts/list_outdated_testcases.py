@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 # pylint: disable=logging-format-interpolation
 """
@@ -15,8 +14,8 @@ Usage:
 IMPORTANT: double-check that the test case is really missing in pytest and was
 not just uncollected because of provider type, appliance version, etc.
 """
-
-from __future__ import unicode_literals, absolute_import
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
 import argparse
 import codecs
@@ -26,10 +25,9 @@ import operator
 import os
 import re
 import sys
-
-from cStringIO import StringIO
 from contextlib import contextmanager
 
+from cStringIO import StringIO
 from dump2polarion.csvtools import get_imported_data
 
 

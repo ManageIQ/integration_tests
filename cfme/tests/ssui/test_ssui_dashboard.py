@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-from datetime import date, timedelta
+from datetime import date
+from datetime import timedelta
 
 import fauxfactory
 import pytest
 
-from cfme import test_requirements
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
+from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE

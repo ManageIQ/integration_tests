@@ -1,7 +1,9 @@
 import fauxfactory
 import pytest
+
+from cfme.utils.testgen import config_managers
+from cfme.utils.testgen import generate
 from cfme.utils.update import update
-from cfme.utils.testgen import config_managers, generate
 
 
 pytest_generate_tests = generate(gen_func=config_managers)

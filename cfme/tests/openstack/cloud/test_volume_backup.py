@@ -1,12 +1,12 @@
 """Tests for Openstack cloud volume Backups"""
-
 import fauxfactory
 import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for, wait_for_decorator
+from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.usefixtures("setup_provider"),

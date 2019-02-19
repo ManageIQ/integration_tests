@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure PhysicalSwitch in CFME."""
 import attr
-
-from navmazing import NavigateToAttribute
 from cached_property import cached_property
+from navmazing import NavigateToAttribute
 
-from cfme.common import PolicyProfileAssignable, Taggable
-from cfme.common.physical_switch_views import (
-    PhysicalSwitchDetailsView,
-    PhysicalSwitchesView
-)
+from cfme.common import PolicyProfileAssignable
+from cfme.common import Taggable
+from cfme.common.physical_switch_views import PhysicalSwitchDetailsView
+from cfme.common.physical_switch_views import PhysicalSwitchesView
 from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseEntity, BaseCollection
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name

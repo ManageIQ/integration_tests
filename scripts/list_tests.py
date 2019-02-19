@@ -1,9 +1,8 @@
 #!/usr/bin/env python2
-
-import os
 import os.path
-import sys
 import re
+import sys
+
 import six
 
 if len(sys.argv) == 1:

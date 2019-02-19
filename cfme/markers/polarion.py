@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """polarion(\*tcid): Marker for marking tests as automation for polarion test cases."""
-import pytest
 import attr
+import pytest
+
 from cfme.fixtures.pytest_store import store
 
 

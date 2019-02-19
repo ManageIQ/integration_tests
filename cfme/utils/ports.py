@@ -2,8 +2,8 @@
 """Storage for ports. Set defaults here, then :py:mod:`fixtures.portset` will make overrides."""
 import sys
 
-from cfme.utils.log import logger
 from cfme.utils import clear_property_cache
+from cfme.utils.log import logger
 
 
 class Ports(object):

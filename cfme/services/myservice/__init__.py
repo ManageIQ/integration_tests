@@ -1,9 +1,8 @@
 import importscan
-
 import sentaku
 
-from cfme.utils.appliance import Navigatable
 from cfme.common import Taggable
+from cfme.utils.appliance import Navigatable
 from cfme.utils.update import Updateable
 
 

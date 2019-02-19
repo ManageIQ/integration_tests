@@ -1,13 +1,24 @@
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedString
-from widgetastic.widget import ParametrizedLocator, Text, View
-from widgetastic_manageiq import (
-    FonticonPicker, BootstrapSwitch, SummaryForm, Table, ItemsToolBarViewSelector, BaseEntitiesView,
-    FileInput, ParametrizedSummaryTable, ManageIQTree
-)
-from widgetastic_patternfly import Accordion, BootstrapSelect, Button, Input, Dropdown
+from widgetastic.widget import ParametrizedLocator
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Accordion
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Input
 
 from cfme.base.login import BaseLoggedInPage
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import BootstrapSwitch
+from widgetastic_manageiq import FileInput
+from widgetastic_manageiq import FonticonPicker
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import ParametrizedSummaryTable
+from widgetastic_manageiq import SummaryForm
+from widgetastic_manageiq import Table
 
 
 class GenericObjectDefinitionToolbar(View):

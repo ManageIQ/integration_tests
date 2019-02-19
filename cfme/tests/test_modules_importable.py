@@ -1,8 +1,10 @@
-import py
-import pytest
-import cfme
 import subprocess
 import sys
+
+import py
+import pytest
+
+import cfme
 
 ROOT = py.path.local(cfme.__file__).dirpath()
 

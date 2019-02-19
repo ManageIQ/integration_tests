@@ -1,16 +1,20 @@
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic_manageiq import ItemNotFound
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic_patternfly import CandidateNotFound
 
+from . import GenericObjectDefinition
+from . import GenericObjectDefinitionCollection
+from .definition_views import GenericObjectDefinitionAddView
+from .definition_views import GenericObjectDefinitionAllView
+from .definition_views import GenericObjectDefinitionDetailsView
+from .definition_views import GenericObjectDefinitionEditView
 from cfme.generic_objects.instance.ui import GenericObjectInstanceAllView
 from cfme.utils.appliance import MiqImplementationContext
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
-
-from . import GenericObjectDefinition, GenericObjectDefinitionCollection
-from .definition_views import (
-    GenericObjectDefinitionDetailsView, GenericObjectDefinitionAllView,
-    GenericObjectDefinitionEditView, GenericObjectDefinitionAddView
-)
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.appliance.implementations.ui import ViaUI
+from widgetastic_manageiq import ItemNotFound
 
 
 @MiqImplementationContext.external_for(GenericObjectDefinitionCollection.create, ViaUI)

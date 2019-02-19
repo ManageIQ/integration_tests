@@ -1,13 +1,16 @@
 import attr
-
-from navmazing import NavigateToAttribute
 from cached_property import cached_property
+from navmazing import NavigateToAttribute
 
-from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-
-from . import AddBoxView, BoxForm
+from . import AddBoxView
+from . import BoxForm
 from .dialog_element import ElementCollection
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.modeling.base import parent_of_type
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 
 
 class EditBoxView(BoxForm):

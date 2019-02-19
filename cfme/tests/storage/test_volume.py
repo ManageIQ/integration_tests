@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import pytest
 import fauxfactory
+import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider

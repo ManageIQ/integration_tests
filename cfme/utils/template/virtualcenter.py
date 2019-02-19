@@ -1,8 +1,10 @@
-from cached_property import cached_property
 import re
 
+from cached_property import cached_property
+
 from cfme.utils.log import logger
-from cfme.utils.template.base import ProviderTemplateUpload, log_wrap
+from cfme.utils.template.base import log_wrap
+from cfme.utils.template.base import ProviderTemplateUpload
 
 NUM_OF_TRIES = 5
 

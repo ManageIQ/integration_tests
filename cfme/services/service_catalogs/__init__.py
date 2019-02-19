@@ -1,9 +1,15 @@
 import importscan
 import sentaku
-
-from widgetastic.widget import ParametrizedView, Select, Text, View
-from widgetastic_patternfly import Input, BootstrapSelect
-from widgetastic.utils import deflatten_dict, Parameter, ParametrizedString, ParametrizedLocator
+from widgetastic.utils import deflatten_dict
+from widgetastic.utils import Parameter
+from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedString
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Select
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Input
 
 from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound

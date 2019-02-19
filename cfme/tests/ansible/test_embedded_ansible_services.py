@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
 import json
-import pytest
 
+import fauxfactory
+import pytest
 from widgetastic_patternfly import BootstrapSelect
 
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data

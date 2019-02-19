@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import attr
 
+from . import Instance
+from . import InstanceCollection
 from cfme.exceptions import OptionNotAvailable
-from . import Instance, InstanceCollection
 
 
 @attr.s

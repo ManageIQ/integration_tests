@@ -1,7 +1,11 @@
 from __future__ import print_function
-from . import IN_VIRTUAL_ENV, USE_LEGACY_VENV_PATH, mk_parser, main
 
 import sys
+
+from . import IN_VIRTUAL_ENV
+from . import main
+from . import mk_parser
+from . import USE_LEGACY_VENV_PATH
 IS_SCRIPT = sys.argv[0] == __file__
 
 if IS_SCRIPT:

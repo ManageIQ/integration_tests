@@ -62,14 +62,18 @@ import pytest
 from py.error import ENOENT
 from py.path import local
 
-from cfme.fixtures.pytest_store import store
 from cfme.exceptions import ApplianceVersionException
+from cfme.fixtures.pytest_store import store
 from cfme.utils import conf
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import create_sublogger
-from cfme.utils.path import conf_path, log_path, scripts_data_path
+from cfme.utils.path import conf_path
+from cfme.utils.path import log_path
+from cfme.utils.path import scripts_data_path
 from cfme.utils.quote import quote
-from cfme.utils.version import LATEST, LOWEST, VersionPicker
+from cfme.utils.version import LATEST
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 
 # paths to all of the coverage-related files
 

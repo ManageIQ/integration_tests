@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+from copy import copy
+
 import pytest
 import six
-
-from copy import copy
 
 from cfme import test_requirements
 from cfme.infrastructure import virtual_machines as vms  # NOQA

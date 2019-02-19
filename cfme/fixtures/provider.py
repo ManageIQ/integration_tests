@@ -38,8 +38,8 @@ to set it up will be made.
 """
 import random
 import sys
-from collections import Mapping
 from collections import defaultdict
+from collections import Mapping
 
 import pytest
 import six
@@ -47,13 +47,15 @@ from _pytest.compat import getimfunc
 from _pytest.fixtures import call_fixture_func
 from _pytest.outcomes import TEST_OUTCOME
 
-from cfme.common.provider import BaseProvider, all_types
+from cfme.common.provider import all_types
+from cfme.common.provider import BaseProvider
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.fixtures.pytest_store import store
 from cfme.fixtures.templateloader import TEMPLATES
 from cfme.utils.appliance import ApplianceException
 from cfme.utils.log import logger
-from cfme.utils.providers import ProviderFilter, list_providers
+from cfme.utils.providers import list_providers
+from cfme.utils.providers import ProviderFilter
 
 # List of problematic providers that will be ignored
 _problematic_providers = set()

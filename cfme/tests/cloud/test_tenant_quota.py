@@ -6,7 +6,8 @@ from widgetastic.utils import partial_match
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils.appliance import ViaSSUI, ViaUI
+from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance import ViaUI
 from cfme.utils.generators import random_vm_name
 
 pytestmark = [

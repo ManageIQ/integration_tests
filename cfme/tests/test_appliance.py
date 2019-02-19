@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests around the appliance"""
-
 import os
+
 import pytest
 
 from cfme import test_requirements

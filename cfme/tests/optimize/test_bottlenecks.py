@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
+from datetime import timedelta
+
 import fauxfactory
 import pytest
-from datetime import timedelta
 
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.timeutil import parsetime
 from cfme.utils.ssh import SSHClient
+from cfme.utils.timeutil import parsetime
 
 pytestmark = pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 

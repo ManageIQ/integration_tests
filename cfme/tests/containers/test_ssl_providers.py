@@ -1,12 +1,13 @@
 from collections import namedtuple
 from copy import copy
 
-from fauxfactory import gen_alphanumeric, gen_integer
 import pytest
+from fauxfactory import gen_alphanumeric
+from fauxfactory import gen_integer
 
+from cfme.common.provider_views import ContainerProvidersView
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.version import current_version
-from cfme.common.provider_views import ContainerProvidersView
 
 
 pytestmark = [

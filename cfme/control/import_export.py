@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToSibling
-
-from widgetastic.widget import Select, ClickableMixin, FileInput
-from widgetastic_patternfly import BootstrapSelect, Button, Input
+from widgetastic.widget import ClickableMixin
+from widgetastic.widget import FileInput
+from widgetastic.widget import Select
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import Server
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 
 
 class InputButton(Input, ClickableMixin):

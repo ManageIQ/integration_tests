@@ -2,24 +2,38 @@
 """ A model of a PXE Server in CFME
 """
 import attr
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from selenium.common.exceptions import NoSuchElementException
-from widgetastic.widget import View, Text, Checkbox
-from widgetastic_manageiq import ManageIQTree, Input, ScriptBox, SummaryTable, Table
-from widgetastic_patternfly import Dropdown, Accordion, BootstrapSelect, Button
+from widgetastic.widget import Checkbox
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Accordion
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
-from cfme.base import BaseEntity, BaseCollection
+from cfme.base import BaseCollection
+from cfme.base import BaseEntity
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import displayed_not_implemented
-from cfme.utils import conf, ParamClassName
+from cfme.utils import conf
+from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.datafile import load_data_file
 from cfme.utils.path import project_path
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import Input
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import ScriptBox
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import Table
 
 
 class PXEToolBar(View):

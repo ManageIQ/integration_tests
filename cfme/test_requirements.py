@@ -15,7 +15,6 @@ Please import the module instead of elements:
         pass
 
 """
-
 import pytest
 
 ansible = pytest.mark.requirement("ansible")

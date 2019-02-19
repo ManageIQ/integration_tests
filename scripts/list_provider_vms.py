@@ -1,11 +1,15 @@
 #!/usr/bin/env python2
 import argparse
+from multiprocessing import Process
+from multiprocessing import Queue
+
 from tabulate import tabulate
-from multiprocessing import Process, Queue
 
 from cfme.utils.appliance import DummyAppliance
 from cfme.utils.path import log_path
-from cfme.utils.providers import get_mgmt, ProviderFilter, list_providers
+from cfme.utils.providers import get_mgmt
+from cfme.utils.providers import list_providers
+from cfme.utils.providers import ProviderFilter
 
 
 # Constant for report

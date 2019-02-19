@@ -1,6 +1,9 @@
 from widgetastic.widget import Table as VanillaTable
 from widgetastic.xpath import quote
-from widgetastic_patternfly import BootstrapSelect, BootstrapSwitch, Button, Input
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
 
 class DisksButton(Button):

@@ -1,20 +1,28 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
 import attr
-
 from cached_property import cached_property
-from navmazing import NavigateToAttribute, NavigateToSibling
-
-from widgetastic_manageiq import CheckboxSelect, ManageIQTree, MultiBoxSelect, SummaryFormItem
-from widgetastic_patternfly import BootstrapSelect, Button, Input
-
-from widgetastic.widget import Checkbox, Text, View
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import Checkbox
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
 from . import ControlExplorerView
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from widgetastic_manageiq import CheckboxSelect
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import MultiBoxSelect
+from widgetastic_manageiq import SummaryFormItem
 
 
 class ActionsAllView(ControlExplorerView):

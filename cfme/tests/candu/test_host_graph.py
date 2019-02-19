@@ -1,12 +1,15 @@
+from datetime import datetime
+from datetime import timedelta
+
 import pytest
-from datetime import datetime, timedelta
 
 from cfme import test_requirements
 from cfme.common.candu_views import UtilizationZoomView
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.tests.candu import compare_data, compare_data_with_unit
+from cfme.tests.candu import compare_data
+from cfme.tests.candu import compare_data_with_unit
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger

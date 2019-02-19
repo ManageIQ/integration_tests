@@ -1,13 +1,15 @@
-import pytest
-from collections import namedtuple
-from wait_for import wait_for
-from cfme.utils import os
-from cfme.utils.log_validator import LogValidator
-from cfme.utils.log import logger
-from cfme.utils.conf import hidden
 import tempfile
+from collections import namedtuple
+
 import lxml.etree
+import pytest
 import yaml
+from wait_for import wait_for
+
+from cfme.utils import os
+from cfme.utils.conf import hidden
+from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
 
 pytestmark = [
     pytest.mark.uncollectif(lambda appliance: appliance.is_pod,

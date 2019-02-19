@@ -1,15 +1,15 @@
 #!/usr/bin/env python2
-
 import argparse
 import re
 import sys
 from collections import defaultdict
 
-from cfme.utils.log import logger
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.log import logger
+from cfme.utils.providers import get_mgmt
+from cfme.utils.providers import list_provider_keys
 from cfme.utils.ssh import SSHClient
-from cfme.utils.providers import list_provider_keys, get_mgmt
 
 
 def parse_cmd_line():

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+import re
+
 import fauxfactory
 import pytest
-import re
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to

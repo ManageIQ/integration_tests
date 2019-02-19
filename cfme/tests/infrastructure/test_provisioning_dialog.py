@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """This module tests various ways how to set up the provisioning using the provisioning dialog."""
-from datetime import datetime, timedelta
+import re
+from datetime import datetime
+from datetime import timedelta
 
 import fauxfactory
 import pytest
-import re
 from widgetastic.utils import partial_match
 from widgetastic_patternfly import CheckableBootstrapTreeview as CbTree
 
@@ -18,7 +19,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),

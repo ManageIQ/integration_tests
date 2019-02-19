@@ -1,25 +1,41 @@
 # -*- coding: utf-8 -*-
-import attr
 from copy import copy
 
+import attr
 from cached_property import cached_property
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.utils import ParametrizedLocator
-from widgetastic.widget import Table, Text, View, ParametrizedView, Select, ClickableMixin
-from widgetastic_manageiq import SummaryFormItem, ScriptBox, Input
-from widgetastic_patternfly import BootstrapSelect, BootstrapSwitch, Button, CandidateNotFound
+from widgetastic.widget import ClickableMixin
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Select
+from widgetastic.widget import Table
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
 
+from . import AutomateExplorerView
+from . import check_tree_path
+from .common import Copiable
+from .common import CopyViewBase
+from .klass import ClassDetailsView
 from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
-from cfme.utils.version import Version, VersionPicker
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
-
-from . import AutomateExplorerView, check_tree_path
-from .common import Copiable, CopyViewBase
-from .klass import ClassDetailsView
+from widgetastic_manageiq import Input
+from widgetastic_manageiq import ScriptBox
+from widgetastic_manageiq import SummaryFormItem
 
 
 class Inputs(View, ClickableMixin):

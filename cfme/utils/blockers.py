@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import re
-import six
+
 import six.moves.xmlrpc_client
 from github import Github
 from six.moves.urllib.parse import urlparse
 
 from cfme.fixtures.pytest_store import store
-from cfme.utils import classproperty, conf, version
+from cfme.utils import classproperty
+from cfme.utils import conf
+from cfme.utils import version
 from cfme.utils.bz import Bugzilla
 from cfme.utils.log import logger
 

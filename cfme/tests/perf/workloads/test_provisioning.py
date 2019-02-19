@@ -1,5 +1,9 @@
 """Runs Provisioning Workload."""
+import time
+from itertools import cycle
+
 import fauxfactory
+import pytest
 
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.conf import cfme_performance
@@ -7,12 +11,11 @@ from cfme.utils.grafana import get_scenario_dashboard_urls
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud
 from cfme.utils.rest import assert_response
-from cfme.utils.smem_memory_monitor import add_workload_quantifiers, test_ts, SmemMemoryMonitor
+from cfme.utils.smem_memory_monitor import add_workload_quantifiers
+from cfme.utils.smem_memory_monitor import SmemMemoryMonitor
+from cfme.utils.smem_memory_monitor import test_ts
 from cfme.utils.wait import wait_for
 from cfme.utils.workloads import get_provisioning_scenarios
-from itertools import cycle
-import time
-import pytest
 
 
 roles_provisioning = ['automate', 'database_operations', 'ems_inventory', 'ems_operations',

@@ -1,11 +1,12 @@
 import attr
-
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text
 
-from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.base.ui import BaseLoggedInPage
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator
 
 # To-Do: FA owner need to develop further model page.
 

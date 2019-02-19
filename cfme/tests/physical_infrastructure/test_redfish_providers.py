@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
+import pytest
 
 from cfme.physical.provider.redfish import RedfishProvider
 from cfme.utils.update import update
-
-import pytest
 
 pytestmark = [
     pytest.mark.provider([RedfishProvider], scope="function")

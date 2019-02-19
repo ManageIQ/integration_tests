@@ -94,13 +94,15 @@ import traceback
 
 import pytest
 
-from cfme.utils import conf, testgen
-from cfme.utils.appliance import current_appliance
-from cfme.utils.browser import browser, ensure_browser_open
-from cfme.utils.browser import take_screenshot
-from cfme.utils.log import logger
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.fixtures.pytest_store import store
+from cfme.utils import conf
+from cfme.utils import testgen
+from cfme.utils.appliance import current_appliance
+from cfme.utils.browser import browser
+from cfme.utils.browser import ensure_browser_open
+from cfme.utils.browser import take_screenshot
+from cfme.utils.log import logger
 
 enable_rbac = False
 

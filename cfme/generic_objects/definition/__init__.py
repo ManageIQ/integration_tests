@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-
 import attr
 import importscan
 import sentaku
 
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.generic_objects.definition.button_groups import (
-    GenericObjectButtonGroupsCollection, GenericObjectButtonsCollection)
+from cfme.generic_objects.definition.button_groups import GenericObjectButtonGroupsCollection
+from cfme.generic_objects.definition.button_groups import GenericObjectButtonsCollection
 from cfme.generic_objects.instance import GenericObjectInstanceCollection
-
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.utils.update import Updateable
 
 

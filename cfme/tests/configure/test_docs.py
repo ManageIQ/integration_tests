@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-import pytest
-import requests
 from io import BytesIO
 
+import pytest
+import requests
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
+from pdfminer.pdfinterp import PDFPageInterpreter
+from pdfminer.pdfinterp import PDFResourceManager
 from pdfminer.pdfpage import PDFPage
-from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
 
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to

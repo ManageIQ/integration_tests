@@ -1,22 +1,35 @@
 import attr
 import fauxfactory
 from cached_property import cached_property
-
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Checkbox, ClickableMixin, View
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.utils import WaitFillViewStrategy
-from widgetastic_manageiq import FonticonPicker, ManageIQTree, WaitTab
-from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound
+from widgetastic.widget import Checkbox
+from widgetastic.widget import ClickableMixin
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import Input
 
-from cfme.common import Taggable, TagPageView
+from cfme.common import Taggable
+from cfme.common import TagPageView
 from cfme.common.vm_views import BasicProvisionFormView
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.services.catalogs import ServicesCatalogView
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.utils.version import LOWEST, VersionPicker
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import FonticonPicker
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import WaitTab
 
 
 class EntryPoint(Input, ClickableMixin):

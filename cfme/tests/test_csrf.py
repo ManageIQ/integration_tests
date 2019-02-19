@@ -2,7 +2,8 @@
 import pytest
 
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 @pytest.mark.tier(2)

@@ -1,6 +1,7 @@
 import pytest
 
-from cfme.utils.soft_get import soft_get, MultipleResultsException
+from cfme.utils.soft_get import MultipleResultsException
+from cfme.utils.soft_get import soft_get
 
 
 def test_soft_get():

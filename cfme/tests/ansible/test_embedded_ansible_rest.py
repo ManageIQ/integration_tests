@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
-
 import pytest
 
 from cfme import test_requirements
 from cfme.utils.blockers import BZ
-from cfme.utils.rest import assert_response, delete_resources_from_collection
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.wait import wait_for
 
 pytestmark = [

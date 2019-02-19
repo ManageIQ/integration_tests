@@ -1,7 +1,7 @@
-import fauxfactory
-import pytest
 import time
 
+import fauxfactory
+import pytest
 from wrapanapi.systems.container.rhopenshift import ApiException
 
 from cfme.containers.provider import ContainersProvider

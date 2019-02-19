@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from copy import deepcopy
+
 from cfme.utils import conf
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable

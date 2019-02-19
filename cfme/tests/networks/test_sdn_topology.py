@@ -1,12 +1,13 @@
-import pytest
 import random
+
+import pytest
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils.wait import wait_for
 from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 pytestmark = [pytest.mark.provider([EC2Provider, AzureProvider, GCEProvider, OpenStackProvider],
                                    scope='module')]

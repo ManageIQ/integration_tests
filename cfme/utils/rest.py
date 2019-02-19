@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Helper functions for tests using REST API."""
-import pytest
 from collections import namedtuple
+
+import pytest
 
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils.wait import wait_for

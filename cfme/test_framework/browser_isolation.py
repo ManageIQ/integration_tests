@@ -5,6 +5,7 @@ If active, then when each test ends, the browser gets killed. That ensures that 
 browser session could be tainted after a test, the next test should not be affected.
 """
 import pytest
+
 from cfme.utils.appliance import find_appliance
 
 

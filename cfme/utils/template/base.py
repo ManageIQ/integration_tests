@@ -1,30 +1,29 @@
 import os
 import re
-
-
 from contextlib import closing
 from os import path
 from threading import Lock
 from zipfile import ZipFile
+
 from cached_property import cached_property
 from fauxfactory import gen_alphanumeric
 from glanceclient import Client
-from six.moves.urllib.request import urlopen
-from six.moves.urllib.error import URLError
 from six.moves.urllib import request
+from six.moves.urllib.error import URLError
+from six.moves.urllib.request import urlopen
 
-
-from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
-from cfme.utils.path import project_path
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import trackerbot
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.path import project_path
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
 

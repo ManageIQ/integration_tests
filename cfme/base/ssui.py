@@ -3,18 +3,26 @@ import time
 from navmazing import NavigateToSibling
 from selenium.webdriver.common.keys import Keys
 from widgetastic.utils import ParametrizedLocator
-from widgetastic.widget import View, ParametrizedView
-from widgetastic_patternfly import NavDropdown, FlashMessages, Input, Button, Text
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import View
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import FlashMessages
+from widgetastic_patternfly import Input
+from widgetastic_patternfly import NavDropdown
+from widgetastic_patternfly import Text
 
+from . import Server
 from cfme.base.credential import Credential
 from cfme.utils import conf
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance import ViaSSUI
-from cfme.utils.appliance.implementations.ssui import navigator, SSUINavigateStep, navigate_to
-from cfme.utils.browser import ensure_browser_open, quit
+from cfme.utils.appliance.implementations.ssui import navigate_to
+from cfme.utils.appliance.implementations.ssui import navigator
+from cfme.utils.appliance.implementations.ssui import SSUINavigateStep
+from cfme.utils.browser import ensure_browser_open
+from cfme.utils.browser import quit
 from cfme.utils.log import logger
 from widgetastic_manageiq import SSUIVerticalNavigation
-from . import Server
 
 
 class SSUIBaseLoggedInPage(View):

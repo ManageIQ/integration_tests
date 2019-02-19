@@ -1,20 +1,24 @@
-import attr
 import copy
 
+import attr
 from widgetastic.widget import View
-from widgetastic_patternfly import BootstrapSelect, Input, Button
-
-from cfme.cloud.tenant import TenantCollection
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 from wrapanapi.systems import NuageSystem
 
-from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm, EventsEndpoint
+from . import NetworkProvider
+from cfme.cloud.tenant import TenantCollection
+from cfme.common.provider import DefaultEndpoint
+from cfme.common.provider import DefaultEndpointForm
+from cfme.common.provider import EventsEndpoint
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.networks.security_group import SecurityGroupCollection
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.varmeth import variable
-from widgetastic_manageiq import RadioGroup, WaitTab
-from . import NetworkProvider
+from widgetastic_manageiq import RadioGroup
+from widgetastic_manageiq import WaitTab
 
 
 class NuageEndpoint(DefaultEndpoint):

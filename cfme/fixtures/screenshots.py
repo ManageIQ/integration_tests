@@ -14,10 +14,10 @@ If you want to take a screenshot inside your test, just do it like this:
 import fauxfactory
 import pytest
 
-from cfme.utils.browser import take_screenshot as take_browser_screenshot
-from cfme.utils.log import logger
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.fixtures.pytest_store import store
+from cfme.utils.browser import take_screenshot as take_browser_screenshot
+from cfme.utils.log import logger
 
 
 @pytest.fixture(scope="function")

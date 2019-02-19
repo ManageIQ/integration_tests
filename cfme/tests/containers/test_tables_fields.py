@@ -6,7 +6,8 @@ from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
 from cfme.containers.pod import Pod
 from cfme.containers.project import Project
-from cfme.containers.provider import ContainersProvider, ContainersTestItem
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersTestItem
 from cfme.containers.replicator import Replicator
 from cfme.containers.route import Route
 from cfme.containers.service import Service

@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-
-from cfme.generic_objects.definition import (
-    GenericObjectDefinition,
-    GenericObjectDefinitionCollection
-)
+from cfme.generic_objects.definition import GenericObjectDefinition
+from cfme.generic_objects.definition import GenericObjectDefinitionCollection
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.rest import ViaREST
-from cfme.utils.rest import assert_response, create_resource
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import create_resource
 
 
 @MiqImplementationContext.external_for(GenericObjectDefinitionCollection.create, ViaREST)

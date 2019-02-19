@@ -4,7 +4,8 @@ import time
 import pytest
 
 from cfme.utils.blockers import BZ
-from cfme.utils.browser import ensure_browser_open, quit
+from cfme.utils.browser import ensure_browser_open
+from cfme.utils.browser import quit
 from cfme.utils.wait import wait_for
 
 

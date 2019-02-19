@@ -12,7 +12,6 @@ artifactor:
             quality: 10
             display: ":99"
 """
-
 import os
 
 from artifactor import ArtifactorBasePlugin

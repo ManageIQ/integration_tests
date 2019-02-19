@@ -1,16 +1,15 @@
 import pytest
 
-from cfme.containers.overview import ContainersOverview
-from cfme.containers.provider import ContainersProvider
 from cfme.containers.container import Container
-from cfme.containers.service import Service
-from cfme.containers.route import Route
-from cfme.containers.project import Project
-from cfme.containers.pod import Pod
 from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
-
+from cfme.containers.overview import ContainersOverview
+from cfme.containers.pod import Pod
+from cfme.containers.project import Project
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.route import Route
+from cfme.containers.service import Service
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [

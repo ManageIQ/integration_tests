@@ -8,8 +8,9 @@ from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import (
-    InfraVmSnapshotAddView, InfraVmSnapshotView, InfraVm)
+from cfme.infrastructure.virtual_machines import InfraVm
+from cfme.infrastructure.virtual_machines import InfraVmSnapshotAddView
+from cfme.infrastructure.virtual_machines import InfraVmSnapshotView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials

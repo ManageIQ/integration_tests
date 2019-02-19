@@ -5,10 +5,10 @@ from selenium.common.exceptions import NoSuchElementException
 
 import cfme.tests.configure.test_access_control as tac
 from cfme import test_requirements
-from cfme.services.catalogs.catalog_items import (
-    AllCatalogItemView, AddCatalogItemView, DetailsCatalogItemView
-)
 from cfme.base.login import BaseLoggedInPage
+from cfme.services.catalogs.catalog_items import AddCatalogItemView
+from cfme.services.catalogs.catalog_items import AllCatalogItemView
+from cfme.services.catalogs.catalog_items import DetailsCatalogItemView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger

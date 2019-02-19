@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ

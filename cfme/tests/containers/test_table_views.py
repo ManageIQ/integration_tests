@@ -1,10 +1,10 @@
-from random import choice
 from collections import OrderedDict
+from random import choice
 
 import pytest
 
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.containers.provider import ContainersProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

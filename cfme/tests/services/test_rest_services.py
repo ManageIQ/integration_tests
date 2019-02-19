@@ -9,31 +9,26 @@ from cfme import test_requirements
 from cfme.fixtures.pytest_store import store
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
-from cfme.rest.gen_data import (
-    TEMPLATE_TORSO,
-    _creating_skeleton,
-    blueprints as _blueprints,
-    copy_role,
-    dialog as _dialog,
-    dialog_rest as _dialog_rest,
-    get_dialog_service_name,
-    groups,
-    orchestration_templates as _orchestration_templates,
-    service_catalog_obj as _service_catalog_obj,
-    service_catalogs as _service_catalogs,
-    service_templates as _service_templates,
-    service_templates_ui,
-    services as _services,
-    vm as _vm,
-)
+from cfme.rest.gen_data import _creating_skeleton
+from cfme.rest.gen_data import copy_role
+from cfme.rest.gen_data import dialog as _dialog
+from cfme.rest.gen_data import dialog_rest as _dialog_rest
+from cfme.rest.gen_data import get_dialog_service_name
+from cfme.rest.gen_data import groups
+from cfme.rest.gen_data import orchestration_templates as _orchestration_templates
+from cfme.rest.gen_data import service_catalog_obj as _service_catalog_obj
+from cfme.rest.gen_data import service_catalogs as _service_catalogs
+from cfme.rest.gen_data import service_templates as _service_templates
+from cfme.rest.gen_data import service_templates_ui
+from cfme.rest.gen_data import services as _services
+from cfme.rest.gen_data import TEMPLATE_TORSO
+from cfme.rest.gen_data import vm as _vm
 from cfme.utils.blockers import BZ
-from cfme.utils.rest import (
-    assert_response,
-    delete_resources_from_collection,
-    delete_resources_from_detail,
-    get_vms_in_service,
-    query_resource_attributes,
-)
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.rest import delete_resources_from_detail
+from cfme.utils.rest import get_vms_in_service
+from cfme.utils.rest import query_resource_attributes
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 

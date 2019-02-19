@@ -1,13 +1,19 @@
 import attr
-
 from navmazing import NavigateToAttribute
-from widgetastic.widget import Text, View
-from widgetastic_patternfly import Accordion, BootstrapNav, Dropdown
-from widgetastic_manageiq import ManageIQTree, Search, ItemsToolBarViewSelector
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Accordion
+from widgetastic_patternfly import BootstrapNav
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.modeling.base import BaseEntity, BaseCollection
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import Search
 
 
 class TowerJobsToolbar(View):

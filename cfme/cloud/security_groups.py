@@ -1,20 +1,32 @@
 # -*- coding: utf-8 -*-
 import attr
-
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import View, Select
-from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, BootstrapSelect, BreadCrumb, ItemsToolBarViewSelector,
-    ManageIQTree, SummaryTable, Text, TextInput)
-from widgetastic_patternfly import Dropdown, Button
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import Select
+from widgetastic.widget import View
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
-from cfme.exceptions import ItemNotFound, SecurityGroupsNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.exceptions import ItemNotFound
+from cfme.exceptions import SecurityGroupsNotFound
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import BootstrapSelect
+from widgetastic_manageiq import BreadCrumb
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import Text
+from widgetastic_manageiq import TextInput
 
 
 class SecurityGroupToolbar(View):

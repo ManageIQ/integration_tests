@@ -7,7 +7,8 @@ from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.networks.provider import NetworkProvider
 from cfme.provisioning import do_vm_provisioning
-from cfme.utils.blockers import BZ, GH
+from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
 

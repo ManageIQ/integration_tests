@@ -4,12 +4,12 @@ import logging
 import traceback
 from datetime import datetime
 
+import dockerbot
 import fauxfactory
 import pika
 import requests
 from slumber.exceptions import HttpClientError
 
-import dockerbot
 from cfme.utils.appliance import Appliance
 from cfme.utils.conf import docker as docker_conf
 from cfme.utils.log import setup_logger

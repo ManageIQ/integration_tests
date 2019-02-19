@@ -1,10 +1,9 @@
 #!/usr/bin/env python2
-
 """Collect artifacts after jenkins run
 """
-
 import argparse
 import sys
+
 from cfme.utils.conf import credentials
 from cfme.utils.ssh import SSHClient
 

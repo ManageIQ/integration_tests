@@ -1,9 +1,9 @@
-import fauxfactory
 import itertools
 import json
-import pytest
-
 from collections import namedtuple
+
+import fauxfactory
+import pytest
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 

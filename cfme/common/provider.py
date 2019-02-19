@@ -1,27 +1,39 @@
 import datetime
-from collections import Iterable, defaultdict
+from collections import defaultdict
+from collections import Iterable
 
 import attr
 from manageiq_client.api import APIException
-from widgetastic.widget import View, Text
-from widgetastic_patternfly import Button, Input
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
-from cfme.base.credential import (
-    Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential)
-from cfme.common import Taggable, CustomButtonEventsMixin
-from cfme.exceptions import (
-    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, AddProviderError)
+from cfme.base.credential import CANDUCredential
+from cfme.base.credential import Credential
+from cfme.base.credential import EventsCredential
+from cfme.base.credential import SSHCredential
+from cfme.base.credential import TokenCredential
+from cfme.common import CustomButtonEventsMixin
+from cfme.common import Taggable
+from cfme.exceptions import AddProviderError
+from cfme.exceptions import HostStatsNotContains
+from cfme.exceptions import ProviderHasNoKey
+from cfme.exceptions import ProviderHasNoProperty
 from cfme.modeling.base import BaseEntity
-from cfme.utils import ParamClassName, conf
+from cfme.utils import conf
+from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigate_to, navigator
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.net import resolve_hostname
 from cfme.utils.stats import tol_check
 from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
 from cfme.utils.version import VersionPicker
-from cfme.utils.wait import wait_for, RefreshTimer
+from cfme.utils.wait import RefreshTimer
+from cfme.utils.wait import wait_for
 
 
 _base_types_cache = {}

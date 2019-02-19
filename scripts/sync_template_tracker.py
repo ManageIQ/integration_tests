@@ -2,17 +2,20 @@
 """Populate template tracker with information based on cfme_data"""
 import sys
 from collections import defaultdict
-from threading import Lock, Thread
+from threading import Lock
+from threading import Thread
 
 from miq_version import TemplateName
 from slumber.exceptions import SlumberHttpBaseException
-
-from cfme.utils import trackerbot, net
-from cfme.utils.conf import cfme_data
-from cfme.utils.log import logger, add_stdout_handler
-from cfme.utils.providers import list_provider_keys, get_mgmt
-
 from wrapanapi import Openshift
+
+from cfme.utils import net
+from cfme.utils import trackerbot
+from cfme.utils.conf import cfme_data
+from cfme.utils.log import add_stdout_handler
+from cfme.utils.log import logger
+from cfme.utils.providers import get_mgmt
+from cfme.utils.providers import list_provider_keys
 
 
 add_stdout_handler(logger)

@@ -3,7 +3,8 @@ import random
 
 import pytest
 
-from cfme.common.host_views import HostDetailsView, HostEditView
+from cfme.common.host_views import HostDetailsView
+from cfme.common.host_views import HostEditView
 from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider

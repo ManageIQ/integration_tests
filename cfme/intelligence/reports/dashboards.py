@@ -1,18 +1,24 @@
 # -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboards"""
 import attr
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import Checkbox
+from widgetastic.widget import Text
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Checkbox, Text
-from widgetastic_manageiq import SummaryFormItem, DashboardWidgetsPicker
-from widgetastic_patternfly import Button, Input
-
-from cfme.modeling.base import BaseCollection, BaseEntity
+from . import CloudIntelReportsView
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from . import CloudIntelReportsView
+from widgetastic_manageiq import DashboardWidgetsPicker
+from widgetastic_manageiq import SummaryFormItem
 
 
 class DashboardAllGroupsView(CloudIntelReportsView):

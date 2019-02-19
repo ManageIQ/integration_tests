@@ -4,11 +4,9 @@ import pytest
 
 from cfme.rest.gen_data import categories as _categories
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.rest import (
-    assert_response,
-    delete_resources_from_collection,
-    delete_resources_from_detail,
-)
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.rest import delete_resources_from_detail
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 

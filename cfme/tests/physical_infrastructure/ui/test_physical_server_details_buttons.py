@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import pytest
-from cfme.utils.appliance.implementations.ui import navigate_to
+
 from cfme.common.physical_server_views import (
     PhysicalServerDetailsView,
 )
 from cfme.physical.provider.lenovo import LenovoProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [pytest.mark.tier(3), pytest.mark.provider([LenovoProvider], scope="module")]
 

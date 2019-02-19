@@ -1,27 +1,33 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure PhysicalStorage in CFME."""
 import attr
-from navmazing import NavigateToAttribute
 from cached_property import cached_property
 from lxml.html import document_fromstring
-from widgetastic_patternfly import Dropdown, Accordion, BreadCrumb
-from widgetastic.widget import Text, View
-from widgetastic_manageiq import (
-    BaseEntitiesView,
-    JSBaseEntity,
-    ItemsToolBarViewSelector,
-    SummaryTable,
-    ManageIQTree
-)
-from cfme.common import PolicyProfileAssignable, Taggable
+from navmazing import NavigateToAttribute
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Accordion
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Dropdown
+
+from cfme.base.login import BaseLoggedInPage
+from cfme.common import PolicyProfileAssignable
+from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseEntity, BaseCollection
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-from cfme.base.login import BaseLoggedInPage
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import JSBaseEntity
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import SummaryTable
 
 
 class ComputePhysicalInfrastructureStoragesView(BaseLoggedInPage):

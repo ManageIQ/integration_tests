@@ -1,33 +1,37 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure Host in CFME."""
-import attr
-import six
 import json
 
+import attr
+import six
 from manageiq_client.api import APIException
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
-from cfme.common import CustomButtonEventsMixin, PolicyProfileAssignable, Taggable
+from cfme.common import CustomButtonEventsMixin
+from cfme.common import PolicyProfileAssignable
+from cfme.common import Taggable
 from cfme.common.candu_views import HostInfraUtilizationView
-from cfme.common.host_views import (
-    HostAddView,
-    HostDetailsView,
-    HostDiscoverView,
-    HostDriftAnalysis,
-    HostDriftHistory,
-    HostEditView,
-    HostsView,
-    HostTimelinesView,
-    ProviderAllHostsView
-)
+from cfme.common.host_views import HostAddView
+from cfme.common.host_views import HostDetailsView
+from cfme.common.host_views import HostDiscoverView
+from cfme.common.host_views import HostDriftAnalysis
+from cfme.common.host_views import HostDriftHistory
+from cfme.common.host_views import HostEditView
+from cfme.common.host_views import HostsView
+from cfme.common.host_views import HostTimelinesView
+from cfme.common.host_views import ProviderAllHostsView
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.datastore import HostAllDatastoresView
-from cfme.modeling.base import BaseEntity, BaseCollection
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.networks.views import OneHostSubnetView
 from cfme.utils import conf
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.ipmi import IPMI
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty

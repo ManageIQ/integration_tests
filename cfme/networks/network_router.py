@@ -1,17 +1,27 @@
 import attr
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 
-from cfme.common import CustomButtonEventsMixin, Taggable
-from cfme.exceptions import ItemNotFound, DestinationNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
+from cfme.common import CustomButtonEventsMixin
+from cfme.common import Taggable
+from cfme.exceptions import DestinationNotFound
+from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.modeling.base import parent_of_type
 from cfme.networks import ValidateStatsMixin
 from cfme.networks.subnet import SubnetCollection
-from cfme.networks.views import (NetworkRouterDetailsView, NetworkRouterView, NetworkRouterAddView,
-                                 NetworkRouterEditView, NetworkRouterAddInterfaceView,
-                                 NetworkEntitySubnetView)
+from cfme.networks.views import NetworkEntitySubnetView
+from cfme.networks.views import NetworkRouterAddInterfaceView
+from cfme.networks.views import NetworkRouterAddView
+from cfme.networks.views import NetworkRouterDetailsView
+from cfme.networks.views import NetworkRouterEditView
+from cfme.networks.views import NetworkRouterView
 from cfme.utils import version
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.wait import wait_for
 
 

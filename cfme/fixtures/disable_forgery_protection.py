@@ -1,7 +1,9 @@
-from cfme.utils.log import logger
-import pytest
-from cfme.utils.ssh import SSHClient
 import time
+
+import pytest
+
+from cfme.utils.log import logger
+from cfme.utils.ssh import SSHClient
 
 
 @pytest.fixture(scope='session')

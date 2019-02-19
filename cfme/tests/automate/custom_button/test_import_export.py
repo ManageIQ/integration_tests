@@ -1,6 +1,5 @@
-import pytest
 import fauxfactory
-
+import pytest
 from widgetastic_patternfly import Dropdown
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider

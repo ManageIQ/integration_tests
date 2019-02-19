@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
-from cfme.utils import conf
 import subprocess
 import sys
+
+from cfme.utils import conf
 
 
 def main():

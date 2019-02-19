@@ -1,16 +1,18 @@
+from collections import namedtuple
+
 import fauxfactory
 import pytest
-from collections import namedtuple
+from wait_for import wait_for
 
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import manager
-from cfme.utils.ssh import SSHClient
-from cfme.utils.conf import credentials, cfme_data
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import list_providers_by_class
-from wait_for import wait_for
+from cfme.utils.ssh import SSHClient
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 

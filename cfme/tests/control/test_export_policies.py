@@ -2,9 +2,9 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.control.import_export import is_imported
-from cfme import test_requirements
 
 
 @pytest.fixture(scope="module")

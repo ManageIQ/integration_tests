@@ -14,9 +14,9 @@ Log files will be tarred and written to log_path
 """
 import pytest
 
-from cfme.utils.path import log_path
 from cfme.utils.conf import env
 from cfme.utils.log import logger
+from cfme.utils.path import log_path
 
 
 DEFAULT_FILES = ['/var/www/miq/vmdb/log/evm.log',

@@ -1,22 +1,29 @@
 import random
-from traceback import format_exc
 from collections import namedtuple
+from traceback import format_exc
 
-import pytest
 import fauxfactory
+import pytest
 
-from cfme.containers.provider import ContainersProvider, refresh_and_navigate
-from cfme.containers.pod import Pod, PodCollection
-from cfme.containers.service import Service, ServiceCollection
-from cfme.containers.replicator import Replicator, ReplicatorCollection
-from cfme.containers.image import Image, ImageCollection
-from cfme.containers.project import Project, ProjectCollection
-from cfme.containers.route import Route, RouteCollection
-from cfme.containers.template import Template, TemplateCollection
-
-from cfme.utils.wait import wait_for
+from cfme.containers.image import Image
+from cfme.containers.image import ImageCollection
+from cfme.containers.pod import Pod
+from cfme.containers.pod import PodCollection
+from cfme.containers.project import Project
+from cfme.containers.project import ProjectCollection
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import refresh_and_navigate
+from cfme.containers.replicator import Replicator
+from cfme.containers.replicator import ReplicatorCollection
+from cfme.containers.route import Route
+from cfme.containers.route import RouteCollection
+from cfme.containers.service import Service
+from cfme.containers.service import ServiceCollection
+from cfme.containers.template import Template
+from cfme.containers.template import TemplateCollection
 from cfme.utils.blockers import GH
 from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

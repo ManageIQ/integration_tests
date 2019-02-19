@@ -1,29 +1,26 @@
-import attr
 import copy
 
-from widgetastic_patternfly import BootstrapSelect, Input
+import attr
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Input
 from wrapanapi.systems import RedfishSystem
 
-from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
-from cfme.exceptions import (
-    StatsDoNotMatch,
-    HostStatsNotContains,
-    ProviderHasNoProperty
-)
-from cfme.physical.physical_server import (
-    PhysicalServer,
-    PhysicalServerCollection)
-from cfme.physical.physical_chassis import (
-    PhysicalChassis,
-    PhysicalChassisCollection)
-from cfme.physical.physical_rack import (
-    PhysicalRack,
-    PhysicalRackCollection)
+from . import PhysicalProvider
+from cfme.common.provider import DefaultEndpoint
+from cfme.common.provider import DefaultEndpointForm
+from cfme.exceptions import HostStatsNotContains
+from cfme.exceptions import ProviderHasNoProperty
+from cfme.exceptions import StatsDoNotMatch
+from cfme.physical.physical_chassis import PhysicalChassis
+from cfme.physical.physical_chassis import PhysicalChassisCollection
+from cfme.physical.physical_rack import PhysicalRack
+from cfme.physical.physical_rack import PhysicalRackCollection
+from cfme.physical.physical_server import PhysicalServer
+from cfme.physical.physical_server import PhysicalServerCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.varmeth import variable
-from . import PhysicalProvider
 
 
 class RedfishEndpoint(DefaultEndpoint):

@@ -1,15 +1,15 @@
 import attr
-
 from wrapanapi.systems import OpenstackSystem
 
+from . import CloudProvider
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.common.provider import EventsEndpoint
 from cfme.exceptions import ItemNotFound
-from cfme.infrastructure.provider.openstack_infra import RHOSEndpoint, OpenStackInfraEndpointForm
+from cfme.infrastructure.provider.openstack_infra import OpenStackInfraEndpointForm
+from cfme.infrastructure.provider.openstack_infra import RHOSEndpoint
 from cfme.services.catalogs.catalog_items import OpenStackCatalogItem
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
-from . import CloudProvider
 
 
 @attr.s(cmp=False)

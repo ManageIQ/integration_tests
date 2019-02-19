@@ -1,13 +1,12 @@
 import attr
-
-from cfme.modeling.base import (
-    BaseCollection, BaseEntity,
-    EntityCollections,
-    parent_of_type,
-    load_appliance_collections,
-)
-from cfme.utils.appliance import DummyAppliance
 import pytest
+
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.modeling.base import EntityCollections
+from cfme.modeling.base import load_appliance_collections
+from cfme.modeling.base import parent_of_type
+from cfme.utils.appliance import DummyAppliance
 
 
 @attr.s

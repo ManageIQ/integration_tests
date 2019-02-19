@@ -1,12 +1,16 @@
 import argparse
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
+
 from tabulate import tabulate
 
+from cfme.utils.log import add_stdout_handler
+from cfme.utils.log import logger
 from cfme.utils.path import log_path
-from cfme.utils.providers import list_provider_keys, get_mgmt
-from cfme.utils.log import logger, add_stdout_handler
+from cfme.utils.providers import get_mgmt
+from cfme.utils.providers import list_provider_keys
 
 add_stdout_handler(logger)
 

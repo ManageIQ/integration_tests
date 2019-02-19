@@ -1,8 +1,9 @@
-from collections import defaultdict
 import inspect
-import subprocess
-import re
 import operator
+import re
+import subprocess
+from collections import defaultdict
+
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.fixtures.pytest_store import store
 

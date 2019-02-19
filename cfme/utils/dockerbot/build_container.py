@@ -1,6 +1,7 @@
 import subprocess
-import py
 import sys
+
+import py
 
 
 def main():

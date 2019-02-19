@@ -1,17 +1,33 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
 from widgetastic.utils import Parameter
-from widgetastic.widget import ParametrizedView, Text, View
-from widgetastic_patternfly import (
-    BreadCrumb, BootstrapNav, BootstrapSelect, CheckableBootstrapTreeview, Dropdown)
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapNav
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import CheckableBootstrapTreeview
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import displayed_not_implemented
 from cfme.utils.log import logger
-from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, Button,
-    Checkbox, DriftComparison, Input, ItemsToolBarViewSelector, JSBaseEntity, ManageIQTree,
-    PaginationPane, ParametrizedSummaryTable, Table, TimelinesView, Search, WaitTab)
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import Button
+from widgetastic_manageiq import Checkbox
+from widgetastic_manageiq import DriftComparison
+from widgetastic_manageiq import Input
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import JSBaseEntity
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import ParametrizedSummaryTable
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import TimelinesView
+from widgetastic_manageiq import WaitTab
 
 
 class ComputeInfrastructureHostsView(BaseLoggedInPage):

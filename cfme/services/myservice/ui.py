@@ -1,7 +1,15 @@
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.utils import Parameter
-from widgetastic.widget import ParametrizedView, Table, Text, View
-from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Table
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Input
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView
@@ -9,13 +17,20 @@ from cfme.common.vm_views import VMDetailsEntities
 from cfme.exceptions import displayed_not_implemented
 from cfme.services.myservice import MyService
 from cfme.utils.appliance import MiqImplementationContext
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.appliance.implementations.ui import ViaUI
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import (
-    Accordion, ManageIQTree, Calendar, SummaryTable, ItemsToolBarViewSelector, BaseEntitiesView,
-    Search, ParametrizedSummaryTable
-)
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import Calendar
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import ParametrizedSummaryTable
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
 
 
 class MyServiceToolbar(View):

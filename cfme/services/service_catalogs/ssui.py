@@ -1,20 +1,21 @@
 import time
 
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.widget import Text
-from widgetastic_patternfly import Input, Button, BootstrapSelect
+from widgetastic_patternfly import Button
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
-from cfme.services.service_catalogs import ServiceCatalogs, BaseOrderForm
+from cfme.services.service_catalogs import BaseOrderForm
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import MiqImplementationContext
-from cfme.utils.appliance.implementations.ssui import (
-    navigator,
-    SSUINavigateStep,
-    navigate_to,
-    ViaSSUI
-)
+from cfme.utils.appliance.implementations.ssui import navigate_to
+from cfme.utils.appliance.implementations.ssui import navigator
+from cfme.utils.appliance.implementations.ssui import SSUINavigateStep
+from cfme.utils.appliance.implementations.ssui import ViaSSUI
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import SSUIServiceCatalogcard, Notification
+from widgetastic_manageiq import Notification
+from widgetastic_manageiq import SSUIServiceCatalogcard
 
 
 class ServiceCatalogsView(SSUIBaseLoggedInPage):

@@ -1,5 +1,6 @@
-import pytest
 import random
+
+import pytest
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider

@@ -5,7 +5,8 @@ from collections import defaultdict
 
 import requests
 import slumber
-from six.moves.urllib_parse import urlparse, parse_qs
+from six.moves.urllib_parse import parse_qs
+from six.moves.urllib_parse import urlparse
 
 from cfme.utils.conf import env
 from cfme.utils.providers import providers_data

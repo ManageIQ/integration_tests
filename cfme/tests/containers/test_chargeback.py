@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
-from collections import OrderedDict
 import calendar
+from collections import OrderedDict
 from datetime import datetime
 
-
 import fauxfactory
-from humanfriendly import parse_size, tokenize
 import pytest
+from humanfriendly import parse_size
+from humanfriendly import tokenize
 
 from cfme.containers.provider import ContainersProvider
-from cfme.intelligence.chargeback import assignments, rates
-
+from cfme.intelligence.chargeback import assignments
+from cfme.intelligence.chargeback import rates
 from cfme.utils.log import logger
-from cfme.utils.units import CHARGEBACK_HEADER_NAMES, parse_number
+from cfme.utils.units import CHARGEBACK_HEADER_NAMES
+from cfme.utils.units import parse_number
 
 
 obj_types = ['Image', 'Project']

@@ -5,7 +5,6 @@
 #  This code may be used pursuant to the MIT License.
 ######################################################################
 # PEP8 applied and some things tweaked by Milan Falesnik
-
 import re
 
 __all__ = ('quote',)

@@ -4,7 +4,8 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.exceptions import ManyEntitiesFound, ItemNotFound
+from cfme.exceptions import ItemNotFound
+from cfme.exceptions import ManyEntitiesFound
 from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.provider import NetworkProviderCollection
 from cfme.utils.appliance.implementations.ui import navigate_to

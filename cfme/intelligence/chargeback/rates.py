@@ -1,22 +1,31 @@
 # -*- coding: utf-8 -*-
 # Page model for Intel->Chargeback->Rates.
-from wait_for import TimedOutError
-
 from cached_property import cached_property
-from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.utils import ParametrizedLocator, ParametrizedString
-from widgetastic.widget import Text, ParametrizedView, View
-from widgetastic_patternfly import Button, Input, Dropdown
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from wait_for import TimedOutError
+from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedString
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Input
 
-from cfme.exceptions import ChargebackRateNotFound, displayed_not_implemented
+from . import ChargebackView
+from cfme.exceptions import ChargebackRateNotFound
+from cfme.exceptions import displayed_not_implemented
 from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from widgetastic_manageiq import Select, Table
-from . import ChargebackView
+from widgetastic_manageiq import Select
+from widgetastic_manageiq import Table
 
 
 class RatesView(ChargebackView):

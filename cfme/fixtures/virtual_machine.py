@@ -1,8 +1,6 @@
 """ Fixtures ensuring that a VM/instance is in the specified state for the test
 """
-
 import pytest
-
 from wrapanapi import VmState
 
 

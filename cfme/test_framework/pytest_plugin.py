@@ -3,7 +3,6 @@ cfme main plugin
 
 this loads all of the elemental cfme plugins and prepares configuration
 """
-
 import pytest
 
 

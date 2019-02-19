@@ -2,25 +2,32 @@
 from functools import partial
 
 import attr
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import Text, View
-from widgetastic_manageiq import (
-    Accordion,
-    BaseEntitiesView,
-    BootstrapSelect,
-    CompareToolBarActionsView,
-    ItemsToolBarViewSelector,
-    SummaryTable,
-    Table,
-)
-from widgetastic_patternfly import BootstrapNav, BreadCrumb, Button, Dropdown
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapNav
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import PolicyProfileAssignable
-from cfme.exceptions import ItemNotFound, RoleNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
+from cfme.exceptions import ItemNotFound
+from cfme.exceptions import RoleNotFound
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import BootstrapSelect
+from widgetastic_manageiq import CompareToolBarActionsView
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import Table
 
 
 class DeploymentRoleToolbar(View):

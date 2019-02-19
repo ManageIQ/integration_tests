@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+
 from . import quickstart
 QUICKSTART_DONE = 'MIQ_RUNTEST_QUICKSTART_DONE'
 

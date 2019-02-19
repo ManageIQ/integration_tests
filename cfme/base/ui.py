@@ -1,38 +1,60 @@
 from __future__ import absolute_import
 
+import re
 import time
 
-import re
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from selenium.webdriver.common.keys import Keys
-from widgetastic.utils import Version, VersionPick
-from widgetastic.widget import View, Table, Text, Image, FileInput
-from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, TimelinesView,
-                                  SummaryFormItem, SummaryTable, WaitTab)
-from widgetastic_patternfly import (Accordion, Input, Button, Dropdown, DatePicker,
-                                    FlashMessages, BootstrapSelect, CheckableBootstrapTreeview)
+from widgetastic.utils import Version
+from widgetastic.utils import VersionPick
+from widgetastic.widget import FileInput
+from widgetastic.widget import Image
+from widgetastic.widget import Table
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Accordion
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import CheckableBootstrapTreeview
+from widgetastic_patternfly import DatePicker
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import FlashMessages
+from widgetastic_patternfly import Input
 
+from . import Region
+from . import Server
+from . import Zone
+from . import ZoneCollection
 from cfme.base.credential import Credential
 from cfme.base.login import BaseLoggedInPage
 from cfme.configure.about import AboutView
-from cfme.configure.configuration.server_settings import (
-    ServerInformationView,
-    ServerAuthenticationView
-)
+from cfme.configure.configuration.server_settings import ServerAuthenticationView
+from cfme.configure.configuration.server_settings import ServerInformationView
 from cfme.configure.documentation import DocView
 from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
 from cfme.exceptions import BugException
-from cfme.exceptions import ZoneNotFound, DestinationNotFound
+from cfme.exceptions import DestinationNotFound
+from cfme.exceptions import ZoneNotFound
 from cfme.intelligence.chargeback import ChargebackView
 from cfme.intelligence.rss import RSSView
 from cfme.intelligence.timelines import CloudIntelTimelinesView
 from cfme.utils import conf
 from cfme.utils.appliance import MiqImplementationContext
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.appliance.implementations.ui import ViaUI
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
-from . import Server, Region, Zone, ZoneCollection
+from widgetastic_manageiq import AttributeValueForm
+from widgetastic_manageiq import Checkbox
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import SummaryFormItem
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import TimelinesView
+from widgetastic_manageiq import WaitTab
 
 
 @MiqImplementationContext.external_for(Server.address, ViaUI)

@@ -1,10 +1,12 @@
 import attr
-from widgetastic_patternfly import BootstrapSelect, Input
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Input
 from wrapanapi.systems import SCVMMSystem
 
-from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
-from cfme.services.catalogs.catalog_items import SCVMMCatalogItem
 from . import InfraProvider
+from cfme.common.provider import DefaultEndpoint
+from cfme.common.provider import DefaultEndpointForm
+from cfme.services.catalogs.catalog_items import SCVMMCatalogItem
 
 
 class SCVMMEndpoint(DefaultEndpoint):

@@ -1,9 +1,6 @@
 import pytest
 
 from cfme.containers.provider import ContainersProvider
-from cfme.markers.env_markers.provider import providers
-from cfme.utils.version import current_version
-from cfme.utils.providers import ProviderFilter
 
 
 pytestmark = [

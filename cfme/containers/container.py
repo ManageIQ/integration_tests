@@ -1,17 +1,27 @@
 # -*- coding: utf-8 -*-
 import attr
-from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import Accordion, ManageIQTree, View, Table
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic_patternfly import VerticalNavigation
 
-from cfme.containers.provider import (ContainerObjectAllBaseView,
-                                      ContainerObjectDetailsBaseView,
-                                      GetRandomInstancesMixin, Labelable, LoggingableView)
+from cfme.common import Taggable
+from cfme.common import TagPageView
+from cfme.containers.provider import ContainerObjectAllBaseView
+from cfme.containers.provider import ContainerObjectDetailsBaseView
+from cfme.containers.provider import GetRandomInstancesMixin
+from cfme.containers.provider import Labelable
+from cfme.containers.provider import LoggingableView
 from cfme.exceptions import ItemNotFound
-from cfme.common import Taggable, TagPageView
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.providers import get_crud_by_name
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import View
 
 
 class ContainerView(ContainerObjectAllBaseView, LoggingableView):

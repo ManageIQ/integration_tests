@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 
 import fauxfactory
 import pytest
+from wrapanapi import VmState
 
+from . import do_scan
+from . import wait_for_ssa_enabled
 from cfme import test_requirements
-from cfme.control.explorer import alert_profiles, policies
+from cfme.control.explorer import alert_profiles
+from cfme.control.explorer import policies
 from cfme.control.explorer.alert_profiles import AlertProfileDetailsView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
@@ -15,15 +20,13 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
-from . import do_scan, wait_for_ssa_enabled
-
-from wrapanapi import VmState
 
 pf1 = ProviderFilter(classes=[InfraProvider])
 pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)

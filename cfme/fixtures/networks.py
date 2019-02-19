@@ -1,11 +1,13 @@
-import pytest
 import re
 from argparse import Namespace
 from contextlib import contextmanager
 
+import pytest
+
 from cfme.exceptions import NeedleNotFoundInLog
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 @pytest.fixture

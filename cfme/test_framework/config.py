@@ -1,11 +1,11 @@
 """
 classes to manage the cfme test framework configuration
 """
-
 import os
 import warnings
-import yaycl
+
 import attr
+import yaycl
 
 
 class Configuration(object):

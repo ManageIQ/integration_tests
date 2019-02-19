@@ -1,13 +1,14 @@
+import csv
+import os
+from operator import itemgetter
+
 import py
 import pytest
-import csv
 import yaml
-import os
 
-from operator import itemgetter
-from cfme.utils.path import project_path
-from cfme.utils.conf import cfme_data
 from .pytest_store import store
+from cfme.utils.conf import cfme_data
+from cfme.utils.path import project_path
 
 
 class MarkFromMap(object):

@@ -2,9 +2,9 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme import test_requirements
 from cfme.utils.blockers import BZ
 
 pytestmark = [

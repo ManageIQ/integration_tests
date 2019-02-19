@@ -1,12 +1,18 @@
 import attr
 from navmazing import NavigateToAttribute
 
-from cfme.common import CustomButtonEventsMixin, Taggable
+from cfme.common import CustomButtonEventsMixin
+from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
-from cfme.networks.views import SecurityGroupDetailsView, SecurityGroupView
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.modeling.base import parent_of_type
+from cfme.networks.views import SecurityGroupDetailsView
+from cfme.networks.views import SecurityGroupView
 from cfme.utils import version
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 
 
 @attr.s

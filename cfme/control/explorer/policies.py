@@ -3,22 +3,34 @@
 from copy import copy
 
 import attr
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.widget import Checkbox, Table, Text, TextInput, View
-from widgetastic_patternfly import Button, Input
+from widgetastic.widget import Checkbox
+from widgetastic.widget import Table
+from widgetastic.widget import Text
+from widgetastic.widget import TextInput
+from widgetastic.widget import View
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
+from . import ControlExplorerView
 from .actions import Action
-from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
 from cfme.utils import ParamClassName
-from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import BootstrapSwitchSelect, MultiBoxSelect, SummaryFormItem, Dropdown
+from widgetastic_manageiq import BootstrapSwitchSelect
+from widgetastic_manageiq import Dropdown
+from widgetastic_manageiq import MultiBoxSelect
+from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq.expression_editor import ExpressionEditor
-from . import ControlExplorerView
 
 
 class PoliciesAllView(ControlExplorerView):

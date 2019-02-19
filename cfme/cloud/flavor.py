@@ -1,23 +1,38 @@
 """ Page functions for Flavor pages
 """
 import attr
-
-from navmazing import NavigateToAttribute, NavigateToSibling
-
-from widgetastic_patternfly import (BootstrapNav, BootstrapSelect, BootstrapSwitch, BreadCrumb,
-                                    Button, Dropdown, TextInput, View)
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 from widgetastic.widget import Select
-
+from widgetastic_patternfly import BootstrapNav
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BootstrapSwitch
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import TextInput
+from widgetastic_patternfly import View
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import Taggable, TaggableCollection
-from cfme.exceptions import FlavorNotFound, ItemNotFound
-from cfme.modeling.base import BaseEntity, BaseCollection
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.common import Taggable
+from cfme.common import TaggableCollection
+from cfme.exceptions import FlavorNotFound
+from cfme.exceptions import ItemNotFound
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.providers import get_crud_by_name
-from widgetastic_manageiq import (
-    BaseEntitiesView, ItemsToolBarViewSelector, SummaryTable, Text, Table, Accordion, ManageIQTree,
-    PaginationPane, Search)
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import Table
+from widgetastic_manageiq import Text
 
 
 class FlavorView(BaseLoggedInPage):

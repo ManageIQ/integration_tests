@@ -1,5 +1,4 @@
 #!/usr/bin/env python2
-
 """SSH in to a running appliance and set up an internal DB.
 
 An optional region can be specified (default 0), and the script
@@ -10,7 +9,6 @@ Running this script against an already configured appliance is
 unsupported, hilarity may ensue.
 
 """
-
 import argparse
 import sys
 

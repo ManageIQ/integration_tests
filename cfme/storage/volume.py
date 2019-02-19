@@ -1,25 +1,43 @@
 # -*- coding: utf-8 -*-
 import attr
-
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
+from widgetastic.widget import NoSuchElementException
+from widgetastic.widget import Text
 from widgetastic.widget import TextInput
-from widgetastic_patternfly import BootstrapNav, BreadCrumb, Button, Dropdown, Input
-from widgetastic_manageiq import Search
-
-from widgetastic.widget import View, Text, NoSuchElementException
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapNav
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Input
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import CustomButtonEventsMixin, TagPageView, Taggable, TaggableCollection
-from cfme.exceptions import VolumeNotFoundError, ItemNotFound, displayed_not_implemented
-from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.common import CustomButtonEventsMixin
+from cfme.common import Taggable
+from cfme.common import TaggableCollection
+from cfme.common import TagPageView
+from cfme.exceptions import displayed_not_implemented
+from cfme.exceptions import ItemNotFound
+from cfme.exceptions import VolumeNotFoundError
+from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.update import Updateable
-from cfme.utils.wait import wait_for, TimedOutError
-from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, BootstrapSelect, BootstrapSwitch, ItemsToolBarViewSelector,
-    ManageIQTree, SummaryTable)
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import BootstrapSelect
+from widgetastic_manageiq import BootstrapSwitch
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
 
 
 class VolumeToolbar(View):

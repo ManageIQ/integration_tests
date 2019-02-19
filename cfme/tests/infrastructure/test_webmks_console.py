@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Test for WebMKS Remote Consoles of VMware Providers."""
+import imghdr
 import socket
 
-import imghdr
 import pytest
 from wait_for import wait_for
 

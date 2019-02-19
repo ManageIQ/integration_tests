@@ -1,11 +1,14 @@
 """Runs Idle Workload by resetting appliance and enabling specific roles with no providers."""
+import time
+
+import pytest
+
 from cfme.utils.conf import cfme_performance
 from cfme.utils.grafana import get_scenario_dashboard_urls
 from cfme.utils.log import logger
-from cfme.utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
+from cfme.utils.smem_memory_monitor import add_workload_quantifiers
+from cfme.utils.smem_memory_monitor import SmemMemoryMonitor
 from cfme.utils.workloads import get_idle_scenarios
-import time
-import pytest
 
 
 def pytest_generate_tests(metafunc):

@@ -21,21 +21,25 @@ already been used, it will die
 
 """
 import atexit
+import os
 import subprocess
 from threading import RLock
 
 import diaper
-import os
 import pytest
 
 from artifactor import ArtifactorClient
-from cfme.fixtures.pytest_store import write_line, store
+from cfme.fixtures.pytest_store import store
+from cfme.fixtures.pytest_store import write_line
 from cfme.markers.polarion import extract_polarion_ids
 from cfme.utils.appliance import find_appliance
-from cfme.utils.blockers import BZ, Blocker
-from cfme.utils.conf import env, credentials
+from cfme.utils.blockers import Blocker
+from cfme.utils.blockers import BZ
+from cfme.utils.conf import credentials
+from cfme.utils.conf import env
 from cfme.utils.log import logger
-from cfme.utils.net import random_port, net_check
+from cfme.utils.net import net_check
+from cfme.utils.net import random_port
 from cfme.utils.wait import wait_for
 
 UNDER_TEST = False  # set to true for artifactor using tests

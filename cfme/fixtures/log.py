@@ -1,7 +1,7 @@
 import collections
 
-import pytest
 import attr
+import pytest
 
 from cfme.utils import log
 from cfme.utils.appliance import find_appliance

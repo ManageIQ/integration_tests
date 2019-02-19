@@ -3,12 +3,14 @@
 
 @author: Milan Falešník <mfalesni@redhat.com>
 """
-import fauxfactory
 import ftplib
 import re
 from datetime import datetime
-from time import strptime, mktime
 from io import BytesIO
+from time import mktime
+from time import strptime
+
+import fauxfactory
 
 
 class FTPException(Exception):

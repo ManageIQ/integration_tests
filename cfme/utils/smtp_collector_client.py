@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+import requests
 
 from cfme.utils.timeutil import parsetime
-import requests
 
 
 class SMTPCollectorClient(object):

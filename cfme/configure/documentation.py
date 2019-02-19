@@ -1,4 +1,6 @@
-from widgetastic.widget import Text, Image, View
+from widgetastic.widget import Image
+from widgetastic.widget import Text
+from widgetastic.widget import View
 
 
 class LinksView(View):

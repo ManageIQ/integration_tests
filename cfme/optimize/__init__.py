@@ -1,10 +1,12 @@
 from navmazing import NavigateToSibling
 from widgetastic.widget import View
-from widgetastic_manageiq import Accordion, ManageIQTree
 
-from cfme.base.login import BaseLoggedInPage
 from cfme.base import Server
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.base.login import BaseLoggedInPage
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import ManageIQTree
 
 
 class BottlenecksView(BaseLoggedInPage):

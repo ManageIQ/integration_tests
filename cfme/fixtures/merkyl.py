@@ -35,7 +35,6 @@ example of artifactor configuration:
           squash_exceptions: true
           threaded: false
 """
-
 import attr
 import pytest
 import six

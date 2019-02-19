@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 from __future__ import print_function
+
 from coverage import CoverageData
 try:
     from cfme.utils.path import project_path, log_path

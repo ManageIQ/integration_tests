@@ -1,13 +1,25 @@
 # -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
 from widgetastic.utils import Parameter
-from widgetastic.widget import ParametrizedView, Text, View
+from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Text
+from widgetastic.widget import View
+from widgetastic_patternfly import Accordion
+from widgetastic_patternfly import BootstrapNav
+from widgetastic_patternfly import BreadCrumb
+from widgetastic_patternfly import Dropdown
+
 from cfme.base.login import BaseLoggedInPage
-from widgetastic_manageiq import (
-    BaseEntitiesView, JSBaseEntity, BootstrapTreeview, Button, ItemsToolBarViewSelector, Search,
-    SummaryTable, TimelinesView, BaseNonInteractiveEntitiesView, ManageIQTree)
-from widgetastic_patternfly import (
-    BootstrapNav, BreadCrumb, Dropdown, Accordion)
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import BaseNonInteractiveEntitiesView
+from widgetastic_manageiq import BootstrapTreeview
+from widgetastic_manageiq import Button
+from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import JSBaseEntity
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import Search
+from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import TimelinesView
 
 
 class ComputePhysicalInfrastructureServersView(BaseLoggedInPage):

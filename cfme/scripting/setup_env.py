@@ -1,13 +1,15 @@
-import click
 import re
 import sys
 from collections import namedtuple
 
+import click
+from wait_for import wait_for
+
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.appliance import IPAppliance
 from cfme.utils.conf import credentials
-from cfme.utils.version import VersionPicker, Version
-from wait_for import wait_for
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 pwd = None

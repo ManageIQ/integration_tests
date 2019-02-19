@@ -1,15 +1,17 @@
 """Runs SmartState Analysis Workload."""
+import time
+
+import pytest
+
 from cfme.infrastructure import host
+from cfme.utils import conf
 from cfme.utils.conf import cfme_performance
 from cfme.utils.grafana import get_scenario_dashboard_urls
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud
-from cfme.utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
+from cfme.utils.smem_memory_monitor import add_workload_quantifiers
+from cfme.utils.smem_memory_monitor import SmemMemoryMonitor
 from cfme.utils.workloads import get_smartstate_analysis_scenarios
-from cfme.utils import conf
-
-import time
-import pytest
 
 roles_smartstate = ['automate', 'database_operations', 'ems_inventory', 'ems_operations', 'event',
     'notifier', 'reporting', 'scheduler', 'smartproxy', 'smartstate', 'user_interface',

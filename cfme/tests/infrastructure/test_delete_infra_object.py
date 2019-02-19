@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-
 import pytest
+
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.wait import wait_for

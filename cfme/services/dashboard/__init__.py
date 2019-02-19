@@ -1,5 +1,4 @@
 import importscan
-
 import sentaku
 
 from cfme.utils.appliance import Navigatable

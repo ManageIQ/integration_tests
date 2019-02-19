@@ -20,14 +20,16 @@ Logs its actions to stderr.
 
 """
 from __future__ import print_function
+
 import argparse
 import inspect
 import json
 import sys
+import traceback
+from concurrent import futures
 from datetime import datetime
 from threading import Lock
-from concurrent import futures
-import traceback
+
 from cfme.utils.appliance import IPAppliance
 
 lock = Lock()

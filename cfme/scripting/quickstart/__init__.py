@@ -1,13 +1,14 @@
 from __future__ import print_function
 
-import os
-import sys
 import argparse
-import subprocess
-import json
 import hashlib
+import json
+import os
+import subprocess
+import sys
 
-from .proc import run_cmd_or_exit, PRISTINE_ENV
+from .proc import PRISTINE_ENV
+from .proc import run_cmd_or_exit
 from .system import install_system_packages
 
 LEGACY_BASENAMES = ('cfme_tests', 'integration_tests')

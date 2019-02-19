@@ -1,28 +1,30 @@
 # -*- coding: utf-8 -*-
-import gevent
+import re
 import socket
 import sys
+from os import path as os_path
 from subprocess import check_call
 
 import attr
 import diaper
 import fauxfactory
+import gevent
 import iso8601
 import paramiko
-import re
+import six
 from cached_property import cached_property
-from os import path as os_path
 from scp import SCPClient
 
-from cfme.utils import conf, ports
+from cfme.fixtures.pytest_store import store
+from cfme.utils import conf
+from cfme.utils import ports
 from cfme.utils.log import logger
 from cfme.utils.net import net_check
 from cfme.utils.path import project_path
 from cfme.utils.quote import quote
 from cfme.utils.timeutil import parsetime
-from cfme.utils.version import Version, VersionPicker
-from cfme.fixtures.pytest_store import store
-import six
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 
 # Default blocking time before giving up on an ssh command execution,
 # in seconds (float)

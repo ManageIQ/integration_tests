@@ -1,5 +1,4 @@
 #!/usr/bin/env python2
-
 """Clean out an appliance DB
 
 In the case where an appliance has been used for a lot of testing and filled up with old records,

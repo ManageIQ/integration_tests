@@ -1,10 +1,10 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.common.candu_views import UtilizationZoomView
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
+from cfme.common.candu_views import UtilizationZoomView
 from cfme.tests.candu import compare_data
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ

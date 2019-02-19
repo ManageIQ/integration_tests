@@ -3,7 +3,8 @@ import time
 
 from cfme.fixtures.pytest_store import store
 from cfme.utils.log import logger
-from cfme.utils.ssh import SSHClient, SSHTail
+from cfme.utils.ssh import SSHClient
+from cfme.utils.ssh import SSHTail
 
 
 def collect_log(ssh_client, log_prefix, local_file_name, strip_whitespace=False):
