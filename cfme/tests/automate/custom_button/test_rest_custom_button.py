@@ -1,15 +1,15 @@
-import pytest
 import fauxfactory
+import pytest
 
 from cfme import test_requirements
-from cfme.utils.rest import (
-    assert_response,
-    delete_resources_from_collection,
-    delete_resources_from_detail,
-    query_resource_attributes,
-)
 from cfme.rest import gen_data
-from cfme.tests.automate.custom_button import CLASS_MAP, OBJ_TYPE, OBJ_TYPE_59
+from cfme.tests.automate.custom_button import CLASS_MAP
+from cfme.tests.automate.custom_button import OBJ_TYPE
+from cfme.tests.automate.custom_button import OBJ_TYPE_59
+from cfme.utils.rest import assert_response
+from cfme.utils.rest import delete_resources_from_collection
+from cfme.utils.rest import delete_resources_from_detail
+from cfme.utils.rest import query_resource_attributes
 from cfme.utils.wait import wait_for
 
 pytestmark = [
