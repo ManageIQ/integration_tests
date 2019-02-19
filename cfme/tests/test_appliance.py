@@ -310,61 +310,6 @@ def test_appliance_executing_script():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_log_rotate_postgres():
-    """
-    [root@host-192-168-55-133 ~]# cd /var/opt/rh/rh-
-    postgresql95/lib/pgsql/data/pg_log
-    [root@host-192-168-55-133 pg_log]# ll
-    total 204
-    -rw-------. 1 postgres postgres 108218 Nov 10 14:39 postgresql.log
-    -rw-------. 1 postgres postgres  10776 Nov  3 03:34
-    postgresql.log-20161103.gz
-    -rw-------. 1 postgres postgres   8095 Nov  4 03:26
-    postgresql.log-20161104.gz
-    -rw-------. 1 postgres postgres   7544 Nov  5 03:20
-    postgresql.log-20161105.gz
-    -rw-------. 1 postgres postgres   8385 Nov  6 03:22
-    postgresql.log-20161106.gz
-    -rw-------. 1 postgres postgres   7637 Nov  7 03:26
-    postgresql.log-20161107.gz
-    -rw-------. 1 postgres postgres   8621 Nov  8 03:09
-    postgresql.log-20161108.gz
-    -rw-------. 1 postgres postgres  13083 Nov  9 03:28
-    postgresql.log-20161109.gz
-    -rw-------. 1 postgres postgres  14880 Nov 10 03:05
-    postgresql.log-20161110.gz
-    # are the log files being compressed and archived each day ( like
-    appliance_console.log-20161109.gz )
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
-        initialEstimate: 1/12h
-        startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_log_rotate_evm():
-    """
-    [root@host-192-168-55-133 pg_log]# vmdb
-    [root@host-192-168-55-133 vmdb]# cd log
-    # are the log files being compressed and archived each day ( like
-    appliance_console.log-20161109.gz )
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
-        initialEstimate: 1/12h
-        startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_appliance_log_crond():
     """
