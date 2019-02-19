@@ -7,7 +7,6 @@ from widgetastic_patternfly import Dropdown, BootstrapSelect, CandidateNotFound
 from widgetastic_manageiq import Button, Table, PaginationPane, SummaryForm, ScriptBox
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.base.ui import automate_menu_name
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
@@ -48,11 +47,10 @@ class ProvDiagForm(View):
 class ProvDiagView(BaseLoggedInPage):
     @property
     def in_customization(self):
-        expected_navigation = automate_menu_name(self.context['object'].appliance)
-        expected_navigation.append('Customization')
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == expected_navigation)
+            self.navigation.currently_selected == ["Automation", "Automate", "Customization"]
+        )
 
     # sidebar are the same on all, details, etc
     sidebar = View.nested(AutomateCustomizationView)

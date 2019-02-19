@@ -6,7 +6,6 @@ from widgetastic_patternfly import Button, Dropdown, Input
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
-from cfme.base.ui import automate_menu_name
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
@@ -16,8 +15,8 @@ class AutomateCustomizationView(BaseLoggedInPage):
     def in_customization(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == automate_menu_name(
-                self.context['object'].appliance) + ['Customization'])
+            self.navigation.currently_selected == ["Automation", "Automate", "Customization"]
+        )
 
     @property
     def is_displayed(self):
@@ -54,7 +53,7 @@ class AutomateCustomization(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.view.navigation.select(*automate_menu_name(self.obj.appliance) + ['Customization'])
+        self.view.navigation.select(*["Automation", "Automate", "Customization"])
 
 
 class DialogForm(AutomateCustomizationView):

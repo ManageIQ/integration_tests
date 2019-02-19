@@ -4,7 +4,6 @@ from widgetastic_manageiq import Accordion, ManageIQTree, DialogButton, DragandD
 from widgetastic_patternfly import Button, Dropdown, Input
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.base.ui import automate_menu_name
 
 
 class AutomateCustomizationView(BaseLoggedInPage):
@@ -12,8 +11,8 @@ class AutomateCustomizationView(BaseLoggedInPage):
     def in_customization(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == automate_menu_name(
-                self.context['object'].appliance) + ['Customization'])
+            self.navigation.currently_selected == ["Automation", "Automate", "Customization"]
+        )
 
     @property
     def is_displayed(self):
