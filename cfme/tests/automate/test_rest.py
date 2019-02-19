@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 """REST API specific automate tests."""
+import pytest
+
 from cfme import test_requirements
 
 
 pytestmark = [test_requirements.rest]
 
 
+@pytest.mark.tier(3)
 def test_rest_search_automate(appliance):
     """
     Polarion:
-        assignee: mkourim
+        assignee: pvala
         caseimportance: low
+        casecomponent: Rest
         initialEstimate: 1/3h
     """
     rest_api = appliance.rest_api

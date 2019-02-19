@@ -50,6 +50,40 @@ OBJ_TYPE = [
     "VM_INSTANCE",
 ]
 
+CLASS_MAP = {
+    "AZONE": {"ui": "Availability Zone", "rest": "AvailabilityZone"},
+    "CLOUD_NETWORK": {"ui": "Cloud Network", "rest": "CloudNetwork"},
+    "CLOUD_OBJECT_STORE_CONTAINER": {
+        "ui": "Cloud Object Store Container",
+        "rest": "CloudObjectStoreContainer",
+    },
+    "CLOUD_SUBNET": {"ui": "Cloud Subnet", "rest": "CloudSubnet"},
+    "CLOUD_TENANT": {"ui": "Cloud Tenant", "rest": "CloudTenant"},
+    "CLOUD_VOLUME": {"ui": "Cloud Volume", "rest": "CloudVolume"},
+    "CLUSTERS": {"ui": "Cluster / Deployment Role", "rest": "EmsCluster"},
+    "CONTAINER_IMAGES": {"ui": "Container Image", "rest": "ContainerImage"},
+    "CONTAINER_NODES": {"ui": "Container Node", "rest": "ContainerNode"},
+    "CONTAINER_PODS": {"ui": "Container Pod", "rest": "ContainerGroup"},
+    "CONTAINER_PROJECTS": {"ui": "Container Project", "rest": "ContainerProject"},
+    "CONTAINER_TEMPLATES": {"ui": "Container Template", "rest": "ContainerTemplate"},
+    "CONTAINER_VOLUMES": {"ui": "Container Volume", "rest": "ContainerVolume"},
+    "DATASTORES": {"ui": "Datastore", "rest": "Storage"},
+    "GROUP": {"ui": "Group", "rest": "MiqGroup"},
+    "USER": {"ui": "User", "rest": "User"},
+    "GENERIC": {"ui": "Generic Object", "rest": "GenericObject"},
+    "HOSTS": {"ui": "Host / Node", "rest": "Host"},
+    "LOAD_BALANCER": {"ui": "Load Balancer", "rest": "LoadBalancer"},
+    "ROUTER": {"ui": "Network Router", "rest": "NetworkRouter"},
+    "ORCHESTRATION_STACK": {"ui": "Orchestration Stack", "rest": "OrchestrationStack"},
+    "PROVIDER": {"ui": "Provider", "rest": "ExtManagementSystem"},
+    "SECURITY_GROUP": {"ui": "Security Group", "rest": "SecurityGroup"},
+    "SERVICE": {"ui": "Service", "rest": "Service"},
+    "SWITCH": {"ui": "Virtual Infra Switch", "rest": "Switch"},
+    "TENANT": {"ui": "Tenant", "rest": "Tenant"},
+    "TEMPLATE_IMAGE": {"ui": "VM Template and Image", "rest": "MiqTemplate"},
+    "VM_INSTANCE": {"ui": "VM and Instance", "rest": "Vm"},
+}
+
 
 def check_log_requests_count(appliance, parse_str=None):
     """ Method for checking number of requests count in automation log
