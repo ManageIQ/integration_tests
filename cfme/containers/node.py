@@ -117,7 +117,7 @@ class All(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Container Nodes')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         # Reset view and selection
         self.view.toolbar.view_selector.select("List View")
         self.view.paginator.reset_selection()
@@ -141,7 +141,7 @@ class EditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
@@ -163,7 +163,7 @@ class Utilization(CFMENavigateStep):
     VIEW = NodeUtilizationView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         """Navigate to the Utilization page"""
         self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
 
@@ -186,7 +186,7 @@ class Timelines(CFMENavigateStep):
     VIEW = NodeTimelinesView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         """Navigate to the Timelines page"""
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 

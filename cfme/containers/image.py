@@ -273,10 +273,10 @@ class All(CFMENavigateStep):
     VIEW = ImageAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Container Images')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         # Reset view and selection
         self.view.entities.search.clear_simple_search()
         self.view.toolbar.view_selector.select("List View")
@@ -287,7 +287,7 @@ class Details(CFMENavigateStep):
     VIEW = ImageDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         search_visible = self.prerequisite_view.entities.search.is_displayed
         self.prerequisite_view.entities.get_entity(provider=self.obj.provider.name,
                                                    surf_pages=not search_visible,
@@ -300,5 +300,5 @@ class EditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

@@ -221,7 +221,7 @@ class BaseNewDashboardWidgetStep(CFMENavigateStep):
     VIEW = None
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.dashboard_widgets.tree.click_path("All Widgets", self.obj.TYPE)
         self.view.configuration.item_select("Add a new Widget")
 
@@ -231,7 +231,7 @@ class BaseDashboardWidgetDetailsStep(CFMENavigateStep):
     VIEW = DashboardWidgetDetailsView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.dashboard_widgets.tree.click_path("All Widgets", self.obj.TYPE, self.obj.title)
 
 
@@ -239,5 +239,5 @@ class BaseEditDashboardWidgetStep(BaseDashboardWidgetDetailsStep):
     VIEW = None
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.configuration.item_select("Edit this Widget")

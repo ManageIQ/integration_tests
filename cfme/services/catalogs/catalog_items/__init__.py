@@ -531,7 +531,7 @@ class All(CFMENavigateStep):
     VIEW = AllCatalogItemView
     prerequisite = NavigateToAttribute('appliance.server', 'ServicesCatalog')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.catalog_items.tree.click_path('All Catalog Items')
 
 
@@ -540,7 +540,7 @@ class ChooseCatalogItemType(CFMENavigateStep):
     VIEW = ChooseCatalogItemTypeView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Add a New Catalog Item')
 
 
@@ -558,7 +558,7 @@ class CatalogItemAddStep(CFMENavigateStep):
         else:
             return AddCatalogItemView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.select_item_type.select_by_visible_text(self.obj.item_type)
 
 
@@ -567,7 +567,7 @@ class CatalogItemDetailsStep(CFMENavigateStep):
     VIEW = DetailsCatalogItemView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         tree = self.prerequisite_view.catalog_items.tree
         tree.click_path(
             'All Catalog Items',
@@ -587,7 +587,7 @@ class CatalogItemEditStep(CFMENavigateStep):
         else:
             return EditCatalogItemView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit this Item')
 
 
@@ -596,7 +596,7 @@ class AddButtonGroup(CFMENavigateStep):
     VIEW = AddButtonGroupView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Add a new Button Group')
 
 
@@ -605,7 +605,7 @@ class AddButton(CFMENavigateStep):
     VIEW = AddButtonView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Add a new Button')
 
 
@@ -614,5 +614,5 @@ class EditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.policy.item_select('Edit Tags')

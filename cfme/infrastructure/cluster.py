@@ -359,7 +359,7 @@ class All(CFMENavigateStep):
         """Navigate to the correct view"""
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Clusters')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """Reset the view"""
         self.view.entities.paginator.reset_selection()
 
@@ -396,5 +396,5 @@ class Utilization(CFMENavigateStep):
     VIEW = ClusterInfraUtilizationView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Utilization')

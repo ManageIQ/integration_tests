@@ -26,10 +26,10 @@ class All(CFMENavigateStep):
     VIEW = ContainersOverviewView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Overview')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         # We should wait ~2 seconds for the StatusBox population
         wait_for(lambda: self.view.status_cards('Providers').value,
                  num_sec=10, delay=1, silent_failure=True)

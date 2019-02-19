@@ -243,7 +243,7 @@ class All(CFMENavigateStep):
     VIEW = DeploymentRoleAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         nav_select = partial(self.prerequisite_view.navigation.select, 'Compute', 'Infrastructure')
         try:
             nav_select('Deployment Roles')
@@ -270,7 +270,7 @@ class AllForProvider(CFMENavigateStep):
     VIEW = DeploymentRoleAllForProviderView
     prerequisite = NavigateToAttribute('provider', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             self.prerequisite_view.entities.summary('Relationships').click_at('Deployment Roles')
         except NameError:
@@ -283,7 +283,7 @@ class DetailsFromProvider(CFMENavigateStep):
     VIEW = DeploymentRoleDetailsView
     prerequisite = NavigateToSibling('AllForProvider')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
         except ItemNotFound:

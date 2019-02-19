@@ -391,7 +391,7 @@ class UserAll(CFMENavigateStep):
     VIEW = AllUserView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Users')
 
@@ -404,7 +404,7 @@ class UserAdd(CFMENavigateStep):
         navigate_to(self.obj.appliance.server, 'Configuration')
         return navigate_to(self.obj, 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Add a new User")
 
 
@@ -413,7 +413,7 @@ class UserDetails(CFMENavigateStep):
     VIEW = DetailsUserView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             self.prerequisite_view.accordions.accesscontrol.tree.click_path(
                 self.obj.appliance.server_region_string(), 'Users', self.obj.name)
@@ -428,7 +428,7 @@ class UserEdit(CFMENavigateStep):
     VIEW = EditUserView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this User')
 
 
@@ -897,7 +897,7 @@ class GroupAll(CFMENavigateStep):
     VIEW = AllGroupView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Groups')
 
@@ -910,7 +910,7 @@ class GroupAdd(CFMENavigateStep):
     VIEW = AddGroupView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Add a new Group")
 
 
@@ -919,7 +919,7 @@ class EditGroupSequence(CFMENavigateStep):
     VIEW = EditGroupSequenceView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select(
             'Edit Sequence of User Groups for LDAP Look Up')
 
@@ -929,7 +929,7 @@ class GroupDetails(CFMENavigateStep):
     VIEW = DetailsGroupView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Groups', self.obj.description)
 
@@ -939,7 +939,7 @@ class GroupEdit(CFMENavigateStep):
     VIEW = EditGroupView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Group')
 
 
@@ -1214,7 +1214,7 @@ class RoleAll(CFMENavigateStep):
     VIEW = AllRolesView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Roles')
 
@@ -1224,7 +1224,7 @@ class RoleAdd(CFMENavigateStep):
     VIEW = AddRoleView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Add a new Role")
 
 
@@ -1233,7 +1233,7 @@ class RoleDetails(CFMENavigateStep):
     VIEW = DetailsRoleView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.browser.refresh()  # workaround for 5.9 issue of role now shown
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Roles', self.obj.name)
@@ -1244,7 +1244,7 @@ class RoleEdit(CFMENavigateStep):
     VIEW = EditRoleView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Role')
 
 
@@ -1559,7 +1559,7 @@ class TenantAll(CFMENavigateStep):
     VIEW = AllTenantView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Tenants')
 
@@ -1569,7 +1569,7 @@ class TenantDetails(CFMENavigateStep):
     VIEW = DetailsTenantView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Tenants', *self.obj.tree_path)
 
@@ -1579,7 +1579,7 @@ class TenantEdit(CFMENavigateStep):
     VIEW = EditTenantView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this item')
 
 
@@ -1588,7 +1588,7 @@ class TenantManageQuotas(CFMENavigateStep):
     VIEW = TenantQuotaView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Manage Quotas')
 
 

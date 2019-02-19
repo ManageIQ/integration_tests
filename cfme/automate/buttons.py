@@ -556,7 +556,7 @@ class ButtonAll(CFMENavigateStep):
     VIEW = ButtonsAllView
     prerequisite = NavigateToAttribute("appliance.server", "AutomateCustomization")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.buttons.tree.click_path("Object Types")
 
 
@@ -565,7 +565,7 @@ class ButtonNew(CFMENavigateStep):
     VIEW = NewButtonView
     prerequisite = NavigateToAttribute("appliance.server", "AutomateCustomization")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.buttons.tree.click_path("Object Types", self.obj.group.type, self.obj.group.text)
         self.view.configuration.item_select("Add a new Button")
 
@@ -575,7 +575,7 @@ class ButtonDetails(CFMENavigateStep):
     VIEW = ButtonDetailView
     prerequisite = NavigateToAttribute("appliance.server", "AutomateCustomization")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.buttons.tree.click_path(
             "Object Types", self.obj.group.type, self.obj.group.text, self.obj.text
         )
@@ -586,7 +586,7 @@ class ButtonEdit(CFMENavigateStep):
     VIEW = EditButtonView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.configuration.item_select("Edit this Button")
 
 
@@ -595,7 +595,7 @@ class ButtonSimulation(CFMENavigateStep):
     VIEW = AutomateSimulationView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Simulate")
 
 
@@ -833,7 +833,7 @@ class ButtonGroupAll(CFMENavigateStep):
     VIEW = ButtonsAllView
     prerequisite = NavigateToAttribute("appliance.server", "AutomateCustomization")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.buttons.tree.click_path("Object Types")
 
 
@@ -842,7 +842,7 @@ class ButtonGroupObjectType(CFMENavigateStep):
     VIEW = ButtonGroupObjectTypeView
     prerequisite = NavigateToAttribute("appliance.server", "AutomateCustomization")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.buttons.tree.click_path("Object Types", self.obj.type)
 
 
@@ -851,7 +851,7 @@ class ButtonGroupNew(CFMENavigateStep):
     VIEW = NewButtonGroupView
     prerequisite = NavigateToSibling("ObjectType")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.configuration.item_select("Add a new Button Group")
 
 
@@ -860,7 +860,7 @@ class ButtonGroupDetails(CFMENavigateStep):
     VIEW = ButtonGroupDetailView
     prerequisite = NavigateToAttribute("appliance.server", "AutomateCustomization")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.buttons.tree.click_path("Object Types", self.obj.type, self.obj.text)
 
 
@@ -869,5 +869,5 @@ class ButtonGroupEdit(CFMENavigateStep):
     VIEW = EditButtonGroupView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.configuration.item_select("Edit this Button Group")

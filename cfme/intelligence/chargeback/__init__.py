@@ -39,5 +39,5 @@ class IntelChargeback(CFMENavigateStep):
     VIEW = ChargebackView
     prerequisite = NavigateToSibling("LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select("Cloud Intel", "Chargeback")

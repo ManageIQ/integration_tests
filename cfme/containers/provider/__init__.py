@@ -385,10 +385,10 @@ class All(CFMENavigateStep):
     VIEW = ContainerProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Providers')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         # Reset view and selection
         self.view.toolbar.view_selector.select("Grid View")
         self.view.paginator.reset_selection()
@@ -400,7 +400,7 @@ class Add(CFMENavigateStep):
     VIEW = ContainerProviderAddViewUpdated
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Containers Provider')
 
 
@@ -409,11 +409,11 @@ class Details(CFMENavigateStep):
     VIEW = ContainerProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    surf_pages=True).click()
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         self.view.toolbar.view_selector.select("Summary View")
 
 
@@ -421,7 +421,7 @@ class Details(CFMENavigateStep):
 class Dashboard(Details):
     VIEW = ContainersProviderDashboardView
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         self.view.toolbar.view_selector.select("Dashboard View")
 
 
@@ -430,7 +430,7 @@ class Edit(CFMENavigateStep):
     VIEW = ContainerProviderEditViewUpdated
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    surf_pages=True).check()
         self.prerequisite_view.toolbar.configuration.item_select(
@@ -441,7 +441,7 @@ class Edit(CFMENavigateStep):
 class EditFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Containers Provider')
 
 
@@ -450,7 +450,7 @@ class EditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    surf_pages=True).click()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
@@ -461,7 +461,7 @@ class EditTagsFromDetails(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
@@ -470,7 +470,7 @@ class EditTagsFromDashboard(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Dashboard')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
@@ -478,7 +478,7 @@ class EditTagsFromDashboard(CFMENavigateStep):
 class TimelinesFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
 
@@ -486,7 +486,7 @@ class TimelinesFromDetails(CFMENavigateStep):
 class TopologyFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         # TODO: implement topology view
         self.prerequisite_view.toolbar.view_selector.select("Topology View")
 
@@ -526,7 +526,7 @@ class AdHocMain(CFMENavigateStep):
     VIEW = AdHocMetricsView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Ad hoc Metrics')
 
 
@@ -546,7 +546,7 @@ class Utilization(CFMENavigateStep):
     VIEW = ContainerProvidersUtilizationView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select("Utilization")
 
 

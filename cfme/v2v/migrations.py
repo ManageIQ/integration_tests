@@ -835,7 +835,7 @@ class AllMappings(CFMENavigateStep):
         '5.10': InfrastructureMappingView
     })
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if self.obj.appliance.version < '5.10':
             self.prerequisite_view.navigation.select('Compute', 'Migration')
         else:
@@ -848,7 +848,7 @@ class AddInfrastructureMapping(CFMENavigateStep):
     VIEW = AddInfrastructureMappingView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.wait_displayed()
         self.prerequisite_view.create_infrastructure_mapping.click()
 
@@ -859,7 +859,7 @@ class EditInfrastructureMapping(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if not self.prerequisite_view.infra_mapping_list.edit_mapping(self.obj.name):
             raise ItemNotFound("Mapping {} not found".format(self.obj.name))
 
@@ -872,7 +872,7 @@ class All(CFMENavigateStep):
         '5.10': MigrationDashboardView
     })
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if self.obj.appliance.version < '5.10':
             self.prerequisite_view.navigation.select('Compute', 'Migration')
         else:
@@ -884,7 +884,7 @@ class AddMigrationPlan(CFMENavigateStep):
     VIEW = AddMigrationPlanView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.wait_displayed()
         self.prerequisite_view.create_migration_plan.click()
 
@@ -894,7 +894,7 @@ class MigrationPlanRequestDetails(CFMENavigateStep):
     VIEW = MigrationPlanRequestDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             self.prerequisite_view.migration_plans_not_started_list.select_plan(
                 self.obj.ENTITY.name)

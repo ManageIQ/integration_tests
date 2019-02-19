@@ -121,5 +121,5 @@ class ShoppingCart(SSUINavigateStep):
     VIEW = ShoppingCartView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.shopping_cart.click()

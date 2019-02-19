@@ -65,5 +65,5 @@ class ServicesCatalog(CFMENavigateStep):
     VIEW = ServicesCatalogView
     prerequisite = NavigateToSibling("LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.navigation.select("Services", "Catalogs")

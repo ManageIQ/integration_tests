@@ -32,5 +32,5 @@ class ControlSimulation(CFMENavigateStep):
     VIEW = ControlSimulationView
     prerequisite = NavigateToSibling("LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.navigation.select("Control", "Simulation")

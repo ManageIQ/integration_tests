@@ -279,10 +279,10 @@ class All(CFMENavigateStep):
     VIEW = InfraProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Providers')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         # Reset view and selection
         self.appliance.browser.widgetastic.browser.refresh()
         self.view.toolbar.view_selector.select('Grid View')
@@ -295,7 +295,7 @@ class Add(CFMENavigateStep):
     VIEW = InfraProviderAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             self.prerequisite_view.toolbar.configuration.item_select('Add a New '
                                                                      'Infrastructure Provider')
@@ -310,7 +310,7 @@ class Discover(CFMENavigateStep):
     VIEW = InfraProvidersDiscoverView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             self.prerequisite_view.toolbar.configuration.item_select('Discover '
                                                                      'Infrastructure Providers')
@@ -325,10 +325,10 @@ class Details(CFMENavigateStep):
     VIEW = InfraProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """Reset view to Summary View if available"""
         view_selector = self.view.toolbar.view_selector
         if view_selector.is_displayed and view_selector.selected != 'Summary View':
@@ -340,7 +340,7 @@ class EditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         try:
             self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
@@ -354,7 +354,7 @@ class Edit(CFMENavigateStep):
     VIEW = ProviderEditView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         try:
             self.prerequisite_view.toolbar.configuration.item_select(
@@ -370,7 +370,7 @@ class Timelines(CFMENavigateStep):
     VIEW = ProviderTimelinesView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         mon = self.prerequisite_view.toolbar.monitoring
         try:
             mon.item_select('Timelines')
@@ -403,7 +403,7 @@ class ProviderNodes(CFMENavigateStep):
     VIEW = ProviderNodesView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             self.prerequisite_view.entities.summary('Relationships').click_at(
                 self.obj.hosts_menu_item)
@@ -418,7 +418,7 @@ class ProviderTemplates(CFMENavigateStep):
     VIEW = ProviderTemplatesView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary('Relationships').click_at('Templates')
 
 
@@ -427,5 +427,5 @@ class ProviderVms(CFMENavigateStep):
     VIEW = ProviderVmsView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary('Relationships').click_at('Virtual Machines')

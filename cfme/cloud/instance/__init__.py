@@ -463,7 +463,7 @@ class All(CFMENavigateStep):
     VIEW = InstanceAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
         self.view.sidebar.instances.tree.click_path('All Instances')
 
@@ -515,7 +515,7 @@ class Details(CFMENavigateStep):
                            'AllForProvider' if self.obj.parent.filters.get('provider')
                            else 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True,
                                                              use_search=True)
@@ -532,7 +532,7 @@ class ArchiveDetails(CFMENavigateStep):
     VIEW = InstanceDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True,
                                                              use_search=True)
@@ -617,5 +617,5 @@ class InstanceUtilization(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Utilization')

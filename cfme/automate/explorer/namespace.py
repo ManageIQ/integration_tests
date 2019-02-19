@@ -264,7 +264,7 @@ class Add(CFMENavigateStep):
     VIEW = NamespaceAddView
     prerequisite = NavigateToAttribute('parent', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Add a New Namespace')
 
 
@@ -273,7 +273,7 @@ class Details(CFMENavigateStep):
     VIEW = NamespaceDetailsView
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateExplorer')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.datastore.tree.click_path(*self.obj.tree_path)
 
 
@@ -282,5 +282,5 @@ class Edit(CFMENavigateStep):
     VIEW = NamespaceEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit this Namespace')

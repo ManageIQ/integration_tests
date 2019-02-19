@@ -612,7 +612,7 @@ class MgrAll(CFMENavigateStep):
     VIEW = ConfigManagementAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if self.obj.type == 'Ansible Tower':
             self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
             self.view.sidebar.providers.tree.click_path('All Ansible Tower Providers')
@@ -626,7 +626,7 @@ class MgrAdd(CFMENavigateStep):
     VIEW = ConfigManagementAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Provider')
 
 
@@ -635,7 +635,7 @@ class MgrEdit(CFMENavigateStep):
     VIEW = ConfigManagementEditView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         row = self.prerequisite_view.entities.paginator.find_row_on_pages(
             self.prerequisite_view.entities.elements, provider_name=self.obj.ui_name)
@@ -648,7 +648,7 @@ class MgrDetails(CFMENavigateStep):
     VIEW = ConfigManagementDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         row = self.prerequisite_view.entities.paginator.find_row_on_pages(
             self.prerequisite_view.entities.elements, provider_name=self.obj.ui_name)
@@ -660,7 +660,7 @@ class MgrEditFromDetails(CFMENavigateStep):
     VIEW = ConfigManagementEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Provider')
 
 
@@ -669,7 +669,7 @@ class Details(CFMENavigateStep):
     VIEW = ConfigManagementProfileView
     prerequisite = NavigateToAttribute('manager', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         row = self.prerequisite_view.entities.paginator.find_row_on_pages(
             self.prerequisite_view.entities.elements, description=self.obj.name)
@@ -681,7 +681,7 @@ class SysAll(CFMENavigateStep):
     VIEW = ConfigSystemAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if hasattr(self.obj, 'type') and self.obj.type == 'Ansible Tower':
             self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
             self.view.sidebar.configured_systems.tree.click_path(
@@ -696,7 +696,7 @@ class SysEditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         row = self.prerequisite_view.entities.paginator.find_row_on_pages(
             self.prerequisite_view.entities.elements, hostname=self.obj.name)

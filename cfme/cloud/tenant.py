@@ -390,7 +390,7 @@ class TenantAll(CFMENavigateStep):
         """Go to the All page"""
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Tenants')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """Reset the view"""
         self.view.toolbar.view_selector.select('List View')
         self.view.paginator.reset_selection()
@@ -418,7 +418,7 @@ class TenantDetails(CFMENavigateStep):
             self.prerequisite_view.table, name=self.obj.name)
         row.click()
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """Reset the view"""
         self.view.browser.refresh()
 
@@ -454,7 +454,7 @@ class CloudSubnets(CFMENavigateStep):
     VIEW = NetworkEntitySubnetView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item = 'Cloud Subnets'
         if not int(self.prerequisite_view.entities.relationships.get_text_of(item)):
             raise DestinationNotFound(
@@ -468,7 +468,7 @@ class NetworkRouters(CFMENavigateStep):
     VIEW = OneTenantNetworkRouterView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item = 'Network Routers'
         if not int(self.prerequisite_view.entities.relationships.get_text_of(item)):
             raise DestinationNotFound(

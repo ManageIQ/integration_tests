@@ -402,10 +402,10 @@ class All(CFMENavigateStep):
     VIEW = DatastoresView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Datastores')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """
         resets page to default state when user navigates to All Datastores destination
         """
@@ -420,7 +420,7 @@ class Details(CFMENavigateStep):
     VIEW = DatastoreDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
@@ -433,7 +433,7 @@ class DetailsFromProvider(CFMENavigateStep):
         prov_view.entities.summary('Relationships').click_at('Datastores')
         return self.obj.create_view(DatastoresView)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
@@ -442,5 +442,5 @@ class Utilization(CFMENavigateStep):
     VIEW = DatastoreInfraUtilizationView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select("Utilization")

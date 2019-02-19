@@ -120,7 +120,7 @@ class AssignAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'IntelChargeback')
     VIEW = AssignmentsAllView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.assignments.tree.click_path("Assignments")
 
 
@@ -129,5 +129,5 @@ class AssignStorage(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
     VIEW = AssignmentsView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.assignments.tree.click_path("Assignments", self.obj.TYPE)

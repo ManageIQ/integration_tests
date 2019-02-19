@@ -123,7 +123,7 @@ class ButtonAdd(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('parent', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Add a new Button')
 
 
@@ -138,7 +138,7 @@ class ButtonAll(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('parent', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if not isinstance(self.obj.parent, GenericObjectButtonGroup):
             self.prerequisite_view.accordion.classes.tree.click_path(
                 'All Generic Object Classes', self.obj.parent.name, 'Actions')
@@ -150,7 +150,7 @@ class ButtonDetails(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('parent', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Add a new Button')
 
 
@@ -239,7 +239,7 @@ class ButtonGroupAll(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('parent', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordion.classes.tree.click_path(
             'All Generic Object Classes', self.obj.parent.name, 'Actions')
 
@@ -250,7 +250,7 @@ class ButtonGroupAdd(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('parent', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Add a new Button Group')
 
 
@@ -260,7 +260,7 @@ class ButtonGroupDetails(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordion.classes.tree.click_path(
             'All Generic Object Classes', self.obj.parent.parent.name, 'Actions',
             '{} (Group)'.format(self.obj.name))

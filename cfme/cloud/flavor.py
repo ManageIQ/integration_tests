@@ -269,5 +269,5 @@ class FlavorAdd(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
     VIEW = FlavorAddView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Flavor')

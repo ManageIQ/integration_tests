@@ -53,7 +53,7 @@ class AutomateCustomization(CFMENavigateStep):
     VIEW = AutomateCustomizationView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.navigation.select(*automate_menu_name(self.obj.appliance) + ['Customization'])
 
 

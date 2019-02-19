@@ -184,7 +184,7 @@ class AddFloatingIP(CFMENavigateStep):
     VIEW = AddFloatingIPView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         configuration = self.prerequisite_view.toolbar.configuration
         try:
             configuration.item_select('Associate a Floating IP with this Instance')
@@ -197,7 +197,7 @@ class RemoveFloatingIP(CFMENavigateStep):
     VIEW = RemoveFloatingIPView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         configuration = self.prerequisite_view.toolbar.configuration
         try:
             configuration.item_select('Disassociate a Floating IP from this Instance')
@@ -210,7 +210,7 @@ class AttachVolume(CFMENavigateStep):
     VIEW = AttachVolumeView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         configuration = self.prerequisite_view.toolbar.configuration
         try:
             configuration.item_select('Attach a Cloud Volume to this Instance')
@@ -223,7 +223,7 @@ class DetachVolume(CFMENavigateStep):
     VIEW = DetachVolumeView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         configuration = self.prerequisite_view.toolbar.configuration
         try:
             configuration.item_select('Detach a Cloud Volume from this Instance')
@@ -236,7 +236,7 @@ class Evacuate(CFMENavigateStep):
     VIEW = EvacuateView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         lifecycle = self.prerequisite_view.toolbar.lifecycle
         try:
             lifecycle.item_select('Evacuate Instance')
@@ -249,7 +249,7 @@ class Migrate(CFMENavigateStep):
     VIEW = MigrateView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         lifecycle = self.prerequisite_view.toolbar.lifecycle
         try:
             lifecycle.item_select('Migrate Instance')
@@ -262,7 +262,7 @@ class Reconfigure(CFMENavigateStep):
     VIEW = ReconfigureView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         configuration = self.prerequisite_view.toolbar.configuration
         try:
             configuration.item_select('Reconfigure this Instance')
@@ -275,7 +275,7 @@ class RightSize(CFMENavigateStep):
     VIEW = RightSizeView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         configuration = self.prerequisite_view.toolbar.configuration
         try:
             configuration.item_select('Right-Size Recommendations')

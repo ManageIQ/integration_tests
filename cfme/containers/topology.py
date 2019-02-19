@@ -20,5 +20,5 @@ class Topology(TopologyMixin, Navigatable):
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Topology')

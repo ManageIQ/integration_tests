@@ -337,7 +337,7 @@ class Add(CFMENavigateStep):
     VIEW = InstanceAddView
     prerequisite = NavigateToAttribute('parent', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.instances.select()
         self.prerequisite_view.configuration.item_select('Add a New Instance')
 
@@ -347,7 +347,7 @@ class Details(CFMENavigateStep):
     VIEW = InstanceDetailsView
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateExplorer')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.datastore.tree.click_path(*self.obj.tree_path)
 
 
@@ -356,7 +356,7 @@ class Edit(CFMENavigateStep):
     VIEW = InstanceEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit this Instance')
 
 
@@ -365,5 +365,5 @@ class Copy(CFMENavigateStep):
     VIEW = InstanceCopyView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Copy this Instance')

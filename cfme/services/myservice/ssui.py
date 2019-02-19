@@ -296,7 +296,7 @@ class MyServiceEdit(SSUINavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit')
 
 
@@ -307,7 +307,7 @@ class LaunchVMConsole(SSUINavigateStep):
     def prerequisite(self):
         return navigate_to(self.obj, 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if self.appliance.version < "5.8":
             self.prerequisite_view.console_button.click()
         else:
@@ -319,7 +319,7 @@ class MyServiceSetOwnership(SSUINavigateStep):
     VIEW = SetOwnershipView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         # this is mandatory otherwise the locator is not found .
         wait_for(
             lambda: self.prerequisite_view.configuration.is_displayed, delay=5, num_sec=300,
@@ -333,7 +333,7 @@ class MyServiceEditTags(SSUINavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.policy.item_select('Edit Tags')
 
 
@@ -343,5 +343,5 @@ class MyServiceRetire(SSUINavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.lifecycle.item_select('Retire')

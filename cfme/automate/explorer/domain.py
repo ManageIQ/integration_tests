@@ -399,7 +399,7 @@ class All(CFMENavigateStep):
     VIEW = DomainListView
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateExplorer')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.datastore.tree.click_path(*self.obj.tree_path)
 
 
@@ -408,7 +408,7 @@ class Add(CFMENavigateStep):
     VIEW = DomainAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Add a New Domain')
 
 
@@ -417,7 +417,7 @@ class Priority(CFMENavigateStep):
     VIEW = DomainPriorityView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit Priority Order of Domains')
 
 
@@ -438,7 +438,7 @@ class Details(CFMENavigateStep):
     VIEW = DomainDetailsView
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateExplorer')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         try:
             self.prerequisite_view.datastore.tree.click_path(*self.obj.tree_path)
         except CandidateNotFound:
@@ -453,5 +453,5 @@ class Edit(CFMENavigateStep):
     VIEW = DomainEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit this Domain')

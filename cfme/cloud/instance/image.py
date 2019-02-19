@@ -171,7 +171,7 @@ class ImageAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
         self.view.sidebar.images.tree.click_path('All Images')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         self.view.entities.search.remove_search_filters()
 
 
@@ -204,7 +204,7 @@ class ImageAllForProvider(CFMENavigateStep):
 
         self.view.sidebar.images_by_provider.tree.click_path('Images by Provider', provider_name)
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         self.view.entities.search.remove_search_filters()
 
 
@@ -213,7 +213,7 @@ class ImageDetails(CFMENavigateStep):
     VIEW = ImageDetailsView
     prerequisite = NavigateToSibling('AllForProvider')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)

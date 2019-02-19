@@ -36,7 +36,7 @@ class ControlImportExport(CFMENavigateStep):
     VIEW = ControlImportExportView
     prerequisite = NavigateToSibling("LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.navigation.select("Control", "Import / Export")
 
 

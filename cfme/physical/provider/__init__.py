@@ -119,10 +119,10 @@ class All(CFMENavigateStep):
     VIEW = PhysicalProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Physical Infrastructure', 'Providers')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         # Reset view and selection
         pass
 
@@ -132,10 +132,10 @@ class Details(CFMENavigateStep):
     VIEW = PhysicalProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """Reset view and selection"""
         self.view.toolbar.view_selector.select('Summary View')
 
@@ -145,7 +145,7 @@ class Edit(CFMENavigateStep):
     VIEW = ProviderEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select(
             'Edit this Infrastructure Provider')
 
@@ -156,7 +156,7 @@ class Add(CFMENavigateStep):
     VIEW = PhysicalProviderAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select(
             'Add a New Physical Infrastructure Provider'
         )
@@ -181,5 +181,5 @@ class Overview(CFMENavigateStep):
     VIEW = PhysicalOverviewView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select("Compute", "Physical Infrastructure", "Overview")

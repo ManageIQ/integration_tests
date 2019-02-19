@@ -64,11 +64,12 @@ class CloudIntelReports(CFMENavigateStep):
     VIEW = CloudIntelReportsView
     prerequisite = NavigateToSibling("LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.navigation.select("Cloud Intel", "Reports")
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         self.view.saved_reports.open()
+
 
 class ReportsMultiBoxSelect(MultiBoxSelect):
     move_into_button = Button(title=Parameter("@move_into"))

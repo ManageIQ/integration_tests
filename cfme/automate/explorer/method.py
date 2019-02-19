@@ -535,7 +535,7 @@ class Add(CFMENavigateStep):
     VIEW = MethodAddView
     prerequisite = NavigateToAttribute('parent', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.methods.select()
         self.prerequisite_view.configuration.item_select('Add a New Method')
 
@@ -545,7 +545,7 @@ class Details(CFMENavigateStep):
     VIEW = MethodDetailsView
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateExplorer')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.datastore.tree.click_path(*self.obj.tree_path)
 
 
@@ -554,7 +554,7 @@ class Edit(CFMENavigateStep):
     VIEW = MethodEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit this Method')
 
 
@@ -563,5 +563,5 @@ class Copy(CFMENavigateStep):
     VIEW = MethodCopyView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Copy this Method')

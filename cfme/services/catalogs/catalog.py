@@ -156,7 +156,7 @@ class All(CFMENavigateStep):
     VIEW = CatalogsView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Services', 'Catalogs')
         self.view.catalogs.tree.click_path("All Catalogs")
 
@@ -166,7 +166,7 @@ class Add(CFMENavigateStep):
     VIEW = AddCatalogView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Add a New Catalog')
 
 
@@ -175,7 +175,7 @@ class Details(CFMENavigateStep):
     VIEW = DetailsCatalogView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.catalogs.tree.click_path("All Catalogs", self.obj.name)
 
 
@@ -184,5 +184,5 @@ class Edit(CFMENavigateStep):
     VIEW = EditCatalogView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit this Item')

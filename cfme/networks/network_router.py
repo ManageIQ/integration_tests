@@ -174,10 +174,10 @@ class All(CFMENavigateStep):
     VIEW = NetworkRouterView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Networks', 'Network Routers')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """Reset the view"""
         self.view.browser.refresh()
 
@@ -195,7 +195,7 @@ class Details(CFMENavigateStep):
         else:
             return navigate_to(self.obj.parent, 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
@@ -204,7 +204,7 @@ class AddRouter(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
     VIEW = NetworkRouterAddView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Router')
 
 
@@ -213,7 +213,7 @@ class EditRouter(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
     VIEW = NetworkRouterEditView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Router')
 
 
@@ -222,7 +222,7 @@ class AddInterface(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
     VIEW = NetworkRouterAddInterfaceView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add Interface to this Router')
 
 
@@ -231,7 +231,7 @@ class CloudSubnets(CFMENavigateStep):
     VIEW = NetworkEntitySubnetView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item = 'Cloud Subnets'
         if not int(self.prerequisite_view.entities.relationships.get_text_of(item)):
             raise DestinationNotFound("This Network router doesn't have {item}".format(item=item))

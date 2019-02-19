@@ -654,7 +654,7 @@ class All(CFMENavigateStep):
         else:
             return navigate_to(self.obj.appliance.server, 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         parent = self.obj.filters.get('parent') or self.obj.filters.get('provider')
         if parent:
             self.prerequisite_view.entities.summary('Relationships').click_at('Hosts')
@@ -670,7 +670,7 @@ class Details(CFMENavigateStep):
     VIEW = HostDetailsView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
@@ -679,7 +679,7 @@ class Edit(CFMENavigateStep):
     VIEW = HostEditView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Edit this item")
 
 
@@ -688,7 +688,7 @@ class Add(CFMENavigateStep):
     VIEW = HostAddView
     prerequisite = NavigateToSibling("All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Add a New item")
 
 
@@ -697,7 +697,7 @@ class Discover(CFMENavigateStep):
     VIEW = HostDiscoverView
     prerequisite = NavigateToSibling("All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Discover items")
 
 
@@ -705,7 +705,7 @@ class Discover(CFMENavigateStep):
 class Provision(CFMENavigateStep):
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.lifecycle.item_select("Provision this item")
 
 
@@ -714,7 +714,7 @@ class Timelines(CFMENavigateStep):
     VIEW = HostTimelinesView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select("Timelines")
 
 
@@ -723,7 +723,7 @@ class Utilization(CFMENavigateStep):
     VIEW = HostInfraUtilizationView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
 
 
@@ -732,5 +732,5 @@ class HostSubnet(CFMENavigateStep):
     prerequisite = NavigateToSibling("Details")
     VIEW = OneHostSubnetView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary('Relationships').click_at('Cloud Subnets')

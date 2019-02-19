@@ -86,10 +86,10 @@ class All(CFMENavigateStep):
     VIEW = NetworkPortView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Networks', 'Network Ports')
 
-    def resetter(self):
+    def resetter(self, *args, **kwargs):
         """Reset the view"""
         self.view.browser.refresh()
 
@@ -99,5 +99,5 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = NetworkPortDetailsView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()

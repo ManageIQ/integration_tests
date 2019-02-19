@@ -278,7 +278,7 @@ class All(CFMENavigateStep):
     VIEW = PhysicalChassisView
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select("Compute", "Physical Infrastructure", "Chassis")
 
 
@@ -287,5 +287,5 @@ class Details(CFMENavigateStep):
     VIEW = PhysicalChassisDetailsView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()

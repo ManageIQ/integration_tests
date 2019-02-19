@@ -508,7 +508,7 @@ class EditRequest(CFMENavigateStep):
     VIEW = RequestEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         return self.prerequisite_view.toolbar.edit.click()
 
 
@@ -517,7 +517,7 @@ class CopyRequest(CFMENavigateStep):
     VIEW = RequestCopyView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         return self.prerequisite_view.toolbar.copy.click()
 
 
@@ -526,7 +526,7 @@ class ApproveRequest(CFMENavigateStep):
     VIEW = RequestApprovalView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         return self.prerequisite_view.toolbar.approve.click()
 
 
@@ -535,5 +535,5 @@ class DenyRequest(CFMENavigateStep):
     VIEW = RequestDenialView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         return self.prerequisite_view.toolbar.deny.click()

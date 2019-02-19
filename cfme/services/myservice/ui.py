@@ -356,7 +356,7 @@ class MyServiceDetails(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.myservice.tree.click_path('Active Services', self.obj.name)
 
 
@@ -366,7 +366,7 @@ class MyServiceEdit(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Service')
 
 
@@ -376,7 +376,7 @@ class MyServiceSetOwnership(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Set Ownership')
 
 
@@ -385,7 +385,7 @@ class MyServiceEditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
@@ -395,7 +395,7 @@ class MyServiceSetRetirement(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.lifecycle.item_select(
             'Set Retirement Dates for this Service')
 
@@ -406,7 +406,7 @@ class MyServiceReconfigure(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Reconfigure this Service')
 
 
@@ -416,7 +416,7 @@ class MyServiceReconfigure(CFMENavigateStep):
 #     VIEW = ServiceVMDetailsView
 #     prerequisite = NavigateToSibling('Details')
 #
-#     def step(self):
+#     def step(self, *args, **kwargs):
 #         self.prerequisite_view.entities.get_entity(name=self.obj.vm_name).click()
 
 
@@ -426,5 +426,5 @@ class AllGenericObjectInstance(CFMENavigateStep):
 
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.details.generic_objects.click_at('Instances')

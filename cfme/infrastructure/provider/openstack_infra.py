@@ -204,7 +204,7 @@ class ProviderRegisterNodes(CFMENavigateStep):
     VIEW = ProviderRegisterNodesView
     prerequisite = NavigateToSibling('ProviderNodes')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Register Nodes')
 
 
@@ -213,7 +213,7 @@ class ProviderScaleDown(CFMENavigateStep):
     VIEW = ProviderScaleDownView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item_title = 'Scale this Infrastructure Provider down'
         self.prerequisite_view.toolbar.configuration.item_select(item_title)
 
@@ -223,6 +223,6 @@ class ProviderScaleOut(CFMENavigateStep):
     VIEW = ProviderScaleOutView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item_title = 'Scale this Infrastructure Provider'
         self.prerequisite_view.toolbar.configuration.item_select(item_title)

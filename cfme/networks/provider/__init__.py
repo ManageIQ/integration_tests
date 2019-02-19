@@ -332,7 +332,7 @@ class All(CFMENavigateStep):
     VIEW = NetworkProviderView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Networks', 'Providers')
 
 
@@ -342,7 +342,7 @@ class Add(CFMENavigateStep):
     VIEW = NetworkProviderAddView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a New '
                                                                  'Network Provider')
 
@@ -352,7 +352,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = NetworkProviderDetailsView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(
             name=self.obj.name, surf_pages=True).click()
 
@@ -362,7 +362,7 @@ class Edit(CFMENavigateStep):
     VIEW = NetworkProviderEditView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.configuration.item_select('Edit Selected Network Provider')
 
@@ -372,7 +372,7 @@ class OpenCloudTenants(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
     VIEW = ProviderTenantAllView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item = 'Cloud Tenants'
         item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
         if item_amt > 0:
@@ -386,7 +386,7 @@ class OpenCloudSubnets(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
     VIEW = OneProviderSubnetView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item = 'Cloud Subnets'
         item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
         if item_amt > 0:
@@ -400,7 +400,7 @@ class OpenCloudNetworks(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
     VIEW = OneProviderCloudNetworkView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item = 'Cloud Networks'
         item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
         if item_amt > 0:
@@ -414,7 +414,7 @@ class OpenNetworkRouters(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
     VIEW = OneProviderNetworkRouterView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item = 'Network Routers'
         item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
         if item_amt > 0:
@@ -428,7 +428,7 @@ class OpenSecurityGroups(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
     VIEW = OneProviderSecurityGroupView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item = 'Security Groups'
         item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
         if item_amt > 0:
@@ -442,7 +442,7 @@ class OpenFloatingIPs(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
     VIEW = OneProviderFloatingIpView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item = 'Floating IPs'
         item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
         if item_amt > 0:
@@ -456,7 +456,7 @@ class OpenNetworkPorts(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
     VIEW = OneProviderNetworkPortView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item = 'Network Ports'
         item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
         if item_amt > 0:
@@ -470,7 +470,7 @@ class OpenNetworkBalancers(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
     VIEW = OneProviderBalancerView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         item = 'Load Balancers'
         item_amt = int(self.prerequisite_view.entities.relationships.get_text_of(item))
         if item_amt > 0:
@@ -484,5 +484,5 @@ class OpenTopologyFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
     VIEW = NetworkTopologyView
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.overview.click_at('Topology')

@@ -317,7 +317,7 @@ class Add(CFMENavigateStep):
     VIEW = ClassAddView
     prerequisite = NavigateToAttribute('parent', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Add a New Class')
 
 
@@ -326,7 +326,7 @@ class Details(CFMENavigateStep):
     VIEW = ClassDetailsView
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateExplorer')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         # Because click is performed on the middle of the element and at the middle there is a
         # chevron button for expanding tree (if there are instances inside class), this navigation
         # then fails to navigate to details. We make use of the splitter to make explorer
@@ -343,7 +343,7 @@ class Edit(CFMENavigateStep):
     VIEW = ClassEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit this Class')
 
 
@@ -352,7 +352,7 @@ class Copy(CFMENavigateStep):
     VIEW = ClassCopyView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Copy this Class')
 
 
@@ -567,6 +567,6 @@ class EditSchema(CFMENavigateStep):
     VIEW = ClassSchemaEditView
     prerequisite = NavigateToAttribute('klass', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.schema.select()
         self.prerequisite_view.configuration.item_select('Edit selected Schema')

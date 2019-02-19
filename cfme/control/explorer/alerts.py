@@ -400,7 +400,7 @@ class AlertsAll(CFMENavigateStep):
     VIEW = AlertsAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.alerts.tree.click_path("All Alerts")
 
 
@@ -409,7 +409,7 @@ class AlertNew(CFMENavigateStep):
     VIEW = NewAlertView
     prerequisite = NavigateToSibling("All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Add a New Alert")
 
 
@@ -418,7 +418,7 @@ class AlertEdit(CFMENavigateStep):
     VIEW = EditAlertView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit this Alert")
 
 
@@ -427,7 +427,7 @@ class AlertDetails(CFMENavigateStep):
     VIEW = AlertDetailsView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.alerts.tree.click_path("All Alerts", self.obj.description)
 
 
@@ -436,7 +436,7 @@ class AlertCopy(CFMENavigateStep):
     VIEW = NewAlertView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Copy this Alert", handle_alert=True)
 
 
@@ -445,5 +445,5 @@ class MonitorOverview(CFMENavigateStep):
     VIEW = MonitorOverviewView
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select("Monitor","Alerts","Overview")

@@ -322,7 +322,7 @@ class LoginScreen(CFMENavigateStep):
         from cfme.utils.browser import ensure_browser_open
         ensure_browser_open(self.obj.appliance.server.address())
 
-    def step(self):
+    def step(self, *args, **kwargs):
         # Can be either blank or logged in
         from cfme.utils import browser
         logged_in_view = self.create_view(BaseLoggedInPage)
@@ -342,7 +342,7 @@ class LoggedIn(CFMENavigateStep):
     VIEW = BaseLoggedInPage
     prerequisite = NavigateToSibling('LoginScreen')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         user = self.obj.appliance.user
         self.prerequisite_view.log_in(user)
 
@@ -393,7 +393,7 @@ class Configuration(CFMENavigateStep):
     VIEW = ConfigurationView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.settings.select_item('Configuration')
         self.prerequisite_view.browser.handle_alert(wait=2, cancel=False, squash=True)
 
@@ -403,7 +403,7 @@ class About(CFMENavigateStep):
     VIEW = AboutView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.help.select_item('About')
 
 
@@ -412,7 +412,7 @@ class RSS(CFMENavigateStep):
     VIEW = RSSView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.navigation.select('Cloud Intel', 'RSS')
 
 
@@ -421,7 +421,7 @@ class CloudIntelTimelines(CFMENavigateStep):
     VIEW = CloudIntelTimelinesView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.navigation.select('Cloud Intel', 'Timelines')
 
 
@@ -430,7 +430,7 @@ class Documentation(CFMENavigateStep):
     VIEW = DocView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.help.select_item('Documentation')
 
 
@@ -439,7 +439,7 @@ class Tasks(CFMENavigateStep):
     VIEW = TasksView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if self.obj.appliance.version > '5.7':
             self.prerequisite_view.settings.select_item('Tasks')
         else:
@@ -451,7 +451,7 @@ class Dashboard(CFMENavigateStep):
     VIEW = DashboardView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Cloud Intel', 'Dashboard')
 
 
@@ -539,7 +539,7 @@ class Details(CFMENavigateStep):
     VIEW = ServerView
     prerequisite = NavigateToSibling('Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         path = (
             self.obj.zone.region.settings_string,
             "Zones",
@@ -563,7 +563,7 @@ class ServerDetails(CFMENavigateStep):
             self.view.server.is_active
         )
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.server.select()
 
 
@@ -572,7 +572,7 @@ class Authentication(CFMENavigateStep):
     VIEW = ServerAuthenticationView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.authentication.select()
 
 
@@ -586,7 +586,7 @@ class Workers(CFMENavigateStep):
             self.view.is_displayed and self.view.workers.is_displayed and
             self.view.workers.is_active)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.workers.select()
 
 
@@ -600,7 +600,7 @@ class CustomLogos(CFMENavigateStep):
             self.view.is_displayed and self.view.custom_logos.is_displayed and
             self.view.custom_logos.is_active)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.customlogos.select()
 
 
@@ -614,7 +614,7 @@ class Advanced(CFMENavigateStep):
             self.view.is_displayed and self.view.advanced.is_displayed and
             self.view.advanced.is_active)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.advanced.select()
 
 
@@ -700,7 +700,7 @@ class Database(CFMENavigateStep):
     VIEW = ServerDatabaseView
     prerequisite = NavigateToSibling('Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordions.database.tree.click_path('VMDB')
 
 
@@ -709,7 +709,7 @@ class DatabaseSummary(CFMENavigateStep):
     VIEW = DatabaseSummaryView
     prerequisite = NavigateToSibling('Database')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.summary.select()
 
 
@@ -718,7 +718,7 @@ class DatabaseTables(CFMENavigateStep):
     VIEW = DatabaseTablesView
     prerequisite = NavigateToSibling('Database')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.tables.select()
 
 
@@ -727,7 +727,7 @@ class DatabaseIndexes(CFMENavigateStep):
     VIEW = DatabaseIndexesView
     prerequisite = NavigateToSibling('Database')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.indexes.select()
 
 
@@ -736,7 +736,7 @@ class DatabaseSettings(CFMENavigateStep):
     VIEW = DatabaseSettingsView
     prerequisite = NavigateToSibling('Database')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.settings.select()
 
 
@@ -745,7 +745,7 @@ class DatabaseClientConnections(CFMENavigateStep):
     VIEW = DatabaseClientConnectionsView
     prerequisite = NavigateToSibling('Database')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.client_connections.select()
 
 
@@ -754,7 +754,7 @@ class DatabaseUtilization(CFMENavigateStep):
     VIEW = DatabaseUtilizationView
     prerequisite = NavigateToSibling('Database')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.utilization.select()
 
 
@@ -823,7 +823,7 @@ class Diagnostics(CFMENavigateStep):
     VIEW = ServerDiagnosticsView
     prerequisite = NavigateToSibling('Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.obj.zone.region.settings_string,
             "Zone: {} (current)".format(self.obj.zone.description),
@@ -843,7 +843,7 @@ class DiagnosticsDetails(CFMENavigateStep):
             self.view.is_displayed and self.view.summary.is_displayed and
             self.view.summary.is_active)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.summary.select()
 
 
@@ -857,7 +857,7 @@ class DiagnosticsWorkers(CFMENavigateStep):
             self.view.is_displayed and self.view.workers.is_displayed and
             self.view.workers.is_active)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.workers.select()
 
 
@@ -871,7 +871,7 @@ class ServerDiagnosticsCollectLogs(CFMENavigateStep):
             self.view.is_displayed and self.view.collectlogs.is_displayed and
             self.view.collectlogs.is_active)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.collectlogs.select()
 
 
@@ -885,7 +885,7 @@ class CFMELog(CFMENavigateStep):
             self.view.is_displayed and self.view.cfmelog.is_displayed and
             self.view.cfmelog.is_active)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.cfmelog.select()
 
 
@@ -899,7 +899,7 @@ class AuditLog(CFMENavigateStep):
             self.view.is_displayed and self.view.auditlog.is_displayed and
             self.view.auditlog.is_active)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.auditlog.select()
 
 
@@ -913,7 +913,7 @@ class ProductionLog(CFMENavigateStep):
             self.view.is_displayed and self.view.productionlog.is_displayed and
             self.view.productionlog.is_active)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.productionlog.select()
 
 
@@ -927,7 +927,7 @@ class Utilization(CFMENavigateStep):
             self.view.is_displayed and self.view.utilization.is_displayed and
             self.view.utilization.is_active)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.utilization.select()
 
 
@@ -941,7 +941,7 @@ class Timelines(CFMENavigateStep):
             self.view.is_displayed and self.view.timelines.is_displayed and
             self.view.timelines.is_active)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.timelines.select()
 
 
@@ -1057,7 +1057,7 @@ class RegionDetails(CFMENavigateStep):
     VIEW = RegionView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         # TODO: This string can now probably be built up with the relevant server, zone,
         # region objects
         self.prerequisite_view.accordions.settings.tree.click_path(self.obj.settings_string)
@@ -1069,7 +1069,7 @@ class ChangeRegionName(CFMENavigateStep):
     VIEW = RegionChangeNameView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.details.table.row().click()
 
 
@@ -1081,7 +1081,7 @@ class ImportTags(CFMENavigateStep):
     def am_i_here(self):
         return False
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if self.obj.appliance.version < '5.9':
             self.prerequisite_view.import_tags.select()
         else:
@@ -1096,7 +1096,7 @@ class Import(CFMENavigateStep):
     def am_i_here(self):
         return False
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if self.obj.appliance.version < '5.9':
             self.prerequisite_view.imports.select()
         else:
@@ -1111,7 +1111,7 @@ class HelpMenu(CFMENavigateStep):
     def am_i_here(self):
         return False
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.help_menu.select()
 
 
@@ -1125,7 +1125,7 @@ class Advanced(CFMENavigateStep):
             self.view.is_displayed and self.view.advanced.is_displayed and
             self.view.advanced.is_active)
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.advanced.select()
 
 
@@ -1148,7 +1148,7 @@ class RegionZones(CFMENavigateStep):
     VIEW = ZoneListView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordions.settings.tree.click_path(
             self.obj.settings_string, 'Zones')
         if not self.view.is_displayed:
@@ -1211,7 +1211,7 @@ class RegionDiagnostics(CFMENavigateStep):
     VIEW = RegionDiagnosticsView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordions.diagnostics.tree.click_path(self.obj.settings_string)
 
 
@@ -1223,7 +1223,7 @@ class RegionDiagnosticsZones(CFMENavigateStep):
     def am_i_here(self):
         return False
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.zones.select()
 
 
@@ -1235,7 +1235,7 @@ class RegionDiagnosticsRolesByServers(CFMENavigateStep):
     def am_i_here(self):
         return False
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.rolesbyservers.select()
 
 
@@ -1247,7 +1247,7 @@ class RegionDiagnosticsReplication(CFMENavigateStep):
     def am_i_here(self):
         return False
 
-    def step(self):
+    def step(self, *args, **kwargs):
         if self.obj.appliance.version < '5.7':
             self.prerequisite_view.replication.select()
         else:
@@ -1262,7 +1262,7 @@ class RegionDiagnosticsServersByRoles(CFMENavigateStep):
     def am_i_here(self):
         return False
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.serversbyroles.select()
 
 
@@ -1274,7 +1274,7 @@ class RegionDiagnosticsServers(CFMENavigateStep):
     def am_i_here(self):
         return False
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.servers.select()
 
 
@@ -1286,7 +1286,7 @@ class RegionDiagnosticsDatabase(CFMENavigateStep):
     def am_i_here(self):
         return False
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.database.select()
 
 
@@ -1298,7 +1298,7 @@ class RegionDiagnosticsOrphanedData(CFMENavigateStep):
     def am_i_here(self):
         return False
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.orphaneddata.select()
 
 
@@ -1360,7 +1360,7 @@ class ZoneDetails(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Zones')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         rows = self.prerequisite_view.table.rows((1, re.compile(r'Zone\s?\:\s?{}'.format(
             self.obj.description))))
         for row in rows:
@@ -1378,7 +1378,7 @@ class SmartProxyAffinity(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Zones')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         rows = self.prerequisite_view.table.rows((1, re.compile(r'Zone\s?\:\s?{}'.format(
             self.obj.description))))
         for row in rows:
@@ -1395,7 +1395,7 @@ class Advanced(CFMENavigateStep):
     VIEW = ZoneDetailsView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Zones')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         rows = self.prerequisite_view.table.rows((1, re.compile(r'Zone\s?\:\s?{}'.format(
             self.obj.description))))
         for row in rows:
@@ -1421,7 +1421,7 @@ class ZoneAdd(CFMENavigateStep):
     VIEW = ZoneAddView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Zones')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Add a new Zone")
 
 
@@ -1439,7 +1439,7 @@ class ZoneEdit(CFMENavigateStep):
     VIEW = ZoneEditView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit this Zone")
 
 
@@ -1486,7 +1486,7 @@ class ZoneDiagnostics(CFMENavigateStep):
     VIEW = ZoneDiagnosticsView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.obj.region.settings_string,
             "Zone: {} (current)".format(self.obj.description))
@@ -1497,7 +1497,7 @@ class ZoneDiagnosticsRolesByServers(CFMENavigateStep):
     VIEW = ZoneDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.rolesbyservers.select()
 
 
@@ -1506,7 +1506,7 @@ class ZoneDiagnosticsServersByRoles(CFMENavigateStep):
     VIEW = ZoneDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.serversbyroles.select()
 
 
@@ -1515,7 +1515,7 @@ class ZoneDiagnosticsServers(CFMENavigateStep):
     VIEW = ZoneDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.servers.select()
 
 
@@ -1524,7 +1524,7 @@ class ZoneCANDUGapCollection(CFMENavigateStep):
     VIEW = ZoneDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.candugapcollection.select()
 
 
@@ -1533,7 +1533,7 @@ class ZoneCollectLogs(CFMENavigateStep):
     VIEW = ZoneCollectLogsView
     prerequisite = NavigateToSibling('Diagnostics')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.collectlogs.select()
 
 
@@ -1649,7 +1649,7 @@ class AutomateSimulation(CFMENavigateStep):
     VIEW = AutomateSimulationView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select(
             *automate_menu_name(self.obj.appliance) + ['Simulation'])
 
@@ -1707,6 +1707,6 @@ class AutomateImportExport(CFMENavigateStep):
     VIEW = AutomateImportExportView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select(
             *automate_menu_name(self.obj.appliance) + ['Import / Export'])

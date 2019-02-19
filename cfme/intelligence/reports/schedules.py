@@ -302,7 +302,7 @@ class ScheduleAll(CFMENavigateStep):
     VIEW = SchedulesAllView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.schedules.tree.click_path("All Schedules")
 
 
@@ -311,7 +311,7 @@ class ScheduleNew(CFMENavigateStep):
     VIEW = NewScheduleView
     prerequisite = NavigateToSibling("All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.configuration.item_select("Add a new Schedule")
 
 
@@ -320,7 +320,7 @@ class ScheduleDetails(CFMENavigateStep):
     VIEW = ScheduleDetailsView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.schedules.tree.click_path("All Schedules", self.obj.name)
 
 
@@ -329,5 +329,5 @@ class ScheduleEdit(CFMENavigateStep):
     VIEW = EditScheduleView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit this Schedule")

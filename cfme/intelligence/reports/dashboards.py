@@ -274,7 +274,7 @@ class DashboardNew(CFMENavigateStep):
     VIEW = NewDashboardView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.dashboards.tree.click_path(
             "All Dashboards",
             "All Groups",
@@ -288,7 +288,7 @@ class DashboardEdit(CFMENavigateStep):
     VIEW = EditDashboardView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit this Dashboard")
 
 
@@ -297,7 +297,7 @@ class DefaultDashboardEdit(CFMENavigateStep):
     VIEW = EditDefaultDashboardView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit this Dashboard")
 
 
@@ -306,7 +306,7 @@ class DashboardDetails(CFMENavigateStep):
     VIEW = DashboardDetailsView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.dashboards.tree.click_path(
             "All Dashboards",
             "All Groups",
@@ -320,7 +320,7 @@ class DefaultDashboardDetails(CFMENavigateStep):
     VIEW = DefaultDashboardDetailsView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.dashboards.tree.click_path(
             "All Dashboards",
             "{} ({})".format(self.obj.title, self.obj.name)

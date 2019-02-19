@@ -106,7 +106,7 @@ class All(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('parent', 'Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.summary('Relationships').click_at('Instances')
 
 
@@ -116,7 +116,7 @@ class DefinitionDetails(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('definition', 'Instances')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
@@ -126,7 +126,7 @@ class EditTags(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('definition', 'Instances')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
@@ -137,5 +137,5 @@ class MyServiceDetails(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('my_service', 'GenericObjectInstance')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()

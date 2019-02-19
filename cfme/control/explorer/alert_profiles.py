@@ -225,7 +225,7 @@ class AlertProfilesAll(CFMENavigateStep):
     VIEW = AlertProfilesAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.alert_profiles.tree.click_path("All Alert Profiles")
 
 
@@ -234,7 +234,7 @@ class AlertProfileNew(CFMENavigateStep):
     VIEW = NewAlertProfileView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.alert_profiles.tree.click_path("All Alert Profiles",
             "{} Alert Profiles".format(self.obj.TYPE))
         self.prerequisite_view.configuration.item_select(
@@ -246,7 +246,7 @@ class AlertProfileEdit(CFMENavigateStep):
     VIEW = EditAlertProfileView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit this Alert Profile")
 
 
@@ -255,7 +255,7 @@ class AlertProfileEditAssignments(CFMENavigateStep):
     VIEW = AlertProfilesEditAssignmentsView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit assignments for this Alert Profile")
 
 
@@ -264,7 +264,7 @@ class AlertProfileDetails(CFMENavigateStep):
     VIEW = AlertProfileDetailsView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.alert_profiles.tree.click_path("All Alert Profiles",
             "{} Alert Profiles".format(self.obj.TYPE), self.obj.description)
 

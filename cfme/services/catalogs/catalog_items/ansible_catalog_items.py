@@ -270,7 +270,7 @@ class Add(CFMENavigateStep):
     VIEW = AddAnsibleCatalogItemView
     prerequisite = NavigateToAttribute("parent", "Choose Type")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.select_item_type.select_by_visible_text(self.obj.item_type)
 
 
@@ -279,7 +279,7 @@ class Edit(CFMENavigateStep):
     VIEW = EditAnsibleCatalogItemView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit this Item")
 
 
@@ -288,7 +288,7 @@ class Details(CFMENavigateStep):
     VIEW = DetailsAnsibleCatalogItemView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         tree = self.prerequisite_view.catalog_items.tree
         tree.click_path(
             "All Catalog Items",

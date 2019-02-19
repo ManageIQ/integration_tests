@@ -204,7 +204,7 @@ class ManagePoliciesFromDetails(CFMENavigateStep):
     VIEW = ManagePoliciesView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
@@ -213,7 +213,7 @@ class ManagePolicies(CFMENavigateStep):
     VIEW = ManagePoliciesView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
@@ -518,7 +518,7 @@ class EditTagsFromDetails(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
+    def step(self, *args, **kwargs):
         # not for all entities we have select like 'Edit Tags',
         # users, groups, tenants have specific dropdown title
         try:
@@ -709,7 +709,7 @@ class CustomButtonEvents(CFMENavigateStep):
     VIEW = CustomButtonEventsView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         ent = self.prerequisite_view.entities
         table = ent.summary("Relationships") if hasattr(ent, "summary") else ent.relationships
 

@@ -621,7 +621,7 @@ class PolicyAll(CFMENavigateStep):
     VIEW = PoliciesAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.policies.tree.click_path("All Policies")
 
 
@@ -630,7 +630,7 @@ class PolicyNew(CFMENavigateStep):
     VIEW = NewPolicyView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.policies.tree.click_path(
             "All Policies",
             "{} Policies".format(self.obj.TYPE),
@@ -645,7 +645,7 @@ class PolicyEdit(CFMENavigateStep):
     VIEW = EditPolicyView
     prerequisite = NavigateToSibling("Details")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit Basic Info, Scope, and Notes")
 
 
@@ -654,7 +654,7 @@ class PolicyDetails(CFMENavigateStep):
     VIEW = PolicyDetailsView
     prerequisite = NavigateToAttribute("parent", "All")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.prerequisite_view.policies.tree.click_path(
             "All Policies",
             "{} Policies".format(self.obj.TYPE),
@@ -668,7 +668,7 @@ class PolicyEventDetails(CFMENavigateStep):
     VIEW = EventDetailsView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
-    def step(self):
+    def step(self, *args, **kwargs):
         self.view.policies.tree.click_path(
             "All Policies",
             "{} Policies".format(self.obj.TYPE),
