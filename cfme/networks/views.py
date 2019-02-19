@@ -362,7 +362,7 @@ class NetworkPortView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return (super(BaseLoggedInPage, self).is_displayed and
+        return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Networks', 'Network Ports'] and
                 self.entities.title.text == 'Network Ports')
 
@@ -372,6 +372,18 @@ class NetworkPortView(BaseLoggedInPage):
 
         navigation = BootstrapNav('.//div/ul')
         tree = ManageIQTree()
+
+
+class SubnetNetworkPortView(NetworkPortView):
+    """ Represents a Subnet network with port view"""
+    title = Text('//div[@id="main-content"]//h1')
+
+    @property
+    def is_displayed(self):
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Subnets'] and
+                self.title.text == '{name} (All Network Ports)'.format(
+                    name=self.context['object'].name))
 
 
 class NetworkPortDetailsView(BaseLoggedInPage):

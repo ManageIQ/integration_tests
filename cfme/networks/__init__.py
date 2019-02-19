@@ -1,4 +1,6 @@
+from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 
 
 class ValidateStatsMixin(object):
@@ -6,7 +8,11 @@ class ValidateStatsMixin(object):
     # network module, maybe BaseEntity
 
     def ui_details_value(self, path, property_name):
-        view = navigate_to(self, "Details", use_resetter=False)
+        is_filtered = isinstance(self.parent, BaseCollection) and self.parent.filters
+        if is_filtered and 'DetailsFromParent' in navigator.list_destinations(self):
+            view = navigate_to(self, 'DetailsFromParent', use_resetter=False)
+        else:
+            view = navigate_to(self, 'Details', use_resetter=False)
         return getattr(view.entities, path).get_text_of(property_name)
 
     def validate_stats(self, expected_stats):
