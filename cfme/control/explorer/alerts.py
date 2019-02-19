@@ -9,6 +9,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, Text, View
 from widgetastic_manageiq import AlertEmail, MonitorStatusCard, SNMPForm, SummaryForm, Table
+from widgetastic_manageiq.expression_editor import ExpressionEditor
 from widgetastic_patternfly import BootstrapSelect, Button, Input, SelectorDropdown
 
 from . import ControlExplorerView
@@ -89,6 +90,8 @@ class AlertFormCommon(ControlExplorerView):
         # Hardware Reconfigured Parameters
         hardware_attribute = BootstrapSelect("select_hdw_attr")
         operator = BootstrapSelect("select_operator")
+        # Expression Parameters
+        expression = ExpressionEditor("//button[normalize-space(.)='Define Expression']")
 
         def fill(self, values):
             if isinstance(values, six.string_types):
