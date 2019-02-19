@@ -3,39 +3,10 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
-
-
-@pytest.fixture(scope='module')
-def domain(appliance):
-    dc = DomainCollection(appliance)
-    d = dc.create(
-        name='test_{}'.format(fauxfactory.gen_alpha()),
-        description='desc_{}'.format(fauxfactory.gen_alpha()),
-        enabled=True)
-    yield d
-    d.delete()
-
-
-@pytest.fixture(scope="module")
-def namespace(request, domain):
-    return domain.namespaces.create(
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha()
-    )
-
-
-@pytest.fixture(scope="module")
-def klass(request, namespace):
-    return namespace.classes.create(
-        name=fauxfactory.gen_alpha(),
-        display_name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha()
-    )
 
 
 @pytest.mark.sauce
@@ -66,7 +37,7 @@ def test_instance_crud(klass):
 
 @pytest.mark.tier(2)
 @pytest.mark.polarion('RHCF3-20871')
-def test_duplicate_instance_disallowed(request, klass):
+def test_duplicate_instance_disallowed(klass):
     """
     Polarion:
         assignee: ghubale
@@ -84,7 +55,7 @@ def test_duplicate_instance_disallowed(request, klass):
 
 @pytest.mark.tier(3)
 @pytest.mark.polarion('RHCF3-20872')
-def test_instance_display_name_unset_from_ui(request, klass):
+def test_instance_display_name_unset_from_ui(klass):
     """
     Polarion:
         assignee: ghubale

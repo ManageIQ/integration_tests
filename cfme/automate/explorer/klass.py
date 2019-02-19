@@ -72,12 +72,9 @@ class ClassDetailsView(AutomateExplorerView):
             self.in_explorer and
             self.title.text == 'Automate Class "{}"'.format(
                 self.context['object'].display_name or self.context['object'].name) and
-            self.datastore.is_opened and (
-                BZ(1611969, forced_streams=['5.10']).blocks or
-                check_tree_path(
-                    self.datastore.tree.currently_selected,
-                    self.context['object'].tree_path)
-            )
+            self.datastore.is_opened and
+            check_tree_path(self.datastore.tree.currently_selected,
+                            self.context['object'].tree_path, partial=True)
         )
 
 
