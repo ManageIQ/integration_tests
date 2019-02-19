@@ -362,7 +362,7 @@ class NetworkPortView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return (super(BaseLoggedInPage, self).is_displayed and
+        return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Networks', 'Network Ports'] and
                 self.entities.title.text == 'Network Ports')
 

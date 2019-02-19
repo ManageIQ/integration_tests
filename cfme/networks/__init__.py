@@ -1,5 +1,6 @@
 from cfme.modeling.base import BaseCollection
-from cfme.utils.appliance.implementations.ui import navigate_to, navigator
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigator
 
 
 class ValidateStatsMixin(object):
