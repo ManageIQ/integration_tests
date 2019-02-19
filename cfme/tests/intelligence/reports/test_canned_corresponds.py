@@ -3,6 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -15,6 +16,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider(classes=[InfraProvider], scope='module'),
     test_requirements.report,
+    pytest.mark.uncollectif(lambda provider: provider.one_of(KubeVirtProvider))
 ]
 
 

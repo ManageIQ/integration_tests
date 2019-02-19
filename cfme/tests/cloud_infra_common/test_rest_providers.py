@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
@@ -16,7 +17,8 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     test_requirements.rest,
     pytest.mark.tier(1),
-    pytest.mark.provider([CloudProvider, InfraProvider])
+    pytest.mark.provider([CloudProvider, InfraProvider]),
+    pytest.mark.uncollectif(lambda provider: provider.one_of(KubeVirtProvider))
 ]
 
 

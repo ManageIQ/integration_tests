@@ -5,6 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import assert_response
@@ -121,7 +122,8 @@ def _uncollectif(appliance, provider, collection_name):
     return (
         (appliance.version < '5.9' and collection_name in COLLECTIONS_ADDED_IN_59) or
         (provider.one_of(InfraProvider) and collection_name == 'instances') or
-        (provider.one_of(CloudProvider) and collection_name == 'vms')
+        (provider.one_of(CloudProvider) and collection_name == 'vms') or
+        (provider.one_of(KubeVirtProvider))
     )
 
 

@@ -10,6 +10,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
+from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
 
 
 pytestmark = [
@@ -18,6 +19,7 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.provider([BaseProvider], scope='module'),
     pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"]),
+    pytest.mark.uncollectif(lambda provider: provider.one_of(KubeVirtProvider))
 ]
 
 
@@ -184,8 +186,10 @@ def test_suspend_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from
         soft_assert(verify_vm_power_state(vm, vm_obj.STATE_SUSPENDED), "vm not suspended")
 
 
-@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider, AzureProvider),
-                         reason='Not supported for RHV or Azure provider')
+@pytest.mark.uncollectif(
+    lambda provider: provider.one_of(RHEVMProvider, AzureProvider, KubeVirtProvider),
+    reason="Not supported for RHV or Azure provider",
+)
 def test_reset_vm_rest(vm_obj, ensure_vm_running, from_detail, appliance):
     """
     Test reset vm
