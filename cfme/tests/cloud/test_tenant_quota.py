@@ -12,6 +12,7 @@ from cfme.utils.generators import random_vm_name
 
 pytestmark = [
     test_requirements.quota,
+    pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
                          scope="module")]
 
@@ -110,22 +111,24 @@ def catalog_item(appliance, provider, provisioning, template_name, dialog, catal
     indirect=['set_roottenant_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
-def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider, setup_provider,
-                                            set_roottenant_quota, extra_msg, custom_prov_data,
-                                            approve, prov_data, vm_name, template_name):
+def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider,
+                                                  set_roottenant_quota, extra_msg, custom_prov_data,
+                                                  approve, prov_data, vm_name, template_name):
     """Test Tenant Quota in UI
 
     Polarion:
         assignee: ghubale
         casecomponent: Cloud
         initialEstimate: 1/10h
+        tags: quota
     """
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
     prov_data.update({
         'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
     prov_data.update({'template_name': template_name})
-    request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name, extra_msg)
+    request_description = 'Provision from [{template}] to [{vm}{msg}]'.format(
+        template=template_name, vm=vm_name, msg=extra_msg)
     appliance.collections.cloud_instances.create(vm_name, provider, prov_data, auto_approve=approve,
                                                  override=True,
                                                  request_description=request_description)
@@ -154,16 +157,16 @@ def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider, 
     indirect=['set_roottenant_quota', 'custom_prov_data', 'set_default'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
-def test_tenant_quota_enforce_via_service_cloud(request, appliance, provider, setup_provider,
-                                                context, set_roottenant_quota, set_default,
-                                                custom_prov_data, extra_msg, template_name,
-                                                catalog_item):
+def test_tenant_quota_enforce_via_service_cloud(request, appliance, context, set_roottenant_quota,
+                                                set_default, custom_prov_data, extra_msg,
+                                                template_name, catalog_item):
     """Test Tenant Quota in UI and SSUI
 
     Polarion:
         assignee: ghubale
         casecomponent: Cloud
         initialEstimate: 1/10h
+        tags: quota
     """
     with appliance.context.use(context):
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
@@ -211,6 +214,7 @@ def test_service_cloud_tenant_quota_with_default_entry_point(request, appliance,
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/12h
+        tags: quota
         testSteps:
             1. Add cloud provider
             2. Set quota for root tenant - 'My Company'

@@ -60,22 +60,18 @@ def wait_for_vm_state_changes(vm, timeout=600):
 def test_vm_discovery(request, setup_provider, provider, vm_crud):
     """ Tests whether cfme will discover a vm change (add/delete) without being manually refreshed.
 
-    Prerequisities:
-        * Desired provider set up
-
-    Steps:
-        * Create a virtual machine on the provider.
-        * Wait for the VM to appear
-        * Delete the VM from the provider (not using CFME)
-        * Wait for the VM to become Archived.
-
-    Metadata:
-        test_flag: discovery
-
     Polarion:
         assignee: ghubale
         casecomponent: Infra
         initialEstimate: 1/4h
+        tags: power
+        setup:
+            1. Desired provider set up
+        testSteps:
+            1. Create a virtual machine on the provider.
+            2. Wait for the VM to appear
+            3. Delete the VM from the provider (not using CFME)
+            4. Wait for the VM to become Archived.
     """
 
     @request.addfinalizer

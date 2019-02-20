@@ -139,8 +139,8 @@ def wait_for_relationship_refresh(provider):
     view = navigate_to(provider, 'Details')  # resetter selects summary view
     logger.info('Waiting for relationship refresh')
     wait_for(
-        lambda: (view.entities.summary("Status").get_text_of('Last Refresh') ==
-                 'Success - Less Than A Minute Ago'),
+        lambda: (view.entities.summary("Status").get_text_of('Last Refresh')
+                 == 'Success - Less Than A Minute Ago'),
         delay=15,
         timeout=110,
         fail_func=view.browser.refresh)
@@ -152,9 +152,6 @@ def wait_for_relationship_refresh(provider):
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE)
 def test_host_relationships(appliance, provider, setup_provider, host, relationship, view):
     """Tests relationship navigation for a host
-
-    Metadata:
-        test_flag: inventory
 
     Polarion:
         assignee: ghubale
@@ -178,9 +175,6 @@ def test_host_relationships(appliance, provider, setup_provider, host, relations
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE)
 def test_infra_provider_relationships(appliance, provider, setup_provider, relationship, view):
     """Tests relationship navigation for an infrastructure provider
-
-    Metadata:
-        test_flag: inventory
 
     Polarion:
         assignee: ghubale
@@ -306,9 +300,6 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
 def test_provider_refresh_relationship(provider, setup_provider):
     """Tests provider refresh
 
-    Metadata:
-        test_flag: inventory
-
     Polarion:
         assignee: ghubale
         casecomponent: Infra
@@ -325,8 +316,6 @@ def test_provider_refresh_relationship(provider, setup_provider):
 def test_host_refresh_relationships(provider, setup_provider):
     """ Test that host refresh doesn't fail
 
-    https://bugzilla.redhat.com/show_bug.cgi?id=1658240
-
     Polarion:
         assignee: ghubale
         casecomponent: Infra
@@ -337,6 +326,9 @@ def test_host_refresh_relationships(provider, setup_provider):
             1. Go to a host summary page in cfme
             2. From configuration -> select "Refresh Relationships and Power State"
             3. No error, host inventory properly refreshes
+
+    Bugzilla:
+        1658240
     """
     host = provider.hosts.all()[0]
     host.refresh(cancel=True)

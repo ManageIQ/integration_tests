@@ -21,7 +21,7 @@ pytestmark = [
 ]
 
 
-def test_show_quota_used_on_tenant_screen(request, appliance, v2v_providers):
+def test_show_quota_used_on_tenant_screen(appliance, v2v_providers):
     """Test show quota used on tenant quota screen even when no quotas are set.
 
     Polarion:

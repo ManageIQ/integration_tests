@@ -130,18 +130,19 @@ def test_rename_vm(small_vm):
 
     """Test for rename the VM.
        This feature is included in 5.10z.
-    Steps:
-    1. Add VMware provider
-    2. Provision VM
-    3. Navigate to details page of VM
-    4. Click on Configuration > Rename this VM > Enter new name
-    5. Click on submit
-    6. Check whether VM is renamed or not
 
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
         casecomponent: Infra
+        tags: power
+        testSteps:
+            1. Add VMware provider
+            2. Provision VM
+            3. Navigate to details page of VM
+            4. Click on Configuration > Rename this VM > Enter new name
+            5. Click on submit
+            6. Check whether VM is renamed or not
     """
     view = navigate_to(small_vm, 'Details')
     vm_name = small_vm.name

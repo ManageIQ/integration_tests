@@ -12,6 +12,7 @@ from cfme.utils.log import logger
 from cfme.utils.update import update
 
 pytestmark = [
+    pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 ]
 
@@ -24,7 +25,7 @@ def admin_email(appliance):
     user = appliance.collections.users
     admin = user.instantiate(name='Administrator')
     with update(admin):
-        admin.email = 'xyz@redhat.com'
+        admin.email = fauxfactory.gen_email()
     yield
     with update(admin):
         admin.email = ''
@@ -162,7 +163,7 @@ def new_user(appliance, new_group_list, new_credential):
     user = collection.create(
         name='user_{}'.format(fauxfactory.gen_alphanumeric()),
         credential=new_credential,
-        email='xyz@redhat.com',
+        email=fauxfactory.gen_email(),
         groups=new_group_list,
         cost_center='Workload',
         value_assign='Database')
@@ -191,8 +192,8 @@ def custom_prov_data(request, prov_data, vm_name, template_name):
     ],
     ids=['max_memory', 'max_storage', 'max_vm', 'max_cpu']
 )
-def test_quota(appliance, provider, setup_provider, custom_prov_data, vm_name, admin_email,
-               entities, template_name, prov_data):
+def test_quota(appliance, provider, custom_prov_data, vm_name, admin_email, entities, template_name,
+               prov_data):
     """This test case checks quota limit using the automate's predefine method 'quota source'
 
     Polarion:
@@ -207,7 +208,8 @@ def test_quota(appliance, provider, setup_provider, custom_prov_data, vm_name, a
                        provisioning_data=prov_data, wait=False, request=None)
 
     # nav to requests page to check quota validation
-    request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
+    request_description = 'Provision from [{template}] to [{vm}]'.format(template=template_name,
+                                                                         vm=vm_name)
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.reason.text == "Quota Exceeded"
@@ -224,11 +226,9 @@ def test_quota(appliance, provider, setup_provider, custom_prov_data, vm_name, a
     indirect=['set_parent_tenant_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
-def test_user_quota_diff_groups(request, appliance, provider, setup_provider, new_user,
-                                set_parent_tenant_quota, extra_msg, custom_prov_data, approve,
-                                prov_data, vm_name, template_name):
-    """prerequisite: Provider should be added
-
+def test_user_quota_diff_groups(appliance, provider, new_user, set_parent_tenant_quota, extra_msg,
+                                custom_prov_data, approve, prov_data, vm_name, template_name):
+    """
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
@@ -243,8 +243,8 @@ def test_user_quota_diff_groups(request, appliance, provider, setup_provider, ne
                            vm_name=vm_name, provisioning_data=prov_data, wait=False, request=None)
 
         # nav to requests page to check quota validation
-        request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name,
-                                                                     extra_msg)
+        request_description = 'Provision from [{template}] to [{vm}{msg}]'.format(
+            template=template_name, vm=vm_name, msg=extra_msg)
         provision_request = appliance.collections.requests.instantiate(request_description)
         if approve:
             provision_request.approve_request(method='ui', reason="Approved")

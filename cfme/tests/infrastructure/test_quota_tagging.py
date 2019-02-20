@@ -11,12 +11,12 @@ from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.update import update
 
 
 pytestmark = [
+    pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 ]
 
@@ -27,7 +27,7 @@ def admin_email(appliance):
     user = appliance.collections.users
     admin = user.instantiate(name='Administrator')
     with update(admin):
-        admin.email = 'xyz@redhat.com'
+        admin.email = fauxfactory.gen_email()
     yield
     with update(admin):
         admin.email = ''
@@ -169,7 +169,7 @@ def set_entity_quota_tag(request, entities, appliance):
     indirect=['set_entity_quota_tag'],
     ids=['max_memory', 'max_storage', 'max_cpu']
 )
-def test_quota_tagging_infra_via_lifecycle(request, appliance, provider, setup_provider,
+def test_quota_tagging_infra_via_lifecycle(request, appliance, provider,
                                            set_entity_quota_tag, custom_prov_data,
                                            vm_name, template_name, prov_data):
     """
@@ -186,7 +186,8 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider, setup_p
                        provisioning_data=prov_data, wait=False, request=None)
 
     # nav to requests page to check quota validation
-    request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
+    request_description = 'Provision from [{template}] to [{vm}]'.format(template=template_name,
+                                                                         vm=vm_name)
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
@@ -194,8 +195,6 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider, setup_p
 
 
 @pytest.mark.rhv2
-@pytest.mark.meta(blockers=[BZ(1633540, forced_streams=['5.10'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 # Here set_entity_quota_tag is used for setting the tag value.
 # Here custom_prov_data is used to provide the value fo the catalog item to be created.
@@ -209,9 +208,9 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider, setup_p
     indirect=['set_entity_quota_tag'],
     ids=['max_memory', 'max_storage', 'max_cpu']
 )
-def test_quota_tagging_infra_via_services(request, appliance, provider, setup_provider, admin_email,
-                                          context, set_entity_quota_tag, custom_prov_data,
-                                          prov_data, catalog_item):
+def test_quota_tagging_infra_via_services(request, appliance, admin_email, context,
+                                          set_entity_quota_tag, custom_prov_data, prov_data,
+                                          catalog_item):
     """This test case verifies the quota tagging is working correctly for the infra providers.
 
     Polarion:
@@ -272,11 +271,9 @@ def custom_prov_data(request, prov_data, vm_name, template_name):
     ids=["max_cores", "max_sockets", "max_memory"],
 )
 def test_quota_vm_reconfigure(
-    request,
     appliance,
     admin_email,
     entities,
-    setup_provider,
     small_vm,
     custom_prov_data,
     prov_data,
@@ -334,7 +331,7 @@ def test_quota_vm_reconfigure(
     ],
     ids=['max_memory', 'max_storage', 'max_vm', 'max_cpu']
 )
-def test_quota_infra(request, appliance, provider, setup_provider, admin_email, entities,
+def test_quota_infra(request, appliance, admin_email, entities,
                      custom_prov_data, prov_data, catalog_item, context, vm_name, template_name):
     """This test case verifies the quota assigned by automation method for user and group
        is working correctly for the infra providers.
@@ -382,9 +379,8 @@ def test_quota_infra(request, appliance, provider, setup_provider, admin_email, 
     ],
     ids=['max_memory', 'max_storage', 'max_vm', 'max_cpu']
 )
-def test_quota_catalog_bundle_infra(request, appliance, provider, setup_provider, admin_email,
-                                    entities, custom_prov_data, prov_data, catalog_bundle, context,
-                                    vm_name, template_name):
+def test_quota_catalog_bundle_infra(request, appliance, admin_email, entities, custom_prov_data,
+                                    prov_data, catalog_bundle, context, vm_name, template_name):
     """This test case verifies the quota assigned by automation method for user and group
        is working correctly for the infra providers by ordering catalog bundle.
 

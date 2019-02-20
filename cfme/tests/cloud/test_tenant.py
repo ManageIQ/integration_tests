@@ -26,7 +26,6 @@ def tenant(provider, setup_provider, appliance):
             provider.mgmt.remove_tenant(tenant.name)
 
 
-@pytest.mark.meta(blockers=[BZ(1462137, forced_streams=["5.9", "5.8"])])
 def test_tenant_crud(tenant):
     """ Tests tenant create and delete
 

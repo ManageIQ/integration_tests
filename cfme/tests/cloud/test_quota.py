@@ -190,6 +190,7 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
         casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/8h
+        tags: quota
         testSteps:
             1. Create a child tenant
             2. Assign quota to child tenant
@@ -261,6 +262,7 @@ def test_project_quota_enforce_via_lifecycle_cloud(
         casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/8h
+        tags: quota
         testSteps:
             1. Create a project
             2. Assign quota to project
