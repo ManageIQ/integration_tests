@@ -20,8 +20,10 @@ def test_service_catalog_crud_ui(appliance, context, order_ansible_service_in_op
     """Tests Ansible Service Catalog in SSUI.
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         initialEstimate: 1/4h
+        casecomponent: Services
+        tags: service
     """
 
     service_name = order_ansible_service_in_ops_ui

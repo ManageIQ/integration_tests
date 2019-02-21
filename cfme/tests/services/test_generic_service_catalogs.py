@@ -35,10 +35,11 @@ def catalog_item(appliance, dialog, catalog):
 def test_delete_catalog_deletes_service(appliance, dialog, catalog):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: service
     """
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = appliance.collections.catalog_items.create(
@@ -55,10 +56,11 @@ def test_delete_catalog_deletes_service(appliance, dialog, catalog):
 def test_delete_catalog_item_deletes_service(appliance, catalog_item):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: service
     """
     catalog_item.delete()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
@@ -69,10 +71,11 @@ def test_delete_catalog_item_deletes_service(appliance, catalog_item):
 def test_service_circular_reference(appliance, catalog_item):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: service
     """
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = appliance.collections.catalog_bundles.create(
@@ -93,10 +96,11 @@ def test_service_circular_reference(appliance, catalog_item):
 def test_service_generic_catalog_bundle(appliance, catalog_item):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: service
     """
     bundle_name = "generic_" + fauxfactory.gen_alphanumeric()
     appliance.collections.catalog_bundles.create(
@@ -117,10 +121,11 @@ def test_service_generic_catalog_bundle(appliance, catalog_item):
 def test_bundles_in_bundle(appliance, catalog_item):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: low
         initialEstimate: 1/8h
+        tags: service
     """
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     appliance.collections.catalog_bundles.create(
@@ -151,10 +156,11 @@ def test_bundles_in_bundle(appliance, catalog_item):
 def test_delete_dialog_before_parent_item(appliance, catalog_item):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: low
         initialEstimate: 1/8h
+        tags: service
     """
     service_dialog = appliance.collections.service_dialogs
     dialog = service_dialog.instantiate(label=catalog_item.dialog.label)
@@ -177,9 +183,11 @@ class TestServiceCatalogViaREST(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
             caseimportance: low
+            casecomponent: Services
             initialEstimate: 1/3h
+            tags: service
         """
         delete_resources_from_detail(service_catalogs, method=method)
 
@@ -190,9 +198,11 @@ class TestServiceCatalogViaREST(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
             caseimportance: low
+            casecomponent: Services
             initialEstimate: 1/3h
+            tags: service
         """
         delete_resources_from_collection(service_catalogs)
 
@@ -207,9 +217,11 @@ class TestServiceCatalogViaREST(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
             caseimportance: low
+            casecomponent: Services
             initialEstimate: 1/3h
+            tags: service
         """
         for ctl in service_catalogs:
             new_name = fauxfactory.gen_alphanumeric()
@@ -231,9 +243,11 @@ class TestServiceCatalogViaREST(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
             caseimportance: low
             initialEstimate: 1/3h
+            casecomponent: Services
+            tags: service
         """
 
         new_names = []
