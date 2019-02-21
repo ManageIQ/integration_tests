@@ -163,7 +163,9 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
 
     # It will provision two of them
     vm_names = [vm_name + "001", vm_name + "002"]
-    requester = "" if BZ(1628240, forced_streams=['5.10']).blocks else "vm_provision@cfmeqe.com "
+    appliance_series = str(appliance.version).split('.')[:2]
+    requester = ("" if BZ(1628240).blocks and appliance_series == '5.11'
+                 else "vm_provision@cfmeqe.com")
     collection = appliance.provider_based_collection(provider)
     inst_args = {'catalog': {
         'vm_name': vm_name,
@@ -179,18 +181,18 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
         lambda:
         len(filter(
             lambda mail:
-            subject in normalize_text(mail["subject"]),
+            normalize_text(subject) in normalize_text(mail["subject"]),
             smtp_test.get_emails())) == 1,
         num_sec=90, delay=5)
     subject = VersionPicker({
         LOWEST: "virtual machine request was not approved",
-        "5.10": "virtual machine request from {}pending approval".format(requester)
+        "5.10": "virtual machine request from {} pending approval".format(requester)
     }).pick()
     wait_for(
         lambda:
         len(filter(
             lambda mail:
-            subject in normalize_text(mail["subject"]),
+            normalize_text(subject) in normalize_text(mail["subject"]),
             smtp_test.get_emails())) == 1,
         num_sec=90, delay=5)
     smtp_test.clear_database()
@@ -226,7 +228,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
         lambda:
         len(filter(
             lambda mail:
-            subject in normalize_text(mail["subject"]),
+            normalize_text(subject) in normalize_text(mail["subject"]),
             smtp_test.get_emails())) == 1,
         num_sec=120, delay=5)
     smtp_test.clear_database()
