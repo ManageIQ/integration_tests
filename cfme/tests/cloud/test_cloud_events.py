@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module tests only cloud specific events"""
 import pytest
-import yaml
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.utils.generators import random_vm_name
@@ -24,7 +23,7 @@ def test_manage_nsg_group(appliance, provider, register_event):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/8h
-        casecomponent: Control
+        casecomponent: Events
         caseimportance: medium
     """
 
@@ -34,14 +33,23 @@ def test_manage_nsg_group(appliance, provider, register_event):
     # registering add/remove network security group events
     # we need to check raw data by regexps, since many azure events aren't parsed by CFME yet
 
-    def add_cmp(_, y):
-        # In 5.9 version `y` is a dict, not a yaml stream.
-        data = yaml.safe_load(y) if appliance.version < '5.9' else y
+    def add_cmp(_, data):
+        """ comparison function, data is expected to be a dictionary, containing the keys below """
 
-        return (data['resourceId'].endswith(nsg_name) and
-                (data['status']['value'] == 'Accepted' and
-                 data['subStatus']['value'] == 'Created') or
-                data['status']['value'] == 'Succeeded')
+        # In 5.10 data does not have 'status' or 'subStatus' key
+        if appliance.version < '5.10':
+            compare = (
+                data['resourceId'].endswith(nsg_name) and
+                (
+                    data['status']['value'] == 'Accepted' and
+                    data['subStatus']['value'] == 'Created'
+                ) or
+                data['status']['value'] == 'Succeeded'
+            )
+        else:
+            compare = data['resourceId'].endswith(nsg_name)
+
+        return compare
 
     fd_add_attr = {'full_data': 'will be ignored',
                    'cmp_func': add_cmp}
@@ -50,11 +58,16 @@ def test_manage_nsg_group(appliance, provider, register_event):
     register_event(fd_add_attr, source=provider.type.upper(),
                    event_type='networkSecurityGroups_write_EndRequest')
 
-    def rm_cmp(_, y):
-        # In 5.9 version `y` is a dict, not a yaml stream.
-        data = yaml.safe_load(y) if appliance.version < '5.9' else y
+    def rm_cmp(_, data):
+        """ comparison function, data is expected to be a dictionary, containing the keys below """
 
-        return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Succeeded'
+        if appliance.version < '5.10':
+            compare = (data['resourceId'].endswith(nsg_name) and
+                       data['status']['value'] == 'Succeeded')
+        else:
+            compare = data['resourceId'].endswith(nsg_name)
+
+        return compare
 
     fd_rm_attr = {'full_data': 'will be ignored',
                   'cmp_func': rm_cmp}
@@ -78,7 +91,7 @@ def test_vm_capture(appliance, request, provider, register_event):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/8h
-        casecomponent: Control
+        casecomponent: Events
         caseimportance: medium
     """
 
@@ -92,11 +105,15 @@ def test_vm_capture(appliance, request, provider, register_event):
     # # deferred delete vm
     request.addfinalizer(vm.cleanup_on_provider)
 
-    def cmp_function(_, y):
-        # In 5.9 version `y` is a dict, not a yaml stream.
-        data = yaml.safe_load(y) if appliance.version < '5.9' else y
+    def cmp_function(_, data):
+        """ comparison function, data is expected to be a dictionary containing the keys below """
+        if appliance.version < '5.10':
+            compare = (data['resourceId'].endswith(vm.name) and
+                       data['status']['value'] == 'Succeeded')
+        else:
+            compare = data['resourceId'].endswith(vm.name)
 
-        return data['resourceId'].endswith(vm.name) and data['status']['value'] == 'Succeeded'
+        return compare
 
     full_data_attr = {'full_data': 'will be ignored',
                       'cmp_func': cmp_function}
