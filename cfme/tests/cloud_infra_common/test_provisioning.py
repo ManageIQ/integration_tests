@@ -14,18 +14,16 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
 from cfme.utils.version import LOWEST
 from cfme.utils.version import VersionPicker
-from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for, TimedOutError
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -163,7 +161,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
 
     # It will provision two of them
     vm_names = [vm_name + "001", vm_name + "002"]
-    requester = "" if BZ(1628240, forced_streams=['5.10']).blocks else "vm_provision@cfmeqe.com "
+    requester = "vm_provision@cfmeqe.com "
     collection = appliance.provider_based_collection(provider)
     inst_args = {'catalog': {
         'vm_name': vm_name,
@@ -171,28 +169,35 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
     }}
 
     vm = collection.create(vm_name, provider, form_values=inst_args, wait=False)
-    subject = VersionPicker({
-        LOWEST: "your request for a new vms was not autoapproved",
-        "5.10": "your virtual machine request is pending"
-    }).pick()
-    wait_for(
-        lambda:
-        len(filter(
-            lambda mail:
-            subject in normalize_text(mail["subject"]),
-            smtp_test.get_emails())) == 1,
-        num_sec=90, delay=5)
-    subject = VersionPicker({
-        LOWEST: "virtual machine request was not approved",
-        "5.10": "virtual machine request from {}pending approval".format(requester)
-    }).pick()
-    wait_for(
-        lambda:
-        len(filter(
-            lambda mail:
-            subject in normalize_text(mail["subject"]),
-            smtp_test.get_emails())) == 1,
-        num_sec=90, delay=5)
+    try:
+        subject = VersionPicker({
+            LOWEST: "your request for a new vms was not autoapproved",
+            "5.10": "your virtual machine request is pending"
+        }).pick()
+        wait_for(
+            lambda:
+            len(filter(
+                lambda mail:
+                normalize_text(subject) in normalize_text(mail["subject"]),
+                smtp_test.get_emails())) == 1,
+            num_sec=90, delay=5)
+        subject = VersionPicker({
+            LOWEST: "virtual machine request was not approved",
+            "5.10": "virtual machine request from {}pending approval".format(requester)
+        }).pick()
+
+        wait_for(
+            lambda:
+            len(filter(
+                lambda mail:
+                normalize_text(subject) in normalize_text(mail["subject"]),
+                smtp_test.get_emails())) == 1,
+            num_sec=90, delay=5)
+    except TimedOutError:
+        subjects = ",".join([normalize_text(m["subject"]) for m in smtp_test.get_emails()])
+        logger.error("expected: %s, got emails: %s", subject, subjects)
+        raise
+
     smtp_test.clear_database()
 
     cells = {'Description': 'Provision from [{}] to [{}###]'.format(vm.template_name, vm.name)}
@@ -222,13 +227,19 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
         LOWEST: "your virtual machine configuration was approved",
         "5.10": "your virtual machine request was approved"
     }).pick()
-    wait_for(
-        lambda:
-        len(filter(
-            lambda mail:
-            subject in normalize_text(mail["subject"]),
-            smtp_test.get_emails())) == 1,
-        num_sec=120, delay=5)
+    try:
+        wait_for(
+            lambda:
+            len(filter(
+                lambda mail:
+                normalize_text(subject) in normalize_text(mail["subject"]),
+                smtp_test.get_emails())) == 1,
+            num_sec=120, delay=5)
+    except TimedOutError:
+        subjects = ",".join([normalize_text(m["subject"]) for m in smtp_test.get_emails()])
+        logger.error("expected: %s, got emails: %s", subject, subjects)
+        raise
+
     smtp_test.clear_database()
 
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
@@ -241,20 +252,24 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
     msg = "Provisioning failed with the message {}".format(provision_request.row.last_message.text)
     assert provision_request.is_succeeded(method='ui'), msg
 
+    subject = VersionPicker({
+        LOWEST: "your virtual machine request has completed vm {}".format(vm_name),
+        "5.10": "your virtual machine request has completed vm name {}".format(vm_name)
+    }).pick()
+
     # Wait for e-mails to appear
     def verify():
-        subject = VersionPicker({
-            LOWEST: "your virtual machine request has completed vm {}".format(
-                normalize_text(vm_name)),
-            "5.10": "your virtual machine request has completed vm name {}".format(
-                normalize_text(vm_name))
-        }).pick()
         return (
             len(filter(
-                lambda mail: subject in normalize_text(mail["subject"]),
+                lambda mail: normalize_text(subject) in normalize_text(mail["subject"]),
                 smtp_test.get_emails())) == len(vm_names)
         )
-    wait_for(verify, message="email receive check", delay=5)
+    try:
+        wait_for(verify, message="email receive check", delay=5)
+    except TimedOutError:
+        subjects = ",".join([normalize_text(m["subject"]) for m in smtp_test.get_emails()])
+        logger.error("expected: %s, got emails: %s", subject, subjects)
+        raise
 
 
 @pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
