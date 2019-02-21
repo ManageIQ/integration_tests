@@ -7,6 +7,7 @@ from wrapanapi.systems import EC2System
 
 from . import CloudProvider
 from cfme.cloud.instance.ec2 import EC2Instance
+from cfme.common.candu_views import AzoneCloudUtilizationView
 from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
@@ -51,6 +52,14 @@ class EC2InstanceUtilizationView(VMUtilizationView):
     vm_network = LineChart(id='miq_chart_parent_candu_2')
 
 
+class EC2AzoneUtilizationView(AzoneCloudUtilizationView):
+    """Availability zone Utilization view for AWS providers"""
+    azone_disk = LineChart(id='miq_chart_parent_candu_1')
+    azone_network = LineChart(id='miq_chart_parent_candu_2')
+    azone_network_avg = LineChart(id='miq_chart_parent_candu_2_2')
+    azone_instance = LineChart(id='miq_chart_parent_candu_3')
+
+
 @attr.s(cmp=False)
 class EC2Provider(CloudProvider):
     """
@@ -59,6 +68,7 @@ class EC2Provider(CloudProvider):
     """
     catalog_item_type = AmazonCatalogItem
     vm_utilization_view = EC2InstanceUtilizationView
+    azone_utilization_view = EC2AzoneUtilizationView
     type_name = "ec2"
     mgmt_class = EC2System
     vm_class = EC2Instance
