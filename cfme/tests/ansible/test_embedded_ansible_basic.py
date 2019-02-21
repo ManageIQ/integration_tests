@@ -4,7 +4,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -147,6 +146,7 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
         assignee: sbulage
         casecomponent: Ansible
         initialEstimate: 1/12h
+        tags: ansible_embed
     """
     updated_description = "edited_{}".format(fauxfactory.gen_alpha())
     with update(ansible_repository):

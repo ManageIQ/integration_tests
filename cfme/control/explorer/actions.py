@@ -4,6 +4,7 @@ import attr
 from cached_property import cached_property
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
+from widgetastic.utils import WaitFillViewStrategy
 from widgetastic.widget import Checkbox
 from widgetastic.widget import Text
 from widgetastic.widget import View
@@ -85,6 +86,7 @@ class NewActionView(ActionFormCommon):
 
 
 class EditActionView(ActionFormCommon):
+    fill_strategy = WaitFillViewStrategy()
     title = Text("#explorer_title_text")
 
     save_button = Button("Save")
