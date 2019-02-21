@@ -1389,16 +1389,47 @@ def test_unique_project_name_on_parent_level(request, appliance):
         * This test is not depending on any other test and can be executed against fresh appliance.
 
     Polarion:
+        assignee: ghubale
+        casecomponent: Infra
+        initialEstimate: 1/20h
+        tags: quota
+    """
+    tenant_unique_tenant_project_name_on_parent_level(request, appliance,
+                                                      appliance.collections.projects)
+
+
+def test_tenant_quota_input_validate(appliance):
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: Infra
+        initialEstimate: 1/8h
+        tags: quota
+    """
+    roottenant = appliance.collections.tenants.get_root_tenant()
+    fields = [('cpu', 2.5), ('storage', '1.x'), ('memory', '2.x'), ('vm', 1.5)]
+
+    for field in fields:
+        view = navigate_to(roottenant, 'ManageQuotas')
+        view.form.fill({'{}_cb'.format(field[0]): True, '{}_txt'.format(field[0]): field[1]})
+        assert view.save_button.disabled
+        view.form.fill({'{}_cb'.format(field[0]): False})
+
+
+def test_delete_default_tenant(request, appliance):
+    """
+    Polarion:
         assignee: mnadeem
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
         initialEstimate: 1/20h
         testSteps:
-            1. Create project
-            2. Create another project with the same name
-            3. Creation will fail because object with the same name exists
-            4. Delete created objects
+            1. Login as an 'Administrator' user
+            2. Navigate to configuration > access control > tenants
+            3. Select default tenant('My Company') from tenants table
+            4. Delete using 'configuration > Delete selected items'
+            5. Check whether default tenant is deleted or not
     """
     tenant_unique_tenant_project_name_on_parent_level(request, appliance,
                                                       appliance.collections.projects)
@@ -1900,3 +1931,71 @@ def test_tenant_visibility_miq_ae_namespaces_all_parents():
         startsin: 5.5
     """
     pass
+
+
+@test_requirements.quota
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream('5.9')
+@pytest.mark.parametrize(
+    'product_features, allowed_actions, disallowed_actions',
+    [
+        [  # Param Set 1
+            [  # product_features
+                [['Everything'], False],  # minimal permission
+                [['Everything', 'Settings', 'Tasks'], True]
+            ],
+            {  # allowed_actions
+                'tasks':
+                    lambda appliance: appliance.browser.create_view(TasksView).tabs.default.click()
+            },
+            {  # disallowed actions
+                'my services': _go_to(MyService),
+                'chargeback': _go_to('server', 'Chargeback'),
+                'clouds providers': _go_to(base_types()['cloud']),
+                'infrastructure providers': _go_to(base_types()['infra']),
+                'control explorer': _go_to('server', 'ControlExplorer'),
+                'automate explorer': _go_to('server', 'AutomateExplorer')
+            }
+        ]
+     ]
+)
+def test_custom_role_modify_for_dynamic_product_feature(request, appliance, product_features,
+                                                        allowed_actions, disallowed_actions):
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/12h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: Configuration
+        tags: quota
+        testSteps:
+            1. create two tenants
+            2. create new custom role using existing role
+            3. Update newly created custom role by doing uncheck in to options provided under
+               automation > automate > customization > Dialogs > modify > edit/add/copy/delete
+               > uncheck for any tenant
+            4. You will see save button is not enabled but if you changed 'Name' or
+               'Access Restriction for Services, VMs, and Templates' then save button is getting
+               enabled.
+            5. It updates changes only when we checked or unchecked for all of the tenants under
+               edit/add/copy/delete options.
+
+    Bugzilla:
+        1655012
+    """
+    for _ in range(2):
+        tenant = appliance.collections.tenants.create(
+            name="tenant_{}".format(fauxfactory.gen_alphanumeric()),
+            description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
+            parent=appliance.collections.tenants.get_root_tenant(),
+        )
+        request.addfinalizer(tenant.delete())
+    role = appliance.collections.roles.instantiate(name='EvmRole-tenant_quota_administrator')
+    with update(role):
+        role.name = "{}_edited".format(role.name)
+    # copied_role = role.copy()
+    # copied_role.delete()
+    request.addfinalizer(role.delete())
