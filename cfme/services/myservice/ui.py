@@ -104,22 +104,20 @@ class MyServiceDetailsToolbar(MyServiceToolbar):
 
 class MyServiceDetailsEntities(View):
     """Represents Details page."""
+    # TODO: use a ParametrizedSummaryTable eventually to do this
     summary = ParametrizedView.nested(ParametrizedSummaryTable)
+    properties = SummaryTable(title='Properties')
+    lifecycle = SummaryTable(title='Lifecycle')
+    relationships = SummaryTable(title='Relationships')
+    vm = SummaryTable(title='Totals for Service VMs ')
+    smart_management = SummaryTable(title='Smart Management')
+    generic_objects = SummaryTable(title='Generic Objects')
 
 
 class MyServiceDetailView(MyServicesView):
     title = Text('#explorer_title_text')
     toolbar = View.nested(MyServiceDetailsToolbar)
-    # entities = View.nested(BaseNonInteractiveEntitiesView)  FIXME need new entities widget here
-
-    @View.nested
-    class details(View):  # noqa
-        properties = SummaryTable(title='Properties')
-        lifecycle = SummaryTable(title='Lifecycle')
-        relationships = SummaryTable(title='Relationships')
-        vm = SummaryTable(title='Totals for Service VMs ')
-        smart_mgmt = SummaryTable(title='Smart Management')
-        generic_objects = SummaryTable(title='Generic Objects')
+    entities = View.nested(MyServiceDetailsEntities)
 
     @View.nested
     class provisioning(View):  # noqa
@@ -174,8 +172,8 @@ class SetOwnershipView(SetOwnershipForm):
 @MiqImplementationContext.external_for(MyService.get_ownership, ViaUI)
 def get_ownership(self, owner, group):
     view = navigate_to(self, 'Details')
-    exists = (view.details.lifecycle.get_text_of("Owner") == owner and
-              view.details.lifecycle.get_text_of("Group") == group)
+    exists = (view.entities.lifecycle.get_text_of("Owner") == owner and
+              view.entities.lifecycle.get_text_of("Group") == group)
     return exists
 
 
@@ -245,7 +243,7 @@ def retire(self):
     # wait for service to retire
     if self.appliance.version < '5.10':
         wait_for(
-            lambda: view.details.lifecycle.get_text_of('Retirement State') == 'Retired',
+            lambda: view.entities.lifecycle.get_text_of('Retirement State') == 'Retired',
             fail_func=view.toolbar.reload.click,
             num_sec=10 * 60, delay=3,
             message='Service Retirement wait')
@@ -263,7 +261,7 @@ def retire_on_date(self, retirement_date):
     view.save_button.click()
     view = navigate_to(self, 'Details')
     wait_for(
-        lambda: view.details.lifecycle.get_text_of('Retirement State') == 'Retired',
+        lambda: view.entities.lifecycle.get_text_of('Retirement State') == 'Retired',
         fail_func=view.toolbar.reload.click,
         num_sec=10 * 60, delay=3,
         message='Service Retirement wait')
