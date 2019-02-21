@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
@@ -23,6 +24,8 @@ events_list = [{'Name': 'test-event',
 updated_files = [
     {'Name': files_list[0]['Name'],
      'Collect Contents?': not files_list[0]['Collect Contents?']}]
+
+TENANT_NAME = "tenant_{}".format(fauxfactory.gen_alphanumeric())
 
 
 def events_check(updates=False):
@@ -333,3 +336,70 @@ def test_analysis_profile_description_validation(analysis_profile_collection):
     )
     view.flash.assert_message("Description can't be blank")
     view.cancel.click()
+
+
+@test_requirements.rbac
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream('5.9')
+@pytest.mark.parametrize(
+    'product_features',
+    [  # Navigation for product features trees
+        # product_features tree for Managing Quotas for 'My Company' tenant
+        [(['Everything', 'Settings', 'Configuration', 'Access Control', 'Tenants', 'Modify',
+           'Manage Quotas', 'Manage Quotas (My Company)'], False)],
+        # product_features tree for Managing Quotas for custom tenant
+        [(['Everything', 'Settings', 'Configuration', 'Access Control', 'Tenants', 'Modify',
+           'Manage Quotas', 'Manage Quotas ({})'.format(TENANT_NAME)], False)],
+        # product_features tree for Managing Dialogs for 'Add'
+        [(['Everything', 'Automation', 'Automate', 'Customization', 'Dialogs', 'Modify', 'Add',
+           'Add ({})'.format(TENANT_NAME)], False)],
+        # product_features tree for Managing Dialogs for 'Edit'
+        [(['Everything', 'Automation', 'Automate', 'Customization', 'Dialogs', 'Modify', 'Edit',
+           'Edit ({})'.format(TENANT_NAME)], False)],
+        # product_features tree for Managing Dialogs for 'Delete'
+        [(['Everything', 'Automation', 'Automate', 'Customization', 'Dialogs', 'Modify', 'Delete',
+           'Delete ({})'.format(TENANT_NAME)], False)],
+        # product_features tree for Managing Dialogs for  'Copy'
+        [(['Everything', 'Automation', 'Automate', 'Customization', 'Dialogs', 'Modify', 'Copy',
+           'Copy ({})'.format(TENANT_NAME)], False)]
+    ]
+)
+def test_custom_role_modify_for_dynamic_product_feature(request, appliance, product_features):
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/12h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: Configuration
+        tags: quota
+        testSteps:
+            1. create two tenants
+            2. create new custom role using existing role
+            3. Update newly created custom role by doing uncheck in to options provided under
+               automation > automate > customization > Dialogs > modify > edit/add/copy/delete
+               > uncheck for any tenant
+            4. Or Update newly created custom role by doing uncheck in to options provided under
+               Settings > Configuration > Access Control > Tenants > Modify > Manage Quotas
+               > uncheck for any tenant
+            5. You will see save button is not enabled but if you changed 'Name' or
+               'Access Restriction for Services, VMs, and Templates' then save button is getting
+               enabled.
+            6. It updates changes only when we checked or unchecked for all of the tenants under
+               edit/add/copy/delete options.
+
+    Bugzilla:
+        1655012
+    """
+    tenant = appliance.collections.tenants.create(
+        name=TENANT_NAME,
+        description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
+        parent=appliance.collections.tenants.get_root_tenant(),
+    )
+    request.addfinalizer(tenant.delete)
+    role = appliance.collections.roles.instantiate(name='EvmRole-tenant_quota_administrator')
+    copied_role = role.copy()
+    request.addfinalizer(copied_role.delete)
+    copied_role.update({'product_features': product_features})
