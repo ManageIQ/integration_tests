@@ -33,8 +33,8 @@ def test_manage_nsg_group(appliance, provider, register_event):
     # registering add/remove network security group events
     # we need to check raw data by regexps, since many azure events aren't parsed by CFME yet
 
-    def add_cmp(_, y):
-        data = y
+    def add_cmp(_, data):
+        """ comparison function, data is expected to be a dictionary, containing the keys below """
 
         # In 5.10 data does not have 'status' or 'subStatus' key
         if appliance.version < '5.10':
@@ -58,8 +58,8 @@ def test_manage_nsg_group(appliance, provider, register_event):
     register_event(fd_add_attr, source=provider.type.upper(),
                    event_type='networkSecurityGroups_write_EndRequest')
 
-    def rm_cmp(_, y):
-        data = y
+    def rm_cmp(_, data):
+        """ comparison function, data is expected to be a dictionary, containing the keys below """
 
         if appliance.version < '5.10':
             compare = (data['resourceId'].endswith(nsg_name) and
@@ -105,9 +105,8 @@ def test_vm_capture(appliance, request, provider, register_event):
     # # deferred delete vm
     request.addfinalizer(vm.cleanup_on_provider)
 
-    def cmp_function(_, y):
-        data = y
-
+    def cmp_function(_, data):
+        """ comparison function, data is expected to be a dictionary containing the keys below """
         if appliance.version < '5.10':
             compare = (data['resourceId'].endswith(vm.name) and
                        data['status']['value'] == 'Succeeded')
