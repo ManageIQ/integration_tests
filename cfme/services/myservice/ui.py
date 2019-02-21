@@ -187,8 +187,9 @@ class ServiceRetirementView(ServiceRetirementForm):
         return (
             self.in_myservices and
             self.myservice.is_opened and
-            self.myservice.tree.currently_selected == self.context['object'].name and
-            self.title.text == 'Set/Remove retirement date for Service')
+            self.myservice.tree.currently_selected == ["Active Services",
+                                                       self.context['object'].name]
+            and self.title.text == 'Set/Remove retirement date for Service')
 
 
 class ReconfigureServiceView(SetOwnershipForm):

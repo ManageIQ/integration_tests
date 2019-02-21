@@ -12,6 +12,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import browser
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.browser import ensure_browser_open
 from cfme.utils.log import logger
 from cfme.utils.update import update
@@ -80,6 +81,7 @@ def test_retire_service_ui(appliance, context, myservice):
         myservice.retire()
 
 
+@pytest.mark.meta(blockers=[BZ(1677569, forced_streams=["5.9"])])
 @pytest.mark.parametrize('context', [ViaUI])
 def test_retire_service_on_date(appliance, context, myservice):
     """Tests my service retirement
