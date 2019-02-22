@@ -8,16 +8,18 @@ from cfme.cloud.provider.gce import GCEProvider
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
+from cfme.markers.env_markers.provider import providers
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
 
+all_prov = ProviderFilter(classes=[InfraProvider, CloudProvider], required_fields=['provisioning'])
+excluded = ProviderFilter(classes=[KubeVirtProvider], inverted=True)
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
     pytest.mark.tier(2),
-    pytest.mark.provider([CloudProvider, InfraProvider],
-                         required_fields=['provisioning'],
+    pytest.mark.provider(gen_func=providers, filters=[all_prov, excluded],
                          scope='module'),
-    pytest.mark.uncollectif(lambda provider: provider.one_of(KubeVirtProvider)),
 ]
 
 

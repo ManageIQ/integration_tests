@@ -5,6 +5,7 @@ from cfme.base.ui import ServerDiagnosticsView
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
@@ -23,7 +24,6 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.provider(gen_func=providers, filters=[excluded, all_infra_prov]),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.meta(blockers=[BZ(1550488, forced_streams=["5.9", "5.10"])]),
 ]
 
 
@@ -127,7 +127,7 @@ class VMEvent(object):
         'policy': {
             'tl_event': ('vm_poweroff',),
             'tl_category': 'VM Operation',
-            'emit_cmd': '_restart_vm'
+            'emit_cmd': '_power_off'
         },
     }
 
@@ -220,7 +220,8 @@ class VMEvent(object):
                 timeline_filter.policy_event_category.select_by_visible_text(self.tl_category)
                 timeline_filter.policy_event_status.fill('Both')
             else:
-                timeline_filter.detailed_events.fill(True)
+                if timelines_view.browser.product_version < "5.10":
+                    timeline_filter.detailed_events.fill(True)
                 for selected_option in timeline_filter.event_category.all_selected_options:
                     timeline_filter.event_category.select_by_visible_text(selected_option)
                 timeline_filter.event_category.select_by_visible_text(self.tl_category)
@@ -292,7 +293,10 @@ def test_infra_timeline_create_event(new_vm, soft_assert):
     """
     event = 'create'
     vm_event = VMEvent(new_vm, event)
-    targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
+    if BZ(1670550).blocks:
+        targets = (new_vm, )
+    else:
+        targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
     wait_for(vm_event.emit, timeout='7m', message='Event {evt}failed'.format(evt=event))
     vm_event.catch_in_timelines(soft_assert, targets)
@@ -313,7 +317,10 @@ def test_infra_timeline_policy_event(new_vm, control_policy, soft_assert):
     """
 
     event = 'policy'
-    targets = (new_vm, new_vm.host, new_vm.cluster, new_vm.provider)
+    if BZ(1670550).blocks:
+        targets = (new_vm,)
+    else:
+        targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     vm_event = VMEvent(new_vm, event)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
     wait_for(vm_event.emit, timeout='7m', message='Event {} did timeout'.format(event))
@@ -333,7 +340,10 @@ def test_infra_timeline_stop_event(new_vm, soft_assert):
         casecomponent: Events
     """
     event = 'stop'
-    targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
+    if BZ(1670550).blocks:
+        targets = (new_vm,)
+    else:
+        targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     vm_event = VMEvent(new_vm, event)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
     wait_for(vm_event.emit, timeout='7m', message='Event {} failed'.format(event))
@@ -353,7 +363,10 @@ def test_infra_timeline_start_event(new_vm, soft_assert):
         casecomponent: Events
     """
     event = 'start'
-    targets = (new_vm, new_vm.host, new_vm.cluster, new_vm.provider)
+    if BZ(1670550).blocks:
+        targets = (new_vm,)
+    else:
+        targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     vm_event = VMEvent(new_vm, event)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
     wait_for(vm_event.emit, timeout='7m', message='Event {} failed'.format(event))
@@ -373,7 +386,10 @@ def test_infra_timeline_suspend_event(new_vm, soft_assert):
         casecomponent: Events
     """
     event = 'suspend'
-    targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
+    if BZ(1670550).blocks:
+        targets = (new_vm,)
+    else:
+        targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     vm_event = VMEvent(new_vm, event)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
     wait_for(vm_event.emit, timeout='7m', message='Event {} failed'.format(event))
@@ -413,7 +429,10 @@ def test_infra_timeline_clone_event(new_vm, soft_assert):
     """
     event = 'clone'
     vm_event = VMEvent(new_vm, event)
-    targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
+    if BZ(1670550).blocks:
+        targets = (new_vm,)
+    else:
+        targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
     wait_for(vm_event.emit, timeout='7m', message='Event {evt} failed'.format(evt=event))
     vm_event.catch_in_timelines(soft_assert, targets)
@@ -433,7 +452,10 @@ def test_infra_timeline_migrate_event(new_vm, soft_assert):
     """
     event = 'migrate'
     vm_event = VMEvent(new_vm, event)
-    targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
+    if BZ(1670550).blocks:
+        targets = (new_vm,)
+    else:
+        targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
     wait_for(vm_event.emit, timeout='7m', message='Event {evt} failed'.format(evt=event))
     vm_event.catch_in_timelines(soft_assert, targets)
@@ -455,12 +477,17 @@ def test_infra_timeline_rename_event(new_vm, soft_assert):
     """
     event = 'rename'
     vm_event = VMEvent(new_vm, event)
-    targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
+    if BZ(1670550).blocks:
+        targets = (new_vm,)
+    else:
+        targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
     wait_for(vm_event.emit, timeout='7m', message='Event {evt} failed'.format(evt=event))
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
+@pytest.mark.meta(blockers=[BZ(1550488, forced_streams=["5.9", "5.10"],
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_infra_timeline_delete_event(new_vm, soft_assert):
     """Test that the event delete is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
@@ -475,7 +502,10 @@ def test_infra_timeline_delete_event(new_vm, soft_assert):
     """
     event = 'delete'
     vm_event = VMEvent(new_vm, event)
-    targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
+    if BZ(1670550).blocks:
+        targets = (new_vm,)
+    else:
+        targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
     wait_for(vm_event.emit, timeout='7m', message='Event {evt} failed'.format(evt=event))
     navigate_to(new_vm, 'ArchiveDetails')
