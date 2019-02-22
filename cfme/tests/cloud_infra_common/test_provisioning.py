@@ -17,6 +17,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -161,7 +162,10 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
 
     # It will provision two of them
     vm_names = [vm_name + "001", vm_name + "002"]
-    requester = "vm_provision@cfmeqe.com "
+    if BZ(1628240, forced_streams=['5.10']).blocks and provider.one_of(CloudProvider):
+        requester = ""
+    else:
+        requester = "vm_provision@cfmeqe.com "
     collection = appliance.provider_based_collection(provider)
     inst_args = {'catalog': {
         'vm_name': vm_name,
@@ -170,9 +174,14 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
 
     vm = collection.create(vm_name, provider, form_values=inst_args, wait=False)
     try:
+        if provider.one_of(CloudProvider):
+            vm_type = "instance"
+        else:
+            vm_type = "virtual machine"
+
         subject = VersionPicker({
             LOWEST: "your request for a new vms was not autoapproved",
-            "5.10": "your virtual machine request is pending"
+            "5.10": "your {} request is pending".format(vm_type)
         }).pick()
         wait_for(
             lambda:
@@ -183,7 +192,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
             num_sec=90, delay=5)
         subject = VersionPicker({
             LOWEST: "virtual machine request was not approved",
-            "5.10": "virtual machine request from {}pending approval".format(requester)
+            "5.10": "{} request from {}pending approval".format(vm_type, requester)
         }).pick()
 
         wait_for(
@@ -225,7 +234,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
         )
     subject = VersionPicker({
         LOWEST: "your virtual machine configuration was approved",
-        "5.10": "your virtual machine request was approved"
+        "5.10": "your {} request was approved".format(vm_type)
     }).pick()
     try:
         wait_for(
@@ -254,7 +263,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
 
     subject = VersionPicker({
         LOWEST: "your virtual machine request has completed vm {}".format(vm_name),
-        "5.10": "your virtual machine request has completed vm name {}".format(vm_name)
+        "5.10": "your {} request has completed vm name {}".format(vm_type, vm_name)
     }).pick()
 
     # Wait for e-mails to appear
