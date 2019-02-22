@@ -15,8 +15,6 @@ from cfme.utils.update import update
 
 pytestmark = [
     test_requirements.generic_objects,
-    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9",
-                            reason="5.8 appliance doesn't support generic objects")
 ]
 
 

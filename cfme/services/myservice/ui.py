@@ -441,4 +441,4 @@ class AllGenericObjectInstance(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.details.generic_objects.click_at('Instances')
+        self.prerequisite_view.entities.generic_objects.click_at('Instances')
