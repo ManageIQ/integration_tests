@@ -435,6 +435,8 @@ class Report(BaseEntity, Updateable):
         view.flash.assert_no_error()
         if wait_for_finish:
             # Get the queued_at value to always target the correct row
+            if view.saved_reports.paginator.sorted_by['sortDir'] != "DESC":
+                view.saved_reports.paginator.sort(sort_by="Queued At", ascending=False)
             queued_at = view.saved_reports.table[0]["Queued At"].text
 
             def _get_state():
