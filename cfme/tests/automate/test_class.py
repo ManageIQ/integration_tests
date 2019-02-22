@@ -36,8 +36,7 @@ def test_class_crud(get_namespace):
         initialEstimate: 1/30h
         tags: automate
     """
-    namespace = get_namespace
-    a_class = namespace.classes.create(
+    a_class = get_namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric()
@@ -62,8 +61,7 @@ def test_schema_crud(get_namespace):
         initialEstimate: 1/20h
         tags: automate
     """
-    namespace = get_namespace
-    a_class = namespace.classes.create(
+    a_class = get_namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric()
@@ -106,11 +104,10 @@ def test_duplicate_class_disallowed(get_namespace):
         initialEstimate: 1/30h
         tags: automate
     """
-    namespace = get_namespace
     name = fauxfactory.gen_alphanumeric()
-    namespace.classes.create(name=name)
+    get_namespace.classes.create(name=name)
     with pytest.raises(Exception, match="Name has already been taken"):
-        namespace.classes.create(name=name)
+        get_namespace.classes.create(name=name)
 
 
 @pytest.mark.tier(2)
@@ -159,8 +156,7 @@ def test_class_display_name_unset_from_ui(get_namespace):
         initialEstimate: 1/30h
         tags: automate
     """
-    namespace = get_namespace
-    a_class = namespace.classes.create(
+    a_class = get_namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric()

@@ -187,6 +187,7 @@ def test_domain_lock_unlock(domain, appliance):
         caseimportance: medium
         tags: automate
     """
+    assert domain.exists
     ns1 = domain.namespaces.create(name='ns1')
     ns2 = ns1.namespaces.create(name='ns2')
     cls = ns2.classes.create(name='class1')
