@@ -4,7 +4,7 @@ import pytest
 from cfme.base.ui import ServerDiagnosticsView
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
@@ -17,11 +17,13 @@ from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 all_infra_prov = ProviderFilter(classes=[InfraProvider])
-excluded = ProviderFilter(classes=[SCVMMProvider, RHEVMProvider], inverted=True)
+# SCVMM timelines are not supported per the support matrix, KubeVirt also should not be collected
+excluded = ProviderFilter(classes=[SCVMMProvider, KubeVirtProvider], inverted=True)
 pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.provider(gen_func=providers, filters=[excluded, all_infra_prov]),
-    pytest.mark.usefixtures('setup_provider')
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.meta(blockers=[BZ(1550488, forced_streams=["5.9", "5.10"])]),
 ]
 
 
@@ -280,6 +282,9 @@ def test_infra_timeline_create_event(new_vm, soft_assert):
     """Test that the event create is visible on the management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
 
+    Metadata:
+        test_flag: events, provision, timelines
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
@@ -293,11 +298,13 @@ def test_infra_timeline_create_event(new_vm, soft_assert):
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.meta(blockers=[BZ(1542962, forced_streams=['5.8'])])
 def test_infra_timeline_policy_event(new_vm, control_policy, soft_assert):
     """Test that the category Policy Event is properly working on the Timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider. For this purpose, there is need to create a policy
     profile, assign it to the VM and stopping it which triggers the policy.
+
+    Metadata:
+        test_flag: events, provision, timelines
 
     Polarion:
         assignee: jdupuy
@@ -317,6 +324,9 @@ def test_infra_timeline_stop_event(new_vm, soft_assert):
     """Test that the event Stop is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
 
+    Metadata:
+        test_flag: events, provision, timelines
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
@@ -333,6 +343,9 @@ def test_infra_timeline_stop_event(new_vm, soft_assert):
 def test_infra_timeline_start_event(new_vm, soft_assert):
     """Test that the event start is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
+
+    Metadata:
+        test_flag: events, provision, timelines
 
     Polarion:
         assignee: jdupuy
@@ -351,6 +364,9 @@ def test_infra_timeline_suspend_event(new_vm, soft_assert):
     """Test that the event suspend is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider. The VM needs to be set before as management engine.
 
+    Metadata:
+        test_flag: events, provision, timelines
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
@@ -368,6 +384,9 @@ def test_infra_timeline_diagnostic(new_vm, soft_assert, mark_vm_as_appliance):
     """Test that the event create is visible on the appliance timeline ( EVM/configuration/Server/
     diagnostic/Timelines.
 
+    Metadata:
+        test_flag: events, provision, timelines
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
@@ -383,6 +402,9 @@ def test_infra_timeline_diagnostic(new_vm, soft_assert, mark_vm_as_appliance):
 def test_infra_timeline_clone_event(new_vm, soft_assert):
     """Test that the event clone is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
+
+    Metadata:
+        test_flag: events, provision, timelines
 
     Polarion:
         assignee: jdupuy
@@ -400,6 +422,9 @@ def test_infra_timeline_clone_event(new_vm, soft_assert):
 def test_infra_timeline_migrate_event(new_vm, soft_assert):
     """Test that the event migrate is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
+
+    Metadata:
+        test_flag: events, provision, timelines
 
     Polarion:
         assignee: jdupuy
@@ -420,6 +445,9 @@ def test_infra_timeline_rename_event(new_vm, soft_assert):
     Vm's cluster,  VM's host, VM's provider.
     Action "rename" does not exist on RHV, thats why it is excluded.
 
+    Metadata:
+        test_flag: events, provision, timelines
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
@@ -433,11 +461,12 @@ def test_infra_timeline_rename_event(new_vm, soft_assert):
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.meta(blockers=[BZ(1550488, forced_streams=['5.8', '5.9'],
-                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_infra_timeline_delete_event(new_vm, soft_assert):
     """Test that the event delete is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
+
+    Metadata:
+        test_flag: events, provision, timelines
 
     Polarion:
         assignee: jdupuy
