@@ -50,12 +50,7 @@ class EditPolicyEventAssignments(ControlExplorerView):
     cancel_button = Button("Cancel")
     save_button = Button("Save")
 
-    @property
-    def supposed_title(self):
-        if BZ(1531468, forced_streams=["5.9"]).blocks:
-            return 'Editing {} {} "{}" Event Assignments'
-        else:
-            return 'Editing {} {} Policy "{}" Event Assignments'
+    supposed_title = 'Editing {} {} Policy "{}" Event Assignments'
 
     @property
     def is_displayed(self):
@@ -354,7 +349,7 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
             events += self.assigned_events
         view = navigate_to(self, "Details")
         view.configuration.item_select("Edit this Policy's Event assignments")
-        view = self.create_view(EditPolicyEventAssignments)
+        view = self.create_view(EditPolicyEventAssignments, wait="5s")
         assert view.is_displayed
         changed = view.fill({"events": events})
         if changed:
