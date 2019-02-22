@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
@@ -88,7 +89,7 @@ def test_duplicate_namespace_disallowed(parent_namespace):
 
 
 @pytest.mark.tier(2)
-def test_namespace_name_wrong(appliance, domain):
+def test_namespace_name_wrong(domain):
     """
     Polarion:
         assignee: ghubale
@@ -100,10 +101,14 @@ def test_namespace_name_wrong(appliance, domain):
         testSteps:
             1. Navigate to Automation> Automate> Explorer
             2. Try to create namespace with name `Dummy Domain` (I put space which is invalid)
-            3. Should give proper flash message
+        expectedResults:
+            1.
+            2. Should give proper flash message
 
     Bugzilla:
         1650071
     """
-    with pytest.raises(Exception, match='Name may contain only'):
-        domain.namespaces.create(name='with space')
+    view = navigate_to(domain.namespaces, 'Add')
+    view.name.fill('Dummy Namespace')
+    view.add_button.click()
+    view.flash.assert_message('Name may contain only alphanumeric and _ . - $ characters')

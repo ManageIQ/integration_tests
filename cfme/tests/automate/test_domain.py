@@ -173,8 +173,10 @@ def test_domain_name_wrong(appliance):
         initialEstimate: 1/60h
         tags: automate
     """
-    with pytest.raises(Exception, match='Name may contain only'):
-        appliance.collections.domains.create(name='with space')
+    view = navigate_to(appliance.collections.domains, 'Add')
+    view.name.fill('Dummy Domain')
+    view.add_button.click()
+    view.flash.assert_message('Name may contain only alphanumeric and _ . - $ characters')
 
 
 @pytest.mark.tier(2)
