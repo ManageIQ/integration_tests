@@ -13,7 +13,7 @@ from cfme.utils.generators import random_vm_name
 pytestmark = [
     test_requirements.quota,
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider', 'uses_infra_providers'),
     pytest.mark.long_running,
     pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module", selector=ONE_PER_TYPE)
 ]
@@ -85,7 +85,7 @@ def new_user(appliance, new_group, new_credential):
     user = collection.create(
         name='user_{}'.format(fauxfactory.gen_alphanumeric()),
         credential=new_credential,
-        email='xyz@redhat.com',
+        email=fauxfactory.gen_email(),
         groups=new_group,
         cost_center='Workload',
         value_assign='Database')
@@ -109,18 +109,16 @@ def new_user(appliance, new_group, new_credential):
     indirect=['set_project_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
-def test_project_quota_enforce_via_lifecycle_infra(appliance, provider, setup_provider, new_user,
-                                                  set_project_quota, extra_msg, custom_prov_data,
-                                                  approve, prov_data, vm_name, template_name):
+def test_project_quota_enforce_via_lifecycle_infra(appliance, provider, new_user,
+                                                   set_project_quota, extra_msg, custom_prov_data,
+                                                   approve, prov_data, vm_name, template_name):
     """Test project quota via lifecycle method
-
-    Metadata:
-        test_flag: quota
 
     Polarion:
         assignee: ghubale
         casecomponent: Configuration
         initialEstimate: 1/4h
+        tags: quota
     """
     with new_user:
         recursive_update(prov_data, custom_prov_data)
@@ -128,8 +126,8 @@ def test_project_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pr
                            vm_name=vm_name, provisioning_data=prov_data, wait=False, request=None)
 
         # nav to requests page to check quota validation
-        request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name,
-                                                                     extra_msg)
+        request_description = 'Provision from [{template}] to [{vm}{msg}]'.format(
+            template=template_name, vm=vm_name, msg=extra_msg)
         provision_request = appliance.collections.requests.instantiate(request_description)
         if approve:
             provision_request.approve_request(method='ui', reason="Approved")

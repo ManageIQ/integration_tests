@@ -12,14 +12,13 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 
 pytestmark = [
     test_requirements.quota,
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.vm_migrate,
-    pytest.mark.usefixtures('uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider', 'uses_infra_providers'),
     pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module", selector=ONE_PER_TYPE)
 ]
 
@@ -133,13 +132,10 @@ def check_hosts(small_vm, provider):
     indirect=['set_roottenant_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
-def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_provider,
-                                            set_roottenant_quota, extra_msg, custom_prov_data,
-                                            approve, prov_data, vm_name, template_name):
+def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, set_roottenant_quota,
+                                                  extra_msg, custom_prov_data, approve, prov_data,
+                                                  vm_name, template_name):
     """Test Tenant Quota in UI and SSUI
-
-    Metadata:
-        test_flag: quota
 
     Polarion:
         assignee: ghubale
@@ -154,7 +150,8 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
                        provisioning_data=prov_data, wait=False, request=None)
 
     # nav to requests page to check quota validation
-    request_description = 'Provision from [{}] to [{}{}]'.format(template_name, vm_name, extra_msg)
+    request_description = 'Provision from [{template}] to [{vm}{msg}]'.format(
+        template=template_name, vm=vm_name, msg=extra_msg)
     provision_request = appliance.collections.requests.instantiate(request_description)
     if approve:
         provision_request.approve_request(method='ui', reason="Approved")
@@ -163,8 +160,6 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1633540, forced_streams=['5.10'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
@@ -181,9 +176,8 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, setup_pro
     indirect=['set_roottenant_quota', 'custom_prov_data'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
-def test_tenant_quota_enforce_via_service_infra(request, appliance, provider, setup_provider,
-                                                context, set_roottenant_quota, extra_msg,
-                                                custom_prov_data, catalog_item):
+def test_tenant_quota_enforce_via_service_infra(request, appliance, context, set_roottenant_quota,
+                                                extra_msg, custom_prov_data, catalog_item):
     """Tests quota enforcement via service infra
 
     Polarion:
@@ -225,8 +219,7 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, provider, se
     indirect=['set_roottenant_quota'],
     ids=['max_cores', 'max_sockets', 'max_memory']
 )
-def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_roottenant_quota,
-                                     small_vm, custom_prov_data):
+def test_tenant_quota_vm_reconfigure(appliance, set_roottenant_quota, small_vm, custom_prov_data):
     """Tests quota with vm reconfigure
 
     Polarion:
@@ -257,7 +250,6 @@ def test_tenant_quota_vm_reconfigure(appliance, provider, setup_provider, set_ro
 def test_setting_child_quota_more_than_parent(appliance, tenants_setup, parent_quota, child_quota,
                                               flash_text):
     """
-
     Polarion:
         assignee: ghubale
         casecomponent: Provisioning
@@ -298,11 +290,9 @@ def test_setting_child_quota_more_than_parent(appliance, tenants_setup, parent_q
     indirect=['set_roottenant_quota'],
     ids=['max_cores']
 )
-def test_vm_migration_after_assigning_tenant_quota(appliance, setup_provider, small_vm,
-                                                   set_roottenant_quota,
+def test_vm_migration_after_assigning_tenant_quota(appliance, small_vm, set_roottenant_quota,
                                                    custom_prov_data, provider):
     """
-
     Polarion:
         assignee: ghubale
         casecomponent: Infra
