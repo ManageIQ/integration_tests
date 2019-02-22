@@ -4,8 +4,6 @@ from riggerlib import recursive_update
 
 from . import Instance
 from . import InstanceCollection
-from cfme.exceptions import OptionNotAvailable
-from cfme.utils.log import logger
 
 
 @attr.s

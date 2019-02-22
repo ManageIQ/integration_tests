@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import attr
 from navmazing import NavigateToSibling
+from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 from widgetastic.widget import NoSuchElementException
 from widgetastic.widget import View
@@ -21,6 +22,7 @@ from cfme.utils.wait import wait_for
 from widgetastic_manageiq import CheckboxSelect
 from widgetastic_manageiq import Input
 from widgetastic_manageiq import Select
+
 
 @attr.s
 class OpenStackInstance(Instance):
@@ -92,6 +94,16 @@ class OpenStackInstance(Instance):
         """
         view = navigate_to(self, 'Details')
         return int(view.entities.summary('Relationships').get_text_of('Cloud Volumes'))
+
+    @property
+    def vm_default_args(self):
+        inst_args = super(OpenStackInstance, self).vm_default_args
+        provisioning = self.provider.data['provisioning']
+        recursive_update(inst_args, {
+            'environment': {
+                'cloud_tenant': provisioning.get('cloud_tenant'),
+            }})
+        return inst_args
 
 
 @attr.s
