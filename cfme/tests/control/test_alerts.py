@@ -433,6 +433,9 @@ def test_alert_hardware_reconfigured(request, configure_fleecing, alert_collecti
     depending on what has been done in your step 2, not the result of step 4. Step 4 is just to
     trigger the event.
 
+    Metadata:
+        test_flag: alerts, provision
+
     Polarion:
         assignee: jdupuy
         casecomponent: Control

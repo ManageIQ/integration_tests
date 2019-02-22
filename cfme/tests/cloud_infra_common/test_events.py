@@ -7,16 +7,18 @@ from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.utils.blockers import BZ
+from cfme.infrastructure.provider.kubevirt import KubeVirtProvider
+from cfme.markers.env_markers.provider import providers
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
 
+all_prov = ProviderFilter(classes=[InfraProvider, CloudProvider], required_fields=['provisioning'])
+excluded = ProviderFilter(classes=[KubeVirtProvider], inverted=True)
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
     pytest.mark.tier(2),
-    pytest.mark.provider([CloudProvider, InfraProvider],
-                         required_fields=['provisioning'],
+    pytest.mark.provider(gen_func=providers, filters=[all_prov, excluded],
                          scope='module'),
 ]
 
@@ -34,8 +36,6 @@ def vm_crud(provider, setup_provider_modscope, small_template_modscope):
 
 
 @pytest.mark.rhv2
-@pytest.mark.meta(blockers=[BZ(1509020, forced_streams=['5.8', '5.9'],
-                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_vm_create(request, appliance, vm_crud, provider, register_event):
     """ Test whether vm_create_complete event is emitted.
 
