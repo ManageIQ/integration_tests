@@ -24,7 +24,8 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
 from cfme.utils.version import LOWEST
 from cfme.utils.version import VersionPicker
-from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -162,7 +163,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
 
     # It will provision two of them
     vm_names = [vm_name + "001", vm_name + "002"]
-    if BZ(1628240, forced_streams=['5.10']).blocks and provider.one_of(CloudProvider):
+    if BZ(1628240).blocks and provider.one_of(CloudProvider):
         requester = ""
     else:
         requester = "vm_provision@cfmeqe.com "
