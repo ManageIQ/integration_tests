@@ -168,7 +168,7 @@ def make_vm_from_template(mgmt, stream, cfme_data, cluster, temp_template_name,
         template = mgmt.get_template(temp_template_name)
         vm = template.deploy(
             vm_name=temp_vm_name,
-            cluster=cluster,
+            cluster_name=cluster,
             cpu=cores,
             sockets=sockets,
             ram=vm_memory
@@ -235,7 +235,7 @@ def templatize_vm(mgmt, template_name, cluster, temp_vm_name, provider):
         vm = mgmt.get_vm(temp_vm_name)
         vm.mark_as_template(
             temporary_name=template_name,
-            cluster=cluster,
+            cluster_name=cluster,
             delete=False
         )
         # check, if template is really there
