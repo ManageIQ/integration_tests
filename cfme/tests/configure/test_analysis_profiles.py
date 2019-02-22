@@ -29,7 +29,7 @@ TENANT_NAME = "tenant_{}".format(fauxfactory.gen_alphanumeric())
 
 
 def events_check(updates=False):
-    form_bug = BZ(1485953, forced_streams=['5.7', '5.8', 'upstream'])
+    form_bug = BZ(1485953, forced_streams=['upstream'])
     if updates:
         return updated_files if not form_bug.blocks else None
     else:
@@ -402,4 +402,11 @@ def test_custom_role_modify_for_dynamic_product_feature(request, appliance, prod
     role = appliance.collections.roles.instantiate(name='EvmRole-tenant_quota_administrator')
     copied_role = role.copy()
     request.addfinalizer(copied_role.delete)
+    view = navigate_to(copied_role, 'Details')
+
+    # Checks whether feature tree path is checked for given node
+    assert not view.features_tree.check_uncheck_node(True, *(product_features[0][0]))
     copied_role.update({'product_features': product_features})
+
+    # Checks whether feature tree path is unchecked for given node
+    assert view.features_tree.check_uncheck_node(True, *(product_features[0][0]))
