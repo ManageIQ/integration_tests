@@ -511,17 +511,19 @@ class CFMENavigateStep(NavigateStep):
         str_msg = "[UI-NAV/{}/{}]: {}".format(class_name, self._name, msg)
         getattr(logger, level)(str_msg)
 
-    def construct_message(self, here, resetter, view, duration, waited):
+    def construct_message(self, here, resetter, view, duration, waited, force):
         str_here = "Already Here" if here else "Needed Navigation"
         str_resetter = "Resetter Used" if resetter else "No Resetter"
         str_view = "View Returned" if view else "No View Available"
         str_waited = "Waited on View" if waited else "No Wait on View"
-        return "{}/{}/{}/{} (elapsed {}ms)".format(
-            str_here, str_resetter, str_view, str_waited, duration
+        str_force = "Force Navigation Used" if force else "Navigation Not Forced"
+        return "{here}/{resetter}/{view}/{waited}/{force} (elapsed {duration}ms)".format(
+            here=str_here, resetter=str_resetter, view=str_view, waited=str_waited,
+            force=str_force, duration=duration
         )
 
     def go(self, _tries=0, *args, **kwargs):
-        nav_args = {'use_resetter': True, 'wait_for_view': 10}
+        nav_args = {'use_resetter': True, 'wait_for_view': 10, 'force': False}
         self.log_message("Beginning Navigation...", level="info")
         start_time = time.time()
         if _tries > 2:
@@ -538,6 +540,7 @@ class CFMENavigateStep(NavigateStep):
         here = False
         resetter_used = False
         waited = False
+        force_used = False
         try:
             here = self.check_for_badness(self.am_i_here, _tries, nav_args, *args, **kwargs)
         except NotImplementedError:
@@ -547,7 +550,9 @@ class CFMENavigateStep(NavigateStep):
         except Exception as e:
             self.log_message(
                 "Exception raised [{}] whilst checking if already here".format(e), level="error")
-        if not here:
+        if not here or nav_args['force']:
+            if nav_args['force']:
+                force_used = True
             self.log_message("Prerequisite Needed")
             self.prerequisite_view = self.prerequisite()
             try:
@@ -573,7 +578,8 @@ class CFMENavigateStep(NavigateStep):
                 message="Waiting for view [{}] to display".format(view.__class__.__name__)
             )
         self.log_message(
-            self.construct_message(here, resetter_used, view, duration, waited), level="info"
+            self.construct_message(here, resetter_used, view, duration, waited, force_used),
+            level="info"
         )
         return view
 

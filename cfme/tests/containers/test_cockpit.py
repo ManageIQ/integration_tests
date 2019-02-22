@@ -46,11 +46,10 @@ def test_cockpit_button_access(appliance, provider, cockpit, request):
 
     for node in nodes:
 
-        view = (navigate_to(node, 'Details') if node else
+        view = (navigate_to(node, 'Details', force=True) if node else
                 pytest.skip("Could not determine node of {}".format(provider.name)))
 
         if cockpit:
-            appliance.server.browser.refresh()
             assert not view.toolbar.web_console.disabled
             view.toolbar.web_console.click()
             webconsole = node.vm_console
@@ -61,5 +60,4 @@ def test_cockpit_button_access(appliance, provider, cockpit, request):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            appliance.server.browser.refresh()
             assert view.toolbar.web_console.disabled

@@ -774,14 +774,6 @@ def navigate_and_get_rows(provider, obj, count, silent_failure=False):
     return sample(rows, min(count, len(rows)))
 
 
-def refresh_and_navigate(*args, **kwargs):
-    # Refreshing the page and navigate - we need this for cases that we already in
-    # the page and want to reload it
-    view = navigate_to(*args, **kwargs)
-    view.browser.refresh()
-    return view
-
-
 class GetRandomInstancesMixin(object):
 
     def get_random_instances(self, count=1):

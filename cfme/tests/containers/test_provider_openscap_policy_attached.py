@@ -5,7 +5,6 @@ import dateparser
 import pytest
 
 from cfme.containers.provider import ContainersProvider
-from cfme.containers.provider import refresh_and_navigate
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
@@ -55,7 +54,7 @@ def openscap_assigned_rand_image(provider, random_image_instance):
 
 def get_table_attr(instance, table_name, attr):
     # Trying to read the table <table_name> attribute <attr>
-    view = refresh_and_navigate(instance, 'Details')
+    view = navigate_to(instance, 'Details', force=True)
     table = getattr(view.entities, table_name, None)
     if table:
         return table.read().get(attr)
