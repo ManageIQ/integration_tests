@@ -16,9 +16,10 @@ pytestmark = [test_requirements.service, pytest.mark.tier(2)]
 def test_catalog_crud(appliance):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         initialEstimate: 1/8h
+        tags: service
     """
     catalog_name = fauxfactory.gen_alphanumeric()
     cat = appliance.collections.catalogs.create(name=catalog_name, description='my catalog')
@@ -36,10 +37,11 @@ def test_catalog_crud(appliance):
 def test_catalog_duplicate_name(appliance):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: service
     """
     catalog_name = fauxfactory.gen_alphanumeric()
     cat = appliance.collections.catalogs.create(name=catalog_name, description='my catalog')
@@ -54,10 +56,11 @@ def test_permissions_catalog_add(appliance, request):
     """ Tests that a catalog can be added only with the right permissions
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: service
     """
 
     def _create_catalog(appliance):

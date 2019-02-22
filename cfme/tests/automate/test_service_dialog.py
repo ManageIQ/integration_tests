@@ -30,9 +30,10 @@ def create_dialog(appliance, element_data, label=None):
 def test_crud_service_dialog(appliance):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         initialEstimate: 1/4h
+        tags: service
     """
     element_data = {
         'element_information': {
@@ -59,10 +60,11 @@ def test_crud_service_dialog(appliance):
 def test_service_dialog_duplicate_name(appliance, request):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: low
         initialEstimate: 1/8h
+        tags: service
     """
     element_data = {
         'element_information': {
@@ -92,10 +94,11 @@ def test_service_dialog_duplicate_name(appliance, request):
 def test_checkbox_dialog_element(appliance, request):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: low
         initialEstimate: 1/8h
+        tags: service
     """
     element_data = {
         'element_information': {
@@ -116,10 +119,11 @@ def test_checkbox_dialog_element(appliance, request):
 def test_datecontrol_dialog_element(appliance, request):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: service
     """
     if appliance.version >= "5.9":
         choose_type = "Datepicker"
@@ -143,10 +147,11 @@ def test_datecontrol_dialog_element(appliance, request):
 def test_tagcontrol_dialog_element(appliance, request):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: service
     """
     element_data = {
         'element_information': {
@@ -167,10 +172,11 @@ def test_tagcontrol_dialog_element(appliance, request):
 def test_textareabox_dialog_element(appliance, request):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: service
     """
     if appliance.version >= "5.9":
         choose_type = "Text Area"
@@ -194,9 +200,10 @@ def test_textareabox_dialog_element(appliance, request):
 def test_reorder_elements(appliance, request):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         initialEstimate: 1/8h
+        tags: service
     """
     element_1_data = {
         'element_information': {
@@ -230,10 +237,11 @@ def test_reorder_elements(appliance, request):
 def test_reorder_unsaved_elements(appliance, request):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: low
         initialEstimate: 1/16h
+        tags: service
     """
     # Automate BZ - https://bugzilla.redhat.com/show_bug.cgi?id=1238721
     box_label = 'box_' + fauxfactory.gen_alphanumeric()
@@ -268,10 +276,11 @@ def test_reorder_unsaved_elements(appliance, request):
 def test_dropdownlist_dialog_element(appliance, request):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: low
         initialEstimate: 1/4h
+        tags: service
     """
     if appliance.version >= "5.9":
         choose_type = "Dropdown"
@@ -292,10 +301,11 @@ def test_dropdownlist_dialog_element(appliance, request):
 def test_radiobutton_dialog_element(appliance, request):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: Services
         caseimportance: low
         initialEstimate: 1/4h
+        tags: service
     """
     element_data = {
         'element_information': {
@@ -320,6 +330,7 @@ def test_mandatory_entry_point_with_dynamic_element(appliance):
         casecomponent: Services
         caseimportance: high
         initialEstimate: 1/8h
+        tags: service
     """
     element_1_data = {
         'element_information': {

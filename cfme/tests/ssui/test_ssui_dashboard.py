@@ -135,8 +135,10 @@ def test_total_services(appliance, setup_provider, context, order_service):
     """Tests total services count displayed on dashboard.
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
+        tags: ssui
     """
 
     with appliance.context.use(context):
@@ -152,6 +154,7 @@ def test_current_service(appliance, context):
         assignee: nansari
         casecomponent: SelfServiceUI
         initialEstimate: 1/4h
+        tags: ssui
     """
 
     with appliance.context.use(context):
@@ -167,6 +170,7 @@ def test_retiring_soon(appliance, context):
         assignee: nansari
         casecomponent: SelfServiceUI
         initialEstimate: 1/4h
+        tags: ssui
     """
 
     with appliance.context.use(context):
@@ -182,6 +186,7 @@ def test_retired_service(appliance, context):
         assignee: nansari
         casecomponent: SelfServiceUI
         initialEstimate: 1/4h
+        tags: ssui
     """
 
     with appliance.context.use(context):
@@ -214,6 +219,7 @@ def test_total_requests(appliance, context):
         assignee: nansari
         casecomponent: SelfServiceUI
         initialEstimate: 1/4h
+        tags: ssui
     """
 
     with appliance.context.use(context):
@@ -229,6 +235,7 @@ def test_pending_requests(appliance, context):
         assignee: nansari
         casecomponent: SelfServiceUI
         initialEstimate: 1/4h
+        tags: ssui
     """
 
     with appliance.context.use(context):
@@ -244,6 +251,7 @@ def test_approved_requests(appliance, context):
         assignee: nansari
         casecomponent: SelfServiceUI
         initialEstimate: 1/4h
+        tags: ssui
     """
 
     with appliance.context.use(context):
@@ -259,6 +267,7 @@ def test_denied_requests(appliance, context):
         assignee: nansari
         casecomponent: SelfServiceUI
         initialEstimate: 1/4h
+        tags: ssui
     """
 
     with appliance.context.use(context):

@@ -224,7 +224,9 @@ class TestServiceRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/30h
+            tags: service
         """
         outcome = query_resource_attributes(services[0])
         for failure in outcome.failed:
@@ -246,7 +248,9 @@ class TestServiceRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/3h
+            tags: service
         """
         for service in services:
             new_name = fauxfactory.gen_alphanumeric()
@@ -268,7 +272,9 @@ class TestServiceRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/3h
+            tags: service
         """
         new_names = []
         services_data_edited = []
@@ -295,8 +301,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         delete_resources_from_detail(services, method='POST')
 
@@ -307,8 +315,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         delete_resources_from_detail(services, method='DELETE')
 
@@ -319,8 +329,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/3h
+            tags: service
         """
         delete_resources_from_collection(services)
 
@@ -334,8 +346,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         collection = appliance.rest_api.collections.services
         vm = get_vms_in_service(vm_service).pop()
@@ -360,8 +374,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/3h
+            tags: service
         """
         date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime("%Y/%m/%d")
         future = {
@@ -395,8 +411,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         user = appliance.rest_api.collections.users.get(userid="admin")
         data = {
@@ -416,8 +434,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         user = appliance.rest_api.collections.users.get(userid="admin")
         requests = [{
@@ -444,8 +464,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         collection = appliance.rest_api.collections.services
         vm = get_vms_in_service(vm_service).pop()
@@ -471,8 +493,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         vm = get_vms_in_service(vm_service).pop()
         assert vm_service.vms[0].id == vm.id
@@ -484,8 +508,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         service = services(request, appliance, num=1).pop()
         rest_vm = appliance.rest_api.collections.vms.get(name=vm)
@@ -502,8 +528,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         vm = get_vms_in_service(vm_service).pop()
         request.addfinalizer(vm.action.delete)
@@ -521,8 +549,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         vm_assigned = get_vms_in_service(vm_service).pop()
         vm_added = appliance.rest_api.collections.vms.get(name=vm)
@@ -545,8 +575,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         collection = appliance.rest_api.collections.services
         service = collection.action.create(service_body())[0]
@@ -567,8 +599,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         collection = appliance.rest_api.collections.services
         grandparent = collection.action.create(service_body())[0]
@@ -594,8 +628,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         collection = appliance.rest_api.collections.services
         parent = collection.action.create(service_body())[0]
@@ -615,8 +651,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         collection = appliance.rest_api.collections.services
         parent = collection.action.create(service_body())[0]
@@ -640,8 +678,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         collection = appliance.rest_api.collections.services
         service = collection.action.create(service_body())[0]
@@ -670,8 +710,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         collection = appliance.rest_api.collections.services
         parent = collection.action.create(service_body())[0]
@@ -724,8 +766,10 @@ class TestServiceDialogsRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         _dialog_rest(request, appliance)
         assert_response(appliance)
@@ -739,8 +783,10 @@ class TestServiceDialogsRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         new_descriptions = []
         if from_detail:
@@ -785,8 +831,10 @@ class TestServiceDialogsRESTAPI(object):
             test_flag: rest
 
         Polarion:
-            assignee: sshveta
+            assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         delete_resources_from_detail(service_dialogs, method=method)
 
@@ -798,7 +846,9 @@ class TestServiceDialogsRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         delete_resources_from_collection(service_dialogs)
 
@@ -826,7 +876,9 @@ class TestServiceTemplateRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         for service_template in service_templates:
             record = appliance.rest_api.collections.service_templates.get(id=service_template.id)
@@ -845,7 +897,9 @@ class TestServiceTemplateRESTAPI(object):
 
         Polarion:
             assignee: nansari
-            initialEstimate: 1/3h
+            casecomponent: Rest
+            initialEstimate: 1/4h
+            tags: service
         """
         for service_template in service_templates:
             new_name = fauxfactory.gen_alphanumeric()
@@ -863,7 +917,9 @@ class TestServiceTemplateRESTAPI(object):
 
         Polarion:
             assignee: nansari
-            initialEstimate: 1/3h
+            casecomponent: Rest
+            initialEstimate: 1/4h
+            tags: service
         """
         delete_resources_from_collection(service_templates)
 
@@ -877,6 +933,7 @@ class TestServiceTemplateRESTAPI(object):
         Polarion:
             assignee: nansari
             initialEstimate: 1/4h
+            tags: service
         """
         delete_resources_from_detail(service_templates, method='POST')
 
@@ -888,7 +945,9 @@ class TestServiceTemplateRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         delete_resources_from_detail(service_templates, method='DELETE')
 
@@ -909,7 +968,9 @@ class TestServiceTemplateRESTAPI(object):
 
         Polarion:
             assignee: nansari
-            initialEstimate: 1/3h
+            casecomponent: Rest
+            initialEstimate: 1/4h
+            tags: service
         """
 
         stpl = service_templates[0]
@@ -946,7 +1007,9 @@ class TestServiceTemplateRESTAPI(object):
 
         Polarion:
             assignee: nansari
-            initialEstimate: 1/3h
+            casecomponent: Rest
+            initialEstimate: 1/4h
+            tags: service
         """
         new_names = []
         service_tpls_data_edited = []
@@ -997,7 +1060,9 @@ class TestServiceCatalogsRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         new_descriptions = []
         if from_detail:
@@ -1040,7 +1105,9 @@ class TestServiceCatalogsRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         catalog = service_catalogs[0]
         unassign_templates(service_templates)
@@ -1086,7 +1153,9 @@ class TestServiceCatalogsRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         catalog = service_catalogs[0]
         unassign_templates(service_templates)
@@ -1145,7 +1214,9 @@ class TestServiceCatalogsRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         # this doesn't return resource in the "service_requests" collection
         # using workaround with `response.json()`
@@ -1188,7 +1259,9 @@ class TestServiceCatalogsRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         delete_resources_from_detail(service_catalogs, method=method, num_sec=100, delay=5)
 
@@ -1200,7 +1273,9 @@ class TestServiceCatalogsRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         delete_resources_from_collection(service_catalogs, num_sec=300, delay=5)
 
@@ -1436,7 +1511,9 @@ class TestServiceRequests(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         new_template = _service_templates(request, appliance, num=1)
         new_template = new_template[0]
@@ -1745,7 +1822,9 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         assert cart.state == 'cart'
         cart_dict = appliance.rest_api.get('{}/cart'.format(cart.collection._href))
@@ -1760,7 +1839,9 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         # This will fail somehow once BZ 1493788 is fixed.
         # There can be one and only one shopping cart for the authenticated user.
@@ -1780,7 +1861,9 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         requests = [{'service_template_href': tmplt.href} for tmplt in service_templates]
         body = {'service_requests': requests}
@@ -1806,7 +1889,9 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         assert cart.service_requests.subcount == 0
         self.add_requests(cart, service_templates_class)
@@ -1824,7 +1909,9 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         self.add_requests(cart, service_templates_class)
         cart_req_ids = {req.id for req in cart.service_requests}
@@ -1847,7 +1934,9 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         self.add_requests(cart, service_templates_class)
         cart_req_ids = {req.id for req in cart.service_requests}
@@ -1870,7 +1959,9 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         self.add_requests(cart, service_templates_class)
         cart_req_ids = {req.id for req in cart.service_requests}
@@ -1891,7 +1982,9 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         with pytest.raises(Exception, match='Cannot copy a service order in the cart state'):
             cart.action.copy(name='new_cart')
@@ -1906,7 +1999,9 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         selected_templates = service_templates_class[:2]
         self.add_requests(cart, selected_templates)
@@ -1952,7 +2047,9 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         delete_resources_from_detail([cart], method=method)
 
@@ -1965,6 +2062,8 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
+            tags: service
         """
         delete_resources_from_collection([cart])

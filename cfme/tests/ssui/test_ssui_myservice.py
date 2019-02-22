@@ -43,8 +43,10 @@ def test_myservice_crud(appliance, setup_provider, context, order_service):
         test_flag: ssui, services
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
+        tags: ssui
     """
     catalog_item = order_service
     with appliance.context.use(context):
@@ -64,8 +66,10 @@ def test_retire_service_ssui(appliance, setup_provider,
         test_flag: ssui, services
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
+        tags: ssui
     """
     catalog_item = order_service
     with appliance.context.use(context):
@@ -87,8 +91,10 @@ def test_service_start(appliance, setup_provider, context,
         test_flag: ssui, services
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
+        tags: ssui
     """
     catalog_item = order_service
     with appliance.context.use(context):

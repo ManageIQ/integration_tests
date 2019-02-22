@@ -39,7 +39,8 @@ def test_service_catalog_crud_ssui(appliance, setup_provider,
         test_flag: ssui
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
         tags: ssui
     """
@@ -258,7 +259,7 @@ def test_sui_monitor_ansible_playbook_std_output():
     """
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: SelfServiceUI
         testtype: functional
         initialEstimate: 1/4h
@@ -276,7 +277,7 @@ def test_sui_snapshots_for_vm_create_edit_delete():
     """
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         casecomponent: SelfServiceUI
         testtype: functional
         initialEstimate: 1/4h

@@ -84,6 +84,7 @@ def test_catalog_item_crud(appliance, dialog, catalog):
         casecomponent: Services
         caseimportance: high
         initialEstimate: 1/8h
+        tags: service
     """
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
@@ -128,6 +129,7 @@ def test_add_button_group(catalog_item, appliance):
         casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: service
     """
     button_name = catalog_item.add_button_group()
     view = appliance.browser.create_view(BaseLoggedInPage)
@@ -144,6 +146,7 @@ def test_add_button(catalog_item, appliance):
         assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: service
     """
     button_name = catalog_item.add_button()
     view = appliance.browser.create_view(BaseLoggedInPage)
@@ -174,6 +177,7 @@ def test_catalog_item_duplicate_name(appliance, dialog, catalog):
         casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: service
     """
     cat_item_name = fauxfactory.gen_alphanumeric()
     cat_item = appliance.collections.catalog_items.create(
@@ -207,6 +211,7 @@ def test_permissions_catalog_item_add(appliance, catalog, dialog, request):
         casecomponent: Services
         caseimportance: high
         initialEstimate: 1/8h
+        tags: service
     """
 
     def _create_catalog(appliance):
@@ -270,6 +275,7 @@ def test_restricted_catalog_items_select_for_catalog_bundle(appliance, request, 
         assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: service
     """
     catalog_bundles = appliance.collections.catalog_bundles
     with user_restricted:

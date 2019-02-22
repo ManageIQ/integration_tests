@@ -66,6 +66,7 @@ def test_tag_dialog_catalog_item_ssui(appliance, catalog_item):
         casecomponent: SelfServiceUI
         caseimportance: high
         initialEstimate: 1/8h
+        tags: ssui
     """
     with appliance.context.use(ViaSSUI):
         dialog_values = {'service_level': "Gold"}
