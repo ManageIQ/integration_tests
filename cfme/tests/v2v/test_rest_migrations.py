@@ -185,3 +185,75 @@ def test_rest_mapping_bulk_delete_from_collection(
     results = appliance.rest_api.response.json()["results"]
     assert results[0]["success"] is False
     assert results[1]["success"] is True
+
+
+def test_rest_conversion_create(request, appliance):
+    """
+    Tests conversion host create
+
+    Polarion:
+        assignee: ytale
+        casecomponent: V2V
+        testtype: functional
+        initialEstimate: 1/8h
+        subcomponent: RHV
+        startsin: 5.9
+        tags: V2V
+    """
+    conversion_host = appliance.rest_api.collections.conversion_hosts.action.create(
+        name=fauxfactory.gen_alphanumeric(),
+        resource_type="Host",
+        resource_id=1,
+        vddk_transport_supported="true",
+        ssh_transport_supported="false")[0]
+
+    @request.addfinalizer
+    def _cleanup():
+        if conversion_host.exists:
+            conversion_host.action.delete()
+
+    assert conversion_host.exists
+
+
+def test_rest_conversion_bulk_delete_from_collection(request, appliance):
+    """
+    Tests conversion host bulk delete from collection.
+
+    Bulk delete operation deletes all specified resources that exist. When the
+    resource doesn't exist at the time of deletion, the corresponding result
+    has "success" set to false.
+
+    Polarion:
+        assignee: ytale
+        casecomponent: V2V
+        testtype: functional
+        initialEstimate: 1/8h
+        subcomponent: RHV
+        startsin: 5.9
+        tags: V2V
+    """
+    conversion_host = appliance.rest_api.collections.conversion_hosts
+    data = [
+        {
+            "name": fauxfactory.gen_alphanumeric(),
+            "resource_type": "Host",
+            "resource_id": 1,
+            "vddk_transport_supported": "true",
+            "ssh_transport_supported": "false"
+        }
+        for _ in range(2)
+    ]
+    hosts_obj = conversion_host.action.create(*data)
+
+    @request.addfinalizer
+    def _cleanup():
+        for m in hosts_obj:
+            if m.exists:
+                m.action.delete()  # delete by post method
+
+    hosts_obj[0].action.delete()
+    conversion_host.action.delete(*hosts_obj)  # delete by delete method
+    assert appliance.rest_api.response
+    results = appliance.rest_api.response.json()["results"]
+    assert results[0]["success"] is False
+    assert results[1]["success"] is True
