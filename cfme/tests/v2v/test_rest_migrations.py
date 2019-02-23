@@ -187,9 +187,9 @@ def test_rest_mapping_bulk_delete_from_collection(
     assert results[1]["success"] is True
 
 
-def test_rest_conversion_create(request, appliance):
+def test_rest_conversion_crud(request, appliance):
     """
-    Tests conversion host create
+    Tests conversion host crud
 
     Polarion:
         assignee: ytale
@@ -207,12 +207,22 @@ def test_rest_conversion_create(request, appliance):
         vddk_transport_supported="true",
         ssh_transport_supported="false")[0]
 
+    assert conversion_host.exists
+
+    edited_host = appliance.rest_api.collections.conversion_hosts.action.edit(
+        id=conversion_host.id,
+        name=fauxfactory.gen_alphanumeric(),
+        resource_type="VmOrTemplate",
+        resource_id=2,
+        vddk_transport_supported="false",
+        ssh_transport_supported="true")[0]
+
     @request.addfinalizer
     def _cleanup():
-        if conversion_host.exists:
-            conversion_host.action.delete()
+        if edited_host.exists:
+            edited_host.action.delete()
 
-    assert conversion_host.exists
+    assert appliance.rest_api.response
 
 
 def test_rest_conversion_bulk_delete_from_collection(request, appliance):
@@ -249,10 +259,10 @@ def test_rest_conversion_bulk_delete_from_collection(request, appliance):
     def _cleanup():
         for m in hosts_obj:
             if m.exists:
-                m.action.delete()  # delete by post method
+                m.action.delete()
 
     hosts_obj[0].action.delete()
-    conversion_host.action.delete(*hosts_obj)  # delete by delete method
+    conversion_host.action.delete(*hosts_obj)
     assert appliance.rest_api.response
     results = appliance.rest_api.response.json()["results"]
     assert results[0]["success"] is False
