@@ -7,6 +7,7 @@ from cfme import test_requirements
 from cfme.intelligence.reports.schedules import NewScheduleView
 from cfme.intelligence.reports.schedules import ScheduleDetailsView
 from cfme.utils.path import data_path
+from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 
@@ -101,3 +102,34 @@ def test_report_schedules_invalid_email(appliance, schedule_data):
     view = appliance.collections.schedules.create_view(NewScheduleView)
     view.flash.assert_message("One of e-mail addresses 'To' is not valid")
     view.flash.assert_message("E-mail address 'From' is not valid")
+
+
+@test_requirements.report
+@pytest.mark.tier(1)
+@pytest.mark.meta(server_roles="+notifier")
+def test_reports_create_schedule_send_report(smtp_test, schedule):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/2h
+        startsin: 5.8
+        tags: report
+        setup:
+            1. Navigate to Cloud > Intel > Reports > Schedules.
+            2. Click on `Configuration` and select `Add a new Schedule`.
+            3. Create schedule that send an email to more than one users.
+            Un-check "Send if Report is Empty" option.
+        testSteps:
+            1. Queue up this Schedule and check if the email was sent.
+        expectedResults:
+            1. Queueing the schedule must send the report via email to all the users.
+    """
+    schedule.queue()
+    emails_sent = ",".join(schedule.emails)
+
+    # wait for emails to appear
+    wait_for(lambda: len(smtp_test.get_emails()) > 0, num_sec=90, delay=5)
+
+    assert len(smtp_test.get_emails(to_address=emails_sent)) == 1
