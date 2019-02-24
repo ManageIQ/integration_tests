@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from copy import copy
+from random import choice
 
 import pytest
 import six
@@ -144,6 +145,7 @@ def test_infra_grid_page_per_item(appliance, request, page, value, set_grid):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
+        tags: settings
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
@@ -175,6 +177,7 @@ def test_infra_tile_page_per_item(appliance, request, page, value, set_tile):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: settings
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
@@ -206,6 +209,7 @@ def test_infra_list_page_per_item(appliance, request, page, value, set_list):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: settings
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
@@ -238,6 +242,7 @@ def test_infra_report_page_per_item(appliance, value, set_report, get_report):
         casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: settings
     """
     appliance.user.my_settings.visual.report_view_limit = value
     limit = appliance.user.my_settings.visual.report_view_limit
@@ -269,6 +274,7 @@ def test_infra_start_page(visual, request, appliance, start_page):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: settings
     """
     request.addfinalizer(set_default_page)
     if appliance.user.my_settings.visual.login_page != start_page:
@@ -294,6 +300,7 @@ def test_infraprovider_noquads(request, set_infra_provider_quad):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: settings
     """
     view = navigate_to(InfraProvider, 'All')
     view.toolbar.view_selector.select('Grid View')
@@ -311,6 +318,7 @@ def test_host_noquads(appliance, request, set_host_quad):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: settings
     """
     host_collection = appliance.collections.hosts
     view = navigate_to(host_collection, 'All')
@@ -329,6 +337,7 @@ def test_datastore_noquads(request, set_datastore_quad, appliance):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: settings
     """
     dc = DatastoreCollection(appliance)
     view = navigate_to(dc, 'All')
@@ -347,6 +356,7 @@ def test_vm_noquads(appliance, request, set_vm_quad):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: settings
     """
     view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     view.toolbar.view_selector.select('Grid View')
@@ -365,8 +375,45 @@ def test_template_noquads(appliance, set_template_quad):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: settings
     """
     view = navigate_to(appliance.collections.infra_templates, 'TemplatesOnly')
     view.toolbar.view_selector.select('Grid View')
     # Here data property will return an empty dict when the Quadrants option is deactivated.
     assert not view.entities.get_first_entity().data
+
+
+def test_change_truncate_long_text_save_button_enabled(appliance):
+    """
+        This test checks if setting long_text enables the save button
+        and if it is saved successfully
+
+        BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1650461
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/10h
+        tags: settings
+        setup:
+            1. Navigate to Visual tab.
+            2. Change the value of long_text.
+        testSteps:
+            1. See if save button is enabled.
+            2. Save and check if the value was updated.
+        expectedResults:
+            1. Save button is enabled.
+            2. Value is changed successfully.
+    """
+    view = navigate_to(appliance.user.my_settings, "Visual")
+
+    available_options = [_.text for _ in view.tabs.visual.grid_tile_icons.long_text.all_options]
+    available_options.remove(view.tabs.visual.grid_tile_icons.long_text.selected_option)
+    selected_choice = choice(available_options)
+
+    view.tabs.visual.grid_tile_icons.long_text.fill(selected_choice)
+    assert not view.tabs.visual.save.disabled
+
+    view.tabs.visual.save.click()
+    assert view.tabs.visual.grid_tile_icons.long_text.selected_option == selected_choice
