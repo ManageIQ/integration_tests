@@ -407,13 +407,13 @@ def test_change_truncate_long_text_save_button_enabled(appliance):
             2. Value is changed successfully.
     """
     view = navigate_to(appliance.user.my_settings, "Visual")
-
-    available_options = [_.text for _ in view.tabs.visual.grid_tile_icons.long_text.all_options]
-    available_options.remove(view.tabs.visual.grid_tile_icons.long_text.selected_option)
+    visual = view.tabs.visual
+    available_options = [option.text for option in visual.grid_tile_icons.long_text.all_options]
+    available_options.remove(visual.grid_tile_icons.long_text.selected_option)
     selected_choice = choice(available_options)
 
-    view.tabs.visual.grid_tile_icons.long_text.fill(selected_choice)
+    visual.grid_tile_icons.long_text.fill(selected_choice)
     assert not view.tabs.visual.save.disabled
 
-    view.tabs.visual.save.click()
-    assert view.tabs.visual.grid_tile_icons.long_text.selected_option == selected_choice
+    visual.save.click()
+    assert visual.grid_tile_icons.long_text.selected_option == selected_choice

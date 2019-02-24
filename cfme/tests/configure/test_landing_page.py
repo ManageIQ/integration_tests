@@ -151,6 +151,7 @@ def test_landing_page_admin(start_page, appliance, my_settings, request):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: settings
     """
     request.addfinalizer(lambda: set_to_default('Cloud Intel / Dashboard', my_settings))
     assert set_landing_page(start_page, appliance, my_settings)

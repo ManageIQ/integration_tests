@@ -95,6 +95,7 @@ def test_cloud_grid_page_per_item(appliance, request, page, value, set_grid):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: settings
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
@@ -126,6 +127,7 @@ def test_cloud_tile_page_per_item(appliance, request, page, value, set_tile):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: settings
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
@@ -157,6 +159,7 @@ def test_cloud_list_page_per_item(appliance, request, page, value, set_list):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: settings
     """
     if isinstance(page, six.string_types):
         page = getattr(appliance.collections, page)
@@ -189,6 +192,7 @@ def test_cloud_start_page(request, appliance, start_page):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: settings
     """
     request.addfinalizer(lambda: set_default_page(appliance))
     appliance.user.my_settings.visual.login_page = start_page
@@ -204,6 +208,7 @@ def test_cloudprovider_noquads(request, set_cloud_provider_quad):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
+        tags: settings
     """
     view = navigate_to(CloudProvider, 'All')
     view.toolbar.view_selector.select('Grid View')
