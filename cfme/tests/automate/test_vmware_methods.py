@@ -70,8 +70,8 @@ def testing_vm(setup_provider, provider):
 
 def test_vmware_vimapi_hotadd_disk(
         appliance, request, testing_group, testing_vm, domain, cls):
-    """Tests hot adding a disk to vmware vm. This test exercises the ``VMware_HotAdd_Disk`` method,
-       located in ``/Integration/VMware/VimApi``
+    """Tests hot adding a disk to vmware vm. This test exercises the `VMware_HotAdd_Disk` method,
+       located in `/Integration/VMware/VimApi`
 
     Polarion:
         assignee: ghubale

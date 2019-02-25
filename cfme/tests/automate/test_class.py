@@ -12,17 +12,19 @@ pytestmark = [test_requirements.automate]
     scope="function",
     params=["plain", "nested_existing"])
 def get_namespace(request, domain):
-    ns = domain.namespaces.create(
+    namespace = domain.namespaces.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha()
     )
     if request.param == 'plain':
-        return ns
+        yield namespace
     else:
-        return ns.namespaces.create(
+        namespace = namespace.namespaces.create(
             name=fauxfactory.gen_alpha(),
             description=fauxfactory.gen_alpha()
         )
+        yield namespace
+    namespace.delete_if_exists()
 
 
 @pytest.mark.sauce
