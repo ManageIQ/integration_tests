@@ -415,6 +415,7 @@ def test_infra_timeline_diagnostic(new_vm, soft_assert, mark_vm_as_appliance):
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
+@pytest.mark.meta(blockers=[BZ(1622952, forced_streams=['5.10'])])
 def test_infra_timeline_clone_event(new_vm, soft_assert):
     """Test that the event clone is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
