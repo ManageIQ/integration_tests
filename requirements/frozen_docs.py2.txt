@@ -142,7 +142,7 @@ requests-toolbelt==0.8.0
 riggerlib==3.1.5
 scandir==1.9.0
 scp==0.12.1
-selenium==3.12.0
+selenium==3.14.0
 selenium-smart-locator==0.2.0
 Send2Trash==1.5.0
 sentaku==0.6.4
