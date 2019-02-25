@@ -108,7 +108,10 @@ def test_namespace_name_wrong(domain):
     Bugzilla:
         1650071
     """
+    wrong_namespace = 'Dummy Namespace'
     view = navigate_to(domain.namespaces, 'Add')
-    view.name.fill('Dummy Namespace')
+    view.name.fill(wrong_namespace)
     view.add_button.click()
     view.flash.assert_message('Name may contain only alphanumeric and _ . - $ characters')
+    wrong_namespace = domain.namespaces.instantiate(name=wrong_namespace)
+    assert not wrong_namespace.exists
