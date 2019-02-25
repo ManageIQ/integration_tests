@@ -272,7 +272,8 @@ class ExpressionEditor(View, Pretty):
         before = self.expression_text.encode("utf-8").strip()
         prog()
         wait_for(
-            lambda: self.expression_text != "<new element>" and self.expression_text != before,
+            lambda: self.expression_text != "<new element>" and self.expression_text != before
+            if expression != 'delete_whole_expression' else self.expression_text == "<new element>",
             handle_exception=True,
             num_sec=10,
             message="updated expression text to appear",
