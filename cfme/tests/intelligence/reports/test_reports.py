@@ -61,6 +61,7 @@ def test_reports_delete_saved_report(appliance, request):
         subtype="Virtual Machines",
         menu_name="Hardware Information for VMs",
     ).queue(wait_for_finish=True)
+    request.addfinalizer(report.delete_if_exists)
     view = navigate_to(appliance.collections.saved_reports, "All")
     # iterates through every row and checks if the 'Name' column matches the given value
     for row in view.table.rows():

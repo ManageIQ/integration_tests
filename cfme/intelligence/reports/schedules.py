@@ -192,6 +192,9 @@ class Schedule(Updateable, Pretty, BaseEntity):
             if item['Name'] == self.name:
                 return item['Active'] == 'True'
 
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
 
 @attr.s
 class ScheduleCollection(BaseCollection):

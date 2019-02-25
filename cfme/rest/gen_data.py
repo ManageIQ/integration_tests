@@ -393,7 +393,7 @@ def roles(request, appliance, num=1, **kwargs):
     for _ in range(num):
         data.append(
             {
-                "name": kwargs("name", "role_name_{}".format(fauxfactory.gen_alphanumeric()))
+                "name": kwargs.get("name", "role_name_{}".format(fauxfactory.gen_alphanumeric()))
             }
         )
 
@@ -449,7 +449,7 @@ def users(request, appliance, num=1, **kwargs):
                 "userid": kwargs.get("userid", "user_{}".format(uniq)),
                 "name": kwargs.get("name", "name_{}".format(uniq)),
                 "password": kwargs.get("password", fauxfactory.gen_alphanumeric()),
-                "email": kwargs.get("email", "user@example.com"),
+                "email": kwargs.get("email", "{}@example.com".format(uniq)),
                 "group": {"description": kwargs.get("group", "EvmGroup-user_self_service")},
             }
         )

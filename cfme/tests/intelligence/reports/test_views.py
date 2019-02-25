@@ -27,8 +27,7 @@ def report(appliance):
         menu_name="Virtual Infrastructure Platforms"
     ).queue(wait_for_finish=True)
     yield report
-    if report.exists:
-        report.delete()
+    report.delete_if_exists()
 
 
 @pytest.mark.rhv3

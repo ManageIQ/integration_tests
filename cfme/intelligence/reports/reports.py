@@ -469,6 +469,10 @@ class Report(BaseEntity, Updateable):
         except (CandidateNotFound, TimedOutError):
             return False
 
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
+
 
 @attr.s
 class ReportsCollection(BaseCollection):
@@ -574,6 +578,9 @@ class SavedReport(Updateable, BaseEntity):
         except (CandidateNotFound, TimedOutError):
             return False
 
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
 
 @attr.s
 class SavedReportsCollection(BaseCollection):
