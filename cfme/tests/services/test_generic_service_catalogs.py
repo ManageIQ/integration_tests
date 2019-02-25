@@ -68,6 +68,7 @@ def test_delete_catalog_item_deletes_service(appliance, catalog_item):
         service_catalogs.order()
 
 
+@pytest.mark.ignore_stream("5.10")
 def test_service_circular_reference(appliance, catalog_item):
     """
     Polarion:
@@ -118,6 +119,7 @@ def test_service_generic_catalog_bundle(appliance, catalog_item):
     assert provision_request.is_succeeded(), msg
 
 
+@pytest.mark.ignore_stream("5.10")
 def test_bundles_in_bundle(appliance, catalog_item):
     """
     Polarion:
