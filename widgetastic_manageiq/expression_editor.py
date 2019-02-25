@@ -212,7 +212,9 @@ class ExpressionEditor(View, Pretty):
     def select_first_expression(self):
         """There is always at least one (???), so no checking of bounds."""
         els = wait_for(
-            lambda: self.browser.elements(self.EXPRESSION_TEXT, parent=self._expressions_root),
+            lambda: self.browser.elements(
+                self.EXPRESSION_TEXT, parent=self._expressions_root
+            ),
             fail_condition=[],
             timeout=5,
         )
@@ -222,21 +224,27 @@ class ExpressionEditor(View, Pretty):
 
     def select_expression_by_text(self, text):
         self.browser.click(
-            "{}[contains(normalize-space(text()),'{}')]".format(self.EXPRESSION_TEXT, text)
+            "{}[contains(normalize-space(text()),'{}')]".format(
+                self.EXPRESSION_TEXT, text
+            )
         )
 
     def no_expression_present(self):
         els = self.browser.elements(self.EXPRESSION_TEXT, parent=self._expressions_root)
         if len(els) > 1:
             return False
-        no_expression_text = "???" if self.browser.product_version < "5.10" else "<new element>"
+        no_expression_text = (
+            "???" if self.browser.product_version < "5.10" else "<new element>"
+        )
         return self.expression_text == no_expression_text
 
     def any_expression_present(self):
         return not self.no_expression_present()
 
     def is_editing(self):
-        no_expression_text = "???" if self.browser.product_version < "5.10" else "<new element>"
+        no_expression_text = (
+            "???" if self.browser.product_version < "5.10" else "<new element>"
+        )
         try:
             self.browser.element(
                 "{}[contains(normalize-space(text()), {})]".format(
@@ -272,8 +280,10 @@ class ExpressionEditor(View, Pretty):
         before = self.expression_text.encode("utf-8").strip()
         prog()
         wait_for(
-            lambda: self.expression_text != "<new element>" and self.expression_text != before
-            if expression != 'delete_whole_expression' else self.expression_text == "<new element>",
+            lambda: self.expression_text != "<new element>"
+            and self.expression_text != before
+            if expression != "delete_whole_expression"
+            else self.expression_text == "<new element>",
             handle_exception=True,
             num_sec=10,
             message="updated expression text to appear",
@@ -328,12 +338,25 @@ class ExpressionEditor(View, Pretty):
         """ Fills the 'Registry' type of form."""
         view = self.registry_form_view
         view.fill(
-            dict(type="Registry", key=key, value=value, operation=operation, contents=contents)
+            dict(
+                type="Registry",
+                key=key,
+                value=value,
+                operation=operation,
+                contents=contents,
+            )
         )
         self.click_commit()
 
     def fill_find(
-        self, field=None, skey=None, value=None, check=None, cfield=None, ckey=None, cvalue=None
+        self,
+        field=None,
+        skey=None,
+        value=None,
+        check=None,
+        cfield=None,
+        ckey=None,
+        cvalue=None,
     ):
         view = self.find_form_view
         view.fill(
@@ -370,7 +393,9 @@ class ExpressionEditor(View, Pretty):
         else:
             no_date = True
         view = self.field_form_view
-        view.fill(dict(type="Field", field=field, key=key, value=value if no_date else None))
+        view.fill(
+            dict(type="Field", field=field, key=key, value=value if no_date else None)
+        )
         # In case of advanced search box
         if view.user_input.is_displayed:
             user_input = value is None
@@ -389,14 +414,20 @@ class ExpressionEditor(View, Pretty):
                 # Specific selection
                 if not view.input_select_date.is_displayed:
                     self.click_switch_to_specific()
-                if (isinstance(value, tuple) or isinstance(value, list)) and len(value) == 2:
+                if (isinstance(value, tuple) or isinstance(value, list)) and len(
+                    value
+                ) == 2:
                     date, time = value
-                elif isinstance(value, six.string_types):  # is in correct format mm/dd/yyyy
+                elif isinstance(
+                    value, six.string_types
+                ):  # is in correct format mm/dd/yyyy
                     # Date only (for now)
                     date = value[:]
                     time = None
                 else:
-                    raise TypeError("fill_field expects a 2-tuple (date, time) or string with date")
+                    raise TypeError(
+                        "fill_field expects a 2-tuple (date, time) or string with date"
+                    )
                 # TODO datetime.datetime support
                 view.input_select_date.fill(date)
                 # Try waiting a little bit for time field
@@ -446,7 +477,9 @@ def get_func(name, context):
     try:
         func = getattr(context, name)
     except AttributeError:
-        raise NameError("Could not find function {} to operate the editor!".format(name))
+        raise NameError(
+            "Could not find function {} to operate the editor!".format(name)
+        )
     try:
         func.__call__
         return func
@@ -504,10 +537,14 @@ def run_commands(command_list, clear_expression=True, context=None):
                 elif isinstance(value, dict):
                     kwargs.update(value)
                 else:
-                    raise Exception("I use '{}' type here!".format(type(value).__name__))
+                    raise Exception(
+                        "I use '{}' type here!".format(type(value).__name__)
+                    )
                 step_list.append(partial(func, *args, **kwargs))
         else:
-            raise Exception("I cannot process '{}' type here!".format(type(command).__name__))
+            raise Exception(
+                "I cannot process '{}' type here!".format(type(command).__name__)
+            )
     if clear_expression:
         context.delete_whole_expression()
     for step in step_list:
@@ -548,7 +585,9 @@ def create_program(dsl_program, widget_object):
             continue
         args_match = re.match(ARGS_CALL, line)
         if not args_match:
-            raise SyntaxError("Could not resolve statement `{}' on line {}".format(line, i))
+            raise SyntaxError(
+                "Could not resolve statement `{}' on line {}".format(line, i)
+            )
         fname = args_match.groupdict()["name"]
         args = [x.strip() for x in args_match.groupdict()["args"].split(",")]
         if len(args) > 0 and len(args[0]) > 0:
@@ -558,7 +597,9 @@ def create_program(dsl_program, widget_object):
                 command_list.append({fname: kwargs})
             else:
                 # Args
-                command_list.append({fname: [None if arg == "/None/" else arg for arg in args]})
+                command_list.append(
+                    {fname: [None if arg == "/None/" else arg for arg in args]}
+                )
         else:
             command_list.append(fname)
     return create_program_from_list(command_list, widget_object)
