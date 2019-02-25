@@ -15,10 +15,12 @@ def rbac_api(appliance, request):
     user, user_data = _users(
         request, appliance, password="smartvm", group="EvmGroup-user"
     )
-    yield appliance.new_rest_api_instance(
+    api = appliance.new_rest_api_instance(
         entry_point=appliance.rest_api._entry_point,
         auth=(user[0].userid, user_data[0]["password"]),
     )
+    assert_response(api)
+    yield api
     appliance.rest_api.collections.users.action.delete(id=user[0].id)
 
 
@@ -42,7 +44,7 @@ def test_non_admin_user_reports_access_rest(appliance, request, rbac_api):
             1. User should be able to access all reports.
     """
     report_data = rbac_api.collections.reports.all
-    assert_response(rbac_api)
+    assert_response(appliance)
     assert len(report_data)
 
 
@@ -52,7 +54,6 @@ def test_reports_delete_saved_report(appliance, request):
     Polarion:
         assignee: pvala
         casecomponent: Reporting
-        caseimportance: high
         initialEstimate: 1/16h
         tags: report
     """

@@ -12,27 +12,25 @@ from cfme.utils.blockers import BZ
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.report,
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([OpenStackProvider, EC2Provider, RHEVMProvider, VMwareProvider],
-                         scope='module')
-]
+                         scope='module')]
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def report(appliance):
     # TODO parameterize on path, for now test infrastructure reports
     report = appliance.collections.reports.instantiate(
         type="Configuration Management",
         subtype="Hosts",
-        menu_name="Virtual Infrastructure Platforms"
+        menu_name="Virtual Infrastructure Platforms",
     ).queue(wait_for_finish=True)
     yield report
     report.delete_if_exists()
 
 
 @pytest.mark.rhv3
-@pytest.mark.parametrize('view_mode', ['Hybrid View', 'Graph View', 'Tabular View'])
-@pytest.mark.meta(blockers=[BZ(1401560)])
+@pytest.mark.parametrize("view_mode", ["Hybrid View", "Graph View", "Tabular View"])
 def test_report_view(report, view_mode):
     """Tests provisioning via PXE
 
@@ -42,9 +40,11 @@ def test_report_view(report, view_mode):
     Polarion:
         assignee: pvala
         casecomponent: Reporting
-        caseimportance: high
         initialEstimate: 1/6h
+        tags: report
     """
-    view = navigate_to(report, 'Details')
+    view = navigate_to(report, "Details")
     view.view_selector.select(view_mode)
-    assert view.view_selector.selected == view_mode, "View setting failed for {}".format(view)
+    assert (
+        view.view_selector.selected == view_mode
+    ), "View setting failed for {}".format(view)

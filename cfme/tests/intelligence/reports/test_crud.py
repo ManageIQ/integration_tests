@@ -55,13 +55,11 @@ def get_custom_report(appliance, custom_report_values):
 
 
 @pytest.mark.rhel_testing
-@pytest.mark.meta(blockers=[BZ(1531600, forced_streams=["5.9"])])
 def test_custom_report_crud(custom_report_values, appliance):
     """
     Polarion:
         assignee: pvala
         casecomponent: Reporting
-        caseimportance: high
         initialEstimate: 1/16h
         tags: report
     """
@@ -74,13 +72,11 @@ def test_custom_report_crud(custom_report_values, appliance):
     custom_report.delete()
 
 
-@pytest.mark.meta(blockers=[1202412])
 def test_schedule_crud(schedule_data, appliance):
     """
     Polarion:
         assignee: pvala
         casecomponent: Reporting
-        caseimportance: high
         initialEstimate: 1/16h
         tags: report
     """
@@ -233,7 +229,6 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
     Polarion:
         assignee: pvala
         casecomponent: Reporting
-        caseimportance: high
         initialEstimate: 1/16h
         tags: report
     """
@@ -268,7 +263,6 @@ def test_crud_custom_report_schedule(
     Polarion:
         assignee: pvala
         casecomponent: Reporting
-        caseimportance: high
         initialEstimate: 1/10h
         tags: report
     """

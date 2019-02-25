@@ -59,7 +59,6 @@ def test_schedule_queue(schedule, appliance, interval):
     Polarion:
         assignee: pvala
         casecomponent: Reporting
-        caseimportance: high
         initialEstimate: 1/10h
         tags: report
     """
@@ -74,7 +73,6 @@ def test_reports_disable_enable_schedule(appliance, schedule):
     Polarion:
         assignee: pvala
         casecomponent: Reporting
-        caseimportance: high
         initialEstimate: 1/10h
         tags: report
     """
