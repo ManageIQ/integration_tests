@@ -5,7 +5,6 @@ import pytest
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [pytest.mark.tier(3)]
@@ -27,13 +26,105 @@ updated_files = [
 
 TENANT_NAME = "tenant_{}".format(fauxfactory.gen_alphanumeric())
 
+PRODUCT_FEATURES = [
+    [
+        (
+            [
+                "Everything",
+                "Settings",
+                "Configuration",
+                "Access Control",
+                "Tenants",
+                "Modify",
+                "Manage Quotas",
+                "Manage Quotas (My Company)",
+            ],
+            False,
+        )
+    ],
+    [
+        (
+            [
+                "Everything",
+                "Settings",
+                "Configuration",
+                "Access Control",
+                "Tenants",
+                "Modify",
+                "Manage Quotas",
+                "Manage Quotas ({})".format(TENANT_NAME),
+            ],
+            False,
+        )
+    ],
+    [
+        (
+            [
+                "Everything",
+                "Automation",
+                "Automate",
+                "Customization",
+                "Dialogs",
+                "Modify",
+                "Add",
+                "Add ({})".format(TENANT_NAME),
+            ],
+            False,
+        )
+    ],
+    [
+        (
+            [
+                "Everything",
+                "Automation",
+                "Automate",
+                "Customization",
+                "Dialogs",
+                "Modify",
+                "Edit",
+                "Edit ({})".format(TENANT_NAME),
+            ],
+            False,
+        )
+    ],
+    [
+        (
+            [
+                "Everything",
+                "Automation",
+                "Automate",
+                "Customization",
+                "Dialogs",
+                "Modify",
+                "Delete",
+                "Delete ({})".format(TENANT_NAME),
+            ],
+            False,
+        )
+    ],
+    [
+        (
+            [
+                "Everything",
+                "Automation",
+                "Automate",
+                "Customization",
+                "Dialogs",
+                "Modify",
+                "Copy",
+                "Copy ({})".format(TENANT_NAME),
+            ],
+            False,
+        )
+    ],
+]
+
 
 def events_check(updates=False):
-    form_bug = BZ(1485953, forced_streams=['upstream'])
     if updates:
-        return updated_files if not form_bug.blocks else None
+        return updated_files
     else:
-        return events_list if not form_bug.blocks else None
+        return events_list
 
 
 @pytest.fixture
@@ -345,23 +436,17 @@ def test_analysis_profile_description_validation(analysis_profile_collection):
     'product_features',
     [  # Navigation for product features trees
         # product_features tree for Managing Quotas for 'My Company' tenant
-        [(['Everything', 'Settings', 'Configuration', 'Access Control', 'Tenants', 'Modify',
-           'Manage Quotas', 'Manage Quotas (My Company)'], False)],
+        PRODUCT_FEATURES[0],
         # product_features tree for Managing Quotas for custom tenant
-        [(['Everything', 'Settings', 'Configuration', 'Access Control', 'Tenants', 'Modify',
-           'Manage Quotas', 'Manage Quotas ({})'.format(TENANT_NAME)], False)],
+        PRODUCT_FEATURES[1],
         # product_features tree for Managing Dialogs for 'Add'
-        [(['Everything', 'Automation', 'Automate', 'Customization', 'Dialogs', 'Modify', 'Add',
-           'Add ({})'.format(TENANT_NAME)], False)],
+        PRODUCT_FEATURES[2],
         # product_features tree for Managing Dialogs for 'Edit'
-        [(['Everything', 'Automation', 'Automate', 'Customization', 'Dialogs', 'Modify', 'Edit',
-           'Edit ({})'.format(TENANT_NAME)], False)],
+        PRODUCT_FEATURES[3],
         # product_features tree for Managing Dialogs for 'Delete'
-        [(['Everything', 'Automation', 'Automate', 'Customization', 'Dialogs', 'Modify', 'Delete',
-           'Delete ({})'.format(TENANT_NAME)], False)],
+        PRODUCT_FEATURES[4],
         # product_features tree for Managing Dialogs for  'Copy'
-        [(['Everything', 'Automation', 'Automate', 'Customization', 'Dialogs', 'Modify', 'Copy',
-           'Copy ({})'.format(TENANT_NAME)], False)]
+        PRODUCT_FEATURES[5]
     ]
 )
 def test_custom_role_modify_for_dynamic_product_feature(request, appliance, product_features):
@@ -389,6 +474,13 @@ def test_custom_role_modify_for_dynamic_product_feature(request, appliance, prod
                enabled.
             6. It updates changes only when we checked or unchecked for all of the tenants under
                edit/add/copy/delete options.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. 'save' button should be enabled after changing product feature tree.
+            6. It should work for individual tenant.
 
     Bugzilla:
         1655012
@@ -400,7 +492,8 @@ def test_custom_role_modify_for_dynamic_product_feature(request, appliance, prod
     )
     request.addfinalizer(tenant.delete)
     role = appliance.collections.roles.instantiate(name='EvmRole-tenant_quota_administrator')
-    copied_role = role.copy()
+    copied_role = role.copy(name="{role}_{name}".format(
+        role=role.name, name=fauxfactory.gen_alpha()))
     request.addfinalizer(copied_role.delete)
     view = navigate_to(copied_role, 'Details')
 

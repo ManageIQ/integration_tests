@@ -1174,6 +1174,12 @@ def test_delete_default_tenant(appliance):
             3. Select default tenant('My Company') from tenants table
             4. Delete using 'configuration > Delete selected items'
             5. Check whether default tenant is deleted or not
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Default tenant('My Company') must not be deleted
     """
     view = navigate_to(appliance.collections.tenants, "All")
     roottenant = appliance.collections.tenants.get_root_tenant()
