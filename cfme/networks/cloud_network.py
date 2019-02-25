@@ -24,7 +24,7 @@ from cfme.utils.wait import wait_for
 
 
 @attr.s
-class CloudNetwork(Taggable, BaseEntity):
+class CloudNetwork(Taggable, BaseEntity, CustomButtonEventsMixin):
     """Class representing cloud networks in cfme database"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
@@ -112,7 +112,7 @@ class CloudNetwork(Taggable, BaseEntity):
 
 
 @attr.s
-class CloudNetworkCollection(BaseCollection, CustomButtonEventsMixin):
+class CloudNetworkCollection(BaseCollection):
     """Collection object for Cloud Network object"""
     ENTITY = CloudNetwork
 

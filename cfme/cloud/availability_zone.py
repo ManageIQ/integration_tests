@@ -75,7 +75,7 @@ class AvailabilityZoneDetailsAccordion(View):
         tree = ManageIQTree()
 
 
-class AvailabilityZoneView(BaseLoggedInPage, CustomButtonEventsMixin):
+class AvailabilityZoneView(BaseLoggedInPage):
     """Bare bones base view for page header matching"""
     @property
     def in_availability_zones(self):
@@ -144,7 +144,7 @@ class CloudAvailabilityZoneTimelinesView(TimelinesView, AvailabilityZoneView):
 
 
 @attr.s
-class AvailabilityZone(BaseEntity, Taggable):
+class AvailabilityZone(BaseEntity, Taggable, CustomButtonEventsMixin):
     _param_name = "AvailabilityZone"
 
     name = attr.ib()

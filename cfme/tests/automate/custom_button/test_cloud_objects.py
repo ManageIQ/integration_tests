@@ -399,7 +399,12 @@ def test_custom_button_expression(appliance, request, setup_objs, button_group, 
                 bool([obj for obj in ["PROVIDER", "CLOUD_NETWORK"] if obj in button_group])
                 and btn_dialog
             ),
-        )
+        ),
+        BZ(
+            1680525,
+            forced_streams=["5.10"],
+            unblock=lambda button_group: "CLOUD_NETWORK" not in button_group,
+        ),
     ]
 )
 @pytest.mark.ignore_stream("5.9")
@@ -423,7 +428,7 @@ def test_custom_button_events(request, dialog, setup_objs, button_group, btn_dia
             3. Assert event count
 
     Bugzilla:
-        1668023
+        1668023, 1680525
     """
     group, obj_type = button_group
     dialog_ = dialog if btn_dialog else None
@@ -438,8 +443,8 @@ def test_custom_button_events(request, dialog, setup_objs, button_group, btn_dia
     request.addfinalizer(button.delete_if_exists)
 
     for setup_obj in setup_objs:
-        view = navigate_to(setup_obj, "Details")
         initial_count = len(setup_obj.get_button_events())
+        view = navigate_to(setup_obj, "Details")
         custom_button_group = Dropdown(view, group.hover)
         custom_button_group.item_select(button.text)
 
