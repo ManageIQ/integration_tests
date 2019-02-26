@@ -15,7 +15,11 @@ pytestmark = [
     test_requirements.storage,
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([OpenStackProvider], scope='module'),
+    pytest.mark.provider(
+        [OpenStackProvider],
+        scope='module',
+        required_fields=[['provisioning', 'cloud_tenant']]
+    ),
 ]
 
 STORAGE_SIZE = 1
@@ -111,7 +115,6 @@ def test_storage_volume_crud(appliance, provider):
     assert not volume.exists
 
 
-@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 def test_storage_volume_edit_tag(volume):
     """ Test add and remove tag to storage volume
 
@@ -140,7 +143,6 @@ def test_storage_volume_edit_tag(volume):
     assert not tag_available
 
 
-@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 def test_multiple_cloud_volumes_tag_edit(appliance, soft_assert):
     """Test tag can be added to multiple volumes at once
 

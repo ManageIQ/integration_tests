@@ -7,9 +7,15 @@ from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 
-pytestmark = [pytest.mark.ignore_stream("upstream"),
-              pytest.mark.usefixtures('setup_provider'),
-              pytest.mark.provider([OpenStackProvider], scope='module')]
+pytestmark = [
+    pytest.mark.ignore_stream("upstream"),
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider(
+        [OpenStackProvider],
+        scope='module',
+        required_fields=[['provisioning', 'cloud_tenant']]
+    )
+]
 
 STORAGE_SIZE = 1
 
@@ -57,7 +63,6 @@ def test_storage_volume_backup_create(backup):
     assert backup.size == STORAGE_SIZE
 
 
-@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 @pytest.mark.tier(3)
 def test_storage_volume_backup_edit_tag_from_detail(backup):
     """
@@ -79,7 +84,6 @@ def test_storage_volume_backup_edit_tag_from_detail(backup):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 def test_storage_volume_backup_delete(backup):
     """ Volume backup deletion method not support by 5.8
 

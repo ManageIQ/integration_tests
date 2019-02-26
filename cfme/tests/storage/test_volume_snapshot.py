@@ -15,7 +15,11 @@ pytestmark = [
     test_requirements.storage,
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([OpenStackProvider], scope='module')
+    pytest.mark.provider(
+        [OpenStackProvider],
+        scope='module',
+        required_fields=[['provisioning', 'cloud_tenant']]
+    )
 ]
 
 STORAGE_SIZE = 1
@@ -164,7 +168,6 @@ def test_storage_volume_snapshot_crud(volume):
     assert not snapshot.exists
 
 
-@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 @pytest.mark.tier(3)
 def test_storage_volume_snapshot_edit_tag_from_detail(snapshot, tag):
     """ Test tags for snapshot
