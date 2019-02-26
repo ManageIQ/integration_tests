@@ -187,7 +187,7 @@ class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
                    'description': description
                    })
         view.add_button.click()
-        view.wait_displayed()
+        view.flash.wait_displayed("10s")
         view.flash.assert_no_error()
         # TODO - Move assertions to tests
         return self.parent.instantiate(template_group=self.template_group,
@@ -229,10 +229,10 @@ class OrchestrationTemplatesCollection(BaseCollection):
                    'draft': draft,
                    'content': content})
         view.add_button.click()
+        view.flash.wait_displayed("10s")
+        view.flash.assert_no_error()
         template = self.instantiate(template_group=template_group, description=description,
                                     template_name=template_name, content=content, draft=draft)
-        view = self.create_view(DetailsTemplateView)
-        view.flash.assert_no_error()
         return template
 
 
