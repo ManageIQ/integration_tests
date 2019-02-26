@@ -648,7 +648,16 @@ class InfraVm(VM):
             title = getattr(self, self.parent_vm.provider.SNAPSHOT_TITLE)
             view = navigate_to(self.parent_vm, 'SnapshotsAll')
             root_item = view.tree.expand_path(self.parent_vm.name)
-            return has_child(view.tree, '{} (Active)'.format(title), root_item)
+            from cfme.infrastructure.provider.rhevm import RHEVMProvider
+
+            if self.parent_vm.provider.one_of(RHEVMProvider):
+                child = view.tree.child_items(root_item)
+                last_snapshot = view.tree.child_items(child[0])[0]
+                return (len(child) == 1 and
+                        child[0].text == 'Active VM (Active)' and
+                        last_snapshot.text == title)
+            else:
+                return has_child(view.tree, '{} (Active)'.format(title), root_item)
 
         def create(self, force_check_memory=False):
             """Create a snapshot"""
