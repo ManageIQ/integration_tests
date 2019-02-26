@@ -15,7 +15,11 @@ from cfme.utils.wait import TimedOutError
 pytestmark = [
     pytest.mark.tier(2),
     test_requirements.discovery,
-    pytest.mark.provider([BaseProvider], scope='module')
+    pytest.mark.provider(
+        [BaseProvider],
+        scope='module',
+        required_fields=[['templates', 'small_template']]  # default for create_on_provider
+    )
 ]
 
 
@@ -79,7 +83,12 @@ def test_vm_discovery(request, setup_provider, provider, vm_crud):
         vm_crud.cleanup_on_provider()
         if_scvmm_refresh_provider(provider)
 
-    vm_crud.create_on_provider(allow_skip="default")
+    try:
+        vm_crud.create_on_provider(allow_skip="default")
+    except KeyError:
+        msg = 'Missing template for provider {}'.format(provider.key)
+        logger.exception(msg)
+        pytest.skip(msg)
     if_scvmm_refresh_provider(provider)
 
     try:

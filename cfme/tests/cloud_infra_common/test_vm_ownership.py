@@ -13,9 +13,12 @@ from cfme.utils.log import logger
 
 pytestmark = [
     test_requirements.ownership,
-    pytest.mark.meta(blockers=[BZ(1380781, forced_streams=["5.7"])]),
     pytest.mark.tier(3),
-    pytest.mark.provider([CloudProvider, InfraProvider], scope='module')
+    pytest.mark.provider(
+        [CloudProvider, InfraProvider],
+        scope='module',
+        required_fields=[['templates', 'small_template']]  # default for create_on_provider
+    )
 ]
 
 
@@ -23,7 +26,12 @@ pytestmark = [
 def vm_crud(provider):
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate(random_vm_name(context='ownrs'), provider)
-    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    try:
+        vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    except KeyError:
+        msg = 'Missing template for provider {}'.format(provider.key)
+        logger.exception(msg)
+        pytest.skip(msg)
     yield vm
 
     try:

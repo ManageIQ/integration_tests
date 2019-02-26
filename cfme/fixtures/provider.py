@@ -384,7 +384,12 @@ def big_template_modscope(provider):
 
 @pytest.fixture(scope="function")
 def provisioning(provider):
-    return provider.data['provisioning']
+    try:
+        return provider.data['provisioning']
+    except KeyError:
+        logger.warning('Tests using the provisioning fixture '
+                       'should include required_fields in their ProviderFilter marker')
+        pytest.skip('Missing "provisioning" field in provider data')
 
 
 @pytest.fixture(scope="function")
