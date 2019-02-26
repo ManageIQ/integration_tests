@@ -350,7 +350,6 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         view = navigate_to(self, "Details")
         view.configuration.item_select("Edit this Policy's Event assignments")
         view = self.create_view(EditPolicyEventAssignments, wait="5s")
-        assert view.is_displayed
         changed = view.fill({"events": events})
         if changed:
             view.save_button.click()

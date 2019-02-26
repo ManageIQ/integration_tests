@@ -196,7 +196,7 @@ class InstEvent(object):
             policy timeline. Returns an array of the found events.
             """
 
-            timelines_view = navigate_to(target, 'Timelines')
+            timelines_view = navigate_to(target, 'Timelines', wait_for_view=20, force=True)
 
             if isinstance(timelines_view, ServerDiagnosticsView):
                 timelines_view = timelines_view.timelines
@@ -252,7 +252,7 @@ class InstEvent(object):
             try:
                 wait_for(self._check_timelines,
                          [target, policy_events],
-                         timeout='7m',
+                         timeout='15m',
                          fail_condition=0)
             except TimedOutError:
                 soft_assert(False, '0 occurrence of {evt} found on the timeline of {tgt}'.format(
@@ -267,6 +267,7 @@ def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
     if BZ(1670550).blocks:
         targets = (new_instance, )
@@ -287,8 +288,10 @@ def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'policy'
+    # accordions on azone and provider's page are not displayed in 5.10
     if BZ(1670550).blocks:
         targets = (new_instance, )
     else:
@@ -307,7 +310,9 @@ def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
+    # accordions on azone and provider's page are not displayed in 5.10
     if BZ(1670550).blocks:
         targets = (new_instance, )
     else:
@@ -327,7 +332,9 @@ def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
+    # accordions on azone and provider's page are not displayed in 5.10
     if BZ(1670550).blocks:
         targets = (new_instance, )
     else:
@@ -348,6 +355,7 @@ def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_asse
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'create'
     targets = (new_instance.appliance.server,)
@@ -365,8 +373,10 @@ def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'rename'
+    # accordions on azone and provider's page are not displayed in 5.10
     if BZ(1670550).blocks:
         targets = (new_instance, )
     else:
@@ -385,8 +395,10 @@ def test_cloud_timeline_delete_event(new_instance, soft_assert, azone):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'delete'
+    # accordions on azone and provider's page are not displayed in 5.10
     if BZ(1670550).blocks:
         targets = (new_instance, )
     else:
