@@ -26,31 +26,6 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="module")
-def policy_profile_collection(appliance):
-    return appliance.collections.policy_profiles
-
-
-@pytest.fixture(scope="module")
-def policy_collection(appliance):
-    return appliance.collections.policies
-
-
-@pytest.fixture(scope="module")
-def condition_collection(appliance):
-    return appliance.collections.conditions
-
-
-@pytest.fixture(scope="module")
-def action_collection(appliance):
-    return appliance.collections.actions
-
-
-@pytest.fixture(scope="module")
-def alert_collection(appliance):
-    return appliance.collections.alerts
-
-
 def create_policy(request, collection):
     args = (VMControlPolicy, fauxfactory.gen_alpha())
     kwargs = {}
@@ -121,12 +96,12 @@ items = [
 
 
 @pytest.fixture(scope="module")
-def collections(policy_collection, condition_collection, action_collection, alert_collection):
+def collections(appliance):
     return {
-        "Policies": policy_collection,
-        "Conditions": condition_collection,
-        "Actions": action_collection,
-        "Alerts": alert_collection
+        "Policies": appliance.collections.policies,
+        "Conditions": appliance.collections.conditions,
+        "Actions": appliance.collections.actions,
+        "Alerts": appliance.collections.alerts
     }
 
 
@@ -142,8 +117,8 @@ def vmware_vm(request, virtualcenter_provider):
 
 
 @pytest.fixture
-def hardware_reconfigured_alert(alert_collection):
-    alert = alert_collection.create(
+def hardware_reconfigured_alert(appliance):
+    alert = appliance.collections.alerts.create(
         fauxfactory.gen_alpha(),
         evaluate=("Hardware Reconfigured", {"hardware_attribute": "RAM"}),
         timeline_event=True
@@ -197,9 +172,8 @@ def setup_disk_usage_alert(appliance):
     assert not result.failed
 
 
-@pytest.mark.meta(blockers=[1155284])
-def test_scope_windows_registry_stuck(request, appliance, infra_provider, policy_collection,
-        policy_profile_collection):
+@pytest.mark.meta(blockers=[BZ(1155284)])
+def test_scope_windows_registry_stuck(request, appliance, infra_provider):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable.
 
     Polarion:
@@ -208,7 +182,7 @@ def test_scope_windows_registry_stuck(request, appliance, infra_provider, policy
         caseimportance: low
         initialEstimate: 1/6h
     """
-    policy = policy_collection.create(
+    policy = appliance.collections.policies.create(
         VMCompliancePolicy,
         "Windows registry scope glitch testing Compliance Policy",
         active=True,
@@ -216,7 +190,7 @@ def test_scope_windows_registry_stuck(request, appliance, infra_provider, policy
         r"some value, INCLUDES, some content)"
     )
     request.addfinalizer(lambda: policy.delete() if policy.exists else None)
-    profile = policy_profile_collection.create(
+    profile = appliance.collections.policy_profiles.create(
         "Windows registry scope glitch testing Compliance Policy",
         policies=[policy]
     )
@@ -232,8 +206,8 @@ def test_scope_windows_registry_stuck(request, appliance, infra_provider, policy
     vm.unassign_policy_profiles(profile.description)
 
 
-@pytest.mark.meta(blockers=[1243357], automates=[1243357])
-def test_invoke_custom_automation(request, action_collection):
+@pytest.mark.meta(blockers=[BZ(1243357)], automates=[1243357])
+def test_invoke_custom_automation(request, appliance):
     """This test tests a bug that caused the ``Invoke Custom Automation`` fields to disappear.
 
     Steps:
@@ -247,7 +221,7 @@ def test_invoke_custom_automation(request, action_collection):
         initialEstimate: 1/6h
     """
     # The action is to have all possible fields filled, that way we can ensure it is good
-    action = action_collection.create(
+    action = appliance.collections.actions.create(
         fauxfactory.gen_alpha(),
         "Invoke a Custom Automation",
         dict(
@@ -268,9 +242,8 @@ def test_invoke_custom_automation(request, action_collection):
     request.addfinalizer(lambda: action.delete() if action.exists else None)
 
 
-@pytest.mark.meta(blockers=[1375093], automates=[1375093])
-def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, policy_collection,
-        policy_profile_collection, appliance):
+@pytest.mark.meta(blockers=[BZ(1375093)], automates=[1375093])
+def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, appliance):
     """This test checks if compliance history link in a VM details screen work.
 
     Steps:
@@ -289,14 +262,16 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, po
         initialEstimate: 1/4h
         casecomponent: Control
     """
-    policy = policy_collection.create(
+    policy = appliance.collections.policies.create(
         VMCompliancePolicy,
         "Check compliance history policy {}".format(fauxfactory.gen_alpha()),
         active=True,
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vmware_vm.name)
     )
     request.addfinalizer(lambda: policy.delete() if policy.exists else None)
-    policy_profile = policy_profile_collection.create(policy.description, policies=[policy])
+    policy_profile = appliance.collections.policy_profiles.create(
+        policy.description, policies=[policy]
+    )
     request.addfinalizer(lambda: policy_profile.delete() if policy_profile.exists else None)
     virtualcenter_provider.assign_policy_profiles(policy_profile.description)
     request.addfinalizer(lambda: virtualcenter_provider.unassign_policy_profiles(
@@ -311,7 +286,7 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, po
 
 @pytest.mark.meta(blockers=[BZ(1395965, forced_streams=["5.6", "5.7"]),
                             BZ(1491576, forced_streams=["5.7"])])
-def test_delete_all_actions_from_compliance_policy(request, policy_collection):
+def test_delete_all_actions_from_compliance_policy(request, appliance):
     """We should not allow a compliance policy to be saved
     if there are no actions on the compliance event.
 
@@ -329,7 +304,9 @@ def test_delete_all_actions_from_compliance_policy(request, policy_collection):
         caseposneg: negative
         initialEstimate: 1/12h
     """
-    policy = policy_collection.create(VMCompliancePolicy, fauxfactory.gen_alphanumeric())
+    policy = appliance.collections.policies.create(
+        VMCompliancePolicy, fauxfactory.gen_alphanumeric()
+    )
     request.addfinalizer(lambda: policy.delete() if policy.exists else None)
     with pytest.raises(AssertionError):
         policy.assign_actions_to_event("VM Compliance Check", [])
@@ -361,8 +338,8 @@ def test_control_identical_descriptions(request, create_function, collections, a
         flash.assert_message("Description has already been taken")
 
 
-@pytest.mark.meta(blockers=[1231889], automates=[1231889])
-def test_vmware_alarm_selection_does_not_fail(request, alert_collection):
+@pytest.mark.meta(blockers=[BZ(1231889)], automates=[1231889])
+def test_vmware_alarm_selection_does_not_fail(request, appliance):
     """Test the bug that causes CFME UI to explode when VMware Alarm type is selected.
         We assert that the alert using this type is simply created. Then we destroy
         the alert.
@@ -377,7 +354,7 @@ def test_vmware_alarm_selection_does_not_fail(request, alert_collection):
         initialEstimate: 1/12h
     """
     try:
-        alert = alert_collection.create(
+        alert = appliance.collections.alerts.create(
             "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
             active=True,
             based_on="VM and Instance",

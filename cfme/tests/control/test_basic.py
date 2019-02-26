@@ -238,39 +238,10 @@ ALERT_PROFILES = [
 ]
 
 
-@pytest.fixture(scope="module")
-def policy_profile_collection(appliance):
-    return appliance.collections.policy_profiles
-
-
-@pytest.fixture(scope="module")
-def policy_collection(appliance):
-    return appliance.collections.policies
-
-
-@pytest.fixture(scope="module")
-def condition_collection(appliance):
-    return appliance.collections.conditions
-
-
-@pytest.fixture(scope="module")
-def action_collection(appliance):
-    return appliance.collections.actions
-
-
-@pytest.fixture(scope="module")
-def alert_collection(appliance):
-    return appliance.collections.alerts
-
-
-@pytest.fixture(scope="module")
-def alert_profile_collection(appliance):
-    return appliance.collections.alert_profiles
-
-
 @pytest.fixture
-def two_random_policies(appliance, policy_collection):
+def two_random_policies(appliance):
     # Physical Infrastucture policies excluded
+    policy_collection = appliance.collections.policies
     if appliance.version < "5.9":
         policies = [policy_class for policy_class in POLICIES if policy_class not in PHYS_POLICIES]
     else:
@@ -298,17 +269,18 @@ def alert_profile_class(request):
 
 
 @pytest.fixture
-def policy(policy_collection, policy_class):
-    policy_ = policy_collection.create(policy_class, fauxfactory.gen_alphanumeric())
+def policy(appliance, policy_class):
+
+    policy_ = appliance.collections.policies.create(policy_class, fauxfactory.gen_alphanumeric())
     yield policy_
     policy_.delete()
 
 
 @pytest.fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__,
     scope="module")
-def condition_for_expressions(request, condition_collection, appliance):
+def condition_for_expressions(request, appliance):
     condition_class = request.param
-    condition = condition_collection.create(
+    condition = appliance.collections.conditions.create(
         condition_class,
         fauxfactory.gen_alphanumeric(),
         expression="fill_field({} : Name, IS NOT EMPTY)".format(
@@ -321,7 +293,7 @@ def condition_for_expressions(request, condition_collection, appliance):
 
 
 @pytest.fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__)
-def condition_prerequisites(request, condition_collection, appliance):
+def condition_prerequisites(request, appliance):
     condition_class = request.param
     expression = "fill_field({} : Name, =, {})".format(
         condition_class.FIELD_VALUE,
@@ -340,15 +312,17 @@ def control_policy_class(request):
 
 
 @pytest.fixture
-def control_policy(control_policy_class, policy_collection):
-    policy = policy_collection.create(control_policy_class, fauxfactory.gen_alphanumeric())
+def control_policy(appliance, control_policy_class):
+    policy = appliance.collections.policies.create(
+        control_policy_class, fauxfactory.gen_alphanumeric()
+    )
     yield policy
     policy.delete()
 
 
 @pytest.fixture
-def action(action_collection):
-    action_ = action_collection.create(
+def action(appliance):
+    action_ = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Tag",
         action_values={"tag": ("My Company Tags", "Department", "Accounting")}
@@ -358,8 +332,8 @@ def action(action_collection):
 
 
 @pytest.fixture
-def alert(alert_collection):
-    alert_ = alert_collection.create(
+def alert(appliance):
+    alert_ = appliance.collections.alerts.create(
         fauxfactory.gen_alphanumeric(),
         based_on=random.choice(ALERT_PROFILES).TYPE,
         timeline_event=True,
@@ -370,14 +344,14 @@ def alert(alert_collection):
 
 
 @pytest.fixture
-def alert_profile(alert_profile_class, alert_collection, alert_profile_collection):
-    alert = alert_collection.create(
+def alert_profile(appliance, alert_profile_class):
+    alert = appliance.collections.alerts.create(
         fauxfactory.gen_alphanumeric(),
         based_on=alert_profile_class.TYPE,
         timeline_event=True,
         driving_event="Hourly Timer"
     )
-    alert_profile_ = alert_profile_collection.create(
+    alert_profile_ = appliance.collections.alert_profiles.create(
         alert_profile_class,
         fauxfactory.gen_alphanumeric(),
         alerts=[alert.description]
@@ -388,21 +362,19 @@ def alert_profile(alert_profile_class, alert_collection, alert_profile_collectio
 
 
 @pytest.fixture(params=POLICIES_AND_CONDITIONS, ids=lambda item: item.name)
-def policy_and_condition(request, policy_collection, condition_collection, appliance):
+def policy_and_condition(request, appliance):
     condition_class = request.param.condition
     policy_class = request.param.policy
-    if policy_class in PHYS_POLICIES and appliance.version < "5.9":
-        pytest.skip("Physical Infrastructure Policies are available in CFME 5.9 and newer.")
     expression = "fill_field({} : Name, =, {})".format(
         condition_class.FIELD_VALUE,
         fauxfactory.gen_alphanumeric()
     )
-    condition = condition_collection.create(
+    condition = appliance.collections.conditions.create(
         condition_class,
         fauxfactory.gen_alphanumeric(),
         expression=expression
     )
-    policy = policy_collection.create(
+    policy = appliance.collections.policies.create(
         policy_class,
         fauxfactory.gen_alphanumeric()
     )
@@ -449,7 +421,7 @@ def setup_for_monitor_alerts(appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_condition_crud(condition_collection, condition_prerequisites):
+def test_condition_crud(appliance, condition_prerequisites):
     """
     Polarion:
         assignee: mmojzis
@@ -459,7 +431,7 @@ def test_condition_crud(condition_collection, condition_prerequisites):
     """
     # CR
     condition_class, scope, expression = condition_prerequisites
-    condition = condition_collection.create(
+    condition = appliance.collections.conditions.create(
         condition_class,
         fauxfactory.gen_alphanumeric(),
         scope=scope,
@@ -473,7 +445,7 @@ def test_condition_crud(condition_collection, condition_prerequisites):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_action_crud(action_collection):
+def test_action_crud(appliance):
     """
     Polarion:
         assignee: mmojzis
@@ -482,7 +454,7 @@ def test_action_crud(action_collection):
         initialEstimate: 1/12h
     """
     # CR
-    action = action_collection.create(
+    action = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Tag",
         action_values={"tag": ("My Company Tags", "Department", "Accounting")}
@@ -496,9 +468,7 @@ def test_action_crud(action_collection):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance, policy_class: (
-    policy_class in PHYS_POLICIES and appliance.version < "5.9"))
-def test_policy_crud(policy_collection, policy_class):
+def test_policy_crud(appliance, policy_class):
     """
     Polarion:
         assignee: mmojzis
@@ -506,7 +476,7 @@ def test_policy_crud(policy_collection, policy_class):
         initialEstimate: 1/4h
     """
     # CR
-    policy = policy_collection.create(policy_class, fauxfactory.gen_alphanumeric())
+    policy = appliance.collections.policies.create(policy_class, fauxfactory.gen_alphanumeric())
     # U
     with update(policy):
         policy.notes = "Modified!"
@@ -515,8 +485,6 @@ def test_policy_crud(policy_collection, policy_class):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda appliance, policy_class: (
-    policy_class in PHYS_POLICIES and appliance.version < "5.9"))
 def test_policy_copy(policy_class, policy):
     """
     Polarion:
@@ -531,9 +499,6 @@ def test_policy_copy(policy_class, policy):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda appliance, control_policy_class: (
-    control_policy_class is policies.PhysicalInfrastructureControlPolicy and
-    appliance.version < "5.9"))
 def test_assign_two_random_events_to_control_policy(control_policy, control_policy_class,
                                                     soft_assert):
     """
@@ -549,8 +514,6 @@ def test_assign_two_random_events_to_control_policy(control_policy, control_poli
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance, policy_class: (
-    policy_class in PHYS_POLICIES and appliance.version < "5.9"))
 @pytest.mark.meta(blockers=[BZ(1565576, forced_streams=["5.9"],
                   unblock=lambda policy_class: policy_class is not PHYS_POLICIES[0])])
 def test_control_assign_actions_to_event(request, policy_class, policy, action):
@@ -575,8 +538,7 @@ def test_control_assign_actions_to_event(request, policy_class, policy, action):
 
 
 @pytest.mark.tier(3)
-def test_assign_condition_to_control_policy(request, policy_and_condition, condition_collection,
-                                            policy_collection):
+def test_assign_condition_to_control_policy(request, policy_and_condition):
     """This test checks if a condition is assigned to a control policy.
     Steps:
         * Create a control policy.
@@ -596,7 +558,7 @@ def test_assign_condition_to_control_policy(request, policy_and_condition, condi
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_policy_profile_crud(policy_profile_collection, two_random_policies):
+def test_policy_profile_crud(appliance, two_random_policies):
     """
     Polarion:
         assignee: mmojzis
@@ -604,7 +566,7 @@ def test_policy_profile_crud(policy_profile_collection, two_random_policies):
         caseimportance: critical
         initialEstimate: 1/12h
     """
-    profile = policy_profile_collection.create(
+    profile = appliance.collections.policy_profiles.create(
         fauxfactory.gen_alphanumeric(),
         policies=two_random_policies
     )
@@ -637,7 +599,7 @@ def test_modify_condition_expression(condition_for_expressions, fill_type, expre
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_alert_crud(alert_collection):
+def test_alert_crud(appliance):
     """
     Polarion:
         assignee: jdupuy
@@ -645,7 +607,7 @@ def test_alert_crud(alert_collection):
         initialEstimate: 1/12h
     """
     # CR
-    alert = alert_collection.create(
+    alert = appliance.collections.alerts.create(
         fauxfactory.gen_alphanumeric()
     )
     # U
@@ -672,8 +634,7 @@ def test_control_alert_copy(alert):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_alert_profile_crud(request, alert_profile_class, alert_collection,
-        alert_profile_collection):
+def test_alert_profile_crud(request, appliance, alert_profile_class):
     """
     Polarion:
         assignee: jdupuy
@@ -681,14 +642,14 @@ def test_alert_profile_crud(request, alert_profile_class, alert_collection,
         caseimportance: critical
         initialEstimate: 1/12h
     """
-    alert = alert_collection.create(
+    alert = appliance.collections.alerts.create(
         fauxfactory.gen_alphanumeric(),
         based_on=alert_profile_class.TYPE,
         timeline_event=True,
         driving_event="Hourly Timer"
     )
     request.addfinalizer(alert.delete)
-    alert_profile = alert_profile_collection.create(
+    alert_profile = appliance.collections.alert_profiles.create(
         alert_profile_class,
         fauxfactory.gen_alphanumeric(),
         alerts=[alert.description]
@@ -725,20 +686,19 @@ def test_alert_profile_assigning(alert_profile, appliance):
 
 
 @pytest.mark.tier(2)
-def test_control_is_ansible_playbook_available_in_actions_dropdown(action_collection):
+def test_control_is_ansible_playbook_available_in_actions_dropdown(appliance):
     """
     Polarion:
         assignee: mmojzis
         casecomponent: Control
         initialEstimate: 1/12h
     """
-    view = navigate_to(action_collection, "Add")
+    view = navigate_to(appliance.collections.actions, "Add")
     assert "Run Ansible Playbook" in [option.text for option in view.action_type.all_options]
 
 
 @pytest.mark.tier(2)
-def test_alerts_monitor_overview_page(alert_collection, virtualcenter_provider,
-        setup_for_monitor_alerts):
+def test_alerts_monitor_overview_page(appliance, virtualcenter_provider, setup_for_monitor_alerts):
     """
     Polarion:
         assignee: jdupuy
@@ -747,7 +707,7 @@ def test_alerts_monitor_overview_page(alert_collection, virtualcenter_provider,
         initialEstimate: 1/12h
     """
 
-    view = navigate_to(alert_collection, 'MonitorOverview')
+    view = navigate_to(appliance.collections.alerts, 'MonitorOverview')
 
     # 1) assert that the status card displays the correct information
     status_card = view.status_card(virtualcenter_provider.name)

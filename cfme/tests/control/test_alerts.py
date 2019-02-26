@@ -75,36 +75,6 @@ def wait_for_alert(smtp, alert, delay=None, additional_checks=None):
     )
 
 
-@pytest.fixture(scope="module")
-def policy_profile_collection(appliance):
-    return appliance.collections.policy_profiles
-
-
-@pytest.fixture(scope="module")
-def policy_collection(appliance):
-    return appliance.collections.policies
-
-
-@pytest.fixture(scope="module")
-def action_collection(appliance):
-    return appliance.collections.actions
-
-
-@pytest.fixture(scope="module")
-def alert_collection(appliance):
-    return appliance.collections.alerts
-
-
-@pytest.fixture(scope="module")
-def alert_profile_collection(appliance):
-    return appliance.collections.alert_profiles
-
-
-@pytest.fixture(scope="module")
-def requests_collection(appliance):
-    return appliance.collections.requests
-
-
 @pytest.fixture(scope="function")
 def vddk_url(provider):
     try:
@@ -137,8 +107,7 @@ def configure_fleecing(appliance, provider, full_template_vm, vddk_url):
 
 
 @pytest.fixture
-def setup_for_alerts(alert_profile_collection, action_collection, policy_collection,
-        policy_profile_collection, appliance):
+def setup_for_alerts(appliance):
     """fixture wrapping the function defined within, for delayed execution during the test
 
     Returns:
@@ -155,7 +124,7 @@ def setup_for_alerts(alert_profile_collection, action_collection, policy_collect
             vm_name: VM name to use for policy filtering
             provider: funcarg provider
         """
-        alert_profile = alert_profile_collection.create(
+        alert_profile = appliance.collections.alert_profiles.create(
             alert_profiles.VMInstanceAlertProfile,
             "Alert profile for {}".format(vm_name),
             alerts=alerts_list
@@ -172,19 +141,19 @@ def setup_for_alerts(alert_profile_collection, action_collection, policy_collect
             # no assignment change made
             view.flash.assert_message('Edit Alert Profile assignments cancelled by user')
         if event is not None:
-            action = action_collection.create(
+            action = appliance.collections.actions.create(
                 "Evaluate Alerts for {}".format(vm_name),
                 "Evaluate Alerts",
                 action_values={"alerts_to_evaluate": [str(alert) for alert in alerts_list]}
             )
             request.addfinalizer(action.delete)
-            policy = policy_collection.create(
+            policy = appliance.collections.policies.create(
                 policies.VMControlPolicy,
                 "Evaluate Alerts policy for {}".format(vm_name),
                 scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
             )
             request.addfinalizer(policy.delete)
-            policy_profile = policy_profile_collection.create(
+            policy_profile = appliance.collections.policy_profiles.create(
                 "Policy profile for {}".format(vm_name), policies=[policy]
             )
             request.addfinalizer(policy_profile.delete)
@@ -241,8 +210,9 @@ def setup_snmp(appliance):
 
 @pytest.mark.rhv3
 @pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope="module")
-def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider, full_template_vm,
-        smtp_test, alert_collection, setup_for_alerts):
+def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
+    request, appliance, provider, full_template_vm, smtp_test, setup_for_alerts
+):
     """ Tests alerts for vm turned on more than twice in 15 minutes
 
     Metadata:
@@ -254,7 +224,7 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider
         initialEstimate: 1/4h
     """
     vm = full_template_vm
-    alert = alert_collection.instantiate("VM Power On > 2 in last 15 min")
+    alert = appliance.collections.alerts.instantiate("VM Power On > 2 in last 15 min")
     with update(alert):
         alert.active = True
         alert.emails = fauxfactory.gen_email()
@@ -276,8 +246,8 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider
 
 
 @pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module")
-def test_alert_rtp(request, full_template_vm, smtp_test, provider, setup_candu, wait_candu,
-        setup_for_alerts, alert_collection):
+def test_alert_rtp(request, appliance, full_template_vm, smtp_test, provider,
+        setup_candu, wait_candu, setup_for_alerts):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available.
 
@@ -290,7 +260,7 @@ def test_alert_rtp(request, full_template_vm, smtp_test, provider, setup_candu, 
         initialEstimate: 1/6h
     """
     email = fauxfactory.gen_email()
-    alert = alert_collection.create(
+    alert = appliance.collections.alerts.create(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -314,8 +284,9 @@ def test_alert_rtp(request, full_template_vm, smtp_test, provider, setup_candu, 
 
 
 @pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module")
-def test_alert_timeline_cpu(request, full_template_vm, set_performance_capture_threshold, provider,
-        ssh, setup_candu, wait_candu, setup_for_alerts, alert_collection):
+def test_alert_timeline_cpu(request, appliance, full_template_vm,
+        set_performance_capture_threshold, provider, ssh, setup_candu, wait_candu,
+        setup_for_alerts):
     """ Tests a custom alert that uses C&U data to trigger an alert. It will run a script that makes
     a CPU spike in the machine to trigger the threshold. The alert is displayed in the timelines.
 
@@ -327,7 +298,7 @@ def test_alert_timeline_cpu(request, full_template_vm, set_performance_capture_t
         casecomponent: Control
         initialEstimate: 1/6h
     """
-    alert = alert_collection.create(
+    alert = appliance.collections.alerts.create(
         "TL event by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -365,7 +336,7 @@ def test_alert_timeline_cpu(request, full_template_vm, set_performance_capture_t
 
 @pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module")
 def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, full_template_vm,
-        wait_candu, alert_collection, setup_for_alerts):
+        wait_candu, setup_for_alerts):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available. It uses SNMP to catch the
     alerts. It uses SNMP v2.
@@ -379,7 +350,7 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, full_
         initialEstimate: 1/6h
     """
     match_string = fauxfactory.gen_alpha(length=8)
-    alert = alert_collection.create(
+    alert = appliance.collections.alerts.create(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -418,8 +389,8 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, full_
 
 
 @pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module")
-def test_alert_hardware_reconfigured(request, configure_fleecing, alert_collection, smtp_test,
-        full_template_vm, requests_collection, setup_for_alerts):
+def test_alert_hardware_reconfigured(request, appliance, configure_fleecing, smtp_test,
+        full_template_vm, setup_for_alerts):
     """Tests alert based on "Hardware Reconfigured" evaluation.
 
     According https://bugzilla.redhat.com/show_bug.cgi?id=1396544 Hardware Reconfigured alerts
@@ -445,7 +416,7 @@ def test_alert_hardware_reconfigured(request, configure_fleecing, alert_collecti
     email = fauxfactory.gen_email()
     service_request_desc = ("VM Reconfigure for: {0} - Processor Sockets: {1}, "
         "Processor Cores Per Socket: 1, Total Processors: {1}")
-    alert = alert_collection.create(
+    alert = appliance.collections.alerts.create(
         "Trigger by hardware reconfigured {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -467,7 +438,7 @@ def test_alert_hardware_reconfigured(request, configure_fleecing, alert_collecti
     for i in range(1, 3):
         do_scan(vm, rediscover=False)
         vm.reconfigure(changes={"cpu": True, "sockets": str(sockets_count + i), "disks": ()})
-        service_request = requests_collection.instantiate(
+        service_request = appliance.collections.requests.instantiate(
             description=service_request_desc.format(vm.name, sockets_count + i))
         service_request.wait_for_request(method="ui", num_sec=300, delay=10)
     wait_for_alert(
