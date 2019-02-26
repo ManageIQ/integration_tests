@@ -18,7 +18,6 @@ from cfme.utils.appliance.implementations.ui import navigator
 @attr.s
 class SecurityGroup(Taggable, BaseEntity, CustomButtonEventsMixin):
     """Class representing security group in sdn"""
-    in_version = ('5.8', version.LATEST)
     category = 'networks'
     string_name = 'SecurityGroup'
     quad_name = None

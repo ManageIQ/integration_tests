@@ -19,7 +19,6 @@ from cfme.utils.appliance.implementations.ui import navigator
 @attr.s
 class NetworkPort(Taggable, BaseEntity, ValidateStatsMixin):
     """Class representing network ports in sdn"""
-    in_version = ('5.8', version.LATEST)
     category = "networks"
     string_name = 'NetworkPort'
     quad_name = None

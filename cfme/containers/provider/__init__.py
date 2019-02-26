@@ -185,7 +185,6 @@ class ContainersProviderDashboardView(ContainerProviderDetailsView):
 class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     PLURAL = 'Providers'
     provider_types = {}
-    in_version = ('5.5', LATEST)
     category = "container"
     pretty_attrs = [
         'name',
