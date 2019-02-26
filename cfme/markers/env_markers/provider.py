@@ -4,6 +4,7 @@ from distutils.version import LooseVersion
 import attr
 import pytest
 import six
+from cached_property import cached_property
 
 from cfme.markers.env import EnvironmentMarker
 from cfme.utils import conf
@@ -158,15 +159,13 @@ class DataProvider(object):
     type_name = attr.ib()
     version = attr.ib()
     klass = attr.ib(default=attr.Factory(data_provider_types, takes_self=True))
-    the_id = attr.ib(init=False)
 
-    def __attrs_post_init__(self):
-        ver = self.version if self.version else None
-        if ver:
-            the_id = "{}-{}".format(self.type_name, self.version)
+    @cached_property
+    def the_id(self):
+        if self.version:
+            return "{}-{}".format(self.type_name, self.version)
         else:
-            the_id = "{}".format(self.type_name)
-        object.__setattr__(self, "the_id", the_id)
+            return "{}".format(self.type_name)
 
     def one_of(self, *classes):
         return issubclass(self.klass, classes)
