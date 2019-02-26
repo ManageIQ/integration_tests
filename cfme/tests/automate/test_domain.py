@@ -46,7 +46,7 @@ def test_domain_crud(request, enabled, appliance):
 
 
 @pytest.mark.tier(1)
-def test_domain_edit_enabled(request, appliance):
+def test_domain_edit_enabled(domain, appliance):
     """
     Polarion:
         assignee: ghubale
@@ -55,11 +55,6 @@ def test_domain_edit_enabled(request, appliance):
         caseimportance: high
         tags: automate
     """
-    domain = appliance.collections.domains.create(
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha(),
-        enabled=True)
-    request.addfinalizer(domain.delete_if_exists)
     assert domain.exists
     view = navigate_to(domain, 'Details')
     assert 'Disabled' not in view.title.text
@@ -115,7 +110,7 @@ def test_domain_delete_from_table(request, appliance):
 
 
 @pytest.mark.tier(2)
-def test_duplicate_domain_disallowed(request, appliance):
+def test_duplicate_domain_disallowed(domain, appliance):
     """
     Polarion:
         assignee: ghubale
@@ -125,11 +120,7 @@ def test_duplicate_domain_disallowed(request, appliance):
         initialEstimate: 1/60h
         tags: automate
     """
-    domain = appliance.collections.domains.create(
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha(),
-        enabled=True)
-    request.addfinalizer(domain.delete_if_exists)
+    assert domain.exists
     with pytest.raises(Exception, match="Name has already been taken"):
         appliance.collections.domains.create(
             name=domain.name,
@@ -187,7 +178,7 @@ def test_domain_name_wrong(appliance):
 
 
 @pytest.mark.tier(2)
-def test_domain_lock_unlock(request, appliance):
+def test_domain_lock_unlock(domain, appliance):
     """
     Polarion:
         assignee: ghubale
@@ -196,12 +187,7 @@ def test_domain_lock_unlock(request, appliance):
         caseimportance: medium
         tags: automate
     """
-    domain = appliance.collections.domains.create(
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha(),
-        enabled=True)
-
-    request.addfinalizer(domain.delete)
+    assert domain.exists
     ns1 = domain.namespaces.create(name='ns1')
     ns2 = ns1.namespaces.create(name='ns2')
     cls = ns2.classes.create(name='class1')

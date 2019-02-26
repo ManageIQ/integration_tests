@@ -3,44 +3,33 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.explorer.domain import DomainCollection
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
 
 
-@pytest.fixture(scope='module')
-def domain(appliance):
-    dc = DomainCollection(appliance)
-    d = dc.create(
-        name='test_{}'.format(fauxfactory.gen_alpha()),
-        description='desc_{}'.format(fauxfactory.gen_alpha()),
-        enabled=True)
-    yield d
-    d.delete()
-
-
 @pytest.fixture(
     scope="function",
     params=["plain", "nested_existing"])
-def namespace(request, domain):
-    ns = domain.namespaces.create(
+def get_namespace(request, domain):
+    namespace = domain.namespaces.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha()
     )
     if request.param == 'plain':
-        return ns
+        yield namespace
     else:
-        return ns.namespaces.create(
+        namespace = namespace.namespaces.create(
             name=fauxfactory.gen_alpha(),
             description=fauxfactory.gen_alpha()
         )
+        yield namespace
+    namespace.delete_if_exists()
 
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_class_crud(namespace):
+def test_class_crud(get_namespace):
     """
     Polarion:
         assignee: ghubale
@@ -49,7 +38,7 @@ def test_class_crud(namespace):
         initialEstimate: 1/30h
         tags: automate
     """
-    a_class = namespace.classes.create(
+    a_class = get_namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric()
@@ -65,8 +54,7 @@ def test_class_crud(namespace):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[1404788])
-def test_schema_crud(request, namespace):
+def test_schema_crud(get_namespace):
     """
     Polarion:
         assignee: ghubale
@@ -75,7 +63,7 @@ def test_schema_crud(request, namespace):
         initialEstimate: 1/20h
         tags: automate
     """
-    a_class = namespace.classes.create(
+    a_class = get_namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric()
@@ -93,8 +81,7 @@ def test_schema_crud(request, namespace):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[1404788])
-def test_schema_duplicate_field_disallowed(request, domain):
+def test_schema_duplicate_field_disallowed(klass):
     """
     Polarion:
         assignee: ghubale
@@ -103,24 +90,14 @@ def test_schema_duplicate_field_disallowed(request, domain):
         initialEstimate: 1/16h
         tags: automate
     """
-    ns = domain.namespaces.create(
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha()
-    )
-    a_class = ns.classes.create(
-        name=fauxfactory.gen_alphanumeric(),
-        display_name=fauxfactory.gen_alphanumeric(),
-        description=fauxfactory.gen_alphanumeric()
-    )
     field = fauxfactory.gen_alpha()
-    a_class.schema.add_field(name=field, type='Relationship')
+    klass.schema.add_field(name=field, type='Relationship')
     with pytest.raises(Exception, match='Name has already been taken'):
-        a_class.schema.add_field(name=field, type='Relationship')
+        klass.schema.add_field(name=field, type='Relationship')
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1428424, forced_streams=['5.8', 'upstream'])])
-def test_duplicate_class_disallowed(namespace):
+def test_duplicate_class_disallowed(get_namespace):
     """
     Polarion:
         assignee: ghubale
@@ -130,13 +107,13 @@ def test_duplicate_class_disallowed(namespace):
         tags: automate
     """
     name = fauxfactory.gen_alphanumeric()
-    namespace.classes.create(name=name)
+    get_namespace.classes.create(name=name)
     with pytest.raises(Exception, match="Name has already been taken"):
-        namespace.classes.create(name=name)
+        get_namespace.classes.create(name=name)
 
 
 @pytest.mark.tier(2)
-def test_same_class_name_different_namespace(request, domain):
+def test_same_class_name_different_namespace(domain):
     """
     Polarion:
         assignee: ghubale
@@ -171,10 +148,9 @@ def test_same_class_name_different_namespace(request, domain):
     assert c2.exists
 
 
-@pytest.mark.meta(blockers=[1148541])
 @pytest.mark.tier(3)
 @pytest.mark.polarion('RHCF3-3455')
-def test_class_display_name_unset_from_ui(request, namespace):
+def test_class_display_name_unset_from_ui(get_namespace):
     """
     Polarion:
         assignee: ghubale
@@ -182,7 +158,7 @@ def test_class_display_name_unset_from_ui(request, namespace):
         initialEstimate: 1/30h
         tags: automate
     """
-    a_class = namespace.classes.create(
+    a_class = get_namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric()

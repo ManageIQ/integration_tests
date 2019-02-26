@@ -2,19 +2,10 @@
 import fauxfactory
 import pytest
 
-from cfme.automate.explorer.domain import DomainCollection
+from cfme import test_requirements
 from cfme.utils.update import update
 
-
-@pytest.fixture(scope='module')
-def domain(appliance):
-    dc = DomainCollection(appliance)
-    d = dc.create(
-        name='test_{}'.format(fauxfactory.gen_alpha()),
-        description='desc_{}'.format(fauxfactory.gen_alpha()),
-        enabled=True)
-    yield d
-    d.delete()
+pytestmark = [test_requirements.automate]
 
 
 @pytest.fixture(
@@ -32,7 +23,7 @@ def parent_namespace(request, domain):
 
 @pytest.mark.sauce
 @pytest.mark.tier(1)
-def test_namespace_crud(request, parent_namespace):
+def test_namespace_crud(parent_namespace):
     """
     Polarion:
         assignee: ghubale
@@ -56,7 +47,7 @@ def test_namespace_crud(request, parent_namespace):
 
 
 @pytest.mark.tier(1)
-def test_namespace_delete_from_table(request, parent_namespace):
+def test_namespace_delete_from_table(parent_namespace):
     """
     Polarion:
         assignee: ghubale
@@ -78,7 +69,7 @@ def test_namespace_delete_from_table(request, parent_namespace):
 
 
 @pytest.mark.tier(2)
-def test_duplicate_namespace_disallowed(request, parent_namespace):
+def test_duplicate_namespace_disallowed(parent_namespace):
     """
     Polarion:
         assignee: ghubale

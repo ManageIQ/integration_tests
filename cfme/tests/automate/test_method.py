@@ -3,40 +3,11 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
-
-
-@pytest.fixture(scope='module')
-def domain(appliance):
-    dc = DomainCollection(appliance)
-    d = dc.create(
-        name='test_{}'.format(fauxfactory.gen_alpha()),
-        description='desc_{}'.format(fauxfactory.gen_alpha()),
-        enabled=True)
-    yield d
-    d.delete()
-
-
-@pytest.fixture(scope="module")
-def namespace(domain):
-    return domain.namespaces.create(
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha()
-    )
-
-
-@pytest.fixture(scope="module")
-def klass(namespace):
-    return namespace.classes.create(
-        name=fauxfactory.gen_alpha(),
-        display_name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha()
-    )
 
 
 @pytest.mark.sauce
@@ -113,7 +84,7 @@ def test_automate_method_inputs_crud(appliance, klass):
 
 
 @pytest.mark.tier(2)
-def test_duplicate_method_disallowed(request, klass):
+def test_duplicate_method_disallowed(klass):
     """
     Polarion:
         assignee: ghubale

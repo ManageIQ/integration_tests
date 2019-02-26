@@ -8,10 +8,8 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
-from cfme.automate.explorer.domain import DomainCollection
 from cfme.base.login import BaseLoggedInPage
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -29,20 +27,7 @@ pytestmark = [
 
 
 @pytest.fixture(scope="module")
-def domain_collection(appliance):
-    return DomainCollection(appliance)
-
-
-@pytest.fixture(scope="module")
-def domain(request, domain_collection):
-    domain = domain_collection.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
-    yield domain
-    if domain.exists:
-        domain.delete()
-
-
-@pytest.fixture(scope="module")
-def cls(request, domain):
+def cls(domain):
     original_class = domain.parent\
         .instantiate(name='ManageIQ')\
         .namespaces.instantiate(name='System')\
@@ -52,7 +37,7 @@ def cls(request, domain):
 
 
 @pytest.fixture(scope="module")
-def testing_group(appliance, request):
+def testing_group(appliance):
     group_desc = fauxfactory.gen_alphanumeric()
     group = appliance.collections.button_groups.create(
         text=group_desc,
@@ -83,11 +68,10 @@ def testing_vm(setup_provider, provider):
         vm.cleanup_on_provider()
 
 
-@pytest.mark.meta(blockers=[1211627, BZ(1311221, forced_streams=['5.5'])])
 def test_vmware_vimapi_hotadd_disk(
-        appliance, request, testing_group, provider, testing_vm, domain, cls):
-    """ Tests hot adding a disk to vmware vm.
-    This test exercises the ``VMware_HotAdd_Disk`` method, located in ``/Integration/VMware/VimApi``
+        appliance, request, testing_group, testing_vm, domain, cls):
+    """Tests hot adding a disk to vmware vm. This test exercises the `VMware_HotAdd_Disk` method,
+       located in `/Integration/VMware/VimApi`
 
     Polarion:
         assignee: ghubale
@@ -101,6 +85,9 @@ def test_vmware_vimapi_hotadd_disk(
                The button shall belong in the VM and instance button group.
             3. After the button is created, it goes to a VM's summary page, clicks the button.
             4. The test waits until the capacity of disks is raised.
+
+    Bugzillas:
+        1211627, 1311221
     """
     meth = cls.methods.create(
         name='load_value_{}'.format(fauxfactory.gen_alpha()),
