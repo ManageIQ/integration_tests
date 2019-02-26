@@ -17,7 +17,6 @@ from cfme.utils.appliance.implementations.ui import navigator
 @attr.s
 class Balancer(Taggable, BaseEntity):
     """Class representing balancers in sdn"""
-    in_version = ('5.8', version.LATEST)
     category = 'networks'
     string_name = 'NetworkBalancer'
     refresh_text = 'Refresh items and relationships'

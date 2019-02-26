@@ -47,7 +47,6 @@ class VmwareCloudEndpointForm(View):
 @attr.s(cmp=False)
 class VmwareCloudProvider(CloudProvider):
     STATS_TO_MATCH = ['num_availability_zone', 'num_orchestration_stack', 'num_vm']
-    in_version = ('5.9', version.LATEST)
     type_name = "vcloud"
     mgmt_class = VmwareCloudSystem
     db_types = ["Vmware::CloudManager"]

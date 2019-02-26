@@ -28,7 +28,6 @@ from cfme.utils.wait import wait_for
 @attr.s
 class Subnet(Taggable, BaseEntity, CustomButtonEventsMixin, ValidateStatsMixin):
     """Class representing subnets in sdn"""
-    in_version = ('5.8', version.LATEST)
     category = 'networks'
     string_name = 'NetworkSubnet'
     quad_name = None

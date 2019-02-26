@@ -65,7 +65,6 @@ class NuageProvider(NetworkProvider):
                       'num_cloud_network',
                       'num_floating_ip',
                       'num_network_port']
-    in_version = ('5.9', version.LATEST)
     type_name = 'nuage'
     db_types = ['Nuage::NetworkManager']
     endpoints_form = NuageEndpointForm

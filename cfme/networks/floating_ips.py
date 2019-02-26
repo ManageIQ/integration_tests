@@ -19,7 +19,6 @@ class FloatingIp(Taggable, BaseEntity):
     """Class representing floating ips"""
     address = attr.ib()
 
-    in_version = ('5.8', version.LATEST)
     category = "networks"
     page_name = 'floating_ip'
     string_name = 'FloatingIP'

@@ -28,7 +28,6 @@ from cfme.utils.wait import wait_for
 @attr.s
 class NetworkRouter(Taggable, BaseEntity, CustomButtonEventsMixin, ValidateStatsMixin):
     """ Class representing network ports in sdn"""
-    in_version = ('5.8', version.LATEST)
     category = 'networks'
     string_name = 'NetworkRouter'
     quad_name = None

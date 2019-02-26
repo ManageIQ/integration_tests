@@ -26,7 +26,6 @@ from cfme.utils.wait import wait_for
 @attr.s
 class CloudNetwork(Taggable, BaseEntity):
     """Class representing cloud networks in cfme database"""
-    in_version = ('5.8', version.LATEST)
     category = 'networks'
     string_name = 'CloudNetwork'
     quad_name = None
