@@ -158,6 +158,15 @@ class DataProvider(object):
     type_name = attr.ib()
     version = attr.ib()
     klass = attr.ib(default=attr.Factory(data_provider_types, takes_self=True))
+    the_id = attr.ib(init=False)
+
+    def __attrs_post_init__(self):
+        ver = self.version if self.version else None
+        if ver:
+            the_id = "{}-{}".format(self.type_name, self.version)
+        else:
+            the_id = "{}".format(self.type_name)
+        object.__setattr__(self, "the_id", the_id)
 
     def one_of(self, *classes):
         return issubclass(self.klass, classes)
@@ -336,14 +345,7 @@ def providers(metafunc, filters=None, selector=ALL, fixture_name='provider'):
         argvalues.append(pytest.param(data_prov))
 
         # Use the provider key for idlist, helps with readable parametrized test output
-        if metafunc.config.getoption('legacy_ids'):
-            the_id = "{}".format(data_prov.key)
-        else:
-            ver = data_prov.version if data_prov.version else None
-            if ver:
-                the_id = "{}-{}".format(data_prov.type_name, data_prov.version)
-            else:
-                the_id = "{}".format(data_prov.type_name)
+        the_id = str(data_prov.key) if metafunc.config.getoption('legacy_ids') else data_prov.the_id
 
         # Now we modify the id based on what selector we chose
         if metafunc.config.getoption('disable_selectors'):
