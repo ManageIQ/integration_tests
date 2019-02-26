@@ -89,8 +89,11 @@ def test_duplicate_namespace_disallowed(parent_namespace):
 
 
 @pytest.mark.tier(2)
-def test_namespace_name_wrong(domain):
-    """
+def test_wrong_namespace_name(domain):
+    """To test whether namespace is creating with wrong name or not.
+       wrong_namespace: 'Dummy Namespace' (This is invalid name of Namespace because there is space
+       in the name)
+
     Polarion:
         assignee: ghubale
         casecomponent: Automate
@@ -100,7 +103,7 @@ def test_namespace_name_wrong(domain):
         tags: automate
         testSteps:
             1. Navigate to Automation> Automate> Explorer
-            2. Try to create namespace with name `Dummy Domain` (I put space which is invalid)
+            2. Try to create namespace with name `Dummy Namespace` (I put space which is invalid)
         expectedResults:
             1.
             2. Should give proper flash message

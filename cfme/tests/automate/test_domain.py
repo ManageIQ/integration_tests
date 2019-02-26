@@ -163,8 +163,11 @@ def test_domain_cannot_edit_builtin(appliance):
 
 
 @pytest.mark.tier(2)
-def test_domain_name_wrong(request, appliance):
-    """
+def test_wrong_domain_name(request, appliance):
+    """To test whether domain is creating with wrong name or not.
+       wrong_domain: 'Dummy Domain' (This is invalid name of Domain because there is space
+       in the name)
+
     Polarion:
         assignee: ghubale
         casecomponent: Automate
