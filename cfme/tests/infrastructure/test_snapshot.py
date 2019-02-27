@@ -29,7 +29,7 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def domain(request, appliance):
     dom = DomainCollection(appliance).create(name=fauxfactory.gen_alpha(), enabled=True)
     request.addfinalizer(dom.delete_if_exists)
@@ -47,16 +47,16 @@ def provision_vm(provider, template):
     return vm
 
 
-@pytest.fixture(scope="module")
-def small_test_vm(setup_provider_modscope, provider, small_template_modscope, request):
-    vm = provision_vm(provider, small_template_modscope)
+@pytest.fixture(scope="function")
+def small_test_vm(setup_provider, provider, small_template, request):
+    vm = provision_vm(provider, small_template)
     yield vm
     vm.cleanup_on_provider()
 
 
-@pytest.fixture(scope="module")
-def full_test_vm(setup_provider_modscope, provider, full_template_modscope, request):
-    vm = provision_vm(provider, full_template_modscope)
+@pytest.fixture(scope="function")
+def full_test_vm(setup_provider, provider, full_template, request):
+    vm = provision_vm(provider, full_template)
     yield vm
     vm.cleanup_on_provider()
 
