@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.automate.explorer.klass import ClassSchemaEditView
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
@@ -169,3 +170,33 @@ def test_class_display_name_unset_from_ui(get_namespace):
     with update(a_class):
         a_class.display_name = ""
     assert a_class.exists
+
+
+@pytest.mark.tier(3)
+def test_automate_schema_field_without_type(klass):
+    """It shouldn't be possible to add a field without specifying a type.
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/12h
+        tags: automate
+        testSteps:
+            1. Create a schema field that does not specify a type
+            2. Save the schema
+        expectedResults:
+            1.
+            2. it is not possible to add a field that does not specify the type
+               (assertion, attribute, relationship, ...)
+
+    Bugzilla:
+        1365442
+    """
+    with pytest.raises(AssertionError):
+        klass.schema.add_fields({'name': 'execute', 'data_type': 'String'})
+    view = klass.create_view(ClassSchemaEditView)
+    assert view.schema.save_button.disabled
+    assert view.schema.reset_button.disabled
+    assert not view.schema.cancel_button.disabled

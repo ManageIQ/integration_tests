@@ -424,34 +424,6 @@ def test_automate_git_domain_import_with_no_connection():
 
 @pytest.mark.manual
 @test_requirements.automate
-@pytest.mark.tier(3)
-def test_automate_schema_field_without_type():
-    """
-    It shouldn't be possible to add a field without specifying a type.
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/12h
-        tags: automate
-        testSteps:
-            1. Create a schema field that does not specify a type
-            2. Save the schema
-        expectedResults:
-            1.
-            2. it is not possible to add a field that does not specify the type
-               (assertion, attribute, relationship, ...)
-
-    Bugzilla:
-        1365442
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_automate_retry_onexit_increases():
     """
