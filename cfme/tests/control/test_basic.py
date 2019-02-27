@@ -242,10 +242,7 @@ ALERT_PROFILES = [
 def two_random_policies(appliance):
     # Physical Infrastucture policies excluded
     policy_collection = appliance.collections.policies
-    if appliance.version < "5.9":
-        policies = [policy_class for policy_class in POLICIES if policy_class not in PHYS_POLICIES]
-    else:
-        policies = POLICIES
+    policies = POLICIES
     policy_1 = policy_collection.create(
         random.choice(policies),
         fauxfactory.gen_alphanumeric()
@@ -513,8 +510,9 @@ def test_assign_two_random_events_to_control_policy(control_policy, control_poli
     soft_assert(control_policy.is_event_assigned(random_events[1]))
 
 
+# TODO: fix this test in 5.10 in a later PR
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1565576, forced_streams=["5.9"],
+@pytest.mark.meta(blockers=[BZ(1565576, forced_streams=["5.9", "5.10"],
                   unblock=lambda policy_class: policy_class is not PHYS_POLICIES[0])])
 def test_control_assign_actions_to_event(request, policy_class, policy, action):
     """

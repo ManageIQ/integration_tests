@@ -284,8 +284,7 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, ap
         vmware_vm.name)
 
 
-@pytest.mark.meta(blockers=[BZ(1395965, forced_streams=["5.6", "5.7"]),
-                            BZ(1491576, forced_streams=["5.7"])])
+@pytest.mark.meta(blockers=[BZ(1395965), BZ(1491576)])
 def test_delete_all_actions_from_compliance_policy(request, appliance):
     """We should not allow a compliance policy to be saved
     if there are no actions on the compliance event.
@@ -336,6 +335,8 @@ def test_control_identical_descriptions(request, create_function, collections, a
         collections[create_function.name].create(*args, **kwargs)
     except (TimedOutError, AssertionError):
         flash.assert_message("Description has already been taken")
+        # force navigation away from the page so the browser is not stuck on the edit page
+        navigate_to(appliance.server, 'ControlExplorer', force=True)
 
 
 @pytest.mark.meta(blockers=[BZ(1231889)], automates=[1231889])

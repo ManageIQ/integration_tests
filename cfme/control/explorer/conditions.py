@@ -16,6 +16,7 @@ from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from widgetastic_manageiq.expression_editor import ExpressionEditor
@@ -159,6 +160,7 @@ class ConditionDetailsView(ControlExplorerView):
             self.title.text == '{} Condition "{}"'.format(self.context["object"].FIELD_VALUE,
                 self.context["object"].description) and
             self.conditions.is_opened
+            # TODO add in a check against the tree once BZ 1683697 is fixed
         )
 
 
@@ -224,7 +226,7 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            view = self.create_view(ConditionClassAllView, wait="10s")
+            view = self.create_view(ConditionClassAllView, wait="20s")
             view.flash.assert_success_message('Condition "{}": Delete successful'.format(
                 self.description))
 
@@ -271,6 +273,8 @@ class ConditionCollection(BaseCollection):
         view.add_button.click()
         view = condition.create_view(ConditionDetailsView, wait="10s")
         view.flash.assert_success_message('Condition "{}" was added'.format(condition.description))
+        if BZ(1683697, forced_streams=["5.9", "5.10"]).blocks:
+            navigate_to(self.appliance.server, 'ControlExplorer', force=True)
         return condition
 
     def all(self):
