@@ -2,8 +2,10 @@
 import fauxfactory
 import pytest
 
+from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.rest.gen_data import categories as _categories
 from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.rest.gen_data import tags as _tags
@@ -15,6 +17,12 @@ from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
+
+
+CLOUD_COLLECTION = ["availability_zones", "cloud_networks",
+        "cloud_networks", "cloud_subnets", "flavors", "network_routers", "security_groups"]
+INFRA_COLLECTION = ["clusters", "hosts", "data_stores", "providers", "resource_pools",
+        "services", "service_templates", "tenants", "vms", ]
 
 pytestmark = [
     pytest.mark.provider(classes=[InfraProvider], selector=ONE),
@@ -230,10 +238,19 @@ class TestTagsViaREST(object):
         assert_response(appliance, http_status=400)
 
     @pytest.mark.tier(3)
-    @pytest.mark.parametrize(
-        "collection_name", ["clusters", "hosts", "data_stores", "providers", "resource_pools",
-        "services", "service_templates", "tenants", "vms", "availability_zones", "cloud_networks",
-        "cloud_networks", "cloud_subnets", "flavors", "network_routers", "security_groups"])
+    @pytest.mark.provider(
+        [CloudProvider, InfraProvider], selector=ONE_PER_CATEGORY, override=True
+    )
+    @pytest.mark.parametrize("collection_name", INFRA_COLLECTION + CLOUD_COLLECTION)
+    @pytest.mark.uncollectif(
+        lambda appliance, collection_name, provider: (
+            provider.one_of(CloudProvider) and collection_name in INFRA_COLLECTION
+        )
+        or (
+            (provider.one_of(InfraProvider) or appliance.version < "5.10")
+            and collection_name in CLOUD_COLLECTION
+        )
+    )
     def test_assign_and_unassign_tag(self, appliance, tags_mod, provider, services_mod,
             service_templates, tenants, vm, collection_name):
         """Tests assigning and unassigning tags.
