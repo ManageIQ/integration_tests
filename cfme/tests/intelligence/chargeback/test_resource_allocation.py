@@ -376,17 +376,16 @@ def new_chargeback_rate():
                 {'per_time': 'Hourly', 'variable_rate': '2'}}
     )
     compute.create()
-    if not BZ(1532368, forced_streams=['5.9']).blocks:
-        storage = rates.StorageRate(description=desc,
-            fields={'Allocated Disk Storage':
-                    {'per_time': 'Hourly', 'variable_rate': '3'}}
-        )
+    storage = rates.StorageRate(description=desc,
+        fields={'Allocated Disk Storage':
+                {'per_time': 'Hourly', 'variable_rate': '3'}}
+    )
     storage.create()
     yield desc
 
     if compute.exists:
         compute.delete()
-    if not BZ(1532368, forced_streams=['5.9']).blocks and storage.exists:
+    if storage.exists:
         storage.delete()
 
 
