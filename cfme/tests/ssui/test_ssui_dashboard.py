@@ -51,44 +51,54 @@ def enable_candu(appliance):
 def new_compute_rate(appliance, enable_candu):
     # Create a new Compute Chargeback rate
     desc = '{}custom_'.format(fauxfactory.gen_alphanumeric())
-    compute = appliance.collections.compute_rates.create(description=desc, fields={
-        'Used CPU': {'per_time': 'Hourly', 'variable_rate': '3'},
-        'Allocated CPU Count': {'per_time': 'Hourly', 'fixed_rate': '2'},
-        'Used Disk I/O': {'per_time': 'Hourly', 'variable_rate': '2'},
-        'Allocated Memory': {'per_time': 'Hourly', 'fixed_rate': '1'},
-        'Used Memory': {'per_time': 'Hourly', 'variable_rate': '2'}})
-    storage = appliance.collections.storage_rates.create(description=desc, fields={
-        'Used Disk Storage': {'per_time': 'Hourly', 'variable_rate': '3'},
-        'Allocated Disk Storage': {'per_time': 'Hourly', 'fixed_rate': '3'}})
-    yield desc
-    if compute.exists:
-        compute.delete()
+    try:
+        compute = appliance.collections.compute_rates.create(
+            description=desc,
+            fields={
+                'Used CPU': {'per_time': 'Hourly', 'variable_rate': '3'},
+                'Allocated CPU Count': {'per_time': 'Hourly', 'fixed_rate': '2'},
+                'Used Disk I/O': {'per_time': 'Hourly', 'variable_rate': '2'},
+                'Allocated Memory': {'per_time': 'Hourly', 'fixed_rate': '1'},
+                'Used Memory': {'per_time': 'Hourly', 'variable_rate': '2'}
+            }
+        )
+        storage = appliance.collections.storage_rates.create(
+            description=desc,
+            fields={
+                'Used Disk Storage': {'per_time': 'Hourly', 'variable_rate': '3'},
+                'Allocated Disk Storage': {'per_time': 'Hourly', 'fixed_rate': '3'}
+            }
+        )
+    except Exception as ex:
+        pytest.fail('Exception during chargeback creation for test setup: {}'.format(ex.message))
 
-    if storage.exists:
-        storage.delete()
+    yield desc
+
+    for rate in [compute, storage]:
+        rate.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
 def assign_chargeback_rate(new_compute_rate):
     """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
     # TODO Move this to a global fixture
-    for klass in (cb.ComputeAssign, cb.StorageAssign):
-        enterprise = klass(
-            assign_to="The Enterprise",
-            selections={
-                'Enterprise': {'Rate': new_compute_rate}
-            })
-        enterprise.assign()
-    logger.info('Assigning CUSTOM Compute and Storage rates')
+    logger.info('Assigning Compute and Storage rates: %s', new_compute_rate)
+
+    def make_assignment(rate):
+        for klass in (cb.ComputeAssign, cb.StorageAssign):
+            klass(
+                assign_to="The Enterprise",
+                selections={
+                    'Enterprise': {'Rate': rate}
+                }
+            ).assign()  # directly assign, no need to save the object
+
+    make_assignment(new_compute_rate)
+
     yield
+
     # Resetting the Chargeback rate assignment
-    for klass in (cb.ComputeAssign, cb.StorageAssign):
-        enterprise = klass(
-            assign_to="The Enterprise",
-            selections={
-                'Enterprise': {'Rate': '<Nothing>'}
-            })
-        enterprise.assign()
+    make_assignment('<Nothing>')
 
 
 def verify_vm_uptime(appliance, provider, vmname):

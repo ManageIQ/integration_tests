@@ -48,9 +48,6 @@ pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't su
 
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.meta(blockers=[BZ(1511099, forced_streams=['5.9', '5.8'],
-                                  unblock=lambda provider: not provider.one_of(GCEProvider)),
-                               ]),
     pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope='module'),
     pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider_modscope'),
     test_requirements.chargeback,
@@ -476,27 +473,37 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provid
 def new_compute_rate(appliance):
     # Create a new Compute Chargeback rate
     try:
-        desc = 'custom_' + fauxfactory.gen_alphanumeric()
-        compute = appliance.collections.compute_rates.create(description=desc,
-                    fields={'Used CPU':
-                            {'per_time': 'Hourly', 'variable_rate': '3'},
-                            'Used Disk I/O':
-                            {'per_time': 'Hourly', 'variable_rate': '2'},
-                            'Used Memory':
-                            {'per_time': 'Hourly', 'variable_rate': '2'}})
+        desc = 'cstm_' + fauxfactory.gen_alphanumeric()
+        compute = appliance.collections.compute_rates.create(
+            description=desc,
+            fields={
+                'Used CPU': {'per_time': 'Hourly', 'variable_rate': '3'},
+                'Used Disk I/O': {'per_time': 'Hourly', 'variable_rate': '2'},
+                'Used Memory': {'per_time': 'Hourly', 'variable_rate': '2'}
+            }
+        )
+        storage = appliance.collections.storage_rates.create(
+            description=desc,
+            fields={
+                'Used Disk Storage': {'per_time': 'Hourly', 'variable_rate': '3'}
+            }
+        )
+    except Exception as ex:
+        pytest.fail(
+            'Exception while creating compute/storage rates for chargeback report tests. {}'
+            .format(ex)
+        )
 
-        if not BZ(1532368, forced_streams=['5.9']).blocks:
-            storage = appliance.collections.storage_rates.create(description=desc,
-                    fields={'Used Disk Storage':
-                            {'per_time': 'Hourly', 'variable_rate': '3'}})
-        yield desc
+    yield desc
 
-    finally:
-        if compute.exists:
-            compute.delete()
-
-        if storage.exists and not BZ(1532368, forced_streams=['5.9']).blocks:
-            storage.delete()
+    for entity in [compute, storage]:
+        try:
+            entity.delete_if_exists()
+        except Exception as ex:
+            pytest.fail(
+                'Exception while cleaning up compute/storage rates for chargeback report tests. {}'
+                .format(ex)
+            )
 
 
 @pytest.mark.rhv3

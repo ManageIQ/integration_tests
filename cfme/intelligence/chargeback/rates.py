@@ -10,22 +10,24 @@ from widgetastic.utils import ParametrizedString
 from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Text
 from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 
 from . import ChargebackView
+from cfme.exceptions import CandidateNotFound
 from cfme.exceptions import ChargebackRateNotFound
-from cfme.exceptions import displayed_not_implemented
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import Select
 from widgetastic_manageiq import Table
 
@@ -71,10 +73,14 @@ class RatesDetailView(RatesView):
 
 
 class AddComputeChargebackView(RatesView):
+    EXPECTED_TITLE = 'Compute Chargeback Rates'
     title = Text('#explorer_title_text')
 
     description = Input(id='description')
-    currency = Select(id='currency')
+    currency = VersionPicker({
+        LOWEST: Select(id='currency'),
+        '5.10': BootstrapSelect(id='currency')
+    })
 
     @ParametrizedView.nested
     class fields(ParametrizedView):  # noqa
@@ -109,7 +115,15 @@ class AddComputeChargebackView(RatesView):
     add_button = Button(title='Add')
     cancel_button = Button(title='Cancel')
 
-    is_displayed = displayed_not_implemented
+    @property
+    def is_displayed(self):
+        result = (
+            self.title.text == self.EXPECTED_TITLE and
+            self.cancel_button.is_displayed and
+            self.description.is_displayed and
+            self.currency.is_displayed
+        )
+        return result
 
 
 class EditComputeChargebackView(AddComputeChargebackView):
@@ -127,7 +141,7 @@ class EditComputeChargebackView(AddComputeChargebackView):
 
 
 class AddStorageChargebackView(AddComputeChargebackView):
-    pass
+    EXPECTED_TITLE = 'Storage Chargeback Rates'
 
 
 class EditStorageChargebackView(EditComputeChargebackView):
@@ -187,12 +201,15 @@ class ComputeRate(Updateable, Pretty, BaseEntity):
     def copy(self, *args, **kwargs):
         new_rate = self.parent.instantiate(*args, **kwargs)
         add_view = navigate_to(self, 'Copy')
-        add_view.fill_with({'description': new_rate.description,
-                            'currency': new_rate.currency,
-                            'fields': new_rate.fields},
-                           on_change=add_view.add_button,
-                           no_change=add_view.cancel_button)
-
+        add_view.fill_with(
+            {
+                'description': new_rate.description,
+                'currency': new_rate.currency,
+                'fields': new_rate.fields
+            },
+            on_change=add_view.add_button,
+            no_change=add_view.cancel_button
+        )
         return new_rate
 
     def update(self, updates):
@@ -212,8 +229,7 @@ class ComputeRate(Updateable, Pretty, BaseEntity):
         """
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Remove from the VMDB', handle_alert=(not cancel))
-        view = self.create_view(navigator.get_class(self.parent, 'All').VIEW)
-        assert view.is_displayed
+        view = self.create_view(navigator.get_class(self.parent, 'All').VIEW, wait=10)
         view.flash.assert_no_error()
 
 
@@ -225,14 +241,14 @@ class ComputeRateCollection(BaseCollection):
     def create(self, description, currency=None, fields=None):
         """ Create a rate in the UI
 
-            Args:
-                description - name of the compute rate to create
-                currency - type of currency for the rate
-                fields -  nested dictionary listing the Rate Details
-                    Key => Rate Details Description
-                    Value => dict
-                        Key => Rate Details table column names
-                        Value => Value to input in the table
+        Args:
+            description (str): name of the compute rate to create
+            currency (str): - type of currency for the rate
+            fields (dict): -  nested dictionary listing the Rate Details
+                Key => Rate Details Description
+                Value => dict
+                    Key => Rate Details table column names
+                    Value => Value to input in the table
         """
         rate = self.instantiate(description, currency, fields)
 
@@ -243,8 +259,7 @@ class ComputeRateCollection(BaseCollection):
                        on_change=view.add_button,
                        no_change=view.cancel_button)
 
-        view = self.create_view(navigator.get_class(self, 'All').VIEW)
-        assert view.is_displayed
+        view = self.create_view(navigator.get_class(self, 'All').VIEW, wait=10)
         view.flash.assert_no_error()
 
         return rate
@@ -262,8 +277,18 @@ class StorageRateCollection(BaseCollection):
     ENTITY = StorageRate
     RATE_TYPE = ENTITY.RATE_TYPE
 
-    def create(self, description=None, currency=None, fields=None):
-        # Create a rate in UI
+    def create(self, description, currency=None, fields=None):
+        """ Create a rate in the UI
+
+        Args:
+            description (str): name of the compute rate to create
+            currency (str): - type of currency for the rate
+            fields (dict): -  nested dictionary listing the Rate Details
+                Key => Rate Details Description
+                Value => dict
+                    Key => Rate Details table column names
+                    Value => Value to input in the table
+        """
         storage_rate = self.instantiate(description, currency, fields)
 
         view = navigate_to(self, 'Add')
@@ -273,8 +298,7 @@ class StorageRateCollection(BaseCollection):
                        on_change=view.add_button,
                        no_change=view.cancel_button)
 
-        view = self.create_view(navigator.get_class(self, 'All').VIEW)
-        assert view.is_displayed
+        view = self.create_view(navigator.get_class(self, 'All').VIEW, wait=10)
         view.flash.assert_no_error()
 
         return storage_rate
@@ -312,8 +336,7 @@ class ComputeRateDetails(CFMENavigateStep):
                 "Rates",
                 "Compute", self.obj.description
             )
-        except Exception as ex:
-            # TODO don't diaper here
+        except CandidateNotFound as ex:
             raise ChargebackRateNotFound('Exception navigating to ComputeRate {} "Details": {}'
                                          .format(self.obj.description, ex))
 

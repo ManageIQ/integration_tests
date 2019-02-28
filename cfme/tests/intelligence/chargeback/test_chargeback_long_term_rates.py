@@ -360,25 +360,37 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, interv
 def new_compute_rate(appliance, interval):
     """Create a new Compute Chargeback rate"""
     desc = 'custom_{}_{}'.format(interval, fauxfactory.gen_alphanumeric())
-    compute = appliance.collections.compute_rates.create(description=desc,
-                fields={'Used CPU':
-                       {'per_time': interval, 'variable_rate': '720'},
-                       'Used Disk I/O':
-                       {'per_time': interval, 'variable_rate': '720'},
-                       'Used Network I/O':
-                       {'per_time': interval, 'variable_rate': '720'},
-                       'Used Memory':
-                       {'per_time': interval, 'variable_rate': '720'}})
-    storage = appliance.collections.storage_rates.create(description=desc,
-                fields={'Used Disk Storage':
-                        {'per_time': interval, 'variable_rate': '720'}})
+    try:
+        compute = appliance.collections.compute_rates.create(
+            description=desc,
+            fields={
+                'Used CPU': {'per_time': interval, 'variable_rate': '720'},
+                'Used Disk I/O': {'per_time': interval, 'variable_rate': '720'},
+                'Used Network I/O': {'per_time': interval, 'variable_rate': '720'},
+                'Used Memory': {'per_time': interval, 'variable_rate': '720'}
+            }
+        )
+        storage = appliance.collections.storage_rates.create(
+            description=desc,
+            fields={
+                'Used Disk Storage': {'per_time': interval, 'variable_rate': '720'}
+            }
+        )
+    except Exception as ex:
+        pytest.fail(
+            'Exception while creating compute/storage rates for chargeback long term rate tests. {}'
+            .format(ex)
+        )
     yield desc
 
-    if compute.exists:
-        compute.delete()
-
-    if storage.exists:
-        storage.delete()
+    for entity in [compute, storage]:
+        try:
+            entity.delete_if_exists()
+        except Exception as ex:
+            pytest.fail(
+                'Exception while cleaning up compute/storage rates for chargeback report tests. {}'
+                .format(ex)
+            )
 
 
 def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom,
