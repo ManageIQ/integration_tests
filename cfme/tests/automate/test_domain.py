@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.automate.explorer.domain import DomainAddView
 from cfme.automate.import_export import AutomateGitRepository
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
@@ -178,9 +179,9 @@ def test_wrong_domain_name(request, appliance):
     """
     wrong_domain = 'Dummy Domain'
     domain = appliance.collections.domains
-    view = navigate_to(domain, 'Add')
-    view.name.fill(wrong_domain)
-    view.add_button.click()
+    with pytest.raises(AssertionError):
+        domain.create(name=wrong_domain)
+    view = domain.create_view(DomainAddView)
     view.flash.assert_message('Name may contain only alphanumeric and _ . - $ characters')
     wrong_domain = domain.instantiate(name=wrong_domain)
     request.addfinalizer(wrong_domain.delete_if_exists)
