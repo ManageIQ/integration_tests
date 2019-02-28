@@ -229,41 +229,6 @@ def test_automate_git_domain_displayed_in_dialog():
     pass
 
 
-@pytest.mark.tier(3)
-def test_automate_disabled_domains_in_domain_priority():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1331017 When the admin
-    clicks on a instance that has duplicate entries in two different
-    domains. If one domain is disabled it is still displayed in the UI for
-    the domain priority.
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/12h
-        caseimportance: low
-        caseposneg: negative
-        testtype: functional
-        startsin: 5.7
-        casecomponent: Automate
-        tags: automate
-        title: Test automate disabled domains in domain priority
-        testSteps:
-            1. create two domains
-            2. attach the same automate code to both domains.
-            3. disable one domain
-            4. click on a instance and see domains displayed.
-        expectedResults:
-            1.
-            2.
-            3.
-            4. CFME should not display disabled domains
-
-    Bugzilla:
-        1331017
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_automate_engine_database_connection():
     """
