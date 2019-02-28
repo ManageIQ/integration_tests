@@ -120,6 +120,11 @@ class ObjectStoreContainer(BaseEntity, CustomButtonEventsMixin, Taggable):
     provider = attr.ib()
     # TODO add create method after BZ 1490320 fix
 
+    @property
+    def name(self):
+        # Note: name attribute needs for custom button event navigation
+        return self.key
+
 
 @attr.s
 class ObjectStoreContainerCollection(BaseCollection):
