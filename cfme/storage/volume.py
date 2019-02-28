@@ -265,20 +265,35 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         except TimedOutError:
             logger.error('Timed out waiting for Volume to disappear, continuing')
 
-    def update(self, updates):
+    def update(self, updates, storage_manager=None):
         """Edit cloud volume"""
-        view = navigate_to(self, 'Edit')
+        if storage_manager:
+            view = navigate_to(storage_manager, 'Volumes')
+            view.entities.get_entity(name=self.name).check()
+            view.toolbar.configuration.item_select('Edit selected Cloud Volume')
+            view = view.browser.create_view(VolumeEditView, additional_context={'object': self})
+        else:
+            view = navigate_to(self, 'Edit')
         view.fill(updates)
 
         view.save.click()
-        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(updates.get('volume_name')))
+        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(
+            updates.get('volume_name')))
         wait_for(lambda: not self.exists, delay=20, timeout=500, fail_func=self.refresh)
+        volume_collection = self.appliance.collections.volumes
+        return volume_collection.instantiate(
+            name=updates.get('volume_name'), provider=self.provider)
 
-    def delete(self, wait=True):
+    def delete(self, wait=True, storage_manager=None):
         """Delete the Volume"""
-
-        view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Delete this Cloud Volume', handle_alert=True)
+        if storage_manager:
+            view = navigate_to(storage_manager, 'Volumes')
+            view.entities.get_entity(name=self.name).check()
+            view.toolbar.configuration.item_select(
+                'Delete selected Cloud Volumes', handle_alert=True)
+        else:
+            view = navigate_to(self, 'Details')
+            view.toolbar.configuration.item_select('Delete this Cloud Volume', handle_alert=True)
         view.flash.assert_success_message('Delete initiated for 1 Cloud Volume.')
 
         if wait:
@@ -326,11 +341,13 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
                 view.save.click()
                 return snapshot_collection.instantiate(name, self.provider)
 
-    def attach_instance(self, name, mountpoint=None, cancel=False, reset=False, storage_manager=None):
+    def attach_instance(self, name, mountpoint=None, cancel=False, reset=False,
+                        storage_manager=None):
         if storage_manager:
             view = navigate_to(storage_manager, 'Volumes')
             view.entities.get_entity(name=self.name).check()
-            view = navigate_to(storage_manager, 'VolumeAttachInstance')
+            view.toolbar.configuration.item_select('Attach selected Cloud Volume to an Instance')
+            view = view.browser.create_view(AttachInstanceView, additional_context={'object': self})
         else:
             view = navigate_to(self, 'AttachInstance')
 
@@ -354,9 +371,10 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         if storage_manager:
             view = navigate_to(storage_manager, 'Volumes')
             view.entities.get_entity(name=self.name).check()
-            view = navigate_to(storage_manager, 'VolumeDetachInstance')
+            view.toolbar.configuration.item_select('Detach selected Cloud Volume from an Instance')
+            view = view.browser.create_view(DetachInstanceView, additional_context={'object': self})
         else:
-            view = navigate_to(self, 'AttachInstance')
+            view = navigate_to(self, 'DetachInstance')
 
         # Detach button is only active when view is changed
         changed = view.instance.fill(name)

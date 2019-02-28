@@ -8,12 +8,9 @@ from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.volume import VolumeAllView
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from cfme.storage.manager import StorageManagerVolumesAll
-from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
@@ -42,7 +39,7 @@ def from_manager(request):
 @pytest.fixture(scope='module')
 def volume(appliance, provider):
     # create new volume
-    create_volume(appliance, provider, from_manager=False, should_assert=False)
+    volume = create_volume(appliance, provider, should_assert=False)
     yield volume
 
     try:
@@ -68,7 +65,7 @@ def instance_fixture(appliance, provider, small_template):
     instance.cleanup_on_provider()
 
 
-def create_volume(appliance, provider, is_from_manager, az="us-west-1a", cancel=False,
+def create_volume(appliance, provider, is_from_manager=False, az=None, cancel=False,
                   should_assert=False):
     volume_collection = appliance.collections.volumes
     manager = appliance.collections.block_managers.filter({"provider": provider}).all()[0]
@@ -81,6 +78,7 @@ def create_volume(appliance, provider, is_from_manager, az="us-west-1a", cancel=
                                           cancel=cancel,
                                           from_manager=is_from_manager)
     elif provider.one_of(EC2Provider):
+        az = az if az else provider.region + 'a'
         volume = volume_collection.create(name=fauxfactory.gen_alpha(),
                                           storage_manager=manager,
                                           volume_type='General Purpose SSD (GP2)',
@@ -135,24 +133,26 @@ def test_storage_volume_crud(appliance, provider, from_manager):
     """
     # create volume
     volume = create_volume(appliance, provider, from_manager, should_assert=True)
-    # print volume_collection.__dict__
-    # v = volume_collection.all(manager)
-    # for vo in v:
-    #     print(vo.__dict__)
 
     # update volume
     old_name = volume.name
     new_name = fauxfactory.gen_alpha()
     updates = {'volume_name': new_name, 'volume_size': STORAGE_SIZE + 1}
-    volume = volume.update(updates)
-    # volume = Volume(new_name, provider)
-    wait_for(lambda: volume.size == '{} GB'.format(volume.volume_size), delay=15, timeout=900)
+
+    if from_manager:
+        storage_manager = appliance.collections.block_managers.filter(
+            {"provider": provider}).all()[0]
+    else:
+        storage_manager = None
+    volume = volume.update(updates, storage_manager)
+    wait_for(lambda: volume.size == '{} GB'.format(updates.get('volume_size')), delay=15,
+             timeout=900)
 
     updates = {'volume_name': old_name}
-    volume = volume.update(updates)
+    volume = volume.update(updates, storage_manager)
 
     # delete volume
-    volume.delete(wait=True)
+    volume.delete(wait=True, storage_manager=storage_manager)
     assert not volume.exists
 
 
@@ -161,7 +161,8 @@ def test_storage_volume_attach_detach(appliance, provider, instance_fixture, fro
     volume = create_volume(appliance, provider, from_manager, az=instance_fixture.
                            vm_default_args["environment"]["availability_zone"], should_assert=True)
     if from_manager:
-        storage_manager = appliance.collections.block_managers.filter({"provider": provider}).all()[0]
+        storage_manager = appliance.collections.block_managers.filter(
+            {"provider": provider}).all()[0]
     else:
         storage_manager = None
     # attach

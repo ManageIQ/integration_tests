@@ -22,13 +22,16 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.providers import get_crud_by_name
 
+from volume import StorageManagerVolumeAllView
+from volume import VolumeAddView
+from volume import AttachInstanceView
+from volume import DetachInstanceView
+
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Table
-from volume import StorageManagerVolumeAllView, VolumeAddView, AttachInstanceView, DetachInstanceView
-
 
 
 class StorageManagerToolbar(View):
