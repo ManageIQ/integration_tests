@@ -19,11 +19,25 @@ from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
 
-CLOUD_COLLECTION = ["availability_zones", "cloud_networks",
-        "cloud_networks", "cloud_subnets", "flavors", "network_routers", "security_groups"]
-INFRA_COLLECTION = ["clusters", "hosts", "data_stores", "providers", "resource_pools",
-        "services", "service_templates", "tenants", "vms", ]
-
+CLOUD_COLLECTION = [
+    "availability_zones",
+    "cloud_networks",
+    "cloud_subnets",
+    "flavors",
+    "network_routers",
+    "security_groups",
+]
+INFRA_COLLECTION = [
+    "clusters",
+    "hosts",
+    "data_stores",
+    "providers",
+    "resource_pools",
+    "services",
+    "service_templates",
+    "tenants",
+    "vms",
+]
 pytestmark = [
     pytest.mark.provider(classes=[InfraProvider], selector=ONE),
     pytest.mark.usefixtures('setup_provider')

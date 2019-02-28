@@ -5,7 +5,8 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 # from selenium.common.exceptions import NoSuchElementException
 # from utils.log import logger
 
@@ -14,7 +15,7 @@ pytestmark = [
     pytest.mark.tier(3),
     test_requirements.report,
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([VMwareProvider], scope='module'),
+    pytest.mark.provider([InfraProvider], scope='module', selector=ONE),
 ]
 
 
