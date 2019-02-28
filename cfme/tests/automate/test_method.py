@@ -4,14 +4,24 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.explorer.klass import ClassDetailsView
+from cfme.automate.simulation import simulate
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
-pytestmark = [test_requirements.automate]
+pytestmark = [test_requirements.automate, pytest.mark.tier(2)]
+
+
+@pytest.fixture(scope='function')
+def original_class(domain):
+    # Take the 'Request' class and copy it for own purpose.
+    domain.parent.instantiate(name="ManageIQ").namespaces.instantiate(
+        name="System"
+    ).classes.instantiate(name="Request").copy_to(domain.name)
+    klass = domain.namespaces.instantiate(name="System").classes.instantiate(name="Request")
+    return klass
 
 
 @pytest.mark.sauce
-@pytest.mark.tier(2)
 def test_method_crud(klass):
     """
     Polarion:
@@ -43,7 +53,6 @@ def test_method_crud(klass):
 
 
 @pytest.mark.sauce
-@pytest.mark.tier(2)
 def test_automate_method_inputs_crud(appliance, klass):
     """
     Polarion:
@@ -83,7 +92,6 @@ def test_automate_method_inputs_crud(appliance, klass):
     method.delete()
 
 
-@pytest.mark.tier(2)
 def test_duplicate_method_disallowed(klass):
     """
     Polarion:
@@ -106,3 +114,111 @@ def test_duplicate_method_disallowed(klass):
             location='inline',
             script='$evm.log(:info, ":P")',
         )
+
+
+@pytest.mark.tier(1)
+def test_automate_simulate_retry(klass, domain, namespace, original_class):
+    """Automate simulation now supports simulating the state machines.
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.6
+        casecomponent: Automate
+        tags: automate
+        title: Test automate simulate retry
+        setup:
+            1. Create a state machine that contains a couple of states
+        testSteps:
+            1. Create an Automate model that has a State Machine that can end in a retry
+            2. Run a simulation to test the Automate Model from Step 1
+            3. When the Automation ends in a retry, we should be able to resubmit the request
+            4. Use automate simulation UI to call the state machine (Call_Instance)
+        expectedResults:
+            1.
+            2.
+            3.
+            4. A Retry button should appear.
+
+    Bugzilla:
+        1299579
+    """
+    # Adding schema for running 'RETRY' method
+    klass.schema.add_fields({'name': 'RUN', 'type': 'Method', 'data_type': 'String'})
+
+    # Adding 'RETRY' method
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location='inline',
+        script='''root = $evm.root \n
+                  if root['ae_state_retries'] && root['ae_state_retries'] > 2 \n
+                  \t \t root['ae_result'] = 'ok'\n else \t \t root['ae_result'] = 'retry' \n end''',
+    )
+
+    # Adding 'RETRY_METHOD' instance to call 'RETRY' method
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={'RUN': {'value': method.name}}
+    )
+
+    # Creating new class in same domain/namespace
+    new_class = namespace.collections.classes.create(name=fauxfactory.gen_alphanumeric())
+
+    # Creating schema of new class with 'TYPE' - 'State'
+    new_class.schema.add_fields({'name': 'STATE1', 'type': 'State', 'data_type': 'String'})
+
+    # Adding new instance - 'TEST_RETRY' to new class which calls instance - 'RETRY_METHOD'
+    new_instance = new_class.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={
+            "STATE1": {
+                "value": "/{domain}/{namespace}/{klass}/{instance}".format(
+                    domain=domain.name,
+                    namespace=namespace.name,
+                    klass=klass.name,
+                    instance=instance.name,
+                )
+            }
+        },
+    )
+
+    # Creating instance 'MY_TEST' under original class which uses relationship - 'rel1' of schema to
+    # call new_instance - 'TEST_RETRY'
+    original_instance = original_class.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        fields={
+            "rel1": {
+                "value": "/{domain}/{namespace}/{klass}/{instance}".format(
+                    domain=domain.name,
+                    namespace=namespace.name,
+                    klass=new_class.name,
+                    instance=new_instance.name,
+                )
+            }
+        },
+    )
+
+    # Navigating to 'AutomateSimulation' view to check whether retry button is not available before
+    # executing automate method
+    view = navigate_to(klass.appliance.server, 'AutomateSimulation')
+    assert not view.retry_button.is_displayed
+
+    # Executing automate method - 'RETRY' using simulation
+    simulate(
+        appliance=klass.appliance,
+        instance="Request",
+        message="create",
+        request=original_instance.name,
+        execute_methods=True
+    )
+
+    # Checking whether 'Retry' button is displayed
+    assert view.retry_button.is_displayed

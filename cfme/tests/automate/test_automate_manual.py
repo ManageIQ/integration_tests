@@ -69,40 +69,6 @@ def test_quota_source_user():
 
 
 @pytest.mark.tier(1)
-def test_automate_simulate_retry():
-    """
-    Automate simulation now supports simulating the state machines.
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/4h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.6
-        casecomponent: Automate
-        tags: automate
-        title: Test automate simulate retry
-        setup:
-            1. Create a state machine that contains a couple of states
-        testSteps:
-            1. Create an Automate model that has a State Machine that can end in a retry
-            2. Run a simulation to test the Automate Model from Step 1
-            3. When the Automation ends in a retry, we should be able to resubmit the request
-            4. Use automate simulation UI to call the state machine (Call_Instance)
-        expectedResults:
-            1.
-            2.
-            3.
-            4. A Retry button should appear.
-
-    Bugzilla:
-        1299579
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_customize_request_security_group():
     """
     Polarion:
