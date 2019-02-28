@@ -26,27 +26,28 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     """The following lines generate appliance versions based from the current build.
-    Appliance version is split and minor_build is picked out for generating each version
+    Appliance version is split and z-version is picked out for generating each version
     and appending it to the empty versions list"""
     versions = []
     version = find_appliance(metafunc).version
 
     split_ver = str(version).split(".")
     try:
-        minor_build = split_ver[2]
-        assert int(minor_build) != 0
-    except IndexError:
-        logger.exception('Caught IndexError generating for test_appliance_update, skipping')
-    except AssertionError:
-        logger.debug('Caught AssertionError: No previous z-stream version to update from')
-        versions.append(
-            pytest.param(
-                "bad:{!r}".format(version),
-                marks=pytest.mark.uncollect('Could not parse minor_build from: {}'.format(version))
-            )
-        )
-    except Exception:  # diaper just in case
-        logger.exception('Exception hit parsing version for test_appliance_update')
+        z_version = int(split_ver[2])
+    except (IndexError, ValueError) as e:
+        logger.exception("Couldn't parse version: %s, skipping", e)
+        versions.append(pytest.param("bad:{!r}".format(version), marks=pytest.mark.uncollect(
+            reason='Could not parse z_version from: {}'.format(version)
+        )))
+    else:
+        if z_version < 1:
+            logger.debug('No previous z-stream version to update from.')
+            versions.append(pytest.param("bad:{!r}".format(version), marks=pytest.mark.uncollect(
+                reason='No previous z-stream version to update from: {}'.format(version)
+            )))
+        else:
+            versions.append("{split_ver[0]}.{split_ver[1]}.{z_version}".format(
+                split_ver=split_ver, z_version=z_version - 1))
     metafunc.parametrize('old_version', versions, indirect=True)
 
 
@@ -179,9 +180,12 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
     wait_for(do_appliance_versions_match, func_args=(appliance, enabled_embedded_appliance),
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
-    assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running, num_sec=90)
-    assert wait_for(func=lambda: enabled_embedded_appliance.rabbitmq_server.running, num_sec=60)
-    assert wait_for(func=lambda: enabled_embedded_appliance.nginx.running, num_sec=60)
+    assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running,
+                    num_sec=180)
+    assert wait_for(func=lambda: enabled_embedded_appliance.is_rabbitmq_running,
+                    num_sec=60)
+    assert wait_for(func=lambda: enabled_embedded_appliance.is_nginx_running,
+                    num_sec=60)
     repositories = enabled_embedded_appliance.collections.ansible_repositories
     name = "example_{}".format(fauxfactory.gen_alpha())
     description = "edited_{}".format(fauxfactory.gen_alpha())

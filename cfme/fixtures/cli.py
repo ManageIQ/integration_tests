@@ -386,7 +386,7 @@ def update_appliance(appliance):
             func=red_hat_updates.checked_updates,
             func_args=[appliance.server.name],
             delay=10,
-            num_sec=100,
+            num_sec=600,
             fail_func=red_hat_updates.refresh,
         )
         if red_hat_updates.platform_updates_available():
