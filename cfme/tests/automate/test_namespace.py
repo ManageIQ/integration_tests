@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.automate.explorer.namespace import NamespaceAddView
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
@@ -85,3 +86,37 @@ def test_duplicate_namespace_disallowed(parent_namespace):
         parent_namespace.namespaces.create(
             name=ns.name,
             description=ns.description)
+
+
+@pytest.mark.tier(2)
+def test_wrong_namespace_name(request, domain):
+    """To test whether namespace is creating with wrong name or not.
+       wrong_namespace: 'Dummy Namespace' (This is invalid name of Namespace because there is space
+       in the name)
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/60h
+        tags: automate
+        testSteps:
+            1. Navigate to Automation> Automate> Explorer
+            2. Try to create namespace with name `Dummy Namespace` (I put space which is invalid)
+        expectedResults:
+            1.
+            2. Should give proper flash message
+
+    Bugzilla:
+        1650071
+    """
+    wrong_namespace = 'Dummy Namespace'
+    namespace = domain.namespaces
+    with pytest.raises(AssertionError):
+        namespace.create(name=wrong_namespace)
+    view = namespace.create_view(NamespaceAddView)
+    view.flash.assert_message('Name may contain only alphanumeric and _ . - $ characters')
+    wrong_namespace = namespace.instantiate(name=wrong_namespace)
+    request.addfinalizer(wrong_namespace.delete_if_exists)
+    assert not wrong_namespace.exists

@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.automate.explorer.domain import DomainAddView
 from cfme.automate.import_export import AutomateGitRepository
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
@@ -163,8 +164,11 @@ def test_domain_cannot_edit_builtin(appliance):
 
 
 @pytest.mark.tier(2)
-def test_domain_name_wrong(appliance):
-    """
+def test_wrong_domain_name(request, appliance):
+    """To test whether domain is creating with wrong name or not.
+       wrong_domain: 'Dummy Domain' (This is invalid name of Domain because there is space
+       in the name)
+
     Polarion:
         assignee: ghubale
         casecomponent: Automate
@@ -173,8 +177,15 @@ def test_domain_name_wrong(appliance):
         initialEstimate: 1/60h
         tags: automate
     """
-    with pytest.raises(Exception, match='Name may contain only'):
-        appliance.collections.domains.create(name='with space')
+    wrong_domain = 'Dummy Domain'
+    domain = appliance.collections.domains
+    with pytest.raises(AssertionError):
+        domain.create(name=wrong_domain)
+    view = domain.create_view(DomainAddView)
+    view.flash.assert_message('Name may contain only alphanumeric and _ . - $ characters')
+    wrong_domain = domain.instantiate(name=wrong_domain)
+    request.addfinalizer(wrong_domain.delete_if_exists)
+    assert not wrong_domain.exists
 
 
 @pytest.mark.tier(2)

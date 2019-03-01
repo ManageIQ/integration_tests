@@ -164,10 +164,7 @@ class Domain(BaseEntity, Fillable):
 
     @cached_property
     def locked(self):
-        if self.appliance.version < '5.7':
-            return self.db_object.system
-        else:
-            return self.db_object.source in {'user_locked', 'system', 'remote'}
+        return self.db_object.source in {'user_locked', 'system', 'remote'}
 
     @property
     def domain(self):
@@ -260,12 +257,8 @@ class Domain(BaseEntity, Fillable):
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
-            if self.appliance.version >= '5.8.2':
-                text = (
-                    updates.get('description', self.description) or
-                    updates.get('name', self.name))
-            else:
-                text = updates.get('name', self.name)
+            text = (updates.get('description', self.description)
+                    or updates.get('name', self.name))
             view.flash.assert_message('Automate Domain "{}" was saved'.format(text))
         else:
             view.flash.assert_message(
