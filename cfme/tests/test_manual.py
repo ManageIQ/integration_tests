@@ -5413,29 +5413,6 @@ def test_heat_stacks_in_non_admin_tenants_shall_also_be_collected():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_automate_schedule_crud():
-    """
-    Create the automate task schedule and make sure all the values are the
-    same after creation.
-    Bug 1479570 - Internal Server Error when creating schedule for
-    automate task
-    https://bugzilla.redhat.com/show_bug.cgi?id=1479570
-    1.) Create a schedule, selecting Automation Tasks under Action.
-    2.) Select a value from the dropdown list under Object Attribute Type.
-    3.) Undo the selection by selecting "<Choose>" from the dropdown.
-    4.) No pop-up window with Internal Server Error.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Automate
-        initialEstimate: 1/15h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rep
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_web_services():
