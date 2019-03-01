@@ -26,8 +26,8 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.update import Updateable
-from widgetastic_manageiq import MultiBoxOrderedSelect
 from widgetastic_manageiq import FonticonPicker
+from widgetastic_manageiq import MultiBoxOrderedSelect
 from widgetastic_manageiq import PotentiallyInvisibleTab
 from widgetastic_manageiq import RadioGroup
 from widgetastic_manageiq import SummaryFormItem
@@ -713,12 +713,13 @@ class ButtonGroup(BaseEntity, Updateable):
         image: Icon of Group.
         display: Group name display on Button.
         icon_color: Icon Color of Group.
+        assign_buttons: List of assigned buttons to Group.
     """
 
     text = attr.ib()
     hover = attr.ib()
     type = attr.ib()
-    image = attr.ib()
+    image = attr.ib(default="fa-user")
     display = attr.ib(default=None)
     icon_color = attr.ib(default=None)
     assign_buttons = attr.ib(default=None)
@@ -803,21 +804,6 @@ class ButtonGroupCollection(BaseCollection):
     TENANT = "Tenant"
     TEMPLATE_IMAGE = "VM Template and Image"
     VM_INSTANCE = "VM and Instance"
-
-    def instantiate(
-        self,
-        text,
-        hover,
-        type,
-        image="fa-user",
-        display=None,
-        icon_color=None,
-        assign_buttons=None,
-    ):
-        self.type = type
-        return self.ENTITY.from_collection(
-            self, text, hover, type, image, display, icon_color, assign_buttons
-        )
 
     def create(
         self,

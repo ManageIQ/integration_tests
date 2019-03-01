@@ -415,11 +415,11 @@ def test_custom_button_simulation(request, appliance, provider, setup_provider, 
 def test_custom_button_order_sort(appliance, request, provider, setup_provider, button_tag):
     """ Test custom button order reflection on destination
     # ToDo: Now, we are testing this against single object per group tag. If need extends for all.
+
     Polarion:
         assignee: ndhandre
         initialEstimate: 1/4h
         caseimportance: medium
-        caseposneg: positive
         testtype: functional
         startsin: 5.9
         casecomponent: CustomButton
