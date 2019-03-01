@@ -1119,7 +1119,70 @@ def test_user_change_password(appliance, request):
         assert appliance.server.current_full_name() == user.name
 
 
+def test_tenant_quota_input_validate(appliance):
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: Infra
+        tags: quota
+        initialEstimate: 1/8h
+    """
+    roottenant = appliance.collections.tenants.get_root_tenant()
+    fields = [('cpu', 2.5), ('storage', '1.x'), ('memory', '2.x'), ('vm', 1.5)]
+
+    for field in fields:
+        view = navigate_to(roottenant, 'ManageQuotas')
+        view.form.fill({'{}_cb'.format(field[0]): True, '{}_txt'.format(field[0]): field[1]})
+        assert view.save_button.disabled
+        view.form.fill({'{}_cb'.format(field[0]): False})
+
+
+def test_copied_user_password_inheritance(appliance, group_collection, request):
+    """Test to verify that dialog for copied user should appear and password field should be
+    empty
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: WebUI
+        caseimportance: high
+        initialEstimate: 1/15h
+    """
+    group_name = 'EvmGroup-user'
+    group = group_collection.instantiate(description=group_name)
+    user = new_user(appliance, [group])
+    request.addfinalizer(user.delete)
+    view = navigate_to(user, 'Details')
+    view.toolbar.configuration.item_select('Copy this User to a new User')
+    view = user.create_view(AddUserView, wait='10s')
+    assert view.password_txt.value == '' and view.password_verify_txt.value == ''
+    view.cancel_button.click()
+
+
 # Tenant/Project test cases
+
+def test_delete_default_tenant(appliance):
+    """
+    Polarion:
+        assignee: mnadeem
+        casecomponent: Configuration
+        caseimportance: low
+        tags: cfme_tenancy
+        initialEstimate: 1/20h
+        testSteps:
+            1. Login as an 'Administrator' user
+            2. Navigate to configuration > access control > tenants
+            3. Select default tenant('My Company') from tenants table
+            4. Delete using 'configuration > Delete selected items'
+            5. Check whether default tenant is deleted or not
+    """
+    view = navigate_to(appliance.collections.tenants, "All")
+    roottenant = appliance.collections.tenants.get_root_tenant()
+    msg = 'Default Tenant "{}" can not be deleted'.format(roottenant.name)
+    tenant = appliance.collections.tenants.instantiate(name=roottenant.name)
+    appliance.collections.tenants.delete(tenant)
+    assert view.flash.assert_message(msg)
+    assert roottenant.exists
+
 
 @pytest.mark.tier(3)
 def test_superadmin_tenant_crud(request, appliance):
@@ -1128,16 +1191,17 @@ def test_superadmin_tenant_crud(request, appliance):
     Prerequisities:
         * This test is not depending on any other test and can be executed against fresh appliance.
 
-    Steps:
-        * Create tenant
-        * Update description of tenant
-        * Update name of tenant
-        * Delete tenant
-
     Polarion:
         assignee: mnadeem
+        casecomponent: Configuration
         caseimportance: low
+        tags: cfme_tenancy
         initialEstimate: 1/4h
+        testSteps:
+            1. Create tenant
+            2. Update description of tenant
+            3. Update name of tenant
+            4. Delete tenant
     """
     tenant_collection = appliance.collections.tenants
     tenant = tenant_collection.create(
@@ -1165,19 +1229,19 @@ def test_superadmin_tenant_project_crud(request, appliance):
     Prerequisities:
         * This test is not depending on any other test and can be executed against fresh appliance.
 
-    Steps:
-        * Create tenant
-        * Create project as child to tenant
-        * Update description of project
-        * Update name of project
-        * Delete project
-        * Delete tenant
-
     Polarion:
         assignee: mnadeem
         casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
         initialEstimate: 1/4h
-        tags: obsolete20180808
+        testSteps:
+            1. Create tenant
+            2. Create project as child to tenant
+            3. Update description of project
+            4. Update name of project
+            5. Delete project
+            6. Delete tenant
     """
     tenant_collection = appliance.collections.tenants
     project_collection = appliance.collections.projects
@@ -1213,16 +1277,17 @@ def test_superadmin_child_tenant_crud(request, appliance, number_of_childrens):
     Prerequisities:
         * This test is not depending on any other test and can be executed against fresh appliance.
 
-    Steps:
-        * Create 5 tenants where the next tenant is always child to the previous one
-        * Update description of tenant(N-1)_* in the tree
-        * Update name of tenant(N-1)_*
-        * Delete all created tenants in reversed order
-
     Polarion:
         assignee: mnadeem
         casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
         initialEstimate: 1h
+        testSteps:
+            1. Create 5 tenants where the next tenant is always child to the previous one
+            2. Update description of tenant(N-1)_* in the tree
+            3. Update name of tenant(N-1)_*
+            4. Delete all created tenants in reversed order
     """
     tenant_collection = appliance.collections.tenants
     tenant_list = []
@@ -1295,11 +1360,22 @@ def tenant_unique_tenant_project_name_on_parent_level(request, appliance, object
 
 @pytest.mark.tier(3)
 def test_unique_tenant_name_on_parent_level(request, appliance):
-    """
+    """Tenant has always unique name on parent level. Same name cannot be used twice.
+
+    Prerequisities:
+        * This test is not depending on any other test and can be executed against fresh appliance.
+
     Polarion:
-        assignee: ghubale
-        casecomponent: Infra
+        assignee: mnadeem
+        casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
         initialEstimate: 1/20h
+        testSteps:
+            1. Create tenant
+            2. Create another tenant with the same name
+            3. Creation will fail because object with the same name exists
+            4. Delete created objects
     """
     tenant_unique_tenant_project_name_on_parent_level(request, appliance,
                                                       appliance.collections.tenants)
@@ -1307,73 +1383,25 @@ def test_unique_tenant_name_on_parent_level(request, appliance):
 
 @pytest.mark.tier(3)
 def test_unique_project_name_on_parent_level(request, appliance):
-    """
+    """Tenant has always unique name on parent level. Same name cannot be used twice.
+
+    Prerequisities:
+        * This test is not depending on any other test and can be executed against fresh appliance.
+
     Polarion:
-        assignee: ghubale
-        casecomponent: Infra
+        assignee: mnadeem
+        casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
         initialEstimate: 1/20h
+        testSteps:
+            1. Create project
+            2. Create another project with the same name
+            3. Creation will fail because object with the same name exists
+            4. Delete created objects
     """
     tenant_unique_tenant_project_name_on_parent_level(request, appliance,
                                                       appliance.collections.projects)
-
-
-def test_tenant_quota_input_validate(appliance):
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        initialEstimate: 1/8h
-    """
-    roottenant = appliance.collections.tenants.get_root_tenant()
-    fields = [('cpu', 2.5), ('storage', '1.x'), ('memory', '2.x'), ('vm', 1.5)]
-
-    for field in fields:
-        view = navigate_to(roottenant, 'ManageQuotas')
-        view.form.fill({'{}_cb'.format(field[0]): True, '{}_txt'.format(field[0]): field[1]})
-        assert view.save_button.disabled
-        view.form.fill({'{}_cb'.format(field[0]): False})
-
-
-def test_delete_default_tenant(appliance):
-    """
-    Steps:
-    1. Login as an 'Administrator' user
-    2. Navigate to configuration > access control > tenants
-    3. Select default tenant('My Company') from tenants table
-    4. Delete using 'configuration > Delete selected items'
-    5. Check whether default tenant is deleted or not
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        initialEstimate: 1/20h
-    """
-    view = navigate_to(appliance.collections.tenants, "All")
-    roottenant = appliance.collections.tenants.get_root_tenant()
-    msg = 'Default Tenant "{}" can not be deleted'.format(roottenant.name)
-    tenant = appliance.collections.tenants.instantiate(name=roottenant.name)
-    appliance.collections.tenants.delete(tenant)
-    assert view.flash.assert_message(msg)
-    assert roottenant.exists
-
-
-def test_copied_user_password_inheritance(appliance, group_collection, request):
-    """Test to verify that dialog for copied user should appear and password field should be
-    empty
-
-    Polarion:
-        assignee: anikifor
-        initialEstimate: 1/15h
-    """
-    group_name = 'EvmGroup-user'
-    group = group_collection.instantiate(description=group_name)
-    user = new_user(appliance, [group])
-    request.addfinalizer(user.delete)
-    view = navigate_to(user, 'Details')
-    view.toolbar.configuration.item_select('Copy this User to a new User')
-    view = user.create_view(AddUserView, wait='10s')
-    assert view.password_txt.value == '' and view.password_verify_txt.value == ''
-    view.cancel_button.click()
 
 
 @pytest.mark.tier(2)
@@ -1384,6 +1412,8 @@ def test_superadmin_tenant_admin_crud(appliance, group_collection):
     Polarion:
         assignee: mnadeem
         casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
         initialEstimate: 1/4h
         startsin: 5.5
         testSteps:
@@ -1410,6 +1440,8 @@ def test_tenant_unique_catalog():
     Polarion:
         assignee: mnadeem
         casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
         caseposneg: negative
         initialEstimate: 1/2h
         startsin: 5.5
@@ -1429,6 +1461,7 @@ def test_tenant_visibility_service_template_catalogs_all_parents():
         assignee: mnadeem
         casecomponent: Configuration
         caseimportance: medium
+        tags: cfme_tenancy
         initialEstimate: 1/2h
         startsin: 5.5
     """
@@ -1446,6 +1479,7 @@ def test_tenant_visibility_services_all_childs():
         assignee: mnadeem
         casecomponent: Configuration
         caseimportance: medium
+        tags: cfme_tenancy
         initialEstimate: 1h
         startsin: 5.5
     """
@@ -1462,6 +1496,7 @@ def test_tenant_osp_mapping_refresh():
     Polarion:
         assignee: mnadeem
         caseimportance: medium
+        tags: cfme_tenancy
         initialEstimate: 1/4h
         startsin: 5.7
         testSteps:
@@ -1486,6 +1521,7 @@ def test_tenant_visibility_providers_all_parents():
         assignee: mnadeem
         casecomponent: Configuration
         caseimportance: medium
+        tags: cfme_tenancy
         initialEstimate: 1/6h
         startsin: 5.5
     """
@@ -1503,6 +1539,7 @@ def test_tenant_visibility_miq_requests_all_childs():
         assignee: mnadeem
         casecomponent: Configuration
         caseimportance: medium
+        tags: cfme_tenancy
         initialEstimate: 1/2h
         startsin: 5.5
     """
@@ -1519,6 +1556,7 @@ def test_tenant_osp_mapping_delete():
         assignee: mnadeem
         casecomponent: Configuration
         caseimportance: medium
+        tags: cfme_tenancy
         initialEstimate: 1/4h
         startsin: 5.7
         testSteps:
@@ -1541,6 +1579,7 @@ def test_tenant_ssui_users_can_see_their_services():
         assignee: mnadeem
         casecomponent: Configuration
         caseimportance: medium
+        tags: cfme_tenancy
         initialEstimate: 1/4h
         startsin: 5.5
         testSteps:
@@ -1585,6 +1624,8 @@ def test_tenant_unique_automation_domain_name_on_parent_level(appliance, request
     Polarion:
         assignee: mnadeem
         casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
         caseposneg: negative
         initialEstimate: 1/2h
         startsin: 5.5
@@ -1618,6 +1659,8 @@ def test_tenantadmin_user_crud():
     Polarion:
         assignee: mnadeem
         casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
         initialEstimate: 1/4h
         startsin: 5.5
         testSteps:
@@ -1647,6 +1690,8 @@ def test_tenant_automation_domains():
     Polarion:
         assignee: mnadeem
         casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
         initialEstimate: 1/4h
         startsin: 5.5
         testSteps:
@@ -1690,6 +1735,8 @@ def test_superadmin_child_tenant_delete_parent_catalog(appliance, group_collecti
     Polarion:
         assignee: mnadeem
         casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
         initialEstimate: 1/2h
         startsin: 5.5
     """
@@ -1734,6 +1781,7 @@ def test_verify_groups_for_tenant_user():
         assignee: mnadeem
         casecomponent: Configuration
         caseimportance: medium
+        tags: cfme_tenancy
         initialEstimate: 1/4h
     """
     pass
@@ -1751,6 +1799,7 @@ def test_tenant_visibility_service_template_items_all_parents():
         assignee: mnadeem
         casecomponent: Configuration
         caseimportance: medium
+        tags: cfme_tenancy
         initialEstimate: 1/2h
         startsin: 5.5
     """
@@ -1767,6 +1816,8 @@ def test_tenantadmin_group_crud():
     Polarion:
         assignee: mnadeem
         casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
         initialEstimate: 1/4h
         startsin: 5.5
         testSteps:
@@ -1790,6 +1841,7 @@ def test_tenant_visibility_vms_all_childs():
         assignee: mnadeem
         casecomponent: Configuration
         caseimportance: medium
+        tags: cfme_tenancy
         initialEstimate: 1h
         startsin: 5.5
     """
@@ -1805,6 +1857,8 @@ def test_tenant_ldap_group_switch_between_tenants():
     Polarion:
         assignee: mnadeem
         casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
         initialEstimate: 1/4h
         startsin: 5.5
         testSteps:
@@ -1841,6 +1895,7 @@ def test_tenant_visibility_miq_ae_namespaces_all_parents():
         assignee: mnadeem
         casecomponent: Configuration
         caseimportance: medium
+        tags: cfme_tenancy
         initialEstimate: 1/4h
         startsin: 5.5
     """
