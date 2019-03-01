@@ -38,6 +38,7 @@ def test_default_view_cloud_reset(appliance):
         casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/20h
+        tags: settings
     """
     view = navigate_to(appliance.user.my_settings, "DefaultViews")
     assert view.tabs.default_views.reset.disabled
@@ -58,6 +59,7 @@ def test_cloud_default_view(appliance, group_name, expected_view):
         casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/10h
+        tags: settings
     """
     page = gtl_params[group_name]
     default_views = appliance.user.my_settings.default_views
@@ -71,7 +73,7 @@ def test_cloud_default_view(appliance, group_name, expected_view):
 
 
 @pytest.mark.parametrize('expected_view',
-                         ['Expanded View', 'Compressed View', 'Details Mode', 'Exists Mode'])
+                        ['Expanded View', 'Compressed View', 'Details Mode', 'Exists Mode'])
 def test_cloud_compare_view(appliance, expected_view):
     """This test changes the default view/mode for comparison between cloud provider instances
     and asserts the change.
@@ -81,6 +83,7 @@ def test_cloud_compare_view(appliance, expected_view):
         casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/10h
+        tags: settings
     """
 
     if expected_view in ['Expanded View', 'Compressed View']:

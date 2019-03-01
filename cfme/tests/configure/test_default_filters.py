@@ -17,6 +17,7 @@ def test_default_filters_reset(appliance):
         casecomponent: Configuration
         caseimportance: high
         initialEstimate: 1/8h
+        tags: settings
     """
     tree_path = ['Cloud', 'Instances', 'Images', 'Platform / Openstack']
     view = navigate_to(appliance.user.my_settings, "DefaultFilters")
@@ -33,6 +34,7 @@ def test_cloudimage_defaultfilters(appliance):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: settings
     """
     filters = [['Cloud', 'Instances', 'Images', 'Platform / Amazon']]
     tree_path = ['All Images', 'Global Filters', 'Platform / Amazon']
@@ -48,6 +50,7 @@ def test_cloudinstance_defaultfilters(appliance):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: settings
     """
     filters = [['Cloud', 'Instances', 'Instances', 'Platform / Openstack']]
     tree_path = ['All Instances', 'Global Filters', 'Platform / Openstack']
@@ -63,6 +66,7 @@ def test_infrastructurehost_defaultfilters(appliance):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: settings
     """
     filters = [['Infrastructure', 'Hosts', 'Platform / HyperV']]
     appliance.user.my_settings.default_filters.update({'filters': [(k, True) for k in filters]})
@@ -78,6 +82,7 @@ def test_infrastructurevms_defaultfilters(appliance):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: settings
     """
     filters = [['Infrastructure', 'Virtual Machines', 'VMs', 'Platform / VMware']]
     tree_path = ['All VMs', 'Global Filters', 'Platform / VMware']
@@ -93,6 +98,7 @@ def test_infrastructuretemplates_defaultfilters(appliance):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: settings
     """
     filters = [['Infrastructure', 'Virtual Machines', 'Templates', 'Platform / Redhat']]
     tree_path = ['All Templates', 'Global Filters', 'Platform / Redhat']
@@ -108,6 +114,7 @@ def test_servicetemplateandimages_defaultfilters(appliance, request):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: settings
     """
     filters = [['Services', 'Workloads', 'Templates & Images', 'Platform / Microsoft']]
     tree_path = ['All Templates & Images', 'Global Filters', 'Platform / Microsoft']
@@ -126,6 +133,7 @@ def test_servicevmsandinstances_defaultfilters(appliance, request):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: settings
     """
     filters = [['Services', 'Workloads', 'VMs & Instances', 'Platform / Openstack']]
     tree_path = ['All VMs & Instances', 'Global Filters', 'Platform / Openstack']

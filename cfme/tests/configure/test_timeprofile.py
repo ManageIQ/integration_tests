@@ -21,6 +21,7 @@ def test_time_profile_crud(appliance):
         casecomponent: Configuration
         caseimportance: high
         initialEstimate: 1/8h
+        tags: settings
     """
     collection = appliance.collections.time_profiles
     time_profile = collection.create(
@@ -43,6 +44,7 @@ def test_time_profile_name_max_character_validation(appliance):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: settings
     """
     collection = appliance.collections.time_profiles
     time_profile = collection.create(
@@ -107,6 +109,7 @@ def test_time_profile_description_required_error_validation(appliance, soft_asse
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: settings
     """
     collection = appliance.collections.time_profiles
     time_profile = collection.instantiate(description='UTC', scope='Current User',
@@ -129,6 +132,7 @@ def test_time_profile_copy(appliance):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
+        tags: settings
     """
     collection = appliance.collections.time_profiles
     time_profile = collection.create(
