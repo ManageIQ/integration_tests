@@ -22,6 +22,17 @@ TIMER = {
     "once": {"run": "Once", "hours": ""},
 }
 
+INVALID_EMAILS = [
+    "{name}".format(name=fauxfactory.gen_alpha()),
+    "{name}..{name}@example..com".format(name=fauxfactory.gen_alpha()),
+    "{name}@example.com".format(name=fauxfactory.gen_special()),
+    "{name}@example.com({name})".format(name=fauxfactory.gen_alpha()),
+    ".{name}@example.com".format(name=fauxfactory.gen_alpha()),
+    "{name}@-example.com".format(name=fauxfactory.gen_alpha()),
+    "{name}.example.com".format(name=fauxfactory.gen_alpha()),
+    "{name}.@example.com".format(name=fauxfactory.gen_alpha()),
+    "@example.com",
+]
 
 def schedule_files():
     result = []
@@ -84,8 +95,29 @@ def test_reports_disable_enable_schedule(appliance, schedule):
 
 
 @pytest.mark.ignore_stream("5.9")
-def test_report_schedules_invalid_email(appliance, schedule_data):
+@pytest.mark.parametrize(
+    "email",
+    INVALID_EMAILS,
+    ids=[
+        "string",
+        "multiple-dots",
+        "special-characters",
+        "brackets",
+        "leading-dot",
+        "dash",
+        "missing-@",
+        "trailing-dot",
+        "missing-username",
+    ],
+)
+def test_report_schedules_invalid_email(appliance, schedule_data, email):
     """
+    This test case checks if invalid emails are accepted while creating a schedule
+    TODO: In addition to above patterns, there are few invalid patterns which are still accepted.
+    Patterns such as: xyz@example@example.com, xyz@example
+    BZ(1684491) has been filed for this.
+
+    Bugzilla: 1684491
     Polarion:
         assignee: pvala
         casecomponent: Reporting
@@ -93,8 +125,7 @@ def test_report_schedules_invalid_email(appliance, schedule_data):
         initialEstimate: 1/12h
         tags: report
     """
-    schedule_data["emails"] = (fauxfactory.gen_alpha(), fauxfactory.gen_alpha())
-    schedule_data["from_email"] = fauxfactory.gen_alpha()
+    schedule_data["emails"], schedule_data["from_email"] = email, email
     with pytest.raises(AssertionError):
         appliance.collections.schedules.create(**schedule_data)
     view = appliance.collections.schedules.create_view(NewScheduleView)
