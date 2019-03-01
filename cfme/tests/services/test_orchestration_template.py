@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-import re
-
 import fauxfactory
 import pytest
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [
@@ -81,9 +78,10 @@ def created_template(appliance, template_type):
 def test_orchestration_template_crud(appliance, template_type):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: service
     """
     method = METHOD_TORSO.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     collection = appliance.collections.orchestration_templates
@@ -103,9 +101,10 @@ def test_copy_template(created_template):
     """Tests Orchestration template copy
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: service
     """
     copied_method = METHOD_TORSO_copied.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     template = created_template
@@ -115,19 +114,18 @@ def test_copy_template(created_template):
     template_copy.delete()
 
 
-@pytest.mark.meta(blockers=[BZ(1659947, forced_streams=["5.9", "5.10"])])
 def test_name_required_error_validation_orch_template(appliance, template_type):
     """Tests error validation if Name wasn't specified during template creation
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: service
     """
-    msg = "Error during 'Orchestration Template creation': Validation failed: Name can't be blank"
     copied_method = METHOD_TORSO_copied.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     collection = appliance.collections.orchestration_templates
-    with pytest.raises(Exception, match=msg):
+    with pytest.raises(AssertionError):
         collection.create(template_group=templates.get(template_type)[1],
                           template_type=templates.get(template_type)[0],
                           template_name=None,
@@ -139,9 +137,10 @@ def test_empty_all_fields_error_validation(appliance, template_type):
     """Tests error validation if we try to create template with all empty fields
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: service
     """
     flash_msg = "Error during Orchestration Template creation: new template content cannot be empty"
     collection = appliance.collections.orchestration_templates
@@ -157,13 +156,14 @@ def test_empty_content_error_validation(appliance, template_type):
     """Tests error validation if content wasn't added during template creation
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: service
     """
     flash_msg = "Error during Orchestration Template creation: new template content cannot be empty"
     collection = appliance.collections.orchestration_templates
-    with pytest.raises(Exception, match=flash_msg):
+    with pytest.raises(AssertionError, match=flash_msg):
         collection.create(template_group=templates.get(template_type)[1],
                           template_type=templates.get(template_type)[0],
                           template_name=fauxfactory.gen_alphanumeric(),
@@ -190,30 +190,25 @@ def test_tag_orchestration_template(tag, created_template):
 
 
 @pytest.mark.parametrize("action", ["copy", "create"], ids=["copy", "create"])
-@pytest.mark.meta(
-    blockers=[BZ(1659947, forced_streams=['5.9', '5.10'],
-                 unblock=lambda action: action != "create")])
 def test_duplicated_content_error_validation(appliance, created_template, template_type,
                                              action):
     """Tests that we are not allowed to have duplicated content in different templates
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: service
     """
     collection = appliance.collections.orchestration_templates
     if action == "copy":
         copy_name = "{}_copied".format(created_template.template_name)
         flash_msg = ("Unable to create a new template copy \"{}\": old and new template content "
                      "have to differ.".format(copy_name))
-        with pytest.raises(Exception, match=flash_msg):
+        with pytest.raises(AssertionError, match=flash_msg):
             created_template.copy_template(copy_name, created_template.content)
     elif action == "create":
-        flash_msg = "Error during 'Orchestration Template creation': " \
-                    "Validation failed: Md5 of content already exists (content must be unique)"
-        flash_msg = re.escape(flash_msg)
-        with pytest.raises(Exception, match=flash_msg):
+        with pytest.raises(AssertionError):
             collection.create(template_group=templates.get(template_type)[1],
                               template_type=templates.get(template_type)[0],
                               template_name=fauxfactory.gen_alphanumeric(),
@@ -227,9 +222,10 @@ def test_service_dialog_creation_from_customization_template(request, created_te
     """Tests Service Dialog creation  from customization template
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: service
     """
     dialog_name = created_template.template_name
     service_dialog = created_template.create_service_dialog_from_template(dialog_name)
