@@ -8,6 +8,7 @@ from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.volume import VolumeAllView
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -138,6 +139,8 @@ def test_storage_volume_crud(appliance, provider, from_manager):
     old_name = volume.name
     new_name = fauxfactory.gen_alpha()
     updates = {'volume_name': new_name, 'volume_size': STORAGE_SIZE + 1}
+    if provider.one_of(OpenStackProvider):
+        updates = {'volume_name': new_name}
 
     if from_manager:
         storage_manager = appliance.collections.block_managers.filter(
@@ -145,8 +148,9 @@ def test_storage_volume_crud(appliance, provider, from_manager):
     else:
         storage_manager = None
     volume = volume.update(updates, storage_manager)
-    wait_for(lambda: volume.size == '{} GB'.format(updates.get('volume_size')), delay=15,
-             timeout=900)
+    if provider.one_of(EC2Provider):
+        wait_for(lambda: volume.size == '{} GB'.format(updates.get('volume_size')), delay=15,
+                 timeout=900)
 
     updates = {'volume_name': old_name}
     volume = volume.update(updates, storage_manager)
@@ -156,23 +160,31 @@ def test_storage_volume_crud(appliance, provider, from_manager):
     assert not volume.exists
 
 
+@pytest.mark.meta(blockers=[BZ(1684939, forced_streams=["5.9", "5.10", "upstream"],
+                               unblock=lambda provider: provider.one_of(EC2Provider))])
 @pytest.mark.tier(1)
 def test_storage_volume_attach_detach(appliance, provider, instance_fixture, from_manager):
     volume = create_volume(appliance, provider, from_manager, az=instance_fixture.
                            vm_default_args["environment"]["availability_zone"], should_assert=True)
-    if from_manager:
-        storage_manager = appliance.collections.block_managers.filter(
-            {"provider": provider}).all()[0]
-    else:
-        storage_manager = None
+    storage_manager = appliance.collections.block_managers.filter(
+        {"provider": provider}).all()[0]
+    stor_manager = storage_manager if from_manager else None
+
     # attach
     volume.attach_instance(name=instance_fixture.name, mountpoint='/dev/sdm',
-                           storage_manager=storage_manager)
+                           storage_manager=stor_manager)
+    if provider.one_of(OpenStackProvider):
+        storage_manager.refresh()
     wait_for(lambda: volume.status == 'in-use', delay=15, timeout=600)
 
     # detach
-    volume.detach_instance(name=instance_fixture.name, storage_manager=storage_manager)
+    volume.detach_instance(name=instance_fixture.name, storage_manager=stor_manager)
+    if provider.one_of(OpenStackProvider):
+        storage_manager.refresh()
     wait_for(lambda: volume.status == 'available', delay=15, timeout=600)
+
+    # cleanup
+    volume.delete()
 
 
 def test_storage_volume_edit_tag(volume):
