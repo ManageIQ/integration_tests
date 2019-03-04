@@ -138,9 +138,10 @@ class Element(BaseEntity):
 
     def add_another_element(self, element):
         """Method to add element."""
-        view = navigate_to(self, 'Edit')
+        navigate_to(self.dialog, 'Edit')
         dragged_element = element.get('element_information').get('choose_type')
         box_label = element.get('element_information').get('ele_label')
+        view = self.create_view(EditElementView)
         view.dd.drag_and_drop(dragged_element, box_label)
         view.element.edit_element(dragged_element)
         view.fill(element)
@@ -159,7 +160,8 @@ class Element(BaseEntity):
             second_element: The second element to be added to the dialog.
             element_data: Already existing first element's data.
         """
-        view = navigate_to(self, 'Edit')
+        navigate_to(self.dialog, 'Edit')
+        view = self.create_view(EditElementView)
         if add_element:
             dragged_element = second_element.get('element_information').get('choose_type')
             box_label = second_element.get('element_information').get('ele_label')
@@ -232,17 +234,3 @@ class Add(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.dd.drag_and_drop("Text Box", self.obj.parent.box_label)
-
-
-@navigator.register(Element, 'Edit')
-class Edit(CFMENavigateStep):
-    VIEW = EditElementView
-
-    prerequisite = NavigateToAttribute('dialog', 'Edit')
-
-    # ToDo: FA owner need to decide edit element required or not as it needs a dynamic element
-    #  access. Restoring old (fake call) means returning the view. refer PR #8462
-
-    # def step(self, *args, **kwargs):
-    #     def step(self):
-    #         self.prerequisite_view.element.edit_element("Text Box")
