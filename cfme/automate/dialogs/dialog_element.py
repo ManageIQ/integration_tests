@@ -240,5 +240,9 @@ class Edit(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('dialog', 'Edit')
 
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.element.edit_element("Text Box")
+    # ToDo: FA owner need to decide edit element required or not as it needs a dynamic element
+    #  access. Restoring old (fake call) means returning the view. refer PR #8462
+
+    # def step(self, *args, **kwargs):
+    #     def step(self):
+    #         self.prerequisite_view.element.edit_element("Text Box")
