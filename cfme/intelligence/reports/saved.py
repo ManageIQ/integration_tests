@@ -30,7 +30,6 @@ class AllSavedReportsView(CloudIntelReportsView):
 
 
 class SavedReportDetailsView(BaseSavedReportDetailsView):
-
     @property
     def is_displayed(self):
         return (
@@ -79,6 +78,15 @@ class SavedReport(BaseEntity):
             view.flash.assert_no_error()
             view.flash.assert_message("Successfully deleted Saved Report from the CFME Database")
 
+    @property
+    def tree_path(self):
+        return [
+            "Saved Reports",
+            "All Saved Reports",
+            self.name,
+            self.run_at_datetime
+        ]
+
 
 @attr.s
 class SavedReportsCollection(BaseCollection):
@@ -100,9 +108,4 @@ class ScheduleDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self, *args, **kwargs):
-        self.view.saved_reports.tree.click_path(
-            "Saved Reports",
-            "All Saved Reports",
-            self.obj.name,
-            self.obj.run_at_datetime
-        )
+        self.view.saved_reports.tree.click_path(*self.obj.tree_path)
