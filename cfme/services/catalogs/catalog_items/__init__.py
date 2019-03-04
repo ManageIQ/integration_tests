@@ -3,6 +3,8 @@ import fauxfactory
 from cached_property import cached_property
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
+from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import StaleElementReferenceException
 from widgetastic.utils import WaitFillViewStrategy
 from widgetastic.widget import Checkbox
 from widgetastic.widget import ClickableMixin
@@ -34,15 +36,23 @@ from widgetastic_manageiq import WaitTab
 
 class EntryPoint(Input, ClickableMixin):
     def fill(self, value):
-        if super(EntryPoint, self).fill(value):
-            self.parent_view.modal.cancel.click()
-            # After changing default path values of 'retirement_entry_point',
-            # 'reconfigure_entry_point' or 'provisioning_entry_point';
-            # 'Select Entry Point Instance'(pop up) occures which also helps to select these paths
-            # using tree structure. Here we have already filled these values through text input.
-            # So to ignore this pop up clicking on cancel button is required.
-            return True
-        return False
+        for _ in range(2):
+            try:
+                if super(EntryPoint, self).fill(value):
+                    self.parent_view.modal.cancel.click()
+                    # After changing default path values of 'retirement_entry_point',
+                    # 'reconfigure_entry_point' or 'provisioning_entry_point';
+                    # 'Select Entry Point Instance'(pop up) occures which also helps to select these
+                    # paths using tree structure. Here we have already filled these values through
+                    # text input. So to ignore this pop up clicking on cancel button is required.
+                    return True
+                return False
+            except (NoSuchElementException, StaleElementReferenceException):
+                # Sometimes while adding values in text box and cancelling pop up gives exceptions
+                # like NoSuchElementException and StaleElementReferenceException. Hence adding
+                # workaround for it and checking if it can be able to fill text box and cancel pop
+                # up by running it two times.
+                pass
 
 
 # Views
@@ -294,6 +304,10 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         assert view.is_displayed
         view.flash.assert_success_message('The selected Catalog Item was deleted')
 
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
+
     def add_button_group(self):
         button_name = fauxfactory.gen_alpha()
         view = navigate_to(self, 'AddButtonGroup')
@@ -364,7 +378,7 @@ class CloudInfraCatalogItem(BaseCatalogItem):
     retirement_entry_point = attr.ib(
         default="/Service/Retirement/StateMachines/ServiceRetirement/Default"
     )
-    reconfigure_entry_point = attr.ib(default=None)
+    reconfigure_entry_point = attr.ib(default='')
 
     @property
     def fill_dict(self):
