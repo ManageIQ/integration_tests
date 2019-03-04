@@ -27,6 +27,8 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.update import Updateable
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Accordion
@@ -138,7 +140,8 @@ class VolumeAddForm(View):
     storage_manager = BootstrapSelect(name='storage_manager_id')
     tenant = BootstrapSelect(name='cloud_tenant_id')  # is for openstack block storage only
     volume_name = TextInput(name='name')
-    volume_type = BootstrapSelect(name='volume_type')
+    volume_type = BootstrapSelect(name=VersionPicker({Version.lowest(): 'aws_volume_type',
+                                                      '5.10': 'volume_type'}))
     volume_size = TextInput(name='size')
     az = BootstrapSelect(name='aws_availability_zone_id')  # is for ec2 block storage only
     iops = TextInput(name='aws_iops')  # is for ec2 block storage only

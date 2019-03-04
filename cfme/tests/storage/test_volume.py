@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-
 from wrapanapi import VmState
 
 from cfme import test_requirements
@@ -116,6 +115,8 @@ def test_storage_volume_create_cancelled_validation(appliance, provider, from_ma
     view.flash.assert_message('Add of new Cloud Volume was cancelled by the user')
 
 
+@pytest.mark.uncollectif(lambda appliance, from_manager: appliance.version < '5.10' and
+                         from_manager == "from_manager")
 @pytest.mark.tier(1)
 def test_storage_volume_crud(appliance, provider, from_manager):
     """ Test storage volume crud
@@ -160,6 +161,8 @@ def test_storage_volume_crud(appliance, provider, from_manager):
     assert not volume.exists
 
 
+@pytest.mark.uncollectif(lambda appliance, from_manager: appliance.version < '5.10' and
+                         from_manager == "from_manager")
 @pytest.mark.meta(blockers=[BZ(1684939, forced_streams=["5.9", "5.10", "upstream"],
                                unblock=lambda provider: provider.one_of(EC2Provider))])
 @pytest.mark.tier(1)

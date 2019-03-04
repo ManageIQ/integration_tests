@@ -17,16 +17,14 @@ from cfme.common import TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
+from cfme.storage.volume import AttachInstanceView
+from cfme.storage.volume import DetachInstanceView
+from cfme.storage.volume import StorageManagerVolumeAllView
+from cfme.storage.volume import VolumeAddView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.providers import get_crud_by_name
-
-from volume import StorageManagerVolumeAllView
-from volume import VolumeAddView
-from volume import AttachInstanceView
-from volume import DetachInstanceView
-
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import PaginationPane
