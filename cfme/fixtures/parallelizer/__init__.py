@@ -151,8 +151,11 @@ class ParallelSession(object):
         self.test_groups = self._test_item_generator()
 
         self._pool = []
-        from cfme.utils.conf import cfme_data
-        self.provs = sorted(set(cfme_data['management_systems'].keys()),
+
+        # necessary to get list of supported providers
+        version = appliances[0].version
+        from cfme.markers.env_markers.provider import all_required
+        self.provs = sorted([p.the_id for p in all_required(version, filters=[])],
                             key=len, reverse=True)
         self.used_prov = set()
 
@@ -525,6 +528,8 @@ class ParallelSession(object):
 
     def get(self, slave):
 
+        # we assume that there is only one provider of the same type and version
+        # because there is no better way to group tests w/o provider initialization
         def provs_of_tests(test_group):
             found = set()
             for test in test_group:
