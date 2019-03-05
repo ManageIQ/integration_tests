@@ -13,6 +13,8 @@ from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.services.catalogs.catalog_items import AmazonCatalogItem
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import LineChart
 from widgetastic_manageiq import WaitTab
 
@@ -57,7 +59,11 @@ class EC2AzoneUtilizationView(AzoneCloudUtilizationView):
     azone_disk = LineChart(id='miq_chart_parent_candu_1')
     azone_network = LineChart(id='miq_chart_parent_candu_2')
     azone_network_avg = LineChart(id='miq_chart_parent_candu_2_2')
-    azone_instance = LineChart(id='miq_chart_parent_candu_3')
+    azone_instance = LineChart(id='miq_chart_parent_candu_4')
+    azone_instance = VersionPicker({
+        Version.lowest(): LineChart(id='miq_chart_parent_candu_4'),
+        '5.10': LineChart(id='miq_chart_parent_candu_3')
+    })
 
 
 @attr.s(cmp=False)
