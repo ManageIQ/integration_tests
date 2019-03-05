@@ -432,11 +432,14 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         credentials = self.prerequisite_view.credentials
-        for row in credentials:
-            if row["Name"].text == self.obj.name:
-                row["Name"].click()
-                break
-        else:
+        try:
+            for row in credentials:
+                if row["Name"].text == self.obj.name:
+                    row["Name"].click()
+                    break
+            else:
+                raise ItemNotFound
+        except NoSuchElementException:
             raise ItemNotFound
 
 
