@@ -77,16 +77,19 @@ class InstanceEntity(JSBaseEntity):
 
             data_dict['policy'] = policy
         elif data_dict.get('quad'):
-            # 5.10 doesn't have quadicon
-            data_dict['os'] = data_dict['quad']['topLeft']['tooltip']
-            data_dict['vendor'] = data_dict['quad']['bottomLeft']['tooltip']
             try:
-                data_dict['no_snapshots'] = data_dict['total_snapshots']
-            # openstack instances require this
+                # 5.10 doesn't have quadicon
+                data_dict['os'] = data_dict['quad']['topLeft']['tooltip']
+                data_dict['vendor'] = data_dict['quad']['bottomLeft']['tooltip']
+                try:
+                    data_dict['no_snapshots'] = data_dict['total_snapshots']
+                # openstack instances require this
+                except KeyError:
+                    data_dict['no_snapshots'] = data_dict['quad']['bottomRight']['text']
+                data_dict['state'] = data_dict['quad']['topRight']['tooltip']
             except KeyError:
-                data_dict['no_snapshots'] = data_dict['quad']['bottomRight']['text']
-            data_dict['state'] = data_dict['quad']['topRight']['tooltip']
-
+                self.logger.warning("quad data isn't available. "
+                                    "what's available {}".format(data_dict))
         return data_dict
 
 
