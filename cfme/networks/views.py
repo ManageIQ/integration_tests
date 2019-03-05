@@ -418,6 +418,7 @@ class NetworkRouterDetailsToolBar(View):
     """ Represents provider toolbar and its controls """
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
+    edit = Dropdown(text='Edit')
     download = VersionPicker({Version.lowest(): Button(title='Download summary in PDF format'),
                               "5.10": Button(title='Print or export summary')})
 
@@ -516,6 +517,16 @@ class NetworkRouterAddInterfaceView(BaseLoggedInPage):
     add = Button('Add')
 
     is_displayed = displayed_not_implemented
+
+
+class NetworkRouterAddCloudSubnetView(BaseLoggedInPage):
+    """ Represents Add Interface to Network Router page """
+    modal_title = Text('//div[@class="modal-header"]//h4')
+    subnet_name = TextInput(id='name')
+    address = TextInput(id='address')
+    netmask = TextInput(id='netmask')
+    gateway = TextInput(id='gateway')
+    add = Button('Add')
 
 
 class SecurityGroupToolBar(View):
