@@ -49,6 +49,7 @@ class CatalogsView(ServicesCatalogView):
         return (
             self.in_explorer and
             self.catalogs.is_opened and
+            self.title.text == "All Catalogs" and
             self.catalogs.tree.currently_selected == ["All Catalogs"])
 
 
