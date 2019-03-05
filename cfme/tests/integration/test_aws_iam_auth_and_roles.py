@@ -45,8 +45,7 @@ def pytest_generate_tests(metafunc):
     BZ(1530683,
        unblock=lambda group_name: group_name not in
        ['evmgroup-user', 'evmgroup-approver', 'evmgroup-auditor', 'evmgroup-operator',
-        'evmgroup-support', 'evmgroup-security']),
-    BZ(1590398, forced_streams=['5.9'])
+        'evmgroup-support', 'evmgroup-security'])
 ])
 def test_group_roles(appliance, setup_aws_auth_provider, group_name, role_access, context,
                      soft_assert):

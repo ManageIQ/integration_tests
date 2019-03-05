@@ -502,8 +502,8 @@ role_access_ui_59z = {
         'Compute': {
             'Clouds': ['Instances'],
             'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
-                               'PXE', 'Resource Pools'],
-            'Physical Infrastructure': ['Servers', 'Providers']},
+                               'PXE', 'Resource Pools', 'Networking'],
+            'Physical Infrastructure': ['Servers', 'Providers', 'Topology']},
         'Control': ['Explorer', 'Log', 'Simulation'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
         'Services': ['Workloads', 'My Services']},
@@ -536,7 +536,7 @@ role_access_ui_59z = {
             'Clouds': ['Instances'],
             'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts',
                                'Clusters', 'Resource Pools'],
-            'Physical Infrastructure': ['Providers', 'Servers', 'Topology']},
+            'Physical Infrastructure': ['Providers']},
         'Control': ['Explorer', 'Log', 'Simulation'],
         'Services': ['My Services', 'Workloads']
     },
