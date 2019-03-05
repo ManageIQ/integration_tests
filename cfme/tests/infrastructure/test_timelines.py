@@ -119,7 +119,12 @@ class VMEvent(object):
             'emit_cmd': '_clone_vm'
         },
         'migrate': {
-            'tl_event': ('VmMigratedEvent', 'RelocateVM_Task'),
+            'tl_event': (
+                'VmMigratedEvent',
+                'RelocateVM_Task',
+                'VM_MIGRATION_DONE',
+                'VM_MIGRATION_FAILED_FROM_TO',  # allow for failure of migration
+            ),
             'tl_category': 'Migration/Vmotion',
             'db_event_type': 'VmMigratedEvent',
             'emit_cmd': '_migrate_vm'
@@ -191,7 +196,14 @@ class VMEvent(object):
 
     def _migrate_vm(self):
         logger.info('%r will be migrated.', self.vm.name)
-        return self.vm.migrate_vm()
+        view = navigate_to(self.vm, "Details")
+        vm_host = view.entities.summary('Relationships').get_text_of('Host')
+        hosts = [vds.name for vds in self.vm.provider.hosts.all() if vds.name not in vm_host]
+        if hosts:
+            migrate_to = hosts[0]
+        else:
+            pytest.skip("There is only one host in the provider")
+        return self.vm.migrate_vm(host=migrate_to)
 
     def _check_timelines(self, target, policy_events):
         """Verify that the event is present in the timeline
@@ -415,6 +427,7 @@ def test_infra_timeline_diagnostic(new_vm, soft_assert, mark_vm_as_appliance):
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
+@pytest.mark.meta(blockers=[BZ(1622952)])
 def test_infra_timeline_clone_event(new_vm, soft_assert):
     """Test that the event clone is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.

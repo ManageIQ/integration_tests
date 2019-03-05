@@ -127,7 +127,7 @@ class InstEvent(object):
         'policy': {
             'tl_event': ('vm_poweroff',),
             'tl_category': 'VM Operation',
-            'emit_cmd': '_power_off_power_on'
+            'emit_cmd': '_power_off'
         },
     }
 
@@ -196,7 +196,7 @@ class InstEvent(object):
             policy timeline. Returns an array of the found events.
             """
 
-            timelines_view = navigate_to(target, 'Timelines')
+            timelines_view = navigate_to(target, 'Timelines', wait_for_view=20, force=True)
 
             if isinstance(timelines_view, ServerDiagnosticsView):
                 timelines_view = timelines_view.timelines
@@ -252,17 +252,13 @@ class InstEvent(object):
             try:
                 wait_for(self._check_timelines,
                          [target, policy_events],
-                         timeout='7m',
+                         timeout='15m',
                          fail_condition=0)
             except TimedOutError:
                 soft_assert(False, '0 occurrence of {evt} found on the timeline of {tgt}'.format(
                     evt=self.event, tgt=target))
 
 
-@pytest.mark.meta(blockers=[BZ(1670550, forced_streams=['5.10']),
-                            BZ(1671521,
-                               unblock=lambda provider: not provider.one_of(AzureProvider),
-                               forced_streams=['5.9', '5.10'])])
 def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
     """
     Metadata:
@@ -271,8 +267,12 @@ def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
-    targets = (new_instance, new_instance.provider, azone)
+    if BZ(1670550).blocks:
+        targets = (new_instance, )
+    else:
+        targets = (new_instance, new_instance.provider, azone)
     event = 'create'
     inst_event = InstEvent(new_instance, event)
     logger.info('Will generate event %r on machine %r', event, new_instance.name)
@@ -280,9 +280,6 @@ def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.meta(blockers=[BZ(1670474,
-                               unblock=lambda provider: not provider.one_of(EC2Provider),
-                               forced_streams=['5.9', '5.10'])])
 def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
     """
     Metadata:
@@ -291,19 +288,20 @@ def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'policy'
-    targets = (new_instance, new_instance.provider)
+    # accordions on azone and provider's page are not displayed in 5.10
+    if BZ(1670550).blocks:
+        targets = (new_instance, )
+    else:
+        targets = (new_instance, new_instance.provider)
     inst_event = InstEvent(new_instance, event)
     logger.info('Will generate event %r on machine %r', event, new_instance.name)
     wait_for(inst_event.emit, timeout='9m', message='Event {} did timeout'.format(event))
     inst_event.catch_in_timelines(soft_assert, targets, policy_events=True)
 
 
-@pytest.mark.meta(blockers=[BZ(1670550, forced_streams=['5.10']),
-                            BZ(1671521,
-                               unblock=lambda provider: not provider.one_of(AzureProvider),
-                               forced_streams=['5.9', '5.10'])])
 def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
     """
     Metadata:
@@ -312,8 +310,13 @@ def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
-    targets = (new_instance, new_instance.provider, azone)
+    # accordions on azone and provider's page are not displayed in 5.10
+    if BZ(1670550).blocks:
+        targets = (new_instance, )
+    else:
+        targets = (new_instance, new_instance.provider, azone)
     event = 'stop'
     inst_event = InstEvent(new_instance, event)
     logger.info('Will generate event %r on machine %r', event, new_instance.name)
@@ -321,10 +324,6 @@ def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.meta(blockers=[BZ(1670550, forced_streams=['5.10']),
-                            BZ(1671521,
-                               unblock=lambda provider: not provider.one_of(AzureProvider),
-                               forced_streams=['5.9', '5.10'])])
 def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
     """
     Metadata:
@@ -333,8 +332,13 @@ def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
-    targets = (new_instance, new_instance.provider, azone)
+    # accordions on azone and provider's page are not displayed in 5.10
+    if BZ(1670550).blocks:
+        targets = (new_instance, )
+    else:
+        targets = (new_instance, new_instance.provider, azone)
     event = 'start'
     inst_event = InstEvent(new_instance, 'start')
     logger.info('Will generate event %r on machine %r', event, new_instance.name)
@@ -342,9 +346,6 @@ def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.meta(blockers=[BZ(1671521,
-                               unblock=lambda provider: not provider.one_of(AzureProvider),
-                               forced_streams=['5.9', '5.10'])])
 def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_assert):
     """Check Configuration/diagnostic/timelines.
 
@@ -354,6 +355,7 @@ def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_asse
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'create'
     targets = (new_instance.appliance.server,)
@@ -362,7 +364,6 @@ def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_asse
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.meta(blockers=[BZ(1670550, forced_streams=['5.10'])])
 @pytest.mark.provider([EC2Provider], override=True, scope='function')
 def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
     """
@@ -372,21 +373,20 @@ def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'rename'
-    targets = (new_instance, new_instance.provider, azone)
+    # accordions on azone and provider's page are not displayed in 5.10
+    if BZ(1670550).blocks:
+        targets = (new_instance, )
+    else:
+        targets = (new_instance, new_instance.provider, azone)
     inst_event = InstEvent(new_instance, event)
     logger.info('Will generate event %r on machine %r', event, new_instance.name)
     wait_for(inst_event.emit, timeout='12m', message='Event {} did timeout'.format(event))
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.meta(blockers=[BZ(1670550, forced_streams=['5.10']),
-                            BZ(1671521,
-                               unblock=lambda provider: not provider.one_of(AzureProvider),
-                               forced_streams=['5.9', '5.10'])])
-@pytest.mark.uncollectif(lambda provider, appliance: provider.one_of(EC2Provider) and
-                         appliance.version < "5.9")
 def test_cloud_timeline_delete_event(new_instance, soft_assert, azone):
     """
     Metadata:
@@ -395,9 +395,14 @@ def test_cloud_timeline_delete_event(new_instance, soft_assert, azone):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Events
     """
     event = 'delete'
-    targets = (new_instance, new_instance.provider, azone)
+    # accordions on azone and provider's page are not displayed in 5.10
+    if BZ(1670550).blocks:
+        targets = (new_instance, )
+    else:
+        targets = (new_instance, new_instance.provider, azone)
     inst_event = InstEvent(new_instance, event)
     logger.info('Will generate event %r on machine %r', event, new_instance.name)
     wait_for(inst_event.emit, timeout='9m', message='Event {} did timeout'.format(event))
