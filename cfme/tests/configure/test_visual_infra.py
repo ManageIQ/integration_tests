@@ -304,8 +304,7 @@ def test_infraprovider_noquads(request, set_infra_provider_quad):
     """
     view = navigate_to(InfraProvider, 'All')
     view.toolbar.view_selector.select('Grid View')
-    # Here data property will return an empty dict when the Quadrants option is deactivated.
-    assert not view.entities.get_first_entity().data
+    assert 'topRight' not in view.entities.get_first_entity().data.get('quad', {})
 
 
 def test_host_noquads(appliance, request, set_host_quad):
@@ -323,8 +322,7 @@ def test_host_noquads(appliance, request, set_host_quad):
     host_collection = appliance.collections.hosts
     view = navigate_to(host_collection, 'All')
     view.toolbar.view_selector.select('Grid View')
-    # Here data property will return an empty dict when the Quadrants option is deactivated.
-    assert not view.entities.get_first_entity().data
+    assert 'topRight' not in view.entities.get_first_entity().data.get('quad', {})
 
 
 def test_datastore_noquads(request, set_datastore_quad, appliance):
@@ -342,8 +340,7 @@ def test_datastore_noquads(request, set_datastore_quad, appliance):
     dc = DatastoreCollection(appliance)
     view = navigate_to(dc, 'All')
     view.toolbar.view_selector.select('Grid View')
-    # Here data property will return an empty dict when the Quadrants option is deactivated.
-    assert not view.entities.get_first_entity().data
+    assert 'topRight' not in view.entities.get_first_entity().data.get('quad', {})
 
 
 def test_vm_noquads(appliance, request, set_vm_quad):
@@ -360,8 +357,7 @@ def test_vm_noquads(appliance, request, set_vm_quad):
     """
     view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     view.toolbar.view_selector.select('Grid View')
-    # Here data property will return an empty dict when the Quadrants option is deactivated.
-    assert not view.entities.get_first_entity().data
+    assert 'topRight' not in view.entities.get_first_entity().data.get('quad', {})
 
 
 @pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:11215'])
@@ -379,8 +375,7 @@ def test_template_noquads(appliance, set_template_quad):
     """
     view = navigate_to(appliance.collections.infra_templates, 'TemplatesOnly')
     view.toolbar.view_selector.select('Grid View')
-    # Here data property will return an empty dict when the Quadrants option is deactivated.
-    assert not view.entities.get_first_entity().data
+    assert 'topRight' not in view.entities.get_first_entity().data.get('quad', {})
 
 
 def test_change_truncate_long_text_save_button_enabled(appliance):

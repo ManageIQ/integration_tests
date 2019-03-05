@@ -187,8 +187,9 @@ class VisualForm(View):
 
     @View.nested
     class grid_tile_icons(View):    # noqa
-        infra_provider_quad = BootstrapSwitch('quadicons_ems')
-        cloud_provider_quad = BootstrapSwitch('quadicons_ems_cloud')
+        infra_provider_quad = BootstrapSwitch('quadicons_infra_manager')
+        cloud_provider_quad = BootstrapSwitch('quadicons_cloud_manager')
+        containers_provider_quad = BootstrapSwitch('quadicons_container_manager')
         host_quad = BootstrapSwitch('quadicons_host')
         datastore_quad = BootstrapSwitch('quadicons_storage')
         vm_quad = BootstrapSwitch('quadicons_vm')
