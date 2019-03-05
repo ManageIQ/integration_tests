@@ -27,6 +27,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.update import Updateable
 from widgetastic_manageiq import FonticonPicker
+from widgetastic_manageiq import MultiBoxOrderedSelect
 from widgetastic_manageiq import PotentiallyInvisibleTab
 from widgetastic_manageiq import RadioGroup
 from widgetastic_manageiq import SummaryFormItem
@@ -345,7 +346,6 @@ class DefaultButton(BaseButton):
         visibility: Visibility expression in terms of tag and its value
         enablement: Enablement expression in terms of tag and its value
     """
-
     group = attr.ib()
     text = attr.ib()
     hover = attr.ib()
@@ -380,7 +380,6 @@ class AnsiblePlaybookButton(BaseButton):
         visibility: Visibility expression in terms of tag and its value
         enablement: Enablement expression in terms of tag and its value
     """
-
     group = attr.ib()
     text = attr.ib()
     hover = attr.ib()
@@ -652,7 +651,14 @@ class ButtonGroupFormCommon(AutomateCustomizationView):
     hover = Input(name="description")
     image = FonticonPicker("button_icon")
     icon_color = ColourInput(id="button_color")
-
+    assign_buttons = MultiBoxOrderedSelect(
+        available_items="available_fields",
+        chosen_items="selected_fields",
+        move_into="Move selected fields right",
+        move_from="Move selected fields left",
+        move_up="Move selected fields up",
+        move_down="Move selected fields down",
+    )
     cancel_button = Button("Cancel")
 
 
@@ -707,14 +713,16 @@ class ButtonGroup(BaseEntity, Updateable):
         image: Icon of Group.
         display: Group name display on Button.
         icon_color: Icon Color of Group.
+        assign_buttons: List of assigned buttons to Group.
     """
 
     text = attr.ib()
     hover = attr.ib()
     type = attr.ib()
-    image = attr.ib()
+    image = attr.ib(default="fa-user")
     display = attr.ib(default=None)
     icon_color = attr.ib(default=None)
+    assign_buttons = attr.ib(default=None)
 
     _collections = {"buttons": ButtonCollection}
 
@@ -797,18 +805,17 @@ class ButtonGroupCollection(BaseCollection):
     TEMPLATE_IMAGE = "VM Template and Image"
     VM_INSTANCE = "VM and Instance"
 
-    def instantiate(self, text, hover, type, image=None, display=None, icon_color=None):
+    def create(
+        self,
+        text,
+        hover,
+        type,
+        image="fa-user",
+        display=None,
+        icon_color=None,
+        assign_buttons=None,
+    ):
         self.type = type
-        if not image:
-            image = "fa-user"
-        return self.ENTITY.from_collection(self, text, hover, type, image, display, icon_color)
-
-    def create(self, text, hover, type, image=None, display=None, icon_color=None):
-        self.type = type
-
-        # Icon selection is Mandatory
-        if not image:
-            image = "fa-user"
 
         view = navigate_to(self, "Add")
         view.fill(
@@ -818,6 +825,7 @@ class ButtonGroupCollection(BaseCollection):
                 "image": image,
                 "display": display,
                 "icon_color": icon_color,
+                "assign_buttons": assign_buttons,
             }
         )
         view.add_button.click()
@@ -826,7 +834,13 @@ class ButtonGroupCollection(BaseCollection):
         view.flash.assert_no_error()
         view.flash.assert_message('Button Group "{}" was added'.format(hover))
         return self.instantiate(
-            text=text, hover=hover, type=type, image=image, display=display, icon_color=icon_color
+            text=text,
+            hover=hover,
+            type=type,
+            image=image,
+            display=display,
+            icon_color=icon_color,
+            assign_buttons=assign_buttons,
         )
 
 
