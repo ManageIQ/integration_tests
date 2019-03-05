@@ -163,6 +163,7 @@ class DashboardWidgetDetailsView(DashboardWidgetsView):
 
     title = Text("#explorer_title_text")
     status_info = SummaryFormItem("Status", "Current Status")
+    last_run_time = SummaryFormItem("Status", "Last Run Time")
     reload_button = Button(title='Refresh this page')
 
     @property

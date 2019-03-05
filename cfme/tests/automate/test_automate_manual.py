@@ -1131,54 +1131,6 @@ def test_list_of_diff_vm_storages_via_rails():
 @pytest.mark.manual
 @test_requirements.automate
 @pytest.mark.tier(1)
-def test_generate_widget_content_by_automate():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.9
-        casecomponent: Automate
-        tags: automate
-        testSteps:
-            1. create a new widget and add this widget to dashboard
-            2. Create automate method with below content:
-                #
-                # Description: generate widget content by calling shell command
-                #
-                cmd =("/var/www/miq/vmdb/bin/rails r
-                      'MiqWidget.find_by_title(\"Migration Candidates\").queue_generate_content'")
-                system(cmd)
-                exit MIQ_OK
-            3. Execute the automate method(by simulation) and check updated time of that widget
-               on dashboard.
-            4. Updated status changes once we trigger the generation of a widget content from
-               Automate method.
-            5. Or we can check widget status by executing following commands on rails console:
-                >> MiqWidget.find_by_title("widget_name")
-                >> service_miq_widget = MiqAeMethodService::MiqAeServiceMiqWidget.find(widget_id)
-                >> service_miq_widget.queue_generate_content (this will do same what we did with
-                   automate method)
-        expectedResults:
-            1.
-            2.
-            3. Updated time of that widget on dashboard should be changes to current time of update
-               by automate method.
-            4.
-            5. Updated time of that widget on dashboard should be changes to current time of update
-               by rails.
-
-    Bugzilla:
-        1445932
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.automate
-@pytest.mark.tier(1)
 def test_method_for_log_and_notify():
     """
     Polarion:
