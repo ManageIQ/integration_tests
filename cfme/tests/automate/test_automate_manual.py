@@ -1104,30 +1104,6 @@ def test_miq_stop_abort_with_state_machines():
 
 
 @pytest.mark.tier(3)
-def test_validate_method_uri_data():
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/6h
-        tags: automate
-        testSteps:
-            1. Create domain > namespace > class
-            2. Click to 'Add a new method' with type 'uri'
-            3. Enter value in 'Data' field
-        expectedResults:
-            1.
-            2.
-            3. 'Validate' button is getting enabled
-
-    Bugzilla:
-         1684417
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_user_requester_for_lifecycle_provision():
     """
     Polarion:
