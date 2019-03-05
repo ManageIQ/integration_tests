@@ -103,11 +103,11 @@ def delete_unused_loadbalancers(provider_mgmt, excluded_elbs, output):
     provider_name = provider_mgmt.kwargs['name']
     try:
         for elb in provider_mgmt.get_all_unused_loadbalancers():
-            if excluded_elbs and elb.name in excluded_elbs:
-                logger.info("  Excluding Elastic LoadBalancer id: %r", elb.name)
+            if excluded_elbs and elb.get("LoadBalancerName") in excluded_elbs:
+                logger.info("  Excluding Elastic LoadBalancer id: %r", elb.get("LoadBalancerName"))
                 continue
             else:
-                elb_list.append([provider_name, elb.name])
+                elb_list.append([provider_name, elb.get("LoadBalancerName")])
                 provider_mgmt.delete_loadbalancer(loadbalancer=elb)
         logger.info("  Deleted Elastic LoadBalancers: %r", elb_list)
         if elb_list:
