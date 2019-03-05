@@ -18,7 +18,6 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.path import data_path
 from cfme.utils.ssh import SSHClient
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -27,13 +26,6 @@ pytestmark = [
     test_requirements.snapshot,
     pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module"),
 ]
-
-
-@pytest.fixture(scope="function")
-def domain(request, appliance):
-    dom = DomainCollection(appliance).create(name=fauxfactory.gen_alpha(), enabled=True)
-    request.addfinalizer(dom.delete_if_exists)
-    return dom
 
 
 def provision_vm(provider, template):
@@ -141,11 +133,16 @@ def test_create_without_description(small_test_vm):
         initialEstimate: 1/4h
         casecomponent: Infra
     """
-    snapshot = new_snapshot(small_test_vm, has_name=False, create_description=False)
-    with pytest.raises(AssertionError):
-        snapshot.create()
-    view = snapshot.parent_vm.create_view(InfraVmSnapshotAddView)
-    view.flash.assert_message('Description is required')
+    if small_test_vm.appliance.version >= '5.10':
+        # In 5.10 it's not possible to create a snapshot w/o description,"Create" button is disabled
+        view = navigate_to(small_test_vm, 'SnapshotsAdd')
+        assert view.create.disabled
+    else:
+        snapshot = new_snapshot(small_test_vm, has_name=False, create_description=False)
+        with pytest.raises(AssertionError):
+            snapshot.create()
+        view = snapshot.parent_vm.create_view(InfraVmSnapshotAddView)
+        view.flash.assert_message('Description is required')
 
 
 @pytest.mark.provider([VMwareProvider], override=True)
