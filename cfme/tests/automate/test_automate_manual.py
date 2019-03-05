@@ -3,9 +3,9 @@ import pytest
 
 from cfme import test_requirements
 
+pytestmark = [test_requirements.automate, pytest.mark.manual]
 
-@pytest.mark.manual
-@test_requirements.automate
+
 @pytest.mark.tier(3)
 def test_automate_git_domain_import_top_level_directory():
     """
@@ -37,8 +37,6 @@ def test_automate_git_domain_import_top_level_directory():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(2)
 def test_quota_source_user():
     """
@@ -70,8 +68,6 @@ def test_quota_source_user():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_automate_simulate_retry():
     """
@@ -106,8 +102,6 @@ def test_automate_simulate_retry():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_customize_request_security_group():
     """
@@ -138,8 +132,6 @@ def test_customize_request_security_group():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_git_import_multiple_domains():
     """
@@ -167,8 +159,6 @@ def test_automate_git_import_multiple_domains():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_automate_relationship_trailing_spaces():
     """
@@ -201,8 +191,6 @@ def test_automate_relationship_trailing_spaces():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_automate_generic_object_service_associations():
     """
@@ -246,8 +234,6 @@ def test_automate_generic_object_service_associations():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(2)
 def test_automate_git_domain_displayed_in_dialog():
     """
@@ -277,8 +263,6 @@ def test_automate_git_domain_displayed_in_dialog():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_disabled_domains_in_domain_priority():
     """
@@ -314,8 +298,6 @@ def test_automate_disabled_domains_in_domain_priority():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_automate_engine_database_connection():
     """
@@ -346,8 +328,6 @@ def test_automate_engine_database_connection():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_check_quota_regression():
     """
@@ -393,8 +373,6 @@ def test_automate_check_quota_regression():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_git_domain_import_with_no_connection():
     """
@@ -422,8 +400,6 @@ def test_automate_git_domain_import_with_no_connection():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_automate_retry_onexit_increases():
     """
@@ -453,8 +429,6 @@ def test_automate_retry_onexit_increases():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_simulation_result_has_hash_data():
     """
@@ -483,8 +457,6 @@ def test_automate_simulation_result_has_hash_data():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_git_import_without_master():
     """
@@ -513,8 +485,6 @@ def test_automate_git_import_without_master():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_state_machine_variable():
     """
@@ -534,8 +504,6 @@ def test_state_machine_variable():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(2)
 def test_automate_method_copy():
     """
@@ -568,8 +536,6 @@ def test_automate_method_copy():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_git_import_deleted_tag():
     """
@@ -603,8 +569,6 @@ def test_automate_git_import_deleted_tag():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_automate_service_quota_runs_only_once():
     """
@@ -629,8 +593,6 @@ def test_automate_service_quota_runs_only_once():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_automate_state_method():
     """
@@ -664,8 +626,6 @@ def test_automate_state_method():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(2)
 def test_button_can_trigger_events():
     """
@@ -700,8 +660,6 @@ def test_button_can_trigger_events():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_requests_tab_exposed():
     """
@@ -741,8 +699,6 @@ def test_automate_requests_tab_exposed():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_git_credentials_changed():
     """
@@ -768,8 +724,6 @@ def test_automate_git_credentials_changed():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_automate_git_import_case_insensitive():
     """
@@ -789,8 +743,6 @@ def test_automate_git_import_case_insensitive():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_custom_button_enable():
     """
@@ -811,8 +763,6 @@ def test_custom_button_enable():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_assert_failed_substitution():
     """
@@ -829,8 +779,6 @@ def test_assert_failed_substitution():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_import_namespace_attributes_updated():
     """
@@ -853,8 +801,6 @@ def test_automate_import_namespace_attributes_updated():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_user_has_groups():
     """
@@ -876,8 +822,6 @@ def test_automate_user_has_groups():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_quota_units():
     """
@@ -894,8 +838,6 @@ def test_automate_quota_units():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_restrict_domain_crud():
     """
@@ -916,8 +858,6 @@ def test_automate_restrict_domain_crud():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_custom_button_visibility():
     """
@@ -941,8 +881,6 @@ def test_custom_button_visibility():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_embedded_method():
     """
@@ -962,8 +900,6 @@ def test_automate_embedded_method():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(3)
 def test_automate_git_verify_ssl():
     """
@@ -981,8 +917,6 @@ def test_automate_git_verify_ssl():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.general_ui
 @pytest.mark.tier(1)
 def test_automate_buttons_requests():
     """
@@ -999,8 +933,6 @@ def test_automate_buttons_requests():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_check_system_request_calls_depr_configurationmanagement():
     """
@@ -1024,8 +956,6 @@ def test_check_system_request_calls_depr_configurationmanagement():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_task_id_for_method_automation_log():
     """
@@ -1053,8 +983,6 @@ def test_task_id_for_method_automation_log():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_refresh_git_current_user():
     """
@@ -1097,8 +1025,6 @@ def test_refresh_git_current_user():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_list_of_diff_vm_storages_via_rails():
     """
@@ -1128,8 +1054,6 @@ def test_list_of_diff_vm_storages_via_rails():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_method_for_log_and_notify():
     """
@@ -1160,8 +1084,6 @@ def test_method_for_log_and_notify():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.automate
 @pytest.mark.tier(1)
 def test_miq_stop_abort_with_state_machines():
     """
@@ -1177,5 +1099,57 @@ def test_miq_stop_abort_with_state_machines():
 
     Bugzilla:
         1441353
+    """
+    pass
+
+
+@pytest.mark.tier(3)
+def test_user_requester_for_lifecycle_provision():
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        initialEstimate: 1/6h
+        tags: automate
+        testSteps:
+            1. Tested a series of service provisions and default lifecycle provisions with different
+               users (user1 only did default lifecycle provision,
+               user2 only did generic service provision or provision different service catalog items
+               with different users)
+            2. Added logging to the validate_request method for both Service and Infrastructure
+               namespaces
+            3. Viewed the automation.log
+        expectedResults:
+            1.
+            2.
+            3. The same user is shown in the automation.log as in the request
+
+    Bugzilla:
+         1671563
+    """
+    pass
+
+
+@pytest.mark.tier(1)
+def test_automate_schedule_crud():
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        initialEstimate: 1/15h
+        startsin: 5.8
+        tags: automate
+        testSteps:
+            1. Create a schedule, selecting Automation Tasks under Action.
+            2. Select a value from the dropdown list under Object Attribute Type.
+            3. Undo the selection by selecting "<Choose>" from the dropdown.
+        expectedResults:
+            1.
+            2.
+            3. No pop-up window with Internal Server Error.
+
+    Bugzilla:
+         1479570
     """
     pass
