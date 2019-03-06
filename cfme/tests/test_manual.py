@@ -3530,18 +3530,6 @@ def test_osp_vmware67_test_vm_migration_from_nfs_storage_in_vmware_to_nfs_on_osp
 
 
 @pytest.mark.manual
-def test_diagnostic_timelines():
-    """
-    None
-
-    Polarion:
-        assignee: jdupuy
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_group_quota_via_ssui():
     """
     Polarion:
