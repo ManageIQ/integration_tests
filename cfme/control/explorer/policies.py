@@ -22,7 +22,6 @@ from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
@@ -70,12 +69,7 @@ class EditPolicyConditionAssignments(ControlExplorerView):
     cancel_button = Button("Cancel")
     save_button = Button("Save")
 
-    @property
-    def supposed_title(self):
-        if BZ(1531468, forced_streams=["5.9"]).blocks:
-            return 'Editing {} {} "{}" Condition Assignments'
-        else:
-            return 'Editing {} {} Policy "{}" Condition Assignments'
+    supposed_title = 'Editing {} {} Policy "{}" Condition Assignments'
 
     @property
     def is_displayed(self):
@@ -349,7 +343,7 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
             events += self.assigned_events
         view = navigate_to(self, "Details")
         view.configuration.item_select("Edit this Policy's Event assignments")
-        view = self.create_view(EditPolicyEventAssignments, wait="5s")
+        view = self.create_view(EditPolicyEventAssignments, wait="20s")
         changed = view.fill({"events": events})
         if changed:
             view.save_button.click()
@@ -368,8 +362,7 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         """
         view = navigate_to(self, "Details")
         view.configuration.item_select("Edit this Policy's Condition assignments")
-        view = self.create_view(EditPolicyConditionAssignments)
-        assert view.is_displayed
+        view = self.create_view(EditPolicyConditionAssignments, wait="20s")
         changed = view.fill({"conditions": [condition.description for condition in conditions]})
         if changed:
             view.save_button.click()
@@ -416,10 +409,8 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         # And now we can assign actions
         self.context_event = event
         view = navigate_to(self, "Event Details")
-        assert view.is_displayed
         view.toolbar.configuration.item_select("Edit Actions for this Policy Event")
-        view = self.create_view(EditEventView)
-        assert view.is_displayed
+        view = self.create_view(EditEventView, wait="20s")
         changed = view.fill({
             "true_actions": [str(action) for action in true_actions],
             "false_actions": [str(action) for action in false_actions]
@@ -427,6 +418,11 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         if changed:
             view.save_button.click()
         else:
+            view.cancel_button.click()
+        # this statement is necessary for test_delete_all_actions_from_compliance_policy
+        view.flash.wait_displayed()
+        check = 'At least one action must be selected to save this Policy Event'
+        if check == view.flash.read()[0]:
             view.cancel_button.click()
         view.flash.assert_success_message('Actions for Policy Event "{}" were saved'.format(
             event))
