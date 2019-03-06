@@ -14,6 +14,7 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.appliance.implementations.ui import ViaUI
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import ManageIQTree
 
@@ -93,7 +94,7 @@ def order(self):
         view.fill(self.dialog_values)
     if self.ansible_dialog_values:
         view.fill(self.ansible_dialog_values)
-    view.submit_button.wait_displayed()
+    wait_for(lambda: not view.submit_button.disabled, timeout=7)
     view.submit_button.click()
     view = self.create_view(RequestsView, wait='10s')
     view.flash.assert_no_error()
