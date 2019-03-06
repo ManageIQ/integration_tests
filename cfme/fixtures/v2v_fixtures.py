@@ -127,9 +127,10 @@ def create_tags(appliance, transformation_method):
         transformation_method: VDDK/SSH
 
     """
+    # t is for True in V2V - Transformation Host * tag
     tag1 = appliance.collections.categories.instantiate(
         display_name="V2V - Transformation Host *"
-    ).collections.tags.instantiate(display_name="transformation_host")
+    ).collections.tags.instantiate(display_name="t")
     tag2 = appliance.collections.categories.instantiate(
         display_name="V2V - Transformation Method"
     ).collections.tags.instantiate(display_name=transformation_method)
@@ -149,23 +150,24 @@ def set_conversion_instance_for_rhev(appliance, transformation_method, rhev_host
         transformation_method : vddk or ssh as per test requirement
         rhev_hosts: hosts in rhev to configure for conversion
     """
-    # Delete all prior conversion hosts otherwise it creates duplicate entries
-    delete_hosts = appliance.ssh_client.run_rails_command("'ConversionHost.delete_all'")
-    if not delete_hosts.success:
-        pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.out))
 
     for host in rhev_hosts:
         # set conversion host via rails console
         if appliance.version >= "5.10":
+            # Delete all prior conversion hosts otherwise it creates duplicate entries
+            delete_hosts = appliance.ssh_client.run_rails_command("'ConversionHost.delete_all'")
+            if not delete_hosts.success:
+                pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
+
             set_conv_host = appliance.ssh_client.run_rails_command(
                 "'r = Host.find_by(name:{host});\
             c_host = ConversionHost.create(name:{host},resource:r);\
             c_host.{method}_transport_supported = true;\
             c_host.save'".format(host=json.dumps(host.name),
-                                     method=transformation_method.lower())
+                                 method=transformation_method.lower())
             )
             if not set_conv_host.success:
-                pytest.skip("Failed to set conversion hosts:".format(set_conv_host.out))
+                pytest.skip("Failed to set conversion hosts:".format(set_conv_host.output))
         else:
             tag1, tag2 = create_tags(appliance, transformation_method)
             # if _tag_cleanup() returns True, means all tags were removed
