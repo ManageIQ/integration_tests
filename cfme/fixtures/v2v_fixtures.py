@@ -192,7 +192,9 @@ def set_conversion_instance_for_osp(appliance, transformation_method, osp_provid
     """
 
     # Delete all prior conversion hosts otherwise it creates duplicate entries
-    appliance.ssh_client.run_rails_command("'ConversionHost.delete_all'")
+    delete_hosts = appliance.ssh_client.run_rails_command("'ConversionHost.delete_all'")
+    if not delete_hosts.success:
+        pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
 
     try:
         conversion_instances = osp_provider.data.get('conversion_instances', [])
