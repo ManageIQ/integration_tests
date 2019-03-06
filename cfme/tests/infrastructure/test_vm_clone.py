@@ -5,7 +5,9 @@ from widgetastic_patternfly import DropdownItemNotFound
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+
 
 pytestmark = [
     pytest.mark.meta(roles="+automate"),
@@ -40,6 +42,7 @@ def create_vm(appliance, provider, request):
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+@pytest.mark.meta(blockers=[BZ(1685201)])
 def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
     """
     Polarion:
