@@ -104,6 +104,7 @@ pytest_plugins = (
     'cfme.fixtures.pxe',
     'cfme.fixtures.candu',
     'cfme.fixtures.v2v',
+    'cfme.fixtures.v2v_fixtures',
     'cfme.fixtures.networks',
     'cfme.fixtures.nuage',
     'cfme.fixtures.automate',
