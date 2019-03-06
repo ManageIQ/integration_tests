@@ -39,22 +39,6 @@ def test_provision_request_approved_msg():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_service_provision_azure():
-    """
-    Azure service provsioning
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        initialEstimate: 1/8h
-        startsin: 5.6
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_none_public_ip_provision_azure():
     """
     Testing provision w/o public IP - to cover -
