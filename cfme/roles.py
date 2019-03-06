@@ -300,8 +300,9 @@ role_access_ui_510z = {
                            'Replicators', 'Projects', 'Topology'],
             'Infrastructure': ['Datastores', 'Networking', 'Providers', 'Virtual Machines', 'Hosts',
                                'Clusters', 'Topology', 'PXE', 'Resource Pools'],
-            'Physical Infrastructure': ['Providers', 'Racks', 'Switches', 'Servers', 'Topology'],
-            'Migration': None},
+            'Physical Infrastructure': ['Overview', 'Providers', 'Chassis', 'Racks', 'Switches',
+                                        'Servers', 'Storages', 'Topology'],
+            'Migration': ['Migration Plans', 'Infrastructure Mappings', 'Migration Settings']},
         'Configuration': ['Management'],
         'Control': ['Import / Export', 'Log', 'Explorer', 'Simulation'],
         'Monitor': {
@@ -312,7 +313,8 @@ role_access_ui_510z = {
         'Red Hat Insights': ['Rules', 'Overview', 'Inventory', 'Actions'],
         'Services': ['Requests', 'Workloads', 'Catalogs', 'My Services'],
         'Storage': {
-            'Block Storage': ['Volume Snapshots', 'Managers', 'Volume Backups', 'Volumes'],
+            'Block Storage': ['Volume Snapshots', 'Managers', 'Volume Backups', 'Volumes',
+                              'Volume Types'],
             'Object Storage': ['Managers', 'Object Store Containers', 'Object Store Objects']}
     },
     'evmgroup-administrator': {
@@ -330,7 +332,8 @@ role_access_ui_510z = {
                            'Projects', 'Topology'],
             'Infrastructure': ['Datastores', 'Networking', 'Providers', 'Virtual Machines', 'Hosts',
                                'Clusters', 'Topology', 'PXE', 'Resource Pools'],
-            'Physical Infrastructure': ['Providers', 'Racks', 'Switches', 'Servers', 'Topology']},
+            'Physical Infrastructure': ['Providers', 'Chassis', 'Racks', 'Switches', 'Servers',
+                                        'Storages', 'Topology']},
         'Configuration': ['Management'],
         'Control': ['Import / Export', 'Log', 'Explorer', 'Simulation'],
         'Networks': ['Providers', 'Security Groups', 'Floating IPs', 'Networks'],
@@ -345,7 +348,8 @@ role_access_ui_510z = {
             'Clouds': ['Instances'],
             'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
                                'PXE', 'Resource Pools'],
-            'Physical Infrastructure': ['Providers', 'Racks', 'Switches', 'Servers', 'Topology']},
+            'Physical Infrastructure': ['Providers', 'Chassis', 'Racks', 'Switches', 'Servers',
+                                        'Storages', 'Topology']},
         'Control': ['Explorer', 'Log', 'Simulation'],
         'Services': ['Requests', 'Workloads', 'My Services'],
     },
@@ -357,8 +361,9 @@ role_access_ui_510z = {
         'Compute': {
             'Clouds': ['Instances'],
             'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
-                               'PXE', 'Resource Pools'],
-            'Physical Infrastructure': ['Providers', 'Racks', 'Switches', 'Servers', 'Topology']},
+                               'Networking', 'PXE', 'Resource Pools'],
+            'Physical Infrastructure': ['Providers', 'Chassis', 'Racks', 'Switches', 'Servers',
+                                        'Storages', 'Topology']},
         'Control': ['Explorer', 'Log', 'Simulation'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
         'Services': ['Workloads', 'My Services']},
@@ -369,7 +374,8 @@ role_access_ui_510z = {
         'Compute': {
             'Clouds': ['Instances'],
             'Infrastructure': ['Virtual Machines'],
-            'Physical Infrastructure': ['Providers', 'Racks', 'Switches', 'Servers', 'Topology']},
+            'Physical Infrastructure': ['Providers', 'Chassis', 'Racks', 'Switches', 'Servers',
+                                        'Storages', 'Topology']},
         'Configuration': ['Management'],
         'Services': ['Requests', 'Workloads']
     },
@@ -382,7 +388,8 @@ role_access_ui_510z = {
             'Clouds': ['Instances'],
             'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
                                'PXE', 'Resource Pools'],
-            'Physical Infrastructure': ['Providers', 'Racks', 'Switches', 'Servers', 'Topology']},
+            'Physical Infrastructure': ['Providers', 'Chassis', 'Racks', 'Switches', 'Servers',
+                                        'Storages', 'Topology']},
         'Configuration': ['Management'],
         'Services': ['Workloads', 'My Services']
     },
@@ -402,7 +409,8 @@ role_access_ui_510z = {
             'Clouds': ['Instances'],
             'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
                                'Resource Pools'],
-            'Physical Infrastructure': ['Providers', 'Racks', 'Switches', 'Servers', 'Topology']},
+            'Physical Infrastructure': ['Providers', 'Chassis', 'Racks', 'Switches', 'Servers',
+                                        'Storages', 'Topology']},
         'Control': ['Explorer', 'Log', 'Simulation'],
         'Services': ['My Services', 'Workloads']
     },
@@ -412,7 +420,8 @@ role_access_ui_510z = {
             'Clouds': ['Instances'],
             'Infrastructure': ['Datastores', 'Providers', 'Virtual Machines', 'Hosts', 'Clusters',
                                'Resource Pools'],
-            'Physical Infrastructure': ['Providers', 'Racks', 'Switches', 'Servers', 'Topology']},
+            'Physical Infrastructure': ['Providers', 'Chassis', 'Racks', 'Switches', 'Servers',
+                                        'Storages', 'Topology']},
         'Services': ['Requests', 'Workloads', 'My Services']
     },
     'evmgroup-vm_user': {
