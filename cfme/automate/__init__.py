@@ -26,7 +26,9 @@ class AutomateCustomizationView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.in_customization and not self.buttons.is_dimmed and self.buttons.is_displayed
+        return (self.in_customization and
+                self.buttons.is_displayed and
+                not self.buttons.is_dimmed)
 
     @View.nested
     class provisioning_dialogs(Accordion):  # noqa

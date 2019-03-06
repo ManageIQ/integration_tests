@@ -341,7 +341,7 @@ def test_mandatory_entry_point_with_dynamic_element(appliance):
                          tab_desc="my tab desc"))
     box = tab.boxes.create(box_label='box_{}'.format(fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc"))
-    box.elements.create(element_data=[element_1_data])
+    assert box.elements.create(element_data=[element_1_data]) is False
     view_cls = navigator.get_class(sd.parent, 'Add').VIEW
     view = appliance.browser.create_view(view_cls)
     assert view.save.disabled

@@ -16,7 +16,7 @@ from cfme.modeling.base import parent_of_type
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.wait import wait_for
+from cfme.utils.log import logger
 from widgetastic_manageiq import DialogBootstrapSwitch
 from widgetastic_manageiq import DialogButton
 from widgetastic_manageiq import DialogElement
@@ -192,8 +192,12 @@ class ElementCollection(BaseCollection):
             view.dd.drag_and_drop(dragged_element, self.parent.box_label)
             view.fill(element)
             view.ele_save_button.click()
-        view.save_button.click()
-        wait_for(lambda: view.flash.is_displayed, timeout=5, delay=0.2, silent_failure=True)
+        if view.save_button.disabled:
+            logger.warning('Save button disabled during Dialog Element creation')
+            return False
+        else:
+            view.save_button.click()
+        view.flash.wait_displayed(timeout=5)
         view.flash.assert_no_error()
         return self.instantiate(element_data=element_data)
 
