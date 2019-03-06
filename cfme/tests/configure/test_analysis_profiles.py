@@ -26,105 +26,25 @@ updated_files = [
 
 TENANT_NAME = "tenant_{}".format(fauxfactory.gen_alphanumeric())
 
-PRODUCT_FEATURES = [
-    [
-        (
-            [
-                "Everything",
-                "Settings",
-                "Configuration",
-                "Access Control",
-                "Tenants",
-                "Modify",
-                "Manage Quotas",
-                "Manage Quotas (My Company)",
-            ],
-            False,
-        )
-    ],
-    [
-        (
-            [
-                "Everything",
-                "Settings",
-                "Configuration",
-                "Access Control",
-                "Tenants",
-                "Modify",
-                "Manage Quotas",
-                "Manage Quotas ({})".format(TENANT_NAME),
-            ],
-            False,
-        )
-    ],
-    [
-        (
-            [
-                "Everything",
-                "Automation",
-                "Automate",
-                "Customization",
-                "Dialogs",
-                "Modify",
-                "Add",
-                "Add ({})".format(TENANT_NAME),
-            ],
-            False,
-        )
-    ],
-    [
-        (
-            [
-                "Everything",
-                "Automation",
-                "Automate",
-                "Customization",
-                "Dialogs",
-                "Modify",
-                "Edit",
-                "Edit ({})".format(TENANT_NAME),
-            ],
-            False,
-        )
-    ],
-    [
-        (
-            [
-                "Everything",
-                "Automation",
-                "Automate",
-                "Customization",
-                "Dialogs",
-                "Modify",
-                "Delete",
-                "Delete ({})".format(TENANT_NAME),
-            ],
-            False,
-        )
-    ],
-    [
-        (
-            [
-                "Everything",
-                "Automation",
-                "Automate",
-                "Customization",
-                "Dialogs",
-                "Modify",
-                "Copy",
-                "Copy ({})".format(TENANT_NAME),
-            ],
-            False,
-        )
-    ],
+OPERATIONS = ["Add", "Edit", "Delete", "Copy"]
+
+PRODUCT_FEATURES_QUOTA = [
+    (
+        ["Everything", "Settings", "Configuration", "Access Control", "Tenants", "Modify",
+         "Manage Quotas"] + ["Manage Quotas ({tenant})".format(tenant=tenant)],
+        False,
+    )
+    for tenant in ["My Company", TENANT_NAME]
 ]
 
-
-def events_check(updates=False):
-    if updates:
-        return updated_files
-    else:
-        return events_list
+PRODUCT_FEATURES_DIALOG = [
+    (
+        ["Everything", "Automation", "Automate", "Customization", "Dialogs", "Modify"]
+        + [op, "{operation} ({tenant})".format(operation=op, tenant=TENANT_NAME)],
+        False,
+    )
+    for op in OPERATIONS
+]
 
 
 @pytest.fixture
@@ -159,7 +79,7 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
         files=files_list,
         categories=categories_list,
         registry=registry_list,
-        events=events_check()
+        events=events_list
     )
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
@@ -168,12 +88,11 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
 
     assert vm_profile.exists
 
-    files_updates = events_check(updates=True)
     with update(vm_profile):
-        vm_profile.files = files_updates
+        vm_profile.files = updated_files
     view = appliance.browser.create_view(navigator.get_class(vm_profile, 'Details').VIEW)
     view.flash.assert_success_message('Analysis Profile "{}" was saved'.format(vm_flash))
-    soft_assert(vm_profile.files == files_updates,
+    soft_assert(vm_profile.files == updated_files,
                 'Files update failed on profile: {}, {}'.format(vm_profile.name, vm_profile.files))
 
     with update(vm_profile):
@@ -214,7 +133,7 @@ def test_host_analysis_profile_crud(appliance, soft_assert, analysis_profile_col
         description=fauxfactory.gen_alphanumeric(),
         profile_type=analysis_profile_collection.HOST_TYPE,
         files=files_list,
-        events=events_check()
+        events=events_list
     )
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
@@ -222,10 +141,9 @@ def test_host_analysis_profile_crud(appliance, soft_assert, analysis_profile_col
     view.flash.assert_message('Analysis Profile "{}" was saved'.format(host_flash))
     assert host_profile.exists
 
-    files_updates = events_check(updates=True)
     with update(host_profile):
-        host_profile.files = files_updates
-    soft_assert(host_profile.files == files_updates,
+        host_profile.files = updated_files
+    soft_assert(host_profile.files == updated_files,
                 'Files update failed on profile: {}, {}'
                 .format(host_profile.name, host_profile.files))
     copied_profile = host_profile.copy(new_name='copied-{}'.format(host_profile.name))
@@ -429,25 +347,14 @@ def test_analysis_profile_description_validation(analysis_profile_collection):
     view.cancel.click()
 
 
+# Arguments of parametrize are product_features trees for Managing Quotas and Dialogs with RBAC
 @test_requirements.rbac
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream('5.9')
 @pytest.mark.parametrize(
     'product_features',
-    [  # Navigation for product features trees
-        # product_features tree for Managing Quotas for 'My Company' tenant
-        PRODUCT_FEATURES[0],
-        # product_features tree for Managing Quotas for custom tenant
-        PRODUCT_FEATURES[1],
-        # product_features tree for Managing Dialogs for 'Add'
-        PRODUCT_FEATURES[2],
-        # product_features tree for Managing Dialogs for 'Edit'
-        PRODUCT_FEATURES[3],
-        # product_features tree for Managing Dialogs for 'Delete'
-        PRODUCT_FEATURES[4],
-        # product_features tree for Managing Dialogs for  'Copy'
-        PRODUCT_FEATURES[5]
-    ]
+    PRODUCT_FEATURES_QUOTA + PRODUCT_FEATURES_DIALOG,
+    ids=["default_tenant", "custom_tenant", "add", "edit", "delete", "copy"]
 )
 def test_custom_role_modify_for_dynamic_product_feature(request, appliance, product_features):
     """
@@ -496,10 +403,14 @@ def test_custom_role_modify_for_dynamic_product_feature(request, appliance, prod
         role=role.name, name=fauxfactory.gen_alpha()))
     request.addfinalizer(copied_role.delete)
     view = navigate_to(copied_role, 'Details')
-
-    # Checks whether feature tree path is checked for given node
-    assert not view.features_tree.check_uncheck_node(True, *(product_features[0][0]))
-    copied_role.update({'product_features': product_features})
+    # node_checked: Checks whether feature tree path is checked for given node
+    # Example:- Tuple: product_feature = (['Everything', 'Automation', 'Automate', 'Customization',
+    # 'Dialogs', 'Modify', 'Add', 'Add (tenant_27WyY6qCHi)'], False)
+    # 'False' argument with product_feature is required while updating copied_roles. It unchecks the
+    # specified node in the list.
+    # List: product_features[0] is the tree path of RBAC feature
+    assert view.features_tree.node_checked(*(product_features[0]))
+    copied_role.update({'product_features': [product_features]})
 
     # Checks whether feature tree path is unchecked for given node
-    assert view.features_tree.check_uncheck_node(True, *(product_features[0][0]))
+    assert not view.features_tree.node_checked(*(product_features[0]))
