@@ -84,16 +84,18 @@ def set_roottenant_quota(request, roottenant, appliance):
 @pytest.fixture
 def catalog_item(appliance, provider, provisioning, template_name, dialog, catalog, prov_data,
                  set_default):
-    collection = appliance.collections.catalog_items
-    yield collection.create(provider.catalog_item_type,
-                            name='test_{}'.format(fauxfactory.gen_alphanumeric()),
-                            description='test catalog',
-                            display_in=True,
-                            catalog=catalog,
-                            dialog=dialog,
-                            prov_data=prov_data,
-                            provisioning_entry_point=set_default
-                            )
+    catalog_item = appliance.collections.catalog_items.create(
+        provider.catalog_item_type,
+        name="test_{}".format(fauxfactory.gen_alphanumeric()),
+        description="test catalog",
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog,
+        prov_data=prov_data,
+        provisioning_entry_point=set_default,
+    )
+    yield catalog_item
+    catalog_item.delete_if_exists()
 
 
 # first arg of parametrize is the list of fixtures or parameters,
@@ -136,9 +138,8 @@ def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider,
     # nav to requests page to check quota validation
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
-    assert provision_request.row.reason.text == "Quota Exceeded"
-
     request.addfinalizer(provision_request.remove_request)
+    assert provision_request.row.reason.text == "Quota Exceeded"
 
 
 # first arg of parametrize is the list of fixtures or parameters,
@@ -177,12 +178,8 @@ def test_tenant_quota_enforce_via_service_cloud(request, appliance, context, set
     request_description = 'Provisioning Service [{0}] from [{0}]'.format(catalog_item.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
+    request.addfinalizer(provision_request.remove_request)
     assert provision_request.row.reason.text == "Quota Exceeded"
-
-    @request.addfinalizer
-    def delete():
-        provision_request.remove_request()
-        catalog_item.delete()
 
 
 # Args of parametrize is the list of navigation parameters to order catalog item.
@@ -237,9 +234,5 @@ def test_service_cloud_tenant_quota_with_default_entry_point(request, appliance,
         name=catalog_item.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
-
-    @request.addfinalizer
-    def delete():
-        provision_request.remove_request()
-        catalog_item.delete()
+    request.addfinalizer(provision_request.remove_request)
     assert provision_request.row.reason.text == "Quota Exceeded"

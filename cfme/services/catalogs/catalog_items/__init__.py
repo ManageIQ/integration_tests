@@ -35,6 +35,7 @@ from widgetastic_manageiq import WaitTab
 class EntryPoint(Input, ClickableMixin):
     def fill(self, value):
         if super(EntryPoint, self).fill(value):
+            self.parent_view.modal.cancel.wait_displayed('20s')
             self.parent_view.modal.cancel.click()
             # After changing default path values of 'retirement_entry_point',
             # 'reconfigure_entry_point' or 'provisioning_entry_point';
@@ -294,6 +295,10 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         assert view.is_displayed
         view.flash.assert_success_message('The selected Catalog Item was deleted')
 
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
+
     def add_button_group(self):
         button_name = fauxfactory.gen_alpha()
         view = navigate_to(self, 'AddButtonGroup')
@@ -364,7 +369,7 @@ class CloudInfraCatalogItem(BaseCatalogItem):
     retirement_entry_point = attr.ib(
         default="/Service/Retirement/StateMachines/ServiceRetirement/Default"
     )
-    reconfigure_entry_point = attr.ib(default=None)
+    reconfigure_entry_point = attr.ib(default='')
 
     @property
     def fill_dict(self):
