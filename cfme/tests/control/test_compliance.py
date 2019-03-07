@@ -138,7 +138,7 @@ def test_check_package_presence(request, compliance_vm, analysis_profile, policy
     to be present on the full_template.
 
     Polarion:
-        assignee: dmisharo
+        assignee: jdupuy
         initialEstimate: 1/4h
     """
     condition = condition_collection.create(
@@ -172,7 +172,7 @@ def test_check_files(request, compliance_vm, analysis_profile, condition_collect
     is checked.
 
     Polarion:
-        assignee: dmisharo
+        assignee: jdupuy
         initialEstimate: 1/4h
     """
     check_file_name = "/etc/hosts"
@@ -210,7 +210,7 @@ def test_check_files(request, compliance_vm, analysis_profile, condition_collect
 def test_compliance_with_unconditional_policy(host, assign_policy_for_testing):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: jdupuy
         initialEstimate: 1/6h
     """
     assign_policy_for_testing.assign_actions_to_event(

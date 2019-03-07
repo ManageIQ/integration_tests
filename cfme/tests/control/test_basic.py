@@ -421,7 +421,7 @@ def setup_for_monitor_alerts(appliance):
 def test_condition_crud(appliance, condition_prerequisites):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
@@ -445,7 +445,7 @@ def test_condition_crud(appliance, condition_prerequisites):
 def test_action_crud(appliance):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: critical
         initialEstimate: 1/12h
@@ -468,7 +468,7 @@ def test_action_crud(appliance):
 def test_policy_crud(appliance, policy_class):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         initialEstimate: 1/4h
     """
@@ -485,7 +485,7 @@ def test_policy_crud(appliance, policy_class):
 def test_policy_copy(policy_class, policy):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
@@ -500,7 +500,7 @@ def test_assign_two_random_events_to_control_policy(control_policy, control_poli
                                                     soft_assert):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         initialEstimate: 1/4h
     """
@@ -517,7 +517,7 @@ def test_assign_two_random_events_to_control_policy(control_policy, control_poli
 def test_control_assign_actions_to_event(request, policy_class, policy, action):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: critical
         initialEstimate: 1/12h
@@ -543,7 +543,7 @@ def test_assign_condition_to_control_policy(request, policy_and_condition):
         * Assign a condition to the created policy.
 
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
@@ -559,7 +559,7 @@ def test_assign_condition_to_control_policy(request, policy_and_condition):
 def test_policy_profile_crud(appliance, two_random_policies):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: critical
         initialEstimate: 1/12h
@@ -583,7 +583,7 @@ def test_policy_profile_crud(appliance, two_random_policies):
 def test_modify_condition_expression(condition_for_expressions, fill_type, expression, verify):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: low
         initialEstimate: 1/12h
@@ -620,7 +620,7 @@ def test_alert_crud(appliance):
 def test_control_alert_copy(alert):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
@@ -687,7 +687,7 @@ def test_alert_profile_assigning(alert_profile, appliance):
 def test_control_is_ansible_playbook_available_in_actions_dropdown(appliance):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         initialEstimate: 1/12h
     """
@@ -716,3 +716,37 @@ def test_alerts_monitor_overview_page(appliance, virtualcenter_provider, setup_f
     # 2) assert that clicking the status card navigates to the correct place
     status_card.click()
     assert view.navigation.currently_selected == ['Monitor', 'Alerts', 'All Alerts']
+
+
+@pytest.mark.manual
+@test_requirements.control
+@pytest.mark.tier(3)
+def test_control_policy_simulation_displayed():
+    """
+    https://bugzilla.redhat.com/show_bug.cgi?id=1550503
+    Test if policy simulation is displayed
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Control
+        caseimportance: low
+        initialEstimate: 1/6h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.control
+@pytest.mark.tier(3)
+def test_control_import_with_incorrect_schema():
+    """
+    Test importing yaml with incorrect schema.
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Control
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/12h
+    """
+    pass

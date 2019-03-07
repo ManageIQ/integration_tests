@@ -30,7 +30,7 @@ def policy_profile_collection(appliance):
 def test_import_policies(appliance, import_policy_file):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: low
         initialEstimate: 1/12h
@@ -41,7 +41,7 @@ def test_import_policies(appliance, import_policy_file):
 def test_control_import_invalid_yaml_file(appliance, import_invalid_yaml_file):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: medium
         caseposneg: negative
@@ -55,7 +55,7 @@ def test_control_import_invalid_yaml_file(appliance, import_invalid_yaml_file):
 def test_control_import_existing_policies(appliance, import_policy_file, policy_profile_collection):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: low
         caseposneg: negative
