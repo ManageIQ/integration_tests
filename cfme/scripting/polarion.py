@@ -36,29 +36,45 @@ def main():
     pass
 
 
-@main.command('populate',
-              help='Populate template with credentials and version based testrun data.'
-              'Does NOT overwrite anything already set in the given template')
-@click.option('--template',
-              help='YAML template to start with',
-              default=conf_path.join('polarion_tools.local.yaml.template').strpath)
-@click.option('--output',
-              help='YAML file to write to',
-              default=conf_path.join('polarion_tools.local.yaml').strpath)
-@click.option('--credentials_key',
-              help='Key for utils.conf.credentials used for polarion authentication',
-              default='polarion-upload')
-@click.option('--vstring',
-              help='version string that can be parsed for series and template selection')
-@click.option('--polarion-project-id',
-              help='The polarion project ID to inject',
-              default=None)
-@click.option('--polarion-url',
-              help='The polarion URL to inject',
-              default=None)
-@click.option('--template-format',
-              help='The format for the test template, y-stream CFME digits is formatted in',
-              default='ImportTestRunTemplate')
+@main.command(
+    'populate',
+    help='Populate template with credentials and version based testrun data.'
+         'Does NOT overwrite anything already set in the given template'
+)
+@click.option(
+    '--template',
+    help='YAML template to start with',
+    default=conf_path.join('polarion_tools.local.yaml.template').strpath
+)
+@click.option(
+    '--output',
+    help='YAML file to write to',
+    default=conf_path.join('polarion_tools.local.yaml').strpath
+)
+@click.option(
+    '--credentials-key',
+    help='Key for utils.conf.credentials used for polarion authentication',
+    default='polarion-upload'
+)
+@click.option(
+    '--vstring',
+    help='version string that can be parsed for series and template selection'
+)
+@click.option(
+    '--polarion-project-id',
+    help='The polarion project ID to inject',
+    default=None
+)
+@click.option(
+    '--polarion-url',
+    help='The polarion URL to inject',
+    default=None
+)
+@click.option(
+    '--template-format',
+    help='The format for the test template, y-stream CFME digits is formatted in',
+    default='ImportTestRunTemplate'
+)
 def populate(
     template,
     output,
