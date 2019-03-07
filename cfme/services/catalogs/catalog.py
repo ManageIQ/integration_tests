@@ -150,8 +150,7 @@ class CatalogCollection(BaseCollection):
         })
         view.add_button.click()
         catalog = self.instantiate(name=name, description=description, items=items)
-        view = self.create_view(CatalogsView)
-        assert view.is_displayed
+        view = self.create_view(CatalogsView, wait="10s")
         view.flash.assert_no_error()
         return catalog
 
