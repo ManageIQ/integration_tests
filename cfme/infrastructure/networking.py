@@ -1,6 +1,7 @@
 import attr
 from navmazing import NavigateToAttribute
-from widgetastic.widget import Text, View
+from widgetastic.widget import Text
+from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.ui import BaseLoggedInPage

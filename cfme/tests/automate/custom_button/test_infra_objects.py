@@ -20,7 +20,15 @@ pytestmark = [
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE),
 ]
 
-INFRA_OBJECTS = ["PROVIDER", "HOSTS", "VM_INSTANCE", "TEMPLATE_IMAGE", "DATASTORES", "CLUSTERS"]
+INFRA_OBJECTS = [
+    "PROVIDER",
+    "HOSTS",
+    "VM_INSTANCE",
+    "TEMPLATE_IMAGE",
+    "DATASTORES",
+    "CLUSTERS",
+    "SWITCH",
+]
 
 DISPLAY_NAV = {
     "Single entity": ["Details"],
@@ -96,6 +104,8 @@ def setup_obj(button_group, provider):
             obj = provider.appliance.provider_based_collection(provider).all()[0]
         elif obj_type == "TEMPLATE_IMAGE":
             obj = provider.appliance.collections.infra_templates.all()[0]
+        elif obj_type == "SWITCH":
+            obj = provider.appliance.collections.infra_switches.all()[0]
         else:
             obj = getattr(provider.appliance.collections, obj_type.lower()).all()[0]
     except IndexError:
@@ -258,7 +268,8 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
             1641669,
             forced_streams=["5.9"],
             unblock=lambda button_group: "DATASTORES" not in button_group,
-        )
+        ),
+        BZ(1685555, unblock=lambda button_group: "SWITCH" not in button_group),
     ]
 )
 def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_group):
@@ -465,7 +476,11 @@ def test_open_url(request, setup_obj, button_group, method):
             1668023,
             forced_streams=["5.10"],
             unblock=lambda button_group, btn_dialog: not ("HOSTS" in button_group and btn_dialog),
-        )
+        ),
+        BZ(
+            1685555,
+            unblock=lambda button_group, btn_dialog: not ("SWITCH" in button_group and btn_dialog),
+        ),
     ]
 )
 @pytest.mark.ignore_stream("5.9")
