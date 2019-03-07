@@ -51,6 +51,7 @@ BUILD_TAG_OBJS = [
     "Cloud Volume",
     "Load Balancer",
     "Orchestration Stack",
+    "Virtual Infra Switch",
 ]
 
 
@@ -346,6 +347,7 @@ class DefaultButton(BaseButton):
         visibility: Visibility expression in terms of tag and its value
         enablement: Enablement expression in terms of tag and its value
     """
+
     group = attr.ib()
     text = attr.ib()
     hover = attr.ib()
@@ -380,6 +382,7 @@ class AnsiblePlaybookButton(BaseButton):
         visibility: Visibility expression in terms of tag and its value
         enablement: Enablement expression in terms of tag and its value
     """
+
     group = attr.ib()
     text = attr.ib()
     hover = attr.ib()
@@ -491,9 +494,8 @@ class ButtonCollection(BaseCollection):
                     obj_type=self.group.type, tag=visibility["tag"]
                 )
             elif self.group.type in BUILD_TAG_OBJS:
-                tag = "{obj_type}.Build.{tag}".format(
-                    obj_type=self.group.type, tag=visibility["tag"]
-                )
+                _type = "Switch" if self.group.type == "Virtual Infra Switch" else self.group.type
+                tag = "{obj_type}.Build.{tag}".format(obj_type=_type, tag=visibility["tag"])
             else:
                 tag = "{obj_type}.{tag}".format(obj_type=self.group.type, tag=visibility["tag"])
 
@@ -508,9 +510,8 @@ class ButtonCollection(BaseCollection):
                     obj_type=self.group.type, tag=enablement["tag"]
                 )
             elif self.group.type in BUILD_TAG_OBJS:
-                tag = "{obj_type}.Build.{tag}".format(
-                    obj_type=self.group.type, tag=enablement["tag"]
-                )
+                _type = "Switch" if self.group.type == "Virtual Infra Switch" else self.group.type
+                tag = "{obj_type}.Build.{tag}".format(obj_type=_type, tag=enablement["tag"])
             else:
                 tag = "{obj_type}.{tag}".format(obj_type=self.group.type, tag=enablement["tag"])
 
