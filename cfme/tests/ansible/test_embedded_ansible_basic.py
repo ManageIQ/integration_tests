@@ -53,31 +53,25 @@ CREDENTIALS = [
             "password": fauxfactory.gen_alpha(),
             "privilage_escalation": "sudo",
             "privilage_escalation_username": fauxfactory.gen_alpha(),
-            "privilage_escalation_password": fauxfactory.gen_alpha()
-        }
+            "privilage_escalation_password": fauxfactory.gen_alpha(),
+        },
     ),
-    (
-        "Scm",
-        {
-            "username": fauxfactory.gen_alpha(),
-            "password": fauxfactory.gen_alpha(),
-        }
-    ),
+    ("Scm", {"username": fauxfactory.gen_alpha(), "password": fauxfactory.gen_alpha()}),
     (
         "Amazon",
         {
             "access_key": fauxfactory.gen_alpha(),
             "secret_key": fauxfactory.gen_alpha(),
-            "sts_token": fauxfactory.gen_alpha()
-        }
+            "sts_token": fauxfactory.gen_alpha(),
+        },
     ),
     (
         "VMware",
         {
             "username": fauxfactory.gen_alpha(),
             "password": fauxfactory.gen_alpha(),
-            "vcenter_host": fauxfactory.gen_alpha()
-        }
+            "vcenter_host": fauxfactory.gen_alpha(),
+        },
     ),
     (
         "OpenStack",
@@ -86,16 +80,16 @@ CREDENTIALS = [
             "password": fauxfactory.gen_alpha(),
             "authentication_url": fauxfactory.gen_alpha(),
             "project": fauxfactory.gen_alpha(),
-            "domain": fauxfactory.gen_alpha()
-        }
+            "domain": fauxfactory.gen_alpha(),
+        },
     ),
     (
         "Red Hat Virtualization",
         {
             "username": fauxfactory.gen_alpha(),
             "password": fauxfactory.gen_alpha(),
-            "host": fauxfactory.gen_alpha()
-        }
+            "host": fauxfactory.gen_alpha(),
+        },
     ),
     (
         "Google Compute Engine",
@@ -103,8 +97,8 @@ CREDENTIALS = [
             "service_account": fauxfactory.gen_alpha(),
             "priv_key": private_key,
             "project": fauxfactory.gen_alpha(),
-        }
-    )
+        },
+    ),
 ]
 
 
@@ -235,7 +229,9 @@ def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
 
 
 @pytest.mark.tier(2)
-def test_control_crud_ansible_playbook_action(request, catalog_item, action_collection):
+def test_control_crud_ansible_playbook_action(
+    request, appliance, catalog_item, action_collection
+):
     """
     Polarion:
         assignee: jdupuy
@@ -246,16 +242,21 @@ def test_control_crud_ansible_playbook_action(request, catalog_item, action_coll
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
         action_values={
-            "run_ansible_playbook":
-            {
+            "run_ansible_playbook": {
                 "playbook_catalog_item": catalog_item.name,
-                "inventory": {
-                    "target_machine": True
-                }
+                "inventory": {"target_machine": True},
             }
-        }
+        },
     )
-    request.addfinalizer(action.delete_if_exists)
+
+    @request.addfinalizer
+    def _finalizer():
+        if action.exists:
+            action_id = appliance.rest_api.collections.actions.get(
+                description=action.description
+            ).id
+            appliance.rest_api.collections.actions.action.delete(id=action_id)
+
     with update(action):
         ipaddr = fauxfactory.gen_ipaddr()
         new_descr = "edited_{}".format(fauxfactory.gen_alphanumeric())
@@ -264,7 +265,7 @@ def test_control_crud_ansible_playbook_action(request, catalog_item, action_coll
             "inventory": {
                 "specific_hosts": True,
                 "hosts": ipaddr
-            }
+            },
         }
     view = navigate_to(action, "Edit")
     assert view.description.value == new_descr
@@ -274,8 +275,9 @@ def test_control_crud_ansible_playbook_action(request, catalog_item, action_coll
 
 
 @pytest.mark.tier(2)
-def test_control_add_ansible_playbook_action_invalid_address(request, catalog_item,
-        action_collection):
+def test_control_add_ansible_playbook_action_invalid_address(
+    request, appliance, catalog_item, action_collection
+):
     """
     Polarion:
         assignee: jdupuy
@@ -286,17 +288,24 @@ def test_control_add_ansible_playbook_action_invalid_address(request, catalog_it
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
         action_values={
-            "run_ansible_playbook":
-            {
+            "run_ansible_playbook": {
                 "playbook_catalog_item": catalog_item.name,
                 "inventory": {
                     "specific_hosts": True,
-                    "hosts": "invalid_address_!@#$%^&*"
-                }
+                    "hosts": "invalid_address_!@#$%^&*",
+                },
             }
-        }
+        },
     )
-    request.addfinalizer(action.delete_if_exists)
+
+    @request.addfinalizer
+    def _finalizer():
+        if action.exists:
+            action_id = appliance.rest_api.collections.actions.get(
+                description=action.description
+            ).id
+            appliance.rest_api.collections.actions.action.delete(id=action_id)
+
     assert action.exists
     view = navigate_to(action, "Edit")
     assert view.run_ansible_playbook.inventory.hosts.value == "invalid_address_!@#$%^&*"
@@ -323,7 +332,7 @@ def test_embedded_ansible_credential_with_private_key(request, wait_for_ansible,
         "Machine",
         username=fauxfactory.gen_alpha(),
         password=fauxfactory.gen_alpha(),
-        private_key=private_key
+        private_key=private_key,
     )
     request.addfinalizer(credential.delete)
     assert credential.exists

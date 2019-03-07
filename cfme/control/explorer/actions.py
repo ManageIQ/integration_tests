@@ -4,7 +4,6 @@ import attr
 from cached_property import cached_property
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
-from widgetastic.utils import WaitFillViewStrategy
 from widgetastic.widget import Checkbox
 from widgetastic.widget import Text
 from widgetastic.widget import View
@@ -86,7 +85,6 @@ class NewActionView(ActionFormCommon):
 
 
 class EditActionView(ActionFormCommon):
-    fill_strategy = WaitFillViewStrategy()
     title = Text("#explorer_title_text")
 
     save_button = Button("Save")
@@ -208,7 +206,7 @@ class Action(BaseEntity, Updateable, Pretty):
             view.flash.assert_no_error()
         else:
             view = self.create_view(ActionsAllView)
-            assert view.is_displayed
+            view.wait_displayed('15s')
             view.flash.assert_success_message(
                 'Action "{}": Delete successful'.format(self.description))
 
