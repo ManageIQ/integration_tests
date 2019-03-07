@@ -130,8 +130,9 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
 @pytest.mark.uncollectif(
     lambda appliance, dbversion:
         dbversion in ('scvmm_58', 'ec2_5540') and appliance.version < "5.9")
-@pytest.mark.parametrize('dbversion', ['ec2_5540', 'azure_5620', 'rhev_57', 'scvmm_58'],
-        ids=['55', '56', '57', '58'])
+@pytest.mark.parametrize('dbversion',
+    ['ec2_5540', 'azure_5620', 'rhev_57', 'scvmm_58', 'vmware_59'],
+    ids=['55', '56', '57', '58', '59'])
 def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance_global_region):
     """
     Polarion:
