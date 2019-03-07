@@ -167,14 +167,6 @@ class VolumeBackup(BaseEntity, Taggable):
         self.browser.refresh()
 
     @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except BackupNotFoundError:
-            return False
-
-    @property
     def size(self):
         """size of cloud volume backup.
 

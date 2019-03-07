@@ -10,7 +10,6 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
-from cfme.exceptions import ItemNotFound
 from cfme.exceptions import ProviderHasNoProperty
 from cfme.exceptions import RackStatsDoesNotContain
 from cfme.exceptions import StatsDoNotMatch
@@ -98,19 +97,6 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
     def rack_name(self):
         view = navigate_to(self, "Details")
         return view.entities.properties.get_text_of("Rack name")
-
-    @property
-    def exists(self):
-        """Checks if the physical_rack exists in the UI.
-
-        Returns: :py:class:`bool`
-        """
-        try:
-            navigate_to(self, 'Details')
-        except ItemNotFound:
-            return False
-        else:
-            return True
 
     def validate_stats(self, ui=False):
         """ Validates that the detail page matches the physical rack's information.

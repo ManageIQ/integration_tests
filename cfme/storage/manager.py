@@ -163,14 +163,6 @@ class StorageManager(BaseEntity, CustomButtonEventsMixin, Taggable, PolicyProfil
         view = self.create_view(StorageManagerDetailsView)
         view.flash.assert_no_error()
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except ItemNotFound:
-            return False
-
 
 @attr.s
 class BlockManagerCollection(BaseCollection):

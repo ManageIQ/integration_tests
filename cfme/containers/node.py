@@ -3,7 +3,6 @@
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_patternfly import BreadCrumb
 
@@ -73,17 +72,6 @@ class Node(BaseEntity, Taggable, Labelable, PolicyProfileAssignable, ConsoleMixi
 
     name = attr.ib()
     provider = attr.ib()
-
-    @property
-    def exists(self):
-        """Return True if the Node exists"""
-        # TODO: move this to some ContainerObjectBase so it'll be shared among all objects
-        try:
-            navigate_to(self, 'Details')
-        except NoSuchElementException:
-            return False
-        else:
-            return True
 
 
 @attr.s

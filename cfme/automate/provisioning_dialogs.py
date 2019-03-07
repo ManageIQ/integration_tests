@@ -146,14 +146,6 @@ class ProvisioningDialog(Updateable, Pretty, BaseEntity):
     def __str__(self):
         return self.name
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except CandidateNotFound:
-            return False
-        return True
-
     def update(self, updates, cancel=False, reset=False):
         view = navigate_to(self, 'Edit')
         view.form.fill(updates)

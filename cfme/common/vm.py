@@ -183,14 +183,6 @@ class BaseVM(
             self.find_quadicon().check()
             view.toolbar.configuration.item_select(self.REMOVE_SELECTED, handle_alert=not cancel)
 
-    @property
-    def exists(self):
-        """Checks presence of the quadicon in the CFME."""
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except VmOrInstanceNotFound:
-            return False
 
     @property
     def ip_address(self):

@@ -10,7 +10,6 @@ from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
 
 from cfme.common import Taggable
@@ -333,14 +332,6 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         wait_for(lambda: view.is_displayed, timeout=5)
         view.flash.assert_no_error()
         return button_name
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except CandidateNotFound:
-            return False
 
     @property
     def catalog_name(self):

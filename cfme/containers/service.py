@@ -10,7 +10,6 @@ from cfme.containers.provider import ContainerObjectDetailsBaseView
 from cfme.containers.provider import GetRandomInstancesMixin
 from cfme.containers.provider import Labelable
 from cfme.containers.provider import LoggingableView
-from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -55,16 +54,6 @@ class Service(BaseEntity, Taggable, Labelable):
     name = attr.ib()
     project_name = attr.ib()
     provider = attr.ib()
-
-    @property
-    def exists(self):
-        """Return True if the Service exists"""
-        try:
-            navigate_to(self, 'Details')
-        except ItemNotFound:
-            return False
-        else:
-            return True
 
 
 @attr.s

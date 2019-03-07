@@ -347,14 +347,6 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
             view.flash.assert_no_error()
 
     @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except VolumeNotFoundError:
-            return False
-
-    @property
     def status(self):
         """ status of cloud volume.
         Returns:

@@ -11,7 +11,6 @@ from cfme.containers.provider import ContainerObjectDetailsBaseView
 from cfme.containers.provider import GetRandomInstancesMixin
 from cfme.containers.provider import Labelable
 from cfme.containers.provider import LoggingableView
-from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -78,16 +77,6 @@ class Container(BaseEntity, Taggable, Labelable):
     @property
     def project_name(self):
         return self.pod.project_name
-
-    @property
-    def exists(self):
-        """Return True if the Container exists"""
-        try:
-            navigate_to(self, 'Details')
-        except ItemNotFound:
-            return False
-        else:
-            return True
 
 
 @attr.s

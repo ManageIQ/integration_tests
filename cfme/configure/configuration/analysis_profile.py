@@ -4,7 +4,6 @@ from copy import deepcopy
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
-from navmazing import NavigationDestinationNotFound
 from widgetastic.widget import ConditionalSwitchableView
 from widgetastic.widget import Text
 from widgetastic.widget import View
@@ -325,15 +324,6 @@ class AnalysisProfile(Pretty, Updateable, BaseEntity):
         view.flush_widget_cache()
         assert view.is_displayed
         return new_profile
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except (NavigationDestinationNotFound, CandidateNotFound):
-            return False
-        else:
-            return True
 
 
 @attr.s

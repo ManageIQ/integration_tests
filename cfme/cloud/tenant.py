@@ -293,14 +293,6 @@ class Tenant(BaseEntity, Taggable, ValidateStatsMixin):
             result = self.wait_for_disappear(600)
         return result
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except NoSuchElementException:
-            return False
-        else:
-            return True
 
 
 @attr.s

@@ -1,7 +1,6 @@
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Version
 from widgetastic.utils import VersionPick
 
@@ -38,15 +37,6 @@ class CloudNetwork(Taggable, BaseEntity, CustomButtonEventsMixin):
     def provider(self):
         from cfme.networks.provider import NetworkProvider
         return parent_of_type(self, NetworkProvider)
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except (ItemNotFound, NoSuchElementException):
-            return False
-        else:
-            return True
 
     @property
     def parent_provider(self):

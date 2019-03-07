@@ -174,14 +174,6 @@ class Repository(BaseEntity, Fillable, Taggable):
             view.flash.assert_message(
                 'Edit of Repository "{}" cancelled by the user.'.format(self.name))
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, "Details")
-            return True
-        except ItemNotFound:
-            return False
-
     def delete(self):
         """Delete the repository in the UI."""
         view = navigate_to(self, "Details")
