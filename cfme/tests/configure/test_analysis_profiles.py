@@ -26,24 +26,31 @@ updated_files = [
 
 TENANT_NAME = "tenant_{}".format(fauxfactory.gen_alphanumeric())
 
+# Operations performed on service dialogs with respect to RBAC permissions
 OPERATIONS = ["Add", "Edit", "Delete", "Copy"]
 
-PRODUCT_FEATURES_QUOTA = [
-    (
-        ["Everything", "Settings", "Configuration", "Access Control", "Tenants", "Modify",
-         "Manage Quotas"] + ["Manage Quotas ({tenant})".format(tenant=tenant)],
-        False,
-    )
-    for tenant in ["My Company", TENANT_NAME]
+# Tree path navigation (for service dialog permissions) to particular node of product feature in
+# RBAC for roles
+PRODUCT_FEATURES_DIALOG = [
+    ["Everything", "Automation", "Automate", "Customization", "Dialogs", "Modify"]
+    + [op, "{operation} ({tenant})".format(operation=op, tenant=TENANT_NAME)]
+    for op in OPERATIONS
 ]
 
-PRODUCT_FEATURES_DIALOG = [
-    (
-        ["Everything", "Automation", "Automate", "Customization", "Dialogs", "Modify"]
-        + [op, "{operation} ({tenant})".format(operation=op, tenant=TENANT_NAME)],
-        False,
-    )
-    for op in OPERATIONS
+# Tree path navigation (for quota management permissions) to particular node of product feature in
+# RBAC for roles
+PRODUCT_FEATURES_QUOTA = [
+    [
+        "Everything",
+        "Settings",
+        "Configuration",
+        "Access Control",
+        "Tenants",
+        "Modify",
+        "Manage Quotas",
+    ]
+    + ["Manage Quotas ({tenant})".format(tenant=tenant)]
+    for tenant in ["My Company", TENANT_NAME]
 ]
 
 
@@ -408,9 +415,9 @@ def test_custom_role_modify_for_dynamic_product_feature(request, appliance, prod
     # 'Dialogs', 'Modify', 'Add', 'Add (tenant_27WyY6qCHi)'], False)
     # 'False' argument with product_feature is required while updating copied_roles. It unchecks the
     # specified node in the list.
-    # List: product_features[0] is the tree path of RBAC feature
-    assert view.features_tree.node_checked(*(product_features[0]))
-    copied_role.update({'product_features': [product_features]})
+    # List: *product_features is the tree path of RBAC feature
+    assert view.features_tree.node_checked(*product_features)
+    copied_role.update({'product_features': [(product_features, False)]})
 
     # Checks whether feature tree path is unchecked for given node
-    assert not view.features_tree.node_checked(*(product_features[0]))
+    assert not view.features_tree.node_checked(*product_features)

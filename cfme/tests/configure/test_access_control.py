@@ -1395,47 +1395,16 @@ def test_unique_project_name_on_parent_level(request, appliance):
         * This test is not depending on any other test and can be executed against fresh appliance.
 
     Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        initialEstimate: 1/20h
-        tags: quota
-    """
-    tenant_unique_tenant_project_name_on_parent_level(request, appliance,
-                                                      appliance.collections.projects)
-
-
-def test_tenant_quota_input_validate(appliance):
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        initialEstimate: 1/8h
-        tags: quota
-    """
-    roottenant = appliance.collections.tenants.get_root_tenant()
-    fields = [('cpu', 2.5), ('storage', '1.x'), ('memory', '2.x'), ('vm', 1.5)]
-
-    for field in fields:
-        view = navigate_to(roottenant, 'ManageQuotas')
-        view.form.fill({'{}_cb'.format(field[0]): True, '{}_txt'.format(field[0]): field[1]})
-        assert view.save_button.disabled
-        view.form.fill({'{}_cb'.format(field[0]): False})
-
-
-def test_delete_default_tenant(request, appliance):
-    """
-    Polarion:
         assignee: mnadeem
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
         initialEstimate: 1/20h
         testSteps:
-            1. Login as an 'Administrator' user
-            2. Navigate to configuration > access control > tenants
-            3. Select default tenant('My Company') from tenants table
-            4. Delete using 'configuration > Delete selected items'
-            5. Check whether default tenant is deleted or not
+            1. Create project
+            2. Create another project with the same name
+            3. Creation will fail because object with the same name exists
+            4. Delete created objects
     """
     tenant_unique_tenant_project_name_on_parent_level(request, appliance,
                                                       appliance.collections.projects)
