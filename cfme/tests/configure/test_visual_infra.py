@@ -155,6 +155,8 @@ def test_infra_grid_page_per_item(appliance, request, page, value, set_grid):
     limit = appliance.user.my_settings.visual.grid_view_limit
     view = navigate_to(page, 'All', use_resetter=False)
     view.toolbar.view_selector.select('Grid View')
+    if not view.entities.paginator.is_displayed:
+        pytest.skip("This page doesn't have entities and/or paginator")
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
     items_per_page = view.entities.paginator.items_per_page
@@ -187,6 +189,8 @@ def test_infra_tile_page_per_item(appliance, request, page, value, set_tile):
     limit = appliance.user.my_settings.visual.tile_view_limit
     view = navigate_to(page, 'All', use_resetter=False)
     view.toolbar.view_selector.select('Tile View')
+    if not view.entities.paginator.is_displayed:
+        pytest.skip("This page doesn't have entities and/or paginator")
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
     items_per_page = view.entities.paginator.items_per_page
@@ -219,6 +223,8 @@ def test_infra_list_page_per_item(appliance, request, page, value, set_list):
     limit = appliance.user.my_settings.visual.list_view_limit
     view = navigate_to(page, 'All', use_resetter=False)
     view.toolbar.view_selector.select('List View')
+    if not view.entities.paginator.is_displayed:
+        pytest.skip("This page doesn't have entities and/or paginator")
     max_item = view.entities.paginator.max_item
     item_amt = view.entities.paginator.items_amount
     items_per_page = view.entities.paginator.items_per_page
