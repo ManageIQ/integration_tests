@@ -167,9 +167,7 @@ class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
 
     def delete(self):
         view = navigate_to(self, 'Details')
-        msg = "Remove this Orchestration Template"
-        if self.appliance.version >= '5.9':
-            msg = '{} from Inventory'.format(msg)
+        msg = "Remove this Orchestration Template from Inventory"
         view.toolbar.configuration.item_select(msg, handle_alert=True)
         view.flash.assert_success_message('Orchestration Template "{}" was deleted.'.format(
             self.template_name))

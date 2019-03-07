@@ -1,4 +1,4 @@
-heat_template_version: 2013-05-23
+heat_template_version: 2018-03-02
 description: Simple template CFMETemplateName to deploy a single compute instance
 parameters:
   image:
@@ -10,7 +10,7 @@ parameters:
     type: string
     label: Flavor
     description: Type of instance (flavor) to be used
-    default: m1.small
+    default: m1.tiny
   key:
     type: string
     label: Key name
@@ -20,7 +20,7 @@ parameters:
     type: string
     label: Private network name or ID
     description: Network to attach instance to.
-    default: d1ee22c8-4e8a-4488-80c5-94b5f7c5408e
+    default: private
 resources:
   my_instance:
     type: OS::Nova::Server

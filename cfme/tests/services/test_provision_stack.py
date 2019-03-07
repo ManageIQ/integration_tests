@@ -1,6 +1,6 @@
 import fauxfactory
 import pytest
-from widgetastic_patternfly import DropdownItemDisabled
+from wait_for import wait_for
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
@@ -10,7 +10,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils.blockers import BZ
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.datafile import load_data_file
 from cfme.utils.path import orchestration_path
@@ -59,6 +59,7 @@ def stack_data(appliance, provider, provisioning):
             'stack_name': stackname,
             'key': stack_prov['key_name'],
             'flavor': stack_prov['instance_type'],
+            'tenant_name': provisioning['cloud_tenant']
         }
     else:
         stack_prov = provisioning['stack_provisioning']
@@ -166,7 +167,6 @@ def _cleanup(appliance=None, provision_request=None, service=None):
         myservice.delete()
 
 
-@pytest.mark.meta(blockers=[BZ(1628384, forced_streams=['5.10'])])
 def test_provision_stack(order_stack):
     """Tests stack provisioning
 
@@ -182,7 +182,6 @@ def test_provision_stack(order_stack):
     assert provision_request.is_succeeded()
 
 
-@pytest.mark.meta(blockers=[BZ(1628384, forced_streams=['5.10'])])
 def test_reconfigure_service(appliance, service_catalogs, request):
     """Tests service reconfiguring
 
@@ -190,9 +189,10 @@ def test_reconfigure_service(appliance, service_catalogs, request):
         test_flag: provision
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: stack
     """
     provision_request = service_catalogs.order()
     provision_request.wait_for_request(method='ui')
@@ -206,7 +206,6 @@ def test_reconfigure_service(appliance, service_catalogs, request):
 
 @pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider),
                          reason='EC2 locks template between Stack order and template removal')
-@pytest.mark.meta(blockers=[BZ(1628384, forced_streams=['5.10'])])
 def test_remove_non_read_only_orch_template(appliance, provider, template, service_catalogs,
                                             request):
     """
@@ -218,21 +217,20 @@ def test_remove_non_read_only_orch_template(appliance, provider, template, servi
         test_flag: provision
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: stack
     """
     provision_request = service_catalogs.order()
     request.addfinalizer(lambda: _cleanup(appliance, provision_request))
     template.delete()
-    assert (provision_request.rest.message == 'Service_Template_Provisioning failed' or
-            provision_request.status == 'Error')
+    wait_for(lambda: provision_request.status == 'Error', timeout='5m')
     assert not template.exists
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider),
                          reason='Only EC2 locks orchestration template')
-@pytest.mark.meta(blockers=[BZ(1628384, forced_streams=['5.10'])])
 def test_remove_read_only_orch_template_neg(appliance, provider, template, service_catalogs,
                                             request):
     """
@@ -243,23 +241,25 @@ def test_remove_read_only_orch_template_neg(appliance, provider, template, servi
     Steps:
     1. Order Service which uses Orchestration template
     2. Try to remove this Orchestration template
+    3. Check if remove item is disabled.
 
     Metadata:
         test_flag: provision
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: stack
     """
     provision_request = service_catalogs.order()
     request.addfinalizer(lambda: _cleanup(appliance, provision_request))
     provision_request.wait_for_request(method='ui')
-    with pytest.raises(DropdownItemDisabled):
-        template.delete()
+    view = navigate_to(template, 'Details')
+    msg = "Remove this Orchestration Template from Inventory"
+    assert not view.toolbar.configuration.item_enabled(msg)
 
 
-@pytest.mark.meta(blockers=[BZ(1628384, forced_streams=['5.10'])])
 def test_retire_stack(order_stack):
     """Tests stack retirement.
 
@@ -271,9 +271,10 @@ def test_retire_stack(order_stack):
         test_flag: provision
 
     Polarion:
-        assignee: sshveta
+        assignee: nansari
         initialEstimate: 1/4h
         casecomponent: Services
+        tags: stack
     """
     _, stack = order_stack
     stack.retire_stack()
