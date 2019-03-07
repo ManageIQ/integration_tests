@@ -190,14 +190,6 @@ class Flavor(BaseEntity, Taggable):
         self.browser.refresh()
 
     @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except FlavorNotFound:
-            return False
-
-    @property
     def instance_count(self):
         """ number of instances using flavor.
 

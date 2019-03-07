@@ -303,14 +303,6 @@ class Credential(BaseEntity, Taggable):
             view.flash.assert_message(
                 'Edit of Credential "{}" was canceled by the user.'.format(self.name))
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, "Details")
-            return True
-        except ItemNotFound:
-            return False
-
     def delete(self):
         view = navigate_to(self, "Details")
         if self.appliance.version < "5.9":

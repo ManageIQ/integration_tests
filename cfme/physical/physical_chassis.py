@@ -13,7 +13,6 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable
 from cfme.exceptions import HostStatsNotContains
-from cfme.exceptions import ItemNotFound
 from cfme.exceptions import ProviderHasNoProperty
 from cfme.exceptions import StatsDoNotMatch
 from cfme.modeling.base import BaseCollection
@@ -70,19 +69,6 @@ class PhysicalChassis(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, T
         view = navigate_to(self, "Details")
         view.toolbar.custom_button(button).item_select(option, handle_alert=handle_alert)
         return view
-
-    @property
-    def exists(self):
-        """Checks if the physical_chassis exists in the UI.
-
-        Returns: :py:class:`bool`
-        """
-        try:
-            navigate_to(self, 'Details')
-        except ItemNotFound:
-            return False
-        else:
-            return True
 
     @variable(alias='ui')
     def chassis_name(self):

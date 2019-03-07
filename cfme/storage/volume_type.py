@@ -86,14 +86,6 @@ class VolumeType(BaseEntity, Updateable, Taggable):
         self.provider.refresh_provider_relationships()
         self.browser.refresh()
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except VolumeTypeNotFoundError:
-            return False
-
 
 @attr.s
 class VolumeTypeCollection(BaseCollection, TaggableCollection):

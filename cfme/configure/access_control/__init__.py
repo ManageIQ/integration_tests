@@ -294,13 +294,6 @@ class User(Updateable, Pretty, BaseEntity, Taggable):
                 self.browser.get_attribute(
                     'onClick', self.browser.element(view.cancel_password_change)))
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except CandidateNotFound:
-            return False
 
     @property
     def description(self):
@@ -828,14 +821,6 @@ class Group(BaseEntity, Taggable):
         view = navigate_to(self, 'EditGroupSequence')
         return view.group_order_selector.items
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except CandidateNotFound:
-            return False
-
 
 @attr.s
 class GroupCollection(BaseCollection):
@@ -1170,13 +1155,6 @@ class Role(Updateable, Pretty, BaseEntity):
         else:
             return False
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except CandidateNotFound:
-            return False
 
 @attr.s
 class RoleCollection(BaseCollection):
@@ -1502,14 +1480,6 @@ class Tenant(Updateable, BaseEntity, Taggable):
             return False
         else:
             return self.tree_path == other.tree_path
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except CandidateNotFound:
-            return False
 
     @property
     def tree_path(self):

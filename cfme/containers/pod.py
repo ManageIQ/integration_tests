@@ -47,16 +47,6 @@ class Pod(BaseEntity, Taggable, Labelable):
     project_name = attr.ib()
     provider = attr.ib()
 
-    @property
-    def exists(self):
-        """Return True if the Pod exists"""
-        try:
-            navigate_to(self, 'Details')
-        except ItemNotFound:
-            return False
-        else:
-            return True
-
 
 @attr.s
 class PodCollection(GetRandomInstancesMixin, BaseCollection):

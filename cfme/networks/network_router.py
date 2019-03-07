@@ -1,7 +1,6 @@
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
-from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
@@ -97,15 +96,6 @@ class NetworkRouter(Taggable, BaseEntity, CustomButtonEventsMixin, ValidateStats
             self.ext_network = None
         if ext_network:
             self.ext_network = ext_network
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except (ItemNotFound, NoSuchElementException):
-            return False
-        else:
-            return True
 
     @property
     def cloud_network(self):

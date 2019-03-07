@@ -7,7 +7,6 @@ from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
 
 from . import ServicesCatalogView
@@ -204,14 +203,6 @@ class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
         service_dialog = self.parent.parent.collections.service_dialogs.instantiate(
             label=dialog_name)
         return service_dialog
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, "Details")
-            return True
-        except CandidateNotFound:
-            return False
 
 
 @attr.s

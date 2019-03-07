@@ -4,7 +4,6 @@ from navmazing import NavigateToSibling
 from widgetastic.utils import Parameter
 from widgetastic.widget import Text
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
 
 from . import ServicesCatalogView
@@ -119,14 +118,6 @@ class Catalog(BaseEntity, Updateable, Pretty, Taggable):
         view.flash.assert_no_error()
         view.flash.assert_success_message(
             'Catalog "{}": Delete successful'.format(self.description or self.name))
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except (NameError, CandidateNotFound):
-            return False
 
 
 @attr.s

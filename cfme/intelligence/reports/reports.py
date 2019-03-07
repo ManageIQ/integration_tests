@@ -461,14 +461,6 @@ class Report(BaseEntity, Updateable):
         )
         return saved_report
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, "Details")
-            return True
-        except (CandidateNotFound, TimedOutError):
-            return False
-
 
 @attr.s
 class ReportsCollection(BaseCollection):
@@ -565,14 +557,6 @@ class SavedReport(Updateable, BaseEntity):
             view.flash.assert_no_error()
             # TODO Doesn't work due to this BZ https://bugzilla.redhat.com/show_bug.cgi?id=1489387
             # view.flash.assert_message("Successfully deleted Saved Report from the CFME Database")
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, "Details")
-            return True
-        except (CandidateNotFound, TimedOutError):
-            return False
 
 
 @attr.s

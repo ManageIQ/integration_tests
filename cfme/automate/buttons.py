@@ -315,14 +315,6 @@ class BaseButton(BaseEntity, Updateable):
                 view.submit_button.click()
             view.flash.assert_no_error()
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, "Details")
-            return True
-        except CandidateNotFound:
-            return False
-
     def delete_if_exists(self):
         if self.exists:
             self.delete()
@@ -759,14 +751,6 @@ class ButtonGroup(BaseEntity, Updateable):
             view = self.create_view(ButtonGroupObjectTypeView, wait="10s")
             view.flash.assert_no_error()
             view.flash.assert_message('Button Group "{}": Delete successful'.format(self.hover))
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, "Details")
-            return True
-        except CandidateNotFound:
-            return False
 
     def delete_if_exists(self):
         if self.exists:

@@ -96,15 +96,6 @@ class Dialog(BaseEntity, Fillable):
         view.flash.assert_success_message(
             'Dialog "{}": Delete successful'.format(self.label))
 
-    @property
-    def exists(self):
-        """ Returns True if dialog exists"""
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except (CandidateNotFound, ItemNotFound):
-            return False
-
     def delete_if_exists(self):
         if self.exists:
             self.delete()

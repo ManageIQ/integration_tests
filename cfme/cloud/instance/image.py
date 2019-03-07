@@ -141,15 +141,6 @@ class Image(Template):
     TO_OPEN_EDIT = "Edit this Image"
     QUADICON_TYPE = "image"
 
-    @property
-    def exists(self):
-        """Whether the image exists in CFME"""
-        try:
-            navigate_to(self, 'Details')
-        except ImageNotFound:
-            return False
-        return True
-
 
 @attr.s
 class ImageCollection(TemplateCollection):

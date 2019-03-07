@@ -184,15 +184,6 @@ class KeyPair(BaseEntity, Taggable):
         view.toolbar.configuration.item_select('Download private key')
         view.flash.assert_no_error()
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except KeyPairNotFound:
-            return False
-        else:
-            return True
-
 
 @attr.s
 class KeyPairCollection(BaseCollection):

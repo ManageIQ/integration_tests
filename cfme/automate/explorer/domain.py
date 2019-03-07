@@ -264,14 +264,6 @@ class Domain(BaseEntity, Fillable):
             view.flash.assert_message(
                 'Edit of Automate Domain "{}" was cancelled by the user'.format(self.name))
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except (CandidateNotFound, ItemNotFound, TimedOutError):
-            return False
-
     def delete_if_exists(self):
         if self.exists:
             self.delete()

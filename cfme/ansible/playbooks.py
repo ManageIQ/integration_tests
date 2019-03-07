@@ -87,14 +87,6 @@ class Playbook(BaseEntity, Taggable):
     name = attr.ib()
     repository = attr.ib()
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, "Details")
-            return True
-        except ItemNotFound:
-            return False
-
 
 @attr.s
 class PlaybooksCollection(BaseCollection):

@@ -8,7 +8,6 @@ from cfme.common import TagPageView
 from cfme.containers.provider import ContainerObjectAllBaseView
 from cfme.containers.provider import ContainerObjectDetailsBaseView
 from cfme.containers.provider import GetRandomInstancesMixin
-from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance import Navigatable
@@ -41,16 +40,6 @@ class ImageRegistry(BaseEntity, Taggable, Navigatable):
     @property
     def name(self):
         return self.host
-
-    @property
-    def exists(self):
-        """Return True if the Image Registry exists"""
-        try:
-            navigate_to(self, 'Details')
-        except ItemNotFound:
-            return False
-        else:
-            return True
 
 
 @attr.s

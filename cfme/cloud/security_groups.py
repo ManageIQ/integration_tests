@@ -163,15 +163,6 @@ class SecurityGroup(BaseEntity, CustomButtonEventsMixin):
                 fail_func=self.refresh
             )
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except SecurityGroupsNotFound:
-            return False
-        else:
-            return True
-
 
 @attr.s
 class SecurityGroupCollection(BaseCollection):

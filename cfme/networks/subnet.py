@@ -1,7 +1,6 @@
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
-from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
@@ -40,15 +39,6 @@ class Subnet(Taggable, BaseEntity, CustomButtonEventsMixin, ValidateStatsMixin):
     _collections = {
         'network_ports': NetworkPortCollection,
     }
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except (ItemNotFound, NoSuchElementException):
-            return False
-        else:
-            return True
 
     def edit(self, new_name, gateway=None):
         """Edit cloud subnet

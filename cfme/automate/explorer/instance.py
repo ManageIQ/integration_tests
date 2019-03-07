@@ -253,14 +253,6 @@ class Instance(BaseEntity, Copiable):
             result_view.flash.assert_message(
                 'Automate Instance "{}": Delete successful'.format(self.description or self.name))
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except CandidateNotFound:
-            return False
-
     def delete_if_exists(self):
         if self.exists:
             self.delete()

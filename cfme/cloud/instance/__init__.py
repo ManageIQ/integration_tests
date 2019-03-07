@@ -293,13 +293,6 @@ class Instance(VM):
         except ItemNotFound:
             raise InstanceNotFound("Instance '{}' not found in UI!".format(self.name))
 
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except InstanceNotFound:
-            return False
 
     def power_control_from_cfme(self, *args, **kwargs):
         """Power controls a VM from within CFME using details or collection
