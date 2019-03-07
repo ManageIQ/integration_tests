@@ -6,13 +6,11 @@ from wait_for import TimedOutError
 
 from cfme.base.ui import Server
 from cfme.exceptions import CannotScrollException
-from cfme.infrastructure.networking import InfraNetworkingCollection
+from cfme.infrastructure.networking import InfraSwitchesCollection
 from cfme.modeling.base import BaseCollection
-from cfme.optimize.bottlenecks import Bottlenecks
 from cfme.optimize.utilization import UtilizationCollection
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from widgetastic_manageiq import Splitter
 # from cfme.cloud.instance import Instance
 # from cfme.infrastructure.config_management import ConfigManager
@@ -32,7 +30,7 @@ from widgetastic_manageiq import Splitter
 LOCATIONS = [
     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
     (MyService, 'All'), (Server, 'ServiceCatalogsDefault'), (Server, 'Configuration'),
-    (UtilizationCollection, 'All'), (InfraNetworkingCollection, 'All')
+    (UtilizationCollection, 'All'), (InfraSwitchesCollection, 'All')
 ]
 
 
@@ -43,12 +41,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.meta(
-    blockers=[
-        BZ(1380443, forced_streams=['5.6', '5.7', '5.8'],
-           unblock=lambda model_object: model_object != Bottlenecks)
-    ]
-)
 @pytest.mark.requirement('general_ui')
 @pytest.mark.tier(3)
 def test_pull_splitter_persistence(request, appliance, model_object, destination):
@@ -57,6 +49,9 @@ def test_pull_splitter_persistence(request, appliance, model_object, destination
         assignee: anikifor
         caseimportance: low
         initialEstimate: 1/20h
+
+    Bugzilla:
+        1380443
     """
     splitter = Splitter(parent=appliance.browser.widgetastic)
 
@@ -94,4 +89,4 @@ def test_pull_splitter_persistence(request, appliance, model_object, destination
         if not selenium.find_element_by_xpath(
                 "//div[@id='left_div'][contains(@class, {})]".format(
                     unescape(quoteattr(position)))):
-            pytest.fail("Splitter did not persist when on " + str(position) + " position!")
+            pytest.fail("Splitter did not persist when on '{}' position!".format(position))
