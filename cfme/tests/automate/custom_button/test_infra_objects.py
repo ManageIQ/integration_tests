@@ -118,6 +118,9 @@ def setup_obj(button_group, provider):
 @pytest.mark.parametrize(
     "display", DISPLAY_NAV.keys(), ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
 )
+@pytest.mark.uncollectif(
+    lambda appliance, button_group: appliance.version < "5.10" and "SWITCH" in button_group
+)
 def test_custom_button_display(request, display, setup_obj, button_group):
     """ Test custom button display on a targeted page
 
@@ -170,6 +173,9 @@ def test_custom_button_display(request, display, setup_obj, button_group):
 @pytest.mark.parametrize("submit", SUBMIT, ids=["_".join(item.split()) for item in SUBMIT])
 @pytest.mark.meta(
     blockers=[BZ(1628224, forced_streams=["5.10"], unblock=lambda submit: submit != "Submit all")]
+)
+@pytest.mark.uncollectif(
+    lambda appliance, button_group: appliance.version < "5.10" and "SWITCH" in button_group
 )
 def test_custom_button_automate(appliance, request, submit, setup_obj, button_group):
     """ Test custom button for automate and requests count as per submit
@@ -263,14 +269,10 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
 
 
 @pytest.mark.meta(
-    blockers=[
-        BZ(
-            1641669,
-            forced_streams=["5.9"],
-            unblock=lambda button_group: "DATASTORES" not in button_group,
-        ),
-        BZ(1685555, unblock=lambda button_group: "SWITCH" not in button_group),
-    ]
+    blockers=[BZ(1685555, unblock=lambda button_group: "SWITCH" not in button_group)]
+)
+@pytest.mark.uncollectif(
+    lambda appliance, button_group: appliance.version < "5.10" and "SWITCH" in button_group
 )
 def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_group):
     """ Test custom button with dialog and InspectMe method
@@ -294,7 +296,7 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
             7. Check for the proper flash message related to button execution
 
     Bugzilla:
-        1635797, 1555331, 1574403, 1640592, 1641669
+        1635797, 1555331, 1574403, 1640592, 1641669, 1685555
     """
 
     group, obj_type = button_group
@@ -338,6 +340,9 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
 
 
 @pytest.mark.parametrize("expression", ["enablement", "visibility"])
+@pytest.mark.uncollectif(
+    lambda appliance, button_group: appliance.version < "5.10" and "SWITCH" in button_group
+)
 def test_custom_button_expression(appliance, request, setup_obj, button_group, expression):
     """ Test custom button as per expression enablement/visibility.
 
