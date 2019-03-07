@@ -98,27 +98,6 @@ def test_schedule_crud(schedule_data, appliance):
     schedule.delete()
 
 
-@pytest.mark.rhel_testing
-@pytest.mark.sauce
-@pytest.mark.tier(3)
-@test_requirements.report
-def test_reports_disable_enable_schedule(schedule_data, appliance):
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: high
-        initialEstimate: 1/10h
-    """
-    schedules = appliance.collections.schedules
-    schedule = schedules.create(**schedule_data)
-    schedules.disable_schedules(schedule)
-    assert not schedule.enabled
-    schedules.enable_schedules(schedule)
-    assert schedule.enabled
-    schedule.delete()
-
-
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1653796), BZ(1667064)])
@@ -399,20 +378,3 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
     custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
     assert custom_report_schedule.exists
     custom_report_schedule.delete(cancel=False)
-
-
-@pytest.mark.ignore_stream('5.9')
-def test_report_schedules_invalid_email(appliance, schedule_data):
-    """
-        Polarion:
-            assignee: pvala
-            casecomponent: Reporting
-            initialEstimate: 1/12h
-    """
-    schedule_data["emails"] = (fauxfactory.gen_alpha(), fauxfactory.gen_alpha())
-    schedule_data["from_email"] = fauxfactory.gen_alpha()
-    with pytest.raises(AssertionError):
-        appliance.collections.schedules.create(**schedule_data)
-    view = appliance.collections.schedules.create_view(NewScheduleView)
-    view.flash.assert_message("One of e-mail addresses 'To' is not valid")
-    view.flash.assert_message("E-mail address 'From' is not valid")
