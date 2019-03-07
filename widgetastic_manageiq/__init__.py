@@ -1602,10 +1602,7 @@ class PaginationPane(View, ReportDataControllerMixin):
     @property
     def is_displayed(self):
         # upstream sometimes shows old pagination page and sometime new one
-        paginator = (
-            "return $('#paging_div').length !== 0 || "
-            "document.getElementsByTagName('miq-pagination').length != 0"
-        )
+        paginator = "return document.getElementsByTagName('miq-pagination').length != 0"
         return self.browser.execute_script(paginator)
 
     @property
