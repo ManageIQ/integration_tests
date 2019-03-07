@@ -23,21 +23,6 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="module")
-def policy_profile_collection(appliance):
-    return appliance.collections.policy_profiles
-
-
-@pytest.fixture(scope="module")
-def policy_collection(appliance):
-    return appliance.collections.policies
-
-
-@pytest.fixture(scope="module")
-def condition_collection(appliance):
-    return appliance.collections.conditions
-
-
 @pytest.fixture
 def policy_name():
     return "compliance_testing: policy {}".format(fauxfactory.gen_alphanumeric(8))
@@ -54,10 +39,11 @@ def host(provider, setup_provider):
 
 
 @pytest.fixture
-def policy_for_testing(policy_name, policy_profile_name, provider, policy_collection,
-        policy_profile_collection):
-    policy = policy_collection.create(HostCompliancePolicy, policy_name)
-    policy_profile = policy_profile_collection.create(policy_profile_name, policies=[policy])
+def policy_for_testing(appliance, policy_name, policy_profile_name):
+    policy = appliance.collections.policies.create(HostCompliancePolicy, policy_name)
+    policy_profile = appliance.collections.policy_profiles.create(
+        policy_profile_name, policies=[policy]
+    )
     yield policy
     policy_profile.delete()
     policy.delete()
@@ -132,29 +118,30 @@ def analysis_profile(appliance):
         ap.delete()
 
 
-def test_check_package_presence(request, compliance_vm, analysis_profile, policy_collection,
-        policy_profile_collection, condition_collection):
+def test_check_package_presence(request, appliance, compliance_vm, analysis_profile):
     """This test checks compliance by presence of a certain "kernel" package which is expected
     to be present on the full_template.
 
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Control
+        caseimportance: high
     """
-    condition = condition_collection.create(
+    condition = appliance.collections.conditions.create(
         VMCondition,
         "Compliance testing condition {}".format(fauxfactory.gen_alphanumeric(8)),
         expression=("fill_find(field=VM and Instance.Guest Applications : Name, "
             "skey=STARTS WITH, value=kernel, check=Check Count, ckey= = , cvalue=1)")
     )
     request.addfinalizer(lambda: diaper(condition.delete))
-    policy = policy_collection.create(
+    policy = appliance.collections.policies.create(
         VMCompliancePolicy,
         "Compliance {}".format(fauxfactory.gen_alphanumeric(8))
     )
     request.addfinalizer(lambda: diaper(policy.delete))
     policy.assign_conditions(condition)
-    profile = policy_profile_collection.create(
+    profile = appliance.collections.policy_profiles.create(
         "Compliance PP {}".format(fauxfactory.gen_alphanumeric(8)),
         policies=[policy]
     )
@@ -166,18 +153,19 @@ def test_check_package_presence(request, compliance_vm, analysis_profile, policy
     assert compliance_vm.compliant
 
 
-def test_check_files(request, compliance_vm, analysis_profile, condition_collection,
-        policy_collection, policy_profile_collection):
+def test_check_files(request, appliance, compliance_vm, analysis_profile):
     """This test checks presence and contents of a certain file. Due to caching, an existing file
     is checked.
 
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
+        casecomponent: Control
+        caseimportance: high
     """
     check_file_name = "/etc/hosts"
     check_file_contents = "127.0.0.1"
-    condition = condition_collection.create(
+    condition = appliance.collections.conditions.create(
         VMCondition,
         "Compliance testing condition {}".format(fauxfactory.gen_alphanumeric(8)),
         expression=("fill_find(VM and Instance.Files : Name, "
@@ -185,13 +173,13 @@ def test_check_files(request, compliance_vm, analysis_profile, condition_collect
                 check_file_name, check_file_contents))
     )
     request.addfinalizer(lambda: diaper(condition.delete))
-    policy = policy_collection.create(
+    policy = appliance.collections.policies.create(
         VMCompliancePolicy,
         "Compliance {}".format(fauxfactory.gen_alphanumeric(8))
     )
     request.addfinalizer(lambda: diaper(policy.delete))
     policy.assign_conditions(condition)
-    profile = policy_profile_collection.create(
+    profile = appliance.collections.policy_profiles.create(
         "Compliance PP {}".format(fauxfactory.gen_alphanumeric(8)),
         policies=[policy]
     )
@@ -212,6 +200,8 @@ def test_compliance_with_unconditional_policy(host, assign_policy_for_testing):
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/6h
+        casecomponent: Control
+        caseimportance: high
     """
     assign_policy_for_testing.assign_actions_to_event(
         "Host Compliance Check",
