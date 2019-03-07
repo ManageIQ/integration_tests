@@ -7,7 +7,6 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick
 from widgetastic_patternfly import CandidateNotFound
 
-
 from cfme.exceptions import BackupNotFoundError
 from cfme.exceptions import FlavorNotFound
 from cfme.exceptions import ImageNotFound
