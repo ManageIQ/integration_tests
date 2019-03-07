@@ -43,7 +43,7 @@ def test_control_navigation(destination, appliance):
         * Open each destination of Control tab.
 
     Polarion:
-        assignee: dmisharo
+        assignee: jdupuy
         casecomponent: WebUI
         initialEstimate: 1/60h
     """
@@ -60,7 +60,7 @@ def test_control_explorer_tree(control_explorer_view, destination, appliance):
         * Open each accordion tab and click on top node of the tree.
 
     Polarion:
-        assignee: dmisharo
+        assignee: jdupuy
         casecomponent: WebUI
         initialEstimate: 1/60h
     """

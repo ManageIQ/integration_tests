@@ -1488,23 +1488,6 @@ def test_orchestration_link_mismatch():
 
 
 @pytest.mark.manual
-@test_requirements.control
-@pytest.mark.tier(3)
-def test_control_import_with_incorrect_schema():
-    """
-    Test importing yaml with incorrect schema.
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Control
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.log_depot
 @pytest.mark.tier(2)
 def test_log_azure_settings_azure():
@@ -4962,23 +4945,6 @@ def test_osp_test_migration_plan_can_be_unscheduled():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test migration plan can be unscheduled
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.control
-@pytest.mark.tier(3)
-def test_control_policy_simulation_displayed():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1550503
-    Test if policy simulation is displayed
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Control
-        caseimportance: low
-        initialEstimate: 1/6h
     """
     pass
 

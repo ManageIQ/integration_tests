@@ -41,7 +41,7 @@ def test_policy_profiles_listed(appliance, policy_profile):
         * Assert that the policy profile is displayed in the selector.
 
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: low
         initialEstimate: 1/12h

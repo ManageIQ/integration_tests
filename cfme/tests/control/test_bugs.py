@@ -177,7 +177,7 @@ def test_scope_windows_registry_stuck(request, appliance, infra_provider):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable.
 
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: low
         initialEstimate: 1/6h
@@ -215,7 +215,7 @@ def test_invoke_custom_automation(request, appliance):
         * The form with additional fields should appear
 
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/6h
@@ -258,7 +258,7 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, ap
         Compliance history screen with last 10 checks should be opened
 
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         initialEstimate: 1/4h
         casecomponent: Control
     """
@@ -297,7 +297,7 @@ def test_delete_all_actions_from_compliance_policy(request, appliance):
         The policy shouldn't be saved.
 
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: medium
         caseposneg: negative
@@ -324,7 +324,7 @@ def test_control_identical_descriptions(request, create_function, collections, a
         The item shouldn't be created.
 
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         caseimportance: low
         initialEstimate: 1/12h
