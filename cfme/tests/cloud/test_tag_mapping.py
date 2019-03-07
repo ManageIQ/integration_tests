@@ -1,6 +1,7 @@
 import fauxfactory
 import pytest
 from widgetastic.utils import partial_match
+from wrapanapi.exceptions import ImageNotFoundError
 
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
@@ -8,10 +9,11 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.exceptions import ItemNotFound
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.provider([AzureProvider, EC2Provider], selector=ONE_PER_TYPE, scope='function'),
+    pytest.mark.provider([EC2Provider], scope='function'),
     pytest.mark.usefixtures('setup_provider', 'refresh_provider')
 ]
 
@@ -26,7 +28,7 @@ def map_tags(appliance, provider, request):
 
 
 @pytest.fixture(scope='function')
-def tagged_vm(appliance, provider):
+def tagged_vm(provider):
     # cu-24x7 vm is tagged with test:testing in provider
     tag_vm = provider.data.cap_and_util.capandu_vm
     collection = provider.appliance.provider_based_collection(provider)
@@ -50,13 +52,19 @@ def tag_mapping_items(request, appliance, provider):
     collection.filters = {'provider': provider}
     view = navigate_to(collection, 'AllForProvider')
     name = view.entities.get_first_entity().name
-    mgmt_item = (
-        provider.mgmt.get_template(name) if entity_type == 'images' else provider.mgmt.get_vm(name)
-    )
+    try:
+        mgmt_item = (
+            provider.mgmt.get_template(name)
+            if entity_type == 'images'
+            else provider.mgmt.get_vm(name)
+        )
+    except ImageNotFoundError:
+        msg = 'Failed looking up template [{}] from CFME on provider: {}'.format(name, provider)
+        logger.exception(msg)
+        pytest.skip(msg)
     return collection.instantiate(name=name, provider=provider), mgmt_item, entity_type
 
 
-@pytest.fixture
 def tag_components():
     # Return tuple with random tag_label and tag_value
     return ('tag_label_{}'.format(fauxfactory.gen_alphanumeric()),
@@ -97,7 +105,8 @@ def test_tag_mapping_azure_instances(tagged_vm, map_tags):
 
 
 @test_requirements.tag
-def test_labels_update(provider, tag_mapping_items, tag_components, soft_assert):
+# TODO: Azure needs tagging support in wrapanapi
+def test_labels_update(provider, tag_mapping_items, soft_assert):
     """" Test updates of tag labels on entity details
 
     Polarion:
@@ -119,7 +128,7 @@ def test_labels_update(provider, tag_mapping_items, tag_components, soft_assert)
             5. labels should not include tag label
     """
     entity, mgmt_entity, entity_type = tag_mapping_items
-    tag_label, tag_value = tag_components
+    tag_label, tag_value = tag_components()
     mgmt_entity.set_tag(tag_label, tag_value)
     provider.refresh_provider_relationships(method='ui')
     view = navigate_to(entity, 'Details')
@@ -143,8 +152,9 @@ def test_labels_update(provider, tag_mapping_items, tag_components, soft_assert)
 
 
 @test_requirements.tag
+# TODO: Azure needs tagging support in wrapanapi
 def test_mapping_tags(
-    appliance, provider, tag_mapping_items, tag_components, soft_assert, category, request
+    appliance, provider, tag_mapping_items, soft_assert, category, request
 ):
     """Test mapping tags on provider instances and images
     Polarion:
@@ -166,7 +176,7 @@ def test_mapping_tags(
             5. smart management table should NOT include category name and tag
     """
     entity, mgmt_entity, entity_type = tag_mapping_items
-    tag_label, tag_value = tag_components
+    tag_label, tag_value = tag_components()
     mgmt_entity.set_tag(tag_label, tag_value)
     request.addfinalizer(
         lambda: mgmt_entity.unset_tag(tag_label, tag_value)
@@ -187,10 +197,10 @@ def test_mapping_tags(
         # no match / break for select_text
         if select_text is None:
             pytest.fail(
-                'Failed to match the entity type [{}] and provider type [{}] in options: [{}]'
-                .format(entity_type, provider_type, options)
+                'Failed to match the entity type [{e}] and provider type [{p}] in options: [{o}]'
+                .format(e=entity_type, p=provider_type, o=options)
             )
-    view.cancel.click()  # close the open form
+    view.cancel_button.click()  # close the open form
 
     map_tag = appliance.collections.map_tags.create(
         entity_type=select_text,

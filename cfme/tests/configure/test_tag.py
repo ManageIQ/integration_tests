@@ -12,7 +12,7 @@ from cfme.rest.gen_data import tags as _tags
 from cfme.rest.gen_data import tenants as _tenants
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -64,6 +64,7 @@ def test_tag_crud(category):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/8h
+        casecomponent: Tagging
     """
     tag = category.collections.tags.create(
         name=fauxfactory.gen_alphanumeric(8).lower(),
@@ -75,27 +76,35 @@ def test_tag_crud(category):
 
 
 def test_map_tagging_crud(appliance, category, soft_assert):
-    """Test Mam tagging grud with flash message assertion"""
+    """Test map tag crud with flash message assertion
+    Polarion:
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Tagging
+    """
     label = fauxfactory.gen_alphanumeric(8)
-    random_category_name = fauxfactory.gen_alphanumeric(8)
     map_tags_collection = appliance.collections.map_tags
     map_tag_entity = map_tags_collection.create('Container Project', label, category.name)
 
     view = appliance.browser.create_view(navigator.get_class(map_tags_collection, 'All').VIEW)
-    view.flash.assert_success_message('Container Label Tag Mapping "{}" was added'.format(label))
+    view.flash.assert_success_message('Container Label Tag Mapping "{}" was added'
+                                      .format(label))  # use label var to validate create method
 
-    map_tag_entity.update({'category': random_category_name})
+    with update(map_tag_entity):
+        map_tag_entity.category = fauxfactory.gen_alphanumeric(8)
 
     view = appliance.browser.create_view(navigator.get_class(map_tags_collection, 'All').VIEW)
-    view.flash.assert_success_message('Container Label Tag Mapping "{}" was saved'.format(label))
-    row = view.table.rows(resource_label=label)
-    soft_assert(row.tag_category.text == 'random_category_name')
+    view.flash.assert_success_message(
+        'Container Label Tag Mapping "{}" was saved'
+        .format(map_tag_entity.label)  # use entity label since it may get updated
+    )
+    row = next(view.table.rows(resource_label=map_tag_entity.label))
+    soft_assert(row.tag_category.text == map_tag_entity.category)
 
     map_tag_entity.delete()
     view = appliance.browser.create_view(navigator.get_class(map_tags_collection, 'All').VIEW)
-    if not BZ(1510473, forced_streams=['5.9']).blocks:
-        view.flash.assert_success_message(
-            'Container Label Tag Mapping "{}": Delete successful'.format(label))
+    view.flash.assert_success_message('Container Label Tag Mapping "{}": Delete successful'
+                                      .format(map_tag_entity.label))
 
 
 class TestTagsViaREST(object):
@@ -310,7 +319,13 @@ class TestTagsViaREST(object):
             pytest.skip("No available entity in {} to assign tag".format(collection_name))
         entity = collection[-1]
         tag = tags_mod[0]
-        entity.tags.action.assign(tag)
+        try:
+            entity.tags.action.assign(tag)
+        except AttributeError:
+            msg = ('Missing tag attribute in parametrized REST collection {} for entity: {}'
+                   .format(collection_name, entity))
+            logger.exception(msg)
+            pytest.fail(msg)
         assert_response(appliance)
         entity.reload()
         assert tag.id in [t.id for t in entity.tags.all]

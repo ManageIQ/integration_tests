@@ -113,5 +113,6 @@ docstrings:
             - Services
             - SmartState
             - Stack
+            - Tagging
             - V2V
             - WebUI
