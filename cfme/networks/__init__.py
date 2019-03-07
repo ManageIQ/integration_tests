@@ -32,4 +32,5 @@ class ValidateStatsMixin(object):
         cfme_stats = {
             (path, stat): self.ui_details_value(path, stat) for path, stat in expected_stats
         }
+        expected_stats = {k: str(v) for k, v in expected_stats.items()}
         assert cfme_stats == expected_stats
