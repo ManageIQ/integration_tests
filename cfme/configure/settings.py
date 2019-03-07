@@ -21,6 +21,8 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import BootstrapSelect
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import Text
@@ -187,8 +189,12 @@ class VisualForm(View):
 
     @View.nested
     class grid_tile_icons(View):    # noqa
-        infra_provider_quad = BootstrapSwitch('quadicons_ems')
-        cloud_provider_quad = BootstrapSwitch('quadicons_ems_cloud')
+        infra_provider_quad = BootstrapSwitch(VersionPicker({Version.lowest(): 'quadicons_ems',
+                                                            '5.10': 'quadicons_infra_manager'}))
+        cloud_provider_quad = BootstrapSwitch(VersionPicker(
+            {Version.lowest(): 'quadicons_ems_cloud', '5.10': 'quadicons_cloud_manager'}))
+
+        containers_provider_quad = BootstrapSwitch('quadicons_container_manager')
         host_quad = BootstrapSwitch('quadicons_host')
         datastore_quad = BootstrapSwitch('quadicons_storage')
         vm_quad = BootstrapSwitch('quadicons_vm')

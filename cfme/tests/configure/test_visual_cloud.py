@@ -218,5 +218,4 @@ def test_cloudprovider_noquads(request, set_cloud_provider_quad):
     """
     view = navigate_to(CloudProvider, 'All')
     view.toolbar.view_selector.select('Grid View')
-    # Here data property will return an empty dict when the Quadrants option is deactivated.
-    assert not view.entities.get_first_entity().data
+    assert 'topRight' not in view.entities.get_first_entity().data.get('quad', {})
