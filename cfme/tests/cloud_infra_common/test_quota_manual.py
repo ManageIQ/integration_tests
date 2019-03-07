@@ -429,38 +429,6 @@ def test_quota_exceed_mail_with_more_info_link():
 @pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
-def test_custome_role_modify_for_dynamic_product_feature():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/12h
-        caseimportance: high
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.10
-        casecomponent: Configuration
-        tags: quota
-        testSteps:
-            1. create two tenants
-            2. create new custom role using existing role
-            3. Update newly created custom role by doing uncheck in to options provided under
-               automation > automate > customization > Dialogs > modify > edit/add/copy/delete
-               > uncheck for any tenant
-            4. You will see save button is not enabled but if you changed 'Name' or
-               'Access Restriction for Services, VMs, and Templates' then save button is getting
-               enabled.
-            5. It updates changes only when we checked or unchecked for all of the tenants under
-               edit/add/copy/delete options.
-
-    Bugzilla:
-        1655012
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-@pytest.mark.tier(1)
 def test_dynamic_product_feature_for_tenant_quota():
     """
     Polarion:

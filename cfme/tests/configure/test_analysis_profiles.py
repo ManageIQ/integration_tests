@@ -2,9 +2,9 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [pytest.mark.tier(3)]
@@ -24,13 +24,34 @@ updated_files = [
     {'Name': files_list[0]['Name'],
      'Collect Contents?': not files_list[0]['Collect Contents?']}]
 
+TENANT_NAME = "tenant_{}".format(fauxfactory.gen_alphanumeric())
 
-def events_check(updates=False):
-    form_bug = BZ(1485953, forced_streams=['5.7', '5.8', 'upstream'])
-    if updates:
-        return updated_files if not form_bug.blocks else None
-    else:
-        return events_list if not form_bug.blocks else None
+# Operations performed on service dialogs with respect to RBAC permissions
+OPERATIONS = ["Add", "Edit", "Delete", "Copy"]
+
+# Tree path navigation (for service dialog permissions) to particular node of product feature in
+# RBAC for roles
+PRODUCT_FEATURES_DIALOG = [
+    ["Everything", "Automation", "Automate", "Customization", "Dialogs", "Modify"]
+    + [op, "{operation} ({tenant})".format(operation=op, tenant=TENANT_NAME)]
+    for op in OPERATIONS
+]
+
+# Tree path navigation (for quota management permissions) to particular node of product feature in
+# RBAC for roles
+PRODUCT_FEATURES_QUOTA = [
+    [
+        "Everything",
+        "Settings",
+        "Configuration",
+        "Access Control",
+        "Tenants",
+        "Modify",
+        "Manage Quotas",
+    ]
+    + ["Manage Quotas ({tenant})".format(tenant=tenant)]
+    for tenant in ["My Company", TENANT_NAME]
+]
 
 
 @pytest.fixture
@@ -65,7 +86,7 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
         files=files_list,
         categories=categories_list,
         registry=registry_list,
-        events=events_check()
+        events=events_list
     )
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
@@ -74,12 +95,11 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
 
     assert vm_profile.exists
 
-    files_updates = events_check(updates=True)
     with update(vm_profile):
-        vm_profile.files = files_updates
+        vm_profile.files = updated_files
     view = appliance.browser.create_view(navigator.get_class(vm_profile, 'Details').VIEW)
     view.flash.assert_success_message('Analysis Profile "{}" was saved'.format(vm_flash))
-    soft_assert(vm_profile.files == files_updates,
+    soft_assert(vm_profile.files == updated_files,
                 'Files update failed on profile: {}, {}'.format(vm_profile.name, vm_profile.files))
 
     with update(vm_profile):
@@ -120,7 +140,7 @@ def test_host_analysis_profile_crud(appliance, soft_assert, analysis_profile_col
         description=fauxfactory.gen_alphanumeric(),
         profile_type=analysis_profile_collection.HOST_TYPE,
         files=files_list,
-        events=events_check()
+        events=events_list
     )
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
@@ -128,10 +148,9 @@ def test_host_analysis_profile_crud(appliance, soft_assert, analysis_profile_col
     view.flash.assert_message('Analysis Profile "{}" was saved'.format(host_flash))
     assert host_profile.exists
 
-    files_updates = events_check(updates=True)
     with update(host_profile):
-        host_profile.files = files_updates
-    soft_assert(host_profile.files == files_updates,
+        host_profile.files = updated_files
+    soft_assert(host_profile.files == updated_files,
                 'Files update failed on profile: {}, {}'
                 .format(host_profile.name, host_profile.files))
     copied_profile = host_profile.copy(new_name='copied-{}'.format(host_profile.name))
@@ -333,3 +352,72 @@ def test_analysis_profile_description_validation(analysis_profile_collection):
     )
     view.flash.assert_message("Description can't be blank")
     view.cancel.click()
+
+
+# Arguments of parametrize are product_features trees for Managing Quotas and Dialogs with RBAC
+@test_requirements.rbac
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream('5.9')
+@pytest.mark.parametrize(
+    'product_features',
+    PRODUCT_FEATURES_QUOTA + PRODUCT_FEATURES_DIALOG,
+    ids=["default_tenant", "custom_tenant", "add", "edit", "delete", "copy"]
+)
+def test_custom_role_modify_for_dynamic_product_feature(request, appliance, product_features):
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/12h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: Configuration
+        tags: quota
+        testSteps:
+            1. create two tenants
+            2. create new custom role using existing role
+            3. Update newly created custom role by doing uncheck in to options provided under
+               automation > automate > customization > Dialogs > modify > edit/add/copy/delete
+               > uncheck for any tenant
+            4. Or Update newly created custom role by doing uncheck in to options provided under
+               Settings > Configuration > Access Control > Tenants > Modify > Manage Quotas
+               > uncheck for any tenant
+            5. You will see save button is not enabled but if you changed 'Name' or
+               'Access Restriction for Services, VMs, and Templates' then save button is getting
+               enabled.
+            6. It updates changes only when we checked or unchecked for all of the tenants under
+               edit/add/copy/delete options.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. 'save' button should be enabled after changing product feature tree.
+            6. It should work for individual tenant.
+
+    Bugzilla:
+        1655012
+    """
+    tenant = appliance.collections.tenants.create(
+        name=TENANT_NAME,
+        description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
+        parent=appliance.collections.tenants.get_root_tenant(),
+    )
+    request.addfinalizer(tenant.delete)
+    role = appliance.collections.roles.instantiate(name='EvmRole-tenant_quota_administrator')
+    copied_role = role.copy(name="{role}_{name}".format(
+        role=role.name, name=fauxfactory.gen_alpha()))
+    request.addfinalizer(copied_role.delete)
+    view = navigate_to(copied_role, 'Details')
+    # node_checked: Checks whether feature tree path is checked for given node
+    # Example:- Tuple: product_feature = (['Everything', 'Automation', 'Automate', 'Customization',
+    # 'Dialogs', 'Modify', 'Add', 'Add (tenant_27WyY6qCHi)'], False)
+    # 'False' argument with product_feature is required while updating copied_roles. It unchecks the
+    # specified node in the list.
+    # List: *product_features is the tree path of RBAC feature
+    assert view.features_tree.node_checked(*product_features)
+    copied_role.update({'product_features': [(product_features, False)]})
+
+    # Checks whether feature tree path is unchecked for given node
+    assert not view.features_tree.node_checked(*product_features)
