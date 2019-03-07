@@ -1,3 +1,8 @@
+import logging
+import math
+from datetime import datetime
+from datetime import timedelta
+
 import fauxfactory
 import pytest
 import pytz
@@ -10,6 +15,8 @@ from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
+
+logger = logging.getLogger('cfme')
 
 pytestmark = [
     pytest.mark.provider([VMwareProvider], required_fields=['hosts'], selector=ONE, scope='module'),
@@ -37,19 +44,35 @@ def host_with_credentials(appliance, provider):
 
 @pytest.fixture
 def current_server_time(appliance):
-    current_time = parser.parse(appliance.ssh_client.run_command('date').output)
+    current_time = parser.parse(appliance.ssh_client.run_command('date --utc').output)
     tz_list = appliance.ssh_client.run_command("timedatectl | grep 'Time zone'") \
         .output.strip().split(' ')
 
     tz_name = tz_list[2]
     tz_num = tz_list[-1][:-1]
-    date = current_time.replace(tzinfo=pytz.timezone(tz_name))
-    return date, tz_num
+    #date = current_time.replace(tzinfo=pytz.timezone(tz_name))
+    return current_time, tz_num
 
 
 def round_min(value, base=5):
     return (0 if int(base * round(float(value) / base)) == 60
             else int(base * round(float(value) / base)))
+
+
+def round_min2(value, base=5):
+    minutes =  int(base * round(float(value.minute) / base))
+    if minutes == 60:
+        value += timedelta(hours=1)
+        minutes = 0
+    return value.replace(minute=minutes)
+
+
+def ceil_min2(value, base=5):
+    minutes =  int(base * math.ceil(float(value.minute) / base))
+    if minutes == 60:
+        value += timedelta(hours=1)
+        minutes = 0
+    return value.replace(minute=minutes)
 
 
 def test_schedule_crud(appliance, current_server_time):
@@ -99,16 +122,12 @@ def test_schedule_analysis_in_the_past(appliance, current_server_time, request):
     """
     current_time, _ = current_server_time
     past_time = current_time - relativedelta.relativedelta(minutes=5)
-    if round_min(past_time.minute) == 0:
-        past_time = past_time + relativedelta.relativedelta(hours=1)
-        past_time_minute = '0'
-    else:
-        past_time_minute = str(round_min(past_time.minute))
+    past_time = round_min2(past_time)
     schedule = appliance.collections.system_schedules.create(
         name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
         start_hour=str(past_time.hour),
-        start_minute=past_time_minute
+        start_minute=str(past_time.minute)
     )
     request.addfinalizer(schedule.delete)
     view = appliance.browser.create_view(BaseLoggedInPage)
@@ -148,13 +167,14 @@ def test_inactive_schedule(appliance, current_server_time):
     """
     current_time, _ = current_server_time
     start_date = current_time + relativedelta.relativedelta(minutes=5)
+    start_date = round_min2(start_date)
 
     schedule = appliance.collections.system_schedules.create(
         name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
         start_date=start_date,
         start_hour=str(start_date.hour),
-        start_minute=str(round_min(start_date.minute)),
+        start_minute=str(start_date.minute),
 
     )
     assert schedule.next_run_date
@@ -162,9 +182,13 @@ def test_inactive_schedule(appliance, current_server_time):
     assert not schedule.next_run_date
 
 
-@pytest.mark.parametrize('run_types', run_types, ids=[type[0] for type in run_types])
-def test_schedule_timer(appliance, run_types, host_with_credentials, request, current_server_time):
+def set_appliance_time(appliance, the_time):
+    the_time = the_time.astimezone(pytz.utc)
+    appliance.ssh_client.run_command("date -u {}".format(the_time.strftime('%m%d%H%M%Y')))
 
+
+@pytest.mark.parametrize('run_types', run_types, ids=[type[0] for type in run_types])
+def test_schedule_timer(appliance, run_types, host_with_credentials, request):
     """
     Polarion:
         assignee: jhenner
@@ -172,52 +196,61 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, request, cu
         initialEstimate: 1/4h
     """
     run_time, time_diff, time_num = run_types
-    current_time, tz_num = current_server_time
-    start_date = current_time + relativedelta.relativedelta(minutes=5)
+    # Set the appliance date and time to something without DST.
+    initial_time = datetime(2019, 4, 6, 14, 2, 0, tzinfo=pytz.timezone('Europe/Prague'))
+    set_appliance_time(appliance, initial_time)
+    logger.debug('initial_time %s', initial_time)
+
     view = navigate_to(appliance.collections.system_schedules, 'Add')
     # bz is here 1559904
     available_list = view.form.time_zone.all_options
-    for tz in available_list:
-        if '{}:00'.format(tz_num[0:3]) in tz.text and 'Atlantic Time (Canada)' not in tz.text:
-            tz_select = tz.text
-            break
-    if round_min(start_date.minute) == 0:
-        start_date = start_date + relativedelta.relativedelta(minutes=60 - start_date.minute)
-        start_date_minute = str(start_date.minute)
-    else:
-        start_date_minute = str(round_min(start_date.minute))
+    current_time, _ = current_server_time(appliance)
+    logger.debug('current_time %s', current_time)
+
+    tz_select = '(GMT+01:00) Prague'
+    # Allow sime time extra for filling the Schedule
+    start_date = current_time + timedelta(minutes=2)
+    start_date = start_date.astimezone(pytz.timezone('Europe/Prague'))
+    start_date = ceil_min2(start_date)
+    logger.debug('start_date %s', start_date)
+
     schedule = appliance.collections.system_schedules.create(
         name=fauxfactory.gen_alphanumeric(),
-        description=fauxfactory.gen_alphanumeric(),
+        description='{} {}'.format(fauxfactory.gen_alphanumeric(),
+                                   start_date.isoformat()),
         action_type='Host Analysis',
         filter_level1='A single Host',
         filter_level2=host_with_credentials.name,
         run_type=run_time,
         start_date=start_date,
-        time_zone=tz_select,
-        start_hour=str(start_date.hour),
-        start_minute=start_date_minute,
-
+        time_zone=tz_select, start_hour=str(start_date.hour),
+        start_minute=str(start_date.minute),
     )
 
+    current_time2, _ = current_server_time(appliance)
+    time_buffer = (start_date - current_time2).total_seconds()
+    logger.info('Will have to wait %d:%d for the schedule to fire up.', time_buffer // 60, time_buffer % 60)
+    assert current_time2 < start_date, (
+            'Adding the schedule took too long time ({} extra seconds).'.format(time_buffer))
 
     @request.addfinalizer
     def _finalize():
         if schedule.exists:
             schedule.delete()
 
+    logger.debug('Waiting for first run to finish.')
     wait_for(lambda: schedule.last_run_date != '',
-             delay=60, timeout="10m", fail_func=appliance.server.browser.refresh,
+             delay=10, timeout="10m", fail_func=appliance.server.browser.refresh,
              message="Scheduled task didn't run in first time")
 
     if time_diff:
         next_date = parser.parse(schedule.next_run_date)
         up = {time_diff: time_num}
-        next_run_date = start_date + relativedelta.relativedelta(minutes=-5, **up)
-        appliance.ssh_client.run_command("date {}".format(next_run_date.strftime('%m%d%H%M%Y')))
+        next_run_date = start_date + relativedelta.relativedelta(minutes=-3, **up)
+        set_appliance_time(appliance, next_run_date)
+        logger.debug('next_run_date %s', next_run_date)
 
         wait_for(
-            lambda: next_date.strftime('%m%d%H') == parser.parse(
-                schedule.last_run_date).strftime('%m%d%H'),
-            delay=60, timeout="10m", fail_func=appliance.server.browser.refresh,
+            lambda: abs(next_date - parser.parse(schedule.last_run_date)) < timedelta(minutes=1),
+            delay=10, timeout="10m", fail_func=appliance.server.browser.refresh,
             message="Scheduled task didn't run in appropriate time set")
