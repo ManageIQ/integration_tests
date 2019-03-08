@@ -7,12 +7,13 @@ import pytest
 from widgetastic.widget import Text
 
 from cfme import test_requirements
+from cfme.control.explorer import conditions
 from cfme.control.explorer import ControlExplorerView
 from cfme.control.explorer.alert_profiles import ServerAlertProfile
-from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import VMCompliancePolicy
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.exceptions import CFMEExceptionOccured
+from cfme.tests.control.test_basic import CONDITIONS
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -23,6 +24,14 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     test_requirements.control,
     pytest.mark.tier(3)
+]
+
+BAD_CONDITIONS = [
+    conditions.ReplicatorCondition,
+    conditions.PodCondition,
+    conditions.ContainerNodeCondition,
+    conditions.ContainerImageCondition,
+    conditions.ProviderCondition
 ]
 
 
@@ -41,7 +50,7 @@ def create_policy(request, collection):
 
 def create_condition(request, collection):
     args = (
-        VMCondition,
+        conditions.VMCondition,
         fauxfactory.gen_alpha(),
         "fill_field(VM and Instance : Boot Time, BEFORE, Today)"
     )
@@ -440,3 +449,38 @@ def test_alert_for_disk_usage(setup_disk_usage_alert):
             num_sec=600,
             message="Waiting for alert {} to appear in DB".format(alert.description)
         )
+
+
+@pytest.mark.parametrize(
+    "condition_class", CONDITIONS, ids=lambda condition_class: condition_class.__name__
+)
+def test_accordion_after_condition_creation(appliance, condition_class):
+    """
+    Bugzillas:
+        * 1683697
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Control
+        caseimportance: medium
+        initialEstimate: 1/12hr
+
+    For this test, we must make a condition 'manually' and so that we can access the view
+    during the condition creation.
+    """
+    if (
+        BZ(1683697, forced_streams=["5.9", "5.10"]).blocks and
+        (condition_class in BAD_CONDITIONS or appliance.version < "5.10")
+    ):
+        pytest.skip("Skipping because {} conditions are impacted by BZ 1683697".format(
+            condition_class.__name__
+        ))
+    condition = appliance.collections.conditions.create(condition_class,
+        fauxfactory.gen_alpha(),
+        expression="fill_field({} : Name, IS NOT EMPTY)".format(
+            condition_class.FIELD_VALUE)
+    )
+    view = condition.create_view(conditions.ConditionDetailsView, wait="10s")
+    assert view.conditions.tree.currently_selected == [
+        "All Conditions", "{} Conditions".format(condition_class.TREE_NODE), condition.description
+    ]
