@@ -5,7 +5,9 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainAddView
 from cfme.automate.import_export import AutomateGitRepository
+from cfme.exceptions import OptionNotAvailable
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
@@ -276,3 +278,41 @@ def test_domain_import_git(request, appliance, url, param_type, param_value, ver
     request.addfinalizer(domain.delete_if_exists)
     assert domain.exists
     domain.delete()
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(blockers=[BZ(1686762)])
+def test_object_attribute_type_in_automate_schedule(appliance):
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        initialEstimate: 1/15h
+        startsin: 5.9
+        tags: automate
+        testSteps:
+            1. Go to Configuration > settings > schedules
+            2. Select 'Add a new schedule' from configuration drop down
+            3. selecting 'Automation Tasks' under Action.
+            4. Select a value from the drop down list of Object Attribute Type.
+            5. Undo the selection by selecting "<Choose>" from the drop down.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. No pop-up window with Internal Server Error.
+            5. No pop-up window with Internal Server Error.
+
+    Bugzilla:
+         1479570, 1686762
+    """
+    view = navigate_to(appliance.collections.system_schedules, 'Add')
+    view.form.action_type.select_by_visible_text('Automation Tasks')
+    all_options = view.form.object_type.all_options
+    if len(all_options) < 2:
+        raise OptionNotAvailable("Options not available")
+    for options in all_options:
+        view.form.object_type.select_by_visible_text(options.text)
+        view.flash.assert_no_error()
+        view.form.object_type.select_by_visible_text('<Choose>')
+        view.flash.assert_no_error()
