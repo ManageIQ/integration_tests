@@ -65,7 +65,7 @@ def appliance_preupdate(old_version, appliance):
     repo file for update"""
 
     usable = []
-    sp = SproutClient.from_config()
+    sp = SproutClient.from_config(sprout_user_key=pytest.config.option.sprout_user_key or None)
     available_versions = set(sp.call_method('available_cfme_versions'))
     for a in available_versions:
         if a.startswith(old_version):
