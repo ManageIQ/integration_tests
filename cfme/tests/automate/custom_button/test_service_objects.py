@@ -5,6 +5,8 @@ from widgetastic_patternfly import Dropdown
 from cfme.services.myservice import MyService
 from cfme.tests.automate.custom_button import CustomButtonSSUIDropdwon
 from cfme.tests.automate.custom_button import log_request_check
+from cfme.tests.automate.custom_button import TextInputDialogSSUIView
+from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
@@ -560,8 +562,11 @@ def test_custom_button_dialog_service_archived():
     pass
 
 
-@pytest.mark.manual
-def test_custom_button_dialog(button_group):
+@pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
+@pytest.mark.uncollectif(
+    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group
+)
+def test_custom_button_dialog(appliance, dialog, request, context, objects, button_group):
     """ Test custom button with dialog and InspectMe method
 
     Polarion:
@@ -585,4 +590,51 @@ def test_custom_button_dialog(button_group):
     Bugzilla:
         1574774
     """
-    pass
+    group, obj_type = button_group
+    with appliance.context.use(ViaUI):
+        button = group.buttons.create(
+            text="btn_{}".format(fauxfactory.gen_alphanumeric(3)),
+            hover="btn_hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+            dialog=dialog,
+            system="Request",
+            request="InspectMe",
+        )
+        request.addfinalizer(button.delete_if_exists)
+
+    with appliance.context.use(context):
+        navigate_to = ssui_nav if context is ViaSSUI else ui_nav
+
+        obj = objects[obj_type]["Details"][0]
+        dest_name = objects[obj_type]["Details"][1]
+        view = navigate_to(obj, dest_name)
+        custom_button_group = Dropdown(view, group.text)
+        assert custom_button_group.has_item(button.text)
+
+        # Clear the automation log
+        assert appliance.ssh_client.run_command(
+            'echo -n "" > /var/www/miq/vmdb/log/automation.log'
+        )
+
+        custom_button_group.item_select(button.text)
+        _dialog_view = TextInputDialogView if context is ViaUI else TextInputDialogSSUIView
+        dialog_view = view.browser.create_view(_dialog_view, wait="10s")
+        assert dialog_view.service_name.fill("Custom Button Execute")
+        dialog_view.submit.click()
+
+        # SSUI not support flash messages
+        if context is ViaUI:
+            view.flash.assert_message("Order Request was Submitted")
+
+        # check request in log
+        try:
+            wait_for(
+                log_request_check,
+                [appliance, 1],
+                timeout=600,
+                message="Check for expected request count",
+                delay=20,
+            )
+        except TimedOutError:
+            assert False, "Expected {count} requests not found in automation log".format(
+                count=str(1)
+            )

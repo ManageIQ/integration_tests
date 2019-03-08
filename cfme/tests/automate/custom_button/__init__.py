@@ -129,6 +129,11 @@ class TextInputDialogView(View):
         return self.submit.is_displayed and self.service_name.is_displayed
 
 
+class TextInputDialogSSUIView(TextInputDialogView):
+    """ This is view comes on SSUI custom button dialog execution"""
+    submit = Button("Submit Request")
+
+
 class CustomButtonSSUIDropdwon(Dropdown):
     """This is workaround for custom button Dropdown in SSUI item_enabled method"""
 
