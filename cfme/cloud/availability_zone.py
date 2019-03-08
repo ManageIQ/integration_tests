@@ -227,7 +227,11 @@ class AvailabilityZoneTimelines(CFMENavigateStep):
 
 @navigator.register(AvailabilityZone, "Utilization")
 class Utilization(CFMENavigateStep):
-    VIEW = AzoneCloudUtilizationView
+    @property
+    def VIEW(self):     # noqa
+        # Get provider.azone_utilization_view if one is defined, otherwise default to the
+        # AzoneCloudUtilizationView view
+        return getattr(self.obj.provider, "azone_utilization_view", AzoneCloudUtilizationView)
     prerequisite = NavigateToSibling("Details")
 
     def step(self, *args, **kwargs):
