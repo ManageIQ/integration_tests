@@ -8,8 +8,8 @@ from cfme.fixtures.cli import provider_app_crud
 from cfme.fixtures.cli import provision_vm
 from cfme.fixtures.cli import update_appliance
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.test_framework.sprout.client import AuthException
 from cfme.test_framework.sprout.client import SproutClient
-from cfme.test_framework.sprout.client import SproutException
 from cfme.utils.appliance import find_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
@@ -71,8 +71,16 @@ def appliance_preupdate(old_version, appliance):
         if a.startswith(old_version):
             usable.append(Version(a))
     usable.sort(reverse=True)
-    apps, pool_id = sp.provision_appliances(count=1, preconfigured=True,
-                                            lease_time=180, version=str(usable[0]))
+    try:
+        apps, pool_id = sp.provision_appliances(count=1,
+                                                preconfigured=True,
+                                                lease_time=180,
+                                                version=str(usable[0]))
+    except AuthException:
+        msg = ('Sprout credentials key or yaml maps missing or invalid,'
+               'unable to provision appliance version %s for preupdate'.format(str(usable[0])))
+        logger.exception(msg)
+        pytest.skip(msg)
 
     apps[0].db.extend_partition()
     urls = cfme_data["basic_info"][update_url]
