@@ -71,12 +71,8 @@ def appliance_preupdate(old_version, appliance):
         if a.startswith(old_version):
             usable.append(Version(a))
     usable.sort(reverse=True)
-    try:
-        apps, pool_id = sp.provision_appliances(count=1, preconfigured=True,
-                                                lease_time=180, version=str(usable[0]))
-    except Exception as e:
-        logger.exception("Couldn't provision appliance with following error:{}".format(e))
-        raise SproutException('No provision available')
+    apps, pool_id = sp.provision_appliances(count=1, preconfigured=True,
+                                            lease_time=180, version=str(usable[0]))
 
     apps[0].db.extend_partition()
     urls = cfme_data["basic_info"][update_url]
