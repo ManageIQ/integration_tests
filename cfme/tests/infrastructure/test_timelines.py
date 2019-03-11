@@ -264,6 +264,14 @@ class VMEvent(object):
                     elif evt.source_vm in self.vm.name and evt.event_type in self.tl_event:
                         found_events.append(evt)
                         break
+                    elif (
+                        self.event == 'create' and
+                        BZ(1687493, forced_stream=["5.9", "5.10"],
+                           unblock=lambda provider: not provider.one_of(RHEVMProvider)).blocks and
+                        self.vm.name in evt.message and evt.event_type in self.tl_event
+                    ):
+                        found_events.append(evt)
+                        break
                 else:
                     if evt.event_type in self.tl_event and evt.target in self.vm.name:
                         found_events.append(evt)
