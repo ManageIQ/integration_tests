@@ -10,10 +10,9 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.fixtures.appliance import sprout_appliances
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.test_framework.sprout.client import AuthException
 from cfme.test_framework.sprout.client import SproutClient
-from cfme.test_framework.sprout.client import SproutException
 from cfme.utils import conf
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import auth_data
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
@@ -148,13 +147,13 @@ def app_creds_modscope():
 
 
 @contextmanager
-def get_apps(appliance, old_version, count, preconfigured):
+def get_apps(appliance, old_version, count, preconfigured, pytest_config):
     """Requests appliance from sprout based on old_versions, edits partitions and adds
         repo file for update"""
     series = appliance.version.series()
     update_url = "update_url_{}".format(series.replace(".", ""))
     usable = []
-    sp = SproutClient.from_config()
+    sp = SproutClient.from_config(sprout_user_key=pytest_config.option.sprout_user_key or None)
     available_versions = set(sp.call_method("available_cfme_versions"))
     for a in available_versions:
         if a.startswith(old_version):
@@ -177,9 +176,11 @@ def get_apps(appliance, old_version, count, preconfigured):
                 "curl {} -o /etc/yum.repos.d/update.repo".format(urls)
             )
         yield apps
-    except Exception as e:
-        logger.error("Couldn't provision appliance with following error:{}".format(e))
-        raise SproutException("Not able to configure provision request")
+    except AuthException:
+        msg = ('Sprout credentials key or yaml maps missing or invalid,'
+               'unable to provision appliance version %s'.format(str(usable_sorted[-1])))
+        logger.exception(msg)
+        pytest.skip(msg)
     finally:
         for app in apps:
             app.ssh_client.close()
@@ -190,21 +191,24 @@ def get_apps(appliance, old_version, count, preconfigured):
 @pytest.fixture
 def appliance_preupdate(appliance, old_version):
     """Requests single appliance from sprout."""
-    with get_apps(appliance, old_version, count=1, preconfigured=True) as apps:
+    with get_apps(appliance, old_version, count=1, preconfigured=True,
+                  pytest_config=pytest.config) as apps:
         yield apps[0]
 
 
 @pytest.fixture
 def multiple_preupdate_appliances(appliance, old_version):
     """Requests multiple appliances from sprout."""
-    with get_apps(appliance, old_version, count=2, preconfigured=False) as apps:
+    with get_apps(appliance, old_version, count=2, preconfigured=False,
+                  pytest_config=pytest.config) as apps:
         yield apps
 
 
 @pytest.fixture
 def ha_multiple_preupdate_appliances(appliance, old_version):
     """Requests multiple appliances from sprout."""
-    with get_apps(appliance, old_version, count=3, preconfigured=False) as apps:
+    with get_apps(appliance, old_version, count=3, preconfigured=False,
+                  pytest_config=pytest.config) as apps:
         yield apps
 
 
