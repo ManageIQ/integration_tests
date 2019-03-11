@@ -4476,23 +4476,6 @@ def test_bottleneck_host():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_vmware_provider_filters():
-    """
-    N-3 filters for esx provider.
-    Example: ESXi 6.5 is the current new release.
-    So filters for 6.5 (n), 6.0 (n-1), 5.5 (n-2) at minimum.
-
-    Polarion:
-        assignee: kkulkarn
-        casecomponent: Provisioning
-        caseimportance: low
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_saml_sso_works_fine_check_both_enable_disable_options():
@@ -4522,22 +4505,6 @@ def test_distributed_zone_mixed_appliance_ip_versions():
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_appliance_scsi_control_vmware():
-    """
-    Appliance cfme-vsphere-paravirtual-*.ova has SCSI controller as Para
-    Virtual
-
-    Polarion:
-        assignee: kkulkarn
-        casecomponent: Appliance
-        caseimportance: critical
-        initialEstimate: 1/4h
     """
     pass
 
@@ -5804,21 +5771,6 @@ def test_osp_vmware65_test_vm_with_multiple_nics_with_single_ip_ipv6_to_first_ni
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_vmware_vds_deploy_target():
-    """
-    Target vDS for deployment
-
-    Polarion:
-        assignee: kkulkarn
-        casecomponent: Infra
-        initialEstimate: 1/12h
-        testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.bottleneck
 @pytest.mark.tier(2)
 def test_bottleneck_cluster():
@@ -6616,24 +6568,6 @@ def test_verify_ldap_authentication_works_without_groups_from_ldap_by_uncheck_th
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_vmware_vds_ui_display():
-    """
-    Virtual Distributed Switch port groups are displayed for VMs assigned
-    to vds port groups.
-    Compute > Infrastructure > Host > [Select host] > Properties > Network
-
-    Polarion:
-        assignee: kkulkarn
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/12h
-        testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(3)
 def test_verify_login_fails_for_user_in_cfme_after_changing_the_password_in_saml_for_the_user():
@@ -7354,20 +7288,6 @@ def test_gap_collection_vsphere6():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_vmware_manual_placemant_cluster_only():
-    """
-    VMware MANUAL Placement to Support ONLY Clusters
-
-    Polarion:
-        assignee: kkulkarn
-        casecomponent: Infra
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_tagvis_tag_and_vm_combination():
     """
@@ -7690,7 +7610,7 @@ def test_osp_test_osp_volumes_are_cleaned_up_if_migration_fails_to_create_instan
     https://bugzilla.redhat.com/show_bug.cgi?id=1653412
 
     Polarion:
-        assignee: kkulkarn
+        assignee: ytale
         casecomponent: V2V
         caseimportance: medium
         initialEstimate: 1/4h
@@ -7732,21 +7652,6 @@ def test_show_tag_info_for_playbook_services():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Show tag info for playbook services
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_vmware_storage_profile_vm_summary():
-    """
-    Correctly display the name of the storage profile
-
-    Polarion:
-        assignee: kkulkarn
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -7808,19 +7713,6 @@ def test_stack_parent():
             1. Set Parent for VM Instance
         expectedResults:
             1. The possible parents are listed and can be saved
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_vmware_topology_status():
-    """
-    Polarion:
-        assignee: kkulkarn
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -12791,27 +12683,6 @@ def test_appliance_log_error():
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_vmware_storage_profile_provision():
-    """
-    The VM provisioning page includes drop-down listing storage_profiles
-    applicable to the ems.
-    if selected vm template has storage_profile attached, that
-    storage_profile is pre-selected
-    datastore listing is filtered by both existing filter and the selected
-    storage_profile
-
-    Polarion:
-        assignee: kkulkarn
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/6h
-        testtype: integration
     """
     pass
 
