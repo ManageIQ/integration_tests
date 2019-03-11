@@ -4,7 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider import CloudProvider
-from cfme.exceptions import VmOrInstanceNotFound
+from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.blockers import BZ
@@ -142,7 +142,7 @@ def check_vm_exists(vm_ownership):
     try:
         vm_ownership.find_quadicon(from_any_provider=True)
         return True
-    except VmOrInstanceNotFound:
+    except ItemNotFound:
         return False
 
 

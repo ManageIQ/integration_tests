@@ -13,7 +13,6 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
 from cfme.common.candu_views import AzoneCloudUtilizationView
-from cfme.exceptions import AvailabilityZoneNotFound
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -211,7 +210,7 @@ class AvailabilityZoneDetails(CFMENavigateStep):
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
-            raise AvailabilityZoneNotFound('Could not locate Availability Zone "{}" on provider {}'
+            raise ItemNotFound('Could not locate Availability Zone "{}" on provider {}'
                                            .format(self.obj.name, self.obj.provider.name))
         row.click()
 

@@ -11,7 +11,6 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common import TaggableCollection
 from cfme.exceptions import ItemNotFound
-from cfme.exceptions import VolumeTypeNotFoundError
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.storage.volume import VolumeToolbar
@@ -111,4 +110,4 @@ class VolumeTypeDetails(CFMENavigateStep):
         try:
             self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
         except ItemNotFound:
-            raise VolumeTypeNotFoundError('Volume Type {} not found'.format(self.obj.name))
+            raise ItemNotFound('Volume Type {} not found'.format(self.obj.name))

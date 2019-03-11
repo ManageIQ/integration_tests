@@ -11,6 +11,7 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
+from cfme.exceptions import ItemNotFound
 from cfme.exceptions import KeyPairNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -21,7 +22,6 @@ from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import BootstrapSelect
-from widgetastic_manageiq import ItemNotFound
 from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import PaginationPane

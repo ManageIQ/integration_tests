@@ -11,7 +11,6 @@ from widgetastic_patternfly import Dropdown
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound
-from cfme.exceptions import ResourcePoolNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -239,5 +238,5 @@ class Details(CFMENavigateStep):
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
-            raise ResourcePoolNotFound('Resource pool {} not found'.format(self.obj.name))
+            raise ItemNotFound('Resource pool {} not found'.format(self.obj.name))
         row.click()

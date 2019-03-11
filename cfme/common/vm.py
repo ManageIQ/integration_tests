@@ -20,7 +20,6 @@ from cfme.common.vm_views import VMPropertyDetailView
 from cfme.exceptions import CFMEException
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import OptionNotAvailable
-from cfme.exceptions import VmOrInstanceNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.services.requests import RequestsView
@@ -225,7 +224,7 @@ class BaseVM(
                 looking up archived or orphaned VMs
 
         Returns: entity of appropriate type
-        Raises: VmOrInstanceNotFound
+        Raises: ItemNotFound
         """
         # todo :refactor this method replace it with vm methods like get_state
         if from_any_provider:
@@ -237,7 +236,7 @@ class BaseVM(
         try:
             return view.entities.get_entity(name=self.name, surf_pages=True, use_search=use_search)
         except ItemNotFound:
-            raise VmOrInstanceNotFound("VM '{}' not found in UI!".format(self.name))
+            raise ItemNotFound("VM '{}' not found in UI!".format(self.name))
 
     def open_console(self, console='VM Console', invokes_alert=None):
         """
@@ -738,7 +737,7 @@ class VM(BaseVM):
         Raises:
             TimedOutError:
                 When instance does not come up to desired state in specified period of time.
-            InstanceNotFound:
+            ItemNotFound:
                 When unable to find the instance passed
         """
 

@@ -14,7 +14,6 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common import TagPageView
 from cfme.exceptions import ItemNotFound
-from cfme.exceptions import SnapshotNotFoundError
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -255,7 +254,9 @@ class Details(CFMENavigateStep):
             self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                        surf_pages=True).click()
         except ItemNotFound:
-            raise SnapshotNotFoundError('Could not locate volume snapshot {}'.format(self.obj.name))
+            raise ItemNotFound(
+                'Could not locate volume snapshot {}'.format(self.obj.name)
+            )
 
 
 @navigator.register(VolumeSnapshot, 'EditTagsFromDetails')

@@ -16,7 +16,6 @@ from widgetastic_patternfly import Dropdown
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common import TagPageView
-from cfme.exceptions import BackupNotFoundError
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -244,7 +243,7 @@ class VolumeBackupCollection(BaseCollection):
                 try:
                     view.entities.get_entity(name=backup.name).check()
                 except ItemNotFound:
-                    raise BackupNotFoundError("Volume backup {} not found".format(backup.name))
+                    raise ItemNotFound("Volume backup {} not found".format(backup.name))
 
             view.toolbar.configuration.item_select('Delete selected Backups', handle_alert=True)
 
@@ -259,7 +258,7 @@ class VolumeBackupCollection(BaseCollection):
                 )
 
         else:
-            raise BackupNotFoundError('No Volume Backups for Deletion')
+            raise ItemNotFound('No Volume Backups for Deletion')
 
 
 @navigator.register(VolumeBackupCollection, 'All')
@@ -282,7 +281,7 @@ class Details(CFMENavigateStep):
             self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                        surf_pages=True).click()
         except ItemNotFound:
-            raise BackupNotFoundError('Could not locate volume backup {}'.format(self.obj.name))
+            raise ItemNotFound('Could not locate volume backup {}'.format(self.obj.name))
 
 
 @navigator.register(VolumeBackup, 'EditTagsFromDetails')

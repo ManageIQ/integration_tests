@@ -17,7 +17,7 @@ from widgetastic_patternfly import Input
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import displayed_not_implemented
-from cfme.exceptions import TemplateNotFound
+from cfme.exceptions import ItemNotFound
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseEntitiesView
@@ -361,7 +361,7 @@ class ProvisionView(BaseLoggedInPage):
                                                         provider=provider_name).click()
             # image was not found, therefore raise an exception
             except IndexError:
-                raise TemplateNotFound('Cannot find template "{}" for provider "{}"'
+                raise ItemNotFound('Cannot find template "{}" for provider "{}"'
                                        .format(template_name, provider_name))
 
         def before_fill(self, values):

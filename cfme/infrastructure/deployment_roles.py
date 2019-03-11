@@ -15,7 +15,6 @@ from widgetastic_patternfly import Dropdown
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import PolicyProfileAssignable
 from cfme.exceptions import ItemNotFound
-from cfme.exceptions import RoleNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -232,7 +231,7 @@ class DeploymentRoleCollection(BaseCollection):
                 try:
                     view.entities.get_entity(name=role.name).check()
                 except ItemNotFound:
-                    raise RoleNotFound("Deployment role {} not found".format(role.name))
+                    raise ItemNotFound("Deployment role {} not found".format(role.name))
 
             view.toolbar.configuration.item_select('Remove selected items',
                                                    handle_alert=True)
@@ -242,7 +241,7 @@ class DeploymentRoleCollection(BaseCollection):
                          "Database".format(len(roles)))
             view.flash.assert_success_message(flash_msg)
         else:
-            raise RoleNotFound('No Deployment Role for Deletion')
+            raise ItemNotFound('No Deployment Role for Deletion')
 
 
 @navigator.register(DeploymentRoleCollection, 'All')
@@ -269,7 +268,7 @@ class Details(CFMENavigateStep):
             self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                        surf_pages=True).click()
         except ItemNotFound:
-            raise RoleNotFound("Deployment Role {} not found".format(self.obj.name))
+            raise ItemNotFound("Deployment Role {} not found".format(self.obj.name))
 
 
 @navigator.register(DeploymentRoles, 'AllForProvider')
@@ -294,4 +293,4 @@ class DetailsFromProvider(CFMENavigateStep):
         try:
             self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
         except ItemNotFound:
-            raise RoleNotFound("Deployment Role {} not found".format(self.obj.name))
+            raise ItemNotFound("Deployment Role {} not found".format(self.obj.name))
