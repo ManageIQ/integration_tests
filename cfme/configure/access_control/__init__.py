@@ -331,11 +331,8 @@ class UserCollection(BaseCollection):
                 not having appropriate permissions OR update is not allowed
                 for currently selected role
         """
-        if self.appliance.version < "5.8":
-            user_blocked_msg = "Userid has already been taken"
-        else:
-            user_blocked_msg = ("Userid is not unique within region {}".format(
-                self.appliance.server.zone.region.number))
+        user_blocked_msg = ("Userid is not unique within region {}".format(
+            self.appliance.server.zone.region.number))
 
         if type(groups) is not list:
             groups = [groups]
@@ -346,8 +343,8 @@ class UserCollection(BaseCollection):
         )
 
         # view.fill supports iteration over a list when selecting pulldown list items but
-        #   will throw an exception when the item doesn't appear in the list so filter out
-        #   null items since they "shouldn't" exist
+        # will throw an exception when the item doesn't appear in the list so filter out
+        # null items since they "shouldn't" exist
         user_group_names = [getattr(ug, 'description', None) for ug in user.groups if ug]
 
         fill_values = {

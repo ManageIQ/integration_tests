@@ -7,6 +7,7 @@ from widgetastic.utils import Fillable
 from widgetastic.widget import Checkbox
 from widgetastic.widget import Text
 from widgetastic.xpath import quote
+from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
@@ -26,6 +27,20 @@ from widgetastic_manageiq import UpDownSelect
 def generate_updown(title):
     return './/*[(self::a or self::button) and @title={}]/*[self::img or self::i]'.format(
         quote(title))
+
+
+class DomainRefreshView(AutomateExplorerView):
+    title = Text("#explorer_title_text")
+    branch_or_tag = BootstrapSelect(id="branch_or_tag_select")
+    git_branches = BootstrapSelect(id="git_branches")
+
+    save_button = Button("Save")
+    cancel_button = Button("Cancel")
+
+    @property
+    def is_displayed(self):
+        return (self.in_explorer
+                and self.title.text == "Refreshing branch/tag for Git-based Domain")
 
 
 class DomainPriorityView(AutomateExplorerView):
@@ -263,6 +278,26 @@ class Domain(BaseEntity, Fillable):
             view.flash.assert_message(
                 'Edit of Automate Domain "{}" was cancelled by the user'.format(self.name))
 
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
+
+    def refresh(self, branch_or_tag=None, git_branch=None, cancel=False):
+        view = navigate_to(self, 'Refresh')
+
+        # It refreshes the domain for default values of 'branch_or_tag' and 'git_branch'; if these
+        # values are not provided while calling 'refresh'.
+        select_branch_or_tag = branch_or_tag or view.branch_or_tag.selected_option
+        select_git_branch = git_branch or view.git_branches.selected_option
+
+        view.branch_or_tag.select_by_visible_text(select_branch_or_tag)
+        view.git_branches.select_by_visible_text(select_git_branch)
+        view.save_button.click()
+
+        if cancel:
+            view.cancel_button.click()
+        view.flash.assert_no_error()
+
 
 @attr.s
 class DomainCollection(BaseCollection):
@@ -405,6 +440,15 @@ class Priority(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit Priority Order of Domains')
+
+
+@navigator.register(Domain)
+class Refresh(CFMENavigateStep):
+    VIEW = DomainRefreshView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.configuration.item_select('Refresh with a new branch or tag')
 
 
 class DomainDetailsView(AutomateExplorerView):

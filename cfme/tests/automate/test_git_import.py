@@ -1,8 +1,11 @@
+import fauxfactory
 import pytest
 from six.moves.urllib.parse import urlparse
 
 from cfme import test_requirements
+from cfme.automate.explorer.domain import DomainDetailsView
 from cfme.automate.import_export import AutomateGitRepository
+from cfme.base.credential import Credential
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -24,6 +27,24 @@ def imported_domain(appliance):
     domain = repo.import_domain_from(branch="origin/master")
     yield domain
     domain.delete_if_exists()
+
+
+@pytest.fixture(scope="module")
+def new_user(appliance):
+    """This fixture creates new user which assigned with non-super group"""
+    group = appliance.collections.groups.instantiate(description='EvmGroup-administrator')
+    user = appliance.collections.users.create(
+        name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
+        credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
+                              secret='{password}'.format(password=fauxfactory.gen_alphanumeric(4))),
+        email=fauxfactory.gen_email(),
+        groups=[group],
+        cost_center="Workload",
+        value_assign="Database",
+    )
+    yield user
+    if user.exists:
+        user.delete()
 
 
 @pytest.mark.tier(1)
@@ -200,3 +221,70 @@ def test_import_export_domain_with_ansible_method():
         1677575
     """
     pass
+
+
+@pytest.mark.tier(1)
+def test_refresh_git_current_user(imported_domain, new_user):
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: Automate
+        tags: automate
+        testSteps:
+            1. created non-super user 'user1' along with default 'admin' user.
+            2. Using admin user imported git repo.:
+               'https://github.com/ramrexx/CloudForms_Essentials.git' or any other repo.
+            3. Logged in with admin and refreshed domain- 'CloudForms_Essentials' or other domain.
+               Then checked all tasks.
+            4. Found user name 'admin' next to 'Refresh git repository'.
+            5. Then checked instances in that domain by logging in with user 'user1' and 'admin'.
+            6. Logged in with non-super user 'user1' and refreshed domain - 'CloudForms_Essentials'.
+               Then checked all tasks.
+            7. Found user name 'user1' next to 'Refresh git repository'.
+            8. Then checked instances in that domain by logging in with user 'user1' and 'admin'.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. It shows that
+               e.g. 'Automate Instance [Provisioning - Updated 2019-01-15 11:41:43 UTC by admin]'
+            6.
+            7.
+            8. It shows that
+               e.g. 'Automate Instance [Provisioning - Updated 2019-01-15 11:44:43 UTC by user1]'
+               Hence, correct user that calls refresh automation domain from git branch is shown.
+    Bugzilla:
+        1592428
+    """
+    tasks_collection = imported_domain.appliance.collections.tasks
+
+    # Refreshed imported domain by 'Admin' user
+    imported_domain.refresh(branch_or_tag='Branch', git_branch='origin/master')
+    view = imported_domain.create_view(DomainDetailsView)
+    view.flash.assert_message("Successfully refreshed!")
+    view = navigate_to(tasks_collection, 'AllTasks')
+
+    # Collecting list of all tasks performed by users
+    all_tasks = view.tabs.alltasks.table.read()
+    for task in all_tasks:
+        if task['Task Name'] == 'Refresh git repository':
+            assert task['User'] == 'admin'
+            break
+
+    with new_user:
+        # Refreshed imported domain by non-super user
+        imported_domain.refresh(branch_or_tag='Branch', git_branch='origin/master')
+        view = navigate_to(tasks_collection, 'AllTasks')
+
+        # Collecting list of all tasks performed by users
+        all_tasks = view.tabs.alltasks.table.read()
+        for task in all_tasks:
+            if task['Task Name'] == 'Refresh git repository':
+                assert task['User'] == new_user.credential.principal
+                break
