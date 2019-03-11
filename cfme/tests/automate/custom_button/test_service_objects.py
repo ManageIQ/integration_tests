@@ -135,7 +135,8 @@ def serv_button_group(appliance, request):
     "display", DISPLAY_NAV.keys(), ids=[item.replace(" ", "_") for item in DISPLAY_NAV.keys()]
 )
 @pytest.mark.uncollectif(
-    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group
+    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group,
+    reason="Generic object custom button not supported by SSUI",
 )
 @pytest.mark.meta(
     blockers=[
@@ -199,7 +200,8 @@ def test_custom_button_display(request, appliance, context, display, objects, bu
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
 @pytest.mark.parametrize("submit", SUBMIT, ids=[item.replace(" ", "_") for item in SUBMIT])
 @pytest.mark.uncollectif(
-    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group
+    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group,
+    reason="Generic object custom button not supported by SSUI",
 )
 def test_custom_button_automate(request, appliance, context, submit, objects, button_group):
     """ Test custom button for automate and requests count as per submit
@@ -369,7 +371,10 @@ def vis_enb_button(request, appliance, button_group):
 
 @pytest.mark.tier(0)
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
-@pytest.mark.uncollectif(lambda context, button_group: "GENERIC" in button_group)
+@pytest.mark.uncollectif(
+    lambda context, button_group: "GENERIC" in button_group,
+    reason="Generic object custom button not supported by SSUI",
+)
 def test_custom_button_expression(appliance, context, objects, button_group, vis_enb_button):
     """ Test custom button as per expression enablement/visibility.
 
@@ -564,7 +569,8 @@ def test_custom_button_dialog_service_archived():
 
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
 @pytest.mark.uncollectif(
-    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group
+    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group,
+    reason="Generic object custom button not supported by SSUI",
 )
 def test_custom_button_dialog(appliance, dialog, request, context, objects, button_group):
     """ Test custom button with dialog and InspectMe method
