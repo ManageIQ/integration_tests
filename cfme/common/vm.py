@@ -220,7 +220,8 @@ class BaseVM(
         else:
             return False
 
-    def find_quadicon(self, from_any_provider=False, use_search=True):
+    def find_quadicon(self, from_any_provider=False, from_archived_all=False,
+                      from_orphaned_all=False, use_search=True):
         """Find and return a quadicon belonging to a specific vm
 
         Args:
@@ -233,6 +234,10 @@ class BaseVM(
         # todo :refactor this method replace it with vm methods like get_state
         if from_any_provider:
             view = navigate_to(self.parent, 'All')
+        elif from_archived_all:
+            view = navigate_to(self.appliance.collections.infra_vms, 'ArchivedAll')
+        elif from_orphaned_all:
+            view = navigate_to(self.appliance.collections.infra_vms, 'OrphanedAll')
         else:
             view = navigate_to(self, 'AllForProvider', use_resetter=False)
 
