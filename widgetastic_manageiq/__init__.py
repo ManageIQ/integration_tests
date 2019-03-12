@@ -3836,6 +3836,13 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
 
         raise ItemNotFound("No Entities found on this page")
 
+    def check_context_against_entities(self, context, attr="name"):
+        """ Given a list of context objects, this method checks that the quadicon
+        for each entity is displayed. The method checks attr of the object against the entity_names.
+        """
+        attr_list = [getattr(obj, attr) for obj in context]
+        return sorted(attr_list) == sorted(self.entity_names)
+
 
 class FonticonPicker(Widget):
     """Widget, designed for the icon picker.
