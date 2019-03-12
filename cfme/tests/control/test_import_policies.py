@@ -21,11 +21,6 @@ def import_invalid_yaml_file(request):
     return data_path.join("ui/control/invalid.yaml").realpath().strpath
 
 
-@pytest.fixture(scope="module")
-def policy_profile_collection(appliance):
-    return appliance.collections.policy_profiles
-
-
 @pytest.mark.meta(blockers=[1106456, 1198111], automates=[1198111])
 def test_import_policies(appliance, import_policy_file):
     """
@@ -52,7 +47,7 @@ def test_control_import_invalid_yaml_file(appliance, import_invalid_yaml_file):
         import_export.import_file(appliance, import_invalid_yaml_file)
 
 
-def test_control_import_existing_policies(appliance, import_policy_file, policy_profile_collection):
+def test_control_import_existing_policies(appliance, import_policy_file):
     """
     Polarion:
         assignee: jdupuy
@@ -62,7 +57,7 @@ def test_control_import_existing_policies(appliance, import_policy_file, policy_
         initialEstimate: 1/12h
     """
     import_export.import_file(appliance, import_policy_file)
-    first_import = policy_profile_collection.all_policy_profile_names
+    first_import = appliance.collections.policy_profiles.all_policy_profile_names
     import_export.import_file(appliance, import_policy_file)
-    second_import = policy_profile_collection.all_policy_profile_names
+    second_import = appliance.collections.policy_profiles.all_policy_profile_names
     assert first_import == second_import

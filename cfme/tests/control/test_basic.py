@@ -733,20 +733,3 @@ def test_control_policy_simulation_displayed():
         initialEstimate: 1/6h
     """
     pass
-
-
-@pytest.mark.manual
-@test_requirements.control
-@pytest.mark.tier(3)
-def test_control_import_with_incorrect_schema():
-    """
-    Test importing yaml with incorrect schema.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Control
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/12h
-    """
-    pass
