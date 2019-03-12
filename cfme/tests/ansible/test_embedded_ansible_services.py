@@ -11,7 +11,6 @@ from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import cfme_data
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -115,6 +114,7 @@ def service_request(appliance, ansible_catalog_item):
     if service_request_.exists():
         service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
         appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+
 
 @pytest.fixture
 def service(appliance, ansible_catalog_item):
