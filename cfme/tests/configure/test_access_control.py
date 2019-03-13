@@ -82,6 +82,18 @@ def tag_value(appliance, category, tag, request):
     return tag_for_create, tag_for_update
 
 
+@pytest.fixture(scope='module')
+def catalog_obj(appliance):
+    catalog_name = fauxfactory.gen_alphanumeric()
+    catalog_desc = "My Catalog"
+
+    cat = appliance.collections.catalogs.create(name=catalog_name, description=catalog_desc)
+    yield cat
+
+    if cat.exists:
+        cat.delete()
+
+
 # User test cases
 @pytest.mark.sauce
 @pytest.mark.tier(2)
@@ -1436,9 +1448,8 @@ def test_superadmin_tenant_admin_crud(appliance, group_collection):
     assert not user.exists
 
 
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-def test_tenant_unique_catalog():
+@pytest.mark.tier(3)
+def test_tenant_unique_catalog(appliance, request, catalog_obj):
     """
     Catalog name is unique per tenant. Every tenant can have catalog with
     name "catalog" defined.
@@ -1452,7 +1463,16 @@ def test_tenant_unique_catalog():
         initialEstimate: 1/2h
         startsin: 5.5
     """
-    pass
+    msg = "Name has already been taken"
+
+    view = navigate_to(appliance.collections.catalogs, 'Add')
+    view.fill({
+        'name': catalog_obj.name,
+        'description': catalog_obj.description
+    })
+    view.add_button.click()
+    view.flash.wait_displayed(timeout=20)
+    assert view.flash.read() == [msg]
 
 
 @pytest.mark.manual
