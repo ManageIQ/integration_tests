@@ -170,7 +170,7 @@ def test_delete_all_snapshots(small_test_vm, provider):
              message="Waiting for second snapshot to disappear")
 
 
-def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request,
+def verify_revert_snapshot(full_test_vm, provider, soft_assert, request,
                            active_snapshot=False):
     if provider.one_of(RHEVMProvider):
         # RHV snapshots have only description, no name
@@ -192,7 +192,7 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     # The 'fail_func' ensures we close the connection that failed with exception.
     # Without this, the connection would hang there and wait_for would fail with timeout.
     wait_for(lambda: ssh_client.run_command('touch snapshot1.txt').success, num_sec=400,
-             delay=100, handle_exception=True, fail_func=ssh_client.close(),
+             delay=20, handle_exception=True, fail_func=ssh_client.close(),
              message="Waiting for successful SSH connection")
     # Create first snapshot
     snapshot1.create()
@@ -250,7 +250,7 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
 )
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
                          'Must be RHEVM provider version >= 4')
-def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request):
+def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, request):
     """Tests revert snapshot
 
     Metadata:
@@ -261,11 +261,11 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
         casecomponent: Infra
         initialEstimate: 1/4h
     """
-    verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request)
+    verify_revert_snapshot(full_test_vm, provider, soft_assert, request)
 
 
 @pytest.mark.provider([VMwareProvider], override=True)
-def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_event, request):
+def test_revert_active_snapshot(full_test_vm, provider, soft_assert, request):
     """Tests revert active snapshot
 
     Metadata:
@@ -277,7 +277,7 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_ev
         caseimportance: medium
         initialEstimate: 1/3h
     """
-    verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request,
+    verify_revert_snapshot(full_test_vm, provider, soft_assert, request,
                            active_snapshot=True)
 
 
