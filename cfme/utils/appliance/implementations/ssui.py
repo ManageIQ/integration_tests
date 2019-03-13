@@ -58,6 +58,22 @@ class MiqSSUIBrowser(Browser):
 class MiqSSUIBrowserPlugin(DefaultPlugin):
 
     ENSURE_PAGE_SAFE = jsmin('''
+        try {
+            var drawer = angular.element(document.getElementsByTagName("pf-notification-drawer"));
+            if (drawer && drawer.is(':visible')){
+                drawer.hide();
+            };
+
+            var eventNotificationsService = drawer.injector().get('eventNotifications');
+            eventNotificationsService.clearAll(
+                ManageIQ.angular.eventNotificationsData.state.groups[0]
+            );
+            eventNotificationsService.clearAll(
+                ManageIQ.angular.eventNotificationsData.state.groups[1]
+            );
+        } catch(err) {
+        }
+
         function checkProgressBar() {
             try {
                 return $('#ngProgress').attr('style').indexOf('width: 0%') > -1;
