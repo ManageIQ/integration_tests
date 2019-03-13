@@ -318,7 +318,7 @@ def get_crud(provider_key):
 
     Returns: A Provider object that has methods that operate on CFME
     """
-    # TODO: note, get_crud will be enturely removed shortly and replaced with collections methods
+    # TODO: note, get_crud will be entirely removed shortly and replaced with collections methods
 
     prov_config = providers_data[provider_key]
     prov_type = prov_config.get('type')

@@ -627,6 +627,8 @@ class SSHClient(paramiko.SSHClient):
                 'called from block in',
                 'Please use .* instead',
                 'key :terminate is duplicated and overwritten',
+                '--------\+--',
+                'Checking EVM status...'
             ]))
         data = self.run_rake_command("evm:status")
         if data.rc != 0:
