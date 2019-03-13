@@ -66,8 +66,12 @@ class MiqBrowserPlugin(DefaultPlugin):
 
     ENSURE_PAGE_SAFE = jsmin('''\
         try {
-            var eventNotificationsService = angular.element('#notification-app')
-                .injector().get('eventNotifications');
+            var drawer = angular.element(document.getElementById("miq-notifications-drawer"));
+            if (drawer && drawer.is(':visible')){
+                drawer.hide();
+            };
+
+            var eventNotificationsService = drawer.injector().get('eventNotifications');
             eventNotificationsService.clearAll(
                 ManageIQ.angular.eventNotificationsData.state.groups[0]
             );
