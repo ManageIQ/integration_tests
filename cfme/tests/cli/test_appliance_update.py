@@ -295,7 +295,7 @@ def test_update_ha_webui(ha_appliances_with_providers, appliance, request, old_v
 
     wait_for(is_failover_started, timeout=450, handle_exception=True,
              message='Waiting for HA failover')
-    ha_appliances_with_providers[2].wait_for_evm_service()
+    ha_appliances_with_providers[2].evmserverd.wait_for_running()
     ha_appliances_with_providers[2].wait_for_web_ui()
     # Verify that existing provider can detect new VMs
     virtual_crud = provider_app_crud(VMwareProvider, ha_appliances_with_providers[2])

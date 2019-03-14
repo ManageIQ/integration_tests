@@ -257,7 +257,8 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     command_set = ("ap", "", "5", "2", app0_ip, "", pwd, "", "2", "0", "y", app0_ip, "", "", "",
                    TimedCommand(pwd, 360), "")
     apps2.appliance_console.run_commands(command_set)
-    apps2.wait_for_evm_service()
+    apps2.evmserverd.wait_for_running()
+
     apps2.wait_for_web_ui()
     # Configure primary replication node
     command_set = ("ap", "", "6", "1", "1", "", "", pwd, pwd, app0_ip, TimedCommand("y", 60),
