@@ -13,6 +13,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 
+from cfme.utils.single import single
 
 @attr.s
 class Server(BaseEntity, sentaku.modeling.ElementMixin):
@@ -43,9 +44,8 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
             string if entity has the name attribute
             None if its missing
         """
-        collect = self.appliance.rest_api.collections.servers
-        servers = collect.all if self.appliance.is_dev else collect.find_by(is_master=True)
-        return getattr(servers[0], 'name', '')  # empty string default for string building w/o None
+        # empty string default for string building w/o None
+        return getattr(self.appliance._rest_api_server(), 'name', '')
 
     @property
     def settings(self):
@@ -67,7 +67,7 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
     @property
     def zone(self):
         server_res = self.appliance.rest_api.collections.servers.find_by(id=self.sid)
-        server = server_res[0]
+        server = single(server_res)
         server.reload(attributes=['zone'])
         zone = server.zone
         zone_obj = self.appliance.collections.zones.instantiate(
@@ -167,7 +167,7 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
         """
         collect = self.appliance.rest_api.collections.servers
         servers = collect.all if self.appliance.is_dev else collect.find_by(is_master=True)
-        server = servers[0]
+        server = single(servers)
 
         if not hasattr(server, 'name'):
             logger.warning('rest_api server object has no name attribute')
@@ -206,7 +206,7 @@ class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
     @property
     def region(self):
         zone_res = self.appliance.rest_api.collections.zones.find_by(id=self.id)
-        zone = zone_res[0]
+        zone = single(zone_res)
         zone.reload(attributes=['region_number'])
         region_obj = self.appliance.collections.regions.instantiate(number=zone.region_number)
         return region_obj
@@ -298,8 +298,7 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
         region_filter = self.appliance.rest_api.get(
             '{}{}'.format(self.appliance.rest_api.collections.regions._href, filter_query)
         )
-        assert len(region_filter['resources']) == 1
-        region_id = region_filter['resources'][0]['id']
+        region_id = single(region_filter['resources'])['id']
         return '/'.join([self.appliance.rest_api.collections.regions._href,
                          str(region_id),
                          'settings'])
