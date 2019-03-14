@@ -122,6 +122,9 @@ def test_check_package_presence(request, appliance, compliance_vm, analysis_prof
     """This test checks compliance by presence of a certain "kernel" package which is expected
     to be present on the full_template.
 
+    Metadata:
+        test_flag: provision, policy
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
@@ -156,6 +159,9 @@ def test_check_package_presence(request, appliance, compliance_vm, analysis_prof
 def test_check_files(request, appliance, compliance_vm, analysis_profile):
     """This test checks presence and contents of a certain file. Due to caching, an existing file
     is checked.
+
+    Metadata:
+        test_flag: provision, policy
 
     Polarion:
         assignee: jdupuy
@@ -197,6 +203,10 @@ def test_check_files(request, appliance, compliance_vm, analysis_profile):
 
 def test_compliance_with_unconditional_policy(host, assign_policy_for_testing):
     """
+
+    Metadata:
+        test_flag: policy
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/6h
