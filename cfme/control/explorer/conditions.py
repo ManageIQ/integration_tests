@@ -16,7 +16,6 @@ from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from widgetastic_manageiq.expression_editor import ExpressionEditor
@@ -273,8 +272,6 @@ class ConditionCollection(BaseCollection):
         view.add_button.click()
         view = condition.create_view(ConditionDetailsView, wait="10s")
         view.flash.assert_success_message('Condition "{}" was added'.format(condition.description))
-        if BZ(1683697, forced_streams=["5.9", "5.10"]).blocks:
-            navigate_to(self.appliance.server, 'ControlExplorer', force=True)
         return condition
 
     def all(self):
