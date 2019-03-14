@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=E1101
 # pylint: disable=W0621
+import os
 import uuid
 
 import fauxfactory
 import pytest
+from six.moves.urllib.parse import urljoin
 from wait_for import wait_for
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
+from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -22,18 +25,164 @@ from cfme.fixtures.provider import enable_provider_regions
 from cfme.fixtures.pytest_store import store
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
+from cfme.utils import appliance
+from cfme.utils import conf
+from cfme.utils import ssh
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import credentials
+from cfme.utils.generators import random_vm_name
 from cfme.utils.providers import list_providers
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import assert_response
 from cfme.utils.update import update
+from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [pytest.mark.provider([CloudProvider], scope="function")]
+
+# path, where powershell scripts are located and where cfme image is downloaded,
+# needed for test_create_azure_vm_from_azure_image
+SPACE = '/mnt/space/'
 
 
 @pytest.fixture(scope='function')
 def enable_regions(provider):
     enable_provider_regions(provider)
+
+
+@pytest.fixture(scope='function')
+def az_pwsh_vm(appliance):
+    """
+    azure_pwsh contains powershell and necessary scripts to upload vhd, create VM, get ip of the
+    resource and delete the VM.
+    Find the provider that contains that template.
+
+    The example of the configuration can be found in data/az_pwsh_cloudinit.cfg
+    """
+    filter_pwsh_template = ProviderFilter(required_fields=[['templates', 'powershell_vm']])
+    providers = list_providers(filters=[filter_pwsh_template])
+    if not providers:
+        pytest.skip("There's no provider that contains a template with powershell")
+
+    # If there's more than 1 provider that has the template, we select the first
+    provider = providers[0]
+
+    vm_name = random_vm_name(context="pwsh")
+    pwsh_vm = provider.data.templates.powershell_vm.name
+
+    collection = provider.appliance.provider_based_collection(provider)
+
+    try:
+        vm = collection.instantiate(vm_name, provider, pwsh_vm)
+        vm.create_on_provider(allow_skip="default")
+    except IndexError:
+        from cfme.exceptions import ItemNotFound
+        raise ItemNotFound('VM with powershell not found!')
+
+    vm.mgmt.ensure_state(VmState.RUNNING)
+
+    @wait_for_decorator(timeout="10m", delay=5)
+    def get_ip_address():
+        ip = vm.mgmt.ip
+        return ip is not None
+    yield vm
+
+    vm.cleanup_on_provider()
+
+
+@pytest.fixture
+def pwsh_ssh(az_pwsh_vm):
+    """Provide vm_ssh_client for ssh operations in the test."""
+    with ssh.SSHClient(hostname=az_pwsh_vm.ip_address,
+                       username=credentials['host_default']['username'],
+                       password=credentials['host_default']['password']) as vm_ssh_client:
+        yield vm_ssh_client
+
+
+@pytest.fixture
+def connect_az_account(pwsh_ssh):
+    """
+    Connect to Azure account to run further scripts, see
+    https://docs.microsoft.com/en-us/powershell/azure/authenticate-azureps
+    """
+    path_script = os.path.join(SPACE, 'connect_account.ps1')
+    connect = pwsh_ssh.run_command("pwsh {}".format(path_script), timeout=180)
+    assert connect.success, "Failed to connect to Azure account"
+
+
+@pytest.fixture(scope='function')
+def cfme_vhd(appliance, pwsh_ssh):
+    path_script = os.path.join(SPACE, 'get_ip.ps1')
+    ip_of_recourse = pwsh_ssh.run_command(
+        r'pwsh {}| grep -oE "([0-9]{{1,3}}\.){{3}}[0-9]{{1,3}}"'.format(path_script),
+        timeout=60).output.strip()
+    if ip_of_recourse is not None:
+        pytest.skip("The resource is taken by some other VM in Azure")
+    stream = appliance.version.stream()
+    try:
+        # need to add the trailing slash for urljoin to work correctly
+        url = '{}/'.format(conf.cfme_data['basic_info']['cfme_images_url'][stream])
+    except KeyError:
+        pytest.skip("Skipping since no such key found in yaml")
+
+    image = pwsh_ssh.run_command(
+        """wget -qO- {url} | grep -Po '(?<=href=")[^"]*' | grep azure""".format(url=url),
+        timeout=30).output.strip()
+    image_url = urljoin(url, image)
+    pwsh_ssh.run_command("wget {image} -P {dest}".format(dest=SPACE, image=image_url),
+                         timeout=180)
+
+    # unpack the archive
+    vhd = image.replace('zip', 'vhd')
+    pwsh_ssh.run_command("unzip {} -d {}".format(os.path.join(SPACE, image), SPACE),
+                         timeout=15 * 60)
+    yield vhd
+
+    pwsh_ssh.run_command("rm -f {}".format(os.path.join(SPACE, image)), timeout=180)
+    pwsh_ssh.run_command("rm -f {}".format(os.path.join(SPACE, vhd)), timeout=180)
+
+
+@pytest.fixture(scope='function')
+def upload_image_to_azure(cfme_vhd, pwsh_ssh):
+    path_script = os.path.join(SPACE, 'upload_vhd.ps1')
+    pwsh_ssh.run_command(
+        r"""sed -i '1s/.*/$BlobNameSource = "{vhd}"/' {script}"""
+            .format(script=path_script, vhd=cfme_vhd), timeout=30)
+
+    pwsh_ssh.run_command("pwsh {}".format(path_script), timeout=15 * 60)
+
+
+@pytest.fixture(scope='function')
+def vm_ip(cfme_vhd, pwsh_ssh):
+    # Create VM in Azure
+    path_script = os.path.join(SPACE, 'create_vm.ps1')
+    pwsh_ssh.run_command(
+        r"""sed -i '1s/.*/$BlobNameSource = "{vhd}"/' {script} &&
+        sed -i '2s/.*/$BlobNameDest = "{b_dest}"/' {script} &&
+        sed -i '3s/.*/$VMName = "{name}"/' {script}""".format(
+            script=path_script,
+            vhd=cfme_vhd,
+            b_dest=cfme_vhd.replace('azure', 'test'),
+            name=cfme_vhd.replace('.x86_64.vhd', '-vm')),
+        timeout=20)
+
+    pwsh_ssh.run_command("pwsh {}".format(path_script), timeout=600)
+
+    # get the ip of the resource
+    path_get_ip = os.path.join(SPACE, 'get_ip.ps1')
+    ip = pwsh_ssh.run_command(
+        r'pwsh {}| grep -oE "([0-9]{{1,3}}\.){{3}}[0-9]{{1,3}}"'.format(path_get_ip),
+        timeout=60).output.strip()
+    yield ip
+
+    # Delete the VM
+    with pwsh_ssh:
+        pwsh_ssh.run_command(
+            r"""sed -i '1s/.*/$VMName = "{name}"/' {script}""".format(
+                script=path_script,
+                name=cfme_vhd.replace('.x86_64.vhd', '-vm')),
+            timeout=20)
+
+        pwsh_ssh.run_command("pwsh {}".format(path_script), timeout=180)
 
 
 @pytest.mark.tier(3)
@@ -666,7 +815,6 @@ class TestProvidersRESTAPI(object):
             assert 'SecurityGroup' in security_groups[0]['type']
 
 
-
 @pytest.mark.provider([CloudProvider], override=True, selector=ONE)
 def test_tagvis_provision_fields(setup_provider, request, appliance, user_restricted, tag,
                                  soft_assert):
@@ -727,42 +875,90 @@ def test_domain_id_validation(request, provider):
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-def test_upload_azure_image_to_azure():
+def test_sdn_nsg_arrays_refresh_azure():
     """
-    Upload image copied from RHCF3-11271 to azure using powershell
-    similiar the script in the setup section.
-
     Polarion:
         assignee: anikifor
         casecomponent: Cloud
         caseimportance: medium
-        initialEstimate: 1/2h
-        setup: # Video Demo Script - Upload VHD to Azure
-               # You have to log in via Login-AzureRmAccount
-               Get-AzureRmSubscription -SubscriptionId "9ee63d8e-aee7-4121-861c-
-               d67a5b8d231e" -TenantId "2e64678d-2fa8-40ed-8922-c9b8e2c3f100" |
-               Select-AzureRmSubscription
-               $ResourceGroupName = "CFMEQE-Main"
-               $BlobLocation = "https://cfmeqestore.blob.core.windows.net/"
-               $BlobContainer = "templates"
-               $BlobName = "tmpl-osDisk.vhd"
-               $BlobDestination = $BlobLocation + $BlobContainer + "/" + $BlobName
-               $LocalFilePath = "C:\tmp\"
-               $LocalFileName = "cfme-azure-5.6.0.13-1.x86_64.vhd"
-               $LocalFile = $LocalFilePath + $LocalFileName
-               Add-AzureRmVhd -ResourceGroupName $ResourceGroupName -Destination
-               $BlobDestination -LocalFilePath $LocalFile -NumberOfUploaderThreads 8
+        initialEstimate: 1/6h
+        testSteps:
+            1. Add Network Security group on Azure with coma separated port ranges
+            `1023,1025` rule inbound/outbound ( ATM this feature is not allowed in
+            East US region of Azure - try West/Central)
+            2. Add such Azure Region into CFME
+            3. Refresh provider
+        expectedResults:
+            1. The group is successfully added
+            2. The region is successfully added
+            3. Refreshed succesfully, there are no errors in the logs
+
+    Bugzilla:
+        1520196
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_provider_flavors_azure():
+    """
+    Verify that the vm flavors in Azure are of the correct sizes and that
+    the size display in CFME is accurate.
+    Low priority as it is unlikely to change once set.  Will want to check
+    when azure adds new sizes.  Only need to spot check a few values.
+    For current size values, you can check here:
+    https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: Cloud
+        caseimportance: low
+        initialEstimate: 1/8h
         startsin: 5.6
-        title: Upload Azure image to Azure
+        testSteps:
+            1. Add Azure provider
+            2. Navigate to Flavours
+        expectedResults:
+            1. The provider is successfully added
+            2. Flavours are the same as in MS documentation
+    Bugzilla:
+        1357086
     """
     pass
 
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-def test_create_azure_vm_from_azure_image():
+def test_market_place_images_azure():
     """
-    CFME image must be uploaded to Azure
+    Polarion:
+        assignee: anikifor
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/6h
+        testSteps:
+            1.Enable market place images
+            2.Add Azure provider
+            3.Refresh the provider
+        expectedResults:
+            1.
+            2.
+            3. Refresh is done fast (faster than 15 minutes)
+    Bugzilla:
+        1491330
+    """
+    pass
+
+
+@pytest.mark.ignore_stream('5.11')
+@pytest.mark.tier(1)
+def test_create_azure_vm_from_azure_image(connect_az_account, cfme_vhd, upload_image_to_azure,
+                                          vm_ip):
+    """
+    To run this test Azure account is required.
+
+    Azure VM is provisioned from another VM using Powershell, that can be run on any provider.
 
     Polarion:
         assignee: anikifor
@@ -831,4 +1027,37 @@ def test_create_azure_vm_from_azure_image():
                   VM is completely Stopped in Azure.
         title: Create Azure VM from Azure image
     """
-    pass
+    app = appliance.IPAppliance.from_url(vm_ip)
+
+    # Credentials for the provisioned VM from CFME image, this is different to the VM that runs
+    # powershell scripts as Azure has specific requirements for login/password.
+    # These credentials are used in the script create_vm.ps1 to provision the VM.
+    username = credentials['azure_appliance']['username']
+    password = credentials['azure_appliance']['password']
+
+    with ssh.SSHClient(hostname=vm_ip,
+                       username=username,
+                       password=password) as app_ssh_client:
+
+        # permit root login over ssh for future appliance configuration
+        command = 'sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/g" /etc/ssh/sshd_config'
+        config = app_ssh_client.run_command(
+            'echo {} | sudo -S {}'.format(password, command), ensure_user=True)
+        assert config.success
+
+        # restart sshd to apply configuration changes
+        restart = app_ssh_client.run_command(
+            'echo {} | sudo -S systemctl restart sshd'.format(password), ensure_user=True)
+        assert restart.success
+
+        # unlock root password
+        unlock = app_ssh_client.run_command(
+            'echo {} | sudo -S passwd -u root'.format(password), ensure_user=True)
+        assert unlock.success
+
+    app.configure()
+    app.wait_for_web_ui()
+
+    # Check we can login
+    logged_in_page = app.server.login()
+    assert logged_in_page.is_displayed
