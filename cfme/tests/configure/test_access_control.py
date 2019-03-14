@@ -700,7 +700,10 @@ def test_role_crud(appliance):
         initialEstimate: 1/8h
         tags: rbac
     """
-    role = new_role(appliance)
+    role = _mk_role(appliance, name=None, vm_restriction=None,
+                    product_features=[(['Everything'], False),
+                                      (['Everything', 'Settings', 'Configuration'], True),
+                                      (['Everything', 'Services', 'Catalogs Explorer'], True)])
     with update(role):
         role.name = "{}edited".format(role.name)
     copied_role = role.copy()
