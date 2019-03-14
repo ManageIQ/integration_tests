@@ -65,6 +65,7 @@ generic_objects = cfme.generic_objects.instance:GenericObjectInstanceCollection
 groups = cfme.configure.access_control:GroupCollection
 hosts = cfme.infrastructure.host:HostsCollection
 infra_providers = cfme.infrastructure.provider:InfraProviderCollection
+infra_switches = cfme.infrastructure.networking:InfraSwitchesCollection
 infra_templates = cfme.infrastructure.virtual_machines:InfraTemplateCollection
 infra_vms = cfme.infrastructure.virtual_machines:InfraVmCollection
 intel_report_menus = cfme.intelligence.reports.menus:ReportMenusCollection
