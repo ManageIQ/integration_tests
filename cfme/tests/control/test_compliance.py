@@ -88,7 +88,14 @@ def compliance_vm(configure_fleecing, provider, full_template_modscope):
     name = "{}-{}".format("test-compliance", fauxfactory.gen_alpha(4))
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate(name, provider, full_template_modscope.name)
-    vm.create_on_provider(allow_skip="default")
+    # TODO: remove this check once issue with SSA on other hosts in vSphere 6.5 is figured out
+    if provider.version == 6.5:
+        vm.create_on_provider(
+            allow_skip="default",
+            host=conf.cfme_data['management_systems'][provider.key]['hosts'][0].name
+        )
+    else:
+        vm.create_on_provider(allow_skip="default")
     vm.mgmt.ensure_state(VmState.RUNNING)
     if not vm.exists:
         vm.wait_to_appear(timeout=900)
