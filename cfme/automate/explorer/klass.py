@@ -242,10 +242,6 @@ class Class(BaseEntity, Copiable):
             view.flash.assert_message(
                 'Edit of Automate Class "{}" was cancelled by the user'.format(self.name))
 
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
-
 
 @attr.s
 class ClassCollection(BaseCollection):

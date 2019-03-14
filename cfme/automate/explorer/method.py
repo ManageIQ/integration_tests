@@ -424,10 +424,6 @@ class Method(BaseEntity, Copiable):
             result_view.flash.assert_message(
                 'Automate Method "{}": Delete successful'.format(self.name))
 
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
-
 
 @attr.s
 class MethodCollection(BaseCollection):

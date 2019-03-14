@@ -294,10 +294,6 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         assert view.is_displayed
         view.flash.assert_success_message('The selected Catalog Item was deleted')
 
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
-
     def add_button_group(self):
         button_name = fauxfactory.gen_alpha()
         view = navigate_to(self, 'AddButtonGroup')

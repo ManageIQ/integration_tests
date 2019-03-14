@@ -179,10 +179,6 @@ class Namespace(BaseEntity):
             view.flash.assert_message(
                 'Edit of Automate Namespace "{}" was cancelled by the user'.format(self.name))
 
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
-
 
 @attr.s
 class NamespaceCollection(BaseCollection):

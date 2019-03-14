@@ -222,10 +222,6 @@ class Action(BaseEntity, Updateable, Pretty):
             .filter(actions.description == self.description)\
             .count() > 0
 
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
-
 
 @attr.s
 class ActionCollection(BaseCollection):

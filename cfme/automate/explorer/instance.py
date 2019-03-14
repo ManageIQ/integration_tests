@@ -253,10 +253,6 @@ class Instance(BaseEntity, Copiable):
             result_view.flash.assert_message(
                 'Automate Instance "{}": Delete successful'.format(self.description or self.name))
 
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
-
 
 @attr.s
 class InstanceCollection(BaseCollection):

@@ -264,10 +264,6 @@ class Domain(BaseEntity, Fillable):
             view.flash.assert_message(
                 'Edit of Automate Domain "{}" was cancelled by the user'.format(self.name))
 
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
-
 
 @attr.s
 class DomainCollection(BaseCollection):

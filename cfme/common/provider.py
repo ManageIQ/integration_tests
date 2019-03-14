@@ -624,16 +624,6 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             return self.create(cancel=False, validate_credentials=True,
                                check_existing=True, validate_inventory=True)
 
-    def delete_if_exists(self, *args, **kwargs):
-        """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``
-
-        Returns: True if provider existed and delete was initiated, False otherwise
-        """
-        if self.exists:
-            self.delete(*args, **kwargs)
-            return True
-        return False
-
     @variable(alias='rest')
     def is_refreshed(self, refresh_timer=None, refresh_delta=600):
         if refresh_timer:
