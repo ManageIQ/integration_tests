@@ -203,7 +203,7 @@ class ApplianceConsoleCli(object):
     def __init__(self, appliance):
         self.appliance = appliance
 
-    def _run(self, appliance_console_cli_command, timeout=10):
+    def _run(self, appliance_console_cli_command, timeout=35):
         result = self.appliance.ssh_client.run_command(
             "appliance_console_cli {}".format(appliance_console_cli_command),
             timeout)
