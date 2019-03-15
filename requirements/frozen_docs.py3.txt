@@ -207,6 +207,7 @@ ovirt-engine-sdk-python==4.3.0
 packaging==19.0
 pandocfilters==1.4.2
 paramiko==2.6
+paramiko-expect==0.2.8
 parsedatetime==2.4
 parso==0.4.0
 pbr==5.4.1
