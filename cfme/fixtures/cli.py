@@ -373,6 +373,7 @@ def provision_vm(request, provider):
 
 
 def update_appliance(appliance):
+    appliance.browser_steal = True
     with appliance:
         red_hat_updates = RedHatUpdates(
             service="rhsm",
