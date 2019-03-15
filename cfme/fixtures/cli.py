@@ -87,7 +87,7 @@ def dedicated_db_appliance(app_creds, unconfigured_appliance):
     10. '' finish."""
     app = unconfigured_appliance
     pwd = app_creds["password"]
-    command_set = ("ap", "", "5", "1", "1", "1", "y", pwd, TimedCommand(pwd, 360), "")
+    command_set = ("ap", "", "7", "1", "1", "2", "y", pwd, TimedCommand(pwd, 360), "")
     app.appliance_console.run_commands(command_set)
     wait_for(lambda: app.db.is_dedicated_active)
     yield app

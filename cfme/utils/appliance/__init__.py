@@ -204,12 +204,13 @@ class ApplianceConsoleCli(object):
         self.appliance = appliance
 
     def _run(self, appliance_console_cli_command, timeout=10):
-        return self.appliance.ssh_client.run_command(
+        result = self.appliance.ssh_client.run_command(
             "appliance_console_cli {}".format(appliance_console_cli_command),
             timeout)
+        return result
 
     def set_hostname(self, hostname):
-        return self._run("--host {host}".format(host=hostname))
+        return self._run("--host {host}".format(host=hostname), timeout=60)
 
     def configure_appliance_external_join(self, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
@@ -217,7 +218,7 @@ class ApplianceConsoleCli(object):
             " --dbname {dbname} --verbose --fetch-key {fetch_key} --sshlogin {sshlogin}"
             " --sshpassword {sshpass}".format(dbhostname=dbhostname, username=username,
                 password=password, dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin,
-                sshpass=sshpass))
+                sshpass=sshpass), timeout=300)
 
     def configure_appliance_external_create(self, region, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
@@ -225,7 +226,8 @@ class ApplianceConsoleCli(object):
             " --password {password} --dbname {dbname} --verbose --fetch-key {fetch_key}"
             " --sshlogin {sshlogin} --sshpassword {sshpass}".format(
                 region=region, dbhostname=dbhostname, username=username, password=password,
-                dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
+                dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass),
+            timeout=300)
 
     def configure_appliance_internal(self, region, dbhostname, username, password, dbname, dbdisk):
         self._run("--region {region} --internal --hostname {dbhostname} --username {username}"
@@ -240,19 +242,19 @@ class ApplianceConsoleCli(object):
             " {fetch_key} --sshlogin {sshlogin} --sshpassword {sshpass}".format(
                 region=region, dbhostname=dbhostname, username=username, password=password,
                 dbname=dbname, dbdisk=dbdisk, fetch_key=fetch_key, sshlogin=sshlogin,
-                sshpass=sshpass))
+                sshpass=sshpass), timeout=600)
 
     def configure_appliance_dedicated_db(self, username, password, dbname, dbdisk):
         self._run("--internal --username {username} --password {password}"
             " --dbname {dbname} --verbose --dbdisk {dbdisk} --key --standalone".format(
-                username=username, password=password, dbname=dbname, dbdisk=dbdisk))
+                username=username, password=password, dbname=dbname, dbdisk=dbdisk), timeout=300)
 
     def configure_ipa(self, ipaserver, ipaprincipal, ipapassword, ipadomain=None, iparealm=None):
         cmd_result = self._run(
             '--ipaserver {s} --ipaprincipal {u} --ipapassword {p} {d} {r}'
             .format(s=ipaserver, u=ipaprincipal, p=ipapassword,
                     d='--ipadomain {}'.format(ipadomain) if ipadomain else '',
-                    r='--iparealm {}'.format(iparealm) if iparealm else ''))
+                    r='--iparealm {}'.format(iparealm) if iparealm else ''), timeout=90)
         logger.debug('IPA configuration output: %s', str(cmd_result))
         assert cmd_result.success
         assert 'ipa-client-install exit code: 1' not in cmd_result.output
@@ -274,10 +276,11 @@ class ApplianceConsoleCli(object):
             " --primary-host {primhost} --standby-host {standhost} --cluster-node-number {node}"
             " --auto-failover --dbname {dbname} --verbose --dbdisk {dbdisk}"
             " --standalone".format(username=username, password=password, reptype=reptype,
-                primhost=primhost, standhost=standhost, node=node, dbname=dbname, dbdisk=dbdisk))
+                primhost=primhost, standhost=standhost, node=node, dbname=dbname, dbdisk=dbdisk),
+                  timeout=300)
 
     def uninstall_ipa_client(self):
-        assert self._run("--uninstall-ipa")
+        assert self._run("--uninstall-ipa", timeout=90)
         assert not self.appliance.ssh_client.run_command("cat /etc/ipa/default.conf")
 
 
