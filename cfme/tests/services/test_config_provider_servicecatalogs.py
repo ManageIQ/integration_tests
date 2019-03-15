@@ -10,8 +10,8 @@ from cfme.utils.log import logger
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
-    pytest.mark.parametrize('job_type', ['template', 'workflow'],
-        ids=['template_job', 'workflow_job'], scope='module'),
+    pytest.mark.parametrize('job_type', ['template', 'workflow', 'template_survey'],
+        ids=['template_job', 'workflow_job', 'template_job_survey'], scope='module'),
     pytest.mark.ignore_stream('upstream'),
     pytest.mark.uncollectif(lambda appliance,
         job_type: appliance.version < '5.10' and job_type == 'workflow'),
@@ -75,7 +75,11 @@ def test_order_tower_catalog_item(appliance, catalog_item, request, job_type):
         casecomponent: Services
         caseimportance: high
     """
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    dialog_values = {'Survey': "QE"}
+    if job_type != 'template_survey':
+        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    else:
+        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name, dialog_values=dialog_values)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}
