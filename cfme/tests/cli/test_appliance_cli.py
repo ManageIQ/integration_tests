@@ -201,7 +201,7 @@ def test_appliance_console_cli_extend_storage(unconfigured_appliance):
         casecomponent: Configuration
         initialEstimate: 1/6h
     """
-    unconfigured_appliance.ssh_client.run_command('appliance_console_cli -t auto')
+    unconfigured_appliance.ssh_client.run_command('appliance_console_cli -t /dev/vdb')
 
     def is_storage_extended():
         assert unconfigured_appliance.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
@@ -218,7 +218,7 @@ def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
         casecomponent: Configuration
         initialEstimate: 1/6h
     """
-    unconfigured_appliance.ssh_client.run_command('appliance_console_cli -l auto')
+    unconfigured_appliance.ssh_client.run_command('appliance_console_cli -l /dev/vdb')
 
     def is_storage_extended():
         assert unconfigured_appliance.ssh_client.run_command("df -h | grep /vg_miq_logs")
