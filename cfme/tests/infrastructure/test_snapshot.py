@@ -40,14 +40,14 @@ def provision_vm(provider, template):
 
 
 @pytest.fixture(scope="function")
-def small_test_vm(setup_provider, provider, small_template, request):
+def small_test_vm(setup_provider, provider, small_template):
     vm = provision_vm(provider, small_template)
     yield vm
     vm.cleanup_on_provider()
 
 
 @pytest.fixture(scope="function")
-def full_test_vm(setup_provider, provider, full_template, request):
+def full_test_vm(setup_provider, provider, full_template):
     vm = provision_vm(provider, full_template)
     yield vm
     vm.cleanup_on_provider()
@@ -170,7 +170,7 @@ def test_delete_all_snapshots(small_test_vm, provider):
              message="Waiting for second snapshot to disappear")
 
 
-def verify_revert_snapshot(full_test_vm, provider, soft_assert, request,
+def verify_revert_snapshot(full_test_vm, provider, soft_assert,
                            active_snapshot=False):
     if provider.one_of(RHEVMProvider):
         # RHV snapshots have only description, no name
@@ -250,7 +250,7 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, request,
 )
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
                          'Must be RHEVM provider version >= 4')
-def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, request):
+def test_verify_revert_snapshot(full_test_vm, provider, soft_assert):
     """Tests revert snapshot
 
     Metadata:
@@ -261,11 +261,11 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, request):
         casecomponent: Infra
         initialEstimate: 1/4h
     """
-    verify_revert_snapshot(full_test_vm, provider, soft_assert, request)
+    verify_revert_snapshot(full_test_vm, provider, soft_assert)
 
 
 @pytest.mark.provider([VMwareProvider], override=True)
-def test_revert_active_snapshot(full_test_vm, provider, soft_assert, request):
+def test_revert_active_snapshot(full_test_vm, provider, soft_assert):
     """Tests revert active snapshot
 
     Metadata:
@@ -277,7 +277,7 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, request):
         caseimportance: medium
         initialEstimate: 1/3h
     """
-    verify_revert_snapshot(full_test_vm, provider, soft_assert, request,
+    verify_revert_snapshot(full_test_vm, provider, soft_assert,
                            active_snapshot=True)
 
 
