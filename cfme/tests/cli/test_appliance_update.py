@@ -224,6 +224,8 @@ def test_update_distributed_webui(ext_appliances_with_providers, appliance, requ
     wait_for(do_appliance_versions_match, func_args=(appliance, ext_appliances_with_providers[1]),
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
+    ext_appliances_with_providers[0].evmserverd.wait_for_running()
+    ext_appliances_with_providers[1].evmserverd.wait_for_running()
     # Verify that existing provider can detect new VMs on both apps
     virtual_crud_appl1 = provider_app_crud(VMwareProvider, ext_appliances_with_providers[0])
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, ext_appliances_with_providers[1])
