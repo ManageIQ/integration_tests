@@ -264,9 +264,6 @@ def test_template_set_ownership(appliance, request, provider, setup_provider, vm
         template.set_ownership(user=user_no_owner)
         # set ownership back to admin
         template.set_ownership(user=user_admin)
-    except Exception as e:
-        # in case of any unforseen exception, raise it
-        raise e
     finally:
         # in every case, delete template we created
         template.mgmt.delete()

@@ -332,7 +332,7 @@ class TestVmDetailsPowerControlPerProvider(object):
             if testing_vm.provider.one_of(RHEVMProvider):
                 logger.warning('working around bz1174858, ignoring timeout')
             else:
-                raise e
+                raise
         soft_assert(testing_vm.mgmt.is_suspended, "vm not suspended")
         # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1101604
         if not testing_vm.provider.one_of(RHEVMProvider):

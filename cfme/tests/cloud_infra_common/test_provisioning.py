@@ -468,7 +468,7 @@ def test_provision_with_boot_volume(request, instance_args, provider, soft_asser
         except Exception as e:
             logger.info(
                 "Provision failed {}: {}".format(e, provision_request.request_state))
-            raise e
+            raise
         msg = "Provisioning failed with the message {}".format(
             provision_request.row.last_message.text)
         assert provision_request.is_succeeded(method='ui'), msg
@@ -537,7 +537,7 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
     except Exception as e:
         logger.info(
             "Provision failed {}: {}".format(e, provision_request.request_state))
-        raise e
+        raise
     assert provision_request.is_succeeded(method='ui'), (
         "Provisioning failed with the message {}".format(
             provision_request.row.last_message.text))
