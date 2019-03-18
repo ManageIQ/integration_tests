@@ -471,9 +471,10 @@ def test_custom_button_on_vm_resource_detail(context):
             2. In normal UI - OPS, Provision test service using any infra provider
             (nvc55 recommended)
             3. In SSUI, Check custom button on VM resource details page
+            4. Check button execution
 
     Bugzilla:
-        1427430
+        1427430, 1450473, 1454910
     """
     pass
 
