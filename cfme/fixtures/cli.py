@@ -511,10 +511,10 @@ def provision_vm(request, provider):
     vm_name = "test_rest_db_{}".format(fauxfactory.gen_alphanumeric())
     coll = provider.appliance.provider_based_collection(provider, coll_type="vms")
     vm = coll.instantiate(vm_name, provider)
-    request.addfinalizer(vm.delete)
     if not provider.mgmt.does_vm_exist(vm_name):
         logger.info("deploying %s on provider %s", vm_name, provider.key)
         vm.create_on_provider(allow_skip="default")
+        request.addfinalizer(vm.delete)
     else:
         logger.info("recycling deployed vm %s on provider %s", vm_name, provider.key)
     vm.provider.refresh_provider_relationships()
