@@ -44,7 +44,7 @@ def network(provider, appliance):
 
 @pytest.mark.rhv1
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8128'),
-    BZ(1633540, forced_streams=['5.9', '5.10'],
+    BZ(1649886, forced_streams=['5.9', '5.10'],
         unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_provision_vm_to_virtual_network(appliance, setup_provider, provider,
                                          request, provisioning, network):
