@@ -1,6 +1,7 @@
 """Test to validate End-to-End migrations- functional testing."""
 import pytest
 
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import rhel7_minimal
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -9,7 +10,10 @@ from cfme.markers.env_markers.provider import ONE_PER_VERSION
 
 pytestmark = [
     pytest.mark.provider(
-        classes=[RHEVMProvider], selector=ONE_PER_VERSION, required_flags=["v2v"], scope="module"
+        classes=[OpenStackProvider, RHEVMProvider],
+        selector=ONE_PER_VERSION,
+        required_flags=["v2v"],
+        scope="module"
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
@@ -34,9 +38,8 @@ def test_infrastructure_mapping_crud(request, appliance, mapping_data_vm_obj_sin
         subcomponent: RHV
         upstream: yes
         testSteps:
-            1. V2V providers have to be added to create Mapping
-            2. Authenticate Host and conversion tags
-            3. create mapping with nfs source and nfs target datastore
+            1. V2V providers have to be added to create Mapping (Vmware and RHV/OSP)
+            2. create mapping with nfs source and nfs target datastore
     """
 
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings

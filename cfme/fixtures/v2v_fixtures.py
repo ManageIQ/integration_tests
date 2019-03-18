@@ -12,6 +12,8 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.v2v.infrastructure_mapping import InfrastructureMapping as InfraMapping
 
 
@@ -197,7 +199,10 @@ def set_conversion_instance_for_osp(appliance, transformation_method, osp_provid
         pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
 
     try:
-        conversion_instances = osp_provider.data.get('conversion_instances', [])
+        if transformation_method == "vddk":
+            conversion_instances = osp_provider.data['conversion_instances']['vddk']
+        else:
+            conversion_instances = osp_provider.data['conversion_instances']['ssh']
     except KeyError:
         pytest.skip("No conversion instance on provider.")
 
@@ -212,7 +217,7 @@ def set_conversion_instance_for_osp(appliance, transformation_method, osp_provid
             )
         )
         if not set_conv_host.success:
-            pytest.skip("Failed to set conversion hosts:".format(set_conv_host.out))
+            pytest.skip("Failed to set conversion hosts:".format(set_conv_host.output))
 
 
 def get_vm(request, appliance, source_provider, template, datastore=None):
@@ -255,7 +260,7 @@ def get_vm(request, appliance, source_provider, template, datastore=None):
     return vm_obj
 
 
-def get_source_data(provider, component, default_value):
+def get_data(provider, component, default_value):
     try:
         data = (provider.data.get(component, [])[0])
     except IndexError:
@@ -273,20 +278,23 @@ def infra_mapping_default_data(source_provider, provider):
         source_provider: Vmware provider
         provider: Target rhev/OSP provider
     """
+    plan_type = VersionPicker({Version.lowest(): None,
+                               "5.10": "rhv" if provider.one_of(RHEVMProvider) else "osp"}).pick()
     infra_mapping_data = {
         "name": "infra_map_{}".format(fauxfactory.gen_alphanumeric()),
         "description": "Single Datastore migration of VM from {ds_type1} to {ds_type2}".format(
             ds_type1="nfs", ds_type2="nfs"
         ),
+        "plan_type": plan_type,
         "clusters": [component_generator("clusters", source_provider, provider)],
         "datastores": [component_generator(
             "datastores", source_provider, provider,
-            get_source_data(source_provider, "datastores", "nfs").type,
-            get_source_data(provider, "datastores", "nfs").type)],
+            get_data(source_provider, "datastores", "nfs").type,
+            get_data(provider, "datastores", "nfs").type)],
         "networks": [
             component_generator("vlans", source_provider, provider,
-                                get_source_data(source_provider, "vlans", "VM Network"),
-                                get_source_data(provider, "vlans", "ovirtmgmt"))
+                                get_data(source_provider, "vlans", "VM Network"),
+                                get_data(provider, "vlans", "ovirtmgmt"))
         ],
     }
     return infra_mapping_data
@@ -531,6 +539,11 @@ def component_generator(selector, source_provider, provider, source_type=None, t
             [partial_match(sources[0])], [partial_match(targets[0])]
         )
     elif selector is "datastores":
+
+        # Ignoring target_type for osp and setting new value
+        if provider.one_of(OpenStackProvider):
+            target_type = "volume"
+
         sources = [d.name for d in source_data if d.type == source_type]
         targets = [d.name for d in target_data if d.type == target_type]
         component = InfraMapping.DatastoreComponent(
