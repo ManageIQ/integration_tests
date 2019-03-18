@@ -7374,32 +7374,6 @@ def test_snapshot_tree_view_functionality():
     pass
 
 
-@test_requirements.cfme_tenancy
-def test_superadmin_child_tenant_delete_parent_catalog():
-    """
-    Child superadmin tenant should able to delete catalog belonging to
-    superadmin in parent tenant. This is by design tenancy has not been
-    split any further and at this point is not expected to be changed
-    Note: As per below BZ#1375713,  Child superadmin tenant should not
-    delete catalog belonging to superadmin in parent tenant. However as
-    per the current code base this is by design: "ServiceTemplate"
-    => :ancestor_ids,
-    https://github.com/ManageIQ/manageiq/blob/2a66cb59e26816c7296896620b5b
-    7731b350943d/lib/rbac/filterer.rb#L114
-    You"re able to see Catalog items of parent and ancestor tenants.  If
-    your role has permission to modify catalog items / delete them, and
-    you can to see ones from ancestor tenants, then you can delete them.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1375713
-
-    Polarion:
-        assignee: mnadeem
-        casecomponent: Configuration
-        initialEstimate: 1/2h
-        startsin: 5.5
-    """
-    pass
-
-
 @pytest.mark.manual
 @test_requirements.rep
 @pytest.mark.tier(3)
