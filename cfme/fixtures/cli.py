@@ -288,7 +288,7 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     interaction.expect('Press any key to continue.', timeout=6 * 60)
     interaction.send('')
 
-    wait_for(lambda: apps0.db.is_dedicated_active)
+    wait_for(lambda: apps0.db.is_dedicated_active, num_sec=4 * 60)
 
     # Configure EVM webui appliance with create region in dedicated database
     interaction = SSHClientInteraction(apps2.ssh_client, timeout=10, display=True,

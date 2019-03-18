@@ -186,6 +186,7 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
                     num_sec=60)
     assert wait_for(func=lambda: enabled_embedded_appliance.is_nginx_running,
                     num_sec=60)
+    enabled_embedded_appliance.wait_for_web_ui()
     repositories = enabled_embedded_appliance.collections.ansible_repositories
     name = "example_{}".format(fauxfactory.gen_alpha())
     description = "edited_{}".format(fauxfactory.gen_alpha())
@@ -218,14 +219,15 @@ def test_update_distributed_webui(ext_appliances_with_providers, appliance, requ
         initialEstimate: 1/4h
     """
     update_appliance(ext_appliances_with_providers[0])
-    wait_for(do_appliance_versions_match, func_args=(appliance, ext_appliances_with_providers[0]),
-             num_sec=900, delay=20, handle_exception=True,
-             message='Waiting for appliance to update')
-    wait_for(do_appliance_versions_match, func_args=(appliance, ext_appliances_with_providers[1]),
-             num_sec=900, delay=20, handle_exception=True,
-             message='Waiting for appliance to update')
-    ext_appliances_with_providers[0].evmserverd.wait_for_running()
-    ext_appliances_with_providers[1].evmserverd.wait_for_running()
+    for updated_appliance in ext_appliances_with_providers:
+        wait_for(do_appliance_versions_match, func_args=(appliance, updated_appliance),
+                num_sec=900, delay=20, handle_exception=True,
+                message='Waiting for appliance to update')
+    for updated_appliance in ext_appliances_with_providers:
+        updated_appliance.evmserverd.wait_for_running()
+    for updated_appliance in ext_appliances_with_providers:
+        updated_appliance.wait_for_web_ui()
+
     # Verify that existing provider can detect new VMs on both apps
     virtual_crud_appl1 = provider_app_crud(VMwareProvider, ext_appliances_with_providers[0])
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, ext_appliances_with_providers[1])
@@ -258,6 +260,10 @@ def test_update_replicated_webui(replicated_appliances_with_providers, appliance
              func_args=(appliance, replicated_appliances_with_providers[1]),
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
+    replicated_appliances_with_providers[0].evmserverd.wait_for_running()
+    replicated_appliances_with_providers[1].evmserverd.wait_for_running()
+    replicated_appliances_with_providers[0].wait_for_web_ui()
+    replicated_appliances_with_providers[1].wait_for_web_ui()
 
     # Assert providers exist after upgrade and replicated to second appliances
     assert providers_before_upgrade == set(
