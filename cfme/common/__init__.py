@@ -727,7 +727,7 @@ class CustomButtonEvents(CFMENavigateStep):
         ent = self.prerequisite_view.entities
         table = ent.summary("Relationships") if hasattr(ent, "summary") else ent.relationships
 
-        # ToDo: remove this workaround as BZ-1668691 fix.
+        # TODO(ndhandre): remove this workaround as BZ-1668691 fix.
         #  This is temporary workaround to avoid inconsistency in UI.
 
         cb_text = (

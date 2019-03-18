@@ -72,7 +72,7 @@ class TenantDetailsAccordion(View):
 class TenantEntities(BaseEntitiesView):
     """The entities on the main list page"""
     table = Table('//div[@id="gtl_div"]//table')
-    # todo: remove stuff about and use the same widgets from entities view ^^
+    # TODO: remove stuff about and use the same widgets from entities view ^^
 
 
 class TenantDetailsEntities(View):
@@ -294,7 +294,6 @@ class Tenant(BaseEntity, Taggable, ValidateStatsMixin):
         return result
 
 
-
 @attr.s
 class TenantCollection(BaseCollection):
     """Collection object for the :py:class:`cfme.cloud.tenant.Tenant`."""
@@ -313,16 +312,10 @@ class TenantCollection(BaseCollection):
         else:
             page.form.cancel_button.click()
 
-        all_view = self.create_view(TenantAllView)
-        wait_for(lambda: all_view.is_displayed, num_sec=120, delay=3,
-                 fail_func=all_view.flush_widget_cache, handle_exception=True)
+        all_view = self.create_view(TenantAllView, wait="20s")
 
         if not changed:
-            if self.appliance.version >= '5.8':
-                msg = 'Add of Cloud Tenant was cancelled by the user'
-            else:
-                msg = 'Add of new Cloud Tenant was cancelled by the user'
-            all_view.flash.assert_success_message(msg)
+            all_view.flash.assert_success_message("Add of Cloud Tenant was cancelled by the user")
         else:
             all_view.flash.assert_success_message(
                 'Cloud Tenant "{}" created'.format(name))

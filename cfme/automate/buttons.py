@@ -480,7 +480,7 @@ class ButtonCollection(BaseCollection):
         )
 
         if visibility:
-            # ToDo: extend visibility expression variations if needed.
+            # TODO: extend visibility expression variations if needed.
             if self.group.type in EVM_TAG_OBJS:
                 tag = "EVM {obj_type}.{tag}".format(
                     obj_type=self.group.type, tag=visibility["tag"]
@@ -496,7 +496,7 @@ class ButtonCollection(BaseCollection):
             view.advanced.visibility.expression.fill_tag(tag=tag, value=visibility["value"])
 
         if enablement:
-            # ToDo: extend enablement expression variations if needed.
+            # TODO: extend enablement expression variations if needed.
             if self.group.type in EVM_TAG_OBJS:
                 tag = "EVM {obj_type}.{tag}".format(
                     obj_type=self.group.type, tag=enablement["tag"]
