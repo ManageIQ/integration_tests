@@ -53,8 +53,8 @@ class ServicesCatalogView(BaseLoggedInPage):
         policy = Dropdown('Policy')
         view_selector = View.nested(ItemsToolBarViewSelector)
 
-    # TODO(nansari/sshveta): this should be fixed by this code owner
-    #  for backward compatibility.it is difficult to figure out where those are used
+    # TODO(nansari/sshveta): For backward compatibility. It is difficult to figure out where those
+    #  are used
     @property
     def configuration(self):
         return self.toolbar.configuration

@@ -249,6 +249,16 @@ We also do a few things that aren't explicitly called out in PEP 8:
           CertainQuestionsError: Raises certain questions about the authors sanity.
         """
 
+* Use `TODO` comment for workaround, temporary or not perfect code.
+  A `TODO` comment begins with the string `TODO` all in caps. It can be use with some identifier
+  like Name or Email (i.e. the person responsible for improvement), Bugzilla, Github Issue etc.
+  An example is described below::
+
+    # TODO: <todo message>
+    # TODO(ndhandre): <todo message>
+    # TODO(ndhandre@redhat.com): <todo message>
+    # TODO(BZ-1687061): <todo message>
+
 * In addition to being broken up into the three sections of standard library,
   third-party, and the local application, imports should be sorted
   alphabetically. 'import' lines within those sections still come before
