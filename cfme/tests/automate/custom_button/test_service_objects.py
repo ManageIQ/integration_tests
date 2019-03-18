@@ -5,6 +5,8 @@ from widgetastic_patternfly import Dropdown
 from cfme.services.myservice import MyService
 from cfme.tests.automate.custom_button import CustomButtonSSUIDropdwon
 from cfme.tests.automate.custom_button import log_request_check
+from cfme.tests.automate.custom_button import TextInputDialogSSUIView
+from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
@@ -133,7 +135,8 @@ def serv_button_group(appliance, request):
     "display", DISPLAY_NAV.keys(), ids=[item.replace(" ", "_") for item in DISPLAY_NAV.keys()]
 )
 @pytest.mark.uncollectif(
-    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group
+    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group,
+    reason="Generic object custom button not supported by SSUI",
 )
 @pytest.mark.meta(
     blockers=[
@@ -197,7 +200,8 @@ def test_custom_button_display(request, appliance, context, display, objects, bu
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
 @pytest.mark.parametrize("submit", SUBMIT, ids=[item.replace(" ", "_") for item in SUBMIT])
 @pytest.mark.uncollectif(
-    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group
+    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group,
+    reason="Generic object custom button not supported by SSUI",
 )
 def test_custom_button_automate(request, appliance, context, submit, objects, button_group):
     """ Test custom button for automate and requests count as per submit
@@ -367,7 +371,10 @@ def vis_enb_button(request, appliance, button_group):
 
 @pytest.mark.tier(0)
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
-@pytest.mark.uncollectif(lambda context, button_group: "GENERIC" in button_group)
+@pytest.mark.uncollectif(
+    lambda context, button_group: "GENERIC" in button_group,
+    reason="Generic object custom button not supported by SSUI",
+)
 def test_custom_button_expression(appliance, context, objects, button_group, vis_enb_button):
     """ Test custom button as per expression enablement/visibility.
 
@@ -560,8 +567,12 @@ def test_custom_button_dialog_service_archived():
     pass
 
 
-@pytest.mark.manual
-def test_custom_button_dialog(button_group):
+@pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
+@pytest.mark.uncollectif(
+    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group,
+    reason="Generic object custom button not supported by SSUI",
+)
+def test_custom_button_dialog(appliance, dialog, request, context, objects, button_group):
     """ Test custom button with dialog and InspectMe method
 
     Polarion:
@@ -585,4 +596,51 @@ def test_custom_button_dialog(button_group):
     Bugzilla:
         1574774
     """
-    pass
+    group, obj_type = button_group
+    with appliance.context.use(ViaUI):
+        button = group.buttons.create(
+            text="btn_{}".format(fauxfactory.gen_alphanumeric(3)),
+            hover="btn_hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+            dialog=dialog,
+            system="Request",
+            request="InspectMe",
+        )
+        request.addfinalizer(button.delete_if_exists)
+
+    with appliance.context.use(context):
+        navigate_to = ssui_nav if context is ViaSSUI else ui_nav
+
+        obj = objects[obj_type]["Details"][0]
+        dest_name = objects[obj_type]["Details"][1]
+        view = navigate_to(obj, dest_name)
+        custom_button_group = Dropdown(view, group.text)
+        assert custom_button_group.has_item(button.text)
+
+        # Clear the automation log
+        assert appliance.ssh_client.run_command(
+            'echo -n "" > /var/www/miq/vmdb/log/automation.log'
+        )
+
+        custom_button_group.item_select(button.text)
+        _dialog_view = TextInputDialogView if context is ViaUI else TextInputDialogSSUIView
+        dialog_view = view.browser.create_view(_dialog_view, wait="10s")
+        assert dialog_view.service_name.fill("Custom Button Execute")
+        dialog_view.submit.click()
+
+        # SSUI not support flash messages
+        if context is ViaUI:
+            view.flash.assert_message("Order Request was Submitted")
+
+        # check request in log
+        try:
+            wait_for(
+                log_request_check,
+                [appliance, 1],
+                timeout=600,
+                message="Check for expected request count",
+                delay=20,
+            )
+        except TimedOutError:
+            assert False, "Expected {count} requests not found in automation log".format(
+                count=str(1)
+            )
