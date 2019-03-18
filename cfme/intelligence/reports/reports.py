@@ -520,7 +520,7 @@ class SavedReport(Updateable, BaseEntity):
         try:
             headers = tuple([hdr.encode("utf-8") for hdr in view.table.headers])
             body = []
-            for _ in view.paginator.pages():
+            for _ in range(view.paginator.pages_amount):
                 for row in view.table.rows():
                     if not all([c[1].is_displayed for c in row]):
                         # This is a temporary workaround for cases we have row span
