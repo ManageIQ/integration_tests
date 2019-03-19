@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.rest.gen_data import _creating_skeleton
 from cfme.rest.gen_data import groups as _groups
 from cfme.rest.gen_data import roles as _roles
 from cfme.rest.gen_data import tenants as _tenants
@@ -485,10 +484,6 @@ class TestUsersViaREST(object):
             assert appliance.new_rest_api_instance(auth=user_auth)
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(
-        lambda appliance: appliance.version < '5.9',
-        reason='fix for BZ 1486041 was not back ported to 5.8'
-    )
     def test_create_uppercase_user(self, request, appliance):
         """Tests creating user with userid containing uppercase letters.
 
@@ -509,12 +504,11 @@ class TestUsersViaREST(object):
             "name": "REST User {}".format(uniq),
             "password": fauxfactory.gen_alphanumeric(),
             "email": "user@example.com",
-            "group": {"description": "EvmGroup-user_self_service"}
+            "group": "EvmGroup-user_self_service"
         }
-
-        user = _creating_skeleton(request, appliance, 'users', [data])[0]
+        user, _ = _users(request, appliance, **data)
         assert_response(appliance)
-        user_auth = (user.userid, data['password'])
+        user_auth = (user[0].userid, data['password'])
         assert appliance.new_rest_api_instance(auth=user_auth)
 
     @pytest.mark.tier(2)
