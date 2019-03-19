@@ -468,6 +468,15 @@ class InstanceCollection(VMCollection):
                  for e in page_entities
                  if e.data.get('provider') != '']  # safe provider check, archived shows no provider
             )
+
+        # filtering
+        if self.filters.get("names"):
+            names = self.filters["names"]
+            entities = [e for e in entities if e.name in names]
+        if self.filters.get("name"):
+            name = self.filters["name"]
+            entities = [e for e in entities if e.name == name]
+
         return entities
 
 
@@ -592,6 +601,29 @@ class PolicySimulation(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Policy Simulation')
+
+
+@navigator.register(InstanceCollection, "PolicySimulation")
+class PolicySimulation(CFMENavigateStep):
+    VIEW = PolicySimulationView
+
+    prerequisite = NavigateToSibling("All")
+
+    @property
+    def navigatable(self):
+        return bool(self.obj.filters)
+
+    def step(self, *args, **kwargs):
+        # if filter is not defined we don't want to navigate using every object
+        if not self.navigatable:
+            raise DestinationNotFound(
+                "Navigation to policy simulation page using a collection requires the collection "
+                "to be filtered."
+            )
+        # click the checkbox of every object in the filtered collection
+        for entity in self.obj.all():
+            self.prerequisite_view.entities.get_entity(name=entity.name, surf_pages=True).check()
+        self.prerequisite_view.toolbar.policy.item_select("Policy Simulation")
 
 
 @navigator.register(Instance, 'SetOwnership')
