@@ -22,7 +22,6 @@ from cfme.common.vm_views import VMDetailsEntities
 from cfme.common.vm_views import VMEntities
 from cfme.common.vm_views import VMToolbar
 from cfme.exceptions import DestinationNotFound
-from cfme.exceptions import InstanceNotFound
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -291,14 +290,14 @@ class Instance(VM):
         try:
             return view.entities.get_entity(name=self.name, surf_pages=True)
         except ItemNotFound:
-            raise InstanceNotFound("Instance '{}' not found in UI!".format(self.name))
+            raise ItemNotFound("Instance '{}' not found in UI!".format(self.name))
 
 
     def power_control_from_cfme(self, *args, **kwargs):
         """Power controls a VM from within CFME using details or collection
 
         Raises:
-            InstanceNotFound: the instance wasn't found when navigating
+            ItemNotFound: the instance wasn't found when navigating
             OptionNotAvailable: option param is not visible or enabled
         """
         # TODO push this to common.vm when infra vm classes have widgets
@@ -313,7 +312,9 @@ class Instance(VM):
             try:
                 row = view.entities.get_entity(name=self.name, surf_pages=True)
             except ItemNotFound:
-                raise InstanceNotFound('Failed to find instance in table: {}'.format(self.name))
+                raise ItemNotFound(
+                    'Failed to find instance in table: {}'.format(self.name)
+                )
             row.check()
 
         # cancel is the kwarg, when true we want item_select to dismiss the alert, flip the bool
@@ -532,7 +533,7 @@ class Details(CFMENavigateStep):
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True,
                                                              use_search=True)
         except ItemNotFound:
-            raise InstanceNotFound('Failed to locate instance with name "{}"'.format(self.obj.name))
+            raise ItemNotFound('Failed to locate instance with name "{}"'.format(self.obj.name))
         row.click()
 
     def resetter(self, *args, **kwargs):
@@ -549,7 +550,7 @@ class ArchiveDetails(CFMENavigateStep):
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True,
                                                              use_search=True)
         except ItemNotFound:
-            raise InstanceNotFound('Failed to locate instance with name "{}"'.format(self.obj.name))
+            raise ItemNotFound('Failed to locate instance with name "{}"'.format(self.obj.name))
         row.click()
 
     def resetter(self, *args, **kwargs):

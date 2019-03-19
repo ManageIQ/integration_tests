@@ -17,12 +17,11 @@ from cfme.common.vm_views import SetOwnershipView
 from cfme.common.vm_views import VMDetailsEntities
 from cfme.common.vm_views import VMEntities
 from cfme.exceptions import DestinationNotFound
-from cfme.exceptions import ImageNotFound
+from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.providers import get_crud_by_name
-from widgetastic_manageiq import ItemNotFound
 from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
@@ -223,7 +222,7 @@ class ImageDetails(CFMENavigateStep):
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
-            raise ImageNotFound('Failed to locate image with name "{}"'.format(self.obj.name))
+            raise ItemNotFound('Failed to locate image with name "{}"'.format(self.obj.name))
         row.click()
 
 

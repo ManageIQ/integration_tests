@@ -16,7 +16,6 @@ from widgetastic_patternfly import View
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common import TaggableCollection
-from cfme.exceptions import FlavorNotFound
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -266,7 +265,7 @@ class FlavorDetails(CFMENavigateStep):
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
-            raise FlavorNotFound('Could not locate flavor "{}" on provider {}'
+            raise ItemNotFound('Could not locate flavor "{}" on provider {}'
                                  .format(self.obj.name, self.obj.provider.name))
         row.click()
 

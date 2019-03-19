@@ -36,7 +36,7 @@ from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
 from cfme.exceptions import BugException
 from cfme.exceptions import DestinationNotFound
-from cfme.exceptions import ZoneNotFound
+from cfme.exceptions import ItemNotFound
 from cfme.intelligence.chargeback import ChargebackView
 from cfme.intelligence.rss import RSSView
 from cfme.intelligence.timelines import CloudIntelTimelinesView
@@ -1383,7 +1383,7 @@ class ZoneDetails(CFMENavigateStep):
             self.view.zone.select()
             break
         else:
-            raise ZoneNotFound(
+            raise ItemNotFound(
                 "No unique Zones with the description '{}'".format(self.obj.description))
 
 
@@ -1401,7 +1401,7 @@ class SmartProxyAffinity(CFMENavigateStep):
             self.view.smart_proxy_affinity.select()
             break
         else:
-            raise ZoneNotFound(
+            raise ItemNotFound(
                 "No unique Zones with the description '{}'".format(self.obj.description))
 
 
@@ -1418,7 +1418,7 @@ class Advanced(CFMENavigateStep):
             self.view.advanced.select()
             break
         else:
-            raise ZoneNotFound(
+            raise ItemNotFound(
                 "No unique Zones with the description '{}'".format(self.obj.description))
 
 
@@ -1557,7 +1557,7 @@ def exists(self):
     try:
         navigate_to(self, 'Details')
         return True
-    except ZoneNotFound:
+    except ItemNotFound:
         return False
 
 

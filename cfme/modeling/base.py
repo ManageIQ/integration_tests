@@ -7,16 +7,8 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick
 from widgetastic_patternfly import CandidateNotFound
 
-from cfme.exceptions import BackupNotFoundError
-from cfme.exceptions import FlavorNotFound
-from cfme.exceptions import ImageNotFound
-from cfme.exceptions import InstanceNotFound
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import KeyPairNotFound
-from cfme.exceptions import SecurityGroupsNotFound
-from cfme.exceptions import VmOrInstanceNotFound
-from cfme.exceptions import VolumeNotFoundError
-from cfme.exceptions import VolumeTypeNotFoundError
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -180,21 +172,13 @@ class BaseEntity(NavigatableMixin):
         try:
             navigate_to(self, "Details")
         except (
-            BackupNotFoundError,
             CandidateNotFound,
-            FlavorNotFound,
-            ImageNotFound,
-            InstanceNotFound,
             ItemNotFound,
             KeyPairNotFound,
             NameError,
             NavigationDestinationNotFound,
             NoSuchElementException,
-            SecurityGroupsNotFound,
             TimedOutError,
-            VmOrInstanceNotFound,
-            VolumeNotFoundError,
-            VolumeTypeNotFoundError,
         ):
             return False
         else:

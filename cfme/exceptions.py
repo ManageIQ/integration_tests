@@ -108,13 +108,6 @@ class CandidateNotFound(CFMEException):
         return self.message
 
 
-class ElementOrBlockNotFound(CFMEException):
-    """
-    Raised if an Element or a Block is not found whilst locating
-    """
-    pass
-
-
 class HostStatsNotContains(CFMEException):
     """
     Raised if the hosts information does not contain the specified key whilst running
@@ -174,14 +167,6 @@ class ProviderHasNoProperty(CFMEException):
     pass
 
 
-class ScheduleNotFound(CFMEException):
-    """
-    Raised if a schedule was not found in
-    :py:meth:`cfme.configure.configuration.Schedule.delete_by_name`
-    """
-    pass
-
-
 class RequestException(CFMEException):
     """
     Raised if a request was not found or multiple rows matched during _request functions in
@@ -197,71 +182,8 @@ class VmNotFoundViaIP(CFMEException):
     pass
 
 
-class VmOrInstanceNotFound(CFMEException):
-    pass
-
-
-class VmNotFound(VmOrInstanceNotFound):
-    """
-    Raised if a specific VM cannot be found.
-    """
-    pass
-
-
-class InstanceNotFound(VmOrInstanceNotFound):
-    """
-    Raised if a specific instance cannot be found.
-    """
-    pass
-
-
-class ImageNotFound(VmOrInstanceNotFound):
-    """
-    Raised if a specific image cannot be found
-    """
-    pass
-
-
-class TenantNotFound(CFMEException):
-    """
-        Raised if a specific tenant cannot be found
-        """
-    pass
-
-
-class TemplateNotFound(CFMEException):
-    """
-    Raised if a specific Template cannot be found.
-    """
-    pass
-
-
-class ClusterNotFound(CFMEException):
-    """Raised if a cluster is not found"""
-    pass
-
-
-class HostNotFound(CFMEException):
-    """Raised if a specific host cannot be found in UI."""
-    pass
-
-
 class NodeNotFound(CFMEException):
     """Raised if a specific container node cannot be found in the UI"""
-    pass
-
-
-class StackNotFound(CFMEException):
-    """
-    Raised if a specific stack cannot be found.
-    """
-    pass
-
-
-class FlavorNotFound(CFMEException):
-    """
-    Raised if a specific cloud flavor cannot be found in the UI
-    """
     pass
 
 
@@ -272,52 +194,9 @@ class KeyPairNotFound(CFMEException):
     pass
 
 
-class SecurityGroupsNotFound(CFMEException):
-    """
-    Raised if a specific cloud Security Groups cannot be found in the UI
-    """
-    pass
-
-
-class ResourcePoolNotFound(CFMEException):
-    """
-    Raised if a specific cloud key pair cannot be found in the UI
-    """
-    pass
-
-
-class AvailabilityZoneNotFound(CFMEException):
-    """
-    Raised if a specific Cloud Availability Zone cannot be found.
-    """
-    pass
-
-
-class VolumeNotFoundError(CFMEException):
-    """
-    Raised if a specific cloud volume cannot be found in the UI
-    """
-    pass
-
-
-class VolumeTypeNotFoundError(CFMEException):
-    """
-    Raised if a specific cloud volume type cannot be found in the UI
-    """
-    pass
-
-
 class OptionNotAvailable(CFMEException):
     """
     Raised if a specified option is not available.
-    """
-    pass
-
-
-class ZoneNotFound(CFMEException):
-    """
-    Raised when a specific Zone cannot be found in the method
-    :py:mod:`cfme.configure.configuration`.
     """
     pass
 
@@ -331,17 +210,8 @@ class UnknownProviderType(CFMEException):
     pass
 
 
-class AccordionItemNotFound(CFMEException):
-    """Raised when it's not possible to locate and accordion item."""
-
-
 class CannotScrollException(CFMEException):
     """Raised when even during the heaviest workarounds for scrolling failure comes."""
-
-
-class StorageManagerNotFound(CFMEException):
-    """Raised when a Storage Manager is not found"""
-    pass
 
 
 class CUCommandException(CFMEException):
@@ -368,18 +238,6 @@ class ItemNotFound(CFMEException):
 
 class ManyEntitiesFound(CFMEException):
     """Raised when one or no items were expected but several/many items were obtained instead."""
-
-
-class RoleNotFound(CFMEException):
-    """Raised when Deployment role not found"""
-
-
-class BackupNotFoundError(CFMEException):
-    """Raised when volume backup not found"""
-
-
-class SnapshotNotFoundError(CFMEException):
-    """Raised when volume snapshot not found"""
 
 
 class RBACOperationBlocked(CFMEException):

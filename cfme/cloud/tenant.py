@@ -14,7 +14,7 @@ from widgetastic_patternfly import Input
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.exceptions import DestinationNotFound
-from cfme.exceptions import TenantNotFound
+from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.networks import ValidateStatsMixin
@@ -282,7 +282,7 @@ class Tenant(BaseEntity, Taggable, ValidateStatsMixin):
             view = navigate_to(self, 'Details')
         except NoSuchElementException as ex:
             # Catch general navigation exceptions and raise
-            raise TenantNotFound(
+            raise ItemNotFound(
                 'Exception while navigating to Tenant details: {}'.format(ex))
         view.toolbar.configuration.item_select('Delete Cloud Tenant')
 

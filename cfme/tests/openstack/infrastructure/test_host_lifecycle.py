@@ -1,6 +1,6 @@
 import pytest
 
-from cfme.exceptions import HostNotFound
+from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.openstack_node import OpenstackNode
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -25,7 +25,7 @@ def host(provider):
         vms = int(view.entities.summary('Relationships').get_text_of('VMs'))
         if 'Compute' in host.name and vms == 0:
             return host
-    raise HostNotFound('There is no proper host for tests')
+    raise ItemNotFound('There is no proper host for tests')
 
 
 @pytest.fixture(scope='module')

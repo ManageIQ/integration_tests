@@ -10,7 +10,6 @@ from widgetastic_patternfly import Dropdown
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
 from cfme.exceptions import ItemNotFound
-from cfme.exceptions import SecurityGroupsNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -232,7 +231,7 @@ class Details(CFMENavigateStep):
         try:
             self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
         except ItemNotFound:
-            raise SecurityGroupsNotFound("Security Groups {} not found".format(
+            raise ItemNotFound("Security Groups {} not found".format(
                 self.obj.name))
 
 

@@ -19,7 +19,6 @@ from cfme.common import TaggableCollection
 from cfme.common import TagPageView
 from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
-from cfme.exceptions import VolumeNotFoundError
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -462,7 +461,7 @@ class VolumeCollection(BaseCollection, TaggableCollection):
                 try:
                     view.entities.get_entity(name=volume.name).check()
                 except ItemNotFound:
-                    raise VolumeNotFoundError("Volume {} not found".format(volume.name))
+                    raise ItemNotFound("Volume {} not found".format(volume.name))
 
             view.toolbar.configuration.item_select('Delete selected Cloud Volumes',
                                                    handle_alert=True)
@@ -470,7 +469,7 @@ class VolumeCollection(BaseCollection, TaggableCollection):
             for volume in volumes:
                 volume.wait_for_disappear()
         else:
-            raise VolumeNotFoundError('No Cloud Volume for Deletion')
+            raise ItemNotFound('No Cloud Volume for Deletion')
 
     def all(self):
         """returning all Volumes objects for respective storage manager type"""
@@ -519,7 +518,7 @@ class VolumeDetails(CFMENavigateStep):
                                                        surf_pages=True).click()
 
         except ItemNotFound:
-            raise VolumeNotFoundError('Volume {} not found'.format(self.obj.name))
+            raise ItemNotFound('Volume {} not found'.format(self.obj.name))
 
 
 @navigator.register(VolumeCollection, 'Add')

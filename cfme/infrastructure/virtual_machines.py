@@ -46,7 +46,6 @@ from cfme.common.vm_views import VMToolbar
 from cfme.exceptions import DestinationNotFound
 from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
-from cfme.exceptions import VmOrInstanceNotFound
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -1290,8 +1289,7 @@ class VmAllWithTemplatesDetails(CFMENavigateStep):
             entity_item = self.prerequisite_view.entities.get_entity(
                 name=self.obj.name, surf_pages=True)
         except ItemNotFound:
-            raise VmOrInstanceNotFound('Failed to locate VM/Template with name "{}"'.
-                                       format(self.obj.name))
+            raise ItemNotFound('Failed to locate VM/Template with name "{}"'.format(self.obj.name))
         entity_item.click()
 
     def resetter(self, *args, **kwargs):
@@ -1309,8 +1307,7 @@ class ArchiveDetails(CFMENavigateStep):
             entity_item = self.prerequisite_view.entities.get_entity(
                 name=self.obj.name, surf_pages=True)
         except ItemNotFound:
-            raise VmOrInstanceNotFound('Failed to locate VM/Template with name "{}"'.
-                                       format(self.obj.name))
+            raise ItemNotFound('Failed to locate VM/Template with name "{}"'.format(self.obj.name))
         entity_item.click()
 
     def resetter(self, *args, **kwargs):
@@ -1357,8 +1354,7 @@ class VmDetails(CFMENavigateStep):
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                              surf_pages=True)
         except ItemNotFound:
-            raise VmOrInstanceNotFound('Failed to locate VM/Template with name "{}"'.
-                                       format(self.obj.name))
+            raise ItemNotFound('Failed to locate VM/Template with name "{}"'.format(self.obj.name))
         row.click()
 
     def resetter(self, *args, **kwargs):

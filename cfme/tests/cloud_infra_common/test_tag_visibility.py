@@ -3,7 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
-from cfme.exceptions import VmOrInstanceNotFound
+from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -112,7 +112,7 @@ def check_vm_visibility(user_restricted, appliance):
             try:
                 navigate_to(vm, 'VMsOnlyDetails')
                 actual_visibility = True
-            except VmOrInstanceNotFound:
+            except ItemNotFound:
                 actual_visibility = False
         assert actual_visibility == vis_expect, (
             'VM visibility is not as expected, expected {}'.format(vis_expect)
