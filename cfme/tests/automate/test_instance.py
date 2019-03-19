@@ -113,3 +113,109 @@ def test_automate_instance_missing(domain, klass, namespace, appliance):
     )
     assert appliance.ssh_client.run_command(
         'grep {} /var/www/miq/vmdb/log/automation.log'.format(catch_string)).success
+
+
+@pytest.mark.tier(1)
+def test_automate_relationship_trailing_spaces(request, klass, namespace, domain):
+    """
+    Handle trailing whitespaces in automate instance relationships.
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/10h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: Automate
+        tags: automate
+        title: Test automate relationship trailing spaces
+        testSteps:
+            1. Create a class and its instance, also create second one,
+               that has a relationship field.
+            2. Create an instance with the relationship field pointing to the first class'
+               instance but add a couple of whitespaces after it.
+            3. Execute the AE model, eg. using Simulate.
+        expectedResults:
+            1.
+            2.
+            3. Logs contain no resolution errors.
+
+    PR:
+        https://github.com/ManageIQ/manageiq/pull/7550
+    """
+    # Message to display in automation log by executing method of klass
+    catch_string = fauxfactory.gen_alphanumeric()
+
+    # Added method1 for klass1
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        location='inline',
+        script='$evm.log(:info, "{}")'.format(catch_string)
+    )
+    request.addfinalizer(method.delete_if_exists)
+
+    # Added schema for klass1 with type method for calling the method1 in same klass1
+    klass.schema.add_fields({'name': 'meth', 'type': 'Method', 'data_type': 'String'})
+
+    # Created instance1 to execute method1
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={'meth': {'value': method.name}}
+    )
+    request.addfinalizer(instance.delete_if_exists)
+
+    # Created klass2 under same domain/namespace
+    klass2 = namespace.classes.create(
+        name=fauxfactory.gen_alpha(),
+        display_name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
+    request.addfinalizer(klass2.delete_if_exists)
+
+    # Added schema for klass2 with type Relationship for calling instance1 of klass1
+    klass2.schema.add_fields({'name': 'rel', 'type': 'Relationship', 'data_type': 'String'})
+
+    # Created instance2 of klass2 and called instance1 of klass1. Here couple of white spaces are
+    # added in the value field of rel type.
+    instance2 = klass2.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={
+            "rel": {
+                "value": "/{domain}/{namespace}/{klass}/{instance}   ".format(
+                    domain=domain.name,
+                    namespace=namespace.name,
+                    klass=klass.name,
+                    instance=instance.name,
+                )
+            }
+        },
+    )
+    request.addfinalizer(instance2.delete_if_exists)
+
+    # Executing the automate method of klass1 using simulation
+    simulate(
+        appliance=klass.appliance,
+        request="Call_Instance",
+        attributes_values={
+            "namespace": "{}/{}".format(domain.name, namespace.name),
+            "class": klass2.name,
+            "instance": instance2.name,
+        },
+    )
+
+    # Checking if automation log is giving resolution error or not by searching 'E,'.
+    # Also checking if method1 of klass1 is executed successfully or not by searching 'catch_string'
+    # in automation log.
+    for search in ['E,', catch_string]:
+        result = klass.appliance.ssh_client.run_command(
+            "grep {} /var/www/miq/vmdb/log/automation.log".format(search)
+        )
+        if search == 'E,':
+            assert result.output == ""
+        else:
+            assert search in result.output

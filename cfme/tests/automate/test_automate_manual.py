@@ -37,37 +37,6 @@ def test_automate_git_domain_import_top_level_directory():
     pass
 
 
-@pytest.mark.tier(2)
-def test_quota_source_user():
-    """
-    When copying and modifying
-    /System/CommonMethods/QuotaStateMachine/quota to user; the user as the
-    quota source and when the user is tagged, the quotas are in effect.
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.7
-        casecomponent: Automate
-        tags: automate
-        title: Test quota source user
-        testSteps:
-            1. Assign quota to user by automate method
-            2. Also assign quota to user by tagging(more/less than automate quota method limit)
-            3. Provision Vm exceeding assigned quota
-            4. Check last message of request info or notification message
-        expectedResults:
-            1.
-            2.
-            3. Request should be denied with quota exceeded message
-            4. Last message should contain, quota exceeded because of tagging quota limit
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_customize_request_security_group():
     """
@@ -121,38 +90,6 @@ def test_automate_git_import_multiple_domains():
             1.
             2.
             3. Import of multiple domains from a single git repo is not allowed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_automate_relationship_trailing_spaces():
-    """
-    Handle trailing whitespaces in automate instance relationships.
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/10h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.6
-        casecomponent: Automate
-        tags: automate
-        title: Test automate relationship trailing spaces
-        testSteps:
-            1. Create a class and its instance, also create second one,
-               that has a relationship field.
-            2. Create an instance with the relationship field pointing to the first class"
-               instance but add a couple of whitespaces after it.
-            3. Execute the AE model, eg. using Simulate.
-        expectedResults:
-            1.
-            2.
-            3. Logs contain no resolution errors.
-
-    PR:
-        https://github.com/ManageIQ/manageiq/pull/7550
     """
     pass
 
