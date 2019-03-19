@@ -114,7 +114,8 @@ def catalog_item(appliance, provider, dialog, catalog, prov_data, set_default):
         provider=provider,
         provisioning_entry_point=set_default)
     yield catalog_item
-    catalog_item.delete()
+    if catalog_item.exists:
+        catalog_item.delete()
 
 
 @pytest.fixture(scope='module')
