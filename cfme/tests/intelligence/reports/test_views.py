@@ -1,30 +1,27 @@
 # -*- coding: utf-8 -*-
 import pytest
+from widgetastic_patternfly import CandidateNotFound
 
 from cfme import test_requirements
-from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.common.provider import BaseProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.report,
-    pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([OpenStackProvider, EC2Provider, RHEVMProvider, VMwareProvider],
-                         scope='module')
+    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.provider([BaseProvider], selector=ONE, scope="module"),
 ]
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def report(appliance):
-    # TODO parameterize on path, for now test infrastructure reports
     report = appliance.collections.reports.instantiate(
         type="Configuration Management",
         subtype="Hosts",
-        menu_name="Virtual Infrastructure Platforms"
+        menu_name="Virtual Infrastructure Platforms",
     ).queue(wait_for_finish=True)
     yield report
     if report.exists:
@@ -32,10 +29,14 @@ def report(appliance):
 
 
 @pytest.mark.rhv3
-@pytest.mark.parametrize('view_mode', ['Hybrid View', 'Graph View', 'Tabular View'])
-@pytest.mark.meta(blockers=[BZ(1401560)])
+@pytest.mark.parametrize(
+    "view_mode",
+    ["Hybrid View", "Graph View", "Tabular View"],
+    ids=["hybrid", "graph", "tabular"],
+)
 def test_report_view(report, view_mode):
     """Tests provisioning via PXE
+    Bugzilla: 1401560
 
     Metadata:
         test_flag: report
@@ -46,6 +47,14 @@ def test_report_view(report, view_mode):
         caseimportance: high
         initialEstimate: 1/6h
     """
-    view = navigate_to(report, 'Details')
+    try:
+        view = navigate_to(report, "Details")
+    except CandidateNotFound:
+        # Sometimes report name is not loaded correctly in the tree and it shows
+        # `Generating report` instead of showing proper saved_report name,
+        # due to which CandidateNotFound error is raised. Refreshing the browser
+        # shows proper saved_report name in the tree.
+        report.browser.refresh()
+        view = navigate_to(report, "Details")
     view.view_selector.select(view_mode)
     assert view.view_selector.selected == view_mode, "View setting failed for {}".format(view)
