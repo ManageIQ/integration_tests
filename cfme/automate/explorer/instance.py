@@ -10,7 +10,6 @@ from widgetastic.utils import ParametrizedString
 from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Text
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
 
 from . import AutomateExplorerView
@@ -24,7 +23,6 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from widgetastic_manageiq import Table
 
 
@@ -43,6 +41,7 @@ class InstanceCopyView(AutomateExplorerView, CopyViewBase):
 class InstanceDetailsView(AutomateExplorerView):
     title = Text('#explorer_title_text')
     table = Table('#instance_fields_grid')
+    domain_priority = Text('//*[@id="instances"]/table/tbody')
 
     @property
     def is_displayed(self):
@@ -50,12 +49,8 @@ class InstanceDetailsView(AutomateExplorerView):
             self.in_explorer and
             self.title.text.startswith('Automate Instance [{}'.format(
                 self.context['object'].display_name or self.context['object'].name)) and
-            self.datastore.is_opened and (
-                BZ(1611969, forced_streams=['5.10']).blocks or
-                check_tree_path(
-                    self.datastore.tree.currently_selected,
-                    self.context['object'].tree_path)
-            )
+            self.datastore.is_opened and check_tree_path(self.datastore.tree.currently_selected,
+                                                         self.context['object'].tree_path)
         )
 
 

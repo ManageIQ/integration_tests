@@ -6,6 +6,7 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -195,3 +196,75 @@ def test_priority(
     assert result.output.strip() == original_method_write_data
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     # END OF LAST SIMULATION
+
+
+@pytest.mark.tier(3)
+def test_automate_disabled_domains_in_domain_priority(request, klass):
+    """When the admin clicks on a instance that has duplicate entries in two different
+       domains. If one domain is disabled it is still displayed in the UI for the domain priority.
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/12h
+        caseimportance: low
+        caseposneg: negative
+        testtype: functional
+        startsin: 5.7
+        casecomponent: Automate
+        tags: automate
+        title: Test automate disabled domains in domain priority
+        testSteps:
+            1. create two domains
+            2. attach the same automate code to both domains.
+            3. disable one domain
+            4. click on a instance and see domains displayed.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. CFME should not display disabled domains or it should be like
+               'domain_name (Disabled)'
+
+    Bugzilla:
+        1331017
+    """
+    # Create one more domain
+    other_domain = klass.appliance.collections.domains.create(name=fauxfactory.gen_alphanumeric(),
+                                                              description=fauxfactory.gen_alpha(),
+                                                              enabled=True)
+    request.addfinalizer(other_domain.delete_if_exists)
+
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location='inline',
+        script='$evm.log(:info, ":P")',
+    )
+    request.addfinalizer(method.delete_if_exists)
+
+    klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={'execute': {'value': method.name}}
+    )
+    request.addfinalizer(instance.delete_if_exists)
+
+    # Copy method and instance to other domain
+    method.copy_to(other_domain)
+    instance.copy_to(other_domain)
+    view = navigate_to(instance, 'Details')
+
+    # Read domain priority to check whether any domain is not disabled
+    domain_priority = view.domain_priority.read().split(' ')
+    assert "(Disabled)" not in domain_priority
+
+    # Disable the other domain
+    with update(other_domain):
+        other_domain.enabled = False
+    view = navigate_to(instance, 'Details')
+
+    # Read domain priority to check whether other domain is disabled
+    domain_priority = view.domain_priority.read().split(' ')
+    assert "(Disabled)" in domain_priority
