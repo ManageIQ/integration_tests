@@ -16,15 +16,15 @@ FILL_DATA = {
     "event_type": "Datastore Operation",
     "event_value": "Datastore Analysis Complete",
     "filter_type": "By Clusters",
-    "filter_value": "Default",
+    "filter_value": "Cluster"
 }
 
 
 @pytest.mark.tier(1)
-def test_control_icons_simulation(appliance, provider):
+def test_control_icons_simulation(appliance):
     """
     Bugzillas:
-        * 1349147
+        * 1349147, 1690572
 
     Polarion:
         assignee: jdupuy
@@ -49,8 +49,11 @@ def test_control_icons_simulation(appliance, provider):
     """
     view = navigate_to(appliance.server, "ControlSimulation")
     view.fill(FILL_DATA)
+    view.wait_displayed()
     view.submit_button.click()
     # Now check all the icons
+    assert view.simulation_results.squash_button.is_displayed
+    # Check the tree icons
     tree = view.simulation_results.tree
     # Check the root_item
     assert tree.image_getter(tree.root_item) is not None

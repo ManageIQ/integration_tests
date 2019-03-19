@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from navmazing import NavigateToSibling
+from widgetastic.utils import WaitFillViewStrategy
 from widgetastic.widget import Checkbox
 from widgetastic.widget import Select
 from widgetastic.widget import View
@@ -10,10 +11,12 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigator
 from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import SquashButton
 
 
 class ControlSimulationView(BaseLoggedInPage):
     """Basic view for Control/Simulation tab."""
+    fill_strategy = WaitFillViewStrategy()
     event_type = Select(id="event_typ")
     event_value = Select(id="event_value")
     filter_type = Select(id="filter_typ")
@@ -29,8 +32,7 @@ class ControlSimulationView(BaseLoggedInPage):
 
     @View.nested
     class simulation_results(View):  # noqa
-        # TODO: match the squash button
-        # squash_button = Button(id="squash_button", title="Expand All")
+        squash_button = SquashButton()
         tree = ManageIQTree("rsop_treebox")
 
     @property
