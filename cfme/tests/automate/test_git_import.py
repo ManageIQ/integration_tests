@@ -79,13 +79,11 @@ def test_automate_git_domain_displayed_in_service(appliance, imported_domain, br
     assert view.provisioning_entry_point.value == ("/{}/Service/Provisioning/StateMachines/"
         "ServiceProvision_Template/CatalogItemInitialization".format(imported_domain.name))
 
-from cfme.base.ui import AutomateImportExportView, AutomateImportExportBaseView
-from cfme.automate.import_export import GitImportSelectorView
 
 @pytest.mark.tier(3)
-def test_automate_git_import_multiple_domains(appliance):
+def test_automate_git_import_multiple_domains(request, appliance):
     """
-    Import of multiple domains from a single git repo is not allowed
+    Importing of multiple domains from a single git repository is not allowed.
 
     Polarion:
         assignee: ghubale
@@ -106,14 +104,9 @@ def test_automate_git_import_multiple_domains(appliance):
             2.
             3. Import of multiple domains from a single git repo is not allowed
     """
-    view = navigate_to(appliance.server, 'AutomateImportExport')
-    view.import_git.url.fill('https://github.com/ganeshhubale/ManageIQ-automate-git')
-    view.import_git.submit.click()
-    view.browser.plugin.ensure_page_safe(timeout='5m')
-    git_select = appliance.browser.create_view(GitImportSelectorView, wait='10s')
-    git_select.flash.assert_no_error()
-    git_select.submit.click()
-    import ipdb;ipdb.set_trace()
-    view = appliance.browser.create_view(AutomateImportExportBaseView, wait='10s')
-    view2 = appliance.browser.create_view(AutomateImportExportView, wait='10s')
-    assert not view.flash.assert_no_error()
+    url = "https://github.com/ganeshhubale/ManageIQ-automate-git"
+    repo = AutomateGitRepository(url=url, verify_ssl=True, appliance=appliance)
+    with pytest.raises(ValueError):
+        domain = repo.import_domain_from(branch="origin/master")
+        request.addfinalizer(domain.delete_if_exists)
+        assert not domain.exists
