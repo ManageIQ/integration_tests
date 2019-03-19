@@ -3148,6 +3148,14 @@ class NavigatableMixin(object):
         return self.appliance.browser.widgetastic
 
     def create_view(self, view_class, o=None, override=None, wait=None):
+        """Create a view object given the class and contextual parameters
+
+        Args:
+            view_class (cls): widgetastic.widget.View based class to create an instance of
+            o (obj): Entity object that is the context for the view class (normally linked by nav)
+            override (dict): Dictionary of override values for the contextual object (o)
+            wait: Value to pass to wait_displayed, default of None skips wait_displayed check
+        """
         o = o or self
         if override is not None:
             new_obj = copy(o)
