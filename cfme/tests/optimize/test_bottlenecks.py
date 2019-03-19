@@ -41,7 +41,7 @@ def db_restore(temp_appliance_extended_db):
     # get app version for backup
     ver = str(temp_appliance_extended_db.version).replace('.', '_')
     ver = ver[:3] if ver[3] == '_' else ver[:4]
-    # get bd backup file
+    # get DB backup file
     db_storage_hostname = conf.cfme_data.bottlenecks.hostname
     db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials.bottlenecks)
     rand_filename = "/tmp/db.backup_{}".format(fauxfactory.gen_alphanumeric())
@@ -53,6 +53,10 @@ def db_restore(temp_appliance_extended_db):
     app.db.drop()
     app.db.create()
     app.db.restore()
+    # When you load a database from an older version of the application, you always need to
+    # run migrations.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1643250
+    app.db.migrate()
     app.db.fix_auth_key()
     app.db.fix_auth_dbyml()
     app.evmserverd.start()
