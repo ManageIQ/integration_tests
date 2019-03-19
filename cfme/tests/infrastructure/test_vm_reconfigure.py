@@ -1,6 +1,7 @@
 import pytest
 from wrapanapi import VmState
 
+from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.blockers import BZ
@@ -9,6 +10,7 @@ from cfme.utils.wait import wait_for
 
 
 pytestmark = [
+    test_requirements.reconfigure,
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.long_running,
     pytest.mark.tier(2),
@@ -81,6 +83,24 @@ def ensure_vm_running(small_vm):
         raise Exception("Unknown power state - unable to continue!")
 
 
+@pytest.fixture(params=["cold", "hot"])
+def vm_state(request, small_vm):
+    if request.param == "cold":
+        if small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_OFF):
+            small_vm.mgmt.ensure_state(VmState.STOPPED)
+            small_vm.wait_for_vm_state_change(small_vm.STATE_OFF)
+        else:
+            raise Exception("Unknown power state - unable to continue!")
+    else:
+        if small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_ON):
+            small_vm.mgmt.ensure_state(VmState.RUNNING)
+            small_vm.wait_for_vm_state_change(small_vm.STATE_ON)
+        else:
+            raise Exception("Unknown power state - unable to continue!")
+
+    yield request.param
+
+
 @pytest.mark.rhel_testing
 @pytest.mark.rhv1
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
@@ -102,7 +122,6 @@ def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, c
     reconfigure_vm(small_vm, orig_config)
 
 
-@pytest.mark.rhel_testing
 @pytest.mark.rhv1
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
@@ -114,15 +133,22 @@ def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, c
     blockers=[BZ(1692801, forced_streams=['5.10'],
                  unblock=lambda provider: not provider.one_of(RHEVMProvider))]
 )
-def test_vm_reconfig_add_remove_disk_cold(
-        provider, small_vm, ensure_vm_stopped, disk_type, disk_mode):
-
+def test_vm_reconfig_add_remove_disk(provider, small_vm, vm_state, disk_type, disk_mode):
     """
     Polarion:
         assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.9
         casecomponent: Infra
-        initialEstimate: 1/3h
         tags: reconfigure
+        testSteps:
+            1. Add and remove the disk while VM is stopped and running
+            2. Go to Compute -> infrastructure -> Virtual Machines -> Select Vm
+            3. Go to VM reconfiguration
+            4. Click on Add Disk -> select disk_type and disk_mode , save and submit
+            5. Check the count in VM details page
+            6. Remove the disk and Check the count in VM details page
     """
     orig_config = small_vm.configuration.copy()
     new_config = orig_config.copy()
@@ -218,31 +244,6 @@ def test_vm_reconfig_add_remove_hw_hot_vmware(change_type):
             3. Go to VM reconfiguration
             4.Change number of CPU sockets and amount of memory, save and submit
             5. Check the count in VM details page
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-@pytest.mark.parametrize('disk_type', ['thin', 'thick'])
-@pytest.mark.parametrize(
-    'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
-def test_vm_reconfig_add_remove_disk_hot(disk_type, disk_mode):
-    """
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.5
-        casecomponent: Infra
-        tags: reconfigure
-        testSteps:
-            1. Add and remove the disk while VM is running
-            2. Go to Compute -> infrastructure -> Virtual Machines -> Select Vm
-            3. Go to VM reconfiguration
-            4. Click on Add Disk -> select disk_type and disk_mode , save and submit
-            5. Check the count in VM details page
-            6. Remove the disk and Check the count in VM details page
     """
     pass
 
