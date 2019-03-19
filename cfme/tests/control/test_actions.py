@@ -39,8 +39,7 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,
-    pytest.mark.meta(server_roles="+automate +smartproxy +smartstate",
-                     blockers=[BZ(1633606, forced_streams=['5.10'])]),
+    pytest.mark.meta(server_roles="+automate +smartproxy +smartstate"),
     pytest.mark.tier(2),
     test_requirements.control
 ]
@@ -940,26 +939,3 @@ def test_action_check_compliance(request, provider, vm, vm_name, policy_for_test
     view = navigate_to(vm.crud, "Details")
     view.toolbar.reload.click()
     assert vm.crud.compliant
-
-
-@pytest.mark.manual
-@test_requirements.general_ui
-@pytest.mark.tier(1)
-def test_control_icons_simulation():
-    """
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Control
-        caseimportance: medium
-        initialEstimate: 1/15h
-        testSteps:
-            1. Have an infrastructure provider
-            2. Go to Control -> Simulation
-            3. Select:
-                Type: Datastore Operation
-                Event: Datastore Analysis Complete
-                VM Selection: By Clusters, Default
-            4. Submit
-            5. Check for all icons in this page
-    """
-    pass
