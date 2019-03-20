@@ -8,7 +8,7 @@ pytestmark = [
     pytest.mark.tier(3)
 ]
 
-property_mapping = {
+PROPERTY_MAPPING = {
     "cpu": "Allocated Virtual CPUs",
     "memory": "Allocated Memory in GB",
     "storage": "Allocated Storage in GB",
@@ -40,7 +40,7 @@ def set_and_get_tenant_quota(appliance):
     root_tenant.set_quota(**tenant_quota_data)
 
     data = dict()
-    for key, value in property_mapping.items():
+    for key, value in PROPERTY_MAPPING.items():
         suffix = "GB" if "GB" in value else "Count"
         data[value] = "{data_value} {suffix}".format(
             data_value=tenant_quota_data[key], suffix=suffix
@@ -82,7 +82,7 @@ def test_queue_tenant_quota_reports(set_and_get_tenant_quota, tenant_report):
     """
     report_data = dict()
     for row in tenant_report.data.rows:
-        if row["Quota Name"] in property_mapping.values():
+        if row["Quota Name"] in PROPERTY_MAPPING.values():
             report_data[row["Quota Name"]] = row["Total Quota"]
     assert report_data == set_and_get_tenant_quota
 
