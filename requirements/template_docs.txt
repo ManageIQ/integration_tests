@@ -18,7 +18,7 @@ bottle
 bottle-sqlite
 cycler
 cached-property
-deepdiff
+deepdiff==3.3.0
 diaper!=1.4.0
 # Pin websocket-client to be within the range kubernetes needs before docker-py installs a newer version
 websocket-client<=0.40.0,>=0.32.0
