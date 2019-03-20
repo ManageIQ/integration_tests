@@ -184,6 +184,21 @@ class BaseEntity(NavigatableMixin):
         else:
             return True
 
+    def delete_if_exists(self, *args, **kwargs):
+        """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``
+
+        Raises
+            NotImplementedError: If the ``.delete()`` is not implemented for the object
+        Returns: True if object existed and delete was initiated, False otherwise
+        """
+        if self.exists:
+            try:
+                self.delete(*args, **kwargs)
+                return True
+            except AttributeError:
+                raise NotImplementedError("Delete method is not implemented.")
+        return False
+
 
 @attr.s
 class CollectionProperty(object):

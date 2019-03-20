@@ -96,10 +96,6 @@ class Dialog(BaseEntity, Fillable):
         view.flash.assert_success_message(
             'Dialog "{}": Delete successful'.format(self.label))
 
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
-
 
 @attr.s
 class DialogCollection(BaseCollection):
