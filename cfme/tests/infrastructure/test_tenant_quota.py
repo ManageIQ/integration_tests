@@ -370,7 +370,7 @@ def test_service_infra_tenant_quota_with_default_entry_point(request, appliance,
         caseimportance: medium
         initialEstimate: 1/12h
         tags: quota
-        testSteps:
+        setup:
             1. Add infrastructure provider
             2. Set quota for root tenant - 'My Company'
             3. Navigate to services > catalogs
@@ -380,7 +380,11 @@ def test_service_infra_tenant_quota_with_default_entry_point(request, appliance,
                 b.retirement_entry_point = /Service/Retirement/StateMachines/ServiceRetirement
                 /Default
             5. Add other information required in catalog for provisioning VM
-            6. Order the catalog item via UI and SSUI individually
+        testSteps:
+            1. Order the catalog item via UI and SSUI individually
+        expectedResults:
+            1. Request of vm provisioning via service catalog should be denied with reason:
+               "Quota Exceeded"
     """
     with appliance.context.use(context):
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
