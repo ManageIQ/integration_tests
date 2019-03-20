@@ -68,7 +68,7 @@ layered-yaml-attrdict-config==16.1.0
 lxml==4.2.5
 manageiq-client==0.5.0
 MarkupSafe==1.0
-miq-version==0.1.8
+miq-version==0.1.9
 mistune==0.8.4
 mock==2.0.0
 monotonic==1.5
