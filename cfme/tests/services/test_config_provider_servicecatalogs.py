@@ -14,8 +14,7 @@ pytestmark = [
         ids=['template_job', 'workflow_job', 'template_job_survey'], scope='module'),
     pytest.mark.ignore_stream('upstream'),
     pytest.mark.uncollectif(lambda appliance,
-        job_type: appliance.version < '5.10' and job_type == 'workflow'),
-    pytest.mark.meta(blockers=[1491704])]
+        job_type: appliance.version < '5.10' and job_type == 'workflow')]
 
 
 def pytest_generate_tests(metafunc):
@@ -75,11 +74,7 @@ def test_order_tower_catalog_item(appliance, catalog_item, request, job_type):
         casecomponent: Services
         caseimportance: high
     """
-    dialog_values = {'Survey': "QE"}
-    if job_type != 'template_survey':
-        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
-    else:
-        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name, dialog_values=dialog_values)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}
