@@ -88,7 +88,14 @@ def compliance_vm(configure_fleecing, provider, full_template_modscope):
     name = "{}-{}".format("test-compliance", fauxfactory.gen_alpha(4))
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate(name, provider, full_template_modscope.name)
-    vm.create_on_provider(allow_skip="default")
+    # TODO: remove this check once issue with SSA on other hosts in vSphere 6.5 is figured out
+    if provider.version == 6.5:
+        vm.create_on_provider(
+            allow_skip="default",
+            host=conf.cfme_data['management_systems'][provider.key]['hosts'][0].name
+        )
+    else:
+        vm.create_on_provider(allow_skip="default")
     vm.mgmt.ensure_state(VmState.RUNNING)
     if not vm.exists:
         vm.wait_to_appear(timeout=900)
@@ -121,6 +128,9 @@ def analysis_profile(appliance):
 def test_check_package_presence(request, appliance, compliance_vm, analysis_profile):
     """This test checks compliance by presence of a certain "kernel" package which is expected
     to be present on the full_template.
+
+    Metadata:
+        test_flag: provision, policy
 
     Polarion:
         assignee: jdupuy
@@ -156,6 +166,9 @@ def test_check_package_presence(request, appliance, compliance_vm, analysis_prof
 def test_check_files(request, appliance, compliance_vm, analysis_profile):
     """This test checks presence and contents of a certain file. Due to caching, an existing file
     is checked.
+
+    Metadata:
+        test_flag: provision, policy
 
     Polarion:
         assignee: jdupuy
@@ -197,6 +210,10 @@ def test_check_files(request, appliance, compliance_vm, analysis_profile):
 
 def test_compliance_with_unconditional_policy(host, assign_policy_for_testing):
     """
+
+    Metadata:
+        test_flag: policy
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/6h
