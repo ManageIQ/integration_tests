@@ -167,7 +167,7 @@ class SSHClient(paramiko.SSHClient):
     def vmdb_version(self):
         res = self.run_command('cat /var/www/miq/vmdb/VERSION')
         if res.failed:
-            raise RuntimeError('Unable to retrieve appliance VMDB version')
+            raise RuntimeError('Unable to retrieve appliance VMDB version: {}'.format(res.output))
         version_string = res.output
         return Version(version_string)
 
