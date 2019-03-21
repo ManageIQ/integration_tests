@@ -34,11 +34,10 @@ IN_VIRTUAL_ENV = IN_VENV or IN_LEGACY_VIRTUALENV
 
 def mk_parser(default_venv_path):
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--mk-virtualenv",
-        default=default_venv_path)
+    parser.add_argument("--mk-virtualenv", default=default_venv_path)
     parser.add_argument("--system-site-packages", action="store_true")
     parser.add_argument("--config-path", default="../cfme-qe-yamls/complete/")
+    parser.add_argument("--debuginfo-install", action="store_true")
     return parser
 
 
@@ -183,11 +182,10 @@ def main(args):
         sys.exit(1)
     if not IN_VIRTUAL_ENV:
         # invoked from outside, its ok to be slow
-        install_system_packages()
+        install_system_packages(args.debuginfo_install)
     else:
         print("INFO: skipping installation of system packages from inside of virtualenv")
-    venv_state = setup_virtualenv(
-        args.mk_virtualenv, args.system_site_packages)
+    venv_state = setup_virtualenv(args.mk_virtualenv, args.system_site_packages)
     install_requirements(args.mk_virtualenv, quiet=(venv_state is CREATED))
     disable_bytecode(args.mk_virtualenv)
     self_install(args.mk_virtualenv)

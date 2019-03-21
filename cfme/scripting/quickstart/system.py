@@ -14,10 +14,8 @@ HAS_YUM = os.path.exists('/usr/bin/yum')
 HAS_APT = os.path.exists('/usr/bin/apt-get')
 
 OS_RELEASE_FILE = '/etc/os-release'
-OS_NAME_REGEX = r'NAME="([\w\W]+)"'
-OS_VERSION_REGEX = r'VERSION="([\w\W]+)"'
-OS_NAME = None
-OS_VERSION = None
+OS_NAME_REGEX = r'^NAME="?([\w\s]*?)"?$'
+OS_VERSION_REGEX = r'^VERSION_ID="?([\S]*?)"?$'
 
 REQUIRED_PACKAGES = None
 INSTALL_COMMAND = None
@@ -50,10 +48,12 @@ if os.path.exists(OS_RELEASE_FILE):
         for var in os_release.readlines():
             name = re.match(OS_NAME_REGEX, var)
             if name:
-                OS_NAME = name.group(1)
+                OS_NAME = name.group(1).rstrip('\n')
             version = re.match(OS_VERSION_REGEX, var)
             if version:
-                OS_VERSION = version.group(1)
+                OS_VERSION = version.group(1).rstrip('\n')
+
+print('OS_NAME: {}, OS_VERSION: {}'.format(OS_NAME, OS_VERSION))
 
 RH_BASE = (
     " python2-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel"
@@ -149,13 +149,16 @@ def retry_install_once(command, shell):
         run_cmd_or_exit(command, shell=shell)
 
 
-def install_system_packages():
+def install_system_packages(debuginfo_install=False):
+    installed = False
     if INSTALL_COMMAND and REQUIRED_PACKAGES:
         retry_install_once(INSTALL_COMMAND + REQUIRED_PACKAGES, shell=True)
-    if DEBUG_INSTALL_COMMAND and DEBUG_PACKAGES:
+        installed = True
+    if DEBUG_INSTALL_COMMAND and DEBUG_PACKAGES and debuginfo_install:
         retry_install_once('{} {}'.format(DEBUG_INSTALL_COMMAND, ' '.join(DEBUG_PACKAGES)),
-                        shell=True)
-    else:
+                           shell=True)
+        installed = True
+    if not installed:
         print("WARNING: unknown distribution,",
               "please ensure you have the required packages installed")
         print("INFO: on redhat based systems this is the equivalent of:")
