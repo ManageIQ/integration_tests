@@ -8,6 +8,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.provider(classes=[InfraProvider], selector=ONE_PER_CATEGORY),
+    pytest.mark.usefixtures("setup_provider"),
     test_requirements.control,
 ]
 
