@@ -210,9 +210,9 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
                 command_result = vm_ssh_client.run_command("rm blather", ensure_user=True)
                 assert command_result
 
-            except Exception as e:
+            except Exception:
                 # Take a screenshot if an exception occurs
                 vm_console.switch_to_console()
                 take_screenshot("ConsoleScreenshot")
                 vm_console.switch_to_appliance()
-                raise e
+                raise

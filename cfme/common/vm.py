@@ -793,12 +793,12 @@ class VM(BaseVM):
         try:
             if find_in_cfme:
                 self.wait_to_appear(timeout=timeout, load_details=False)
-        except Exception as e:
+        except Exception:
             logger.warn("Couldn't find VM or Instance '%s' in CFME", self.name)
             if delete_on_failure:
                 logger.info("Removing VM or Instance from mgmt system")
                 self.cleanup_on_provider()
-            raise e
+            raise
         return vm
 
     def cleanup_on_provider(self):
