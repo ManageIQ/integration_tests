@@ -204,7 +204,7 @@ def test_login_retrieve_group(appliance, request, auth_mode, auth_provider, soft
                     'user full name "{}" did not match UI display name "{}"'
                     .format(user_obj.name, view.current_fullname))
         soft_assert(group.description in view.group_names,
-                    'user group "{}" not displayed in UI groups list "{}"'
+                    u'user group "{}" not displayed in UI groups list "{}"'
                     .format(group.description, view.group_names))
 
     appliance.server.login_admin()  # context should get us back to admin, just in case
