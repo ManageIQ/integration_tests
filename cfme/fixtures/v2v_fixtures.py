@@ -92,8 +92,8 @@ def host_credentials(appliance, transformation_method, v2v_providers):
     if rhv_hosts is not None :
         set_conversion_instance_for_rhev(appliance, transformation_method, rhv_hosts)
     if v2v_providers.osp_provider is not None:
-        set_conversion_instance_for_osp(appliance, transformation_method,
-                                        v2v_providers.osp_provider)
+        set_conversion_instance_for_osp(appliance, v2v_providers.osp_provider,
+                                        transformation_method)
 
 
 def _tag_cleanup(host_obj, tag1, tag2):
@@ -178,7 +178,7 @@ def set_conversion_instance_for_rhev(appliance, transformation_method, rhev_host
                 host.add_tags(tags=(tag1, tag2))
 
 
-def set_conversion_instance_for_osp(appliance, transformation_method, osp_provider):
+def set_conversion_instance_for_osp(appliance, osp_provider, transformation_method="vddk"):
     """
     Rails console command
     ====================
@@ -199,10 +199,7 @@ def set_conversion_instance_for_osp(appliance, transformation_method, osp_provid
         pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
 
     try:
-        if transformation_method == "vddk":
-            conversion_instances = osp_provider.data['conversion_instances']['vddk']
-        else:
-            conversion_instances = osp_provider.data['conversion_instances']['ssh']
+        conversion_instances = osp_provider.data['conversion_instances'][transformation_method]
     except KeyError:
         pytest.skip("No conversion instance on provider.")
 
