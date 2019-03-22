@@ -4,6 +4,7 @@ from collections import namedtuple
 import lxml.etree
 import pytest
 import yaml
+from wait_for import TimedOutError
 from wait_for import wait_for
 
 from cfme.utils import os
@@ -37,7 +38,7 @@ RETURN = ''
 ext_auth_options = [
     LoginOption('sso', 'sso_enabled', '1'),
     LoginOption('saml', 'saml_enabled', '2'),
-    LoginOption('local_login', 'local_login_disabled', '3')
+    LoginOption('local_login', 'local_login_disabled', '4')
 ]
 
 
@@ -70,7 +71,7 @@ def test_appliance_console(appliance):
 def test_appliance_console_set_hostname(configured_appliance):
     """ Commands:
     1. 'ap' launch appliance_console,
-    2. '' clear info screen,
+    2. RETURN clear info screen,
     3. '1' loads network settings,
     4. '5' gives access to set hostname,
     5. 'hostname' sets new hostname.
@@ -83,12 +84,12 @@ def test_appliance_console_set_hostname(configured_appliance):
     """
 
     hostname = 'test.example.com'
-    command_set = ('ap', '', '1', '5', hostname,)
-    configured_appliance.appliance_console.run_commands(command_set)
+    command_set = ('ap', RETURN, '1', '5', hostname, RETURN, RETURN)
+    configured_appliance.appliance_console.run_commands(command_set, timeout=30)
 
     def is_hostname_set(appliance):
-        assert appliance.ssh_client.run_command("hostname -f | grep {hostname}"
-            .format(hostname=hostname))
+        return appliance.ssh_client.run_command("hostname -f | grep {hostname}"
+                                                .format(hostname=hostname)).success
     wait_for(is_hostname_set, func_args=[configured_appliance])
     result = configured_appliance.ssh_client.run_command("hostname -f")
     assert result.success
@@ -101,12 +102,12 @@ def test_appliance_console_set_hostname(configured_appliance):
 def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modscope):
     """ Commands:
     1. 'ap' launch appliance_console,
-    2. '' clear info screen,
+    2. RETURN clear info screen,
     3. '2' set timezone,
     4. 'opt' select region,
     5. 'timezone' selects zone,
     6. 'y' confirm slection,
-    7. '' finish.
+    7. RETURN finish.
 
     Polarion:
         assignee: sbulage
@@ -114,7 +115,7 @@ def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modsc
         casecomponent: Configuration
         initialEstimate: 1/6h
     """
-    command_set = ('ap', '', '2') + timezone[1] + ('y', '')
+    command_set = ('ap', RETURN, '2') + timezone[1] + ('y', RETURN)
     temp_appliance_preconfig_modscope.appliance_console.run_commands(command_set)
 
     temp_appliance_preconfig_modscope.appliance_console.timezone_check(timezone)
@@ -132,12 +133,19 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
         initialEstimate: 1/6h
     """
     app = temp_appliance_preconfig_funcscope
-    command_set = ('ap', '', '3', 'y', '2020-10-20', '09:58:00', 'y', '')
-    app.appliance_console.run_commands(command_set)
+    if app.chronyd.running:
+        app.chronyd.stop()
+
+    command_set = ('ap', RETURN, '3', 'y', '2020-10-20', '09:58:00', 'y', RETURN, RETURN)
+    app.appliance_console.run_commands(command_set, timeout=30)
 
     def date_changed():
-        return app.ssh_client.run_command("date +%F-%T | grep 2020-10-20-10:00").success
-    wait_for(date_changed)
+        appliance_time = str(app.ssh_client.run_command("date +%F-%T"))
+        return "2020-10-20-10:00" in str(appliance_time)
+    try:
+        wait_for(date_changed, timeout=180)
+    except TimedOutError:
+        raise AssertionError("appliance time doesn't match to set one")
 
 
 @pytest.mark.rhel_testing
@@ -145,17 +153,16 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
 def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
     """ Commands:
     1. 'ap' launch appliance_console,
-    2. '' clear info screen,
-    3. '5' setup db,
+    2. RETURN clear info screen,
+    3. '7' setup db,
     4. '1' Creates v2_key,
     5. '1' selects internal db,
-    6. 'y' continue,
-    7. '1' use partition,
-    8. 'n' don't create dedicated db,
-    9. '0' db region number,
-    10. 'pwd' db password,
-    11. 'pwd' confirm db password + wait 360 secs
-    12. '' finish.
+    6. '2' choose /dev/vdb as disk
+    7. 'n' don't create dedicated db,
+    8. '0' db region number,
+    9. 'pwd' db password,
+    10. 'pwd' confirm db password + wait 360 secs
+    11. RETURN finish.
 
     Polarion:
         assignee: sbulage
@@ -165,7 +172,7 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
     """
 
     pwd = app_creds['password']
-    command_set = ('ap', '', '5', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 360), '')
+    command_set = ('ap', RETURN, '7', '1', '1', '2', 'n', '0', pwd, TimedCommand(pwd, 360), RETURN)
     unconfigured_appliance.appliance_console.run_commands(command_set)
     unconfigured_appliance.evmserverd.wait_for_running()
     unconfigured_appliance.wait_for_web_ui()
@@ -175,12 +182,12 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
 def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope):
     """ Commands:
     1. 'ap' launch appliance_console,
-    2. '' clear info screen,
+    2. RETURN clear info screen,
     3. '5' setup db,
     4. '4' reset db,
     5. 'y' confirm db reset,
     6. '1' db region number + wait 360 secs,
-    7. '' continue
+    7. RETURN continue
 
     Polarion:
         assignee: sbulage
@@ -190,7 +197,7 @@ def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope)
     """
 
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
-    command_set = ('ap', '', '5', '4', 'y', TimedCommand('1', 360), '')
+    command_set = ('ap', RETURN, '5', '4', 'y', TimedCommand('1', 360), RETURN)
     temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl start evmserverd')
     temp_appliance_preconfig_funcscope.evmserverd.wait_for_running()
@@ -201,16 +208,15 @@ def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope)
 def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
     """ Commands:
     1. 'ap' launch appliance_console,
-    2. '' clear info screen,
-    3. '5' setup db,
+    2. RETURN clear info screen,
+    3. '7' setup db,
     4. '1' Creates v2_key,
     5. '1' selects internal db,
-    6. 'y' continue,
-    7. '1' use partition,
-    8. 'y' create dedicated db,
-    9. 'pwd' db password,
-    10. 'pwd' confirm db password + wait 360 secs
-    11. '' finish.
+    6. '2' use /dev/vdb partition,
+    7. 'y' create dedicated db,
+    8. 'pwd' db password,
+    9. 'pwd' confirm db password + wait 360 secs
+    10. RETURN finish.
 
     Polarion:
         assignee: sbulage
@@ -221,7 +227,7 @@ def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
     """
 
     pwd = app_creds['password']
-    command_set = ('ap', '', '5', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+    command_set = ('ap', RETURN, '7', '1', '1', '2', 'y', pwd, TimedCommand(pwd, 360), RETURN)
     unconfigured_appliance.appliance_console.run_commands(command_set)
     wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
 
@@ -274,29 +280,29 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     app1_ip = apps[1].hostname
     pwd = app_creds['password']
     # Configure first appliance as dedicated database
-    command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+    command_set = ('ap', RETURN, '7', '1', '1', '2', 'y', pwd, TimedCommand(pwd, 360), RETURN)
     apps[0].appliance_console.run_commands(command_set)
     wait_for(lambda: apps[0].db.is_dedicated_active)
     # Configure EVM webui appliance with create region in dedicated database
-    command_set = ('ap', '', '5', '2', app0_ip, '', pwd, '', '2', '0', 'y', app0_ip, '', '', '',
-        pwd, TimedCommand(pwd, 360), '')
+    command_set = ('ap', RETURN, '7', '2', app0_ip, RETURN, pwd, RETURN, '2', '0', 'y', app0_ip,
+                   RETURN, RETURN, RETURN, pwd, TimedCommand(pwd, 360), RETURN)
     apps[2].appliance_console.run_commands(command_set)
     apps[2].evmserverd.wait_for_running()
     apps[2].wait_for_web_ui()
     # Configure primary replication node
-    command_set = ('ap', '', '6', '1', '1', '', '', pwd, pwd, app0_ip, 'y',
-        TimedCommand('y', 60), '')
+    command_set = ('ap', RETURN, '8', '1', '1', RETURN, RETURN, pwd, pwd, app0_ip, 'y',
+        TimedCommand('y', 60), RETURN)
     apps[0].appliance_console.run_commands(command_set)
     # Configure secondary replication node
     if apps[0].version > '5.9':
-        command_set = ('ap', '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
-                       app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
+        command_set = ('ap', RETURN, '8', '2', '2', app0_ip, RETURN, pwd, RETURN, '2', '2', RETURN,
+                       RETURN, pwd, pwd, app0_ip, app1_ip, 'y', TimedCommand('y', 360), RETURN)
     else:
-        command_set = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, app0_ip, app1_ip, 'y',
-                       TimedCommand('y', 60), '')
+        command_set = ('ap', RETURN, '6', '2', '1', '2', RETURN, RETURN, pwd, pwd, app0_ip, app1_ip,
+                       'y', TimedCommand('y', 360), RETURN)
     apps[1].appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
-    command_set = ('ap', '', '8', TimedCommand('1', 30), '')
+    command_set = ('ap', RETURN, '10', TimedCommand('1', 30), RETURN)
     apps[2].appliance_console.run_commands(command_set)
 
     def is_ha_monitor_started(appliance):
@@ -319,20 +325,20 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
 def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_creds, appliance):
     """ Commands:
     1. 'ap' launch appliance_console,
-    2. '' clear info screen,
-    3. '5/8' setup db,
+    2. RETURN clear info screen,
+    3. '7' setup db,
     4. '2' fetch v2_key,
     5. 'ip' address to fetch from,
-    6. '' default username,
+    6. RETURN default username,
     7. 'pwd' db password,
-    8. '' default v2_key location,
+    8. RETURN default v2_key location,
     9. '3' join external region,
     10. 'port' ip and port of joining region,
-    11. '' use default db name,
-    12. '' default username,
+    11. RETURN use default db name,
+    12. RETURN default username,
     13. 'pwd' db password,
     14. 'pwd' confirm db password + wait 360 secs
-    15. '' finish.
+    15. RETURN finish.
 
     Polarion:
         assignee: sbulage
@@ -344,8 +350,9 @@ def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_cr
 
     ip = appliance.hostname
     pwd = app_creds['password']
-    command_set = ('ap', '', '5', '2', ip, '', pwd, '', '3', ip, '', '', '',
-        pwd, TimedCommand(pwd, 360), '')
+    command_set = ('ap', RETURN, '7', '2', ip, RETURN, pwd, RETURN, '3', ip, RETURN, RETURN, RETURN,
+                   pwd, TimedCommand(pwd, 360), RETURN, RETURN)
+
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.evmserverd.wait_for_running()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
@@ -356,20 +363,19 @@ def test_appliance_console_external_db_create(
         app_creds, dedicated_db_appliance, unconfigured_appliance_secondary):
     """
     1. 'ap' launch appliance_console,
-    2. '' clear info screen,
-    3. '5' setup db,
-    4. '1'
-    5. create v2_key,
-    6. '2' create region in external db,
-    7. '0' db region number,
-    8. 'y' confirm create region in external db
-    9. 'ip',
-    10. '' ip and port for dedicated db,
-    11. '' use default db name,
-    12. '' default username,
-    13. 'pwd' db  password,
-    14. 'pwd' confirm db password + wait 360 secs,
-    15. '' finish.
+    2. RETURN clear info screen,
+    3. '7' setup db,
+    4. '1' create v2_key,
+    5. '2' create region in external db,
+    6. '0' db region number,
+    7. 'y' confirm create region in external db
+    8. 'ip',
+    9. RETURN ip and port for dedicated db,
+    10. RETURN use default db name,
+    11. RETURN default username,
+    12. 'pwd' db  password,
+    13. 'pwd' confirm db password + wait 360 secs,
+    14. RETURN finish.
 
     Polarion:
         assignee: sbulage
@@ -380,8 +386,8 @@ def test_appliance_console_external_db_create(
 
     ip = dedicated_db_appliance.hostname
     pwd = app_creds['password']
-    command_set = ('ap', '', '5', '1', '2', '0', 'y', ip, '', '', '', pwd,
-        TimedCommand(pwd, 300), '')
+    command_set = ('ap', RETURN, '7', '1', '2', '0', 'y', ip, RETURN, RETURN, RETURN, pwd,
+        TimedCommand(pwd, 300), RETURN)
     unconfigured_appliance_secondary.appliance_console.run_commands(command_set)
     unconfigured_appliance_secondary.evmserverd.wait_for_running()
     unconfigured_appliance_secondary.wait_for_web_ui()
@@ -391,11 +397,11 @@ def test_appliance_console_external_db_create(
 def test_appliance_console_extend_storage(unconfigured_appliance):
     """ Commands:
     1. 'ap' launches appliance_console,
-    2. '' clears info screen,
-    3. '9' extend storage,
-    4. '1' select disk,
+    2. RETURN clears info screen,
+    3. '11' extend storage,
+    4. '2' select disk,
     5. 'y' confirm configuration,
-    6. '' complete.
+    6. RETURN complete.
 
     Polarion:
         assignee: sbulage
@@ -403,7 +409,7 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
         caseimportance: critical
         initialEstimate: 1/4h
     """
-    command_set = ('ap', '', '9', '1', 'y', '')
+    command_set = ('ap', RETURN, '11', '2', 'y', RETURN)
     unconfigured_appliance.appliance_console.run_commands(command_set)
 
     def is_storage_extended():
@@ -415,9 +421,9 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
 def test_appliance_console_ipa(ipa_crud, configured_appliance):
     """ Commands:
     1. 'ap' launches appliance_console,
-    2. '' clears info screen,
-    3. '10' setup IPA, + wait 40 secs,
-    4. '' finish.
+    2. RETURN clears info screen,
+    3. '12' setup IPA, + wait 40 secs,
+    4. RETURN finish.
 
     Polarion:
         assignee: sbulage
@@ -425,21 +431,17 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
         initialEstimate: 1/4h
     """
 
-    command_set = ('ap', RETURN, '10',
-                   ipa_crud.host1,
-                   ipa_crud.ipadomain or RETURN,
-                   ipa_crud.iparealm or RETURN,
-                   ipa_crud.ipaprincipal or RETURN,
-                   ipa_crud.bind_password,
-                   TimedCommand('y', 40), RETURN)
-    configured_appliance.appliance_console.run_commands(command_set)
+    command_set = ('ap', RETURN, '12', ipa_crud.host1, ipa_crud.ipadomain, ipa_crud.iparealm,
+                   ipa_crud.ipaprincipal, ipa_crud.bind_password, TimedCommand('y', 60),
+                   RETURN, RETURN)
+    configured_appliance.appliance_console.run_commands(command_set, timeout=20)
     configured_appliance.sssd.wait_for_running()
     assert configured_appliance.ssh_client.run_command("cat /etc/ipa/default.conf |"
                                                        "grep 'enable_ra = True'")
 
     # Unconfigure to cleanup
     # When setup_ipa option selected, will prompt to unconfigure, then to proceed with new config
-    command_set = ('ap', RETURN, '10', TimedCommand('y', 40), TimedCommand('n', 5))
+    command_set = ('ap', RETURN, '12', TimedCommand('y', 40), TimedCommand('n', 5), RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set)
     wait_for(lambda: not configured_appliance.sssd.running)
 
@@ -448,8 +450,8 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
 def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configured_appliance):
     """ Commands:
     1. 'ap' launches appliance_console,
-    2. '' clears info screen,
-    3. '11' change ext auth options,
+    2. RETURN clears info screen,
+    3. '13' change ext auth options,
     4. 'auth_type' auth type to change,
     5. '4' apply changes.
 
@@ -467,8 +469,8 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
                             username=app_creds['sshlogin'],
                             password=app_creds['sshpass'])
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '11', auth_type.index, '4')
-    configured_appliance.appliance_console.run_commands(command_set)
+    command_set = ('ap', RETURN, '13', auth_type.index, '5', RETURN, RETURN)
+    configured_appliance.appliance_console.run_commands(command_set, timeout=30)
     evm_tail.validate_logs()
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
@@ -478,18 +480,18 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
                             password=app_creds['sshpass'])
 
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '11', auth_type.index, '4')
-    configured_appliance.appliance_console.run_commands(command_set)
+    command_set = ('ap', RETURN, '13', auth_type.index, '5', RETURN, RETURN)
+    configured_appliance.appliance_console.run_commands(command_set, timeout=30)
     evm_tail.validate_logs()
 
 
-def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_appliance):
+def test_appliance_console_external_auth_all(app_creds, configured_appliance):
     """ Commands:
     1. 'ap' launches appliance_console,
-    2. '' clears info screen,
-    3. '12/15' change ext auth options,
+    2. RETURN clears info screen,
+    3. '13' change ext auth options,
     4. 'auth_type' auth type to change,
-    5. '4' apply changes.
+    5. '5' apply changes.
 
     Polarion:
         assignee: sbulage
@@ -505,7 +507,8 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '11', '1', '2', '3', '4')
+    command_set = ('ap', RETURN, TimedCommand('13', 20), '1', '2', TimedCommand('5', 20),
+                   RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -518,7 +521,8 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
                             password=app_creds['password'])
 
     evm_tail.fix_before_start()
-    command_set = ('ap', '', '11', '1', '2', '3', '4')
+    command_set = ('ap', RETURN, TimedCommand('13', 20), '1', '2', TimedCommand('5', 20),
+                   RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -528,9 +532,9 @@ def test_appliance_console_external_auth_all(app_creds, ipa_crud, configured_app
 def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     """ Commands:
     1. 'ap' launches appliance_console,
-    2. '' clears info screen,
-    3. '13' Hardens appliance using SCAP configuration,
-    4. '' complete.
+    2. RETURN clears info screen,
+    3. '15' Hardens appliance using SCAP configuration,
+    4. RETURN complete.
 
     Polarion:
         assignee: sbulage
@@ -539,8 +543,8 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
         initialEstimate: 1/3h
     """
 
-    command_set = ('ap', '', '13', '')
-    temp_appliance_preconfig.appliance_console.run_commands(command_set)
+    command_set = ('ap', RETURN, '15', RETURN, RETURN)
+    temp_appliance_preconfig.appliance_console.run_commands(command_set, timeout=30)
 
     with tempfile.NamedTemporaryFile('w') as f:
         f.write(hidden['scap.rb'])
@@ -548,10 +552,7 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
         os.fsync(f.fileno())
         temp_appliance_preconfig.ssh_client.put_file(
             f.name, '/tmp/scap.rb')
-    if temp_appliance_preconfig.version >= "5.8":
-        rules = '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml'
-    else:
-        rules = '/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml'
+    rules = '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml'
 
     temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby scap.rb '
         '--rulesfile={rules}'.format(rules=rules))
@@ -584,7 +585,7 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
 def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
     """ Commands:
     1. 'ap' launches appliance_console,
-    2. '' clears info screen,
+    2. RETURN clears info screen,
     3. '1' configure network,
     4. '1' configure DHCP,
     5. 'y' confirm IPv4 configuration,
@@ -596,7 +597,7 @@ def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
         caseimportance: critical
         initialEstimate: 1/6h
     """
-    command_set = ('ap', '', '1', '1', 'y', 'y')
+    command_set = ('ap', RETURN, '1', '1', 'y', TimedCommand('y', 90), RETURN, RETURN)
     unconfigured_appliance.appliance_console.run_commands(command_set)
 
     def appliance_is_connective():
@@ -604,24 +605,24 @@ def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
     wait_for(appliance_is_connective, handle_exception=True, delay=1, timeout=30)
 
     soft_assert(unconfigured_appliance.ssh_client.run_command(
-        "ip a show dev eth0 | grep 'inet\s.*dynamic'"))
+        "ip a show dev eth0 | grep 'inet\s.*dynamic'").success)
     soft_assert(unconfigured_appliance.ssh_client.run_command
-        ("ip a show dev eth0 | grep 'inet6\s.*dynamic'"))
+        ("ip a show dev eth0 | grep 'inet6\s.*dynamic'").success)
 
 
 @pytest.mark.tier(1)
 def test_appliance_console_static_ipv4(unconfigured_appliance, soft_assert):
     """ Commands:
     1. 'ap' launches appliance_console,
-    2. '' clears info screen,
+    2. RETURN clears info screen,
     3. '1' configure network,
     4. '2' configure static IPv4,
-    5. '' confirm default IPv4 addr,
-    6. '' confirm default netmask,
-    7. '' confirm default gateway,
-    8. '' confirm default primary DNS,
-    9. '' confirm default secondary DNS,
-    10. '' confirm default search order,
+    5. RETURN confirm default IPv4 addr,
+    6. RETURN confirm default netmask,
+    7. RETURN confirm default gateway,
+    8. RETURN confirm default primary DNS,
+    9. RETURN confirm default secondary DNS,
+    10. RETURN confirm default search order,
     11. 'y' apply static configuration.
 
     Polarion:
@@ -630,7 +631,7 @@ def test_appliance_console_static_ipv4(unconfigured_appliance, soft_assert):
         caseimportance: critical
         initialEstimate: 1/6h
     """
-    command_set = ('ap', '', '1', '2', '', '', '', '', '', '', 'y')
+    command_set = ('ap', RETURN, '1', '2', RETURN, RETURN, RETURN, RETURN, RETURN, RETURN, 'y')
     unconfigured_appliance.appliance_console.run_commands(command_set)
 
     def appliance_is_connective():
@@ -646,15 +647,15 @@ def test_appliance_console_static_ipv4(unconfigured_appliance, soft_assert):
 def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
     """ Commands:
     1. 'ap' launches appliance_console,
-    2. '' clears info screen,
+    2. RETURN clears info screen,
     3. '1' configure network,
     4. '3' configure static IPv6,
     5. '1::1' set IPv4 addr,
-    6. '' set deafault prefix length,
+    6. RETURN set deafault prefix length,
     7. '1::f' set IPv6 gateway,
-    8. '' confirm default primary DNS,
-    9. '' confirm default secondary DNS,
-    10. '' confirm default search order,
+    8. RETURN confirm default primary DNS,
+    9. RETURN confirm default secondary DNS,
+    10. RETURN confirm default search order,
     11. 'y' apply static configuration.
 
     Polarion:
@@ -662,8 +663,8 @@ def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
         caseimportance: high
         initialEstimate: 1/4h
     """
-    command_set = ('ap', '', '1', '3', '1::1', '', '1::f', '', '', '', 'y')
-    unconfigured_appliance.appliance_console.run_commands(command_set)
+    command_set = ('ap', RETURN, '1', '3', '1::1', RETURN, '1::f', RETURN, RETURN, RETURN, 'y', '')
+    unconfigured_appliance.appliance_console.run_commands(command_set, timeout=30)
 
     def appliance_is_connective():
         unconfigured_appliance.ssh_client.run_command("true")
