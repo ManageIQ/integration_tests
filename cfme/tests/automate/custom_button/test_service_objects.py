@@ -466,14 +466,62 @@ def test_custom_button_on_vm_resource_detail(context):
         startsin: 5.9
         casecomponent: CustomButton
         tags: custom_button
+        setup:
+            1. Add Provider
+            2. Refresh Provider; Data should be collected.
+            3. Create Simple Dialog for catalog
+                * Navigate to Automation > Automate > Customization
+                * Click on All Dialogs from a sidebar
+                * From toolbar select "Add a new Dialog"
+                * Fill Dialog's name and description
+                * Drag TextBox (we can select other as well)
+                * Save changes
+            4. Create Catalog
+                * Navigate to Services > Catalogs
+                * Click on Catalogs from a sidebar
+                * From toolbar Configuration select "Add New Catalog"
+                * Fill name and description
+                * Save changes
+            5. Create a Catalog item
+                * Navigate to Services > Catalogs
+                * From sidebar select All Catalogs > catalog (created above)
+                * From toolbar select Add New catalog item
+                * Select Provider
+                * Fill Name, description, catalog and dialog (created above)
+                * Select VM name proper template etc...
+            6. Order Catalog
+                * Navigate to Services > Catalogs
+                * Click on Service catalogs from a sidebar
+                * Order catalog from this Page
         testSteps:
-            1. Add custom button for VM/Instance object from automation
-            2. In normal UI - OPS, Provision test service using any infra provider
-            (nvc55 recommended)
-            3. In SSUI, Check custom button on VM resource details page
-
+            1. Add custom button group for VM/Instance object from automation
+                * Navigate to Automate > Automation > Customization
+                * Click on Buttons from a sidebar
+                * Select VM/Instance
+                * From configuration select Add new Button Group
+                * Fill text, hover, icon, icon color
+                * Save change
+            2. Add custom button in above group
+                * Under this Group Click on configuration and select Add new Button
+                * Fill text, hover, icon, icon color, dialog, method
+                * Save changes
+            3. Navigate to SSUI (https://hostname/ui/service/login) (Credentials as Normal UI)
+            4. Click on My Services and select service (as per catalog item name)
+            5. Click on Instance which ordered by service.
+            6. Click on Group and select button
+            7. Fill dialog and submit it.
+        expectedResults:
+            1. A group should be created (is_displayed)
+            2. A button should created (is_displayed)
+            3.
+            4.
+            5. Check button displayed in a toolbar or not (Details page of an instance)
+            6. Dialog should display
+            7. Check for the flash message "Order Request was Submitted" and
+               check automation log for the request (Note request as per method attach to button in
+               step-1).
     Bugzilla:
-        1427430
+        1427430, 1450473, 1454910
     """
     pass
 

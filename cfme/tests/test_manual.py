@@ -5044,22 +5044,6 @@ def test_distributed_zone_failover_cu_data_collector():
 
 
 @pytest.mark.manual
-def test_custom_button_in_sui():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1450473
-    https://bugzilla.redhat.com/show_bug.cgi?id=1454910
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: SelfServiceUI
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Test Custom button in SUI
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_user_validation_works_fine_but_authentication_fails_if_no_group_is_assigned_fo():
@@ -13425,27 +13409,6 @@ def test_candu_graphs_host_hourly_vsphere55():
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.cfme_tenancy
-@pytest.mark.tier(1)
-def test_cloud_tenant_crud_rhos():
-    """
-    1. Add RHOS provider and perform refresh
-    2. Navigate to Compute -> Clouds -> Providers
-    3. Click on RHOS provider which was added
-    4. In the Relationships table click on Cloud Tenants
-    5. Configuration ->Create Cloud tenant6. Edit created tenant
-    7. Try to delete it
-
-    Polarion:
-        assignee: ndhandre
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/2h
     """
     pass
 
