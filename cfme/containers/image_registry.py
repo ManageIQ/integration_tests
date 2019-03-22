@@ -4,6 +4,7 @@ from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 
 from cfme.common import Taggable
+from cfme.common import TaggableCollection
 from cfme.common import TagPageView
 from cfme.containers.provider import ContainerObjectAllBaseView
 from cfme.containers.provider import ContainerObjectDetailsBaseView
@@ -43,7 +44,7 @@ class ImageRegistry(BaseEntity, Taggable, Navigatable):
 
 
 @attr.s
-class ImageRegistryCollection(GetRandomInstancesMixin, BaseCollection):
+class ImageRegistryCollection(GetRandomInstancesMixin, BaseCollection, TaggableCollection):
     """Collection object for :py:class:`Image Registry`."""
 
     ENTITY = ImageRegistry

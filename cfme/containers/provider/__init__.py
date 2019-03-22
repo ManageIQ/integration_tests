@@ -21,6 +21,7 @@ from widgetastic_patternfly import SelectorDropdown
 from cfme.base.credential import TokenCredential
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import PolicyProfileAssignable
+from cfme.common import TaggableCollection
 from cfme.common import TagPageView
 from cfme.common.candu_views import OptionForm
 from cfme.common.provider import BaseProvider
@@ -46,7 +47,6 @@ from cfme.utils.browser import browser
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
-from cfme.utils.version import LATEST
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import ContainerSummaryTable
@@ -336,7 +336,7 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
 
 
 @attr.s
-class ContainersProviderCollection(BaseCollection):
+class ContainersProviderCollection(BaseCollection, TaggableCollection):
     """Collection object for ContainersProvider objects
     """
 

@@ -4,6 +4,7 @@ from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 
 from cfme.common import Taggable
+from cfme.common import TaggableCollection
 from cfme.common import TagPageView
 from cfme.containers.provider import ContainerObjectAllBaseView
 from cfme.containers.provider import ContainerObjectDetailsBaseView
@@ -48,7 +49,7 @@ class Project(BaseEntity, Taggable, Labelable):
 
 
 @attr.s
-class ProjectCollection(GetRandomInstancesMixin, BaseCollection):
+class ProjectCollection(GetRandomInstancesMixin, BaseCollection, TaggableCollection):
     """Collection object for :py:class:`Project`."""
 
     ENTITY = Project

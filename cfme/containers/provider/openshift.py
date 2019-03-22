@@ -8,6 +8,7 @@ from wrapanapi.systems.container import Openshift
 from . import ContainersProvider
 from . import ContainersProviderDefaultEndpoint
 from . import ContainersProviderEndpointsForm
+from cfme.common import Taggable
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.vm_console import ConsoleMixin
 from cfme.control.explorer.alert_profiles import NodeAlertProfile
@@ -85,7 +86,8 @@ class AlertsEndpoint(ServiceBasedEndpoint):
 
 
 @attr.s(cmp=False)
-class OpenshiftProvider(ContainersProvider, ConsoleMixin):
+class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
+
     num_route = ['num_route']
     STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route
     type_name = "openshift"
