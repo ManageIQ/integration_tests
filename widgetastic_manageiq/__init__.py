@@ -1391,10 +1391,9 @@ class DialogButton(Button):
 class SquashButton(Button):
     """ This button requires a specific locator"""
 
-    def __locator__(self):
-        return './/div[contains(@class, "btn") and @id="squash_button" {}]'.format(
-            self.locator_conditions
-        )
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class, "btn") and @id="squash_button" {@locator_conditions}]'
+    )
 
 
 class DragandDropElements(View):

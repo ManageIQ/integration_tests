@@ -17,7 +17,8 @@ FILL_DATA = {
     "event_type": "Datastore Operation",
     "event_value": "Datastore Analysis Complete",
     "filter_type": "By Clusters",
-    "filter_value": "Cluster"
+    "filter_value": "Cluster",
+    "submit_button": True
 }
 
 
@@ -50,14 +51,12 @@ def test_control_icons_simulation(appliance):
     """
     view = navigate_to(appliance.server, "ControlSimulation")
     view.fill(FILL_DATA)
-    view.wait_displayed()
-    view.submit_button.click()
     # Now check all the icons
     assert view.simulation_results.squash_button.is_displayed
     # Check the tree icons
     tree = view.simulation_results.tree
     # Check the root_item
-    assert tree.image_getter(tree.root_item) is not None
+    assert tree.image_getter(tree.root_item)
     # Check all the child items
     for child_item in tree.child_items(tree.root_item):
-        assert tree.image_getter(child_item) is not None
+        assert tree.image_getter(child_item)
