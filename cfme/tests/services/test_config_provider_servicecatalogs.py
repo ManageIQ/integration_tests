@@ -4,18 +4,18 @@ from cfme import test_requirements
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
+from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 
 
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
-    pytest.mark.parametrize('job_type', ['template', 'workflow'],
-        ids=['template_job', 'workflow_job'], scope='module'),
+    pytest.mark.parametrize('job_type', ['template', 'workflow', 'template_survey'],
+        ids=['template_job', 'workflow_job', 'template_job_survey'], scope='module'),
     pytest.mark.ignore_stream('upstream'),
     pytest.mark.uncollectif(lambda appliance,
-        job_type: appliance.version < '5.10' and job_type == 'workflow'),
-    pytest.mark.meta(blockers=[1491704])]
+        job_type: appliance.version < '5.10' and job_type == 'workflow')]
 
 
 def pytest_generate_tests(metafunc):
@@ -87,6 +87,7 @@ def test_order_tower_catalog_item(appliance, catalog_item, request, job_type):
                                                               'List View')
 
 
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8610')])
 def test_retire_ansible_service(appliance, catalog_item, request, job_type):
     """Tests retiring of catalog items for Ansible Template and Workflow jobs
     Metadata:
