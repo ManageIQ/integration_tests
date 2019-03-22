@@ -47,7 +47,7 @@ def reconfigure_vm(vm, config):
 
 
 @pytest.fixture(scope='function')
-def small_vm(appliance, provider, small_template):
+def full_vm(appliance, provider, full_template):
     """This fixture is function-scoped, because there is no un-ambiguous way how to search for
     reconfigure request in UI in situation when you have two requests for the same reconfiguration
     and for the same VM name. This happens if you run test_vm_reconfig_add_remove_hw_cold and then
@@ -56,7 +56,7 @@ def small_vm(appliance, provider, small_template):
     are unique as a result."""
     vm = appliance.collections.infra_vms.instantiate(random_vm_name(context='reconfig'),
                                                      provider,
-                                                     small_template.name)
+                                                     full_template.name)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     vm.refresh_relationships()
 
@@ -66,45 +66,55 @@ def small_vm(appliance, provider, small_template):
 
 
 @pytest.fixture(scope='function')
-def ensure_vm_stopped(small_vm):
-    if small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_OFF):
-        small_vm.mgmt.ensure_state(VmState.STOPPED)
-        small_vm.wait_for_vm_state_change(small_vm.STATE_OFF)
+def ensure_vm_stopped(full_vm):
+    if full_vm.is_pwr_option_available_in_cfme(full_vm.POWER_OFF):
+        full_vm.mgmt.ensure_state(VmState.STOPPED)
+        full_vm.wait_for_vm_state_change(full_vm.STATE_OFF)
     else:
         raise Exception("Unknown power state - unable to continue!")
 
 
 @pytest.fixture(scope='function')
-def ensure_vm_running(small_vm):
-    if small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_ON):
-        small_vm.mgmt.ensure_state(VmState.RUNNING)
-        small_vm.wait_for_vm_state_change(small_vm.STATE_ON)
+def ensure_vm_running(full_vm):
+    if full_vm.is_pwr_option_available_in_cfme(full_vm.POWER_ON):
+        full_vm.mgmt.ensure_state(VmState.RUNNING)
+        full_vm.wait_for_vm_state_change(full_vm.STATE_ON)
     else:
         raise Exception("Unknown power state - unable to continue!")
 
 
 @pytest.fixture(params=["cold", "hot"])
-def vm_state(request, small_vm):
+def vm_state(request, full_vm):
     if request.param == "cold":
-        if small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_OFF):
-            small_vm.mgmt.ensure_state(VmState.STOPPED)
-            small_vm.wait_for_vm_state_change(small_vm.STATE_OFF)
+        if full_vm.is_pwr_option_available_in_cfme(full_vm.POWER_OFF):
+            full_vm.mgmt.ensure_state(VmState.STOPPED)
+            full_vm.wait_for_vm_state_change(full_vm.STATE_OFF)
         else:
             raise Exception("Unknown power state - unable to continue!")
     else:
-        if small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_ON):
-            small_vm.mgmt.ensure_state(VmState.RUNNING)
-            small_vm.wait_for_vm_state_change(small_vm.STATE_ON)
+        if full_vm.is_pwr_option_available_in_cfme(full_vm.POWER_ON):
+            full_vm.mgmt.ensure_state(VmState.RUNNING)
+            full_vm.wait_for_vm_state_change(full_vm.STATE_ON)
         else:
             raise Exception("Unknown power state - unable to continue!")
 
     yield request.param
 
 
+@pytest.fixture(scope='function')
+def enable_hot_plugin(provider, full_vm, ensure_vm_stopped):
+    # Operation on Provider side
+    # Hot plugin enable only needs for Vsphere Provider
+    if provider.one_of(VMwareProvider):
+        vm = provider.mgmt.get_vm(full_vm.name)
+        vm.cpu_hot_plug = True
+        vm.memory_hot_plug = True
+
+
 @pytest.mark.rhel_testing
 @pytest.mark.rhv1
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
-def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, change_type):
+def test_vm_reconfig_add_remove_hw_cold(provider, full_vm, ensure_vm_stopped, change_type):
     """
     Polarion:
         assignee: nansari
@@ -112,14 +122,14 @@ def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, c
         initialEstimate: 1/3h
         tags: reconfigure
     """
-    orig_config = small_vm.configuration.copy()
+    orig_config = full_vm.configuration.copy()
     new_config = prepare_new_config(orig_config, change_type)
 
     # Apply new config
-    reconfigure_vm(small_vm, new_config)
+    reconfigure_vm(full_vm, new_config)
 
     # Revert back to original config
-    reconfigure_vm(small_vm, orig_config)
+    reconfigure_vm(full_vm, orig_config)
 
 
 @pytest.mark.rhv1
@@ -133,7 +143,7 @@ def test_vm_reconfig_add_remove_hw_cold(provider, small_vm, ensure_vm_stopped, c
     blockers=[BZ(1692801, forced_streams=['5.10'],
                  unblock=lambda provider: not provider.one_of(RHEVMProvider))]
 )
-def test_vm_reconfig_add_remove_disk(provider, small_vm, vm_state, disk_type, disk_mode):
+def test_vm_reconfig_add_remove_disk(provider, full_vm, vm_state, disk_type, disk_mode):
     """
     Polarion:
         assignee: nansari
@@ -150,38 +160,38 @@ def test_vm_reconfig_add_remove_disk(provider, small_vm, vm_state, disk_type, di
             5. Check the count in VM details page
             6. Remove the disk and Check the count in VM details page
     """
-    orig_config = small_vm.configuration.copy()
+    orig_config = full_vm.configuration.copy()
     new_config = orig_config.copy()
     new_config.add_disk(
         size=500, size_unit='MB', type=disk_type, mode=disk_mode)
 
-    add_disk_request = small_vm.reconfigure(new_config)
+    add_disk_request = full_vm.reconfigure(new_config)
     # Add disk request verification
     wait_for(add_disk_request.is_succeeded, timeout=360, delay=45,
              message="confirm that disk was added")
     # Add disk UI verification
     wait_for(
-        lambda: small_vm.configuration.num_disks == new_config.num_disks, timeout=360, delay=45,
-        fail_func=small_vm.refresh_relationships,
+        lambda: full_vm.configuration.num_disks == new_config.num_disks, timeout=360, delay=45,
+        fail_func=full_vm.refresh_relationships,
         message="confirm that disk was added")
     msg = "Disk wasn't added to VM config"
-    assert small_vm.configuration.num_disks == new_config.num_disks, msg
+    assert full_vm.configuration.num_disks == new_config.num_disks, msg
 
-    remove_disk_request = small_vm.reconfigure(orig_config)
+    remove_disk_request = full_vm.reconfigure(orig_config)
     # Remove disk request verification
     wait_for(remove_disk_request.is_succeeded, timeout=360, delay=45,
              message="confirm that previously-added disk was removed")
     # Remove disk UI verification
     wait_for(
-        lambda: small_vm.configuration.num_disks == orig_config.num_disks, timeout=360, delay=45,
-        fail_func=small_vm.refresh_relationships,
+        lambda: full_vm.configuration.num_disks == orig_config.num_disks, timeout=360, delay=45,
+        fail_func=full_vm.refresh_relationships,
         message="confirm that previously-added disk was removed")
     msg = "Disk wasn't removed from VM config"
-    assert small_vm.configuration.num_disks == orig_config.num_disks, msg
+    assert full_vm.configuration.num_disks == orig_config.num_disks, msg
 
 
 @pytest.mark.rhv3
-def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
+def test_reconfig_vm_negative_cancel(provider, full_vm, ensure_vm_stopped):
     """ Cancel reconfiguration changes
 
     Polarion:
@@ -190,7 +200,7 @@ def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
         initialEstimate: 1/3h
         tags: reconfigure
     """
-    config_vm = small_vm.configuration.copy()
+    config_vm = full_vm.configuration.copy()
 
     # Some changes in vm reconfigure before cancel
     config_vm.hw.cores_per_socket = config_vm.hw.cores_per_socket + 1
@@ -200,52 +210,34 @@ def test_reconfig_vm_negative_cancel(provider, small_vm, ensure_vm_stopped):
     config_vm.add_disk(
         size=5, size_unit='GB', type='thin', mode='persistent')
 
-    small_vm.reconfigure(config_vm, cancel=True)
+    full_vm.reconfigure(config_vm, cancel=True)
 
 
 @pytest.mark.rhv1
-@pytest.mark.provider([RHEVMProvider], required_fields=['templates'], override=True)
+@pytest.mark.meta(
+    blockers=[BZ(1697967, unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize('change_type', ['sockets', 'memory'])
-@pytest.mark.meta(blockers=[BZ(1632782, forced_streams=['5.10'])])
-def test_vm_reconfig_add_remove_hw_hot(provider, small_vm, ensure_vm_running, change_type):
+def test_vm_reconfig_add_remove_hw_hot(
+        provider, full_vm, enable_hot_plugin, ensure_vm_running, change_type):
     """Change number of CPU sockets and amount of memory while VM is runnng.
-        Chaning number of cores per socket on running VM is not supported by RHV.
-
+        Changing number of cores per socket on running VM is not supported by RHV.
     Polarion:
         assignee: nansari
         initialEstimate: 1/4h
         tags: reconfigure
     """
-    orig_config = small_vm.configuration.copy()
+    orig_config = full_vm.configuration.copy()
     new_config = prepare_new_config(orig_config, change_type)
+    assert vars(orig_config.hw) != vars(new_config.hw)
 
     # Apply new config
-    reconfigure_vm(small_vm, new_config)
+    reconfigure_vm(full_vm, new_config)
 
-    # Revert back to original config
-    reconfigure_vm(small_vm, orig_config)
+    assert vars(full_vm.configuration.hw) == vars(new_config.hw)
 
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-@pytest.mark.parametrize('change_type', ['sockets', 'memory'])
-def test_vm_reconfig_add_remove_hw_hot_vmware(change_type):
-    """
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.5
-        casecomponent: Infra
-        tags: reconfigure
-        testSteps:
-            1. Change number of CPU sockets and amount of memory while VM is runnng.
-            2. Go to Compute -> infrastructure -> Virtual Machines -> Select Vm
-            3. Go to VM reconfiguration
-            4.Change number of CPU sockets and amount of memory, save and submit
-            5. Check the count in VM details page
-    """
-    pass
+    # Revert back to original config only supported by RHV
+    if provider.one_of(RHEVMProvider):
+        reconfigure_vm(full_vm, orig_config)
 
 
 @pytest.mark.manual
