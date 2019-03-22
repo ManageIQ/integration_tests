@@ -6,74 +6,99 @@ import fauxfactory
 import pytest
 
 import cfme.intelligence.chargeback.assignments as cb
-import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.dashboard import Dashboard
 from cfme.utils.appliance import ViaSSUI
-from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate", blockers=[GH('ManageIQ/integration_tests:7479')]),
+    pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.ssui,
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE,
-                         required_fields=[['provisioning', 'template'],
-                                          ['provisioning', 'host'],
-                                          ['provisioning', 'datastore']],
-                         scope="module"),
+    pytest.mark.provider(
+        [InfraProvider],
+        selector=ONE_PER_TYPE,
+        required_fields=[['provisioning', 'template'],
+                         ['provisioning', 'host'],
+                         ['provisioning', 'datastore']],
+        scope="module"
+    ),
 ]
 
 
 @pytest.fixture(scope="module")
-def new_compute_rate(enable_candu):
+def enable_candu(appliance):
+    candu = appliance.collections.candus
+    server_info = appliance.server.settings
+    original_roles = server_info.server_roles_db
+    server_info.enable_server_roles(
+        'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
+    candu.enable_all()
+    yield
+    server_info.update_server_roles_db(original_roles)
+    candu.disable_all()
+
+
+@pytest.fixture(scope="module")
+def new_compute_rate(appliance, enable_candu):
     # Create a new Compute Chargeback rate
     desc = '{}custom_'.format(fauxfactory.gen_alphanumeric())
-    compute = rates.ComputeRate(description=desc, fields={
-        'Used CPU': {'per_time': 'Hourly', 'variable_rate': '3'},
-        'Allocated CPU Count': {'per_time': 'Hourly', 'fixed_rate': '2'},
-        'Used Disk I/O': {'per_time': 'Hourly', 'variable_rate': '2'},
-        'Allocated Memory': {'per_time': 'Hourly', 'fixed_rate': '1'},
-        'Used Memory': {'per_time': 'Hourly', 'variable_rate': '2'}})
-    compute.create()
-    storage = rates.StorageRate(description=desc, fields={
-        'Used Disk Storage': {'per_time': 'Hourly', 'variable_rate': '3'},
-        'Allocated Disk Storage': {'per_time': 'Hourly', 'fixed_rate': '3'}})
-    storage.create()
+    try:
+        compute = appliance.collections.compute_rates.create(
+            description=desc,
+            fields={
+                'Used CPU': {'per_time': 'Hourly', 'variable_rate': '3'},
+                'Allocated CPU Count': {'per_time': 'Hourly', 'fixed_rate': '2'},
+                'Used Disk I/O': {'per_time': 'Hourly', 'variable_rate': '2'},
+                'Allocated Memory': {'per_time': 'Hourly', 'fixed_rate': '1'},
+                'Used Memory': {'per_time': 'Hourly', 'variable_rate': '2'}
+            }
+        )
+        storage = appliance.collections.storage_rates.create(
+            description=desc,
+            fields={
+                'Used Disk Storage': {'per_time': 'Hourly', 'variable_rate': '3'},
+                'Allocated Disk Storage': {'per_time': 'Hourly', 'fixed_rate': '3'}
+            }
+        )
+    except Exception as ex:
+        pytest.fail('Exception during chargeback creation for test setup: {}'.format(ex.message))
+
     yield desc
-    compute.delete()
-    storage.delete()
+
+    for rate in [compute, storage]:
+        rate.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
 def assign_chargeback_rate(new_compute_rate):
     """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
     # TODO Move this to a global fixture
-    for klass in (cb.ComputeAssign, cb.StorageAssign):
-        enterprise = klass(
-            assign_to="The Enterprise",
-            selections={
-                'Enterprise': {'Rate': new_compute_rate}
-            })
-        enterprise.assign()
-    logger.info('Assigning CUSTOM Compute and Storage rates')
+    logger.info('Assigning Compute and Storage rates: %s', new_compute_rate)
+
+    def make_assignment(rate):
+        for klass in (cb.ComputeAssign, cb.StorageAssign):
+            klass(
+                assign_to="The Enterprise",
+                selections={
+                    'Enterprise': {'Rate': rate}
+                }
+            ).assign()  # directly assign, no need to save the object
+
+    make_assignment(new_compute_rate)
+
     yield
+
     # Resetting the Chargeback rate assignment
-    for klass in (cb.ComputeAssign, cb.StorageAssign):
-        enterprise = klass(
-            assign_to="The Enterprise",
-            selections={
-                'Enterprise': {'Rate': '<Nothing>'}
-            })
-        enterprise.assign()
+    make_assignment('<Nothing>')
 
 
 def verify_vm_uptime(appliance, provider, vmname):

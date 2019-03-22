@@ -13,7 +13,6 @@ import pytest
 from wrapanapi import VmState
 
 import cfme.intelligence.chargeback.assignments as cb
-import cfme.intelligence.chargeback.rates as rates
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -358,27 +357,40 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, interv
 
 
 @pytest.fixture(scope="module")
-def new_compute_rate(interval):
+def new_compute_rate(appliance, interval):
     """Create a new Compute Chargeback rate"""
-    desc = 'custom_{}'.format(interval)
-    compute = rates.ComputeRate(description=desc,
-                fields={'Used CPU':
-                       {'per_time': interval, 'variable_rate': '720'},
-                       'Used Disk I/O':
-                       {'per_time': interval, 'variable_rate': '720'},
-                       'Used Network I/O':
-                       {'per_time': interval, 'variable_rate': '720'},
-                       'Used Memory':
-                       {'per_time': interval, 'variable_rate': '720'}})
-    compute.create()
-    storage = rates.StorageRate(description=desc,
-                fields={'Used Disk Storage':
-                        {'per_time': interval, 'variable_rate': '720'}})
-    storage.create()
+    desc = 'custom_{}_{}'.format(interval, fauxfactory.gen_alphanumeric())
+    try:
+        compute = appliance.collections.compute_rates.create(
+            description=desc,
+            fields={
+                'Used CPU': {'per_time': interval, 'variable_rate': '720'},
+                'Used Disk I/O': {'per_time': interval, 'variable_rate': '720'},
+                'Used Network I/O': {'per_time': interval, 'variable_rate': '720'},
+                'Used Memory': {'per_time': interval, 'variable_rate': '720'}
+            }
+        )
+        storage = appliance.collections.storage_rates.create(
+            description=desc,
+            fields={
+                'Used Disk Storage': {'per_time': interval, 'variable_rate': '720'}
+            }
+        )
+    except Exception as ex:
+        pytest.fail(
+            'Exception while creating compute/storage rates for chargeback long term rate tests. {}'
+            .format(ex)
+        )
     yield desc
 
-    compute.delete()
-    storage.delete()
+    for entity in [compute, storage]:
+        try:
+            entity.delete_if_exists()
+        except Exception as ex:
+            pytest.fail(
+                'Exception while cleaning up compute/storage rates for chargeback report tests. {}'
+                .format(ex)
+            )
 
 
 def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom,
