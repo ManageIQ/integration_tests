@@ -14,12 +14,26 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
     log_name = 'VSPHERE'
     image_pattern = re.compile(r'<a href="?\'?([^"\']*vsphere[^"\'>]*)')
 
+    @cached_property
+    def _vm_mgmt(self):
+        return self.mgmt.get_vm(self.template_name)
+
+    @cached_property
+    def _temp_vm_mgmt(self):
+        return self.mgmt.get_vm(self.temp_template_name)
+
+    @cached_property
+    def _picked_datastore(self):
+        # Priority goes to template_datastore_cluster
+        return (self.template_upload_data.get('template_datastore_cluster') or
+                self.template_upload_data.get('template_datastore') or
+                self.template_upload_data.get('allowed_datastores'))
+
     @log_wrap("upload template")
     def upload_template(self):
         cmd_args = [
             "ovftool --noSSLVerify",
-            # prefer the datastore from template_upload
-            "--datastore={}".format(self.provider_data.provisioning.datastore),  # move later
+            "--datastore={}".format(self._picked_datastore),
             "--name={}".format(self.temp_template_name),
             "--vCloudTemplate=True",
             "--overwrite",
@@ -45,14 +59,6 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
                 logger.error('Failure running ovftool: %s', upload_result.output)
                 logger.warning('Retrying template upload via ovftool')
 
-    @cached_property
-    def _vm_mgmt(self):
-        return self.mgmt.get_vm(self.template_name)
-
-    @cached_property
-    def _temp_vm_mgmt(self):
-        return self.mgmt.get_vm(self.temp_template_name)
-
     @log_wrap("add disk to VM")
     def add_disk_to_vm(self):
         # adding disk #1 (base disk is 0)
@@ -66,7 +72,7 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
         # move it to other datastore
         host = self.template_upload_data.get('host') or self.mgmt.list_host().pop()
         self._temp_vm_mgmt.clone(vm_name=self.template_name,
-                                 datastore=self.template_upload_data.template_datastore,
+                                 datastore=self._picked_datastore,
                                  host=host,
                                  relocate=True)
         assert self._vm_mgmt.exists
