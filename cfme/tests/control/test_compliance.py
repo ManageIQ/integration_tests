@@ -20,6 +20,7 @@ pytestmark = [
     pytest.mark.tier(3),
     test_requirements.control,
     pytest.mark.provider([VMwareProvider], scope='module'),
+    pytest.mark.usefixtures("setup_provider_modscope")
 ]
 
 
@@ -57,34 +58,7 @@ def assign_policy_for_testing(policy_for_testing, host, policy_profile_name):
 
 
 @pytest.fixture(scope="module")
-def vddk_url(provider):
-    try:
-        major, minor = str(provider.version).split(".")
-    except ValueError:
-        major = str(provider.version)
-        minor = "0"
-    vddk_version = "v{}_{}".format(major, minor)
-    # cf. BZ 1651702 vddk_version 6_7 does not currently work with CFME, so use v6_5
-    if BZ(1651702, forced_streams=['5.9', '5.10']).blocks:
-        vddk_version = "v6_5"
-    url = conf.cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
-    if url is None:
-        pytest.skip("There is no vddk url for this VMware provider version")
-    else:
-        return url
-
-
-@pytest.fixture(scope="module")
-def configure_fleecing(appliance, provider, setup_provider_modscope, vddk_url):
-    provider.setup_hosts_credentials()
-    appliance.install_vddk(vddk_url=vddk_url)
-    yield
-    appliance.uninstall_vddk()
-    provider.remove_hosts_credentials()
-
-
-@pytest.fixture(scope="module")
-def compliance_vm(configure_fleecing, provider, full_template_modscope):
+def compliance_vm(configure_fleecing_modscope, provider, full_template_modscope):
     name = "{}-{}".format("test-compliance", fauxfactory.gen_alpha(4))
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate(name, provider, full_template_modscope.name)
