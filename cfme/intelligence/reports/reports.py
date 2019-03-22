@@ -125,12 +125,7 @@ class ReportEditView(CustomReportFormCommon):
         return (
             self.in_intel_reports and
             self.reports.is_opened and
-            self.reports.tree.currently_selected == [
-                "All Reports",
-                self.context["object"].company_name,
-                "Custom",
-                self.context["object"].menu_name
-            ] and
+            self.reports.tree.currently_selected == self.context["object"].tree_path and
             self.report_title.text == 'Editing Report "{}"'.format(self.context["object"].menu_name)
         )
 
@@ -145,10 +140,7 @@ class ReportCopyView(ReportAddView):
             self.in_intel_reports and
             self.reports.is_opened and
             self.report_title.text == "Adding a new Report" and
-            self.reports.tree.currently_selected == [
-                "All Reports", self.context["object"].type, self.context["object"].subtype,
-                self.context["object"].menu_name
-            ]
+            self.reports.tree.currently_selected == self.context["object"].tree_path
         )
 
 class ReportDetailsView(CloudIntelReportsView):
@@ -169,18 +161,12 @@ class ReportDetailsView(CloudIntelReportsView):
 
     @property
     def is_displayed(self):
-        expected_tree = [
-            "All Reports",
-            self.context["object"].type or self.context["object"].company_name,
-            self.context["object"].subtype or "Custom",
-            self.context["object"].menu_name
-        ]
         expected_title = 'Report "{}"'.format(self.context["object"].menu_name)
         return (
             self.in_intel_reports and
             self.reports.is_opened and
             self.report_info.is_displayed and
-            self.reports.tree.currently_selected == expected_tree and
+            self.reports.tree.currently_selected == self.context["object"].tree_path and
             self.title.text == expected_title
         )
 
@@ -190,16 +176,13 @@ class ReportTimelineView(CloudIntelTimelinesView):
 
     @property
     def is_displayed(self):
-        expected_tree = [
-            self.context["object"].type or self.context["object"].company_name,
-            self.context["object"].subtype or "Custom",
-            self.context["object"].menu_name
-        ]
-
+        # Skipping the first element of report object's tree_path in Timelines,
+        # since Timeline doesn't include `All Reports` in it's tree_path,
+        # which is why tree.currently_selected is checked against tree_path[1:]
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Cloud Intel', 'Timelines'] and
-            self.timelines.tree.currently_selected == expected_tree
+            self.timelines.tree.currently_selected == self.context["object"].tree_path[1:]
         )
 
 
@@ -229,13 +212,6 @@ class SavedReportDetailsView(CloudIntelReportsView):
 
     @property
     def is_displayed(self):
-        expected_tree = [
-            "All Reports",
-            self.context["object"].report.type or self.context["object"].report.company_name,
-            self.context["object"].report.subtype or "Custom",
-            self.context["object"].report.menu_name,
-            self.context["object"].datetime_in_tree
-        ]
         expected_title = 'Saved Report "{} - {}"'.format(
             self.context["object"].report.title or self.context['object'].report.menu_name,
             self.context["object"].queued_datetime_in_title
@@ -243,7 +219,7 @@ class SavedReportDetailsView(CloudIntelReportsView):
         return (
             self.in_intel_reports and
             self.reports.is_opened and
-            self.reports.tree.currently_selected == expected_tree and
+            self.reports.tree.currently_selected == self.context["object"].tree_path and
             self.title.text == expected_title
         )
 
@@ -268,14 +244,15 @@ class AllCustomReportsView(CloudIntelReportsView):
 
     @property
     def is_displayed(self):
+        # This view is only used when more than one custom reports are present and
+        # one of them is deleted. It is used to check if the tree_path
+        # [`All Reports`, `My Company (All Groups)`, `Custom`] is available even after
+        # one of the custom reports has been deleted, which is why
+        # tree.currently_selected is checked against tree_path[:3]
         return (
             self.in_intel_reports and
             self.reports.is_opened and
-            self.reports.tree.currently_selected == [
-                "All Reports",
-                self.context["object"].company_name,
-                "Custom"
-            ] and
+            self.reports.tree.currently_selected == self.context["object"].tree_path[:3] and
             self.title.text == "Custom Reports"
         )
 
@@ -285,17 +262,10 @@ class ReportScheduleView(SchedulesFormCommon):
 
     @property
     def is_displayed(self):
-        report_obj = self.context["object"]
         return (
             self.in_intel_reports
             and self.title.text == "Adding a new Schedule"
-            and self.reports.tree.currently_selected
-            == [
-                "All Reports",
-                report_obj.type,
-                report_obj.subtype,
-                report_obj.menu_name,
-            ]
+            and self.reports.tree.currently_selected == self.context["object"].tree_path
         )
 
 @attr.s
@@ -461,6 +431,15 @@ class Report(BaseEntity, Updateable):
         )
         return saved_report
 
+    @property
+    def tree_path(self):
+        return [
+            "All Reports",
+            self.type or self.company_name,
+            self.subtype or "Custom",
+            self.menu_name,
+        ]
+
 
 @attr.s
 class ReportsCollection(BaseCollection):
@@ -557,6 +536,10 @@ class SavedReport(Updateable, BaseEntity):
             view.flash.assert_no_error()
             # TODO Doesn't work due to this BZ https://bugzilla.redhat.com/show_bug.cgi?id=1489387
             # view.flash.assert_message("Successfully deleted Saved Report from the CFME Database")
+
+    @property
+    def tree_path(self):
+        return self.report.tree_path + [self.datetime_in_tree]
 
 
 @attr.s
@@ -662,11 +645,10 @@ class ReportTimeline(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelTimelines")
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.timelines.tree.click_path(
-            self.obj.type or self.obj.company_name,
-            self.obj.subtype or "Custom",
-            self.obj.menu_name
-        )
+        # Skipping the first element of report object's tree_path in Timelines,
+        # since Timeline doesn't include `All Reports` in it's tree_path,
+        # which is why tree.currently_selected is checked against tree_path[1:]
+        self.prerequisite_view.timelines.tree.click_path(*self.obj.tree_path[1:])
 
 
 @navigator.register(Report, "Details")
@@ -675,12 +657,7 @@ class ReportDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.reports.tree.click_path(
-            "All Reports",
-            self.obj.type or self.obj.company_name,
-            self.obj.subtype or "Custom",
-            self.obj.menu_name
-        )
+        self.prerequisite_view.reports.tree.click_path(*self.obj.tree_path)
         self.view.report_info.select()
 
 
@@ -690,12 +667,7 @@ class ReportSchedule(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.reports.tree.click_path(
-            "All Reports",
-            self.obj.type or self.obj.company_name,
-            self.obj.subtype or "Custom",
-            self.obj.menu_name
-        )
+        self.prerequisite_view.reports.tree.click_path(*self.obj.tree_path)
         self.prerequisite_view.configuration.item_select("Add a new Schedule")
 
 
@@ -705,10 +677,4 @@ class SavedReportDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute("report", "Details")
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.reports.tree.click_path(
-            "All Reports",
-            self.obj.report.type or self.obj.report.company_name,
-            self.obj.report.subtype or "Custom",
-            self.obj.report.menu_name,
-            self.obj.datetime_in_tree
-        )
+        self.prerequisite_view.reports.tree.click_path(*self.obj.tree_path)
