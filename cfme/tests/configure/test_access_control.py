@@ -1929,34 +1929,3 @@ def test_tenant_visibility_miq_ae_namespaces_all_parents():
         startsin: 5.5
     """
     pass
-
-
-@pytest.mark.manual
-@test_requirements.cfme_tenancy
-@pytest.mark.tier(1)
-def test_cloud_tenant_crud_rhos():
-    """
-    Polarion:
-        assignee: mnadeem
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/2h
-        tags: cfme_tenancy
-        testSteps:
-            1. Add RHOS provider and perform refresh
-            2. Navigate to Compute -> Clouds -> Providers
-            3. Click on RHOS provider which was added
-            4. In the Relationships table click on Cloud Tenants
-            5. Configuration ->Create Cloud tenant
-            6. Edit created tenant
-            7. Try to delete it
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5. Check cloud tenant created or not
-            6. Check edited or not
-            7. Check deleted or not
-    """
-    pass
