@@ -4,6 +4,7 @@ from cfme import test_requirements
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
+from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 
 
@@ -86,6 +87,7 @@ def test_order_tower_catalog_item(appliance, catalog_item, request, job_type):
                                                               'List View')
 
 
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8610')])
 def test_retire_ansible_service(appliance, catalog_item, request, job_type):
     """Tests retiring of catalog items for Ansible Template and Workflow jobs
     Metadata:
