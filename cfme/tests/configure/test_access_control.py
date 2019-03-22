@@ -1950,5 +1950,13 @@ def test_cloud_tenant_crud_rhos():
             5. Configuration ->Create Cloud tenant
             6. Edit created tenant
             7. Try to delete it
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Check cloud tenant created or not
+            6. Check edited or not
+            7. Check deleted or not
     """
     pass
