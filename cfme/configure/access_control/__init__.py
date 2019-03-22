@@ -530,7 +530,7 @@ class DetailsGroupView(ConfigurationView):
     def is_displayed(self):
         return (
             self.accordions.accesscontrol.is_opened and
-            self.title.text == 'EVM Group "{}"'.format(self.context['object'].description)
+            self.title.text == u'EVM Group "{}"'.format(self.context['object'].description)
         )
 
 
@@ -712,11 +712,11 @@ class Group(BaseEntity, Taggable):
                 not having appropriate permissions OR delete is not allowed
                 for currently selected group
         """
-        flash_success_msg = 'EVM Group "{}": Delete successful'.format(self.description)
+        flash_success_msg = u'EVM Group "{}": Delete successful'.format(self.description)
         flash_blocked_msg_list = [
-            ('EVM Group "{}": '
-             'Error during delete: A read only group cannot be deleted.'.format(self.description)),
-            ('EVM Group "{}": Error during delete: '
+            (u'EVM Group "{}": Error during delete: '
+             'A read only group cannot be deleted.'.format(self.description)),
+            (u'EVM Group "{}": Error during delete: '
              'The group has users assigned that do not '
              'belong to any other group'.format(self.description))]
         delete_group_txt = 'Delete this Group'
