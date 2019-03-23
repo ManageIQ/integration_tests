@@ -178,7 +178,7 @@ def set_conversion_instance_for_rhev(appliance, transformation_method, rhev_host
                 host.add_tags(tags=(tag1, tag2))
 
 
-def set_conversion_instance_for_osp(appliance, osp_provider, transformation_method="vddk"):
+def set_conversion_instance_for_osp(appliance, osp_provider, transformation_method='vddk'):
     """
     Rails console command
     ====================
@@ -197,9 +197,11 @@ def set_conversion_instance_for_osp(appliance, osp_provider, transformation_meth
     delete_hosts = appliance.ssh_client.run_rails_command("'ConversionHost.delete_all'")
     if not delete_hosts.success:
         pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
-
+        
+    # transformation method needs to be lower case always
+    trans_method = transformation_method.lower()
     try:
-        conversion_instances = osp_provider.data['conversion_instances'][transformation_method]
+        conversion_instances = osp_provider.data['conversion_instances'][trans_method]
     except KeyError:
         pytest.skip("No conversion instance on provider.")
 
