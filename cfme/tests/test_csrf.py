@@ -23,10 +23,15 @@ def test_csrf_post(appliance):
     dashboard.reset_widgets(cancel=False)
 
     try:
-        wait_for(
-            lambda: (
-                dashboard.unexpected_error is not None and
-                'InvalidAuthenticityToken' in dashboard.unexpected_error),
-            num_sec=15, delay=0.2)
+        if appliance.version >= '5.10':
+            wait_for(
+                lambda: dashboard.logged_out, num_sec=15, delay=0.2)
+        else:
+            wait_for(
+                lambda: (
+                    dashboard.unexpected_error is not None and
+                    'InvalidAuthenticityToken' in dashboard.unexpected_error),
+                num_sec=15, delay=0.2)
+
     except TimedOutError:
         pytest.fail("CSRF attack succeeded!")
