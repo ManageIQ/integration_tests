@@ -640,7 +640,7 @@ class Group(BaseEntity, Taggable):
                    'group_tenant': self.tenant})
         view.add_button.click()
         view = self.create_view(AllGroupView)
-        view.flash.assert_success_message('Group "{}" was saved'.format(self.description))
+        view.flash.assert_success_message(u'Group "{}" was saved'.format(self.description))
         assert view.is_displayed
 
     def add_group_from_ldap_lookup(self):
