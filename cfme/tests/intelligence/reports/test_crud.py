@@ -14,15 +14,15 @@ from cfme.utils.update import update
 from cfme.utils.wait import wait_for_decorator
 
 
-report_crud_dir = data_path.join("reports_crud")
-schedules_crud_dir = data_path.join("schedules_crud")
+REPORT_CRUD_DIR = data_path.join("reports_crud")
+SCHEDULES_CRUD_DIR = data_path.join("schedules_crud")
 
 
 def crud_files_reports():
     result = []
-    if not report_crud_dir.exists:
-        report_crud_dir.mkdir()
-    for file_name in report_crud_dir.listdir():
+    if not REPORT_CRUD_DIR.exists:
+        REPORT_CRUD_DIR.mkdir()
+    for file_name in REPORT_CRUD_DIR.listdir():
         if file_name.isfile() and file_name.basename.endswith(".yaml"):
             result.append(file_name.basename)
     return result
@@ -30,9 +30,9 @@ def crud_files_reports():
 
 def crud_files_schedules():
     result = []
-    if not schedules_crud_dir.exists:
-        schedules_crud_dir.mkdir()
-    for file_name in schedules_crud_dir.listdir():
+    if not SCHEDULES_CRUD_DIR.exists:
+        SCHEDULES_CRUD_DIR.mkdir()
+    for file_name in SCHEDULES_CRUD_DIR.listdir():
         if file_name.isfile() and file_name.basename.endswith(".yaml"):
             result.append(file_name.basename)
     return result
@@ -40,13 +40,13 @@ def crud_files_schedules():
 
 @pytest.fixture(params=crud_files_reports())
 def custom_report_values(request):
-    with report_crud_dir.join(request.param).open(mode="r") as rep_yaml:
+    with REPORT_CRUD_DIR.join(request.param).open(mode="r") as rep_yaml:
         return yaml.safe_load(rep_yaml)
 
 
 @pytest.fixture(params=crud_files_schedules())
 def schedule_data(request):
-    with schedules_crud_dir.join(request.param).open(mode="r") as rep_yaml:
+    with SCHEDULES_CRUD_DIR.join(request.param).open(mode="r") as rep_yaml:
         return yaml.safe_load(rep_yaml)
 
 
@@ -344,7 +344,7 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
         menu_name="Hardware Information for VMs",
     )
     data = {
-        "timer": {"hour": "12", "minute": "10"},
+        "timer": {"starting_hour": "12", "starting_minute": "10"},
         "emails": "test@example.com",
         "email_options": {
             "send_if_empty": True,
@@ -370,7 +370,7 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
         caseimportance: high
         initialEstimate: 1/10h
     """
-    schedule_data["filter"] = (
+    schedule_data["report_filter"] = (
         "My Company (All Groups)",
         "Custom",
         get_custom_report.menu_name,

@@ -11,15 +11,44 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 
-schedules_report_dir = data_path.join("schedules_crud")
+SCHEDULES_REPORT_DIR = data_path.join("schedules_crud")
 
 
 TIMER = {
-    "monthly": {"run": "Monthly", "hours": "Month"},
-    "hourly": {"run": "Hourly", "hours": "Hour"},
-    "daily": {"run": "Daily", "hours": "Day"},
-    "weekly": {"run": "Weekly", "hours": "Week"},
-    "once": {"run": "Once", "hours": ""},
+    "monthly": {
+        "run": "Monthly",
+        "run_month": "2 Months",
+        "starting_hour": "12",
+        "starting_minute": "5",
+        "time_zone": "(GMT+10:00) Melbourne",
+    },
+    "hourly": {
+        "run": "Hourly",
+        "run_hour": "6 Hours",
+        "starting_hour": "12",
+        "starting_minute": "5",
+        "time_zone": "(GMT+10:00) Melbourne",
+    },
+    "daily": {
+        "run": "Daily",
+        "run_day": "2 Days",
+        "starting_hour": "12",
+        "starting_minute": "5",
+        "time_zone": "(GMT+10:00) Melbourne",
+    },
+    "weekly": {
+        "run": "Weekly",
+        "run_week": "3 Weeks",
+        "starting_hour": "12",
+        "starting_minute": "5",
+        "time_zone": "(GMT+10:00) Melbourne",
+    },
+    "once": {
+        "run": "Once",
+        "starting_hour": "12",
+        "starting_minute": "5",
+        "time_zone": "(GMT+10:00) Melbourne",
+    },
 }
 
 INVALID_EMAILS = {
@@ -38,35 +67,30 @@ INVALID_EMAILS = {
 
 def schedule_files():
     result = []
-    for file_name in schedules_report_dir.listdir():
+    if not SCHEDULES_REPORT_DIR.exists:
+        SCHEDULES_REPORT_DIR.mkdir()
+    for file_name in SCHEDULES_REPORT_DIR.listdir():
         if file_name.isfile() and file_name.basename.endswith(".yaml"):
             result.append(file_name.basename)
     return result
 
 
-@pytest.fixture(
-    params=schedule_files(),
-    ids=[schedule.split(".")[0] for schedule in schedule_files()],
-)
-def schedule_data(request, interval=None):
-    with schedules_report_dir.join(request.param).open(mode="r") as rep_yaml:
-        schedule_data = yaml.safe_load(rep_yaml)
-        if interval:
-            schedule_data["timer"] = TIMER[interval]
-        yield schedule_data
+@pytest.fixture(params=schedule_files(),
+                ids=[schedule.split(".")[0] for schedule in schedule_files()])
+def schedule_data(request):
+    with SCHEDULES_REPORT_DIR.join(request.param).open(mode="r") as rep_yaml:
+        return yaml.safe_load(rep_yaml)
 
 
 @pytest.fixture(scope="function")
 def schedule(schedule_data, appliance):
-    collection = appliance.collections.schedules
-    schedule = collection.create(**schedule_data)
+    schedule = appliance.collections.schedules.create(**schedule_data)
     yield schedule
-    if schedule.exists:
-        schedule.delete()
+    schedule.delete_if_exists()
 
 
 @pytest.mark.parametrize("interval", TIMER)
-def test_schedule_queue(schedule, appliance, interval):
+def test_schedule_queue(appliance, request, interval, schedule_data):
     """ To test scheduling of report using options: Once, Hourly, Daily, Weekly, Monthly
 
     Polarion:
@@ -75,6 +99,9 @@ def test_schedule_queue(schedule, appliance, interval):
         initialEstimate: 1/10h
         tags: report
     """
+    schedule_data["timer"] = TIMER[interval]
+    schedule = appliance.collections.schedules.create(**schedule_data)
+    request.addfinalizer(schedule.delete_if_exists)
 
     schedule.queue()
     view = schedule.create_view(ScheduleDetailsView)
