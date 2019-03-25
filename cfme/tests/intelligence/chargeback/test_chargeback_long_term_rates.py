@@ -388,7 +388,7 @@ def new_compute_rate(appliance, interval):
             entity.delete_if_exists()
         except Exception as ex:
             pytest.fail(
-                'Exception while cleaning up compute/storage rates for chargeback report tests. {}'
+                'Exception cleaning up compute/storage rate for chargeback long term rate tests. {}'
                 .format(ex)
             )
 
