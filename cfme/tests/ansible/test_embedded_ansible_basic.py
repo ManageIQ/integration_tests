@@ -270,7 +270,7 @@ def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
 def test_control_crud_ansible_playbook_action(request, catalog_item, action_collection):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         initialEstimate: 1/12h
     """
@@ -309,7 +309,7 @@ def test_control_add_ansible_playbook_action_invalid_address(request, catalog_it
         action_collection):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: jdupuy
         casecomponent: Control
         initialEstimate: 1/12h
     """
