@@ -1062,7 +1062,7 @@ class SettingsGroupSubmenu(NavDropdown):
                 )
             )
         element = self.browser.element(
-            "./ul/li[normalize-space(.)={}]".format(quote(item)), parent=self
+            u"./ul/li[normalize-space(.)={}]".format(quote(item)), parent=self
         )
         return "disabled" not in self.browser.classes(element)
 
@@ -1077,8 +1077,8 @@ class SettingsGroupSubmenu(NavDropdown):
             raise WidgetOperationFailed("Cannot click disabled item {}".format(item))
 
         self.expand()
-        self.logger.info("selecting item {}".format(item))
-        self.browser.click("./ul/li[normalize-space(.)={}]".format(quote(item)), parent=self)
+        self.logger.info(u"selecting item {}".format(item))
+        self.browser.click(u"./ul/li[normalize-space(.)={}]".format(quote(item)), parent=self)
 
     def read(self):
         """ Returns the text of the group element """

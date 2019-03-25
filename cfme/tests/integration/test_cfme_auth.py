@@ -306,7 +306,7 @@ def test_user_group_switching(appliance, auth_user, auth_mode, auth_provider, so
         # pick non-evm group when there are multiple groups for the user
         if 'evmgroup' not in group.lower():
             # create group in CFME via retrieve_group which looks it up on auth_provider
-            logger.info('Retrieving a user group that is non evm built-in: {}'.format(group))
+            logger.info(u'Retrieving a user group that is non evm built-in: {}'.format(group))
             retrieved_groups.append(retrieve_group(appliance,
                                                    auth_mode,
                                                    auth_user.username,
@@ -329,19 +329,19 @@ def test_user_group_switching(appliance, auth_user, auth_mode, auth_provider, so
         # check retrieved groups are there
         for group in retrieved_groups:
             soft_assert(group.description in view.group_names,
-                        'user group "{}" not displayed in UI groups list "{}"'
+                        u'user group "{}" not displayed in UI groups list "{}"'
                         .format(group, view.group_names))
 
         # change to the other groups
         for other_group in display_other_groups:
-            soft_assert(other_group in auth_user.groups, 'Group {} in UI not expected for user {}'
+            soft_assert(other_group in auth_user.groups, u'Group {} in UI not expected for user {}'
                                                          .format(other_group, auth_user))
             view.change_group(other_group)
-            assert view.is_displayed, ('Not logged in after switching to group {} for {}'
+            assert view.is_displayed, (u'Not logged in after switching to group {} for {}'
                                        .format(other_group, auth_user))
             # assert selected group has changed
             soft_assert(other_group == view.current_groupname,
-                        'After switching to group {}, its not displayed as active'
+                        u'After switching to group {}, its not displayed as active'
                         .format(other_group))
 
     appliance.server.login_admin()
