@@ -225,23 +225,24 @@ def delete_queues(provider_mgmt, excluded_queues, output):
 
 
 def delete_s3_bucket(provider_mgmt, bucket_name, output):
-    buckets = []
-    provider_name = provider_mgmt.kwargs['name']
+    deleted_buckets = []
     try:
-        bucket_list = provider_mgmt.list_s3_bucket_names()
-        for bucket in bucket_list:
-            if bucket_name in bucket:
-                provider_mgmt.delete_s3_buckets(bucket_names=[bucket])
-                buckets.append([provider_name, bucket])
-                logger.info("Deleted S3 Buckets: %r", bucket)
+        to_delete = [
+            bucket
+            for bucket in provider_mgmt.list_s3_bucket_names()
+            if bucket_name in bucket
+        ]
+        if to_delete:
+            deleted_buckets = provider_mgmt.delete_s3_buckets(bucket_names=to_delete)
         else:
             logger.info("%s Bucket is not found", bucket_name)
 
-        if buckets:
+        if deleted_buckets:
             with open(output, 'a+') as report:
-                report.write(tabulate(tabular_data=buckets,
+                report.write(tabulate(tabular_data=deleted_buckets,
                                       headers=['Provider Key', 'Bucket Name'],
                                       tablefmt='orgtbl'))
+                logger.info("Deleted S3 Buckets: %r", deleted_buckets)
     except Exception as e:
         logger.exception('Exception in %s', e.message)
 
