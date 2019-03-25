@@ -293,6 +293,7 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_
     request.addfinalizer(policy_for_testing.assign_events)
     # Stop the VM
     vm.mgmt.stop()
+    vm._prov.refresh_provider_relationships()
     # Wait for VM powered on by CFME
     try:
         vm.mgmt.wait_for_state(VmState.RUNNING, timeout=600, delay=5)
@@ -324,6 +325,7 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
     request.addfinalizer(policy_for_testing.assign_events)
     # Start the VM
     vm.mgmt.start()
+    vm._prov.refresh_provider_relationships()
     # Wait for VM powered off by CFME
     try:
         vm.mgmt.wait_for_state(VmState.STOPPED, timeout=600, delay=5)
@@ -354,6 +356,7 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, poli
     request.addfinalizer(policy_for_testing.assign_events)
     # Start the VM
     vm.mgmt.start()
+    vm._prov.refresh_provider_relationships()
     # Wait for VM be suspended by CFME
     try:
         vm.mgmt.wait_for_state(VmState.SUSPENDED, timeout=600, delay=5)
