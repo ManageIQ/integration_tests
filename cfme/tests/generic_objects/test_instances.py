@@ -9,6 +9,7 @@ from cfme.services.myservice import MyService
 from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.update import update
 
@@ -180,12 +181,16 @@ def test_generic_objects_crud(appliance, context, request):
         assert not instance.exists
 
 
+@pytest.mark.meta(blockers=[BZ(1692531)])
 @pytest.mark.parametrize('button_group', [True, False],
                          ids=['button_group_with_button', 'single_button'])
 def test_generic_objects_with_buttons_ui(appliance, request, add_generic_object_to_service,
                                          button_group, generic_object_button):
     """
         Tests buttons ui visibility assigned to generic object
+
+        Bugzillas:
+            * 1692531
 
         Metadata:
             test_flag: ui
