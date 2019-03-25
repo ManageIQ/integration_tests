@@ -364,14 +364,7 @@ def original_request_class(appliance):
 
 @pytest.fixture(scope="module")
 def modified_request_class(request, domain, original_request_class):
-    try:
-        # methods of this class might have been copied by other fixture, so this error can occur
-        original_request_class.copy_to(domain)
-    except Exception as ex:
-        if "Error during 'Automate Class copy'" in ex.message:
-            pass
-        else:
-            pytest.fail('Unexpected exception duing request class copy')
+    original_request_class.copy_to(domain)
     klass = (domain
              .namespaces.instantiate(name='Cloud')
              .namespaces.instantiate(name='VM')
