@@ -34,24 +34,6 @@ def test_catalog_crud(appliance):
 
 
 @pytest.mark.sauce
-def test_catalog_duplicate_name(appliance):
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        tags: service
-    """
-    catalog_name = fauxfactory.gen_alphanumeric()
-    cat = appliance.collections.catalogs.create(name=catalog_name, description='my catalog')
-    with pytest.raises(AssertionError):
-        appliance.collections.catalogs.create(name=catalog_name, description='my catalog')
-    view = cat.create_view(CatalogsView)
-    view.flash.assert_message('Name has already been taken')
-
-
-@pytest.mark.sauce
 def test_permissions_catalog_add(appliance, request):
     """ Tests that a catalog can be added only with the right permissions
 
