@@ -5,6 +5,7 @@ import pytest
 from wait_for import wait_for
 
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.fixtures.cli import is_failover_started
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import manager
@@ -183,10 +184,7 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     command_set = ('ap', '', '8', TimedCommand('1', 30), '')
     appl3.appliance_console.run_commands(command_set)
 
-    def is_ha_monitor_started(appliance):
-        return bool(appliance.ssh_client.run_command(
-            "grep {} /var/www/miq/vmdb/config/failover_databases.yml".format(app1_ip)).success)
-    wait_for(is_ha_monitor_started, func_args=[appl3], timeout=300, handle_exception=True)
+    wait_for(is_ha_monitor_started, func_args=[appl3, app1_ip], timeout=300, handle_exception=True)
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl3).setup()
     provider_app_crud(EC2Provider, appl3).setup()

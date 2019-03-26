@@ -8,6 +8,7 @@ from wait_for import TimedOutError
 from wait_for import wait_for
 
 from cfme import test_requirements
+from cfme.fixtures.cli import is_failover_started
 from cfme.utils import os
 from cfme.utils.conf import hidden
 from cfme.utils.log import logger
@@ -304,10 +305,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     command_set = ('ap', RETURN, '10', TimedCommand('1', 30), RETURN)
     apps[2].appliance_console.run_commands(command_set)
 
-    def is_ha_monitor_started(appliance):
-        return bool(appliance.ssh_client.run_command(
-            "grep {} /var/www/miq/vmdb/config/failover_databases.yml".format(app1_ip)).success)
-    wait_for(is_ha_monitor_started, func_args=[apps[2]], timeout=300, handle_exception=True)
+    wait_for(is_ha_monitor_started, func_args=[apps[2], app1_ip], timeout=300, handle_exception=True)
     # Cause failover to occur
     result = apps[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
     assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
