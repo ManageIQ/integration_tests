@@ -188,29 +188,7 @@ def temp_appliances_unconfig_funcscope(appliance, pytestconfig):
         yield appliances
 
 
-@pytest.fixture(scope="function")
-def vddk_url(provider):
-    try:
-        major, minor = str(provider.version).split(".")
-    except ValueError:
-        major = str(provider.version)
-        minor = "0"
-    vddk_version = "v{}_{}".format(major, minor)
-    # cf. BZ 1651702 vddk_version 6_7 does not currently work with CFME, so use v6_5
-    if BZ(1651702, forced_streams=['5.9', '5.10']).blocks:
-        vddk_version = "v6_5"
-    try:
-        url = conf.cfme_data.basic_info.vddk_url.get(vddk_version)
-    except (KeyError, AttributeError):
-        pytest.skip('VDDK URL/Version not found in cfme_data.basic_info')
-    if url is None:
-        pytest.skip("There is no vddk url for this VMware provider version")
-    else:
-        return url
-
-
-@pytest.fixture(scope="module")
-def vddk_url_modscope(provider):
+def get_vddk_url(provider):
     try:
         major, minor = str(provider.version).split(".")
     except ValueError:
@@ -231,7 +209,8 @@ def vddk_url_modscope(provider):
 
 
 @pytest.fixture(scope="function")
-def configure_fleecing(appliance, provider, vddk_url):
+def configure_fleecing(appliance, provider, setup_provider):
+    vddk_url = get_vddk_url(provider)
     provider.setup_hosts_credentials()
     appliance.install_vddk(vddk_url=vddk_url)
     yield
@@ -240,9 +219,10 @@ def configure_fleecing(appliance, provider, vddk_url):
 
 
 @pytest.fixture(scope="module")
-def configure_fleecing_modscope(appliance, provider, vddk_url_modscope):
+def configure_fleecing_modscope(appliance, provider, setup_provider_modscope):
+    vddk_url = get_vddk_url(provider)
     provider.setup_hosts_credentials()
-    appliance.install_vddk(vddk_url=vddk_url_modscope)
+    appliance.install_vddk(vddk_url=vddk_url)
     yield
     appliance.uninstall_vddk()
     provider.remove_hosts_credentials()
