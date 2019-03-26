@@ -107,7 +107,7 @@ def test_host_most_recent_hour_graph_screen(graph_type, provider, host, enable_c
     assert graph_data > 0
 
 
-@pytest.mark.uncollectif(lambda provider, graph_type, interval:
+@pytest.mark.uncollectif(lambda provider, graph_type:
                          provider.one_of(RHEVMProvider) and
                          graph_type == "host_disk")
 @pytest.mark.parametrize('interval', INTERVAL)
