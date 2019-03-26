@@ -663,7 +663,7 @@ class SSHClient(paramiko.SSHClient):
         # Servers part
         srvs = [line for line in srvs.split("\n")[1:] if matcher.search(line) is None]
         srv_headers = [h.strip() for h in srvs[0].strip().split("|")]
-        srv_body = srvs[2:]
+        srv_body = srvs[1:]
         servers = []
         for server in srv_body:
             fields = [f.strip() for f in server.strip().split("|")]
