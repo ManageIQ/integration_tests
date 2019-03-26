@@ -66,6 +66,7 @@ class MyServicesView(BaseLoggedInPage):
 
     @View.nested
     class myservice(Accordion):  # noqa
+        # Note: Services in tree now hidden to improve performance BZ-1692531
         ACCORDION_NAME = 'Services'
         tree = ManageIQTree()
 
@@ -187,9 +188,8 @@ class ServiceRetirementView(ServiceRetirementForm):
         return (
             self.in_myservices and
             self.myservice.is_opened and
-            self.myservice.tree.currently_selected == ["Active Services",
-                                                       self.context['object'].name]
-            and self.title.text == 'Set/Remove retirement date for Service')
+            self.title.text == 'Set/Remove retirement date for Service'
+        )
 
 
 class ReconfigureServiceView(SetOwnershipForm):
@@ -237,10 +237,7 @@ def retire(self):
     view = navigate_to(self, 'Details')
     view.toolbar.lifecycle.item_select('Retire this Service', handle_alert=True)
     view.flash.assert_no_error()
-    if self.appliance.version < '5.8':
-        view.flash.assert_success_message(
-            'Retirement initiated for 1 Service from the {} Database'.format(
-                self.appliance.product_name))
+
     # wait for service to retire
     if self.appliance.version < '5.10':
         wait_for(
@@ -295,15 +292,10 @@ def exists(self):
 @MiqImplementationContext.external_for(MyService.delete, ViaUI)
 def delete(self):
     view = navigate_to(self, 'Details')
-    if self.appliance.version < '5.9':
-        remove_str = 'Remove Service'
-    else:
-        remove_str = 'Remove Service from Inventory'
-    view.toolbar.configuration.item_select(remove_str, handle_alert=True)
+    view.toolbar.configuration.item_select("Remove Service from Inventory", handle_alert=True)
     view = self.create_view(MyServicesView, wait='5s')
     view.flash.assert_no_error()
-    view.flash.assert_success_message(
-        'Service "{}": Delete successful'.format(self.name))
+    view.flash.assert_success_message('Service "{}": Delete successful'.format(self.name))
 
 
 @MiqImplementationContext.external_for(MyService.set_ownership, ViaUI)
@@ -331,8 +323,7 @@ def edit_tags(self, tag, value):
 @MiqImplementationContext.external_for(MyService.check_vm_add, ViaUI)
 def check_vm_add(self, vm):
     view = navigate_to(vm, 'Details')
-    assert self.name == view.entities.summary(
-        'Relationships').get_text_of('Service')
+    assert self.name == view.entities.summary('Relationships').get_text_of('Service')
 
 
 @MiqImplementationContext.external_for(MyService.download_file, ViaUI)
@@ -371,7 +362,7 @@ class MyServiceDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.myservice.tree.click_path('Active Services', self.obj.name)
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
 @navigator.register(MyService, 'Edit')
