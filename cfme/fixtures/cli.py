@@ -234,25 +234,26 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     Appliance one configuring dedicated database, 'ap' launch appliance_console,
     '' clear info screen, '5' setup db, '1' Creates v2_key, '1' selects internal db,
     '1' use partition, 'y' create dedicated db, 'pwd' db password, 'pwd' confirm db password + wait
-    360 secs and '' finish.
+    and '' finish.
 
     Appliance two creating region in dedicated database, 'ap' launch appliance_console, '' clear
     info screen, '5' setup db, '2' fetch v2_key, 'app0_ip' appliance ip address, '' default user,
     'pwd' appliance password, '' default v2_key location, '2' create region in external db, '0' db
     region number, 'y' confirm create region in external db 'app0_ip', '' ip and default port for
     dedicated db, '' use default db name, '' default username, 'pwd' db password, 'pwd' confirm db
-    password + wait 360 seconds and '' finish.
+    password + wait and '' finish.
 
     Appliance one configuring primary node for replication, 'ap' launch appliance_console, '' clear
     info screen, '6' configure db replication, '1' configure node as primary, '1' cluster node
     number set to 1, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
-    'app0_ip' primary appliance ip, confirm settings and wait 360 seconds to configure, '' finish.
+    'app0_ip' primary appliance ip, confirm settings and wait to configure, '' finish.
 
 
     Appliance three configuring standby node for replication, 'ap' launch appliance_console, ''
-    clear info screen, '6' configure db replication, '1' configure node as primary, '1' cluster node
-    number set to 1, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
-    'app0_ip' primary appliance ip, confirm settings and wait 360 seconds to configure, '' finish.
+    clear info screen, '6' configure db replication, '2' configure node as standby, '2' cluster node
+    number set to 2, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
+    'app0_ip' primary appliance ip, app1_ip standby appliance ip, confirm settings and wait
+    to configure finish, '' finish.
 
 
     Appliance two configuring automatic failover of database nodes, 'ap' launch appliance_console,
