@@ -3,7 +3,6 @@
 # in selenium (the group is selected then immediately reset)
 from textwrap import dedent
 
-import fauxfactory
 import pytest
 from riggerlib import recursive_update
 from widgetastic_patternfly import CheckableBootstrapTreeview as Check_tree
@@ -49,8 +48,9 @@ def vm_name():
 def instance_args(request, provider, provisioning, vm_name):
     """ Fixture to prepare instance parameters for provisioning
     """
-    inst_args = dict(template_name=provisioning.get('image', {}).get('image') or provisioning.get(
+    inst_args = dict(template_name=provisioning.get('image', {}).get('name') or provisioning.get(
         'template'))
+    assert inst_args.get('template_name')
 
     # Base instance info
     inst_args['request'] = {
@@ -336,20 +336,26 @@ def test_provision_from_template_using_rest(appliance, request, provider, vm_nam
 
 
 VOLUME_METHOD = ("""
+clone_options = {{
+  :image_ref => nil,
+  :block_device_mapping_v2 => [
+    {}
+  ]
+}}
+
 prov = $evm.root["miq_provision"]
-prov.set_option(
-    :clone_options,
-    {{ :block_device_mapping => [{}] }})
+prov.set_option(:clone_options, clone_options)
 """)
 
-ONE_FIELD = """{{:volume_id => "{}", :device_name => "{}"}}"""
-
-
-@pytest.fixture(scope="module")
-def domain(request, appliance):
-    domain = appliance.collections.domains.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
-    request.addfinalizer(domain.delete_if_exists)
-    return domain
+ONE_FIELD = """{{
+  :boot_index => {boot_index},
+  :uuid => "{uuid}",
+  :device_name => "{device_name}",
+  :source_type => "volume",
+  :destination_type => "volume",
+  :volume_size => 1,
+  :delete_on_termination => false
+}}"""
 
 
 @pytest.fixture(scope="module")
@@ -405,37 +411,59 @@ def test_cloud_provision_from_template_with_attached_disks(
     if provider.one_of(AzureProvider):
         recursive_update(inst_args, {'environment': {'availability_zone': provisioning("av_set")}})
 
-    device_name = "/dev/sd{}"
+    device_name = "vd{}"
     device_mapping = []
 
-    with provider.mgmt.with_volumes(1, n=disks) as volumes:
-        for i, volume in enumerate(volumes):
-            device_mapping.append((volume, device_name.format(chr(ord("b") + i))))
-        # Set up automate
+    volumes = provider.mgmt.volume_configurations(1, n=disks)
 
-        method = modified_request_class.methods.instantiate(name="openstack_PreProvision")
+    @request.addfinalizer
+    def delete_volumes():
+        for volume in volumes:
+            provider.mgmt.delete_volume(volume)
 
+    # Set up automate
+    for i, volume in enumerate(volumes, 0):
+        if i == 0:
+            provider.mgmt.capi.volumes.set_bootable(volume, True)
+            device_mapping.append(
+                {'boot_index': 0,
+                'uuid': volume,
+                'device_name': device_name.format(chr(ord("a") + i))})
+        else:
+            device_mapping.append(
+                {'boot_index': -1,
+                'uuid': volume,
+                'device_name': device_name.format(chr(ord("a") + i))})
+
+    method = modified_request_class.methods.instantiate(name="openstack_PreProvision")
+
+    view = navigate_to(method, 'Details')
+    former_method_script = view.script.get_value()
+    with update(method):
+        disk_mapping = []
+        for mapping in device_mapping:
+            disk_mapping.append(ONE_FIELD.format(**mapping))
+        method.script = VOLUME_METHOD.format(",\n".join(disk_mapping))
+
+    @request.addfinalizer
+    def _finish_method():
         with update(method):
-            disk_mapping = []
-            for mapping in device_mapping:
-                disk_mapping.append(ONE_FIELD.format(*mapping))
-            method.script = VOLUME_METHOD.format(", ".join(disk_mapping))
+            method.script = former_method_script
 
-        def _finish_method():
-            with update(method):
-                method.script = """prov = $evm.root["miq_provision"]"""
-        request.addfinalizer(_finish_method)
+    instance = appliance.collections.cloud_instances.create(vm_name,
+                                                            provider,
+                                                            form_values=inst_args)
 
-        instance = appliance.collections.cloud_instances.create(vm_name,
-                                                                provider,
-                                                                form_values=inst_args)
-
-        for volume_id in volumes:
-            soft_assert(vm_name in provider.mgmt.volume_attachments(volume_id))
-        for volume, device in device_mapping:
-            soft_assert(provider.mgmt.volume_attachments(volume)[vm_name] == device)
-        instance.mgmt.delete()  # To make it possible to delete the volume
+    @request.addfinalizer
+    def delete_vm_and_wait_for_gone():
+        instance.mgmt.delete()
         wait_for(lambda: not instance.exists_on_provider, num_sec=180, delay=5)
+
+    for volume_id in volumes:
+        assert vm_name in provider.mgmt.volume_attachments(volume_id)
+    for device in device_mapping:
+        assert (provider.mgmt.volume_attachments(device['uuid'])[vm_name]
+                == '/dev/{}'.format(device['device_name']))
 
 
 # Not collected for EC2 in generate_tests above
@@ -458,52 +486,54 @@ def test_provision_with_boot_volume(request, instance_args, provider, soft_asser
 
     image = inst_args.get('template_name')
 
-    with provider.mgmt.with_volume(1, imageRef=provider.mgmt.get_template_id(image)) as volume:
-        # Set up automate
-        method = modified_request_class.methods.instantiate(name="openstack_CustomizeRequest")
+    volume = provider.mgmt.create_volume(1, imageRef=provider.mgmt.get_template(image).uuid)
+    request.addfinalizer(lambda: provider.mgmt.delete_volume(volume))
+
+    # Set up automate
+    method = modified_request_class.methods.instantiate(name="openstack_CustomizeRequest")
+    view = navigate_to(method, 'Details')
+    former_method_script = view.script.get_value()
+    with update(method):
+        method.script = dedent('''\
+            $evm.root["miq_provision"].set_option(
+                :clone_options, {{
+                    :image_ref => nil,
+                    :block_device_mapping_v2 => [{{
+                        :boot_index => 0,
+                        :uuid => "{}",
+                        :device_name => "vda",
+                        :source_type => "volume",
+                        :destination_type => "volume",
+                        :volume_size => 1,
+                        :delete_on_termination => false
+                    }}]
+                }}
+            )
+        '''.format(volume))
+
+    @request.addfinalizer
+    def _finish_method():
         with update(method):
-            method.script = dedent('''\
-                $evm.root["miq_provision"].set_option(
-                    :clone_options, {{
-                        :image_ref => nil,
-                        :block_device_mapping_v2 => [{{
-                            :boot_index => 0,
-                            :uuid => "{}",
-                            :device_name => "vda",
-                            :source_type => "volume",
-                            :destination_type => "volume",
-                            :volume_size => 1,
-                            :delete_on_termination => false
-                        }}]
-                    }}
-                )
-            '''.format(volume))
+            method.script = former_method_script
 
-        @request.addfinalizer
-        def _finish_method():
-            with update(method):
-                method.script = """prov = $evm.root["miq_provision"]"""
+    instance = appliance.collections.cloud_instances.create(vm_name,
+                                                            provider,
+                                                            form_values=inst_args)
 
-        instance = appliance.collections.cloud_instances.create(vm_name,
-                                                                provider,
-                                                                form_values=inst_args)
-
-        request_description = 'Provision from [{}] to [{}]'.format(image,
-                                                                   instance.name)
-        provision_request = appliance.collections.requests.instantiate(request_description)
-        try:
-            provision_request.wait_for_request(method='ui')
-        except Exception as e:
-            logger.info(
-                "Provision failed {}: {}".format(e, provision_request.request_state))
-            raise
-        msg = "Provisioning failed with the message {}".format(
-            provision_request.row.last_message.text)
-        assert provision_request.is_succeeded(method='ui'), msg
-        soft_assert(instance.name in provider.mgmt.volume_attachments(volume))
-        soft_assert(provider.mgmt.volume_attachments(volume)[instance.name] == "/dev/vda")
+    @request.addfinalizer
+    def delete_vm_and_wait_for_gone():
         instance.mgmt.delete()  # To make it possible to delete the volume
         wait_for(lambda: not instance.exists_on_provider, num_sec=180, delay=5)
+
+    request_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui')
+
+    msg = "Provisioning failed with the message {}".format(
+        provision_request.row.last_message.text)
+    assert provision_request.is_succeeded(method='ui'), msg
+    soft_assert(instance.name in provider.mgmt.volume_attachments(volume))
+    soft_assert(provider.mgmt.volume_attachments(volume)[instance.name] == "/dev/vda")
 
 
 # Not collected for EC2 in generate_tests above
@@ -532,6 +562,9 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
         image_id = provider.mgmt.get_template(small_template.name).uuid
     except KeyError:
         pytest.skip("No small_template in provider data!")
+
+    view = navigate_to(method, 'Details')
+    former_method_script = view.script.get_value()
     with update(method):
         method.script = dedent('''\
             $evm.root["miq_provision"].set_option(
@@ -550,14 +583,26 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
         )
         '''.format(image_id))
 
+    @request.addfinalizer
     def _finish_method():
         with update(method):
-            method.script = """prov = $evm.root["miq_provision"]"""
-    request.addfinalizer(_finish_method)
+            method.script = former_method_script
 
-    instance = appliance.collections.cloud_instances.create(vm_name,
-                                                            provider,
-                                                            form_values=inst_args)
+    def cleanup_and_wait_for_instance_gone():
+        instance.mgmt.refresh()
+        prov_instance_raw = instance.mgmt.raw
+        instance_volumes = getattr(prov_instance_raw, 'os-extended-volumes:volumes_attached')
+
+        instance.cleanup_on_provider()
+        wait_for(lambda: not instance.exists_on_provider, num_sec=180, delay=5)
+
+        # Delete the volumes.
+        for volume in instance_volumes:
+            provider.mgmt.delete_volume(volume['id'])
+
+    instance = appliance.collections.cloud_instances.create(
+        vm_name, provider, form_values=inst_args)
+    request.addfinalizer(cleanup_and_wait_for_instance_gone)
 
     request_description = 'Provision from [{}] to [{}]'.format(small_template.name, instance.name)
     provision_request = appliance.collections.requests.instantiate(request_description)
@@ -573,20 +618,14 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
 
     instance.mgmt.refresh()
     prov_instance_raw = instance.mgmt.raw
-    try:
-        assert hasattr(prov_instance_raw, 'os-extended-volumes:volumes_attached')
-        volumes_attached = getattr(prov_instance_raw, 'os-extended-volumes:volumes_attached')
-        assert len(volumes_attached) == 1
-        volume_id = volumes_attached[0]["id"]
-        assert provider.mgmt.volume_exists(volume_id)
-        volume = provider.mgmt.get_volume(volume_id)
-        assert volume.size == 3
-    finally:
-        instance.cleanup_on_provider()
-        wait_for(lambda: not instance.exists_on_provider, num_sec=180, delay=5)
-        if "volume_id" in locals():  # To handle the case of 1st or 2nd assert
-            if provider.mgmt.volume_exists(volume_id):
-                provider.mgmt.delete_volume(volume_id)
+
+    assert hasattr(prov_instance_raw, 'os-extended-volumes:volumes_attached')
+    volumes_attached = getattr(prov_instance_raw, 'os-extended-volumes:volumes_attached')
+    assert len(volumes_attached) == 1
+    volume_id = volumes_attached[0]["id"]
+    assert provider.mgmt.volume_exists(volume_id)
+    volume = provider.mgmt.get_volume(volume_id)
+    assert volume.size == 3
 
 
 @test_requirements.tag

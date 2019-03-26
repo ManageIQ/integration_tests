@@ -145,6 +145,7 @@ class MethodDetailsView(AutomateExplorerView):
     location = SummaryFormItem('Main Info', 'Location')
     created_on = SummaryFormItem('Main Info', 'Created On', text_filter=parsetime.from_iso_with_utc)
     inputs = Table(locator='#params_grid', assoc_column='Input Name')
+    script = ScriptBox()
 
     @property
     def is_displayed(self):
