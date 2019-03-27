@@ -317,7 +317,7 @@ class TestGroupsViaREST(object):
     @pytest.fixture(scope="function")
     def groups(self, request, appliance, roles, tenants):
         num_groups = 3
-        response = _groups(request, appliance, roles, tenants, num=num_groups)
+        response = _groups(request, appliance, roles, num=num_groups, tenant=tenants)
         assert_response(appliance)
         assert len(response) == num_groups
         return response
