@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import attr
 from navmazing import NavigateToAttribute
-from navmazing import NavigateToSibling
 from widgetastic.widget import NoSuchElementException
 from widgetastic.widget import Text
 from widgetastic.widget import View
@@ -12,7 +11,6 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
-from cfme.common import TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -149,19 +147,16 @@ class ObjectStoreObjectCollection(BaseCollection):
             return None
 
     def delete(self, *objects):
-        # TODO: capture flash message after BZ 1497113 resolve.
         view = navigate_to(self, 'All')
 
         for obj in objects:
             try:
-                row = view.entities.paginator.find_row_on_pages(
-                    view.entities.elements, key=obj.key)
-                row[0].check()
-            except NoSuchElementException:
+                view.entities.get_entity(key=obj.key, surf_pages=True).check()
+            except ItemNotFound:
                 raise ItemNotFound('Could not locate object {}'.format(obj.key))
 
-        view.toolbar.configuration.item_select('Remove Object Storage Objects',
-                                               handle_alert=True)
+        view.toolbar.configuration.item_select('Remove Object Storage Objects', handle_alert=True)
+        view.flash.assert_no_error()
 
 
 @navigator.register(ObjectStoreObjectCollection, 'All')
@@ -173,9 +168,6 @@ class ObjectStoreObjectAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select(
             'Storage', 'Object Storage', 'Object Store Objects')
 
-    def resetter(self, *args, **kwargs):
-        self.view.toolbar.view_selector.select("List View")
-
 
 @navigator.register(ObjectStoreObject, 'Details')
 class ObjectStoreObjectDetails(CFMENavigateStep):
@@ -184,18 +176,6 @@ class ObjectStoreObjectDetails(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         try:
-            # ToDo: use get_entity method as JS API issue (#2898) resolve.
-            row = self.prerequisite_view.entities.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.elements, key=self.obj.key)
-            row[1].click()
-        except NoSuchElementException:
+            self.prerequisite_view.entities.get_entity(key=self.obj.key, surf_pages=True).click()
+        except ItemNotFound:
             raise ItemNotFound('Could not locate object {}'.format(self.obj.key))
-
-
-@navigator.register(ObjectStoreObject, 'EditTagsFromDetails')
-class ObjectStoreObjectDetailEditTag(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

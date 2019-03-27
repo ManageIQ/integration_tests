@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import attr
 from navmazing import NavigateToAttribute
-from navmazing import NavigateToSibling
-from widgetastic.widget import NoSuchElementException
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapNav
@@ -13,13 +11,12 @@ from widgetastic_patternfly import Dropdown
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
-from cfme.common import TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.providers import get_crud_by_name
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import ItemsToolBarViewSelector
@@ -130,21 +127,25 @@ class ObjectStoreContainer(BaseEntity, CustomButtonEventsMixin, Taggable):
 class ObjectStoreContainerCollection(BaseCollection):
     """Collection object for :py:class:'cfme.storage.object_store_container.ObjectStoreContainer'
     """
+
     ENTITY = ObjectStoreContainer
 
     def all(self):
         """returning all containers objects for respective Cloud Provider"""
-        view = navigate_to(self, 'All')
+
+        provider = self.filters.get("provider")
+        prov_db = {prov.id: prov for prov in self.appliance.rest_api.collections.providers.all}
 
         containers = []
 
-        # ToDo: use all_entity_names method as JS API issue (#2898) resolve.
-        view.entities.elements.wait_displayed()
-        for item in view.entities.elements.read():
-            if self.filters.get('provider').name in item['Cloud Provider']:
-                containers.append(self.instantiate(key=item['Key'],
-                                                   provider=self.filters.get('provider')))
-        return containers
+        for cont in self.appliance.rest_api.collections.cloud_object_store_containers:
+            prov = get_crud_by_name(prov_db[cont.ems.parent_ems_id].name)
+            containers.append(self.instantiate(key=cont.key, provider=prov))
+        return (
+            [cont for cont in containers if cont.provider.id == provider.id]
+            if provider
+            else containers
+        )
 
 
 @navigator.register(ObjectStoreContainerCollection, 'All')
@@ -156,9 +157,6 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select(
             'Storage', 'Object Storage', 'Object Store Containers')
 
-    def resetter(self, *args, **kwargs):
-        self.view.toolbar.view_selector.select("List View")
-
 
 @navigator.register(ObjectStoreContainer, 'Details')
 class Details(CFMENavigateStep):
@@ -167,20 +165,6 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         try:
-            # ToDo: use get_entity method as JS API issue (#2898) resolve.
-            row = self.prerequisite_view.entities.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.elements, key=self.obj.key)
-            row.click()
-
-        except NoSuchElementException:
+            self.prerequisite_view.entities.get_entity(key=self.obj.key, surf_pages=True).click()
+        except ItemNotFound:
             raise ItemNotFound('Could not locate container {}'.format(self.obj.key))
-
-
-@navigator.register(ObjectStoreContainer, 'EditTagsFromDetails')
-class ObjectDetailEditTag(CFMENavigateStep):
-    """ This navigation destination help to Taggable"""
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
