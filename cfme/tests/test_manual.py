@@ -612,7 +612,7 @@ def test_infrastructure_hosts_icons_states():
     Summary of the host
 
     Polarion:
-        assignee: mmojzis
+        assignee: anikifor
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/3h
@@ -1267,7 +1267,7 @@ def test_storage_ebs_volume_crud():
     pass
 
 
-@pytest.mark.manual
+@pytest.mark.manual('manualonly')
 def test_ec2_deploy_cfme_image():
     """
     BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1413835
@@ -4304,7 +4304,7 @@ def test_puma_server():
     Worker]
 
     Polarion:
-        assignee: mmojzis
+        assignee: anikifor
         casecomponent: WebUI
         initialEstimate: 1/2h
     """
@@ -6342,7 +6342,7 @@ def test_osp_vmware65_test_vm_migration_with_windows_7():
     pass
 
 
-@pytest.mark.manual
+@pytest.mark.manual('manualonly')
 def test_ec2_flavor_list_up_to_date():
     """
     Requirement: EC2 Provider
@@ -13311,7 +13311,7 @@ def test_verify_external_auth_configuration_for_ldap_can_be_un_configured_using_
     pass
 
 
-@pytest.mark.manual
+@pytest.mark.manual('manualonly')
 @pytest.mark.tier(1)
 def test_infrastructure_provider_left_panel_titles():
     """
