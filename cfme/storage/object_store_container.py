@@ -15,8 +15,8 @@ from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.providers import get_crud_by_name
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import ItemsToolBarViewSelector
@@ -132,20 +132,16 @@ class ObjectStoreContainerCollection(BaseCollection):
 
     def all(self):
         """returning all containers objects for respective Cloud Provider"""
-
-        provider = self.filters.get("provider")
-        prov_db = {prov.id: prov for prov in self.appliance.rest_api.collections.providers.all}
+        view = navigate_to(self, 'All')
 
         containers = []
 
-        for cont in self.appliance.rest_api.collections.cloud_object_store_containers:
-            prov = get_crud_by_name(prov_db[cont.ems.parent_ems_id].name)
-            containers.append(self.instantiate(key=cont.key, provider=prov))
-        return (
-            [cont for cont in containers if cont.provider.id == provider.id]
-            if provider
-            else containers
-        )
+        view.entities.elements.wait_displayed()
+        for item in view.entities.elements.read():
+            if self.filters.get('provider').name in item['Cloud Provider']:
+                containers.append(self.instantiate(key=item['Key'],
+                                                   provider=self.filters.get('provider')))
+        return containers
 
 
 @navigator.register(ObjectStoreContainerCollection, 'All')
