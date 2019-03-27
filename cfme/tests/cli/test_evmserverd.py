@@ -41,19 +41,28 @@ def test_evmserverd_stop(appliance, request):
 
     server_name_key = 'Server'
 
-    server_names = {server[server_name_key] for server in appliance.ssh_client.status["servers"]}
+    server_names = {
+        server[server_name_key].rstrip('*')  # evm* shows up in status
+        for server in appliance.ssh_client.status["servers"]
+    }
     request.addfinalizer(appliance.evmserverd.start)
     appliance.evmserverd.stop()
 
     @wait_for_decorator(timeout="2m", delay=5)
     def servers_stopped():
-        status = {
-            server[server_name_key]: server for server in appliance.ssh_client.status["servers"]
+        server_name_status_map = {
+            server[server_name_key].rstrip('*'): server
+            for server in appliance.ssh_client.status["servers"]  # pull the status again
         }
-        for server_name in server_names:
-            if status[server_name]["Status"] != "stopped":
-                return False
-        return True
+        for server_name in server_names:  # iterate over original list of server names
+            try:
+                if server_name_status_map[server_name]["Status"] != "stopped":
+                    return False  # keep waiting
+            except KeyError:
+                pytest.fail('Expected server name [{}] not found in status map [{}].'
+                            .format(server_name, server_name_status_map))
+        else:
+            return True
 
     status = appliance.ssh_client.run_command("systemctl status evmserverd")
     assert "Stopped EVM server daemon" in status.output

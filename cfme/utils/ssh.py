@@ -643,16 +643,14 @@ class SSHClient(paramiko.SSHClient):
             raise Exception("Wrong command output:\n{}".format(data.output))
 
         def _process_dict(d):
-            d["ID"] = int(d["ID"])
-            try:
-                # this function fails if some server process isn't running. pid will be '' then
-                d["PID"] = int(d["PID"])
-            except ValueError:
-                d["PID"] = None
-            try:
-                d["SPID"] = int(d["SPID"])
-            except ValueError:
-                d["SPID"] = None
+            for k in ['ID', 'PID', 'SPID']:
+                try:
+                    d[k] = int(d[k])
+                except ValueError:
+                    d[k] = None
+                except KeyError:
+                    continue
+
             if "Active Roles" in d:
                 d["Active Roles"] = set(d["Active Roles"].split(":"))
             if "Last Heartbeat" in d:
