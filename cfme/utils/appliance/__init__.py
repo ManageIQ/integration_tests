@@ -312,6 +312,7 @@ class IPAppliance(object):
     collectd = SystemdService.declare(unit_name='collectd')
     evminit = SystemdService.declare(unit_name='evminit')
     evmserverd = SystemdService.declare(unit_name='evmserverd')
+    evm_failover_monitor = SystemdService.declare(unit_name='evm-failover-monitor')
     httpd = SystemdService.declare(unit_name='httpd')
     merkyl = SystemdService.declare(unit_name='merkyl')
     nginx = SystemdService.declare(unit_name='nginx')
@@ -1825,6 +1826,24 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     @property
     def is_embedded_ansible_running(self):
         return self.is_embedded_ansible_role_enabled and self.supervisord.running
+
+    @property
+    def is_failover_started(self):
+        log = ('/var/www/miq/vmdb/log/ha_admin.log' if self.version < 5.10
+               else '/var/www/miq/vmdb/log/evm.log')
+        return self.ssh_client.run_command(
+            "grep 'Starting to execute failover' {}".format(log)).success
+
+    def is_ha_monitor_started(self, standby_server_ip=None):
+        if self.version < '5.10':
+            assert standby_server_ip, (
+                'The is_ha_monitor_started() needs a standby_server_ip when appliance '
+                'version is < 5.10')
+            return self.ssh_client.run_command(
+                "grep {} /var/www/miq/vmdb/config/failover_databases.yml".format(standby_server_ip)
+            ).success
+        else:
+            return self.evm_failover_monitor.running
 
     def wait_for_embedded_ansible(self, timeout=1200):
         """Waits for embedded ansible to be ready

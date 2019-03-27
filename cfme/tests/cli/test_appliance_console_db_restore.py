@@ -5,7 +5,6 @@ import pytest
 from wait_for import wait_for
 
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.fixtures.cli import is_failover_started
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import manager
@@ -184,7 +183,7 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     command_set = ('ap', '', '8', TimedCommand('1', 30), '')
     appl3.appliance_console.run_commands(command_set)
 
-    wait_for(is_ha_monitor_started, func_args=[appl3, app1_ip], timeout=300, handle_exception=True)
+    wait_for(appl3.is_ha_monitor_started, func_args=[app1_ip], timeout=300, handle_exception=True)
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl3).setup()
     provider_app_crud(EC2Provider, appl3).setup()
@@ -469,10 +468,7 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
     result = appl1.ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
     assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
 
-    def is_failover_started(appliance):
-        return bool(appliance.ssh_client.run_command(
-            "grep 'Starting to execute failover' /var/www/miq/vmdb/log/ha_admin.log").success)
-    wait_for(is_failover_started, func_args=[appl3], timeout=450, handle_exception=True)
+    wait_for(lambda: appl3.is_failover_started, timeout=450, handle_exception=True)
     appl3.evmserverd.wait_for_running()
     appl3.wait_for_web_ui()
     # Assert providers still exist after ha failover

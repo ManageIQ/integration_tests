@@ -297,11 +297,8 @@ def test_update_ha_webui(ha_appliances_with_providers, appliance, request, old_v
         'systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
     assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
 
-    def is_failover_started():
-        return ha_appliances_with_providers[2].ssh_client.run_command(
-            "grep 'Starting to execute failover' /var/www/miq/vmdb/log/ha_admin.log").success
-
-    wait_for(is_failover_started, timeout=450, handle_exception=True,
+    wait_for(lambda: ha_appliances_with_providers[2].is_failover_started,
+             timeout=450, handle_exception=True,
              message='Waiting for HA failover')
     ha_appliances_with_providers[2].evmserverd.wait_for_running()
     ha_appliances_with_providers[2].wait_for_web_ui()

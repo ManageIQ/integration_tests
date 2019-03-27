@@ -25,20 +25,6 @@ from cfme.utils.wait import wait_for
 TimedCommand = namedtuple("TimedCommand", ["command", "timeout"])
 
 
-def is_ha_monitor_started(appliance, standby_server_ip=None):
-    if appliance.version < '5.10':
-        assert standby_server_ip, ('The is_ha_monitor_started() needs '
-                                   'a standby_server_ip when appliance '
-                                   'version is < 5.10')
-        return appliance.ssh_client.run_command(
-            "grep {} /var/www/miq/vmdb/config/failover_databases.yml".format(standby_server_ip)
-        ).success
-    else:
-        return appliance.ssh_client.run_command(
-            "systemctl status evm-failover-monitor"
-        ).success
-
-
 @pytest.fixture()
 def unconfigured_appliance(appliance, pytestconfig):
     with sprout_appliances(
@@ -437,7 +423,7 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     interaction.send('')
 
     wait_for(
-        is_ha_monitor_started, func_args=[apps2, app1_ip], timeout=300, handle_exception=True
+        apps2.is_ha_monitor_started, func_args=[app1_ip], timeout=300, handle_exception=True
     )
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, apps2).setup()

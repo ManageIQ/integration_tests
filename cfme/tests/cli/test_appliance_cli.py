@@ -269,14 +269,11 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     command_set = ('ap', '', '8', '1', '')
     apps[2].appliance_console.run_commands(command_set)
 
-    wait_for(is_ha_monitor_started, func_args=[apps[2], app1_ip], timeout=300, handle_exception=True)
+    wait_for(apps[2].is_ha_monitor_started, func_args=[app1_ip], timeout=300, handle_exception=True)
     # Cause failover to occur
     result = apps[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
     assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
 
-    def is_failover_started(appliance):
-        return appliance.ssh_client.run_command(
-            "grep 'Starting to execute failover' /var/www/miq/vmdb/log/ha_admin.log").success
-    wait_for(is_failover_started, func_args=[apps[2]], timeout=450, handle_exception=True)
+    wait_for(lambda: apps[2].is_failover_started, timeout=450, handle_exception=True)
     apps[2].evmserverd.wait_for_running()
     apps[2].wait_for_web_ui()
