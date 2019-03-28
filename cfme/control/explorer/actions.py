@@ -205,8 +205,7 @@ class Action(BaseEntity, Updateable, Pretty):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            view = self.create_view(ActionsAllView)
-            view.wait_displayed('15s')
+            view = self.create_view(ActionsAllView, wait="15s")
             view.flash.assert_success_message(
                 'Action "{}": Delete successful'.format(self.description))
 

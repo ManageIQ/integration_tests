@@ -123,8 +123,8 @@ def catalog_item(appliance, ansible_repository):
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
             "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric()
-        }
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
+        },
     )
     yield cat_item
 
@@ -188,7 +188,7 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
             lambda: cr_opts.get_text_of(field_name) == updated_value,
             fail_func=view.browser.selenium.refresh,
             delay=10,
-            timeout=60
+            timeout=60,
         )
 
     if credential.credential_type == "Amazon":
@@ -252,10 +252,9 @@ def test_control_crud_ansible_playbook_action(
     @request.addfinalizer
     def _finalizer():
         if action.exists:
-            action_id = appliance.rest_api.collections.actions.get(
+            appliance.rest_api.collections.actions.get(
                 description=action.description
-            ).id
-            appliance.rest_api.collections.actions.action.delete(id=action_id)
+            ).action.delete()
 
     with update(action):
         ipaddr = fauxfactory.gen_ipaddr()
@@ -270,7 +269,7 @@ def test_control_crud_ansible_playbook_action(
     view = navigate_to(action, "Edit")
     assert view.description.value == new_descr
     assert view.run_ansible_playbook.inventory.hosts.value == ipaddr
-    view.browser.refresh()
+    view.cancel_button.click()
     action.delete()
 
 
@@ -301,15 +300,14 @@ def test_control_add_ansible_playbook_action_invalid_address(
     @request.addfinalizer
     def _finalizer():
         if action.exists:
-            action_id = appliance.rest_api.collections.actions.get(
+            appliance.rest_api.collections.actions.get(
                 description=action.description
-            ).id
-            appliance.rest_api.collections.actions.action.delete(id=action_id)
+            ).action.delete()
 
     assert action.exists
     view = navigate_to(action, "Edit")
     assert view.run_ansible_playbook.inventory.hosts.value == "invalid_address_!@#$%^&*"
-    view.browser.refresh()
+    view.cancel_button.click()
 
 
 @pytest.mark.tier(2)
