@@ -31,6 +31,7 @@ class SCVMMProvider(InfraProvider):
     mgmt_class = SCVMMSystem
     db_types = ["Microsoft::InfraManager"]
     endpoints_form = SCVMMEndpointForm
+    ems_pretty_name = 'Microsoft System Center VMM'
     discover_dict = {"scvmm": True}
     bad_credentials_error_msg = (
         'Credential validation was not successful: '

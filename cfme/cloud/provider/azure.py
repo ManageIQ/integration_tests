@@ -47,6 +47,7 @@ class AzureProvider(CloudProvider):
     discover_name = "Azure"
     settings_key = 'ems_azure'
     log_name = 'azure'
+    ems_pretty_name = 'Azure'
 
     region = attr.ib(default=None)
     tenant_id = attr.ib(default=None)

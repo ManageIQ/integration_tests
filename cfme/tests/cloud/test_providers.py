@@ -710,7 +710,6 @@ class TestProvidersRESTAPI(object):
             assert 'SecurityGroup' in security_groups[0]['type']
 
 
-
 @pytest.mark.provider([CloudProvider], override=True, selector=ONE)
 def test_tagvis_provision_fields(setup_provider, request, appliance, user_restricted, tag,
                                  soft_assert):

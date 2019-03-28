@@ -95,6 +95,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
     db_types = ["Openshift::ContainerManager"]
     endpoints_form = ContainersProviderEndpointsForm
     settings_key = 'ems_openshift'
+    ems_pretty_name = 'OpenShift Container Platform'
 
     http_proxy = attr.ib(default=None)
     adv_http = attr.ib(default=None)

@@ -82,6 +82,7 @@ class EC2Provider(CloudProvider):
     discover_name = "Amazon EC2"
     settings_key = 'ems_amazon'
     log_name = 'aws'
+    ems_pretty_name = 'Amazon EC2'
 
     region = attr.ib(default=None)
     region_name = attr.ib(default=None)

@@ -117,6 +117,7 @@ class CloudProvider(BaseProvider, CloudInfraProviderMixin, Pretty, PolicyProfile
     template_name = "Images"
     db_types = ["CloudManager"]
     template_class = Image
+    collection_name = 'cloud_providers'
 
     name = attr.ib(default=None)
     key = attr.ib(default=None)

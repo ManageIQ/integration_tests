@@ -184,6 +184,7 @@ def all_required(miq_version, filters=None):
         filters: A list of filters
     """
     # Load the supportability YAML and extrace the providers portion
+    filters = filters or []  # default immutable
     stream = Version(miq_version).series()
     try:
         data_for_stream = conf.supportability[stream]['providers']

@@ -212,6 +212,7 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     refresh_text = 'Refresh items and relationships'
     resume_provider_text = "Resume this Containers Provider"
     pause_provider_text = "Pause this Containers Provider"
+    collection_name = 'containers_providers'
 
     name = attr.ib(default=None)
     key = attr.ib(default=None)

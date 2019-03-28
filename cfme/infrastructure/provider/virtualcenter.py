@@ -35,6 +35,7 @@ class VMwareProvider(InfraProvider):
     mgmt_class = VMWareSystem
     db_types = ["Vmware::InfraManager"]
     endpoints_form = VirtualCenterEndpointForm
+    ems_pretty_name = 'VMware vCenter'
     discover_dict = {"vmware": True}
     settings_key = 'ems_vmware'
     # xpath locators for elements, to be used by selenium
