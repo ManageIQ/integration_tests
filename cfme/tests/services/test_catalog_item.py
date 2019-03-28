@@ -157,7 +157,7 @@ def test_add_button(catalog_item, appliance):
     view.flash.assert_success_message(message)
 
 
-def test_edit_tags(catalog_item):
+def test_edit_tags_catalog_item(catalog_item):
     """
     Polarion:
         assignee: anikifor
