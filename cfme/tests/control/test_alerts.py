@@ -75,37 +75,6 @@ def wait_for_alert(smtp, alert, delay=None, additional_checks=None):
     )
 
 
-@pytest.fixture(scope="function")
-def vddk_url(provider):
-    try:
-        major, minor = str(provider.version).split(".")
-    except ValueError:
-        major = str(provider.version)
-        minor = "0"
-    vddk_version = "v{}_{}".format(major, minor)
-    # cf. BZ 1651702 vddk_version 6_7 does not currently work with CFME, so use v6_5
-    if BZ(1651702, forced_streams=['5.9','5.10']).blocks:
-        vddk_version = "v6_5"
-    url = cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
-    if url is None:
-        pytest.skip("There is no vddk url for this VMware provider version")
-    else:
-        return url
-
-
-@pytest.fixture(scope="function")
-def configure_fleecing(appliance, provider, full_template_vm, vddk_url):
-    view = navigate_to(full_template_vm, "Details")
-    host_name = view.entities.summary("Relationships").get_text_of("Host")
-    host, = [host for host in provider.hosts.all() if host.name == host_name]
-    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
-    host.update_credentials_rest(credentials=host_data['credentials'])
-    appliance.install_vddk(vddk_url=vddk_url)
-    yield
-    appliance.uninstall_vddk()
-    host.remove_credentials_rest()
-
-
 @pytest.fixture
 def setup_for_alerts(appliance):
     """fixture wrapping the function defined within, for delayed execution during the test

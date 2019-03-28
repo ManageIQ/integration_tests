@@ -27,7 +27,6 @@ from cfme.control.explorer import policies
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -100,38 +99,6 @@ def get_vm_object(appliance, vm_name):
 @pytest.fixture(scope="module")
 def vm_name(provider):
     return random_vm_name("action", max_length=16)
-
-
-@pytest.fixture(scope="function")
-def vddk_url(provider):
-    try:
-        major, minor = str(provider.version).split(".")
-    except ValueError:
-        major = str(provider.version)
-        minor = "0"
-    vddk_version = "v{}_{}".format(major, minor)
-    # cf. BZ 1651702 vddk_version 6_7 does not currently work with CFME, so use v6_5
-    if BZ(1651702, forced_streams=['5.9','5.10']).blocks:
-        vddk_version = "v6_5"
-    try:
-        url = conf.cfme_data.basic_info.vddk_url.get(vddk_version)
-    except (KeyError, AttributeError):
-        pytest.skip('VDDK URL/Version not found in cfme_data.basic_info')
-    if url is None:
-        pytest.skip("There is no vddk url for this VMware provider version")
-    else:
-        return url
-
-
-@pytest.fixture(scope="function")
-def configure_fleecing(appliance, provider, vm, vddk_url):
-    host, = [host for host in provider.hosts.all() if host.name == vm.api.host.name]
-    host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
-    host.update_credentials_rest(credentials=host_data['credentials'])
-    appliance.install_vddk(vddk_url=vddk_url)
-    yield
-    appliance.uninstall_vddk()
-    host.remove_credentials_rest()
 
 
 def _get_vm(request, provider, template_name, vm_name):
