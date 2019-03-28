@@ -14,15 +14,15 @@ from cfme.utils.update import update
 from cfme.utils.wait import wait_for_decorator
 
 
-report_crud_dir = data_path.join("reports_crud")
-schedules_crud_dir = data_path.join("schedules_crud")
+REPORT_CRUD_DIR = data_path.join("reports_crud")
+SCHEDULES_CRUD_DIR = data_path.join("schedules_crud")
 
 
 def crud_files_reports():
     result = []
-    if not report_crud_dir.exists:
-        report_crud_dir.mkdir()
-    for file_name in report_crud_dir.listdir():
+    if not REPORT_CRUD_DIR.exists:
+        REPORT_CRUD_DIR.mkdir()
+    for file_name in REPORT_CRUD_DIR.listdir():
         if file_name.isfile() and file_name.basename.endswith(".yaml"):
             result.append(file_name.basename)
     return result
@@ -30,9 +30,9 @@ def crud_files_reports():
 
 def crud_files_schedules():
     result = []
-    if not schedules_crud_dir.exists:
-        schedules_crud_dir.mkdir()
-    for file_name in schedules_crud_dir.listdir():
+    if not SCHEDULES_CRUD_DIR.exists:
+        SCHEDULES_CRUD_DIR.mkdir()
+    for file_name in SCHEDULES_CRUD_DIR.listdir():
         if file_name.isfile() and file_name.basename.endswith(".yaml"):
             result.append(file_name.basename)
     return result
@@ -40,13 +40,13 @@ def crud_files_schedules():
 
 @pytest.fixture(params=crud_files_reports())
 def custom_report_values(request):
-    with report_crud_dir.join(request.param).open(mode="r") as rep_yaml:
+    with REPORT_CRUD_DIR.join(request.param).open(mode="r") as rep_yaml:
         return yaml.safe_load(rep_yaml)
 
 
 @pytest.fixture(params=crud_files_schedules())
 def schedule_data(request):
-    with schedules_crud_dir.join(request.param).open(mode="r") as rep_yaml:
+    with SCHEDULES_CRUD_DIR.join(request.param).open(mode="r") as rep_yaml:
         return yaml.safe_load(rep_yaml)
 
 
@@ -95,27 +95,6 @@ def test_reports_schedule_crud(schedule_data, appliance):
     with update(schedule):
         schedule.description = "badger badger badger"
     schedule.queue()
-    schedule.delete()
-
-
-@pytest.mark.rhel_testing
-@pytest.mark.sauce
-@pytest.mark.tier(3)
-@test_requirements.report
-def test_reports_disable_enable_schedule(schedule_data, appliance):
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: high
-        initialEstimate: 1/10h
-    """
-    schedules = appliance.collections.schedules
-    schedule = schedules.create(**schedule_data)
-    schedules.disable_schedules(schedule)
-    assert not schedule.enabled
-    schedules.enable_schedules(schedule)
-    assert schedule.enabled
     schedule.delete()
 
 
@@ -365,7 +344,7 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
         menu_name="Hardware Information for VMs",
     )
     data = {
-        "timer": {"hour": "12", "minute": "10"},
+        "timer": {"starting_hour": "12", "starting_minute": "10"},
         "emails": "test@example.com",
         "email_options": {
             "send_if_empty": True,
@@ -391,7 +370,7 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
         caseimportance: high
         initialEstimate: 1/10h
     """
-    schedule_data["filter"] = (
+    schedule_data["report_filter"] = (
         "My Company (All Groups)",
         "Custom",
         get_custom_report.menu_name,
@@ -399,20 +378,3 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
     custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
     assert custom_report_schedule.exists
     custom_report_schedule.delete(cancel=False)
-
-
-@pytest.mark.ignore_stream('5.9')
-def test_report_schedules_invalid_email(appliance, schedule_data):
-    """
-        Polarion:
-            assignee: pvala
-            casecomponent: Reporting
-            initialEstimate: 1/12h
-    """
-    schedule_data["emails"] = (fauxfactory.gen_alpha(), fauxfactory.gen_alpha())
-    schedule_data["from_email"] = fauxfactory.gen_alpha()
-    with pytest.raises(AssertionError):
-        appliance.collections.schedules.create(**schedule_data)
-    view = appliance.collections.schedules.create_view(NewScheduleView)
-    view.flash.assert_message("One of e-mail addresses 'To' is not valid")
-    view.flash.assert_message("E-mail address 'From' is not valid")

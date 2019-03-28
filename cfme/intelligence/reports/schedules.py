@@ -60,6 +60,12 @@ class SchedulesFormCommon(CloudIntelReportsView):
     filter3 = BootstrapSelectRetry("repfilter_typ")
     # Timer
     run = BootstrapSelect("timer_typ")
+    # Adding timer for hour, day, week, and zone because there is no single element
+    #  for the timer_interval.
+    timer_hour = BootstrapSelect("timer_hours")
+    timer_day = BootstrapSelect("timer_days")
+    timer_month = BootstrapSelect("timer_months")
+    timer_week = BootstrapSelect("timer_weeks")
     time_zone = BootstrapSelect("time_zone")
     starting_date = Calendar("miq_date_1")
     hour = BootstrapSelect("start_hour")
@@ -123,23 +129,23 @@ class Schedule(Updateable, Pretty, BaseEntity):
     Args:
         name: Schedule name.
         description: Schedule description.
-        filter: 3-tuple with filter selection (see the UI).
+        report_filter: 3-tuple with filter selection (see the UI).
         active: Whether is this schedule active.
-        run: Specifies how often this schedule runs. It can be either string "Once", or a tuple,
-            which maps to the two selects in UI ("Hourly", "Every hour")...
-        time_zone: Specify time zone.
-        start_date: Specify the start date.
-        start_time: Specify the start time either as a string ("0:15") or tuple ("0", "15")
-        send_email: If specifies, turns on e-mail sending. Can be string, or list or set.
+        timer: Specifies how often this schedule runs. It can be a dictionary that contains
+                run, run_interval, starting_date, timezone, starting_hour and starting_minute
+        from_email: Email from which scheduled report will be sent.
+        emails: Contains list of emails where schedules emails will be sent.
+                If specified, turns on e-mail sending. Can be string, or list or set.
+        email_options: Tuple containing send_if_empty, send_csv, send_txt, send_pdf.
     """
-    pretty_attrs = ["name", "filter"]
+    pretty_attrs = ["name", "report_filter"]
 
     def __str__(self):
         return self.name
 
     name = attr.ib()
     description = attr.ib()
-    filter = attr.ib()
+    report_filter = attr.ib()
     active = attr.ib(default=None)
     timer = attr.ib(default=None)
     from_email = attr.ib(default=None)
@@ -198,31 +204,39 @@ class ScheduleCollection(BaseCollection):
 
     ENTITY = Schedule
 
-    def create(self, name=None, description=None, filter=None, active=None,
+    def create(self, name=None, description=None, report_filter=None, active=None,
                timer=None, from_email=None, emails=None, email_options=None):
-        schedule = self.instantiate(name, description, filter, active=active, timer=timer,
+        schedule = self.instantiate(name, description, report_filter, active=active, timer=timer,
             emails=emails, email_options=email_options)
         view = navigate_to(self, "Add")
-        view.fill({
-            "name": name,
-            "description": description,
-            "active": active,
-            "filter1": filter[0],
-            "filter2": filter[1],
-            "filter3": filter[2],
-            "run": timer.get("run"),
-            "time_zone": timer.get("time_zone"),
-            "starting_date": timer.get("starting_date"),
-            "hour": timer.get("hour"),
-            "minute": timer.get("minute"),
-            "emails_send": bool(emails),
-            "from_email": from_email,
-            "emails": emails,
-            "send_if_empty": email_options.get("send_if_empty"),
-            "send_txt": email_options.get("send_txt"),
-            "send_csv": email_options.get("send_csv"),
-            "send_pdf": email_options.get("send_pdf")
-        })
+
+        view.fill(
+            {
+                "name": name,
+                "description": description,
+                "active": active,
+                "filter1": report_filter[0],
+                "filter2": report_filter[1],
+                "filter3": report_filter[2],
+                "run": timer.get("run"),
+                "timer_hour": timer.get("run_hour"),
+                "timer_day": timer.get("run_day"),
+                "timer_week": timer.get("run_week"),
+                "timer_month": timer.get("run_month"),
+                "time_zone": timer.get("time_zone"),
+                "starting_date": timer.get("starting_date"),
+                "hour": timer.get("starting_hour"),
+                "minute": timer.get("starting_minute"),
+                "emails_send": bool(emails),
+                "from_email": from_email,
+                "emails": emails,
+                "send_if_empty": email_options.get("send_if_empty"),
+                "send_txt": email_options.get("send_txt"),
+                "send_csv": email_options.get("send_csv"),
+                "send_pdf": email_options.get("send_pdf"),
+            }
+        )
+
         view.add_button.click()
         view = schedule.create_view(ScheduleDetailsView)
         assert view.is_displayed

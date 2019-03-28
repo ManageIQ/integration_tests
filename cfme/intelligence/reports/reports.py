@@ -390,7 +390,7 @@ class Report(BaseEntity, Updateable):
         schedule = self.appliance.collections.schedules.instantiate(
             name=name or self.menu_name,
             description=description,
-            filter=(self.company_name, self.subtype, self.menu_name),
+            report_filter=(self.company_name, self.subtype, self.menu_name),
             active=active,
             emails=emails,
             email_options=email_options,

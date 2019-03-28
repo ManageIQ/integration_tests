@@ -216,31 +216,6 @@ def test_after_setting_certain_types_of_filters_filter_tab_should_be_accessible_
 @pytest.mark.manual
 @test_requirements.report
 @pytest.mark.tier(1)
-def test_reports_create_schedule_send_report():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.8
-        setup:
-            1. Navigate to Cloud > Intel > Reports > Schedules.
-            2. Click on `Configuration` and select `Add a new Schedule`.
-        testSteps:
-            1. Create schedule that send an email to more than five users.
-            Un-check "Send if Report is Empty" option.
-            2. Queue up this Schedule
-        expectedResults:
-            1. Schedule must be created successfully.
-            2. Queueing the schedule must send the report via email to all the users.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
 def test_date_should_be_change_in_editing_reports_scheduled():
     """
     https://bugzilla.redhat.com/show_bug.cgi?id=1446052
