@@ -47,17 +47,17 @@ def config_manager(config_manager_obj):
 
 
 @pytest.fixture(scope="function")
-def catalog_item(appliance, request, config_manager, dialog, catalog, job_type):
+def catalog_item(appliance, request, config_manager, ansible_dialog, catalog, job_type):
     config_manager_obj = config_manager
     provider_name = config_manager_obj.yaml_data.get('name')
     template = config_manager_obj.yaml_data['provisioning_data'][job_type]
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_TOWER,
-        name=dialog.label,
+        name=ansible_dialog.label,
         description="my catalog",
         display_in=True,
         catalog=catalog,
-        dialog=dialog,
+        dialog=ansible_dialog,
         provider='{} Automation Manager'.format(provider_name),
         config_template=template)
     request.addfinalizer(catalog_item.delete)
