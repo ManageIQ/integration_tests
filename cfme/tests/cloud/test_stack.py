@@ -123,7 +123,7 @@ def test_resources_link(stack):
 
 @pytest.mark.tier(3)
 @test_requirements.tag
-def test_edit_tags(request, stack):
+def test_edit_tags_stack(request, stack):
     """
     Polarion:
         assignee: anikifor

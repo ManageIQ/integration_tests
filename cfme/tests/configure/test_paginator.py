@@ -101,7 +101,7 @@ def schedule(appliance):
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])
-def test_paginator(appliance, place_info):
+def test_paginator_config_pages(appliance, place_info):
     """
         Check paginator is visible for config pages
 
