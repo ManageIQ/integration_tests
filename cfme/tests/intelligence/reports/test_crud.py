@@ -83,7 +83,7 @@ def test_custom_report_crud(custom_report_values, appliance):
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1202412])
 @test_requirements.report
-def test_schedule_crud(schedule_data, appliance):
+def test_reports_schedule_crud(schedule_data, appliance):
     """
     Polarion:
         assignee: pvala
