@@ -368,8 +368,9 @@ def automation_requests_data(vm, requests_collection=False, approve=True, num=4)
     return [data for _ in range(num)]
 
 
-def groups(request, appliance, role, tenant, num=1, **kwargs):
+def groups(request, appliance, role, num=1, **kwargs):
     data = []
+    tenant = kwargs.get("tenant", appliance.rest_api.collections.tenants.get(name="My Company"))
     for _ in range(num):
         data.append(
             {
@@ -393,7 +394,17 @@ def roles(request, appliance, num=1, **kwargs):
     for _ in range(num):
         data.append(
             {
-                "name": kwargs.get("name", "role_name_{}".format(fauxfactory.gen_alphanumeric()))
+                "name": kwargs.get(
+                    "name", "role_name_{}".format(fauxfactory.gen_alphanumeric())
+                ),
+                "features": kwargs.get(
+                    "features",
+                    [
+                        {"identifier": "vm_explorer"},
+                        {"identifier": "ems_infra_tag"},
+                        {"identifier": "miq_report_run"},
+                    ],
+                ),
             }
         )
 

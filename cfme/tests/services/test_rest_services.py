@@ -1481,8 +1481,7 @@ class TestServiceRequests(object):
 
     @pytest.fixture(scope='class')
     def new_group(self, request, appliance, new_role):
-        tenant = appliance.rest_api.collections.tenants.get(name='My Company')
-        return groups(request, appliance, new_role, tenant, num=1)
+        return groups(request, appliance, new_role, num=1)
 
     @pytest.fixture(scope='class')
     def user_auth(self, request, appliance, new_group):
