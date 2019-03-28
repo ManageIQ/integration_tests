@@ -167,7 +167,9 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
         )
 
         custom_button_group.item_select(button.text)
-        view.flash.assert_message('"{}" was executed'.format(button.text))
+
+        diff = "executed" if appliance.version < "5.10" else "launched"
+        view.flash.assert_message('"{btn}" was {diff}'.format(btn=button.text, diff=diff))
 
         # Submit all: single request for all entity execution
         # One by one: separate requests for all entity execution

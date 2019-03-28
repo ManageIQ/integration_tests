@@ -281,7 +281,8 @@ def test_custom_button_automate(request, appliance, context, submit, objects, bu
 
             # SSUI not support flash messages
             if context is ViaUI:
-                view.flash.assert_message('"{button}" was executed'.format(button=button.text))
+                diff = "executed" if appliance.version < "5.10" else "launched"
+                view.flash.assert_message('"{btn}" was {diff}'.format(btn=button.text, diff=diff))
 
             # Submit all: single request for all entity execution
             # One by one: separate requests for all entity execution
