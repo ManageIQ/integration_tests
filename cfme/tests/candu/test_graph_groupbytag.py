@@ -2,15 +2,12 @@
 from datetime import datetime
 from datetime import timedelta
 
-import fauxfactory
 import pytest
 
 from cfme.common.candu_views import UtilizationZoomView
 from cfme.tests.candu import compare_data_with_unit
-from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
-from cfme.utils.ssh import SSHClient
 
 
 pytestmark = pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
@@ -29,59 +26,25 @@ CANDU_VM = 'cu-24x7'
 
 
 @pytest.fixture(scope='function')
-def host(appliance, provider):
-    vm = appliance.rest_api.collections.vms.get(name=CANDU_VM)
+def host(temp_appliance_extended_db):
+    vm = temp_appliance_extended_db.rest_api.collections.vms.get(name=CANDU_VM)
+
     vm_host = vm.host.name
-    return appliance.collections.hosts.instantiate(name=vm_host)
-
-
-@pytest.fixture(scope="module")
-def temp_appliance_extended_db(temp_appliance_preconfig):
-    app = temp_appliance_preconfig
-    app.evmserverd.stop()
-    app.db.extend_partition()
-    app.evmserverd.start()
-    return app
-
-
-@pytest.fixture(scope="module")
-def candu_db_restore(temp_appliance_extended_db):
-    app = temp_appliance_extended_db
-    # get DB backup file
-    db_storage_hostname = conf.cfme_data.bottlenecks.hostname
-    db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials.bottlenecks)
-    rand_filename = "/tmp/db.backup_{}".format(fauxfactory.gen_alphanumeric())
-    db_storage_ssh.get_file("{}/candu.db.backup".format(
-        conf.cfme_data.bottlenecks.backup_path), rand_filename)
-    app.ssh_client.put_file(rand_filename, "/tmp/evm_db.backup")
-
-    app.evmserverd.stop()
-    app.db.drop()
-    app.db.create()
-    app.db.restore()
-    # When you load a database from an older version of the application, you always need to
-    # run migrations.
-    # https://bugzilla.redhat.com/show_bug.cgi?id=1643250
-    app.db.migrate()
-    app.db.fix_auth_key()
-    app.db.fix_auth_dbyml()
-    app.evmserverd.start()
-    app.wait_for_web_ui()
+    return temp_appliance_extended_db.collections.hosts.instantiate(name=vm_host)
 
 
 @pytest.mark.parametrize('gp_by', GROUP_BY, ids=['vm_tag'])
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', HOST_GRAPHS)
 def test_tagwise(candu_db_restore, interval, graph_type, gp_by, host):
-    """Test Host graphs group by VM tag for hourly and Daily
+    """Tests for grouping host graphs by VM tag for hourly and Daily intervals
 
     prerequisites:
-        * C&U enabled appliance
-        * C&U data collection enabled for Tag category
-        * VM should be taged with proper tag category
+        * DB from an appliance on which C&U is enabled
+        * DB should have C&U data collection enabled for Tag category
+        * DB should have a VM tagged with proper tag category
 
     Steps:
-        * Capture historical data for host and vm
         * Navigate to Host Utilization Page
         * Select interval(Hourly or Daily)
         * Select group by option with VM tag
@@ -112,10 +75,6 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, host):
     except AttributeError as e:
         logger.error(e)
     assert graph.is_displayed
-
-    # wait, for specific vm tag data. It take time to reload metrics with specific vm tag.
-    # wait_for(lambda: "London" in graph.all_legends,
-    # delay=120, timeout=1500, fail_func=refresh)
 
     graph.zoom_in()
     view = view.browser.create_view(UtilizationZoomView)

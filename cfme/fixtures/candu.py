@@ -1,7 +1,11 @@
 """
 Fixtures for Capacity and Utilization
 """
+import fauxfactory
 import pytest
+
+from cfme.utils import conf
+from cfme.utils.ssh import SSHClient
 
 
 @pytest.fixture(scope="module")
@@ -64,3 +68,37 @@ def candu_tag_vm(provider, enable_candu_category):
     if tag.display_name not in [item.display_name for item in available_tags]:
         vm.add_tag(tag)
     return vm
+
+
+@pytest.fixture(scope="module")
+def temp_appliance_extended_db(temp_appliance_preconfig):
+    app = temp_appliance_preconfig
+    app.evmserverd.stop()
+    app.db.extend_partition()
+    app.evmserverd.start()
+    return app
+
+
+@pytest.fixture(scope="module")
+def candu_db_restore(temp_appliance_extended_db):
+    app = temp_appliance_extended_db
+    # get DB backup file
+    db_storage_hostname = conf.cfme_data.bottlenecks.hostname
+    db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials.bottlenecks)
+    rand_filename = "/tmp/db.backup_{}".format(fauxfactory.gen_alphanumeric())
+    db_storage_ssh.get_file("{}/candu.db.backup".format(
+        conf.cfme_data.bottlenecks.backup_path), rand_filename)
+    app.ssh_client.put_file(rand_filename, "/tmp/evm_db.backup")
+
+    app.evmserverd.stop()
+    app.db.drop()
+    app.db.create()
+    app.db.restore()
+    # When you load a database from an older version of the application, you always need to
+    # run migrations.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1643250
+    app.db.migrate()
+    app.db.fix_auth_key()
+    app.db.fix_auth_dbyml()
+    app.evmserverd.start()
+    app.wait_for_web_ui()
