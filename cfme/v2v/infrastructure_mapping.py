@@ -5,6 +5,7 @@ from widgetastic.utils import ParametrizedLocator
 from widgetastic.utils import WaitFillViewStrategy
 from widgetastic.widget import ParametrizedView
 from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import SelectorDropdown
 from widgetastic_patternfly import Text
@@ -94,6 +95,7 @@ class InfrastructureMappingForm(InfrastructureMappingView):
     class general(InfraMappingCommonButtons):  # noqa
         name = TextInput(name="name")
         description = TextInput(name="description")
+        plan_type = BootstrapSelect("targetProvider")
         name_help_text = Text(locator='.//div[contains(@id,"name")]/span')
         description_help_text = Text(locator='.//div[contains(@id,"description")]/span')
         fill_strategy = WaitFillViewStrategy()
@@ -202,6 +204,7 @@ class InfrastructureMapping(BaseEntity):
 
     name = attr.ib()
     description = attr.ib()
+    plan_type = attr.ib()
     clusters = attr.ib(validator=attr.validators.instance_of(list))
     datastores = attr.ib(validator=attr.validators.instance_of(list))
     networks = attr.ib(validator=attr.validators.instance_of(list))
@@ -219,8 +222,13 @@ class InfrastructureMapping(BaseEntity):
             }
         Returns: dict, see above
         """
+        target_provider = None
+        if self.appliance.version >= "5.10":
+            target_provider = ("Red Hat Virtualization" if self.plan_type is "rhv"
+                               else "Red Hat OpenStack Platform")
         return {
-            "general": {"name": self.name, "description": self.description},
+            "general": {"name": self.name, "description": self.description,
+                        "plan_type": target_provider},
             "cluster": [component.fill_dict() for component in self.clusters],
             "datastore": [component.fill_dict() for component in self.datastores],
             "network": [component.fill_dict() for component in self.networks],
@@ -247,9 +255,11 @@ class InfrastructureMappingCollection(BaseCollection):
 
     ENTITY = InfrastructureMapping
 
-    def create(self, name, description, clusters, datastores, networks, *args, **kwargs):
+    def create(self, name, description, plan_type,
+               clusters, datastores, networks,
+               *args, **kwargs):
         mapping = self.instantiate(
-            name, description, clusters, datastores, networks, *args, **kwargs
+            name, description, plan_type, clusters, datastores, networks, *args, **kwargs
         )
         view = navigate_to(self, "Add")
         view.fill(mapping.fill_dict())
