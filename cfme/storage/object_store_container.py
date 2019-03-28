@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import attr
 from navmazing import NavigateToAttribute
+from widgetastic.widget import NoSuchElementException
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapNav
@@ -17,6 +18,7 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.log import logger
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import ItemsToolBarViewSelector
@@ -130,17 +132,30 @@ class ObjectStoreContainerCollection(BaseCollection):
 
     ENTITY = ObjectStoreContainer
 
+    @property
+    def manager(self):
+        coll = self.appliance.collections.object_managers.filter(
+            {"provider": self.filters.get('provider')}
+        )
+        # For each provider has single object type storage manager
+        return coll.all()[0]
+
     def all(self):
         """returning all containers objects for respective Cloud Provider"""
+
+        # TODO(ndhandre): Need to implement with REST.
+
         view = navigate_to(self, 'All')
 
         containers = []
+        try:
+            for item in view.entities.elements.read():
+                if self.filters.get('provider').name in item['Cloud Provider']:
+                    containers.append(self.instantiate(key=item['Key'],
+                                                       provider=self.filters.get('provider')))
+        except NoSuchElementException:
+            logger.warning('The containers table is probably not present or empty')
 
-        view.entities.elements.wait_displayed()
-        for item in view.entities.elements.read():
-            if self.filters.get('provider').name in item['Cloud Provider']:
-                containers.append(self.instantiate(key=item['Key'],
-                                                   provider=self.filters.get('provider')))
         return containers
 
 
