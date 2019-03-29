@@ -12,6 +12,7 @@ from cfme.fixtures.provider import console_template
 from cfme.infrastructure.provider import InfraProvider
 from cfme.rest.gen_data import dialog as _dialog
 from cfme.rest.gen_data import service_catalog_obj as _catalog
+from cfme.rest.gen_data import service_templates_rest as _service_templates
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ
@@ -19,12 +20,12 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def dialog(request, appliance):
     return _dialog(request, appliance)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def catalog(request, appliance):
     return _catalog(request, appliance)
 
@@ -33,6 +34,25 @@ def catalog(request, appliance):
 def catalog_item(appliance, provider, provisioning, dialog, catalog):
     catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
     return catalog_item
+
+
+@pytest.fixture(scope="module")
+def generic_catalog_item(request, appliance, dialog, catalog):
+    cat = _service_templates(
+        request, appliance, service_dialog=dialog, service_catalog=catalog, num=1
+    )[0]
+
+    yield appliance.collections.catalog_items.instantiate(
+        appliance.collections.catalog_items.GENERIC,
+        name=cat.name,
+        description=cat.description,
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog,
+    )
+
+    if cat.exists:
+        cat.action.delete()
 
 
 def create_catalog_item(appliance, provider, provisioning, dialog, catalog,

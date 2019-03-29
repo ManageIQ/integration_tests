@@ -552,26 +552,6 @@ def test_custom_button_role_access_service(context):
 
 
 @pytest.mark.manual
-def test_custom_group_on_catalog_item():
-    """
-    Polarion:
-        assignee: ndhandre
-        initialEstimate: 1/8h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.9
-        casecomponent: CustomButton
-        tags: custom_button
-        testSteps:
-            1. Add catalog_item
-            2. Goto catalog detail page and select `add group` from toolbar
-            3. Fill info and save button
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_custom_button_on_catalog_item():
     """
     Polarion:

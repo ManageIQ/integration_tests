@@ -1,3 +1,5 @@
+import re
+
 import attr
 import fauxfactory
 from cached_property import cached_property
@@ -10,6 +12,7 @@ from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
 
 from cfme.common import Taggable
@@ -21,6 +24,7 @@ from cfme.services.catalogs import ServicesCatalogView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.version import LOWEST
@@ -28,6 +32,7 @@ from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import WaitTab
 
 
@@ -245,6 +250,25 @@ class TabbedEditCatalogItemView(ServicesCatalogView):
         )
 
 
+class ButtonGroupDetailView(ServicesCatalogView):
+    title = Text("#explorer_title_text")
+
+    text = SummaryFormItem(
+        "Basic Information",
+        "Text",
+        text_filter=lambda text: re.sub(r"\s+Display on Button\s*$", "", text),
+    )
+    hover = SummaryFormItem("Basic Information", "Hover Text")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and
+            self.catalog_items.is_opened and
+            "Button Group" in self.title.text
+        )
+
+
 class AddButtonGroupView(ButtonGroupForm):
 
     add = Button('Add')
@@ -294,17 +318,46 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         assert view.is_displayed
         view.flash.assert_success_message('The selected Catalog Item was deleted')
 
-    def add_button_group(self):
-        button_name = fauxfactory.gen_alpha()
-        view = navigate_to(self, 'AddButtonGroup')
-        view.fill({'btn_group_text': 'group_text',
-                   'btn_group_hvr_text': button_name,
-                   'btn_image': self.button_icon_name})
+    def add_button_group(self, **kwargs):
+        button_name = kwargs.get("text", "gp_{}".format(fauxfactory.gen_alpha()))
+        hover_name = kwargs.get("hover", "hover_{}".format(fauxfactory.gen_alpha()))
+        image = kwargs.get("image", "broom")
+
+        view = navigate_to(self, "AddButtonGroup")
+        view.fill(
+            {
+                "btn_group_text": button_name,
+                "btn_group_hvr_text": hover_name,
+                "btn_image": image,
+            }
+        )
         view.add.click()
-        view = self.create_view(DetailsCatalogItemView)
-        assert view.is_displayed
+        view = self.create_view(DetailsCatalogItemView, wait="10s")
         view.flash.assert_no_error()
         return button_name
+
+    def button_group_exists(self, name):
+        view = navigate_to(self, "Details")
+        path = view.catalog_items.tree.read()
+        path.extend(["Actions", "{} (Group)".format(name)])
+
+        try:
+            view.catalog_items.tree.fill(path)
+            return True
+        except CandidateNotFound:
+            return False
+
+    def delete_button_group(self, name):
+        view = navigate_to(self, "Details")
+        path = view.catalog_items.tree.read()
+        path.extend(["Actions", "{} (Group)".format(name)])
+        view.catalog_items.tree.fill(path)
+        view.configuration.item_select("Remove this Button Group", handle_alert=True)
+        view.flash.assert_no_error()
+
+        # TODO(BZ-1687289): To avoid improper page landing adding a workaround.
+        if BZ(1687289).blocks:
+            view.browser.refresh()
 
     def add_button(self):
         button_name = fauxfactory.gen_alpha()
