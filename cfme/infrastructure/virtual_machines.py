@@ -35,6 +35,7 @@ from cfme.common.vm_views import CloneVmView
 from cfme.common.vm_views import EditView
 from cfme.common.vm_views import ManagementEngineView
 from cfme.common.vm_views import MigrateVmView
+from cfme.common.vm_views import PolicySimulationView
 from cfme.common.vm_views import ProvisionView
 from cfme.common.vm_views import PublishVmView
 from cfme.common.vm_views import RenameVmView
@@ -1115,6 +1116,14 @@ class InfraVmCollection(VMCollection):
                  for e in page_entities
                  if e.data.get('provider') != '']  # safe provider check, orphaned shows no provider
             )
+        # filtering
+        if self.filters.get("names"):
+            names = self.filters["names"]
+            entities = [e for e in entities if e.name in names]
+        if self.filters.get("name"):
+            name = self.filters["name"]
+            entities = [e for e in entities if e.name == name]
+
         return entities
 
 
@@ -1518,3 +1527,30 @@ class VmUtilization(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
+
+
+@navigator.register(InfraVm, 'PolicySimulation')
+class PolicySimulation(CFMENavigateStep):
+    VIEW = PolicySimulationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.policy.item_select('Policy Simulation')
+
+
+@navigator.register(InfraVmCollection, "PolicySimulation")  # noqa
+class PolicySimulationOnCollection(CFMENavigateStep):
+    VIEW = PolicySimulationView
+
+    def prerequisite(self):
+        provider = self.obj.filters.get("provider")  # None if no filter
+        if provider:
+            return navigate_to(provider, "ProviderVms")
+        else:
+            return navigate_to(self.obj, "All")
+
+    def step(self, *args, **kwargs):
+        # click the checkbox of every object in the filtered collection
+        for entity in self.obj.all():
+            self.prerequisite_view.entities.get_entity(name=entity.name, surf_pages=True).check()
+        self.prerequisite_view.toolbar.policy.item_select("Policy Simulation")

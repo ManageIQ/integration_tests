@@ -28,6 +28,7 @@ from widgetastic_manageiq import Checkbox
 from widgetastic_manageiq import DriftComparison
 from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import JSBaseEntity
+from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import MultiBoxSelect
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import ParametrizedSummaryTable
@@ -545,15 +546,51 @@ class PolicySimulationView(BaseLoggedInPage):
     """
     Policy Simulation page for vms/instances
     """
+    title = Text("#explorer_title_text")
+
     @View.nested
     class form(View):  # noqa
-        policy = BootstrapSelect('policy_id')
+        policy_profile = BootstrapSelect("profile_id")
         # TODO policies table, ability to remove
         entities = View.nested(BaseNonInteractiveEntitiesView)
-        cancel_button = Button('Cancel')
+        cancel_button = Button("Cancel")
 
-    # TODO match quadicon
-    is_displayed = displayed_not_implemented
+    @property
+    def is_displayed(self):
+        vm_type = (
+            getattr(self.context["object"], "VM_TYPE", None) or
+            getattr(self.context["object"].ENTITY, "VM_TYPE", None)
+        )
+        expected_title = "{} Policy Simulation".format(vm_type)
+        return self.title.text == expected_title and len(self.form.entities.get_all()) > 0
+
+
+class PolicySimulationDetailsView(BaseLoggedInPage):
+    """
+    Policy simulation details page that appears after clicking a quadicon on the
+    PolicySimulationView page.
+    """
+    title = Text("#explorer_title_text")
+    back_button = Button("Back")
+
+    @View.nested
+    class options(View):  # noqa
+        out_of_scope = Checkbox(name="out_of_scope")
+        show_successful = Checkbox(name="passed")
+        show_failed = Checkbox(name="failed")
+
+    @View.nested
+    class details(View):  # noqa
+        tree = ManageIQTree("policy_simulation_treebox")
+
+    @property
+    def is_displayed(self):
+        expected_title = "{} Policy Simulation".format(self.context["object"].VM_TYPE)
+        return (
+            self.title.text == expected_title and
+            self.details.tree.is_displayed and
+            self.details.tree.root_item.text == self.context["object"].name
+        )
 
 
 class RightSizeView(BaseLoggedInPage):

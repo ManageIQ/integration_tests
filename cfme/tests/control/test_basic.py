@@ -716,20 +716,3 @@ def test_alerts_monitor_overview_page(appliance, virtualcenter_provider, setup_f
     # 2) assert that clicking the status card navigates to the correct place
     status_card.click()
     assert view.navigation.currently_selected == ['Monitor', 'Alerts', 'All Alerts']
-
-
-@pytest.mark.manual
-@test_requirements.control
-@pytest.mark.tier(3)
-def test_control_policy_simulation_displayed():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1550503
-    Test if policy simulation is displayed
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Control
-        caseimportance: low
-        initialEstimate: 1/6h
-    """
-    pass

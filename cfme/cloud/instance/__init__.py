@@ -456,8 +456,8 @@ class InstanceCollection(VMCollection):
         # Pretty much same as image, but defining at VMCollection would only work for cloud
         # provider filter means we're viewing instances through provider details relationships
         provider = self.filters.get('provider')  # None if no filter, need for entity instantiation
-        view = navigate_to(self,
-                           'AllForProvider' if provider else 'All')
+        view = navigate_to(provider or self,
+                          'Instances' if provider else 'All')
         # iterate pages here instead of use surf_pages=True because data is needed
         entities = []
         for _ in view.entities.paginator.pages():  # auto-resets to first page
@@ -468,6 +468,15 @@ class InstanceCollection(VMCollection):
                  for e in page_entities
                  if e.data.get('provider') != '']  # safe provider check, archived shows no provider
             )
+
+        # filtering
+        if self.filters.get("names"):
+            names = self.filters["names"]
+            entities = [e for e in entities if e.name in names]
+        if self.filters.get("name"):
+            name = self.filters["name"]
+            entities = [e for e in entities if e.name == name]
+
         return entities
 
 
@@ -585,13 +594,31 @@ class Provision(CFMENavigateStep):
         self.prerequisite_view.toolbar.lifecycle.item_select('Provision Instances')
 
 
-@navigator.register(Instance, 'PolicySimulation')
+@navigator.register(Instance, "PolicySimulation")
 class PolicySimulation(CFMENavigateStep):
     VIEW = PolicySimulationView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling("Details")
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.policy.item_select('Policy Simulation')
+        self.prerequisite_view.toolbar.policy.item_select("Policy Simulation")
+
+
+@navigator.register(InstanceCollection, "PolicySimulation")  # noqa
+class PolicySimulationOnCollection(CFMENavigateStep):
+    VIEW = PolicySimulationView
+
+    def prerequisite(self):
+        provider = self.obj.filters.get("provider")
+        if provider:
+            return navigate_to(provider, "Instances")
+        else:
+            return navigate_to(self.obj, "All")
+
+    def step(self, *args, **kwargs):
+        # click the checkbox of every object in the filtered collection
+        for entity in self.obj.all():
+            self.prerequisite_view.entities.get_entity(name=entity.name, surf_pages=True).check()
+        self.prerequisite_view.toolbar.policy.item_select("Policy Simulation")
 
 
 @navigator.register(Instance, 'SetOwnership')
