@@ -44,7 +44,7 @@ def azone(appliance, provider):
 )
 @pytest.mark.uncollectif(lambda provider, graph_type: provider.one_of(EC2Provider)
     and graph_type in ["azone_memory", "azone_disk"])
-def test_graph_screen(provider, azone, graph_type, interval, enable_candu):
+def test_azone_graph_screen(provider, azone, graph_type, interval, enable_candu):
     """Test Availibility zone graphs for Hourly
 
     prerequisites:

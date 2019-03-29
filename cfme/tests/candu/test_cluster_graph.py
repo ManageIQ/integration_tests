@@ -56,7 +56,7 @@ def host(appliance, provider):
 )
 @pytest.mark.parametrize("interval", INTERVAL)
 @pytest.mark.parametrize("graph_type", GRAPHS)
-def test_graph_screen(provider, cluster, host, graph_type, interval, enable_candu):
+def test_cluster_graph_screen(provider, cluster, host, graph_type, interval, enable_candu):
     """Test Cluster graphs for Hourly and Daily Interval
 
     prerequisites:

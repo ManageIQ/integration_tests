@@ -28,7 +28,7 @@ INTERVAL = ["Hourly"]
 
 @pytest.mark.parametrize("interval", INTERVAL)
 @pytest.mark.parametrize("graph_type", DATASTORE_GRAPHS)
-def test_graph_screen(provider, interval, graph_type, enable_candu):
+def test_datastore_graph_screen(provider, interval, graph_type, enable_candu):
     """Test Datastore graphs for hourly
 
     prerequisites:
