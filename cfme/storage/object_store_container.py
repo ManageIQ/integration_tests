@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import attr
 from navmazing import NavigateToAttribute
-from navmazing import NavigateToSibling
-from widgetastic.widget import NoSuchElementException
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapNav
@@ -13,7 +11,6 @@ from widgetastic_patternfly import Dropdown
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
-from cfme.common import TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -130,6 +127,7 @@ class ObjectStoreContainer(BaseEntity, CustomButtonEventsMixin, Taggable):
 class ObjectStoreContainerCollection(BaseCollection):
     """Collection object for :py:class:'cfme.storage.object_store_container.ObjectStoreContainer'
     """
+
     ENTITY = ObjectStoreContainer
 
     def all(self):
@@ -138,7 +136,6 @@ class ObjectStoreContainerCollection(BaseCollection):
 
         containers = []
 
-        # ToDo: use all_entity_names method as JS API issue (#2898) resolve.
         view.entities.elements.wait_displayed()
         for item in view.entities.elements.read():
             if self.filters.get('provider').name in item['Cloud Provider']:
@@ -156,9 +153,6 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select(
             'Storage', 'Object Storage', 'Object Store Containers')
 
-    def resetter(self, *args, **kwargs):
-        self.view.toolbar.view_selector.select("List View")
-
 
 @navigator.register(ObjectStoreContainer, 'Details')
 class Details(CFMENavigateStep):
@@ -167,20 +161,6 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         try:
-            # ToDo: use get_entity method as JS API issue (#2898) resolve.
-            row = self.prerequisite_view.entities.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.elements, key=self.obj.key)
-            row.click()
-
-        except NoSuchElementException:
+            self.prerequisite_view.entities.get_entity(key=self.obj.key, surf_pages=True).click()
+        except ItemNotFound:
             raise ItemNotFound('Could not locate container {}'.format(self.obj.key))
-
-
-@navigator.register(ObjectStoreContainer, 'EditTagsFromDetails')
-class ObjectDetailEditTag(CFMENavigateStep):
-    """ This navigation destination help to Taggable"""
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
