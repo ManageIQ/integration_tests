@@ -5012,9 +5012,11 @@ class HiddenFileInput(BaseFileInput):
 class MigrationProgressBar(Widget):
     """Represents in-progress plan widget for v2v migration"""
 
+    ROOT = './/div[contains(@class,"migrations")]/div/div/div/div/div'
+
     ITEM_LOCATOR = './/div[contains(@class,"card-pf-match-height")]'
     TITLE_LOCATOR = './/div[h3[contains(@class,"card-pf-title")]]'
-    TIMER_LOCATOR = './/div[contains(@class,"active-migration-elapsed-time")]'
+    TIMER_LOCATOR = './div/div[contains(@class,"active-migration-elapsed-time")]'
     SIZE_LOCATOR = './/strong[contains(@id,"size-migrated")]'
     VMS_LOCATOR = './/strong[contains(@id,"vms-migrated")]'
     SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
@@ -5022,9 +5024,8 @@ class MigrationProgressBar(Widget):
     PROGRESS_BARS = './/div[@class="progress-bar"]'
     PROGRESS_DESCRIPTION = './/div[contains(@class,"progress-description")]'
 
-    def __init__(self, parent, locator, logger=None):
+    def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
-        self.locator = locator
 
     @property
     def all_items(self):

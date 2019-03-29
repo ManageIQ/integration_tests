@@ -282,8 +282,6 @@ class InfrastructureMappingCollection(BaseCollection):
 @navigator.register(InfrastructureMappingCollection, "All")
 class AllMappings(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
-    # Uncomment when all files are merged
-    # VIEW = VersionPicker({Version.lowest(): MigrationPlanView, "5.10": AllInfraMappingView})
     VIEW = AllInfraMappingView
 
     def step(self):
