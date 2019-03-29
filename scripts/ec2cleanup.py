@@ -1,6 +1,8 @@
 import argparse
 import sys
 import time
+import pytz
+
 from datetime import datetime
 from datetime import timedelta
 
@@ -48,20 +50,20 @@ def delete_disassociated_addresses(provider_mgmt, excluded_eips, output):
     provider_name = provider_mgmt.kwargs['name']
     try:
         for ip in provider_mgmt.get_all_disassociated_addresses():
-            if ip.allocation_id:
-                if excluded_eips and ip.allocation_id in excluded_eips:
-                    logger.info("  Excluding allocation ID: %r", ip.allocation_id)
+            if ip.get("AllocationId"):
+                if excluded_eips and ip["AllocationId"] in excluded_eips:
+                    logger.info("  Excluding allocation ID: %r", ip["AllocationId"])
                     continue
                 else:
-                    ip_list.append([provider_name, ip.public_ip, ip.allocation_id])
-                    provider_mgmt.release_vpc_address(alloc_id=ip.allocation_id)
+                    ip_list.append([provider_name, ip["PublicIp"], ip["AllocationId"]])
+                    provider_mgmt.release_vpc_address(alloc_id=ip["AllocationId"])
             else:
-                if excluded_eips and ip.public_ip in excluded_eips:
-                    logger.info("  Excluding IP: %r", ip.public_ip)
+                if excluded_eips and ip["PublicIp"] in excluded_eips:
+                    logger.info("  Excluding IP: %r", ip["PublicIp"])
                     continue
                 else:
-                    ip_list.append([provider_name, ip.public_ip, 'N/A'])
-                    provider_mgmt.release_address(address=ip.public_ip)
+                    ip_list.append([provider_name, ip["PublicIp"], 'N/A'])
+                    provider_mgmt.release_address(address=ip["PublicIp"])
         logger.info("  Released Addresses: %r", ip_list)
         if ip_list:
             with open(output, 'a+') as report:
@@ -81,11 +83,14 @@ def delete_unattached_volumes(provider_mgmt, excluded_volumes, output):
     try:
         for volume in provider_mgmt.get_all_unattached_volumes():
             if excluded_volumes and volume.id in excluded_volumes:
-                logger.info("  Excluding volume id: %r", volume.id)
+                logger.info("  Excluding volume id: %r", volume["VolumeId"])
                 continue
             else:
-                volume_list.append([provider_name, volume.id])
-                volume.delete()
+                if datetime.now(pytz.utc) - volume["CreateTime"] > timedelta(hours=3):
+                    volume_list.append([provider_name, volume["VolumeId"]])
+                    provider_mgmt.ec2_connection.delete_volume(VolumeId=volume["VolumeId"])
+                else:
+                    logger.info("  Excluding volume id: %r", volume["VolumeId"])
         logger.info("  Deleted Volumes: %r", volume_list)
         if volume_list:
             with open(output, 'a+') as report:
@@ -107,8 +112,12 @@ def delete_unused_loadbalancers(provider_mgmt, excluded_elbs, output):
                 logger.info("  Excluding Elastic LoadBalancer id: %r", elb.get("LoadBalancerName"))
                 continue
             else:
-                elb_list.append([provider_name, elb.get("LoadBalancerName")])
-                provider_mgmt.delete_loadbalancer(loadbalancer=elb)
+                if datetime.now(pytz.utc) - elb.get("CreatedTime") > timedelta(hours=3):
+                    elb_list.append([provider_name, elb.get("LoadBalancerName")])
+                    provider_mgmt.delete_loadbalancer(loadbalancer=elb)
+                else:
+                    logger.info("  Excluding Elastic LoadBalancer id: %r", elb.get(
+                        "LoadBalancerName"))
         logger.info("  Deleted Elastic LoadBalancers: %r", elb_list)
         if elb_list:
             with open(output, 'a+') as report:
@@ -126,12 +135,14 @@ def delete_unused_network_interfaces(provider_mgmt, excluded_enis, output):
     provider_name = provider_mgmt.kwargs['name']
     try:
         for eni in provider_mgmt.get_all_unused_network_interfaces():
-            if excluded_enis and eni.id in excluded_enis:
-                logger.info("  Excluding Elastic Network Interface id: %r", eni.id)
+            if excluded_enis and eni.get("NetworkInterfaceId") in excluded_enis:
+                logger.info("  Excluding Elastic Network Interface id: %r",
+                            eni.get("NetworkInterfaceId"))
                 continue
             else:
-                eni_list.append([provider_name, eni.id])
-                eni.delete()
+                eni_list.append([provider_name,eni.get("NetworkInterfaceId")])
+                provider_mgmt.ec2_connection.delete_network_interface(
+                    NetworkInterfaceId=eni.get("NetworkInterfaceId"))
         logger.info("  Deleted Elastic Network Interfaces: %r", eni_list)
         if eni_list:
             with open(output, 'a+') as report:
@@ -155,7 +166,7 @@ def delete_stacks(provider_mgmt, excluded_stacks, stack_template, output):
                 logger.info("  Excluding Stack name: %r", stack.name)
                 continue
             else:
-                today = datetime.utcnow().replace(tzinfo=None)
+                today = datetime.now(pytz.utc)
                 some_date = today - timedelta(days=1)
                 if stack.creation_time < some_date:
                     stack_list.append([provider_name, stack.name])
