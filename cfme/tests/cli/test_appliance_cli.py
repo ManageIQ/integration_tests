@@ -141,7 +141,7 @@ def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance
 
 @pytest.mark.parametrize('auth_type', ['sso_enabled', 'saml_enabled', 'local_login_disabled'],
     ids=['sso', 'saml', 'local_login'])
-def test_appliance_console_cli_external_auth(auth_type, ipa_crud, app_creds, configured_appliance):
+def test_appliance_console_cli_external_auth(auth_type, ipa_crud, configured_appliance):
     """
     Polarion:
         assignee: sbulage
@@ -150,9 +150,7 @@ def test_appliance_console_cli_external_auth(auth_type, ipa_crud, app_creds, con
     """
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to true.*'.format(auth_type)],
-                            hostname=configured_appliance.hostname,
-                            username=app_creds['sshlogin'],
-                            password=app_creds['sshpass'])
+                            hostname=configured_appliance.hostname)
     evm_tail.fix_before_start()
     cmd_set = 'appliance_console_cli --extauth-opts="/authentication/{}=true"'.format(auth_type)
     assert configured_appliance.ssh_client.run_command(cmd_set)
@@ -160,9 +158,7 @@ def test_appliance_console_cli_external_auth(auth_type, ipa_crud, app_creds, con
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to false.*'.format(auth_type)],
-                            hostname=configured_appliance.hostname,
-                            username=app_creds['sshlogin'],
-                            password=app_creds['sshpass'])
+                            hostname=configured_appliance.hostname)
 
     evm_tail.fix_before_start()
     cmd_unset = 'appliance_console_cli --extauth-opts="/authentication/{}=false"'.format(auth_type)
