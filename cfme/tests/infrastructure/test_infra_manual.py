@@ -56,3 +56,30 @@ def test_add_infra_provider_screen():
             5. Form must not be validated.
     """
     pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_check_vm_retirement_requester():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/2h
+        setup:
+            1. Add a provider, here VMware vCenter 6.7
+            2. Provision a VM.
+            3. Once the VM has been provisioned, retire the VM.
+            4. Create a report(See attachment in BZ).
+        testSteps:
+            1. Queue the report while the VM is still retiring
+                and check the requester column for the VM.
+            2. Queue the report again once the VM has been retired
+                and check the requester column for the VM.
+        expectedResults:
+            1. Requester name must be visible.
+            2. Requester name must be visible.
+
+    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1638502
+    """

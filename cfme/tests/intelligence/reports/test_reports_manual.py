@@ -397,9 +397,9 @@ def test_reports_manage_report_menu_accordion_with_users():
     pass
 
 
-
 @pytest.mark.manual
 @test_requirements.report
+@pytest.mark.tier(1)
 def test_report_menus_moving_reports():
     """
     Polarion:
@@ -408,9 +408,8 @@ def test_report_menus_moving_reports():
         caseimportance: low
         initialEstimate: 1/12h
         setup:
-            1. Navigate to  Cloud Intel -> Reports -> Edit reports menuSelect EvmGroup
-                Administrator -> Configuration Management -> Virtual Machines
-            2. Select Virtual Machines folder
+            1. Navigate to  Cloud Intel -> Reports -> Edit reports menu
+            2. Select EvmGroupAdministrator -> Configuration Management -> Virtual Machines
         testSteps:
             1. Select 5 Reports and move them to the left.
             2. Reset it.
@@ -420,5 +419,109 @@ def test_report_menus_moving_reports():
             2. All settings must be reset.
             3. All reports should be moved.
 
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.report
+@test_requirements.timelines
+@pytest.mark.tier(2)
+@pytest.mark.parametrize(
+    "report_type", ["hosts", "vm_operation", "policy_events", "custom"]
+)
+def test_custom_reports_with_timelines(report_type):
+    """
+    Cloud Intel->Reports allows to copy existing reports with timelines or
+    create new ones from scratch.
+    Such custom reports appear in Cloud Intel -> Timelines after creation.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: low
+        initialEstimate: 1/3h
+        setup:
+            1. Navigate to Cloud Intel > Reports > All Reports.
+            2. In the `All Reports` accordion, trace the report based on report_type.
+                and copy the report or create a new report if the report_type is `custom`.
+            3. Navigate to Cloud Intel > Timelines.
+        testSteps:
+            1. Check the Timelines tree.
+        expectedResults:
+            1. The copied/new report must appear under in the tree.
+                under [My Company (All Groups), Custom].
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.report
+@pytest.mark.tier(1)
+def test_reports_custom_tags():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: low
+        initialEstimate: 1/3h
+        setup:
+            1. Add custom tags to appliance using black console
+                i. ssh to appliance, vmdb; rails c
+                ii. cat = Classification.create_category!(
+                    name: "rocat1", description: "read_only cat 1", read_only: true)
+                iii. cat.add_entry(name: "roent1", description: "read_only entry 1")
+        testSteps:
+            1. Create new or Edit existing report and look for the tag category in list of columns.
+        expectedResults:
+            2. Custom tag must be visible in the list of columns
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.report
+@pytest.mark.tier(1)
+def test_sent_text_custom_report_with_long_condition():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/3h
+        setup:
+            1. Create a report containing 1 or 2 columns
+                and add a report filter with a long condition.(Refer BZ for more detail)
+            2. Create a schedule for the report and check send_txt.
+        testSteps:
+            1. Queue the schedule and monitor evm log.
+        expectedResults:
+            1. There should be no error in the log and report must be sent successfully.
+
+    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1677839
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.report
+@pytest.mark.tier(1)
+def test_vm_volume_free_space_less_than_20_percent():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/3h
+        setup:
+            1. Go to Cloud Intel -> Reports -> All Reports
+        testSteps:
+            1. Queue the report
+                [Configuration Management, Virtual Machines, VMs with Volume Free Space <= 20%]
+        expectedResults:
+            1. It should report only those VMs which has volume free space less than
+                or equal to 20%.
+
+    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1686281
     """
     pass

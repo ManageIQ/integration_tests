@@ -431,3 +431,25 @@ def test_configure_icons_roles_by_server():
             3. Click through all Roles and look for missing icons.
     """
     pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(0)
+def test_create_filter_with_multiple_conditions():
+    """
+        Polarion:
+        assignee: pvala
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/5h
+        setup:
+            1. Navigate to Compute > Infrastructure > Providers.
+            2. Click on Advanced Search Filter.
+        testSteps:
+            1. Create an expression with multiple types of condition. Eg: arg_1 AND arg_2 OR arg_3
+        expectedResults:
+            2. Expression must be created successfully.
+
+        Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1660460
+    """
+    pass
