@@ -25,7 +25,6 @@ from cfme.utils import ssh
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.blockers import GH
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.virtual_machines import deploy_template
@@ -360,9 +359,8 @@ def assign_profile_to_vm(appliance, ssa_policy, request):
     def _assign_profile_to_vm(vm):
         profile = appliance.collections.policy_profiles.create(
             'ssa_policy_profile_{}'.format(fauxfactory.gen_alpha()), policies=[ssa_policy])
-        request.addfinalizer(profile.delete)
         vm.assign_policy_profiles(profile.description)
-        request.addfinalizer(lambda: vm.unassign_policy_profiles(profile.description))
+        request.addfinalizer(profile.delete)
     return _assign_profile_to_vm
 
 
