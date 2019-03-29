@@ -226,16 +226,6 @@ def ansible_dialog_rest(request, appliance):
     return ansible_service_dialog[0]
 
 
-def ansible_dialog(request, appliance):
-    """Returns service dialog object."""
-    rest_resource = ansible_dialog_rest(request, appliance)
-    service_dialogs = appliance.collections.service_dialogs
-    service_dialog = service_dialogs.instantiate(
-        label=rest_resource.label,
-        description=rest_resource.description)
-    return service_dialog
-
-
 def dialog(request, appliance):
     """Returns service dialog object."""
     rest_resource = dialog_rest(request, appliance)

@@ -1,6 +1,7 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.rest.gen_data import ansible_dialog_rest as _ansible_dialog_rest
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
@@ -62,6 +63,11 @@ def catalog_item(appliance, request, config_manager, ansible_dialog, catalog, jo
         config_template=template)
     request.addfinalizer(catalog_item.delete)
     return catalog_item
+
+
+@pytest.fixture(scope="function")
+def ansible_dialog(request, appliance):
+    _ansible_dialog_rest(request, appliance)
 
 
 def test_order_tower_catalog_item(appliance, catalog_item, request, job_type):
