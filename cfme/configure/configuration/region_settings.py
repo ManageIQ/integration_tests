@@ -388,7 +388,6 @@ class MapTag(BaseEntity, Pretty, Updateable):
             entity_type: Name of the tag
             label: Tag display name
             category: Tags Category
-
     """
     pretty_attrs = ['entity_type', 'label', 'category']
 
@@ -402,7 +401,7 @@ class MapTag(BaseEntity, Pretty, Updateable):
             Args:
                 updates: tag map data that should be changed
                 cancel: True - if you want to cancel map edition,
-                        by defaul map will be updated
+                        by default map will be updated
         """
         view = navigate_to(self, 'Edit')
         # only category can be updated, as other fields disabled by default
@@ -427,7 +426,7 @@ class MapTag(BaseEntity, Pretty, Updateable):
                         'True' - map will not be deleted
         """
         view = navigate_to(self.parent, 'All')
-        row = view.table.row(tag_category=self.category)
+        row = view.table.row(tag_category=self.category, resource_label=self.label)
         row.actions.click()
         view.browser.handle_alert(cancel=cancel)
 
