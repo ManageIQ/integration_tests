@@ -1388,6 +1388,14 @@ class DialogButton(Button):
         )
 
 
+class SquashButton(Button):
+    """ This button requires a specific locator"""
+
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class, "btn") and @id="squash_button" {@locator_conditions}]'
+    )
+
+
 class DragandDropElements(View):
     """Drag elements to a drop place."""
 
