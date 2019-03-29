@@ -23,6 +23,7 @@ def main():
     print(sys.argv[1], sys.argv[2], coverage)
     post_task_result(sys.argv[1], sys.argv[2], safe_string(data), coverage)
 
+    print("blabla blablabla")
 
 if __name__ == "__main__":
     main()
