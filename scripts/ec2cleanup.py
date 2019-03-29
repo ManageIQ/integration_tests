@@ -1,11 +1,10 @@
 import argparse
 import sys
 import time
-import pytz
-
 from datetime import datetime
 from datetime import timedelta
 
+import pytz
 from tabulate import tabulate
 
 from cfme.utils.log import add_stdout_handler
@@ -140,7 +139,7 @@ def delete_unused_network_interfaces(provider_mgmt, excluded_enis, output):
                             eni.get("NetworkInterfaceId"))
                 continue
             else:
-                eni_list.append([provider_name,eni.get("NetworkInterfaceId")])
+                eni_list.append([provider_name, eni.get("NetworkInterfaceId")])
                 provider_mgmt.ec2_connection.delete_network_interface(
                     NetworkInterfaceId=eni.get("NetworkInterfaceId"))
         logger.info("  Deleted Elastic Network Interfaces: %r", eni_list)
