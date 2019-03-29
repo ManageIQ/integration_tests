@@ -6,6 +6,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils import conf
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
@@ -420,13 +421,22 @@ def test_codename_in_log(appliance):
         initialEstimate: 1/60h
     """
     log = '/var/www/miq/vmdb/log/evm.log'
-    appliance.ssh_client.run_command('echo > {}'.format(log))
+    lv = LogValidator(log,
+                      matched_patterns=[r'.*Codename: \w+$'],
+                      hostname=appliance.hostname,
+                      username=conf.credentials['ssh']['username'],
+                      password=conf.credentials['ssh']['password'])
+    lv.fix_before_start()
     appliance.ssh_client.run_command('appliance_console_cli --server=restart')
 
     @wait_for_decorator
     def codename_in_log():
-        r = appliance.ssh_client.run_command(r'egrep "Codename: \w+$" {}'.format(log))
-        return r.success
+        try:
+            lv.validate_logs()
+        except pytest.Fail:
+            return False
+        else:
+            return True
 
 
 @pytest.mark.ignore_stream('5.9')
