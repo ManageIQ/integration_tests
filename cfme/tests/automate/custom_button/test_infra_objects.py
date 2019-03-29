@@ -121,7 +121,7 @@ def setup_obj(button_group, provider):
 @pytest.mark.uncollectif(
     lambda appliance, button_group: appliance.version < "5.10" and "SWITCH" in button_group
 )
-def test_custom_button_display(request, display, setup_obj, button_group):
+def test_custom_button_display_infra_obj(request, display, setup_obj, button_group):
     """ Test custom button display on a targeted page
 
     Polarion:
@@ -177,7 +177,7 @@ def test_custom_button_display(request, display, setup_obj, button_group):
 @pytest.mark.uncollectif(
     lambda appliance, button_group: appliance.version < "5.10" and "SWITCH" in button_group
 )
-def test_custom_button_automate(appliance, request, submit, setup_obj, button_group):
+def test_custom_button_automate_infra_obj(appliance, request, submit, setup_obj, button_group):
     """ Test custom button for automate and requests count as per submit
 
     Polarion:
@@ -276,7 +276,7 @@ def test_custom_button_automate(appliance, request, submit, setup_obj, button_gr
 @pytest.mark.uncollectif(
     lambda appliance, button_group: appliance.version < "5.10" and "SWITCH" in button_group
 )
-def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_group):
+def test_custom_button_dialog_infra_obj(appliance, dialog, request, setup_obj, button_group):
     """ Test custom button with dialog and InspectMe method
 
     Polarion:
@@ -345,7 +345,9 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
 @pytest.mark.uncollectif(
     lambda appliance, button_group: appliance.version < "5.10" and "SWITCH" in button_group
 )
-def test_custom_button_expression(appliance, request, setup_obj, button_group, expression):
+def test_custom_button_expression_infra_obj(
+    appliance, request, setup_obj, button_group, expression
+):
     """ Test custom button as per expression enablement/visibility.
 
     Polarion:
@@ -492,7 +494,7 @@ def test_open_url(request, setup_obj, button_group, method):
 )
 @pytest.mark.ignore_stream("5.9")
 @pytest.mark.parametrize("btn_dialog", [False, True], ids=["simple", "dialog"])
-def test_custom_button_events(request, dialog, setup_obj, button_group, btn_dialog):
+def test_custom_button_events_infra_obj(request, dialog, setup_obj, button_group, btn_dialog):
     """Test custom button events
 
     Polarion:

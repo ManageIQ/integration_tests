@@ -77,7 +77,7 @@ def setup_obj(appliance, provider, button_group):
 @pytest.mark.parametrize(
     "display", DISPLAY_NAV.keys(), ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
 )
-def test_custom_button_display(request, display, setup_obj, button_group):
+def test_custom_button_display_container_obj(request, display, setup_obj, button_group):
     """ Test custom button display on a targeted page
 
     Polarion:
@@ -122,7 +122,7 @@ def test_custom_button_display(request, display, setup_obj, button_group):
     lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
     and appliance.version < "5.10"
 )
-def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_group):
+def test_custom_button_dialog_container_obj(appliance, dialog, request, setup_obj, button_group):
     """ Test custom button with dialog and InspectMe method
 
     Polarion:
@@ -190,7 +190,9 @@ def test_custom_button_dialog(appliance, dialog, request, setup_obj, button_grou
     and appliance.version < "5.10"
 )
 @pytest.mark.parametrize("expression", ["enablement", "visibility"])
-def test_custom_button_expression(appliance, request, setup_obj, button_group, expression):
+def test_custom_button_expression_container_obj(
+    appliance, request, setup_obj, button_group, expression
+):
     """ Test custom button as per expression enablement/visibility.
 
     Polarion:

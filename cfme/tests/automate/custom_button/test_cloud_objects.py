@@ -104,7 +104,7 @@ def setup_objs(button_group, provider):
 @pytest.mark.parametrize(
     "display", DISPLAY_NAV.keys(), ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
 )
-def test_custom_button_display(appliance, request, display, setup_objs, button_group):
+def test_custom_button_display_cloud_obj(appliance, request, display, setup_objs, button_group):
     """ Test custom button display on a targeted page
 
     Polarion:
@@ -149,7 +149,7 @@ def test_custom_button_display(appliance, request, display, setup_objs, button_g
     lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
     and appliance.version < "5.10"
 )
-def test_custom_button_dialog(appliance, dialog, request, setup_objs, button_group):
+def test_custom_button_dialog_cloud_obj(appliance, dialog, request, setup_objs, button_group):
     """ Test custom button with dialog and InspectMe method
 
     Polarion:
@@ -223,7 +223,7 @@ def test_custom_button_dialog(appliance, dialog, request, setup_objs, button_gro
     and appliance.version < "5.10"
 )
 @pytest.mark.parametrize("submit", SUBMIT, ids=[item.replace(" ", "_") for item in SUBMIT])
-def test_custom_button_automate(appliance, request, submit, setup_objs, button_group):
+def test_custom_button_automate_cloud_obj(appliance, request, submit, setup_objs, button_group):
     """ Test custom button for automate and requests count as per submit
 
     Polarion:
@@ -320,7 +320,9 @@ def test_custom_button_automate(appliance, request, submit, setup_objs, button_g
     and appliance.version < "5.10"
 )
 @pytest.mark.parametrize("expression", ["enablement", "visibility"])
-def test_custom_button_expression(appliance, request, setup_objs, button_group, expression):
+def test_custom_button_expression_cloud_obj(
+    appliance, request, setup_objs, button_group, expression
+):
     """ Test custom button as per expression enablement/visibility.
 
     Polarion:
@@ -411,7 +413,7 @@ def test_custom_button_expression(appliance, request, setup_objs, button_group, 
 )
 @pytest.mark.ignore_stream("5.9")
 @pytest.mark.parametrize("btn_dialog", [False, True], ids=["simple", "dialog"])
-def test_custom_button_events(request, dialog, setup_objs, button_group, btn_dialog):
+def test_custom_button_events_cloud_obj(request, dialog, setup_objs, button_group, btn_dialog):
     """Test custom button events
 
     Polarion:
