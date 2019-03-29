@@ -1,7 +1,6 @@
 import fauxfactory
 import pytest
 
-from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -13,7 +12,7 @@ def search_filter_obj(appliance, request):
     filter_value = fauxfactory.gen_string("alphanumeric", 10)
     param_filter = "Infrastructure Provider : Name"
 
-    view = navigate_to(InfraProvider, "All")
+    view = navigate_to(appliance.collections.infra_providers, "All")
 
     view.search.save_filter(
         "fill_field({}, =, {})".format(param_filter, filter_value),
