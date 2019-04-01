@@ -5,6 +5,7 @@ import pytest
 from wait_for import wait_for
 
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.fixtures.cli import provider_app_crud
 from cfme.fixtures.cli import waiting_for_ha_monitor_started
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -13,22 +14,11 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
-from cfme.utils.providers import list_providers_by_class
 from cfme.utils.ssh import SSHClient
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
 evm_log = '/var/www/miq/vmdb/log/evm.log'
-
-
-def provider_app_crud(provider_class, appliance):
-    try:
-        prov = list_providers_by_class(provider_class)[0]
-        logger.info('using provider {}'.format(prov.name))
-        prov.appliance = appliance
-        return prov
-    except IndexError:
-        pytest.skip("No {} providers available (required)".format(provider_class.type))
 
 
 def provision_vm(request, provider):
