@@ -130,24 +130,21 @@ class SSHClient(paramiko.SSHClient):
         self.f_stdout = connect_kwargs.pop('stdout', sys.stdout)
         self.f_stderr = connect_kwargs.pop('stderr', sys.stderr)
 
-        # load the defaults for ssh
-        default_connect_kwargs = {
-            'timeout': 10,
-            'allow_agent': False,
-            'look_for_keys': False,
-            'gss_auth': False
-        }
-        # Load credentials and destination from confs, if connect_kwargs is empty
-        if not connect_kwargs.get('hostname'):
-            default_connect_kwargs['hostname'] = store.current_appliance.hostname
-            default_connect_kwargs['port'] = ports.SSH
-            default_connect_kwargs['username'] = conf.credentials['ssh']['username']
-            default_connect_kwargs['password'] = conf.credentials['ssh']['password']
-        default_connect_kwargs['port'] = connect_kwargs.pop('port', ports.SSH)
+        # load the defaults for ssh, including current_appliance and default credentials keys
+        compiled_kwargs = dict(
+            timeout=10,
+            allow_agent=False,
+            look_for_keys=False,
+            gss_auth=False,
+            hostname=store.current_appliance.hostname,
+            username=conf.credentials['ssh']['username'],
+            password=conf.credentials['ssh']['password'],
+            port=ports.SSH,
+        )
 
-        # Overlay defaults with any passed-in kwargs and store
-        default_connect_kwargs.update(connect_kwargs)
-        self._connect_kwargs = default_connect_kwargs
+        # Overlay defaults with any passed-in kwargs and assign to _connect_kwargs
+        compiled_kwargs.update(connect_kwargs)
+        self._connect_kwargs = compiled_kwargs
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         _client_session.append(self)
 
