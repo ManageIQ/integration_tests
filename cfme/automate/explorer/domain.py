@@ -278,10 +278,6 @@ class Domain(BaseEntity, Fillable):
             view.flash.assert_message(
                 'Edit of Automate Domain "{}" was cancelled by the user'.format(self.name))
 
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
-
     def refresh(self, branch_or_tag=None, git_branch=None, cancel=False):
         view = navigate_to(self, 'Refresh')
 

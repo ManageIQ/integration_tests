@@ -43,8 +43,7 @@ def new_user(appliance):
         value_assign="Database",
     )
     yield user
-    if user.exists:
-        user.delete()
+    user.delete_if_exists()
 
 
 @pytest.mark.tier(1)
@@ -272,10 +271,15 @@ def test_refresh_git_current_user(imported_domain, new_user):
 
     # Collecting list of all tasks performed by users
     all_tasks = view.tabs.alltasks.table.read()
+    expected_task = None
     for task in all_tasks:
         if task['Task Name'] == 'Refresh git repository':
-            assert task['User'] == 'admin'
+            expected_task = task
             break
+    if expected_task:
+        assert expected_task['User'] == 'admin'
+    else:
+        raise ValueError("Task not found")
 
     with new_user:
         # Refreshed imported domain by non-super user
@@ -284,7 +288,12 @@ def test_refresh_git_current_user(imported_domain, new_user):
 
         # Collecting list of all tasks performed by users
         all_tasks = view.tabs.alltasks.table.read()
+        expected_task = None
         for task in all_tasks:
             if task['Task Name'] == 'Refresh git repository':
-                assert task['User'] == new_user.credential.principal
+                expected_task = task
                 break
+        if expected_task:
+            assert expected_task['User'] == new_user.credential.principal
+        else:
+            raise ValueError("Task not found")
