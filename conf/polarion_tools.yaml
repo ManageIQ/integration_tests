@@ -62,6 +62,8 @@ docstrings:
     marker_fields:
         caselevel: "@pytest.mark.tier"
         caseautomation: "@pytest.mark.manual"
+        # default for manual mark is 'notautomated'
+        # @pytest.mark.manual('manualonly') to set 'manualonly'
         linkedWorkItems: "@pytest.mark.requirements"
 
     ignored_fields:
