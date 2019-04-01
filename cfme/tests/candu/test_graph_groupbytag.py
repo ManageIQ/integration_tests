@@ -4,13 +4,17 @@ from datetime import timedelta
 
 import pytest
 
+from cfme import test_requirements
 from cfme.common.candu_views import UtilizationZoomView
 from cfme.tests.candu import compare_data_with_unit
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 
 
-pytestmark = pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+pytestmark = [
+    pytest.mark.tier(3),
+    test_requirements.c_and_u
+]
 
 HOST_GRAPHS = ['host_cpu',
                'host_memory',
@@ -59,12 +63,14 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, host):
     Polarion:
         assignee: nachandr
         initialEstimate: 1/4h
+        casecomponent: CandU
     """
     view = navigate_to(host, 'candu')
     back_date = datetime.now() - timedelta(days=1)
     data = {'interval': interval, 'group_by': gp_by}
 
-    # Note: If we won't choose backdate then  we have wait for 30min at least for metric collection
+    # Note: We have to choose backdate since the testing is being done on a DB containing
+    # pre-existing C&U data.
     if interval == "Hourly":
         data.update({"calendar": back_date})
     view.options.fill(data)
