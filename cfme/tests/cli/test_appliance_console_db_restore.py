@@ -391,7 +391,7 @@ def test_appliance_console_restore_db_replicated(
     providers_before_restore = set(appl1.managed_provider_names)
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
-    command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
+    command_set = ('ap', '', '6', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
     # Restore db on first appliance
     appl1.set_pglogical_replication(replication_type=':none')
