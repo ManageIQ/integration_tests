@@ -388,8 +388,8 @@ def test_upgrade_multi_replication_inplace():
         caseimportance: medium
         initialEstimate: 1h
         setup: 2 appliances:
-               - Appliance A: internal DB, region 0
-               - Appliance B: external DB, pointed at A, region 0
+               - Appliance A: Replication Global, region 0
+               - Appliance B: Replication Local, region 1
                - Setup LDAP on one of the appliances
                - Login as LDAP user A
                - Setup a provider

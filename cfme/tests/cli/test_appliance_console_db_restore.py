@@ -5,6 +5,7 @@ import pytest
 from wait_for import wait_for
 
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.fixtures.cli import replicated_appliances_with_providers
 from cfme.fixtures.cli import waiting_for_ha_monitor_started
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -72,19 +73,7 @@ def get_replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_
     prior to running tests.
 
     """
-    appl1, appl2 = temp_appliances_unconfig_funcscope_rhevm
-    # configure appliances
-    appl1.configure(region=0)
-    appl1.wait_for_web_ui()
-    appl2.configure(region=99)
-    appl2.wait_for_web_ui()
-    # configure replication between appliances
-    appl1.set_pglogical_replication(replication_type=':remote')
-    appl2.set_pglogical_replication(replication_type=':global')
-    appl2.add_pglogical_replication_subscription(appl1.hostname)
-    # Add infra/cloud providers and create db backups
-    provider_app_crud(VMwareProvider, appl1).setup()
-    provider_app_crud(EC2Provider, appl1).setup()
+    appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
     appl1.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
     appl1.db.backup()
     appl2.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
