@@ -70,12 +70,25 @@ def new_tenant(appliance):
 
     # Here TENANT[0] is the first tenant(parent tenant) from the tenant's list
     tenant = collection.create(
-        name="{}".format(TENANTS[0]),
+        name=TENANTS[0],
         description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
         parent=collection.get_root_tenant(),
     )
     yield tenant
     tenant.delete_if_exists()
+
+
+@pytest.fixture(scope="module")
+def child_tenant(new_tenant):
+    """This fixture used to create child tenant under parent tenant - new_tenant"""
+    # Here TENANT[1] is the second tenant(child tenant) from the tenant's list
+    child_tenant = new_tenant.appliance.collections.tenants.create(
+        name=TENANTS[1],
+        description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
+        parent=new_tenant,
+    )
+    yield child_tenant
+    child_tenant.delete_if_exists()
 
 
 def check_permissions(appliance, assigned_tenant):
@@ -91,9 +104,8 @@ def check_permissions(appliance, assigned_tenant):
 
 
 @test_requirements.quota
-@pytest.mark.ignore_stream('5.9')
 @pytest.mark.tier(1)
-def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant):
+def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant, child_tenant):
     """
     Polarion:
         assignee: ghubale
@@ -117,9 +129,10 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
             7. Modify role_omega for manage quota permissions of omega user as it will not even
                manage quota of itself or other tenants
             8. CHECK IF YOU ARE ABLE TO MODIFY THE "MANAGE QUOTA" CHECKS IN ROLE AS YOU WANT
-            9  Then see if you are able to save these two new roles.
-            10. Then login with both users one by one and see if these roles permissions are
-                applied or not.
+            9. Then see if you are able to save these two new roles.
+            10.Login with alpha and SEE IF ALPHA USER CAN ABLE TO SET QUOTA OF omega_tenant
+            11.Login with omega and SEE QUOTA GETS CHANGED OR NOT. THEN TRY TO CHANGE QUOTA
+               IMPOSED BY ALPHA USER.
         expectedResults:
             1.
             2.
@@ -129,32 +142,21 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
             6.
             7.
             8.
-            9.
-            10. Logged in with users created
-            10a. login with alpha and SEE IF ALPHA USER CAN ABLE TO SET QUOTA OF omega_tenant
-                 FOR CPU - 5('Manage Quotas' option should be available)
-            11b. login with omega and SEE QUOTA GETS CHANGED OR NOT. THEN TRY TO CHANGE QUOTA
-                 IMPOSED BY ALPHA USER.
-            12c. Here as per role_omega permissions, omega must not able change its own quota or
+            9. Save roles successfully
+            10. 'Manage Quotas' option should be available for user alpha
+            11. Here as per role_omega permissions, omega must not able change its own quota or
                  other tenants quota.
 
     Bugzilla:
         1655012, 1468795
     """
-    # Here TENANT[1] is the second tenant(child tenant) from the tenant's list
-    child_tenant = appliance.collections.tenants.create(
-        name="{}".format(TENANTS[1]),
-        description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
-        parent=new_tenant,
-    )
-    request.addfinalizer(child_tenant.delete_if_exists)
-
     user_ = []
     role_ = []
 
     # List of two tenants with their parents to assign to two different groups
-    tenant_ = ["My Company/{parent}".format(parent=TENANTS[0]),
-               "My Company/{parent}/{child}".format(parent=TENANTS[0], child=TENANTS[1])]
+    tenant_ = ["My Company/{parent}".format(parent=new_tenant.name),
+               "My Company/{parent}/{child}".format(parent=new_tenant.name,
+                                                    child=child_tenant.name)]
 
     # Instantiating existing role - 'EvmRole-tenant_administrator' to copy it to new role
     role = appliance.collections.roles.instantiate(name='EvmRole-tenant_administrator')
@@ -176,9 +178,10 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
         # Creating two different users which are assigned with different groups
         user = appliance.collections.users.create(
             name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
-            credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
-                                  secret='{password}'.format(
-                                      password=fauxfactory.gen_alphanumeric(4))),
+            credential=Credential(
+                principal="uid{}".format(fauxfactory.gen_alphanumeric(4)),
+                secret="{password}".format(password=fauxfactory.gen_alphanumeric(4)),
+            ),
             email=fauxfactory.gen_email(),
             groups=group,
             cost_center="Workload",
@@ -187,26 +190,21 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
         user_.append(user)
         request.addfinalizer(user.delete_if_exists)
 
-    # Updating first role for first user with PRODUCT_FEATURES tree. It restrict user from the
-    # tenants for which this role does not have access.
-    # Here PRODUCT_FEATURES[0] is the tree path navigation for updating RBAC role for tenant1
-    # (parent tenant) from TENANTS list.
-    # role_[0] is the first role from the list of two role created above; Providing 'False' while
-    # updating role means it restrict user from accessing that particular tenant.
-    role_[0].update({'product_features': [(PRODUCT_FEATURES[0], False)]})
+        # Updating roles for users with PRODUCT_FEATURES tree. It restrict user from the
+        # tenants for which this role does not have access.
+        # Here PRODUCT_FEATURES[0] is the tree path navigation for updating RBAC role for tenant1
+        # (parent tenant) from TENANTS list.
+        # Here PRODUCT_FEATURES[1] is the tree path navigation for updating RBAC role for tenant2
+        # (child tenant) from TENANTS list.
+        # role_[0] and role_[1] is the first and second role from the list of two role created
+        # above; Providing 'False' while updating role means it restrict user from accessing that
+        # particular tenant.
+        role_[i].update({'product_features': [(PRODUCT_FEATURES[i], False)]})
 
     # Logged in with user1 and then checking; this user should not have access of manage quota for
     # tenant1(parent tenant).
     with user_[0]:
         check_permissions(appliance=appliance, assigned_tenant=new_tenant.name)
-
-    # Updating second role for second user with PRODUCT_FEATURES tree. It restrict user from the
-    # tenants for which this role does not have access.
-    # Here PRODUCT_FEATURES[1] is the tree path navigation for updating RBAC role for tenant2
-    # (child tenant) from TENANTS list.
-    # role_[1] is the second role from the list of two role created above; Providing 'False' while
-    # updating role means it restrict user from accessing that particular tenant.
-    role_[1].update({'product_features': [(PRODUCT_FEATURES[1], False)]})
 
     # Logged in with user2 and then checking; this user should not have access of manage quota for
     # tenant2(child tenant).

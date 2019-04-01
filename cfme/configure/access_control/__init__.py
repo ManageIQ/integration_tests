@@ -991,8 +991,7 @@ class AllRolesView(ConfigurationView):
     def is_displayed(self):
         return (
             self.accordions.accesscontrol.is_opened and
-            self.title.text == 'Access Control Roles' or
-            self.title.text == 'Role "{}"'.format(self.context['object'].name)
+            self.title.text == 'Access Control Roles'
         )
 
 
