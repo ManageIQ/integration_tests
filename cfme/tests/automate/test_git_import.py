@@ -279,7 +279,7 @@ def test_refresh_git_current_user(imported_domain, new_user):
     if expected_task:
         assert expected_task['User'] == 'admin'
     else:
-        raise ValueError("Task not found")
+        raise NameError("Task not found")
 
     with new_user:
         # Refreshed imported domain by non-super user
@@ -296,4 +296,4 @@ def test_refresh_git_current_user(imported_domain, new_user):
         if expected_task:
             assert expected_task['User'] == new_user.credential.principal
         else:
-            raise ValueError("Task not found")
+            raise NameError("Task not found")
