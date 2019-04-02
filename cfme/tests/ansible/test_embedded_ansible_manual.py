@@ -297,28 +297,6 @@ def test_embed_tower_repo_links():
     pass
 
 
-@pytest.mark.tier(3)
-def test_embed_tower_exec_play_against_amazon():
-    """
-    User/Admin is able to execute playbook without creating Job Temaplate
-    and can execute it against Amazon EC2 with EC2 credentials
-    enable Embedded Ansible
-    wait until it is enabled and add repository with playbooks
-    add AWS EC2 credentials
-    create new catalog
-    add new catalog item with EC2 playbook
-    order the service and wait for it"s execution
-    check if service was finished OK
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_embed_tower_add_branch_repo():
     """

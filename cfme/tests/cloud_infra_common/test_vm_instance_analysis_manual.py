@@ -571,21 +571,6 @@ def test_ssa_vm_scvmm2k12_second_disk_refs():
     pass
 
 
-def test_ssa_vm():
-    """
-    Make sure SSA can be started on a VM for configured provider
-    (parametrized)
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_vm_ec2_fedora():
     """
     Add EC-2 provider.
