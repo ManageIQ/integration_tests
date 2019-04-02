@@ -1035,23 +1035,6 @@ def test_appliance_console_restore_db_network_negative():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_appliance_console_packages():
-    """
-    Check that we no long use scl packages in cfme. We should not have an
-    rh-ruby packages.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Appliance
-        initialEstimate: 1/12h
-        startsin: 5.10
-        testtype: structural
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_appliance_console_cli_rh_registration():
     """
     Test RHSM registration through cli and check if changes are made
