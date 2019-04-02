@@ -94,13 +94,12 @@ def child_tenant(new_tenant):
 def check_permissions(appliance, assigned_tenant):
     """This function is used to check user permissions for particular tenant"""
     view = navigate_to(appliance.collections.tenants, 'All')
-    count = view.table.row_count
-    for i in range(count):
-        existing_tenant = view.table.read()[i]['Name']
-        if assigned_tenant == existing_tenant:
-            row = view.table.row(name=existing_tenant)
-            row.click()
-            assert not view.toolbar.configuration.has_item('Manage Quotas')
+    # TODO: (GH-8662) Need to restructure tenant entity by considering RBAC roles
+    for tenant in view.table:
+        if tenant["Name"].text == assigned_tenant:
+            tenant.click()
+            break
+    assert not view.toolbar.configuration.has_item('Manage Quotas')
 
 
 @test_requirements.quota
@@ -209,4 +208,4 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
     # Logged in with user2 and then checking; this user should not have access of manage quota for
     # tenant2(child tenant).
     with user_[1]:
-        check_permissions(appliance=appliance, assigned_tenant=new_tenant.name)
+        check_permissions(appliance=appliance, assigned_tenant=child_tenant.name)
