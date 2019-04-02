@@ -185,3 +185,23 @@ def test_retire_on_date_for_multiple_service():
         tags: service
     """
     pass
+
+
+@test_requirements.service
+@pytest.mark.tier(0)
+@pytest.mark.ignore_stream("5.10")
+def test_service_state():
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        startsin: 5.11
+        testSteps:
+            1. Create catalog and catalog item
+            2. Order the catalog item
+            3. Go to My services and check service state
+
+    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1678123
+    """
+    pass

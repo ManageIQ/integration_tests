@@ -269,3 +269,23 @@ class TestServiceCatalogViaREST(object):
             scl = service_catalogs[index]
             scl.reload()
             assert scl.name == new_names[index]
+
+
+@test_requirements.service
+@pytest.mark.tier(0)
+@pytest.mark.ignore_stream("5.10")
+def test_copy_catalog_bundle():
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        startsin: 5.11
+        testSteps:
+            1. Create catalog and catalog item
+            2. Create catalog bundle
+            3. Make a copy of catalog bundle
+
+    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1678149
+    """
+    pass

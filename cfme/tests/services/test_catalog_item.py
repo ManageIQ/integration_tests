@@ -392,3 +392,42 @@ def test_service_reconfigure_in_distributed_environment():
             2. raise provisioning request in master and reconfigure in child.
     """
     pass
+
+
+@test_requirements.service
+@pytest.mark.tier(0)
+@pytest.mark.ignore_stream("5.10")
+def test_copy_catalog_item():
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        startsin: 5.11
+        testSteps:
+            1. Create catalog and catalog item
+            2. Make a copy of catalog item
+
+    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1678149
+    """
+    pass
+
+
+@test_requirements.service
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+def test_service_select_tenants():
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        startsin: 5.11
+        testSteps:
+            1. Create catalog
+            2. Create catalog item with tenants
+            3. login with tenant and check the services
+
+    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1678123
+    """
+    pass
