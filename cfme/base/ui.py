@@ -1670,8 +1670,8 @@ class AutomateSimulation(CFMENavigateStep):
 
 
 class AutomateImportExportBaseView(BaseLoggedInPage):
-    # TODO This is currently overiding the base flash and should be renamed and efforts made
-    # to update assocaited tests
+    # TODO: This is currently overiding the base flash and should be renamed and efforts made
+    # to update associated tests
     flash = FlashMessages('div.import-flash-message')
     title = Text('.//div[@id="main-content"]//h1')
 
@@ -1709,12 +1709,22 @@ class AutomateImportExportView(AutomateImportExportBaseView):
     reset_all = VersionPick({
         Version.lowest(): Image(
             './/img[starts-with(@alt, "Reset all components in the following domains:")]'),
-        '5.10': Button(title='Reset all components in the following domains:')
+        '5.10': Button(title='Reset all components in the following domains: RedHat, ManageIQ')
     })
+    reset_title = Text(
+        ".//div[contains(@class, 'import-or-export')]/h3[contains(text(), 'Reset all')]"
+    )
 
     @property
     def is_displayed(self):
-        return self.in_import_export and self.export_all.is_displayed
+        # TODO: Remove check if the fix for BZ 1686054 is back ported to 5.9z
+        if self.browser.product_version < "5.10":
+            title = "Reset all components in the following domains: ManageIQ"
+        else:
+            title = "Reset all components in the following domains: RedHat, ManageIQ"
+
+        return (self.in_import_export and self.export_all.is_displayed and self.reset_title.text
+                == title)
 
 
 @navigator.register(Server)
