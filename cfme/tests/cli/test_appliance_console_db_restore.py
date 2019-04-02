@@ -119,31 +119,31 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     """Configure HA environment
 
     Appliance one configuring dedicated database, 'ap' launch appliance_console,
-    '' clear info screen, '5' setup db, '1' Creates v2_key, '1' selects internal db,
-    '1' use partition, 'y' create dedicated db, 'pwd' db password, 'pwd' confirm db password + wait
+    '' clear info screen, '7' setup db, '1' Creates v2_key, '1' selects internal db,
+    '2' use partition, 'y' create dedicated db, 'pwd' db password, 'pwd' confirm db password + wait
     360 secs and '' finish.
 
     Appliance two creating region in dedicated database, 'ap' launch appliance_console, '' clear
-    info screen, '5' setup db, '2' fetch v2_key, 'app0_ip' appliance ip address, '' default user,
+    info screen, '7' setup db, '2' fetch v2_key, 'app0_ip' appliance ip address, '' default user,
     'pwd' appliance password, '' default v2_key location, '2' create region in external db, '0' db
     region number, 'y' confirm create region in external db 'app0_ip', '' ip and default port for
     dedicated db, '' use default db name, '' default username, 'pwd' db password, 'pwd' confirm db
     password + wait 360 seconds and '' finish.
 
     Appliance one configuring primary node for replication, 'ap' launch appliance_console, '' clear
-    info screen, '6' configure db replication, '1' configure node as primary, '1' cluster node
+    info screen, '8' configure db replication, '1' configure node as primary, '1' cluster node
     number set to 1, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
     'app0_ip' primary appliance ip, confirm settings and wait 360 seconds to configure, '' finish.
 
 
     Appliance three configuring standby node for replication, 'ap' launch appliance_console, ''
-    clear info screen, '6' configure db replication, '1' configure node as primary, '1' cluster node
+    clear info screen, '8' configure db replication, '1' configure node as primary, '1' cluster node
     number set to 1, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
     'app0_ip' primary appliance ip, confirm settings and wait 360 seconds to configure, '' finish.
 
 
     Appliance two configuring automatic failover of database nodes, 'ap' launch appliance_console,
-    '' clear info screen '9' configure application database failover monitor, '1' start failover
+    '' clear info screen '10' configure application database failover monitor, '1' start failover
     monitor. wait 30 seconds for service to start '' finish.
 
     """
@@ -152,23 +152,26 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     app1_ip = appl2.hostname
     pwd = app_creds['password']
     # Configure first appliance as dedicated database
-    command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+    command_set = ('ap', '', '7', '1', '2', 'y', pwd, TimedCommand(pwd, 360), '')
     appl1.appliance_console.run_commands(command_set)
     wait_for(lambda: appl1.db.is_dedicated_active)
     # Configure EVM webui appliance with create region in dedicated database
-    command_set = ('ap', '', '5', '2', app0_ip, '', pwd, '', '2', '0', 'y', app0_ip, '', '', '',
+    command_set = ('ap', '', '7', '2', app0_ip, '', pwd, '', '2', '0', 'y', app0_ip, '', '', '',
         pwd, TimedCommand(pwd, 360), '')
     appl3.appliance_console.run_commands(command_set)
     appl3.evmserverd.wait_for_running()
     appl3.wait_for_web_ui()
     # Configure primary replication node
-    command_set = ('ap', '', '6', '1', '1', '', '', pwd, pwd, app0_ip, 'y',
+    command_set = ('ap', '', '8', '1', '1', '', '', pwd, pwd, app0_ip, 'y',
         TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
     # Configure secondary replication node
-    command_set = ('ap', '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
+    command_set = ('ap', '', '8', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
                    app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
+    # Configure automatic failover on EVM appliance
+    command_set = ('ap', '', '8', TimedCommand('1', 30), '')
+    appl3.appliance_console.run_commands(command_set)
 
     with waiting_for_ha_monitor_started(appl3, app1_ip, timeout=300):
         # Configure automatic failover on EVM appliance
