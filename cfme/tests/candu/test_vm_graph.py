@@ -104,7 +104,7 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
                          interval == 'Daily'))
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', VM_GRAPHS)
-def test_graph_screen(provider, interval, graph_type, enable_candu):
+def test_vm_graph_screen(provider, interval, graph_type, enable_candu):
     """Test VM graphs for hourly and Daily
 
     prerequisites:

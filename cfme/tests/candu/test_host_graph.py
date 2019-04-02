@@ -112,7 +112,7 @@ def test_host_most_recent_hour_graph_screen(graph_type, provider, host, enable_c
                          graph_type == "host_disk")
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', HOST_GRAPHS)
-def test_graph_screen(provider, interval, graph_type, host, enable_candu):
+def test_host_graph_screen(provider, interval, graph_type, host, enable_candu):
     """Test Host graphs for hourly and Daily
 
     prerequisites:
