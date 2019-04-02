@@ -2,6 +2,7 @@ from collections import namedtuple
 
 import fauxfactory
 import pytest
+from paramiko_expect import SSHClientInteraction
 from wait_for import wait_for
 
 from cfme import test_requirements
@@ -213,6 +214,33 @@ def setup_nfs_samba_backup(appl1):
     nfs_smb.put_file(dump_filename, "{}share.backup".format(loc))
 
 
+def logging_callback(appliance):
+    # TODO (jhenner) Remove me. This is being defined also in some other PR:
+    # Fix minor version update tests. #8521
+    def the_logger(m):
+        logger.debug('Appliance %s:\n%s', appliance.hostname, m)
+    return the_logger
+
+
+def restore_db(appl, location=''):
+    interaction = SSHClientInteraction(appl.ssh_client, timeout=10, display=True,
+                                       output_callback=logging_callback(appl))
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=20)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('6')
+    interaction.expect('Choose the restore database file source: |1| ')
+    interaction.send('1')
+    interaction.expect('Enter the location of the local restore file: |/tmp/evm_db.backup| ')
+    interaction.send(location)
+    interaction.expect('Should this file be deleted after completing the restore\? \(Y\/N\): ')
+    interaction.send('N')
+    interaction.expect('Are you sure you would like to restore the database\? \(Y\/N\): ')
+    interaction.send('Y')
+    interaction.expect('Press any key to continue.', timeout=60)
+
+
 @pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
@@ -234,8 +262,7 @@ def test_appliance_console_restore_db_local(request, get_appliances_with_provide
     appl2.evmserverd.stop()
     appl2.db.drop()
     appl2.db.create()
-    command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
-    appl2.appliance_console.run_commands(command_set)
+    restore_db(appl2)
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
@@ -262,8 +289,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     # Restore DB on the second appliance
     appl1.evmserverd.stop()
     appl1.db_service.restart()
-    command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
-    appl1.appliance_console.run_commands(command_set)
+    restore_db(appl1, '/tmp/backup/base.tar.gz')
     manager.quit()
     appl1.evmserverd.start()
     appl1.wait_for_web_ui()
@@ -311,9 +337,8 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     appl2.evmserverd.stop()
     appl1.db_service.restart()
     appl2.db_service.restart()
-    command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
-    appl1.appliance_console.run_commands(command_set)
-    appl2.appliance_console.run_commands(command_set)
+    restore_db(appl1, '/tmp/backup/base.tar.gz')
+    restore_db(appl2, '/tmp/backup/base.tar.gz')
     appl1.evmserverd.start()
     appl2.evmserverd.start()
     appl1.wait_for_web_ui()
@@ -354,8 +379,7 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
     appl1.db_service.restart()
     appl1.db.drop()
     appl1.db.create()
-    command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
-    appl1.appliance_console.run_commands(command_set)
+    restore_db(appl1)
     appl1.evmserverd.start()
     appl1.wait_for_web_ui()
     appl2.evmserverd.start()
@@ -391,14 +415,14 @@ def test_appliance_console_restore_db_replicated(
     providers_before_restore = set(appl1.managed_provider_names)
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
-    command_set = ('ap', '', '6', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
-    appl2.appliance_console.run_commands(command_set)
+
+    restore_db(appl2)
     # Restore db on first appliance
     appl1.set_pglogical_replication(replication_type=':none')
     appl1.evmserverd.stop()
     appl1.db.drop()
     appl1.db.create()
-    appl1.appliance_console.run_commands(command_set)
+    restore_db(appl1)
     appl1.evmserverd.start()
     appl2.evmserverd.start()
     appl1.wait_for_web_ui()
@@ -444,8 +468,7 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
     appl1.db.drop()
     appl1.db.create()
     fetch_v2key(appl3, appl1)
-    command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
-    appl1.appliance_console.run_commands(command_set)
+    restore_db(appl1)
     appl1.ssh_client.run_command("systemctl start rh-postgresql95-repmgr")
     appl2.ssh_client.run_command("systemctl start rh-postgresql95-repmgr")
     appl3.evmserverd.start()
