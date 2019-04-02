@@ -149,7 +149,9 @@ def serv_button_group(appliance, request):
         )
     ]
 )
-def test_custom_button_display(request, appliance, context, display, objects, button_group):
+def test_custom_button_display_service_obj(
+    request, appliance, context, display, objects, button_group
+):
     """ Test custom button display on a targeted page
 
     Polarion:
@@ -203,7 +205,9 @@ def test_custom_button_display(request, appliance, context, display, objects, bu
     lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group,
     reason="Generic object custom button not supported by SSUI",
 )
-def test_custom_button_automate(request, appliance, context, submit, objects, button_group):
+def test_custom_button_automate_service_obj(
+    request, appliance, context, submit, objects, button_group
+):
     """ Test custom button for automate and requests count as per submit
 
     Polarion:
@@ -376,7 +380,9 @@ def vis_enb_button(request, appliance, button_group):
     lambda context, button_group: "GENERIC" in button_group,
     reason="Generic object custom button not supported by SSUI",
 )
-def test_custom_button_expression(appliance, context, objects, button_group, vis_enb_button):
+def test_custom_button_expression_service_obj(
+    appliance, context, objects, button_group, vis_enb_button
+):
     """ Test custom button as per expression enablement/visibility.
 
     Polarion:
@@ -601,7 +607,9 @@ def test_custom_button_dialog_service_archived():
     lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group,
     reason="Generic object custom button not supported by SSUI",
 )
-def test_custom_button_dialog(appliance, dialog, request, context, objects, button_group):
+def test_custom_button_dialog_service_obj(
+    appliance, dialog, request, context, objects, button_group
+):
     """ Test custom button with dialog and InspectMe method
 
     Polarion:
