@@ -305,3 +305,26 @@ def test_error_message_azure():
         startsin: 5.8
     """
     pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_stack_template_azure():
+    """
+    There was a new field added to Orchestration stacks to show which
+    image was used to create it.  You need to verify the end points of
+    this image are displayed correctly.
+    This just needs to be checked every once in a while.  Perhaps once per
+    build.  Should be able to automate it by comparing the yaml entries to
+    the value.
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: Cloud
+        caseimportance: low
+        initialEstimate: 1/8h
+        setup: Create a stack based on a cloud image.  Go to stack details and check
+               the
+        upstream: yes
+    """
+    pass
