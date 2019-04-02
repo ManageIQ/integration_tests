@@ -80,7 +80,9 @@ def test_vmware_guests_linked_clone():
     Every VM discovered from VMware provider has "linked_clone": true.
     However, none of the VMs is sharing a disk or has a snapshot.
     Ideally they shouldn't mark them all as linked_clone=t
-    https://bugzilla.redhat.com/show_bug.cgi?id=1588908
+
+    Bugzilla:
+        * 1588908
 
     Polarion:
         assignee: kkulkarn
@@ -111,7 +113,9 @@ def test_vmware_reconfigure_vm_controller_type():
     Edit any VM which is provisioned for vSphere and select "Reconfigure this VM" option.
     In "Controller Type" column we do not see the Controller Type listed.
     Controller Type should be listed.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1650441
+
+    Bugzilla:
+        * 1650441
 
     Polarion:
         assignee: kkulkarn
@@ -158,5 +162,119 @@ def test_vmware_vds_ui_tagging():
             2.Properties page for the host opens.
             3.If DSwitch exists it will be displayed on this page.
             4.You can assign tags to DSwitch.
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_vmware_inaccessible_datastore():
+    """
+    VMware sometimes has datastores that are inaccessible, and CloudForms should indicate that.
+
+    Bugzilla:
+        * 1684656
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testtype: integration
+        testSteps:
+            1.Integrate VMware provider in CFME
+            2.Compute > Infrastructure > Datastores
+            3.Check if any of the datastores marked inaccessible and compare it with VMware UI.
+        expectedResults:
+            1.
+            2.Datastores page opens showing all the datastores known to CFME
+            3.All datastores that are inaccessible in vSphere should be marked such in CFME UI too.
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_vmware_cdrom_dropdown_not_blank():
+    """
+    Test CD/DVD Drives dropdown lists ISO files, dropdown is not blank
+
+    Bugzilla:
+        * 1689369
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testtype: integration
+        testSteps:
+            1.Integrate VMware provider in CFME
+            2.Compute > Infrastructure > Datastores
+            3.Run SSA on datastore which contains ISO files
+            4.Navigate to Compute>Infrastructure>Virtual Machines, select any virtual machine
+            5.Reconfigure it to have new ISO file attached to it in CD/DVD drive
+        expectedResults:
+            1.
+            2.Datastores page opens showing all the datastores known to CFME
+            3.SSA runs successfully, and you can see files in datastore
+            4.Virtual machine is selected
+            5.Dropdown of ISO files is not empty for CD/DVD Drive
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_vmware_inaccessible_datastore_vm_provisioning():
+    """
+    VMware sometimes has datastores that are inaccessible, and CloudForms should not pick this
+    during provisioning when using "Choose Automatically" as an option under environment tab.
+
+    Bugzilla:
+        * 1694137
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/4h
+        testtype: integration
+        testSteps:
+            1.Integrate VMware provider in CFME
+            2.Compute > Infrastructure > Virtual Machines > Templates
+            3.Provision a VM from template, make sure to have at least 1 Datastore on VMware that is
+              inaccssible & while provisioning use "Choose Automatically" option in Environment Tab.
+        expectedResults:
+            1.
+            2.See all available templates
+            3.CFME should provision VM on datastore other than the one that is inaccessible.
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_vmware_provisioned_vm_host_relationship():
+    """
+    VMware VMs provisioned through cloudforms should have host relationship.
+
+    Bugzilla:
+        * 1657341
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/2h
+        testtype: integration
+        testSteps:
+            1.Integrate VMware provider in CFME
+            2.Compute > Infrastructure > Virtual Machines > Templates
+            3.Provision a VM from template
+        expectedResults:
+            1.
+            2.See all available templates
+            3.CFME Provisioned VM should have host relationship.
     """
     pass
