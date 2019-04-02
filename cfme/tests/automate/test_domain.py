@@ -310,6 +310,7 @@ def test_object_attribute_type_in_automate_schedule(appliance):
     view.form.action_type.select_by_visible_text('Automation Tasks')
     all_options = view.form.object_type.all_options
     if len(all_options) < 2:
+        # There should be more than one options available because <choose> is default option
         raise OptionNotAvailable("Options not available")
     for options in all_options:
         view.form.object_type.select_by_visible_text(options.text)
