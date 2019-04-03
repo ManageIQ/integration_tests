@@ -18,7 +18,7 @@ pytestmark = [
         required_flags=["v2v"],
         scope="module",
     ),
-    # pytest.mark.usefixtures("v2v_provider_setup")
+    pytest.mark.usefixtures("v2v_provider_setup")
 ]
 
 
