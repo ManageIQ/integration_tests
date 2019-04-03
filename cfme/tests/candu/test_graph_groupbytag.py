@@ -8,7 +8,6 @@ from cfme import test_requirements
 from cfme.common.candu_views import UtilizationZoomView
 from cfme.tests.candu import compare_data_with_unit
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.log import logger
 
 
 pytestmark = [
@@ -78,8 +77,8 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, host):
     # Check graph displayed or not
     try:
         graph = getattr(view.interval_type, graph_type)
-    except AttributeError as e:
-        logger.error(e)
+    except AttributeError:
+        raise Exception('Graph {} not found'.format(graph_type))
     assert graph.is_displayed
 
     graph.zoom_in()
