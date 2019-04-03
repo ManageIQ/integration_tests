@@ -67,33 +67,6 @@ def test_customize_request_security_group():
     pass
 
 
-@pytest.mark.tier(3)
-def test_automate_git_import_multiple_domains():
-    """
-    Import of multiple domains from a single git repo is not allowed
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/12h
-        caseimportance: medium
-        caseposneg: negative
-        testtype: functional
-        startsin: 5.10
-        casecomponent: Automate
-        tags: automate
-        title: Test automate git import multiple domains
-        testSteps:
-            1. Enable server role: git Repositories Owner
-            2. Navigate to Automation > Automate > Import/Export
-            3. Import multiple domains from a single git repository
-        expectedResults:
-            1.
-            2.
-            3. Import of multiple domains from a single git repo is not allowed
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_automate_generic_object_service_associations():
     """

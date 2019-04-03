@@ -78,3 +78,35 @@ def test_automate_git_domain_displayed_in_service(appliance, imported_domain, br
     view.modal.apply.click()
     assert view.provisioning_entry_point.value == ("/{}/Service/Provisioning/StateMachines/"
         "ServiceProvision_Template/CatalogItemInitialization".format(imported_domain.name))
+
+
+@pytest.mark.tier(3)
+def test_automate_git_import_multiple_domains(request, appliance):
+    """
+    Importing of multiple domains from a single git repository is not allowed.
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/12h
+        caseimportance: medium
+        caseposneg: negative
+        testtype: functional
+        startsin: 5.10
+        casecomponent: Automate
+        tags: automate
+        title: Test automate git import multiple domains
+        testSteps:
+            1. Enable server role: git Repositories Owner
+            2. Navigate to Automation > Automate > Import/Export
+            3. Import multiple domains from a single git repository
+        expectedResults:
+            1.
+            2.
+            3. Import of multiple domains from a single git repo is not allowed
+    """
+    url = "https://github.com/ganeshhubale/ManageIQ-automate-git"
+    repo = AutomateGitRepository(url=url, verify_ssl=True, appliance=appliance)
+    with pytest.raises(ValueError):
+        domain = repo.import_domain_from(branch="origin/master")
+        request.addfinalizer(domain.delete_if_exists)
+        assert not domain.exists
