@@ -3,9 +3,13 @@
 
 # add what breaks on RTD
 
-wrapanapi~=3.0.21
+wrapanapi~=3.1.0
 
 --no-binary pycurl
 pycurl
 
+ansible
+cfme-testcases
+distro
+flake8
 virtualenv

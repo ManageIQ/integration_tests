@@ -35,11 +35,9 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
         self.mgmt.import_glance_image(
             source_storage_domain_name=self.glance_key,
             target_cluster_name=self.provider_data.template_upload.cluster,
-            # This part depends on wrapanapi PR + release
-            # https://github.com/ManageIQ/wrapanapi/pull/264
             source_template_name=self.image_name,
             target_template_name=self.temp_template_name,
-            target_storage_domain_name=self.provider_data.template_upload.sdomain)
+            target_storage_domain_name=self.provider_data.template_upload.storage_domain)
         mgmt_network = self.provider_data.template_upload.get('management_network')
         rv_tmpl = self.mgmt.get_template(self.temp_template_name)
         if mgmt_network:
@@ -59,6 +57,7 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
         self.mgmt.get_template(self.temp_template_name).deploy(
             vm_name=self.temp_vm_name,
             cluster=self.provider_data.template_upload.cluster,
+            storage_domain=self.provider_data.template_upload.storage_domain,
             cpu=stream_hardware.cores,
             sockets=stream_hardware.sockets,
             ram=int(stream_hardware.memory) * 2**30)  # GB -> B
@@ -78,7 +77,7 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
                         self.provider_key, self.temp_vm_name)
             return
         rhevm_specs = cfme_data.template_upload.template_upload_rhevm
-        disk_kwargs = dict(storage_domain=self.provider_data.template_upload.sdomain,
+        disk_kwargs = dict(storage_domain=self.provider_data.template_upload.storage_domain,
                            size=rhevm_specs.disk_size,
                            interface=rhevm_specs.disk_interface,
                            format=rhevm_specs.disk_format)
@@ -96,8 +95,10 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
         """
         self.mgmt.get_vm(self.temp_vm_name).mark_as_template(
             template_name=self.template_name,
-            cluster=self.provider_data.template_upload.cluster,
-            delete=False)  # leave vm in place in case it fails, for debug
+            cluster_name=self.provider_data.template_upload.cluster,
+            storage_domain_name=self.provider_data.template_upload.get('template_domain', None),
+            delete=False  # leave vm in place in case it fails, for debug
+        )
         # check, if template is really there
         if not self.mgmt.does_template_exist(self.template_name):
             raise TemplateUploadException('%s templatizing %s to %s FAILED',
@@ -113,7 +114,7 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
         if self.mgmt.does_vm_exist(self.temp_vm_name):
             self.mgmt.get_vm(self.temp_vm_name).cleanup()
 
-        logger.info('%s Deleting temp_template "%s"on sdomain',
+        logger.info('%s Deleting temp_template "%s"on storage domain',
                     self.provider_key, self.temp_template_name)
         if self.mgmt.does_template_exist(self.temp_template_name):
             self.mgmt.get_template(self.temp_template_name).cleanup()

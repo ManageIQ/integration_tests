@@ -177,6 +177,7 @@ layered-yaml-attrdict-config==16.1.0
 lxml==4.2.5
 manageiq-client==0.5.0
 MarkupSafe==1.0
+mccabe==0.6.1
 miq-version==0.1.9
 mistune==0.8.4
 mock==2.0.0
@@ -227,9 +228,11 @@ ptyprocess==0.6.0
 py==1.7.0
 pyasn1==0.4.4
 pyasn1-modules==0.2.2
+pycodestyle==2.4.0
 pycparser==2.19
 pycryptodome==3.7.0
 pycurl==7.43.0.2
+pyflakes==2.0.0
 pygal==2.4.0
 PyGithub==1.43.2
 Pygments==2.2.0
@@ -240,7 +243,7 @@ pyparsing==2.2.2
 pyperclip==1.7.0
 pytesseract==0.2.5
 pytest==3.4.1
-pytest-polarion-collect==0.12
+pytest-polarion-collect==0.13
 python-bugzilla==2.2.0
 python-cinderclient==4.1.0
 python-dateutil==2.7.5
@@ -310,7 +313,7 @@ Werkzeug==0.14.1
 widgetastic.core==0.32.1
 widgetastic.patternfly==0.1.0
 widgetsnbextension==3.4.2
-wrapanapi==3.0.44
+wrapanapi==3.1.0
 wrapt==1.10.11
 xmltodict==0.11.0
 yaycl==0.3.0

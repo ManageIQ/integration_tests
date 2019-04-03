@@ -27,6 +27,7 @@ from miq_version import Version, TemplateName
 from novaclient.exceptions import OverLimit as OSOverLimit
 from paramiko import SSHException
 from urllib2 import urlopen, HTTPError
+from wrapanapi import VmState, Openshift, VMWareSystem
 import socket
 
 from appliances.models import (
@@ -44,7 +45,6 @@ from cfme.utils.timeutil import parsetime
 from cfme.utils.trackerbot import api, depaginate
 from cfme.utils.wait import wait_for
 
-from wrapanapi import VmState, Openshift
 
 LOCK_EXPIRE = 60 * 15  # 15 minutes
 TRACKERBOT_PAGINATE = 100
@@ -759,27 +759,29 @@ def prepare_template_finish(self, template_id):
         if not template.provider.is_working:
             raise RuntimeError('Provider {} is not working.'.format(template.provider))
         template.set_status("Finishing template creation with an api mark_as_template call")
-        # TODO: change after openshift wrapanapi refactor
-        if isinstance(template.provider_api, Openshift):
-            template.provider_api.mark_as_template(template.name, delete_on_error=True)
-        else:
+
+        if isinstance(template.provider_api, VMWareSystem):
             # virtualcenter may want to store templates on different datastore
             # migrate if necessary
-            if template.provider.provider_type == 'virtualcenter':
-                host = (template.provider.provider_data.get('template_upload', {}).get('host') or
-                        template.provider_api.list_host().pop())
-                datastore = template.provider.provider_data.get('template_upload',
-                                                                {}).get('template_datastore')
-                if host is not None and datastore is not None:
-                    template.set_status("Migrating VM before mark_as_template for vmware")
-                    template.vm_mgmt.clone(vm_name=template.name,
-                                       datastore=datastore,
-                                       host=host,
-                                       relocate=True)
-                # we now have a cloned VM with temporary name to mark as the template
-                template.vm_mgmt.mark_as_template(template.name, delete_on_error=True)
-            else:
-                template.vm_mgmt.mark_as_template(template.name, delete_on_error=True)
+            host = (template.provider.provider_data.get('template_upload', {}).get('host') or
+                    template.provider_api.list_host().pop())
+            datastore = template.provider.provider_data.get('template_upload',
+                                                            {}).get('template_datastore')
+            if host is not None and datastore is not None:
+                template.set_status("Migrating VM before mark_as_template for vmware")
+                template.vm_mgmt.clone(
+                    vm_name=template.name,
+                    datastore=datastore,
+                    host=host,
+                    relocate=True
+                )
+        # TODO: change after openshift wrapanapi refactor
+        # mark the template from the vm or system api
+        getattr(
+            template,
+            'provider_api' if isinstance(template.provider_api, Openshift) else 'vm_mgmt'
+        ).mark_as_template(template.name, delete_on_error=True)
+
         with transaction.atomic():
             template = Template.objects.get(id=template_id)
             template.ready = True
