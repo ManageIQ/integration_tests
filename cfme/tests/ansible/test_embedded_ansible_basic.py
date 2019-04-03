@@ -4,21 +4,14 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,
-    pytest.mark.meta(server_roles=["+embedded_ansible"]),
-    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.8",
-                            reason="Ansible was added only in 5.8"),
     pytest.mark.ignore_stream("upstream"),
     test_requirements.ansible,
-    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
-                            reason="5.8 pod appliance doesn't support embedded ansible"),
-    pytest.mark.meta(blockers=[BZ(1640533, forced_streams=["5.10"])])
 ]
 
 private_key = """
@@ -60,31 +53,25 @@ CREDENTIALS = [
             "password": fauxfactory.gen_alpha(),
             "privilage_escalation": "sudo",
             "privilage_escalation_username": fauxfactory.gen_alpha(),
-            "privilage_escalation_password": fauxfactory.gen_alpha()
-        }
+            "privilage_escalation_password": fauxfactory.gen_alpha(),
+        },
     ),
-    (
-        "Scm",
-        {
-            "username": fauxfactory.gen_alpha(),
-            "password": fauxfactory.gen_alpha(),
-        }
-    ),
+    ("Scm", {"username": fauxfactory.gen_alpha(), "password": fauxfactory.gen_alpha()}),
     (
         "Amazon",
         {
             "access_key": fauxfactory.gen_alpha(),
             "secret_key": fauxfactory.gen_alpha(),
-            "sts_token": fauxfactory.gen_alpha()
-        }
+            "sts_token": fauxfactory.gen_alpha(),
+        },
     ),
     (
         "VMware",
         {
             "username": fauxfactory.gen_alpha(),
             "password": fauxfactory.gen_alpha(),
-            "vcenter_host": fauxfactory.gen_alpha()
-        }
+            "vcenter_host": fauxfactory.gen_alpha(),
+        },
     ),
     (
         "OpenStack",
@@ -93,16 +80,16 @@ CREDENTIALS = [
             "password": fauxfactory.gen_alpha(),
             "authentication_url": fauxfactory.gen_alpha(),
             "project": fauxfactory.gen_alpha(),
-            "domain": fauxfactory.gen_alpha()
-        }
+            "domain": fauxfactory.gen_alpha(),
+        },
     ),
     (
         "Red Hat Virtualization",
         {
             "username": fauxfactory.gen_alpha(),
             "password": fauxfactory.gen_alpha(),
-            "host": fauxfactory.gen_alpha()
-        }
+            "host": fauxfactory.gen_alpha(),
+        },
     ),
     (
         "Google Compute Engine",
@@ -110,14 +97,9 @@ CREDENTIALS = [
             "service_account": fauxfactory.gen_alpha(),
             "priv_key": private_key,
             "project": fauxfactory.gen_alpha(),
-        }
-    )
+        },
+    ),
 ]
-
-
-@pytest.fixture(scope="module")
-def wait_for_ansible(appliance):
-    appliance.wait_for_embedded_ansible()
 
 
 @pytest.fixture(scope="module")
@@ -128,29 +110,6 @@ def action_collection(appliance):
 @pytest.fixture(scope="module")
 def credentials_collection(appliance):
     return appliance.collections.ansible_credentials
-
-
-@pytest.fixture(scope='module')
-def ansible_repository(appliance):
-    repositories = appliance.collections.ansible_repositories
-    repository = repositories.create(
-        name=fauxfactory.gen_alpha(),
-        url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
-        description=fauxfactory.gen_alpha())
-    view = navigate_to(repository, "Details")
-    if appliance.version < "5.9":
-        refresh = view.browser.refresh
-    else:
-        refresh = view.toolbar.refresh.click
-    wait_for(
-        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
-        timeout=60,
-        fail_func=refresh
-    )
-    yield repository
-
-    if repository.exists:
-        repository.delete()
 
 
 @pytest.fixture(scope="module")
@@ -164,8 +123,8 @@ def catalog_item(appliance, ansible_repository):
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
             "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric()
-        }
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
+        },
     )
     yield cat_item
 
@@ -178,9 +137,10 @@ def catalog_item(appliance, ansible_repository):
 def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: sbulage
         casecomponent: Ansible
         initialEstimate: 1/12h
+        tags: ansible_embed
     """
     updated_description = "edited_{}".format(fauxfactory.gen_alpha())
     with update(ansible_repository):
@@ -200,9 +160,10 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
         credentials, appliance):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: sbulage
         casecomponent: Ansible
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     credential = credentials_collection.create(
         "{}_credential_{}".format(credential_type, fauxfactory.gen_alpha()),
@@ -227,7 +188,7 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
             lambda: cr_opts.get_text_of(field_name) == updated_value,
             fail_func=view.browser.selenium.refresh,
             delay=10,
-            timeout=60
+            timeout=60,
         )
 
     if credential.credential_type == "Amazon":
@@ -244,9 +205,10 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
 def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: sbulage
         casecomponent: Ansible
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     "Tests if playbooks list changed after playbooks repo removing"
     playbooks = []
@@ -267,7 +229,9 @@ def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
 
 
 @pytest.mark.tier(2)
-def test_control_crud_ansible_playbook_action(request, catalog_item, action_collection):
+def test_control_crud_ansible_playbook_action(
+    request, appliance, catalog_item, action_collection
+):
     """
     Polarion:
         assignee: jdupuy
@@ -278,16 +242,20 @@ def test_control_crud_ansible_playbook_action(request, catalog_item, action_coll
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
         action_values={
-            "run_ansible_playbook":
-            {
+            "run_ansible_playbook": {
                 "playbook_catalog_item": catalog_item.name,
-                "inventory": {
-                    "target_machine": True
-                }
+                "inventory": {"target_machine": True},
             }
-        }
+        },
     )
-    request.addfinalizer(action.delete_if_exists)
+
+    @request.addfinalizer
+    def _finalizer():
+        if action.exists:
+            appliance.rest_api.collections.actions.get(
+                description=action.description
+            ).action.delete()
+
     with update(action):
         ipaddr = fauxfactory.gen_ipaddr()
         new_descr = "edited_{}".format(fauxfactory.gen_alphanumeric())
@@ -296,17 +264,19 @@ def test_control_crud_ansible_playbook_action(request, catalog_item, action_coll
             "inventory": {
                 "specific_hosts": True,
                 "hosts": ipaddr
-            }
+            },
         }
     view = navigate_to(action, "Edit")
     assert view.description.value == new_descr
     assert view.run_ansible_playbook.inventory.hosts.value == ipaddr
+    view.cancel_button.click()
     action.delete()
 
 
 @pytest.mark.tier(2)
-def test_control_add_ansible_playbook_action_invalid_address(request, catalog_item,
-        action_collection):
+def test_control_add_ansible_playbook_action_invalid_address(
+    request, appliance, catalog_item, action_collection
+):
     """
     Polarion:
         assignee: jdupuy
@@ -317,20 +287,27 @@ def test_control_add_ansible_playbook_action_invalid_address(request, catalog_it
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
         action_values={
-            "run_ansible_playbook":
-            {
+            "run_ansible_playbook": {
                 "playbook_catalog_item": catalog_item.name,
                 "inventory": {
                     "specific_hosts": True,
-                    "hosts": "invalid_address_!@#$%^&*"
-                }
+                    "hosts": "invalid_address_!@#$%^&*",
+                },
             }
-        }
+        },
     )
-    request.addfinalizer(action.delete_if_exists)
+
+    @request.addfinalizer
+    def _finalizer():
+        if action.exists:
+            appliance.rest_api.collections.actions.get(
+                description=action.description
+            ).action.delete()
+
     assert action.exists
     view = navigate_to(action, "Edit")
     assert view.run_ansible_playbook.inventory.hosts.value == "invalid_address_!@#$%^&*"
+    view.cancel_button.click()
 
 
 @pytest.mark.tier(2)
@@ -342,17 +319,18 @@ def test_embedded_ansible_credential_with_private_key(request, wait_for_ansible,
     actually create new credentials with ssh keys.
 
     Polarion:
-        assignee: dmisharo
+        assignee: sbulage
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     credential = credentials_collection.create(
         fauxfactory.gen_alpha(),
         "Machine",
         username=fauxfactory.gen_alpha(),
         password=fauxfactory.gen_alpha(),
-        private_key=private_key
+        private_key=private_key,
     )
     request.addfinalizer(credential.delete)
     assert credential.exists
