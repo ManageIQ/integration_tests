@@ -4,6 +4,7 @@ import pytest
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
+from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -16,6 +17,7 @@ from cfme.utils.update import update
 
 
 pytestmark = [
+    test_requirements.quota,
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 ]
@@ -34,73 +36,53 @@ def admin_email(appliance):
 
 
 @pytest.fixture
-def vm_name():
-    return random_vm_name(context='quota')
-
-
-@pytest.fixture
-def template_name(provider):
-    if provider.one_of(RHEVMProvider):
-        return provider.data.templates.get('full_template')['name']
-    elif provider.one_of(VMwareProvider):
-        return provider.data.templates.get('big_template')['name']
-
-
-@pytest.fixture
-def prov_data(provider, vm_name, template_name):
+def prov_data(provider):
     if provider.one_of(RHEVMProvider):
         return {
-            "catalog": {'vm_name': vm_name, 'catalog_name': {'name': template_name}},
-            "environment": {'automatic_placement': True},
-            "network": {'vlan': partial_match('ovirtmgmt')},
+            "catalog": {
+                "vm_name": random_vm_name(context="quota"),
+                "catalog_name": {"name": provider.data.templates.get("full_template")["name"]},
+            },
+            "environment": {"automatic_placement": True},
+            "network": {"vlan": partial_match("ovirtmgmt")},
         }
     else:
         return {
-            "catalog": {'vm_name': vm_name, 'catalog_name': {'name': template_name}},
-            "environment": {'automatic_placement': True},
+            "catalog": {
+                "vm_name": random_vm_name(context="quota"),
+                "catalog_name": {"name": provider.data.templates.get('big_template')['name']},
+            },
+            "environment": {"automatic_placement": True},
         }
-
-
-@pytest.fixture(scope='module')
-def domain(appliance):
-    domain = appliance.collections.domains.create('test_{}'.format(fauxfactory.gen_alphanumeric()),
-                                                  'description_{}'.format(
-                                                      fauxfactory.gen_alphanumeric()),
-                                                  enabled=True)
-    yield domain
-    if domain.exists:
-        domain.delete()
 
 
 @pytest.fixture
 def catalog_item(appliance, provider, dialog, catalog, prov_data):
-
-    collection = appliance.collections.catalog_items
-    catalog_item = collection.create(provider.catalog_item_type,
-                                     name='test_{}'.format(fauxfactory.gen_alphanumeric()),
-                                     description='test catalog',
-                                     display_in=True,
-                                     catalog=catalog,
-                                     dialog=dialog,
-                                     prov_data=prov_data)
+    catalog_item = appliance.collections.catalog_items.create(
+        provider.catalog_item_type,
+        name="test_{}".format(fauxfactory.gen_alphanumeric()),
+        description="test catalog",
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog,
+        prov_data=prov_data,
+    )
     yield catalog_item
-    if catalog_item.exists:
-        catalog_item.delete()
+    catalog_item.delete_if_exists()
 
 
 @pytest.fixture
 def catalog_bundle(appliance, dialog, catalog, catalog_item):
-    collection = appliance.collections.catalog_bundles
-    catalog_bundle = collection.create(name='test_{}'.format(fauxfactory.gen_alphanumeric()),
-                                       catalog_items=[catalog_item.name],
-                                       description='test catalog bundle',
-                                       display_in=True,
-                                       catalog=catalog,
-                                       dialog=dialog)
-
+    catalog_bundle = appliance.collections.catalog_bundles.create(
+        name="test_{}".format(fauxfactory.gen_alphanumeric()),
+        catalog_items=[catalog_item.name],
+        description="test catalog bundle",
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog,
+    )
     yield catalog_bundle
-    if catalog_bundle.exists:
-        catalog_bundle.delete()
+    catalog_bundle.delete_if_exists()
 
 
 @pytest.fixture(scope='module')
@@ -153,8 +135,6 @@ def set_entity_quota_tag(request, entities, appliance):
         display_name=value)
     entities.add_tag(tag)
     yield
-    # will refresh page as navigation to configuration is blocked if alert are on requests page
-    appliance.server.browser.refresh()
     entities.remove_tag(tag)
 
 
@@ -169,11 +149,10 @@ def set_entity_quota_tag(request, entities, appliance):
     indirect=['set_entity_quota_tag'],
     ids=['max_memory', 'max_storage', 'max_cpu']
 )
-def test_quota_tagging_infra_via_lifecycle(request, appliance, provider,
-                                           set_entity_quota_tag, custom_prov_data,
-                                           vm_name, template_name, prov_data):
+def test_quota_tagging_infra_via_lifecycle(
+    request, appliance, provider, set_entity_quota_tag, custom_prov_data, prov_data
+):
     """
-
     Polarion:
         assignee: ghubale
         casecomponent: Quota
@@ -182,22 +161,30 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider,
         tags: quota
     """
     recursive_update(prov_data, custom_prov_data)
-    do_vm_provisioning(appliance, template_name=template_name, provider=provider, vm_name=vm_name,
-                       provisioning_data=prov_data, wait=False, request=None)
+    do_vm_provisioning(
+        appliance,
+        template_name=prov_data["catalog"]["catalog_name"]["name"],
+        provider=provider,
+        vm_name=prov_data["catalog"]["vm_name"],
+        provisioning_data=prov_data,
+        wait=False,
+        request=None,
+    )
 
     # nav to requests page to check quota validation
-    request_description = 'Provision from [{template}] to [{vm}]'.format(template=template_name,
-                                                                         vm=vm_name)
+    request_description = "Provision from [{template}] to [{vm}]".format(
+        template=prov_data["catalog"]["catalog_name"]["name"], vm=prov_data["catalog"]["vm_name"]
+    )
     provision_request = appliance.collections.requests.instantiate(request_description)
-    provision_request.wait_for_request(method='ui')
+    provision_request.wait_for_request(method="ui")
     request.addfinalizer(provision_request.remove_request)
     assert provision_request.row.reason.text == "Quota Exceeded"
 
 
-@pytest.mark.rhv2
-@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 # Here set_entity_quota_tag is used for setting the tag value.
 # Here custom_prov_data is used to provide the value fo the catalog item to be created.
+@pytest.mark.rhv2
+@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 @pytest.mark.parametrize(
     ['set_entity_quota_tag', 'custom_prov_data'],
     [
@@ -247,10 +234,17 @@ def small_vm(provider, small_template_modscope):
 
 
 @pytest.fixture
-def custom_prov_data(request, prov_data, vm_name, template_name):
+def custom_prov_data(request, provider, prov_data):
     prov_data.update(request.param)
-    prov_data['catalog']['vm_name'] = vm_name
-    prov_data['catalog']['catalog_name'] = {'name': template_name}
+    prov_data["catalog"]["vm_name"] = random_vm_name(context="quota")
+    if provider.one_of(RHEVMProvider):
+        prov_data["catalog"]["catalog_name"] = {
+            "name": provider.data.templates.get("full_template")["name"]
+        }
+    else:
+        prov_data["catalog"]["catalog_name"] = {
+            "name": provider.data.templates.get("big_template")["name"]
+        }
 
 
 @pytest.mark.long_running
@@ -325,14 +319,19 @@ def test_quota_vm_reconfigure(
     ['custom_prov_data'],
     [
         [{'hardware': {'memory': '4096'}}],
-        [{}],
+        [{}],  # This parameterization is for selecting storage while provisioning VM.
+        # But it is not possible to parameterize storage size.
+        # Becuase it is defined in disk formats(Thin, Thick, Default and other types).
+        # Also it varies with providers.
+        # But we don't need to select storage because by default storage is already more than
+        # assigned storage quota which is 2GB maximum.
         [{'hardware': {'vm_num': '21'}}],
         [{'hardware': {'num_sockets': '8'}}]
     ],
     ids=['max_memory', 'max_storage', 'max_vm', 'max_cpu']
 )
 def test_quota_infra(request, appliance, admin_email, entities,
-                     custom_prov_data, prov_data, catalog_item, context, vm_name, template_name):
+                     custom_prov_data, prov_data, catalog_item, context):
     """This test case verifies the quota assigned by automation method for user and group
        is working correctly for the infra providers.
 
@@ -373,14 +372,14 @@ def test_quota_infra(request, appliance, admin_email, entities,
         # Becuase it is defined in disk formats(Thin, Thick, Default and other types).
         # Also it varies with providers.
         # But we don't need to select storage because by default storage is already more than
-        #  assigned storage quota which is 2GB maximum.
+        # assigned storage quota which is 2GB maximum.
         [{'hardware': {'vm_num': '21'}}],
         [{'hardware': {'num_sockets': '8'}}]
     ],
     ids=['max_memory', 'max_storage', 'max_vm', 'max_cpu']
 )
 def test_quota_catalog_bundle_infra(request, appliance, admin_email, entities, custom_prov_data,
-                                    prov_data, catalog_bundle, context, vm_name, template_name):
+                                    prov_data, catalog_bundle, context):
     """This test case verifies the quota assigned by automation method for user and group
        is working correctly for the infra providers by ordering catalog bundle.
 

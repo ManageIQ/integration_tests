@@ -23,8 +23,7 @@ pytestmark = [
 @pytest.fixture
 def admin_email(appliance):
     """Required for user quota tagging services to work, as it's mandatory for it's functioning."""
-    user = appliance.collections.users
-    admin = user.instantiate(name='Administrator')
+    admin = appliance.collections.users.instantiate(name='Administrator')
     with update(admin):
         admin.email = fauxfactory.gen_email()
     yield
@@ -33,40 +32,21 @@ def admin_email(appliance):
 
 
 @pytest.fixture
-def vm_name():
-    return random_vm_name(context='quota')
-
-
-@pytest.fixture
-def template_name(provisioning):
-    return provisioning["image"]["name"]
-
-
-@pytest.fixture
-def prov_data(provider, vm_name, template_name):
+def prov_data(provider, provisioning):
     if provider.one_of(OpenStackProvider):
         return {
-            "catalog": {'vm_name': vm_name, 'catalog_name': {'name': template_name}},
-            "environment": {'automatic_placement': True},
-            "properties": {'instance_type': partial_match('m1.large')}
+            "catalog": {
+                "vm_name": random_vm_name(context="quota"),
+                "catalog_name": {"name": provisioning["image"]["name"]},
+            },
+            "environment": {"automatic_placement": True},
+            "properties": {"instance_type": partial_match("m1.large")},
         }
-
-
-@pytest.fixture(scope='module')
-def domain(appliance):
-    domain = appliance.collections.domains.create('test_{}'.format(fauxfactory.gen_alphanumeric()),
-                                                  'description_{}'.format(
-                                                      fauxfactory.gen_alphanumeric()),
-                                                  enabled=True)
-    yield domain
-    if domain.exists:
-        domain.delete()
 
 
 @pytest.fixture
 def catalog_item(appliance, provider, dialog, catalog, prov_data):
-    collection = appliance.collections.catalog_items
-    catalog_item = collection.create(
+    catalog_item = appliance.collections.catalog_items.create(
         provider.catalog_item_type,
         name='test_{}'.format(fauxfactory.gen_alphanumeric()),
         description='test catalog',
@@ -75,8 +55,7 @@ def catalog_item(appliance, provider, dialog, catalog, prov_data):
         dialog=dialog,
         prov_data=prov_data)
     yield catalog_item
-    if catalog_item.exists:
-        catalog_item.delete()
+    catalog_item.delete_if_exists()
 
 
 @pytest.fixture(scope='module')
@@ -136,8 +115,6 @@ def set_entity_quota_tag(request, entities, appliance):
         display_name=value)
     entities.add_tag(tag)
     yield
-    # will refresh page as navigation to configuration is blocked if alert are on requests page
-    appliance.server.browser.refresh()
     entities.remove_tag(tag)
 
 
@@ -152,7 +129,7 @@ def set_entity_quota_tag(request, entities, appliance):
     ids=['max_memory', 'max_storage', 'max_cpu']
 )
 def test_quota_tagging_cloud_via_lifecycle(request, appliance, provider, prov_data,
-                                           set_entity_quota_tag, template_name, vm_name):
+                                           set_entity_quota_tag, provisioning):
     """Test Group and User Quota in UI using tagging
 
     Polarion:
@@ -161,15 +138,17 @@ def test_quota_tagging_cloud_via_lifecycle(request, appliance, provider, prov_da
         initialEstimate: 1/6h
         tags: quota
     """
-    recursive_update(prov_data, {
-        'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
-    prov_data.update({'template_name': template_name})
-    appliance.collections.cloud_instances.create(vm_name, provider, prov_data, override=True)
+    recursive_update(prov_data, {"request": {"email": fauxfactory.gen_email()}})
+    prov_data.update({"template_name": provisioning["image"]["name"]})
+    appliance.collections.cloud_instances.create(
+        prov_data["catalog"]["vm_name"], provider, prov_data, override=True
+    )
     # nav to requests page to check quota validation
-    request_description = 'Provision from [{template}] to [{vm}]'.format(template=template_name,
-                                                                         vm=vm_name)
+    request_description = "Provision from [{template}] to [{vm}]".format(
+        template=prov_data["template_name"], vm=prov_data["catalog"]["vm_name"]
+    )
     provision_request = appliance.collections.requests.instantiate(request_description)
-    provision_request.wait_for_request(method='ui')
+    provision_request.wait_for_request(method="ui")
     request.addfinalizer(provision_request.remove_request)
     assert provision_request.row.reason.text == "Quota Exceeded"
 
@@ -209,7 +188,7 @@ def test_quota_tagging_cloud_via_services(appliance, request, context, admin_ema
 
 
 def test_cloud_quota_by_lifecycle(request, appliance, provider, set_entity_quota_source_change,
-                                  prov_data, vm_name, template_name):
+                                  prov_data, provisioning):
     """Testing cloud quota for user and group by provisioning instance via lifecycle
 
     Polarion:
@@ -226,15 +205,17 @@ def test_cloud_quota_by_lifecycle(request, appliance, provider, set_entity_quota
             5. Make sure that provisioned 'template' is having more than assigned quota
             6. Check whether instance provision 'Denied' with reason 'Quota Exceeded'
     """
-    recursive_update(prov_data, {
-        'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
-    prov_data.update({'template_name': template_name})
-    appliance.collections.cloud_instances.create(vm_name, provider, prov_data, override=True)
+    recursive_update(prov_data, {"request": {"email": fauxfactory.gen_email()}})
+    prov_data.update({"template_name": provisioning["image"]["name"]})
+    appliance.collections.cloud_instances.create(
+        prov_data["catalog"]["vm_name"], provider, prov_data, override=True
+    )
     # nav to requests page to check quota validation
-    request_description = 'Provision from [{template}] to [{vm}]'.format(template=template_name,
-                                                                         vm=vm_name)
+    request_description = "Provision from [{template}] to [{vm}]".format(
+        template=prov_data["template_name"], vm=prov_data["catalog"]["vm_name"]
+    )
     provision_request = appliance.collections.requests.instantiate(request_description)
-    provision_request.wait_for_request(method='ui')
+    provision_request.wait_for_request(method="ui")
     request.addfinalizer(provision_request.remove_request)
     assert provision_request.row.reason.text == "Quota Exceeded"
 
