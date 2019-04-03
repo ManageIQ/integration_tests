@@ -127,9 +127,12 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
             self.add_glance_to_provider()
             self.import_template_from_glance()
             self.deploy_vm_from_template()
+            if self.stream == 'upstream':
+                self.manageiq_cleanup()
             self.add_disk_to_vm()
             self.templatize_vm()
             return True
         except Exception:
-            logger.exception('template creation failed')
+            logger.exception('template creation failed for provider {}'.format(
+                self.provider_data.name))
             return False

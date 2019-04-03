@@ -212,9 +212,13 @@ def main(**kwargs):
 
         deploy_args['flavor_name'] = flavor
 
-        if 'network' in provider_dict:
-            # support rhos4 network names
-            deploy_args['network_name'] = provider_dict['network']
+        network_name = (kwargs.get('network_name') or
+                        provider_dict.get('sprout', {}).get('network_name'))
+
+        logger.info('Selected Network: %s', network_name)
+
+        if network_name is not None:
+            deploy_args['network_name'] = network_name
 
         provider_pools = [p.name for p in provider.api.floating_ip_pools.list()]
         try:
@@ -224,6 +228,7 @@ def main(**kwargs):
             raise Exception('No floating IP pools available on provider')
 
         if floating_ip_pool is not None:
+            logger.info('Selected floating ip pool: %s', floating_ip_pool)
             deploy_args['floating_ip_pool'] = floating_ip_pool
     elif provider_type == "virtualcenter":
         if "allowed_datastores" in provider_dict:

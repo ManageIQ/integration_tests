@@ -23,9 +23,11 @@ from cfme.utils import trackerbot
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.net import resolve_hostname
 from cfme.utils.path import project_path
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import wait_for
 
 NUM_OF_TRIES = 3
 lock = Lock()
@@ -185,11 +187,35 @@ class ProviderTemplateUpload(object):
                 'password': credentials[cred_key]['password']}
 
     @cached_property
+    def raw_vm_ssh_client_args(self):
+        """ Returns credentials + hostname for ssh client auth for a temp_vm."""
+
+        def check_ip():
+            vm_name = (self.temp_vm_name if self.provider_data.type == 'rhevm' else
+                       self.template_name)
+            vm = self.mgmt.get_vm(vm_name)
+            ip = vm.ip
+            # get_ip_address might return None
+            return ip if ip and resolve_hostname(ip) else False
+
+        vm_ip, tc = wait_for(check_ip, delay=5, num_sec=600,
+                             message="waiting for {} to obtain DHCP"
+                             .format(self.temp_vm_name))
+
+        return {'hostname': vm_ip,
+                'username': credentials['ssh']['username'],
+                'password': credentials['ssh']['password']}
+
+    @cached_property
     def tool_client_args(self):
         tool_data = self.from_template_upload('tool_client')
         return {'hostname': tool_data.hostname,
             'username': credentials[tool_data['credentials']].username,
             'password': credentials[tool_data['credentials']].password}
+
+    @cached_property
+    def _vm_mgmt(self):
+        return self.mgmt.get_vm(self.template_name)
 
     @staticmethod
     def from_template_upload(key):
@@ -309,11 +335,11 @@ class ProviderTemplateUpload(object):
         client = Client(version='2', **client_kwargs)
         if self.image_name in [i.name for i in client.images.list()]:
             logger.info('Image "%s" already exists on %s, skipping glance_upload',
-                        self.image_name, self.provider_key)
+                        self.image_name, self.glance_key)
             return True
 
         glance_image = client.images.create(
-            name=self.template_name if self.provider_type == 'openstack' else self.image_name,
+            name=self.image_name,
             container_format='bare',
             disk_format='qcow2',
             visibility='public')
@@ -325,6 +351,58 @@ class ProviderTemplateUpload(object):
                 client.images.upload(glance_image.id, open(self.local_file_path, 'rb'))
             else:
                 return False
+        return True
+
+    @log_wrap('clean out default setup of a ManageIQ appliance')
+    def manageiq_cleanup(self):
+        """Clean out the default setup of a ManageIQ appliance
+            Based on:
+                https://gist.github.com/carbonin/a25b84efca2e6b3c3f91b673821a22c8
+        """
+
+        def check_appliance_init(client_args):
+            app_init_complete_check = ['Active: inactive (dead)', 'Loaded: loaded',
+                                       'Started Initialize Appliance Database']
+            try:
+                out = self.execute_ssh_command('systemctl status appliance-initialize',
+                                               client_args=client_args)
+                return True if all(
+                    check in out.output for check in app_init_complete_check) else False
+            except Exception:
+                # Have seen instances where IP is resolvable but SSH connect failed.
+                logger.info('SSH connection failed, trying again')
+                return False
+
+        upstream_cleanup = [
+            "/var/www/miq/vmdb/REGION",
+            "/var/www/miq/vmdb/GUID",
+            "/var/www/miq/vmdb/certs/*",
+            "/var/www/miq/vmdb/config/database.yml",
+            "/var/lib/pgsql/data/*"
+        ]
+
+        upstream_services = [
+            "systemctl stop evmserverd",
+            "systemctl disable evmserverd",
+            "systemctl stop postgresql.service",
+            "systemctl disable postgresql.service",
+            "systemctl disable appliance-initialize"
+        ]
+        # Get SSH Client args
+        client_args = self.raw_vm_ssh_client_args
+        # Check to make sure appliance-initialization has run
+        wait_for(func=check_appliance_init,
+                 func_args=[client_args],
+                 delay=5,
+                 timeout=300,
+                 message='Waiting for appliance-initialization to complete')
+        for service in upstream_services:
+            self.execute_ssh_command('{}'.format(service), client_args=client_args)
+        for cleanup in upstream_cleanup:
+            self.execute_ssh_command('rm -rf {}'.format(cleanup), client_args=client_args)
+
+        logger.info('Finished cleaning out the default setup of a ManageIQ appliance')
+
         return True
 
     @log_wrap("template upload script")

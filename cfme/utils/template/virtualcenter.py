@@ -67,15 +67,22 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
             provision_type='thin')
         return result
 
-    @log_wrap("templatize VM")
-    def templatize_vm(self):
-        # move it to other datastore
+    @log_wrap("deploy VM")
+    def deploy_vm(self):
+        # Move the VM to the template datastore and set the correct name
         host = self.template_upload_data.get('host') or self.mgmt.list_host().pop()
         self._temp_vm_mgmt.clone(vm_name=self.template_name,
                                  datastore=self._picked_datastore,
                                  host=host,
                                  relocate=True)
-        assert self._vm_mgmt.exists
+        # For Upstream builds, the VM needs to be on to perform cleanup from
+        # appliance-initialization
+        if self.stream == 'upstream' and self._vm_mgmt.exists:
+            self._temp_vm_mgmt.start()
+        return self._vm_mgmt.exists
+
+    @log_wrap("templatize VM")
+    def templatize_vm(self):
         try:
             self._vm_mgmt.mark_as_template()
             return True
@@ -84,17 +91,19 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
 
     def run(self):
         template_upload_vsphere = self.from_template_upload('template_upload_vsphere')
-
-        if template_upload_vsphere.get('upload'):
-            if not self.upload_template():
-                return False
-
-        if template_upload_vsphere.get('disk'):
-            if not self.add_disk_to_vm():
-                return False
-
-        if template_upload_vsphere.get('template'):
-            if not self.templatize_vm():
-                return False
-
-        return True
+        try:
+            if template_upload_vsphere.get('upload'):
+                self.upload_template()
+            if template_upload_vsphere.get('disk'):
+                self.add_disk_to_vm()
+            if template_upload_vsphere.get('template'):
+                self.deploy_vm()
+                # Cleanup from appliance-initialization if upstream
+                if self.stream == 'upstream':
+                    self.manageiq_cleanup()
+                self.templatize_vm()
+            return True
+        except Exception:
+            logger.exception('template creation failed for provider {}'.format(
+                self.provider_data.name))
+            return False
