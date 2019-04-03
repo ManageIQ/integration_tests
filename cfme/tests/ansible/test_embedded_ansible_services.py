@@ -320,6 +320,55 @@ def test_service_ansible_playbook_confirm(appliance, soft_assert):
     soft_assert(view.retirement.verbosity.selected_option == "0 (Normal)")
 
 
+@pytest.mark.tier(1)
+def test_service_ansible_retirement_remove_resources(request, appliance, ansible_repository):
+    """
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: critical
+        initialEstimate: 1/4h
+        tags: ansible_embed
+        setup:
+            1. Go to User-Dropdown right upper corner --> Configuration
+            2. Under Server roles --> Enable Embedded Ansible role.
+            3. Wait for 15-20mins to start ansible server role.
+        testSteps:
+            1. Open creation screen of Ansible Playbook catalog item.
+            2. Fill required fields.
+            3. Open Retirement tab.
+            4. Fill "Remove resources?" field with "No" value.
+            5. Press "Save" button.
+        expectedResults:
+            1. Catalog should be created without any failure.
+            2. Check required fields with exact details.
+            3. Retirement tab should be open with default items.
+            4. Check "Remove resources?" value updated with value "No".
+            5. "Remove resources" should have correct value.
+    """
+    cat_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
+        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(),
+        provisioning={
+            "repository": ansible_repository.name,
+            "playbook": "dump_all_variables.yml",
+            "machine_credential": "CFME Default Credential",
+            "create_new": True,
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
+        },
+        retirement={"remove_resources": "No"},
+    )
+
+    request.addfinalizer(cat_item.delete_if_exists)
+
+    view = navigate_to(cat_item, "Details")
+    assert view.entities.retirement.info.get_text_of("Remove Resources") == "No"
+
+    cat_item.delete()
+    assert not cat_item.exists
+
+
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda host_type, action:
                          host_type == "blank" and action == "retirement")

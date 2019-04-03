@@ -745,33 +745,6 @@ def test_embed_tower_logs():
 
 
 @pytest.mark.tier(3)
-def test_service_ansible_retirement_remove_resources():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1501143
-    Description of problem:
-    It"s not possible to have "Remove resources?" field with "No" value in
-    Ansible Playbook catalog item
-    Steps to Reproduce:
-    1. Open creation screen of Ansible Playbook catalog item.
-    2. Fill required fields.
-    3. Open Retirement tab.
-    4. Fill "Remove resources?" field with "No" value.
-    5. Press "Save" button.
-    Actual results:
-    In details screen of the catalog item "Remove resources?" has "Yes".
-    Expected results:
-    "Remove resources" should have correct value.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/4h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_service_ansible_playbook_with_already_existing_catalog_item_name():
     """
     https://bugzilla.redhat.com/show_bug.cgi?id=1509809
