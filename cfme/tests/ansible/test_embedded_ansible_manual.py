@@ -359,24 +359,6 @@ def test_embed_tower_repos_available():
     pass
 
 
-@pytest.mark.tier(1)
-def test_embed_tower_add_vmware_credentials():
-    """
-    Allow user/admin to create/import credentials for machines which will
-    be managed (may need to be split into multiple tests to cover
-    -Machine, Network, Amazon Web Services, Rackspace, VMware vCenter, Red
-    Hat Satellite 6, Red Hat CloudForms, Google Compute Engine, Microsoft
-    Azure Classic, Microsoft Azure Resource Manager, OpenStack)
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(3)
 def test_embed_tower_repo_details():
     """
@@ -388,20 +370,6 @@ def test_embed_tower_repo_details():
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_add_gce_credentials():
-    """
-    Add GCE credentials.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/2h
         tags: ansible_embed
     """
     pass
@@ -434,20 +402,6 @@ def test_embed_tower_add_public_repo():
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_add_amazon_credentials():
-    """
-    Add Amazon credentials.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/2h
         tags: ansible_embed
     """
     pass
@@ -582,22 +536,6 @@ def test_embed_tower_add_azure_credentials():
     pass
 
 
-@pytest.mark.tier(3)
-def test_embed_tower_exec_play_against_machine():
-    """
-    User/Admin is able to execute playbook without creating Job Temaplate
-    and can execute it against machine with machine credentials
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_embed_tower_add_network_credentials():
     """
@@ -711,22 +649,6 @@ def test_embed_tower_event_catcher_process():
 
 
 @pytest.mark.tier(1)
-def test_embed_tower_add_repo_invalid_url():
-    """
-    Try to add GIT/HTPPs url which does not exist. User should be notified
-    about invalid URL.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: critical
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_embed_tower_add_machine_credentials_vault():
     """
     Add vault password and test in the playbook that encrypted yml can be
@@ -761,24 +683,6 @@ def test_embed_tower_add_machine_credentials_escalate_perm_sudo():
 
 @pytest.mark.tier(1)
 def test_embed_tower_add_machine_credentials_machine_root_pass():
-    """
-    Allow user/admin to create/import credentials for machines which will
-    be managed (may need to be split into multiple tests to cover
-    -Machine, Network, Amazon Web Services, Rackspace, VMware vCenter, Red
-    Hat Satellite 6, Red Hat CloudForms, Google Compute Engine, Microsoft
-    Azure Classic, Microsoft Azure Resource Manager, OpenStack)
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_add_machine_credentials_machine_ssh_key():
     """
     Allow user/admin to create/import credentials for machines which will
     be managed (may need to be split into multiple tests to cover
