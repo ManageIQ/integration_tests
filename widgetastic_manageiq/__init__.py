@@ -16,6 +16,7 @@ from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.common.keys import Keys
 from wait_for import TimedOutError
 from wait_for import wait_for
 from widgetastic.exceptions import NoSuchElementException
@@ -5317,3 +5318,19 @@ class MultiBoxOrderedSelect(MultiBoxSelect):
                             else:
                                 self.move_down_button.click()
             return True
+
+
+class SearchBox(TextInput):
+    """Overriding fill method of TextInput to send
+       enter after filling """
+
+    def fill(self, value):
+        current_value = self.value
+        if value == current_value:
+            return False
+        # Clear and type everything
+        self.browser.click(self)
+        self.browser.clear(self)
+        self.browser.send_keys(value, self)
+        self.browser.send_keys(Keys.ENTER, self)
+        return True

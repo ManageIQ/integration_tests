@@ -18,7 +18,7 @@ pytestmark = [
         required_flags=["v2v"],
         scope="module",
     ),
-    pytest.mark.usefixtures("v2v_provider_setup")
+    # pytest.mark.usefixtures("v2v_provider_setup")
 ]
 
 
@@ -62,12 +62,12 @@ def test_migration_plan(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping.name,
-        vm_list=mapping_data_vm_obj_single_datastore.vm_list,
-        start_migration=True,
+        vm_list=mapping_data_vm_obj_single_datastore.vm_list
     )
-    assert migration_plan_collection.is_plan_started(migration_plan.name)
-    assert migration_plan.is_plan_in_progress()
+    assert migration_plan.plan_started
+    assert migration_plan.in_progress
+    assert migration_plan.completed
+    assert migration_plan.successful
     # validate MAC address matches between source and target VMs
-    assert migration_plan.is_migration_complete()
     migrated_vm = get_migrated_vm_obj(src_vm_obj, provider)
     assert src_vm_obj.mac_address == migrated_vm.mac_address
