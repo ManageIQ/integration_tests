@@ -118,7 +118,7 @@ pyOpenSSL==18.0.0
 pyparsing==2.2.2
 pytesseract==0.2.5
 pytest==3.4.1
-pytest-polarion-collect==0.12
+pytest-polarion-collect==0.13
 python-bugzilla==2.2.0
 python-dateutil==2.7.5
 python-glanceclient==2.12.1
