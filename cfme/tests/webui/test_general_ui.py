@@ -223,6 +223,30 @@ def test_infrastructure_filter_20k_vms(appliance, create_20k_vms):
     assert items_amount >= 20000, 'Vms count is less than should be filtered'
 
 
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.manual
+@test_requirements.general_ui
+@pytest.mark.tier(1)
+def test_consistent_breadcrumbs():
+    """
+    BreadCrumbs should be consistent across whole CloudForms UI
+    https://bugzilla.redhat.com/show_bug.cgi?id=1678192
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: WebUI
+        caseimportance: high
+        initialEstimate: 1/2h
+        startsin: 5.11
+        testSteps:
+            1. Navigate to all pages in the UI
+        expectedResults:
+            1. BreadCrumbs are displayed on every page and look the same
+
+    """
+    pass
+
+
 @pytest.mark.manual
 @test_requirements.general_ui
 @pytest.mark.tier(1)
