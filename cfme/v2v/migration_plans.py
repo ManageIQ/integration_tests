@@ -397,9 +397,9 @@ class MigrationPlan(BaseEntity):
                             time=plan_time_elapsed
                         )
                         logger.info(
-                            "For plan {plan_name}, is plan in progress: {visibility}, {message}".format(
-                                plan_name=self.name, visibility=is_plan_visible, message=new_msg
-                            )
+                            "For plan {plan_name}, is plan in progress: {visibility}, {message}".
+                            format(plan_name=self.name, visibility=is_plan_visible,
+                                   message=new_msg)
                         )
                     except NoSuchElementException:
                         logger.info("For plan {plan_name} playbook is executing..".format(
@@ -508,8 +508,8 @@ class MigrationPlanCollection(BaseCollection):
         view.advanced.fill({
             'pre_playbook': pre_playbook,
             'post_playbook': post_playbook,
-            'pre_checkbox':pre_checkbox,
-            'post_checkbox':post_checkbox
+            'pre_checkbox': pre_checkbox,
+            'post_checkbox': post_checkbox
         })
         view.schedule.wait_displayed()
         view.schedule.fill(start_migration)
