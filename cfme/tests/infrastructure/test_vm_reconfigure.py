@@ -250,6 +250,7 @@ def test_vm_reconfig_add_remove_hw_hot_vmware(change_type):
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
+@pytest.mark.provider([VMwareProvider], override=True)
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
     'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
@@ -276,6 +277,7 @@ def test_vm_reconfig_resize_disk_cold(disk_type, disk_mode):
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
+@pytest.mark.provider([VMwareProvider], override=True)
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
     'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
@@ -302,6 +304,7 @@ def test_vm_reconfig_resize_disk_hot(disk_type, disk_mode):
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
+@pytest.mark.provider([VMwareProvider], override=True)
 @pytest.mark.parametrize(
     'adapters_type', ['DPortGroup', 'VmNetwork', 'MgmtNetwork', 'VmKernel'])
 def test_vm_reconfig_add_remove_network_adapters(adapters_type):
@@ -325,6 +328,7 @@ def test_vm_reconfig_add_remove_network_adapters(adapters_type):
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
+@pytest.mark.provider([VMwareProvider], override=True)
 def test_reconfigure_vm_vmware_mem_multiple():
     """
     Polarion:
@@ -357,7 +361,7 @@ def test_reconfigure_vm_vmware_mem_multiple():
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-@pytest.mark.ignore_stream('5.9')
+@pytest.mark.provider([VMwareProvider], override=True)
 def test_vm_reconfig_attach_iso_vsphere67_nested():
     """
 
@@ -384,6 +388,7 @@ def test_vm_reconfig_attach_iso_vsphere67_nested():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
+@pytest.mark.provider([VMwareProvider], override=True)
 def test_reconfigure_vm_vmware_sockets_multiple():
     """ Test changing the cpu sockets of multiple vms at the same time.
 
@@ -408,6 +413,7 @@ def test_reconfigure_vm_vmware_sockets_multiple():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
+@pytest.mark.provider([VMwareProvider], override=True)
 def test_reconfigure_vm_vmware_cores_multiple():
     """ Test changing the cpu cores of multiple vms at the same time.
 
@@ -441,6 +447,7 @@ def test_reconfigure_vm_vmware_cores_multiple():
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
+@pytest.mark.provider([VMwareProvider], override=True)
 def test_reconfigure_add_disk_cold():
     """ Test adding 16th disk to test how a new scsi controller is handled.
 
@@ -465,6 +472,7 @@ def test_reconfigure_add_disk_cold():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
+@pytest.mark.provider([VMwareProvider], override=True)
 def test_reconfigure_add_disk_cold_controller_sas():
     """
 
