@@ -122,24 +122,6 @@ def test_catalog_item_crud(appliance, dialog, catalog):
     assert not cat_item.exists
 
 
-def test_add_button_group(catalog_item, appliance):
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        tags: service
-    """
-    button_name = catalog_item.add_button_group()
-    view = appliance.browser.create_view(BaseLoggedInPage)
-    if appliance.version.is_in_series('5.8'):
-        message = 'Buttons Group "{}" was added'.format(button_name)
-    else:
-        message = 'Button Group "{}" was added'.format(button_name)
-    view.flash.assert_success_message(message)
-
-
 def test_add_button(catalog_item, appliance):
     """
     Polarion:
