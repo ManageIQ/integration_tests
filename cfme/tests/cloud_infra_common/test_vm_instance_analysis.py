@@ -33,7 +33,6 @@ from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8152')]),
     test_requirements.smartstate,
 ]
 
@@ -186,6 +185,11 @@ def set_agent_creds(appliance, request, provider):
             }
         }
     }
+    if BZ(1684203, forced_streams=['5.10']).blocks:
+        # there is an issue with AMI which is used by CloudForms by default
+        # this is temporary workaround
+        new_ami = 'RHEL-Atomic_7.6_HVM_GA-20190306-x86_64-0-Access2-GP2'
+        agent_data['ems']['ems_amazon']['agent_coordinator']['agent_ami_name'] = new_ami
     appliance.update_advanced_settings(agent_data)
 
 
@@ -631,7 +635,6 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8157')])
 def test_ssa_vm(ssa_vm, soft_assert, vm_system_type):
     """ Tests SSA can be performed and returns sane results
 
