@@ -1,6 +1,7 @@
 import fauxfactory
 import pytest
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
 from cfme.configure.configuration.region_settings import RedHatUpdates
@@ -72,6 +73,11 @@ details_pages = [
     ('tag', None, 'All', False),
 ]
 
+items_selection_5_10 = ['5 Items', '10 Items', '20 Items', '50 Items', '100 Items', '1000 Items']
+
+items_selection = ['5 Items', '10 Items', '20 Items', '50 Items', '100 Items', '200 Items',
+                   '500 Items', '1000 Items']
+
 
 def check_paginator_for_page(view):
     try:
@@ -129,13 +135,16 @@ def test_paginator_config_pages(appliance, place_info):
                               for set_type in details_pages])
 def test_paginator_details_page(appliance, place_info, schedule):
     """
-        Check paginator is visible for access control pages + schedules
+        Check paginator is visible for access control pages + schedules.
+        If paginator is present, check that all options are present in items per page.
 
     Polarion:
         assignee: anikifor
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
+    Bugzilla:
+        1515952
     """
     place_name, place_class, place_navigation, paginator_expected_result = place_info
     if place_name == 'tag':
@@ -150,6 +159,15 @@ def test_paginator_details_page(appliance, place_info, schedule):
         if place_navigation == 'Details':
             table[0].click()
     assert check_paginator_for_page(view) == paginator_expected_result
+
+    if check_paginator_for_page(view):
+        paginator = view.paginator
+        items_selector = Dropdown(view, '{} Items'.format(paginator.items_per_page))
+        msg = 'Not all options are present in items per page'
+        if view.extra.appliance.version < '5.11':
+            assert set(items_selection_5_10) == set(items_selector.items), msg
+        else:
+            assert set(items_selection) == set(items_selector.items), msg
 
 
 @pytest.mark.manual
