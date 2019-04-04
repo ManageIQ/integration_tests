@@ -24,19 +24,26 @@ GROUP_BY = ['VM Location']
 
 CANDU_VM = 'cu-24x7'
 
+ENTITY = ['Host', 'Cluster']
+
 
 @pytest.fixture(scope='function')
-def host(temp_appliance_extended_db):
-    vm = temp_appliance_extended_db.rest_api.collections.vms.get(name=CANDU_VM)
-
-    vm_host = vm.host.name
-    return temp_appliance_extended_db.collections.hosts.instantiate(name=vm_host)
+def entity_object(temp_appliance_extended_db, ENTITY):
+    if ENTITY == 'Host':
+        vm = temp_appliance_extended_db.rest_api.collections.vms.get(name=CANDU_VM)
+        vm_host = vm.host.name
+        return temp_appliance_extended_db.collections.hosts.instantiate(name=vm_host)
+    elif ENTITY == 'Cluster':
+        collection = provider.appliance.collections.clusters
+        cluster_name = provider.data["cap_and_util"]["cluster"]
+        return collection.instantiate(name=cluster_name, provider=provider)
 
 
 @pytest.mark.parametrize('gp_by', GROUP_BY, ids=['vm_tag'])
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', HOST_GRAPHS)
-def test_tagwise(candu_db_restore, interval, graph_type, gp_by, host):
+@pytest.mark.parametrize('entity', ENTITY)
+def test_tagwise(candu_db_restore, interval, graph_type, gp_by, entity_object):
     """Tests for grouping host graphs by VM tag for hourly and Daily intervals
 
     prerequisites:
@@ -61,7 +68,7 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, host):
         initialEstimate: 1/4h
         casecomponent: CandU
     """
-    view = navigate_to(host, 'candu')
+    view = navigate_to(entity_object, 'candu')
     data = {'interval': interval, 'group_by': gp_by}
     view.options.fill(data)
 
