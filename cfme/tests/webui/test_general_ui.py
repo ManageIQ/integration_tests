@@ -370,7 +370,7 @@ def test_key_pairs_quadicon():
 
 
 @pytest.mark.manual
-@test_requirements.filter
+@test_requirements.filtering
 @pytest.mark.tier(2)
 def test_search_is_displayed_myservices():
     """
