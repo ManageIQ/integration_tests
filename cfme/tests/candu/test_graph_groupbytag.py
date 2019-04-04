@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
-from datetime import timedelta
+# from datetime import datetime
+# from datetime import timedelta
 
+import datetime
 import pytest
 
 from cfme import test_requirements
@@ -65,13 +66,7 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, host):
         casecomponent: CandU
     """
     view = navigate_to(host, 'candu')
-    back_date = datetime.now() - timedelta(days=1)
     data = {'interval': interval, 'group_by': gp_by}
-
-    # Note: We have to choose backdate since the testing is being done on a DB containing
-    # pre-existing C&U data.
-    if interval == "Hourly":
-        data.update({"calendar": back_date})
     view.options.fill(data)
 
     # Check graph displayed or not
