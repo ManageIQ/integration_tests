@@ -124,6 +124,14 @@ class ObjectStoreObjectCollection(BaseCollection):
 
     ENTITY = ObjectStoreObject
 
+    @property
+    def manager(self):
+        coll = self.appliance.collections.object_managers.filter(
+            {"provider": self.filters.get('provider')}
+        )
+        # For each provider has single object type storage manager
+        return coll.all()[0]
+
     def all(self):
         """returning all Object Store Objects"""
         view = navigate_to(self, 'All')
