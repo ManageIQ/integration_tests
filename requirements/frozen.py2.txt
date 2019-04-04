@@ -181,7 +181,7 @@ kubernetes==3.0.0
 kwargify==2.2.0
 layered-yaml-attrdict-config==16.1.0
 lxml==4.2.5
-manageiq-client==0.5.0
+manageiq-client==0.5.1
 MarkupSafe==1.0
 mccabe==0.6.1
 miq-version==0.1.9
