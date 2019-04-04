@@ -485,7 +485,7 @@ def test_custom_button_order_sort(appliance, request, provider, setup_provider, 
     assert custom_button_group.items == shuffle_buttons
 
 
-@pytest.mark.manual
+@pytest.mark.manual('manualonly')
 @pytest.mark.tier(3)
 def test_custom_button_language():
     """ There was bug with usecase before... (#1568417)
@@ -503,6 +503,10 @@ def test_custom_button_language():
             1. set the language to french
             2. go to automation-> automate -> customization
             3. check the custom buttons tree should not empty from automation
+        expectedResults:
+            1.
+            2. Navigate as per french i18n code
+            3. check we are getting french i18n code in tree
 
     Bugzilla:
         1568417
