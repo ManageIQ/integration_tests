@@ -175,37 +175,35 @@ class VmsTemplatesAllView(InfraVmView):
             self.entities.title.text == 'All VMs & Templates')
 
     def reset_page(self):
+        """It resets the 'search filter' to empty or removes the value of 'search filter' if already
+        present"""
         self.entities.search.remove_search_filters()
 
 
 class OrphanedVmsAllView(VmsTemplatesAllView):
     """This view is for all Orphaned Vms page"""
+
     @property
     def is_displayed(self):
+        selected = self.sidebar.vmstemplates.tree.currently_selected
         return (
             self.in_infra_vms
-            and self.sidebar.vmstemplates.tree.currently_selected
-            == ["All VMs & Templates", "<Orphaned>"]
+            and selected == ["All VMs & Templates", "<Orphaned>"]
             and self.entities.title.text == "Orphaned VM or Templates"
         )
-
-    def reset_page(self):
-        self.entities.search.remove_search_filters()
 
 
 class ArchivedVmsAllView(VmsTemplatesAllView):
     """This view is for all Archived Vms page"""
+
     @property
     def is_displayed(self):
+        selected = self.sidebar.vmstemplates.tree.currently_selected
         return (
             self.in_infra_vms
-            and self.sidebar.vmstemplates.tree.currently_selected
-            == ["All VMs & Templates", "<Archived>"]
+            and selected == ["All VMs & Templates", "<Archived>"]
             and self.entities.title.text == "Archived VM or Templates"
         )
-
-    def reset_page(self):
-        self.entities.search.remove_search_filters()
 
 
 class VmTemplatesAllForProviderView(InfraVmView):
