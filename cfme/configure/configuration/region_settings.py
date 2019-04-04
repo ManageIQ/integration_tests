@@ -72,8 +72,9 @@ class Tag(Pretty, BaseEntity, Updateable):
     def update(self, updates):
         """ Update category method """
         view = navigate_to(self.parent, 'All')
+        view.table.row(name=self.name).click()
         view.table.fill({
-            self.display_name: {
+            self.name: {
                 'Name': updates.get('name'),
                 'Description': updates.get('display_name')
             }

@@ -57,22 +57,32 @@ def category(appliance):
         cg.delete()
 
 
+@pytest.fixture
+def tag(category):
+    tag = category.collections.tags.create(
+        name=fauxfactory.gen_alphanumeric(8).lower(),
+        display_name=fauxfactory.gen_alphanumeric(32)
+    )
+    yield tag
+
+    tag.delete_if_exists()
+
+
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_tag_crud(category):
+def test_tag_crud(tag):
     """
     Polarion:
         assignee: anikifor
         initialEstimate: 1/8h
         casecomponent: Tagging
     """
-    tag = category.collections.tags.create(
-        name=fauxfactory.gen_alphanumeric(8).lower(),
-        display_name=fauxfactory.gen_alphanumeric(32).lower()
-    )
-    with update(tag):
-        tag.display_name = fauxfactory.gen_alphanumeric(32).lower()
-    tag.delete()
+    assert tag.exists
+
+    tag.update({
+        'name': fauxfactory.gen_alphanumeric(8).lower(),
+        'display_name': fauxfactory.gen_alphanumeric(32)
+    })
 
 
 def test_map_tagging_crud(appliance, category, soft_assert):
@@ -105,6 +115,52 @@ def test_map_tagging_crud(appliance, category, soft_assert):
     view = appliance.browser.create_view(navigator.get_class(map_tags_collection, 'All').VIEW)
     view.flash.assert_success_message('Container Label Tag Mapping "{}": Delete successful'
                                       .format(map_tag_entity.label))
+
+
+def test_updated_tag_name_on_vm(provider, tag, request):
+    """
+    This test checks that tags don't disappear from the UI after their name (not displayed name) is
+    changed.
+
+    https://bugzilla.redhat.com/show_bug.cgi?id=1668730
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: Configuration
+        caseimportance: high
+        initialEstimate: 1/8h
+        testSteps:
+            1. create a tag
+            2. assign the tag to some vm, observe the tag in Smart Management section of vm
+            3. change name of the tag
+            4. on VM screen: still the same tag in Smart Management section of vm
+    """
+    coll = provider.appliance.provider_based_collection(provider, coll_type='vms')
+    # need some VM to assign tags to, nothing specific is needed, so take the first one
+    vm = coll.all()[0]
+    vm.add_tag(tag)
+    request.addfinalizer(lambda: vm.remove_tag(tag))
+
+    # assert the tag is correctly assigned
+    vm_tags = vm.get_tags()
+    assert any(
+        tag.category.display_name == vm_tag.category.display_name and
+        tag.display_name == vm_tag.display_name
+        for vm_tag in vm_tags
+    ), "tag is not assigned"
+
+    # update the name of the tag
+    new_tag_name = '{}_{}'.format(tag.name, fauxfactory.gen_alphanumeric(4).lower())
+    tag.update({'name': new_tag_name})
+
+    vm_tags = vm.get_tags()
+
+    # assert the tag was not changed in the UI
+    assert any(
+        tag.category.display_name == vm_tag.category.display_name and
+        tag.display_name == vm_tag.display_name
+        for vm_tag in vm_tags
+    ), 'tag is not assigned'
 
 
 class TestTagsViaREST(object):
