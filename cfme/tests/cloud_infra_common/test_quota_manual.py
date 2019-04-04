@@ -7,7 +7,6 @@ from cfme import test_requirements
 @pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(1)
-@pytest.mark.ignore_stream('5.9')
 def test_custom_service_dialog_quota_flavors():
     """
     Test quota with instance_type in custom dialog
@@ -34,7 +33,9 @@ def test_custom_service_dialog_quota_flavors():
             3. Quota exceeded message should be displayed
 
     Bugzilla:
-        1499193, 1581288, 1657628
+        1499193
+        1581288
+        1657628
     """
     pass
 
@@ -77,7 +78,6 @@ def test_quota_for_simultaneous_service_catalog_request_with_different_users():
 @pytest.mark.manual
 @test_requirements.quota
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream('5.9', '5.10')
 def test_instance_quota_reconfigure_with_flavors():
     """
     Test reconfiguration of instance using flavors after setting quota but this is RFE which is not

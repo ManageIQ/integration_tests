@@ -2,28 +2,6 @@ import pytest
 
 from cfme import test_requirements
 
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-@pytest.mark.ignore_stream('5.9', '5.10')
-def test_upgrade_single_inplace_postgres():
-    """
-    Upgrading a single appliance and upgrade postgres to 9.5
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
-        caseimportance: critical
-        endsin: 5.8
-        initialEstimate: 1/2h
-        setup: Run inplace upgrade and postgres upgrade
-               Migration docs at (https://mojo.redhat.com/docs/DOC-1058772)
-               Check new postgress is running correctly
-        startsin: 5.7
-        testtype: upgrade
-    """
-    pass
-
 
 @pytest.mark.manual
 @test_requirements.upgrade
@@ -33,10 +11,11 @@ def test_upgrade_dedicated_db_migration_local():
     Test that you can locally migrate a dedicated database after upgrade.
     Previously it was missing the database.yml during setup with would
     case the rake task to fail.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1478986
-    https://bugzilla.redhat.com/show_bug.cgi?id=1561075
-    https://bugzilla.redhat.com/show_bug.cgi?id=1590846
-    https://bugzilla.redhat.com/show_bug.cgi?id=1578957
+    Bugzilla:
+        1478986
+        1561075
+        1590846
+        1578957
 
 
     Polarion:
@@ -106,9 +85,10 @@ def test_upgrade_single_negative_v2_key_fix_auth():
 @test_requirements.upgrade
 @pytest.mark.tier(2)
 def test_upgrade_custom_css():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1553841
-    Test css customization"s function correctly after upgrades.
+    """Test css customization"s function correctly after upgrades.
+
+    Bugzilla:
+        1553841
 
     Polarion:
         assignee: jhenner
@@ -178,35 +158,6 @@ def test_rh_rhsm_sat6_cred_save_crud():
                edit subscription
                setup sat6
                click save
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-@pytest.mark.ignore_stream('5.10')
-def test_upgrade_rubyrep_to_pglogical():
-    """
-    Test upgrading appliances in ruby replication and change it over to
-    pglogical
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Configuration
-        caseimportance: medium
-        endsin: 5.9
-        initialEstimate: 1h
-        setup: provision 2 appliances
-               setup rubyrep between them
-               test replication is working
-               stop replication
-               upgrade appliances following version dependent docs found here
-               https://mojo.redhat.com/docs/DOC-1058772
-               configure pglogical replication
-               confirm replication is working correctly
-        startsin: 5.6
-        testtype: upgrade
     """
     pass
 

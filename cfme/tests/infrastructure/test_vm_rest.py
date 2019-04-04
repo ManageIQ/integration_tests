@@ -6,7 +6,6 @@ from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import vm as _vm
-from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -42,9 +41,7 @@ def test_query_vm_attributes(vm, soft_assert):
     """
     outcome = query_resource_attributes(vm)
     for failure in outcome.failed:
-        if failure.type == 'attribute' and failure.name == 'policy_events' and BZ(
-                1546995, forced_streams=['5.8', '5.9', 'upstream']).blocks:
-            continue
+        # BZ 1546995
         soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
             failure.type, failure.name, failure.response.status_code, failure.error))
 

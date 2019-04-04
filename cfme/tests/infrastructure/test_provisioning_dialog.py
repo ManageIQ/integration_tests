@@ -376,10 +376,10 @@ def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, v
 
 
 @pytest.mark.rhv2
-@pytest.mark.meta(blockers=[BZ(1625139, forced_streams=['5.9', '5.10'])])
 @pytest.mark.provider([RHEVMProvider],
                       required_fields=[['provisioning', 'template_2_nics']],
                       override=True)
+@pytest.mark.meta(blockers=[BZ(1625139, forced_streams=['5.10', 'upstream'])])
 def test_provision_vm_with_2_nics(provisioner, provisioning, prov_data, vm_name):
     """ Tests provision VM from a template configured with 2 NICs.
 
@@ -392,6 +392,9 @@ def test_provision_vm_with_2_nics(provisioner, provisioning, prov_data, vm_name)
         * Submit the provisioning request, it should provision the vm successfully.
         * Check NIC configuration of provisioned VM - it should have 2 NICs attached.
 
+    Bugzilla:
+        1625139
+
     Metadata:
         test_flag: provision
 
@@ -399,6 +402,11 @@ def test_provision_vm_with_2_nics(provisioner, provisioning, prov_data, vm_name)
         assignee: jhenner
         caseimportance: high
         initialEstimate: 1/4h
+        testSteps:
+            1. Open the provisioning dialog.
+            2. Apart from the usual provisioning settings, select template with 2 NICs.
+            3. Submit the provisioning request, it should provision the vm successfully.
+            4. Check NIC configuration of provisioned VM - it should have 2 NICs attached.
     """
     template_name = provisioning.get('template_2_nics', None)
     prov_data['catalog']['vm_name'] = vm_name

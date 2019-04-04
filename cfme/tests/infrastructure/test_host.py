@@ -117,9 +117,6 @@ def test_discover_host(request, provider, appliance, host_ips):
 
 
 @pytest.mark.rhv2
-# Tests to automate BZ 1201092
-@pytest.mark.meta(blockers=[BZ(1619626, forced_streams=['5.9', '5.10'],
-                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
 @pytest.mark.uncollectif(
@@ -129,6 +126,11 @@ def test_discover_host(request, provider, appliance, host_ips):
 )
 def test_multiple_host_good_creds(setup_provider, provider, creds):
     """
+
+    Bugzilla:
+        1619626
+        1201092
+
     Polarion:
         assignee: mkourim
         initialEstimate: 1/4h
@@ -161,8 +163,6 @@ def test_multiple_host_good_creds(setup_provider, provider, creds):
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1619626, forced_streams=['5.9', '5.10'],
-                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_multiple_host_bad_creds(setup_provider, provider):
     """    Tests multiple host credentialing with bad credentials
 

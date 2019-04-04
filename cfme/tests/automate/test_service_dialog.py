@@ -232,6 +232,9 @@ def test_reorder_elements(appliance, request):
 
 def test_reorder_unsaved_elements(appliance, request):
     """
+    Bugzilla:
+        1238721
+
     Polarion:
         assignee: nansari
         casecomponent: Services
@@ -239,7 +242,6 @@ def test_reorder_unsaved_elements(appliance, request):
         initialEstimate: 1/16h
         tags: service
     """
-    # Automate BZ - https://bugzilla.redhat.com/show_bug.cgi?id=1238721
     box_label = "box_{}".format(fauxfactory.gen_alphanumeric())
     element_1_data = {
         'element_information': {
@@ -312,11 +314,11 @@ def test_radiobutton_dialog_element(appliance, request):
     request.addfinalizer(dialog.delete_if_exists)
 
 
-@pytest.mark.ignore_stream('5.9')
 def test_mandatory_entry_point_with_dynamic_element(appliance):
     """Tests Entry point should be mandatory if element is dynamic
 
-    Testing BZ 1488579
+    Bugzilla:
+        1488579
 
     Polarion:
         assignee: nansari

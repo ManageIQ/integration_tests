@@ -124,7 +124,6 @@ def small_vm(provider, small_template):
         vm.cleanup_on_provider()
 
 
-@pytest.mark.ignore_stream('5.9')
 @pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE_PER_TYPE)
 def test_rename_vm(small_vm):
 

@@ -344,10 +344,6 @@ class UserCollection(BaseCollection):
         if type(groups) is not list:
             groups = [groups]
 
-        if self.appliance.version < "5.9" and len(groups) > 1:
-            raise CFMEException(
-                "Assigning a user to multiple groups is only supported in CFME versions > 5.8")
-
         user = self.instantiate(
             name=name, credential=credential, email=email, groups=groups, cost_center=cost_center,
             value_assign=value_assign
@@ -757,12 +753,7 @@ class Group(BaseEntity, Taggable):
         Args:
             updated_order: group order list
         """
-        if self.appliance.version < "5.9.2":
-            name_column = "Name"
-        else:
-            name_column = "Description"
-
-        find_row_kwargs = {name_column: self.description}
+        find_row_kwargs = {"Description": self.description}
         view = navigate_to(self.parent, 'All')
         row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
         original_sequence = row.sequence.text
@@ -1069,16 +1060,8 @@ class Role(Updateable, Pretty, BaseEntity):
         else:
             view.cancel_button.click()
             flash_message = 'Edit of Role was cancelled by the user'
-        view = self.create_view(DetailsRoleView, override=updates)
+        view = self.create_view(DetailsRoleView, override=updates, wait=10)
         view.flash.assert_message(flash_message)
-
-        # Typically this would be a safe check but BZ 1561698 will sometimes cause the accordion
-        #  to fail to update the role name w/o a manual refresh causing is_displayed to fail
-        # Instead of inserting a blind refresh, just disable this until the bug is resolved since
-        #  it's a good check for accordion UI failures
-        # See BZ https://bugzilla.redhat.com/show_bug.cgi?id=1561698
-        if not BZ(1561698, forced_streams=['5.9']).blocks:
-            assert view.is_displayed
 
     def delete(self, cancel=True):
         """ Delete existing role
@@ -1112,11 +1095,10 @@ class Role(Updateable, Pretty, BaseEntity):
         view.flash.assert_message(flash_success_msg)
 
         if cancel:
-            view = self.create_view(AllRolesView)
+            view = self.create_view(AllRolesView, wait=10)  # implicit assert
             view.flash.assert_success_message(flash_success_msg)
         else:
-            view = self.create_view(DetailsRoleView)
-        assert view.is_displayed
+            view = self.create_view(DetailsRoleView, wait=10)  # implicit assert
 
     def copy(self, name=None):
         """ Creates copy of existing role
@@ -1127,16 +1109,16 @@ class Role(Updateable, Pretty, BaseEntity):
             name = "{}_copy".format(self.name)
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Copy this Role to a new Role')
-        view = self.create_view(AddRoleView)
+        view = self.create_view(AddRoleView, wait=10)  # implicit assert
         new_role = self.parent.instantiate(name=name)
         view.fill({'name_txt': new_role.name})
         view.add_button.click()
-        view = self.create_view(AllRolesView)
+        view = self.create_view(AllRolesView, wait=10)  # implicit assert
         view.flash.assert_success_message('Role "{}" was saved'.format(new_role.name))
-        assert view.is_displayed
         return new_role
 
-    def set_role_product_features(self, view, product_features):
+    @staticmethod
+    def set_role_product_features(view, product_features):
         """ Sets product features for role restriction
 
         Args:
@@ -1164,6 +1146,9 @@ class RoleCollection(BaseCollection):
         """ Create role method
 
         Args:
+            name: string name of the role
+            vm_restriction: restriction used for role
+            product_features: product feature to select
             cancel: True - if you want to cancel role creation,
                     by default, role will be created
 
@@ -1188,7 +1173,7 @@ class RoleCollection(BaseCollection):
         else:
             view.add_button.click()
             flash_message = 'Role "{}" was saved'.format(role.name)
-        view = self.create_view(AllRolesView)
+        view = self.create_view(AllRolesView, wait=10)  # implicit assert
 
         try:
             view.flash.assert_message(flash_blocked_msg)
@@ -1197,8 +1182,6 @@ class RoleCollection(BaseCollection):
             pass
 
         view.flash.assert_success_message(flash_message)
-
-        assert view.is_displayed
 
         return role
 
@@ -1228,9 +1211,11 @@ class RoleDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.browser.refresh()  # workaround for 5.9 issue of role now shown
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
-            self.obj.appliance.server_region_string(), 'Roles', self.obj.name)
+            self.obj.appliance.server_region_string(),
+            'Roles',
+            self.obj.name
+        )
 
 
 @navigator.register(Role, 'Edit')
@@ -1393,21 +1378,14 @@ class Tenant(Updateable, BaseEntity, Taggable):
         """
         view = navigate_to(self, 'Edit')
         changed = view.form.fill(updates)
+        new_name = updates.get('name', self.name)
         if changed:
             view.save_button.click()
-            if self.appliance.version < '5.9':
-                flash_message = 'Project "{}" was saved'.format(updates.get('name', self.name))
-            else:
-                flash_message = '{} "{}" has been successfully saved.'.format(
-                    self.obj_type, updates.get('name', self.name))
+            flash_message = '{} "{}" has been successfully saved.'.format(self.obj_type, new_name)
         else:
             view.cancel_button.click()
-            if self.appliance.version < '5.9':
-                flash_message = 'Edit of Project "{}" was cancelled by the user'.format(
-                    updates.get('name', self.name))
-            else:
-                flash_message = 'Edit of {} "{}" was canceled by the user.'.format(
-                    self.obj_type, updates.get('name', self.name))
+            flash_message = ('Edit of {} "{}" was canceled by the user.'
+                             .format(self.obj_type, new_name))
         view = self.create_view(DetailsTenantView, override=updates)
         view.flash.assert_message(flash_message)
 
@@ -1447,11 +1425,10 @@ class Tenant(Updateable, BaseEntity, Taggable):
             expected_msg = 'Quotas for {} "{}" were saved'.format(self.obj_type, self.name)
         else:
             view.cancel_button.click()
-            expected_msg = 'Manage quotas for {} "{}" was cancelled by the user'\
-                .format(self.obj_type, self.name)
-        view = self.create_view(DetailsTenantView)
+            expected_msg = ('Manage quotas for {} "{}" was cancelled by the user'
+                            .format(self.obj_type, self.name))
+        view = self.create_view(DetailsTenantView, wait=10)  # implicit assert
         view.flash.assert_success_message(expected_msg)
-        assert view.is_displayed
 
     @property
     def quota(self):
@@ -1503,17 +1480,11 @@ class TenantCollection(BaseCollection):
                                 default=True)
 
     def create(self, name, description, parent):
-        if self.appliance.version > '5.9':
-            tenant_success_flash_msg = 'Tenant "{}" has been successfully added.'
-        else:
-            tenant_success_flash_msg = 'Tenant "{}" was saved'
-
         tenant = self.instantiate(name, description, parent)
 
         view = navigate_to(tenant.parent_tenant, 'Details')
         view.toolbar.configuration.item_select('Add child Tenant to this Tenant')
-        view = self.create_view(AddTenantView)
-        wait_for(lambda: view.is_displayed, timeout=5)
+        view = self.create_view(AddTenantView, wait=5)
         changed = view.form.fill({'name': name,
                                   'description': description})
         if changed:
@@ -1522,9 +1493,7 @@ class TenantCollection(BaseCollection):
             view.form.cancel_button.click()
 
         view = self.create_view(ParentDetailsTenantView)
-
-        view.flash.assert_success_message(tenant_success_flash_msg.format(name))
-
+        view.flash.assert_success_message('Tenant "{}" has been successfully added.'.format(name))
         return tenant
 
     def delete(self, *tenants):
@@ -1611,18 +1580,12 @@ class ProjectCollection(TenantCollection):
             name=str(self.appliance.rest_api.collections.tenants[0].name), default=True)
 
     def create(self, name, description, parent):
-        if self.appliance.version > '5.9':
-            project_success_flash_msg = 'Project "{}" has been successfully added.'
-        else:
-            project_success_flash_msg = 'Project "{}" was saved'
-
         project = self.instantiate(name, description, parent)
 
         view = navigate_to(project.parent_tenant, 'Details')
         view.toolbar.configuration.item_select('Add Project to this Tenant')
 
-        view = self.create_view(AddTenantView)
-        wait_for(lambda: view.is_displayed, timeout=5)
+        view = self.create_view(AddTenantView, wait=5)
         changed = view.form.fill({'name': name,
                                   'description': description})
         if changed:
@@ -1631,7 +1594,7 @@ class ProjectCollection(TenantCollection):
             view.form.cancel_button.click()
 
         view = self.create_view(ParentDetailsTenantView)
-        view.flash.assert_success_message(project_success_flash_msg.format(name))
+        view.flash.assert_success_message('Project "{}" has been successfully added.'.format(name))
 
         return project
 

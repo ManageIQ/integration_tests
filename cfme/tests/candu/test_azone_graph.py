@@ -39,8 +39,7 @@ def azone(appliance, provider):
 @pytest.mark.parametrize("interval", INTERVAL)
 @pytest.mark.parametrize("graph_type", GRAPHS)
 @pytest.mark.meta(
-    blockers=[BZ(1671580, forced_streams=["5.9", "5.10"],
-    unblock=lambda provider: not provider.one_of(AzureProvider))]
+    blockers=[BZ(1671580, unblock=lambda provider: not provider.one_of(AzureProvider))]
 )
 @pytest.mark.uncollectif(lambda provider, graph_type: provider.one_of(EC2Provider)
     and graph_type in ["azone_memory", "azone_disk"])

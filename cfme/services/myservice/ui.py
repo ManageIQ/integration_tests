@@ -200,7 +200,7 @@ class ReconfigureServiceView(SetOwnershipForm):
     @property
     def is_displayed(self):
         name = self.context['object'].name
-        if BZ(1658906, forced_streams=['5.9', '5.10']).blocks:
+        if BZ(1658906).blocks:
             # there is shorten name in view title due to above BZ
             name = self.context['object'].name.split('-')[0]
 

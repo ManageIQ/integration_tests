@@ -56,13 +56,13 @@ INFRA_PROVIDER_RELATIONSHIPS = [
 
 CLOUD_PROVIDER_RELATIONSHIPS = [
     ("Network Manager", NetworkProviderDetailsView),
-    ("Availability zones", ProviderAvailabilityZoneAllView),
-    ("Cloud tenants", ProviderTenantAllView),
+    ("Availability Zones", ProviderAvailabilityZoneAllView),
+    ("Cloud Tenants", ProviderTenantAllView),
     ("Flavors", ProviderFlavorAllView),
     ("Security Groups", ProviderSecurityGroupAllView),
     ("Instances", CloudProviderInstancesView),
     ("Images", CloudProviderImagesView),
-    ("Orchestration stacks", ProviderStackAllView),
+    ("Orchestration Stacks", ProviderStackAllView),
     ("Storage Managers", ProviderStorageManagerAllView)
 ]
 # TODO: add Host Aggregates view to CLOUD_PROVIDER_RELATIONSHIPS
@@ -88,18 +88,6 @@ infra_test_items = [
     "infra_vms",
     "infra_templates"
 ]
-
-
-def _fix_item(appliance, item):
-    # Some version-dependent things ...
-    if item == 'Orchestration stacks' and appliance.version >= '5.9':
-        return 'Orchestration Stacks'
-    elif item == 'Availability zones' and appliance.version >= '5.9':
-        return 'Availability Zones'
-    elif item == 'Cloud tenants' and appliance.version >= '5.9':
-        return 'Cloud Tenants'
-    else:
-        return item
 
 
 RELATIONSHIPS = {
@@ -191,7 +179,7 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
     assert relationship_view.is_displayed
 
 
-@pytest.mark.parametrize("relationship,view", CLOUD_PROVIDER_RELATIONSHIPS,
+@pytest.mark.parametrize("relationship, view", CLOUD_PROVIDER_RELATIONSHIPS,
     ids=[rel[0] for rel in CLOUD_PROVIDER_RELATIONSHIPS])
 @pytest.mark.provider([CloudProvider], selector=ONE_PER_TYPE)
 def test_cloud_provider_relationships(appliance, provider, setup_provider, relationship, view):
@@ -205,7 +193,6 @@ def test_cloud_provider_relationships(appliance, provider, setup_provider, relat
         tags: relationship
     """
     # Version dependent strings
-    relationship = _fix_item(appliance, relationship)
     provider_view = navigate_to(provider, "Details")  # resetter selects summary view
     if provider_view.entities.summary("Relationships").get_text_of(relationship) == "0":
         pytest.skip("There are no relationships for {}".format(relationship))
@@ -244,10 +231,7 @@ def prov_child_visibility(appliance, provider, request, tag, user_restricted):
                 assert view.entities.entity_names
             else:
                 # this case is specified for block_managers
-                if appliance.version >= '5.9':
-                    assert view.entities.read()
-                else:
-                    assert view.entities.read().get('table')
+                assert view.entities.read()
             actual_visibility = True
         except AssertionError:
             actual_visibility = False

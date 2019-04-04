@@ -70,15 +70,13 @@ class Subnet(Taggable, BaseEntity, CustomButtonEventsMixin, ValidateStatsMixin):
     def cloud_network(self):
         """ Return name of network that subnet belongs to"""
         view = navigate_to(self, 'Details')
-        field_name = 'Cloud Network' if self.appliance.version >= '5.9' else 'Cloud network'
-        return view.entities.relationships.get_text_of(field_name)
+        return view.entities.relationships.get_text_of('Cloud Network')
 
     @property
     def cidr(self):
         """ Return subnet's CIDR"""
         view = navigate_to(self, 'Details')
-        field_name = 'CIDR' if self.appliance.version >= '5.9' else 'Cidr'
-        return view.entities.properties.get_text_of(field_name)
+        return view.entities.properties.get_text_of('CIDR')
 
     @property
     def net_protocol(self):
@@ -95,9 +93,9 @@ class Subnet(Taggable, BaseEntity, CustomButtonEventsMixin, ValidateStatsMixin):
     def parent_provider(self):
         """ Return object of parent cloud provider """
         view = navigate_to(self, 'Details')
-        entity = 'Parent Cloud Provider' if self.appliance.version >= '5.9' else 'Parent ems cloud'
-        provider_name = view.entities.relationships.get_text_of(entity)
-        return providers.get_crud_by_name(provider_name)
+        return providers.get_crud_by_name(
+            view.entities.relationships.get_text_of('Parent Cloud Provider')
+        )
 
     @property
     def network_provider(self):

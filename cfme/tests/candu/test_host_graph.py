@@ -177,7 +177,6 @@ def test_host_graph_screen(provider, interval, graph_type, host, enable_candu):
     compare_data(table_data=table_data, graph_data=graph_data, legends=legends)
 
 
-@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=['5.9'])])
 @pytest.mark.uncollectif(lambda provider, interval:
                          provider.one_of(RHEVMProvider) and
                          interval == "Daily")

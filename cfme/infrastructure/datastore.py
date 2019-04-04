@@ -199,9 +199,7 @@ class Datastore(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
         """
         # BZ 1467989 - this button is never getting enabled for some resources
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Remove Datastore from Inventory'
-                                               if self.appliance.version >= '5.9'
-                                               else 'Remove Datastore',
+        view.toolbar.configuration.item_select('Remove Datastore from Inventory',
                                                handle_alert=(not cancel))
         view.flash.assert_success_message('Delete initiated for Datastore from the CFME Database')
 
@@ -240,9 +238,7 @@ class Datastore(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
         vms_view = view.browser.create_view(DatastoresView)
         for entity in vms_view.entities.get_all():
             entity.check()
-        view.toolbar.configuration.item_select('Remove selected items from Inventory'
-                                               if self.appliance.version >= '5.9'
-                                               else 'Remove selected items',
+        view.toolbar.configuration.item_select('Remove selected items from Inventory',
                                                handle_alert=True)
 
         wait_for(lambda: bool(len(vms_view.entities.get_all())), fail_condition=True,
@@ -255,9 +251,7 @@ class Datastore(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
         hosts_view = view.browser.create_view(RegisteredHostsView)
         for entity in hosts_view.entities.get_all():
             entity.check()
-        view.toolbar.configuration.item_select('Remove items from Inventory'
-                                               if self.appliance.version >= '5.9'
-                                               else 'Remove items',
+        view.toolbar.configuration.item_select('Remove items from Inventory',
                                                handle_alert=True)
 
         wait_for(lambda: bool(len(hosts_view.entities.get_all())), fail_condition=True,
@@ -267,8 +261,8 @@ class Datastore(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
     @property
     def exists(self):
         try:
-            view = navigate_to(self, 'Details')
-            return view.is_displayed
+            navigate_to(self, 'Details')
+            return True
         except ItemNotFound:
             return False
 

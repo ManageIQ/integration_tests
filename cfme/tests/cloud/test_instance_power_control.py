@@ -223,16 +223,21 @@ def test_quadicon_terminate(appliance, provider, testing_instance, ensure_vm_run
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE, from_details=False)
     logger.info("Terminate initiated")
-    msg_part = "Terminate initiated" if appliance.version >= '5.9' else "Vm Destroy initiated"
-    msg = "{} for 1 VM and Instance from the {} Database".format(msg_part, appliance.product_name)
-    appliance.browser.create_view(BaseLoggedInPage).flash.assert_success_message(msg)
+    appliance.browser.create_view(BaseLoggedInPage).flash.assert_success_message(
+        "Terminate initiated for 1 VM and Instance from the {} Database"
+        .format(appliance.product_name)
+    )
 
     soft_assert(
         testing_instance.wait_for_instance_state_change(
-            desired_state=(testing_instance.STATE_TERMINATED,
-                           testing_instance.STATE_ARCHIVED,
-                           testing_instance.STATE_UNKNOWN),
-            timeout=1200))
+            desired_state=(
+                testing_instance.STATE_TERMINATED,
+                testing_instance.STATE_ARCHIVED,
+                testing_instance.STATE_UNKNOWN
+            ),
+            timeout=1200
+        )
+    )
 
 
 def test_stop(appliance, provider, testing_instance, ensure_vm_running, soft_assert):
@@ -469,11 +474,10 @@ def test_terminate(provider, testing_instance, ensure_vm_running, soft_assert, a
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE)
-
-    msg_part = "Terminate initiated" if appliance.version >= '5.9' else "Vm Destroy initiated"
-    msg = "{} for 1 VM and Instance from the {} Database".format(msg_part, appliance.product_name)
-
-    appliance.browser.create_view(BaseLoggedInPage).flash.assert_success_message(msg)
+    appliance.browser.create_view(BaseLoggedInPage).flash.assert_success_message(
+        "Terminate initiated for 1 VM and Instance from the {} Database"
+        .format(appliance.product_name)
+    )
     wait_for_instance_state(soft_assert, testing_instance, state="terminated")
 
 

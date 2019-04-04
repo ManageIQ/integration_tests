@@ -45,8 +45,7 @@ class Copiable(object):
             copy_page.copy_button.click()
             # Attention! Now we should be on a different page but the flash message is the same!
             copy_page.flash.assert_no_error()
-            if not BZ(1510463, forced_streams=['5.9']).blocks:
-                copy_page.flash.assert_message(
+            copy_page.flash.assert_message(
                     'Copy selected Automate {} was saved'.format(type(self).__name__))
         else:
             copy_page.cancel_button.click()

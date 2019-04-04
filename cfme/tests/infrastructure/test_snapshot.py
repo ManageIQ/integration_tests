@@ -64,8 +64,6 @@ def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
 
 
 @pytest.mark.rhv2
-@pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
-                         'Must be RHEVM provider version >= 4')
 def test_memory_checkbox(small_test_vm, provider, soft_assert):
     """Tests snapshot memory checkbox
 
@@ -99,8 +97,6 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
 
 
 @pytest.mark.rhv1
-@pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
-                         'Must be RHEVM provider version >= 4')
 def test_snapshot_crud(small_test_vm, provider):
     """Tests snapshot crud
 
@@ -239,15 +235,6 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
 
 
 @pytest.mark.rhv1
-@pytest.mark.meta(
-    blockers=[
-        BZ(
-            1561618,
-            forced_streams=['5.8', '5.9'],
-            unblock=lambda provider: not provider.one_of(RHEVMProvider)
-        )
-    ]
-)
 @pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
                          'Must be RHEVM provider version >= 4')
 def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request):
@@ -255,6 +242,9 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
 
     Metadata:
         test_flag: snapshot, provision
+
+    Bugzilla:
+        1561618
 
     Polarion:
         assignee: apagac

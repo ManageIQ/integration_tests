@@ -200,7 +200,6 @@ def test_incr_backup_of_attached_volume_crud(appliance, provider, request, attac
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_create_backup_of_volume_with_type(volume_backup_with_type):
     """
     Polarion:

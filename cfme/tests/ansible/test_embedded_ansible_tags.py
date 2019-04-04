@@ -3,16 +3,10 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.wait import wait_for
 
-pytestmark = [
-    test_requirements.ansible,
-    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9",
-                            reason="5.8 is not support tagging via UI"),
-    pytest.mark.meta(blockers=[BZ(1640533, forced_streams=["5.10"])])
-]
+pytestmark = [test_requirements.ansible]
 
 
 @pytest.fixture(scope='module')
@@ -35,41 +29,35 @@ def repository(enabled_embedded_ansible, appliance):
     except KeyError:
         pytest.skip("Skipping since no such key found in yaml")
     view = navigate_to(repository, "Details")
-    if appliance.version < "5.9":
-        refresh = view.browser.refresh
-    else:
-        refresh = view.toolbar.refresh.click
     wait_for(
         lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
         timeout=60,
-        fail_func=refresh
+        fail_func=view.toolbar.refresh.click
     )
     yield repository
 
-    if repository.exists:
-        repository.delete()
+    repository.delete_if_exists()
 
 
 @pytest.fixture(scope='module')
 def credential(enabled_embedded_ansible, appliance):
     credentials_collection = appliance.collections.ansible_credentials
-    credential = credentials_collection.create(
+    _credential = credentials_collection.create(
         "{}_credential_{}".format('Machine', fauxfactory.gen_alpha()),
         'Machine',
         username=fauxfactory.gen_alpha(),
         password=fauxfactory.gen_alpha()
     )
     wait_for(
-        func=lambda: credential.exists,
+        func=lambda: _credential.exists,
         message='credential appears on UI',
         fail_func=appliance.browser.widgetastic.refresh,
         delay=20,
         num_sec=240
     )
 
-    yield credential
-    if credential.exists:
-        credential.delete()
+    yield _credential
+    _credential.delete_if_exists()
 
 
 @pytest.fixture(scope='module')

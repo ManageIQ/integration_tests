@@ -412,7 +412,7 @@ def temp_ssa_pod_appliance(request, temp_pod_appliance, new_ssa_image):
             }
         }
     }}
-    if BZ(1684203, forced_streams=['5.9', '5.10']).blocks:
+    if BZ(1684203, forced_streams=['5.10']).blocks:
         # there is an issue with AMI which is used by CloudForms by default
         # this is temporary workaround
         new_ami = 'RHEL-Atomic_7.6_HVM_GA-20190306-x86_64-0-Access2-GP2'
@@ -444,17 +444,16 @@ def test_crud_pod_appliance(temp_pod_appliance, provider, setup_provider):
 
 
 @pytest.mark.ignore_stream('5.10')
-def test_crud_pod_appliance_ansible_deployment(temp_pod_ansible_appliance, provider,
-                                               setup_provider):
+def test_crud_pod_appliance_ansible_deployment(
+    temp_pod_ansible_appliance, provider, setup_provider
+):
     """
     deploys pod appliance
     checks that it is alive
     deletes pod appliance
-
-    Metadata
+     Metadata
        test_flag: podtesting
-
-    Polarion:
+     Polarion:
         assignee: izapolsk
         casecomponent: Containers
         caseimportance: high
@@ -597,7 +596,7 @@ def test_aws_smartstate_pod(temp_ssa_pod_appliance, ssa_vm, provider, aws_provid
     """
     appliance = temp_ssa_pod_appliance
 
-    if BZ(1684203, forced_streams=['5.9', '5.10']).blocks:
+    if BZ(1684203, forced_streams=['5.10']).blocks:
         logger.info("stopping & starting appliance in order to re-read new AMI name")
         provider.mgmt.stop_vm(appliance.project)
         provider.mgmt.start_vm(appliance.project)

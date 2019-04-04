@@ -152,9 +152,8 @@ def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_
     soft_assert(len(view.form.datastore.mappings_tree.mapping_sources) ==
         len(datastore_mapping_sources))
 
-    # next assertion may fail for 5.9.3.3 as we still have size restrictions on datastore mapping
-    soft_assert(view.form.datastore.mappings_tree.mapping_targets[0].split('(')[0]
-        in datastore_mapping_target)
+    assert (view.form.datastore.mappings_tree.mapping_targets[0].split('(')[0]
+            in datastore_mapping_target)
     view.form.datastore.next_btn.click()
 
     # Test multiple Network sources can be mapped to single target
@@ -427,7 +426,6 @@ def test_migration_rbac(appliance, new_credential, v2v_providers):
                                                     'rbac should allow this')
 
 
-@pytest.mark.ignore_stream("5.9")
 def test_edit_mapping_fields(appliance, v2v_providers, edited_form_data,
                              host_creds, conversion_tags, soft_assert):
     _form_data, edited_form_data = edited_form_data

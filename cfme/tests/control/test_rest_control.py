@@ -182,11 +182,11 @@ class TestPoliciesRESTAPI(object):
         """
         delete_resources_from_detail(policies, method='POST', num_sec=100, delay=5)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.9')
     def test_delete_policies_from_detail_delete(self, policies):
         """Tests delete policies from detail using DELETE method.
 
-        Testing BZ 1435773
+        Bugzilla:
+            1435773
 
         Metadata:
             test_flag: rest
@@ -258,7 +258,9 @@ class TestPoliciesRESTAPI(object):
     def test_create_invalid_policies(self, appliance):
         """
         This test case checks policy creation with invalid data.
-        Testing BZ 1435780
+
+        Bugzilla:
+            1435780
 
         Metadata:
             test_flag: rest

@@ -22,8 +22,7 @@ pytestmark = [
     pytest.mark.provider([VMwareProvider, RHEVMProvider, EC2Provider, AzureProvider],
         selector=ONE_PER_TYPE, required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')]),
     pytest.mark.meta(
-        blockers=[BZ(1671580, forced_streams=["5.9", "5.10"],
-        unblock=lambda provider: not provider.one_of(AzureProvider))]
+        blockers=[BZ(1671580, unblock=lambda provider: not provider.one_of(AzureProvider))]
     )
 ]
 

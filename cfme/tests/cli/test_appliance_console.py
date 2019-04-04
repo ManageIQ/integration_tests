@@ -291,15 +291,12 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     apps[2].wait_for_web_ui()
     # Configure primary replication node
     command_set = ('ap', RETURN, '8', '1', '1', RETURN, RETURN, pwd, pwd, app0_ip, 'y',
-        TimedCommand('y', 60), RETURN)
+                   TimedCommand('y', 60), RETURN)
     apps[0].appliance_console.run_commands(command_set)
     # Configure secondary replication node
-    if apps[0].version > '5.9':
-        command_set = ('ap', RETURN, '8', '2', '2', app0_ip, RETURN, pwd, RETURN, '2', '2', RETURN,
-                       RETURN, pwd, pwd, app0_ip, app1_ip, 'y', TimedCommand('y', 360), RETURN)
-    else:
-        command_set = ('ap', RETURN, '6', '2', '1', '2', RETURN, RETURN, pwd, pwd, app0_ip, app1_ip,
-                       'y', TimedCommand('y', 360), RETURN)
+    command_set = ('ap', RETURN, '8', '2', '2', app0_ip, RETURN, pwd, RETURN, '2', '2', RETURN,
+                   RETURN, pwd, pwd, app0_ip, app1_ip, 'y', TimedCommand('y', 360), RETURN)
+
     apps[1].appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
     command_set = ('ap', RETURN, '10', TimedCommand('1', 30), RETURN)
@@ -1069,36 +1066,6 @@ def test_appliance_console_extend_storage_negative():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-@pytest.mark.ignore_stream('5.9', '5.10')
-def test_appliance_console_db_maintenance_periodic_unconfigure():
-    """
-    Test unconfiguring full vacums
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Configuration
-        caseimportance: medium
-        endsin: 5.8
-        initialEstimate: 1/6h
-        setup: -ssh to appliance
-               -run appliance_console
-               -select option "configure database maintenance"
-               -say yes to "unconfigure Periodic Database Maintance"
-               -wait for the set time
-               -check that full vacums have stopped by checking log in
-               "vmdb/log/hourly.........log" (all timescales are stored in the hourly
-               log file)
-        startsin: 5.7
-        testSteps:
-            1. unconfigure periodic maintenance
-        expectedResults:
-            1. full vacuums stop running
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_appliance_console_static_dns():
     """
@@ -1127,32 +1094,6 @@ def test_appliance_console_apache_reload_log_rotate():
         initialEstimate: 1/12h
         startsin: 5.10
         testtype: structural
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-@pytest.mark.ignore_stream('5.9', '5.10')
-def test_appliance_console_db_maintenance_hourly_unconfigure():
-    """
-    Test unconfiguring db maintenance for Hourly re-indexing of tables
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Configuration
-        caseimportance: medium
-        endsin: 5.8
-        initialEstimate: 1/6h
-        setup: -ssh to appliance
-               -run appliance_console
-               -select option "configure database maintenance"
-               -say yes to unconfigure hourly database maintenance (requires hourly
-               db maintenance to already be configured)
-               -wait 1 hour
-               -check that maintenance is has stopped correctly by checking log in
-               "vmdb/log/hourly.........log"
-        startsin: 5.7
     """
     pass
 
@@ -1194,7 +1135,9 @@ def test_appliance_console_key_fetch_negative():
 def test_appliance_console_negative():
     """
     test launching appliance_console without a network attached
-    https://bugzilla.redhat.com/show_bug.cgi?id=1439345
+
+    Bugzilla:
+        1439345
 
     Polarion:
         assignee: sbulage

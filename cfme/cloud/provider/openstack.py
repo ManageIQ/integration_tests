@@ -91,11 +91,7 @@ class OpenStackProvider(CloudProvider):
 
         event_endpoint_config = prov_config['endpoints'].get(EventsEndpoint.name, {})
         if event_endpoint_config:
-            if (event_endpoint_config.get('event_stream') == 'AMQP' and
-                    BZ(1618700, forced_streams=["5.9", "5.10", "upstream"]).blocks):
-                logger.warning('Skipping AMQP event config due to BZ 1618700')
-            else:
-                endpoints[EventsEndpoint.name] = EventsEndpoint(**event_endpoint_config)
+            endpoints[EventsEndpoint.name] = EventsEndpoint(**event_endpoint_config)
 
         rsa_endpoint_config = prov_config['endpoints'].get(SSHEndpoint.name, {})
         if rsa_endpoint_config:

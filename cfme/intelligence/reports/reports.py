@@ -344,7 +344,7 @@ class Report(BaseEntity, Updateable):
         node = view.reports.tree.expand_path("All Reports", self.company_name, "Custom")
         custom_reports_number = len(view.reports.tree.child_items(node))
         view.configuration.item_select("Delete this Report from the Database",
-            handle_alert=not cancel)
+                                       handle_alert=not cancel)
         if cancel:
             view.wait_displayed()
             view.flash.assert_no_error()
@@ -354,9 +354,7 @@ class Report(BaseEntity, Updateable):
             if custom_reports_number > 1:
                 view = self.create_view(AllCustomReportsView, wait='5s')
             view.flash.assert_no_error()
-            if not BZ(1561779, forced_streams=['5.9', '5.8']).blocks:
-                view.flash.assert_message(
-                    'Report "{}": Delete successful'.format(self.menu_name))
+            view.flash.assert_message('Report "{}": Delete successful'.format(self.menu_name))
 
     @cached_property
     def saved_reports(self):
@@ -529,13 +527,11 @@ class SavedReport(Updateable, BaseEntity):
             "Delete this Saved Report from the Database",
             handle_alert=not cancel
         )
+        view.flash.assert_no_error()
         if cancel:
             assert view.is_displayed
-            view.flash.assert_no_error()
         else:
-            view.flash.assert_no_error()
-            # TODO Doesn't work due to this BZ https://bugzilla.redhat.com/show_bug.cgi?id=1489387
-            # view.flash.assert_message("Successfully deleted Saved Report from the CFME Database")
+            view.flash.assert_message("Successfully deleted Saved Report from the CFME Database")
 
     @property
     def tree_path(self):

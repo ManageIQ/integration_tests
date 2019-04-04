@@ -512,8 +512,6 @@ def test_assign_two_random_events_to_control_policy(control_policy, control_poli
 
 # TODO: fix this test in 5.10 in a later PR
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1565576, forced_streams=["5.9", "5.10"],
-                  unblock=lambda policy_class: policy_class is not PHYS_POLICIES[0])])
 def test_control_assign_actions_to_event(request, policy_class, policy, action):
     """
     Polarion:
@@ -576,10 +574,6 @@ def test_policy_profile_crud(appliance, two_random_policies):
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("fill_type,expression,verify", EXPRESSIONS_TO_TEST, ids=[
     expr[0] for expr in EXPRESSIONS_TO_TEST])
-@pytest.mark.meta(
-    blockers=[BZ(1607361, forced_streams=["5.10"],
-    unblock=lambda fill_type: fill_type != "Find")]
-)
 def test_modify_condition_expression(condition_for_expressions, fill_type, expression, verify):
     """
     Polarion:
@@ -616,7 +610,7 @@ def test_alert_crud(appliance):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1303645], automates=[1303645])
+@pytest.mark.meta(automates=[1303645])
 def test_control_alert_copy(alert):
     """
     Polarion:

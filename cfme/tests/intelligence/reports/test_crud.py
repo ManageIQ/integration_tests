@@ -4,7 +4,6 @@ import pytest
 import yaml
 
 from cfme import test_requirements
-from cfme.intelligence.reports.schedules import NewScheduleView
 from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -60,10 +59,12 @@ def get_custom_report(appliance, custom_report_values):
 @pytest.mark.rhel_testing
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1531600, forced_streams=["5.9"])])
 @test_requirements.report
 def test_custom_report_crud(custom_report_values, appliance):
     """
+    Bugzilla:
+        1531600
+
     Polarion:
         assignee: pvala
         casecomponent: Reporting
@@ -81,10 +82,12 @@ def test_custom_report_crud(custom_report_values, appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1202412])
 @test_requirements.report
 def test_reports_schedule_crud(schedule_data, appliance):
     """
+    Bugzilla:
+        1202412
+
     Polarion:
         assignee: pvala
         casecomponent: Reporting
@@ -100,9 +103,13 @@ def test_reports_schedule_crud(schedule_data, appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1653796), BZ(1667064)])
+@pytest.mark.meta(blockers=[BZ(1667064)])
 def test_menuwidget_crud(appliance):
     """
+    Bugzilla:
+        1653796
+        1667064
+
     Polarion:
         assignee: jhenner
         casecomponent: Reporting
@@ -128,9 +135,13 @@ def test_menuwidget_crud(appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1656413), BZ(1667064)])
+@pytest.mark.meta(blockers=[BZ(1667064)])
 def test_reportwidget_crud(appliance):
     """
+    Bugzilla:
+        1656413
+        1667064
+
     Polarion:
         assignee: jhenner
         casecomponent: Reporting
@@ -149,9 +160,8 @@ def test_reportwidget_crud(appliance):
     )
     view = w.create_view(AllDashboardWidgetsView)
     view.flash.assert_message('Widget "{}" was saved'.format(w.title))
-    if not BZ(1653796, forced_streams=['5.9']).blocks:
-        with update(w):
-            w.active = False
+    with update(w):
+        w.active = False
     w.delete()
 
 

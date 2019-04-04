@@ -168,13 +168,9 @@ class HostAllVMsView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        if self.browser.product_version < "5.9":
-            title = "{} (All VMs)".format(self.context["object"].name)
-        else:
-            title = "{} (All Direct VMs)".format(self.context["object"].name)
         return (
             self.navigation.currently_selected == ["Compute", "Infrastructure", "Hosts"] and
-            self.title.text == title
+            self.title.text == "{} (All Direct VMs)".format(self.context["object"].name)
         )
 
 

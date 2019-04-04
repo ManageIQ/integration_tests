@@ -34,9 +34,6 @@ class BaseLoggedInPage(View):
 
             User is required to be currently logged in
         """
-        if self.extra.appliance.version < '5.9':
-            raise CFMEException("Changing the user group is not supported in versions < 5.9")
-
         if not self.logged_in_as_user:
             raise CFMEException("Unable to change group when a user is not logged in")
 
@@ -87,8 +84,7 @@ class BaseLoggedInPage(View):
         """ Return a list of the logged in user's assigned groups.
 
         Returns:
-            Version >= 5.9 - list containing all groups the logged in user is assigned to
-            Version < 5.9 - single item list containing the user's current group
+            list containing all groups the logged in user is assigned to
         """
 
         return [

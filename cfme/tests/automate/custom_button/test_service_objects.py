@@ -142,7 +142,6 @@ def serv_button_group(appliance, request):
     blockers=[
         BZ(
             1650066,
-            forced_streams=["5.9", "5.10"],
             unblock=lambda display, context: not (
                 context is ViaSSUI and display in ["List", "Single and list"]
             ),
@@ -252,7 +251,7 @@ def test_custom_button_automate_service_obj(
         # BZ-1650066: no custom button on All page
         destinations = (
             ["Details"]
-            if context == ViaSSUI and BZ(1650066, forced_streams=["5.9", "5.10"]).blocks
+            if context == ViaSSUI and BZ(1650066).blocks
             else ["All", "Details"]
         )
         for destination in destinations:
@@ -306,13 +305,7 @@ def test_custom_button_automate_service_obj(
 
 
 @pytest.mark.meta(
-    blockers=[
-        BZ(
-            1659452,
-            forced_streams=["5.9", "5.10"],
-            unblock=lambda serv_button_group: "group" not in serv_button_group,
-        )
-    ]
+    blockers=[BZ(1659452, unblock=lambda serv_button_group: "group" not in serv_button_group)]
 )
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
 def test_custom_button_text_display(appliance, context, serv_button_group, service):
@@ -333,7 +326,8 @@ def test_custom_button_text_display(appliance, context, serv_button_group, servi
             3. Check Group/Button text display or not on UI and SSUI.
 
     Bugzilla:
-        1650066, 1659452
+        1650066
+        1659452
     """
 
     my_service = MyService(appliance, name=service.name)
@@ -343,7 +337,7 @@ def test_custom_button_text_display(appliance, context, serv_button_group, servi
         navigate_to = ssui_nav if context is ViaSSUI else ui_nav
         destinations = (
             ["Details"]
-            if (BZ(1650066, forced_streams=["5.9", "5.10"]).blocks and context is ViaSSUI)
+            if (BZ(1650066).blocks and context is ViaSSUI)
             else ["All", "Details"]
         )
         for destination in destinations:

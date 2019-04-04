@@ -20,9 +20,7 @@ pytestmark = [
     pytest.mark.rhv3
 ]
 
-COLLECTIONS = ['providers', 'vms']
-COLLECTIONS_ADDED_IN_59 = ['instances', 'services']
-COLLECTIONS.extend(COLLECTIONS_ADDED_IN_59)
+COLLECTIONS = ['providers', 'vms', 'instances', 'services']
 
 
 @pytest.fixture(scope='module')
@@ -117,18 +115,16 @@ def add_custom_attributes(request, resource, num=2):
     return attrs
 
 
-def _uncollectif(appliance, provider, collection_name):
+def _uncollect(provider, collection_name):
     return (
-        (appliance.version < '5.9' and collection_name in COLLECTIONS_ADDED_IN_59) or
         (provider.one_of(InfraProvider) and collection_name == 'instances') or
         (provider.one_of(CloudProvider) and collection_name == 'vms')
     )
 
 
 class TestCustomAttributesRESTAPI(object):
-    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
-        _uncollectif(appliance, provider, collection_name)
-    )
+    @pytest.mark.uncollectif(lambda provider, collection_name:
+                             _uncollect(provider, collection_name))
     @pytest.mark.rhv2
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_add(self, request, collection_name, get_resource):
@@ -150,9 +146,8 @@ class TestCustomAttributesRESTAPI(object):
             assert record.name == attr.name
             assert record.value == attr.value
 
-    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
-        _uncollectif(appliance, provider, collection_name)
-    )
+    @pytest.mark.uncollectif(lambda provider, collection_name:
+                             _uncollect(provider, collection_name))
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_from_detail_post(self, request, collection_name, get_resource):
         """Test deleting custom attributes from detail using POST method.
@@ -169,10 +164,8 @@ class TestCustomAttributesRESTAPI(object):
         attributes = add_custom_attributes(request, get_resource[collection_name]())
         delete_resources_from_detail(attributes, method='POST')
 
-    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
-        appliance.version < '5.9' or  # BZ 1422596 was not fixed for versions < 5.9
-        _uncollectif(appliance, provider, collection_name)
-    )
+    @pytest.mark.uncollectif(lambda provider, collection_name:
+                             _uncollect(provider, collection_name))
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_from_detail_delete(self, request, collection_name, get_resource):
         """Test deleting custom attributes from detail using DELETE method.
@@ -189,9 +182,8 @@ class TestCustomAttributesRESTAPI(object):
         attributes = add_custom_attributes(request, get_resource[collection_name]())
         delete_resources_from_detail(attributes, method='DELETE')
 
-    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
-        _uncollectif(appliance, provider, collection_name)
-    )
+    @pytest.mark.uncollectif(lambda provider, collection_name:
+                             _uncollect(provider, collection_name))
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_from_collection(self, request, collection_name, get_resource):
         """Test deleting custom attributes from collection using REST API.
@@ -210,9 +202,8 @@ class TestCustomAttributesRESTAPI(object):
         collection = resource.custom_attributes
         delete_resources_from_collection(attributes, collection=collection, not_found=True)
 
-    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
-        _uncollectif(appliance, provider, collection_name)
-    )
+    @pytest.mark.unollectif(lambda provider, collection_name:
+                            _uncollect(provider, collection_name))
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_single_from_collection(self, request, collection_name, get_resource):
         """Test deleting single custom attribute from collection using REST API.
@@ -232,9 +223,8 @@ class TestCustomAttributesRESTAPI(object):
         collection = resource.custom_attributes
         delete_resources_from_collection([attribute], collection=collection, not_found=True)
 
-    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
-        _uncollectif(appliance, provider, collection_name)
-    )
+    @pytest.mark.uncollectif(lambda provider, collection_name:
+                             _uncollect(provider, collection_name))
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_edit(self, request, from_detail, collection_name, appliance, get_resource):
@@ -277,11 +267,8 @@ class TestCustomAttributesRESTAPI(object):
             assert edited[i].value == body[i]['value'] == attributes[i].value
             assert edited[i].section == body[i]['section'] == attributes[i].section
 
-    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
-        # BZ 1516762 was not fixed for versions < 5.9
-        (appliance.version < '5.9' and collection_name != 'providers') or
-        _uncollectif(appliance, provider, collection_name)
-    )
+    @pytest.mark.uncollectif(lambda provider, collection_name:
+                             _uncollect(provider, collection_name))
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_bad_section_edit(self, request, from_detail, collection_name, appliance, get_resource):
@@ -314,11 +301,8 @@ class TestCustomAttributesRESTAPI(object):
                 resource.custom_attributes.action.edit(*body)
             assert_response(appliance, http_status=400)
 
-    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
-        # BZ 1516762 was not fixed for versions < 5.9
-        (appliance.version < '5.9' and collection_name != 'providers') or
-        _uncollectif(appliance, provider, collection_name)
-    )
+    @pytest.mark.uncollectif(lambda provider, collection_name:
+                             _uncollect(provider, collection_name))
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_bad_section_add(self, request, collection_name, appliance, get_resource):
         """Test adding custom attributes with invalid section to resource using REST API.
@@ -344,11 +328,8 @@ class TestCustomAttributesRESTAPI(object):
             resource.custom_attributes.action.add(body)
         assert_response(appliance, http_status=400)
 
-    @pytest.mark.uncollectif(lambda appliance, provider, collection_name:
-        # BZ 1544800 was not fixed for versions < 5.9
-        appliance.version < '5.9' or
-        _uncollectif(appliance, provider, collection_name)
-    )
+    @pytest.mark.uncollectif(lambda provider, collection_name:
+                             _uncollect(provider, collection_name))
     @pytest.mark.parametrize('collection_name', COLLECTIONS)
     def test_add_duplicate(self, request, collection_name, get_resource):
         """Tests that adding duplicate custom attribute updates the existing one.

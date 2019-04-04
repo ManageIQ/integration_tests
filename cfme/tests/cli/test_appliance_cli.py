@@ -1,7 +1,6 @@
 import pytest
 from wait_for import wait_for
 
-from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 
 pytestmark = [
@@ -23,13 +22,7 @@ tzs = [
     ['UTC'],
 ]
 
-requires_59 = pytest.mark.uncollectif(
-    lambda appliance: appliance.version < '5.9',
-    reason="this test requires an appliance version >= 5.9"
-)
 
-
-@requires_59
 @pytest.mark.tier(1)
 def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
     """Grab fresh appliance and set time and date through appliance_console_cli and check result
@@ -49,7 +42,6 @@ def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
 
 
 @pytest.mark.rhel_testing
-@requires_59
 @pytest.mark.parametrize('timezone', tzs, ids=[tz[0] for tz in tzs])
 @pytest.mark.tier(2)
 def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modscope):
@@ -66,7 +58,6 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
     app.appliance_console.timezone_check(timezone)
 
 
-@pytest.mark.meta(blockers=[BZ(1598427, forced_streams=['5.9', '5.10'])])
 @pytest.mark.tier(2)
 def test_appliance_console_cli_set_hostname(configured_appliance):
     """
@@ -191,7 +182,6 @@ def test_appliance_console_cli_ipa(ipa_crud, configured_appliance, no_ipa_config
     assert wait_for(lambda: not configured_appliance.sssd.running)
 
 
-@requires_59
 @pytest.mark.tier(1)
 def test_appliance_console_cli_extend_storage(unconfigured_appliance):
     """
@@ -208,7 +198,6 @@ def test_appliance_console_cli_extend_storage(unconfigured_appliance):
     wait_for(is_storage_extended)
 
 
-@requires_59
 @pytest.mark.tier(1)
 def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
     """
@@ -226,7 +215,6 @@ def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
 
 
 @pytest.mark.rhel_testing
-@requires_59
 @pytest.mark.tier(1)
 def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, app_creds):
     """
@@ -243,7 +231,6 @@ def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, ap
     wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
 
 
-@pytest.mark.meta(blockers=[BZ(1544854, forced_streams=['5.9', '5.10'])])
 @pytest.mark.tier(2)
 def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     """Tests the configuration of HA with three appliances including failover to standby node

@@ -362,33 +362,31 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
     def add_button(self):
         button_name = fauxfactory.gen_alpha()
         view = navigate_to(self, 'AddButton')
-        if self.appliance.version < '5.9':
-            view.fill({'btn_text': 'btn_text',
-                'btn_hvr_text': button_name,
-                'btn_image': self.button_icon_name,
-                'select_dialog': self.dialog,
-                'system_process': 'Request',
-                'request': 'InspectMe'})
-        else:
-            view.fill({'options': {'btn_text': 'btn_text',
-                                   'btn_hvr_text': button_name,
-                                   'select_dialog': self.dialog,
-                                   'btn_image': self.button_icon_name},
-                       'advanced': {'system_process': 'Request',
-                                    'request': 'InspectMe'}})
+        view.fill(
+            {
+                'options':
+                    {
+                        'btn_text': 'btn_text',
+                        'btn_hvr_text': button_name,
+                        'select_dialog': self.dialog,
+                        'btn_image': self.button_icon_name
+                    },
+                'advanced':
+                    {
+                        'system_process': 'Request',
+                        'request': 'InspectMe'
+                    }
+            }
+        )
         view.add.click()
-        view = self.create_view(DetailsCatalogItemView)
-        wait_for(lambda: view.is_displayed, timeout=5)
+        view = self.create_view(DetailsCatalogItemView, wait=5)
         view.flash.assert_no_error()
         return button_name
 
     @property
     def catalog_name(self):
         # In 5.10 catalog name is appended with 'My Company'
-        cat_name = VersionPicker({
-            LOWEST: getattr(self.catalog, 'name', None),
-            '5.10': 'My Company/{}'.format(getattr(self.catalog, 'name', None))
-        }).pick(self.appliance.version)
+        cat_name = 'My Company/{}'.format(getattr(self.catalog, 'name', None))
         return cat_name
 
 
@@ -457,15 +455,10 @@ class AmazonCatalogItem(CloudInfraCatalogItem):
 
 @attr.s
 class AnsibleTowerCatalogItem(NonCloudInfraCatalogItem):
+    item_type = 'Ansible Tower'
+
     provider = attr.ib(default=None)
     config_template = attr.ib(default=None)
-
-    @property
-    def item_type(self):
-        if self.appliance.version >= '5.9':
-            return 'Ansible Tower'
-        else:
-            return 'AnsibleTower'
 
     @property
     def fill_dict(self):
@@ -523,12 +516,7 @@ class OrchestrationCatalogItem(NonCloudInfraCatalogItem):
 
 
 class RHVCatalogItem(CloudInfraCatalogItem):
-    @property
-    def item_type(self):
-        if self.appliance.version >= '5.9.0.17':
-            return 'Red Hat Virtualization'
-        else:
-            return 'RHEV'
+    item_type = 'Red Hat Virtualization'
 
 
 class SCVMMCatalogItem(CloudInfraCatalogItem):

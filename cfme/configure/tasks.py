@@ -142,9 +142,7 @@ class Task(BaseEntity):
 
     @property
     def queued(self):
-        if self.appliance.version >= '5.9':
-            return self._row.queued.text
-        return None
+        return self._row.queued.text
 
     @property
     def message(self):

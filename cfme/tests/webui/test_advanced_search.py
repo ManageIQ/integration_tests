@@ -108,13 +108,13 @@ pytestmark = [
         'param', params_values,
         ids=['{}-{}'.format(param.entity, param.destination.lower()) for param in params_values]
     ),
-    pytest.mark.uncollectif(lambda param, appliance: (
-        (param.collection in (MyService, 'physical_providers', 'physical_servers', 'volume_backups',
-                       'volume_snapshots') and appliance.version < '5.9') or
-        (param.collection in (ConfigManager, 'ansible_tower_providers') and
-         appliance.version > '5.10') or
-        (param.filter == 'Template (Ansible Tower) : Name' and appliance.version < '5.10') or
-        (param.filter == 'Job Template (Ansible Tower) : Name' and appliance.version > '5.10')))
+    pytest.mark.uncollectif(
+        lambda param, appliance: (
+            appliance.version > '5.10' and
+            (param.collection in (ConfigManager, 'ansible_tower_providers') or
+            param.filter == 'Job Template (Ansible Tower) : Name')
+        )
+    )
 ]
 
 
@@ -176,18 +176,12 @@ def test_can_open_advanced_search(param, appliance):
     view.search.close_advanced_search()
 
 
-@pytest.mark.uncollectif(lambda param, appliance: (
-    (param.collection in (MyService, 'physical_providers', 'physical_servers', 'volume_backups',
-                          'volume_snapshots') and appliance.version < '5.9') or
-    (param.collection in (ConfigManager, 'ansible_tower_providers') and appliance.version > '5.10')
-    or (param.filter == 'Template (Ansible Tower) : Name' and appliance.version < '5.10') or
-    (param.filter == 'Job Template (Ansible Tower) : Name' and appliance.version > '5.10') or
-    (param.collection in ('cloud_host_aggregates', 'cloud_instances', 'cloud_images', 'infra_vms',
-                          'infra_templates', 'datastores', ConfigManager, 'ansible_tower_providers',
-                          'ansible_tower_systems', 'ansible_tower_job_templates', VmsInstances)
-    and appliance.version < '5.10'))
-    or (param.collection == TemplatesImages and BZ(1626579)) or (param.collection == MyService
-                                                                 and BZ(1627078)))
+@pytest.mark.uncollectif(
+    lambda param, appliance: (
+        param.collection in (ConfigManager, 'ansible_tower_providers') or
+        param.filter == 'Job Template (Ansible Tower) : Name'
+    )
+)
 def test_filter_crud(param, appliance):
     """
     Polarion:

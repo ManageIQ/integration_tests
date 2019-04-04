@@ -305,11 +305,8 @@ class Credential(BaseEntity, Taggable):
 
     def delete(self):
         view = navigate_to(self, "Details")
-        if self.appliance.version < "5.9":
-            remove_str = "Remove this Credential"
-        else:
-            remove_str = "Remove this Credential from Inventory"
-        view.toolbar.configuration.item_select(remove_str, handle_alert=True)
+        view.toolbar.configuration.item_select("Remove this Credential from Inventory",
+                                               handle_alert=True)
         credentials_list_page = self.create_view(CredentialsListView)
         wait_for(lambda: False, silent_failure=True, timeout=5)
         assert credentials_list_page.is_displayed

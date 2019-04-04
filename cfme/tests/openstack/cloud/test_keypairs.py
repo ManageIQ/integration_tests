@@ -21,7 +21,6 @@ def keypair(appliance, provider):
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_download_private_key(keypair):
     """
     Polarion:

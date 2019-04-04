@@ -64,7 +64,7 @@ def test_policy_simulation_ui(appliance, provider, navigation):
     assert view.form.cancel_button.is_displayed
     view.form.policy_profile.select_by_visible_text("OpenSCAP profile")
     # now check that we can navigate to the right page
-    if vm.provider.one_of(InfraProvider) or not BZ(1688359, forced_streams=["5.9"]).blocks:
+    if vm.provider.one_of(InfraProvider) or not BZ(1688359).blocks:
         view.form.entities.get_entity(name=vm.name).click()
         view = vm.create_view(PolicySimulationDetailsView, wait="10s")
         # check that the back button works

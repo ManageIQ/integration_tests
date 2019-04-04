@@ -21,13 +21,10 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,
-    pytest.mark.ignore_stream("upstream", "5.8"),
+    pytest.mark.ignore_stream("upstream"),
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, scope="module"),
     test_requirements.ansible,
-    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
-                            reason="5.8 pod appliance doesn't support embedded ansible"),
     pytest.mark.tier(3),
-    pytest.mark.meta(blockers=[BZ(1640533, forced_streams=["5.10"])])
 ]
 
 
@@ -50,19 +47,14 @@ def ansible_repository(appliance, wait_for_ansible):
     except KeyError:
         pytest.skip("Skipping since no such key found in yaml")
     view = navigate_to(repository, "Details")
-    if appliance.version < "5.9":
-        refresh = view.browser.refresh
-    else:
-        refresh = view.toolbar.refresh.click
     wait_for(
         lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
         timeout=60,
-        fail_func=refresh
+        fail_func=view.toolbar.refresh.click
     )
     yield repository
 
-    if repository.exists:
-        repository.delete()
+    repository.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -74,18 +66,17 @@ def ansible_credential(appliance, ansible_repository, full_template_modscope):
         password=credentials[full_template_modscope["creds"]]["password"]
     )
     yield credential
-    if credential.exists:
-        credential.delete()
+    credential.delete_if_exists()
 
 
 @pytest.fixture(scope='module')
 def domain(appliance):
     dc = appliance.collections.domains
-    d = dc.create(
+    _domain = dc.create(
         name='test_{}'.format(fauxfactory.gen_alpha()),
         enabled=True)
-    yield d
-    d.delete()
+    yield _domain
+    _domain.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -128,19 +119,17 @@ def instance(klass, method):
 
 @pytest.fixture
 def management_event_class(appliance, namespace):
-    appliance.collections.domains\
-        .instantiate("ManageIQ")\
-        .namespaces.instantiate("System")\
-        .namespaces.instantiate("Event")\
-        .namespaces.instantiate("CustomEvent")\
-        .classes.instantiate(name="Alert")\
-        .copy_to(namespace.domain)
-    return appliance.collections.domains\
-        .instantiate(namespace.domain.name)\
-        .namespaces.instantiate("System")\
-        .namespaces.instantiate("Event")\
-        .namespaces.instantiate("CustomEvent")\
-        .classes.instantiate(name="Alert")
+    appliance.collections.domains.instantiate(
+        "ManageIQ").namespaces.instantiate(
+        "System").namespaces.instantiate(
+        "Event").namespaces.instantiate(
+        "CustomEvent").classes.instantiate(
+        name="Alert").copy_to(namespace.domain)
+    return appliance.collections.domains.instantiate(
+        namespace.domain.name).namespaces.instantiate(
+        "System").namespaces.instantiate(
+        "Event").namespaces.instantiate(
+        "CustomEvent").classes.instantiate(name="Alert")
 
 
 @pytest.fixture
@@ -181,8 +170,7 @@ def ansible_catalog_item(appliance, ansible_repository):
     )
     yield cat_item
 
-    if cat_item.exists:
-        cat_item.delete()
+    cat_item.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -204,24 +192,23 @@ def custom_vm_button(appliance, ansible_catalog_item):
 @pytest.fixture
 def service_request(appliance, ansible_catalog_item):
     request_desc = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request_ = appliance.collections.requests.instantiate(request_desc)
-    yield service_request_
-    if service_request_.exists():
-        service_request_.remove_request()
+    _service_request = appliance.collections.requests.instantiate(request_desc)
+    yield _service_request
+    if _service_request.exists():
+        _service_request.remove_request()
 
 
 @pytest.fixture
 def service(appliance, ansible_catalog_item):
-    service_ = MyService(appliance, ansible_catalog_item.name)
-    yield service_
+    _service = MyService(appliance, ansible_catalog_item.name)
+    yield _service
 
-    if service_.exists:
-        service_.delete()
+    _service.delete_if_exists()
 
 
 @pytest.fixture
 def alert(appliance, management_event_instance):
-    alert = appliance.collections.alerts.create(
+    _alert = appliance.collections.alerts.create(
         "Trigger by Un-Tag Complete {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -230,22 +217,20 @@ def alert(appliance, management_event_instance):
         notification_frequency="1 Minute",
         mgmt_event=management_event_instance.name,
     )
-    yield alert
-    if alert.exists:
-        alert.delete()
+    yield _alert
+    _alert.delete_if_exists()
 
 
 @pytest.fixture
 def alert_profile(appliance, alert, full_template_vm_modscope):
-    alert_profile = appliance.collections.alert_profiles.create(
+    _alert_profile = appliance.collections.alert_profiles.create(
         alert_profiles.VMInstanceAlertProfile,
         "Alert profile for {}".format(full_template_vm_modscope.name),
         alerts=[alert]
     )
-    alert_profile.assign_to("The Enterprise")
+    _alert_profile.assign_to("The Enterprise")
     yield
-    if alert_profile.exists:
-        alert_profile.delete()
+    _alert_profile.delete_if_exists()
 
 
 def test_automate_ansible_playbook_method_type_crud(appliance, ansible_repository, domain,

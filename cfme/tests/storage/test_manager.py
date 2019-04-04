@@ -55,7 +55,6 @@ def test_manager_navigation(manager):
     manager.refresh()
 
 
-@pytest.mark.meta(blockers=[BZ(1648243, forced_streams=["5.9"])])
 def test_storage_manager_edit_tag(manager):
     """ Test add and remove tag to storage manager
 

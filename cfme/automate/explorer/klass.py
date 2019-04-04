@@ -269,10 +269,8 @@ class ClassCollection(BaseCollection):
         else:
             add_page.add_button.click()
             add_page.flash.assert_no_error()
-            if not BZ(1428424, forced_streams=['5.9']).blocks:
-                add_page.flash.assert_message(
-                    'Automate Class "/{}/{}" was added'.format(
-                        '/'.join(self.tree_path[1:]), name))
+            add_page.flash.assert_message('Automate Class "/{}/{}" was added'
+                                          .format('/'.join(self.tree_path[1:]), name))
             return self.instantiate(name=name, display_name=display_name, description=description)
 
     def delete(self, *classes):

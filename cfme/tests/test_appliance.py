@@ -27,7 +27,7 @@ def test_rpms_present(appliance, package):
     """Verifies nfs-util rpms are in place needed for pxe & nfs operations
 
     Polarion:
-        assignee: mshriver
+        assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
     """
@@ -41,7 +41,7 @@ def test_selinux_enabled(appliance):
     """Verifies selinux is enabled
 
     Polarion:
-        assignee: mshriver
+        assignee: jhenner
         initialEstimate: 1/11h
         testtype: functional
     """
@@ -54,7 +54,7 @@ def test_firewalld_running(appliance):
     """Verifies iptables service is running on the appliance
 
     Polarion:
-        assignee: mshriver
+        assignee: jhenner
         initialEstimate: 1/4h
     """
     result = appliance.ssh_client.run_command('systemctl status firewalld').output
@@ -66,7 +66,7 @@ def test_evm_running(appliance):
     """Verifies overall evm service is running on the appliance
 
     Polarion:
-        assignee: mshriver
+        assignee: jhenner
         caseimportance: critical
         initialEstimate: 1/4h
         testtype: functional
@@ -87,7 +87,7 @@ def test_service_enabled(appliance, service):
     """Verifies if key services are configured to start on boot up
 
     Polarion:
-        assignee: mshriver
+        assignee: jhenner
         caseimportance: critical
         initialEstimate: 1/6h
         testtype: functional
@@ -113,7 +113,7 @@ def test_iptables_rules(appliance, proto, port):
     """Verifies key iptable rules are in place
 
     Polarion:
-        assignee: mshriver
+        assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
         upstream: no
@@ -141,7 +141,7 @@ def test_memory_total(appliance):
     """Verifies that the total memory on the box is >= 6GB
 
     Polarion:
-        assignee: mshriver
+        assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
     """
@@ -155,7 +155,7 @@ def test_cpu_total(appliance):
     """Verifies that the total number of cpus is >= 4
 
     Polarion:
-        assignee: mshriver
+        assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
     """
@@ -169,7 +169,7 @@ def test_certificates_present(appliance, soft_assert):
     """Test whether the required product certificates are present.
 
     Polarion:
-        assignee: mshriver
+        assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
         upstream: no
@@ -229,7 +229,7 @@ def test_db_connection(appliance):
     on an appliance with a working database and UI
 
     Polarion:
-        assignee: mshriver
+        assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
     """
@@ -240,7 +240,7 @@ def test_db_connection(appliance):
 def test_asset_precompiled(appliance):
     """
     Polarion:
-        assignee: mshriver
+        assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
     """
@@ -252,7 +252,7 @@ def test_asset_precompiled(appliance):
 def test_keys_included(appliance, soft_assert):
     """
     Polarion:
-        assignee: mshriver
+        assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
         upstream: no
@@ -264,7 +264,6 @@ def test_keys_included(appliance, soft_assert):
             "{} was not included in the build".format(k))
 
 
-@pytest.mark.ignore_stream("5.9")
 def test_appliance_console_packages(appliance):
     """Test that we have no scl packages installed.
 
@@ -280,7 +279,8 @@ def test_appliance_console_packages(appliance):
 def test_appliance_chrony_conf():
     """
     check that iburst exists within /etc/chrony.conf.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1308606
+    Bugzilla:
+        1308606
 
     Polarion:
         assignee: jhenner
@@ -364,23 +364,6 @@ def test_appliance_replicate_database_disconnection_with_backlog():
 @pytest.mark.manual
 @test_requirements.rep
 @pytest.mark.tier(1)
-@pytest.mark.ignore_stream('5.7', '5.8', '5.9', '5.10')
-def test_appliance_replicate_sync_role_change_with_backlog():
-    """
-    Replicate role change w/ a replication backlog
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
-        endsin: 5.6
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rep
-@pytest.mark.tier(1)
 def test_appliance_replicate_database_disconnection():
     """
     test replication re-connection w/ no backlog
@@ -398,7 +381,8 @@ def test_appliance_replicate_database_disconnection():
 def test_appliance_log_error():
     """
     check logs for errors such as
-    https://bugzilla.redhat.com/show_bug.cgi?id=1392087
+    Bugzilla:
+        1392087
 
     Polarion:
         assignee: jhenner

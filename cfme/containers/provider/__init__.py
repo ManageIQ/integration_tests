@@ -29,8 +29,8 @@ from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
 from cfme.common.provider import provider_types
 from cfme.common.provider_views import BeforeFillMixin
-from cfme.common.provider_views import ContainerProviderAddViewUpdated
-from cfme.common.provider_views import ContainerProviderEditViewUpdated
+from cfme.common.provider_views import ContainerProviderAddView
+from cfme.common.provider_views import ContainerProviderEditView
 from cfme.common.provider_views import ContainerProvidersView
 from cfme.common.provider_views import ProviderDetailsToolBar
 from cfme.common.provider_views import ProviderDetailsView
@@ -419,7 +419,7 @@ class All(CFMENavigateStep):
 @navigator.register(ContainersProviderCollection, 'Add')
 @navigator.register(ContainersProvider, 'Add')
 class Add(CFMENavigateStep):
-    VIEW = ContainerProviderAddViewUpdated
+    VIEW = ContainerProviderAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
@@ -449,7 +449,7 @@ class Dashboard(Details):
 
 @navigator.register(ContainersProvider, 'Edit')
 class Edit(CFMENavigateStep):
-    VIEW = ContainerProviderEditViewUpdated
+    VIEW = ContainerProviderEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):

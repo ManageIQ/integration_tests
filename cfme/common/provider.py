@@ -196,13 +196,6 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             add_view = navigate_to(self, 'Add')
 
             if not cancel or (cancel and any(self.view_value_mapping.values())):
-                # Workaround for BZ#1526050
-                from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-                if self.appliance.version == '5.8.3.0' and self.one_of(VMwareProvider):
-                    add_view.fill({'prov_type': 'Red Hat Virtualization'})
-                elif '5.8.3.0' < self.appliance.version < '5.9':
-                    import warnings
-                    warnings.warn('REMOVE ME: BZ#1526050')
                 # filling main part of dialog
                 add_view.fill(self.view_value_mapping)
 

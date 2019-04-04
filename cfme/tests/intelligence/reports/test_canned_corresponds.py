@@ -133,12 +133,14 @@ def test_cluster_relationships(appliance, soft_assert):
 
 
 @pytest.mark.rhv2
-@pytest.mark.meta(blockers=[BZ(1571254, forced_streams=['5.9', '5.10'])])
 def test_operations_vm_on(soft_assert, appliance, request):
     """Tests vm power options from on
 
     Metadata:
         test_flag: report
+
+    Bugzilla:
+        1571254
 
     Polarion:
         assignee: pvala
@@ -176,9 +178,8 @@ def test_operations_vm_on(soft_assert, appliance, request):
     vm_names = [vm.vm_name for vm in vms_in_db]
     for vm in vms_in_db:
         # Following check is based on BZ 1504010
-        if not BZ(1504010, forced_streams=['5.9']).blocks:
-            assert vm_names.count(vm.vm_name) == 1, (
-                'There is a duplicate entry in DB for VM {}'.format(vm.vm_name))
+        assert vm_names.count(vm.vm_name) == 1, (
+            'There is a duplicate entry in DB for VM {}'.format(vm.vm_name))
         store_path = vm.vm_location.encode('utf8')
         if vm.storages_name:
             store_path = '{}/{}'.format(vm.storages_name.encode('utf8'), store_path)

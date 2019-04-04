@@ -23,7 +23,6 @@ from cfme.utils import safe_string
 from cfme.utils import ssh
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.blockers import GH
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
@@ -757,13 +756,14 @@ def test_ssa_groups(ssa_vm):
 
 
 @pytest.mark.long_running
-@pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_ssa_packages(ssa_vm):
     """ Tests SSA fetches correct results for packages
 
     Metadata:
         test_flag: vm_analysis
+
+    Bugzilla:
+        1551273
 
     Polarion:
         assignee: sbulage
@@ -805,8 +805,6 @@ def test_ssa_packages(ssa_vm):
         pytest.fail('Package {} was not found in details table after SSA run'.format(package_name))
 
 
-@pytest.mark.meta(blockers=[BZ(1553808, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.long_running
 def test_ssa_files(ssa_vm):
     """Tests that instances can be scanned for specific file.
@@ -916,14 +914,15 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
 
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-@pytest.mark.meta(blockers=[BZ(1551273, forced_streams=['5.8', '5.9'],
-                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_ssa_multiple_vms(ssa_multiple_vms, soft_assert, appliance, compare_linux_vm_data,
                           compare_windows_vm_data):
     """ Tests SSA run while selecting multiple vms at once
 
     Metadata:
         test_flag: vm_analysis
+
+    Bugzilla:
+        1551273
 
     Polarion:
         assignee: sbulage

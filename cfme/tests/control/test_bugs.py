@@ -393,11 +393,12 @@ def test_alert_ram_reconfigured(hardware_reconfigured_alert):
 
 @pytest.mark.tier(2)
 @test_requirements.alert
-@pytest.mark.ignore_stream("5.9")
 def test_alert_for_disk_usage(setup_disk_usage_alert):
         """
-        Bugzillas:
-            * 1658670, 1672698
+        Bugzilla:
+            1658670
+            1672698
+
         Polarion:
             assignee: jdupuy
             casecomponent: Control
@@ -456,8 +457,8 @@ def test_alert_for_disk_usage(setup_disk_usage_alert):
 )
 def test_accordion_after_condition_creation(appliance, condition_class):
     """
-    Bugzillas:
-        * 1683697
+    Bugzilla:
+        1683697
 
     Polarion:
         assignee: jdupuy
@@ -468,13 +469,9 @@ def test_accordion_after_condition_creation(appliance, condition_class):
     For this test, we must make a condition 'manually' and so that we can access the view
     during the condition creation.
     """
-    if (
-        BZ(1683697, forced_streams=["5.9", "5.10"]).blocks and
-        (condition_class in BAD_CONDITIONS or appliance.version < "5.10")
-    ):
-        pytest.skip("Skipping because {} conditions are impacted by BZ 1683697".format(
-            condition_class.__name__
-        ))
+    if BZ(1683697).blocks and condition_class in BAD_CONDITIONS:
+        pytest.skip("Skipping because {} conditions are impacted by BZ 1683697"
+                    .format(condition_class.__name__))
     condition = appliance.collections.conditions.create(condition_class,
         fauxfactory.gen_alpha(),
         expression="fill_field({} : Name, IS NOT EMPTY)".format(

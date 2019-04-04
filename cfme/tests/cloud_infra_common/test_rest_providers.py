@@ -4,8 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -52,6 +50,10 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
     Metadata:
         test_flag: rest
 
+    Bugzilla:
+        1612905
+        1546112
+
     Polarion:
         assignee: pvala
         casecomponent: Rest
@@ -60,27 +62,12 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
     """
     outcome = query_resource_attributes(provider_rest)
     for failure in outcome.failed:
-        if provider.one_of(InfraProvider):
-            # once BZ1545240 is fixed other failure than internal server
-            # error is expected
-            if failure.name == 'cloud_tenants' and BZ(
-                    1612905, forced_streams=['5.8', '5.9', 'upstream']).blocks:
-                continue
-            if failure.name == 'flavors' and BZ(
-                    1612905, forced_streams=['5.9', 'upstream']).blocks:
-                continue
-        if provider.one_of(RHEVMProvider):
-            # once BZ1546112 is fixed other failure than internal server
-            # error is expected
-            if failure.name in ('cloud_networks', 'cloud_subnets', 'security_groups') and BZ(
-                    1546112, forced_streams=['5.9', 'upstream']).blocks:
-                continue
+        # once BZ1546112 is fixed other failure than internal server error is expected
         soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
             failure.type, failure.name, failure.response.status_code, failure.error))
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 def test_provider_options(appliance):
     """Tests that provider settings are present in OPTIONS listing.
 
@@ -177,7 +164,9 @@ def test_provider_edit(request, provider_rest, appliance):
 def test_provider_delete_from_detail(provider_rest, method):
     """Tests deletion of the provider from detail using REST API.
 
-    Testing BZs 1525498, 1501941
+    Bugzilla:
+        1525498
+        1501941
 
     Metadata:
         test_flag: rest
@@ -195,7 +184,9 @@ def test_provider_delete_from_detail(provider_rest, method):
 def test_provider_delete_from_collection(provider_rest):
     """Tests deletion of the provider from collection using REST API.
 
-    Testing BZs 1525498, 1501941
+    Bugzilla:
+        1525498
+        1501941
 
     Metadata:
         test_flag: rest

@@ -6,7 +6,6 @@ import pytest
 
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 
@@ -60,7 +59,6 @@ def get_table_attr(instance, table_name, attr):
         return table.read().get(attr)
 
 
-@pytest.mark.meta(blockers=[BZ(1620068, forced_streams=["5.9", "5.10"])])
 def test_check_compliance_provider_policy(provider, soft_assert, delete_all_container_tasks,
                                           openscap_assigned_rand_image):
 

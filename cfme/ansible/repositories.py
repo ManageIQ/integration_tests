@@ -159,11 +159,8 @@ class Repository(BaseEntity, Fillable, Taggable):
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
-            if self.appliance.version < "5.9":
-                msg = 'Edit of Repository "{}" was successfully initialized.'
-            else:
-                msg = 'Edit of Repository "{}" was successfully initiated.'
-            view.flash.assert_message(msg.format(updates.get("name", self.name)))
+            view.flash.assert_message('Edit of Repository "{}" was successfully initiated.'
+                                      .format(updates.get("name", self.name)))
 
             def _wait_until_changes_applied():
                 changed_updated_at = self.db_object.updated_at
@@ -177,11 +174,8 @@ class Repository(BaseEntity, Fillable, Taggable):
     def delete(self):
         """Delete the repository in the UI."""
         view = navigate_to(self, "Details")
-        if self.appliance.version < "5.9":
-            remove_str = "Remove this Repository"
-        else:
-            remove_str = "Remove this Repository from Inventory"
-        view.toolbar.configuration.item_select(remove_str, handle_alert=True)
+        view.toolbar.configuration.item_select("Remove this Repository from Inventory",
+                                               handle_alert=True)
         repo_list_page = self.create_view(RepositoryAllView)
         assert repo_list_page.is_displayed
         repo_list_page.flash.assert_no_error()
@@ -239,11 +233,8 @@ class RepositoryCollection(BaseCollection):
         repo_list_page = self.create_view(RepositoryAllView)
         assert repo_list_page.is_displayed
         repo_list_page.flash.assert_no_error()
-        if self.appliance.version < "5.9.2":
-            initiated_message = 'Add of Repository "{}" was successfully initialized.'.format(name)
-        else:
-            initiated_message = 'Add of Repository "{}" was successfully initiated.'.format(name)
-        repo_list_page.flash.assert_message(initiated_message)
+        repo_list_page.flash.assert_message('Add of Repository "{}" was successfully initiated.'
+                                            .format(name))
 
         repository = self.instantiate(
             name,

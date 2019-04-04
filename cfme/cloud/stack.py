@@ -265,10 +265,8 @@ class Stack(Pretty, BaseEntity, Taggable):
     def delete(self):
         """Delete the stack from detail view"""
         view = navigate_to(self, 'Details')
-        msg = 'Remove this Orchestration Stack'
-        if self.appliance.version >= '5.9':
-            msg = 'Remove this Orchestration Stack from Inventory'
-        view.toolbar.configuration.item_select(msg, handle_alert=True)
+        view.toolbar.configuration.item_select('Remove this Orchestration Stack from Inventory',
+                                               handle_alert=True)
         view.flash.assert_success_message('The selected Orchestration Stacks was deleted')
 
         def refresh():

@@ -105,23 +105,14 @@ def test_provider_log_updated(appliance, provider, log_exists):
     assert log_before != log_after, "Log hashes are the same"
 
 
-@pytest.mark.meta(blockers=[BZ(1633656,
-                               unblock=lambda provider: provider.one_of(AzureProvider, EC2Provider),
-                               forced_streams=["5.9", "5.10", "upstream"]),
-                            BZ(1640718,
-                               unblock=lambda provider: not provider.one_of(AzureProvider),
-                               forced_streams=["5.9"])
-                            ]
-                  )
+@pytest.mark.meta(blockers=[BZ(1633656, forced_streams=['5.10', 'upstream'])])
 def test_provider_log_level(appliance, provider, log_exists):
     """
     Tests that log level in advanced settings affects log files
 
-    Steps:
-    1. Change log level to debug
-    2. Refresh provider
-    3. Check logs contain debug level
-    4. Reset level back
+    Bugzilla:
+        1633656
+        1640718
 
     Metadata:
         test_flag: log
@@ -130,6 +121,11 @@ def test_provider_log_level(appliance, provider, log_exists):
         assignee: anikifor
         initialEstimate: 1/4h
         casecomponent: Configuration
+        testSteps:
+            1. Change log level to debug
+            2. Refresh provider
+            3. Check logs contain debug level
+            4. Reset level back
     """
     assert log_exists, "Log file {}.log doesn't exist".format(provider.log_name)
     log_level = appliance.server.advanced_settings['log']['level_{}'.format(provider.log_name)]

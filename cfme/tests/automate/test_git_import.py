@@ -13,21 +13,13 @@ GIT_REPO_URL = "https://github.com/RedHatQE/ManageIQ-automate-git.git"
 
 
 @pytest.fixture
-def branch(appliance):
-    if appliance.version < "5.9":
-        return "origin/5.8"
-    else:
-        return "origin/master"
-
-
-@pytest.fixture
-def imported_domain(appliance, branch):
+def imported_domain(appliance):
     repo = AutomateGitRepository(
         url=GIT_REPO_URL,
         verify_ssl=False,
         appliance=appliance
     )
-    domain = repo.import_domain_from(branch=branch)
+    domain = repo.import_domain_from(branch="origin/master")
     yield domain
     domain.delete_if_exists()
 
@@ -49,7 +41,7 @@ def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
 
 
 @pytest.mark.tier(2)
-def test_automate_git_domain_displayed_in_service(appliance, imported_domain, branch):
+def test_automate_git_domain_displayed_in_service(appliance, imported_domain):
     """Tests if a domain is displayed in a service.
        Checks if the domain imported from git is displayed and usable in the pop-up tree in the
        dialog for creating services.
@@ -67,7 +59,7 @@ def test_automate_git_domain_displayed_in_service(appliance, imported_domain, br
     view.provisioning_entry_point.click()
     view.modal.tree.click_path(
         "Datastore",
-        "{0} ({1}) ({0}) (Locked)".format(imported_domain.name, branch),
+        "{0} ({1}) ({0}) (Locked)".format(imported_domain.name, "origin/master"),
         "Service",
         "Provisioning",
         "StateMachines",

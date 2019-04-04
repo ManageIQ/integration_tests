@@ -141,11 +141,8 @@ def create_tags(appliance, transformation_method):
 
 def set_conversion_instance_for_rhev(appliance, transformation_method, rhev_hosts):
     """Assigning tags to conversion host.
-       In 5.9 all rhev hosts and tagged with tags V2V - Transformation Host=t
-       and V2V - Transformation Method=vddk/ssh.These tags are automatically removed
-       once the provider is deleted.
 
-       In 5.10 rails console commands are run to configure all the rhev hosts.
+    In 5.10 rails console commands are run to configure all the rhev hosts.
 
     Args:
         appliance:
@@ -155,27 +152,20 @@ def set_conversion_instance_for_rhev(appliance, transformation_method, rhev_host
 
     for host in rhev_hosts:
         # set conversion host via rails console
-        if appliance.version >= "5.10":
-            # Delete all prior conversion hosts otherwise it creates duplicate entries
-            delete_hosts = appliance.ssh_client.run_rails_command("'ConversionHost.delete_all'")
-            if not delete_hosts.success:
-                pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
+        # Delete all prior conversion hosts otherwise it creates duplicate entries
+        delete_hosts = appliance.ssh_client.run_rails_command("'ConversionHost.delete_all'")
+        if not delete_hosts.success:
+            pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
 
-            set_conv_host = appliance.ssh_client.run_rails_command(
-                "'r = Host.find_by(name:{host});\
-            c_host = ConversionHost.create(name:{host},resource:r);\
-            c_host.{method}_transport_supported = true;\
-            c_host.save'".format(host=json.dumps(host.name),
-                                 method=transformation_method.lower())
-            )
-            if not set_conv_host.success:
-                pytest.skip("Failed to set conversion hosts:".format(set_conv_host.output))
-        else:
-            tag1, tag2 = create_tags(appliance, transformation_method)
-            # if _tag_cleanup() returns True, means all tags were removed
-            if _tag_cleanup(host, tag1, tag2):
-                # so we call add_tags to add only required tags
-                host.add_tags(tags=(tag1, tag2))
+        set_conv_host = appliance.ssh_client.run_rails_command(
+            "'r = Host.find_by(name:{host});\
+        c_host = ConversionHost.create(name:{host},resource:r);\
+        c_host.{method}_transport_supported = true;\
+        c_host.save'".format(host=json.dumps(host.name),
+                             method=transformation_method.lower())
+        )
+        if not set_conv_host.success:
+            pytest.skip("Failed to set conversion hosts:".format(set_conv_host.output))
 
 
 def set_conversion_instance_for_osp(appliance, osp_provider, transformation_method='vddk'):

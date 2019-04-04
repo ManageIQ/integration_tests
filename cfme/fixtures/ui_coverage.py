@@ -204,55 +204,11 @@ class CoverageManager(object):
         # Put the coverage hook in the miq config path
         self.ipapp.ssh_client.put_file(
             coverage_hook.strpath,
-            rails_root.join('config', coverage_hook_file_name).strpath)
-        # XXX: Once the manageiq PR 17302 makes it into the 5.9 and 5.8 stream we
-        #      can remove all the code in this function after this.   This is only
-        #      a temporary fix so we can start acquiring code coverage statistics.
-        #
-        # See if we need to install the patch.   If not just return.
-        # The patch will create the file lib/code_coverage.rb under the rails root.
-        # so if that is there we assume the patch is already installed.
-        result = self.ipapp.ssh_client.run_command('cd {}; [ -e lib/code_coverage.rb ]'.format(
-            rails_root))
-        if result.success:
-            return True
-        # place patch on the system
-        self.log.info('Patching system with manageiq patch #17302')
-        coverage_hook_patch_name = 'manageiq-17302.patch'
-        local_coverage_hook_patch = coverage_data.join(coverage_hook_patch_name)
-        remote_coverage_hook_patch = rails_root.join(coverage_hook_patch_name)
-        self.ipapp.ssh_client.put_file(
-            local_coverage_hook_patch.strpath,
-            remote_coverage_hook_patch.strpath)
-        # See if we need to install the patch command:
-        result = self.ipapp.ssh_client.run_command('rpm -q patch')
-        if not result.success:
-            # Setup yum repositories and install patch
-            local_yum_repo = log_path.join('yum.local.repo')
-            remote_yum_repo = '/etc/yum.repos.d/local.repo'
-            repo_data = cfme_data['basic_info']['local_yum_repo']
-            yum_repo_data = '''
-[{name}]
-name={name}
-baseurl={baseurl}
-enabled={enabled}
-gpgcheck={gpgcheck}
-'''.format(
-                name=repo_data['name'],
-                baseurl=repo_data['baseurl'],
-                enabled=repo_data['enabled'],
-                gpgcheck=repo_data['gpgcheck'])
-            with open(local_yum_repo.strpath, 'w') as f:
-                f.write(yum_repo_data)
-            self.ipapp.ssh_client.put_file(local_yum_repo.strpath, remote_yum_repo)
-            self.ipapp.ssh_client.run_command('yum install -y patch')
-            # Remove the yum repo just in case a test of registering the system might
-            # happen and this repo cause problems with the test.
-            self.ipapp.ssh_client.run_command('rm {}'.format(remote_yum_repo))
-        # patch system.
-        result = self.ipapp.ssh_client.run_command('cd {}; patch -p1 < {}'.format(
-            rails_root.strpath,
-            remote_coverage_hook_patch.strpath))
+            rails_root.join('config', coverage_hook_file_name).strpath
+        )
+        result = self.ipapp.ssh_client.run_command(
+            'cd {}; [ -e lib/code_coverage.rb ]'.format(rails_root)
+        )
         return result.success
 
     def _collect_reports(self):

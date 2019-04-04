@@ -2,15 +2,12 @@ import pytest
 from deepdiff import DeepDiff
 
 from cfme.roles import role_access_ui_510z
-from cfme.roles import role_access_ui_59z
 from cfme.utils.appliance import find_appliance
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
-from cfme.utils.version import Version
-from cfme.utils.version import VersionPicker
 
 
 def pytest_generate_tests(metafunc):
@@ -24,10 +21,9 @@ def pytest_generate_tests(metafunc):
     parameter_list = []
     id_list = []
     # TODO: Include SSUI role_access dict and VIASSUI context
-    role_access_ui = VersionPicker({
-        Version.lowest(): role_access_ui_59z,
-        '5.10': role_access_ui_510z
-    }).pick(appliance.version)
+    # This is assigned generically, even though only onle role_access_ui tree is in use
+    # Likely to be version dependent with 5.11, and require a VersionPicker to assign role_access_ui
+    role_access_ui = role_access_ui_510z
     logger.info('Using the role access dict: %s', role_access_ui)
     roles_and_context = [(
         role_access_ui, ViaUI)
@@ -82,26 +78,14 @@ def test_group_roles(appliance, setup_aws_auth_provider, group_name, role_access
             nav_visible = view.navigation.nav_item_tree()
 
             # RFE BZ 1526495 shows up as an extra requests link in nav
-            # TODO BZ remove assert skip when BZ is fixed in 59z
-            bz = BZ(1526495,
-                    forced_streams=['5.8', '5.9'],
-                    unblock=lambda group_name: group_name not in
-                    ['evmgroup-user', 'evmgroup-approver', 'evmgroup-desktop', 'evmgroup-vm_user',
-                     'evmgroup-administrator', 'evmgroup-super_administrator'])
             for area in group_access.keys():
                 # using .get() on nav_visibility because it may not have `area` key
                 diff = DeepDiff(group_access[area], nav_visible.get(area, {}),
                                 verbose_level=0,  # If any higher, will flag string vs unicode
                                 ignore_order=True)
-                nav_extra = diff.get('iterable_item_added')
 
-                if nav_extra and 'Requests' in nav_extra.values() and bz.blocks:
-                    logger.warning('Skipping RBAC verification for group "%s" in "%s" due to %r',
-                                   group_name, area, bz)
-                    continue
-                else:
-                    soft_assert(diff == {}, '{g} RBAC mismatch (expected first) for {a}: {d}'
-                                            .format(g=group_name, a=area, d=diff))
+                soft_assert(diff == {}, '{g} RBAC mismatch (expected first) for {a}: {d}'
+                                        .format(g=group_name, a=area, d=diff))
 
         appliance.server.login_admin()
         assert user.exists

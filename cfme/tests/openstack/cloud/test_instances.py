@@ -239,7 +239,7 @@ def test_start_instance(new_instance):
 def test_soft_reboot_instance(new_instance):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
         initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
@@ -256,7 +256,7 @@ def test_soft_reboot_instance(new_instance):
 def test_hard_reboot_instance(new_instance):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
         initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
@@ -273,7 +273,7 @@ def test_hard_reboot_instance(new_instance):
 def test_delete_instance(new_instance, provider):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
         initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
@@ -298,7 +298,7 @@ def test_delete_instance(new_instance, provider):
 def test_instance_operating_system_linux(new_instance):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
         initialEstimate: 1/4h
     """
     view = navigate_to(new_instance, 'Details')
@@ -311,7 +311,7 @@ def test_instance_operating_system_linux(new_instance):
 def test_instance_attach_volume(volume, new_instance, appliance):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
         initialEstimate: 1/4h
     """
     initial_volume_count = new_instance.volume_count
@@ -327,11 +327,10 @@ def test_instance_attach_volume(volume, new_instance, appliance):
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_instance_attach_detach_volume_with_type(volume_with_type, new_instance, appliance):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
         initialEstimate: 1/4h
     """
     initial_volume_count = new_instance.volume_count

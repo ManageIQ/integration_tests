@@ -176,8 +176,6 @@ def test_embedded_ansible_repository_invalid_url_crud(request, appliance, wait_f
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(("credential_type", "credentials"), CREDENTIALS,
     ids=[cred[0] for cred in CREDENTIALS])
-@pytest.mark.uncollectif(lambda appliance, credential_type: appliance.version < "5.9.2.1" and
-                         credential_type == "Red Hat Virtualization")
 def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansible, credential_type,
         credentials, appliance):
     """

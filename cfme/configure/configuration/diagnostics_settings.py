@@ -82,10 +82,7 @@ class DiagnosticWorker(BaseEntity):
         # Initiate the restart
         for pid_item in pid:
             row = view.workers_table.row(pid=pid_item)
-            if self.appliance.version >= '5.9':
-                row[0].check(),
-            else:
-                row.click()
+            row[0].check()
             view.toolbar.configuration.item_select("Restart selected worker", handle_alert=True)
         return pid
 
@@ -192,20 +189,27 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         updated = view.fill({'depot_type': depot_type})
         fill_dict = {}
         if depot_type != 'Red Hat Dropbox':
-            fill_dict.update({'depot_info': {
-                'depot_name': updates.get('depot_name'),
-                'uri': updates.get('uri')}
-            })
+            fill_dict.update(
+                {
+                    'depot_info':
+                        {
+                            'depot_name': updates.get('depot_name'),
+                            'uri': updates.get('uri')
+                        }
+                }
+            )
         else:  # all data is filled automatically for Red Hat Dropbox depot type
             updated = True
         if depot_type in ['FTP', 'Samba']:
-            fill_dict.update({'depot_creds': {
-                'username': updates.get('username'),
-                'password': updates.get('password')
-            }
-            })
-            if self.appliance.version < '5.9':
-                fill_dict['depot_creds']['confirm_password'] = updates.get('password')
+            fill_dict.update(
+                {
+                    'depot_creds':
+                        {
+                            'username': updates.get('username'),
+                            'password': updates.get('password')
+                        }
+                }
+            )
         updated = view.fill(fill_dict) or updated
         try:
             view.depot_creds.validate_button.click()
@@ -226,7 +230,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             flash_message = "Log Depot Settings were saved"
         else:
             logger.info('Settings were not updated')
-        view = self.create_view(flash_view)
+        view = self.create_view(flash_view, wait=10)  # implicit assert
         view.flash.assert_message(flash_message)
 
     @property

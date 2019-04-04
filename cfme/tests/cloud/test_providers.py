@@ -19,7 +19,6 @@ from cfme.cloud.provider.openstack import RHOSEndpoint
 from cfme.common.provider_views import CloudProviderAddView
 from cfme.common.provider_views import CloudProvidersView
 from cfme.fixtures.provider import enable_provider_regions
-from cfme.fixtures.pytest_store import store
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -57,66 +56,6 @@ def test_add_cancelled_validation_cloud(request, appliance):
         prov.create(cancel=True)
     view = prov.browser.create_view(CloudProvidersView)
     view.flash.assert_success_message('Add of Cloud Provider was cancelled by the user')
-
-
-@pytest.mark.tier(3)
-@pytest.mark.uncollect()
-@pytest.mark.usefixtures('has_no_cloud_providers')
-@test_requirements.discovery
-def test_providers_discovery_amazon(appliance):
-    """
-    Polarion:
-        assignee: pvala
-        initialEstimate: 1/4h
-    """
-    # This test was being uncollected anyway, and needs to be parametrized and not directory call
-    # out to specific credential keys
-    # amazon_creds = get_credentials_from_config('cloudqe_amazon')
-    # discover(amazon_creds, EC2Provider)
-    collection = appliance.collections.cloud_providers
-    view = appliance.browser.create_view(CloudProvidersView)
-    view.flash.assert_success_message('Amazon Cloud Providers: Discovery successfully initiated')
-    collection.wait_for_new_provider()
-
-
-@pytest.mark.uncollectif(lambda provider: (store.current_appliance.version >= '5.9' or
-                                           not(provider.one_of(AzureProvider) or
-                                               provider.one_of(EC2Provider))),
-                         reason='no more support for cloud provider discovery')
-@test_requirements.discovery
-@pytest.mark.tier(1)
-def test_providers_discovery(request, appliance, provider):
-    """Tests provider discovery
-
-    Metadata:
-        test_flag: crud
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Cloud
-        caseimportance: high
-        initialEstimate: 1/8h
-    """
-    if provider.one_of(AzureProvider):
-        cred = Credential(
-            principal=provider.default_endpoint.credentials.principal,
-            secret=provider.default_endpoint.credentials.secret,
-            tenant_id=provider.data['tenant_id'],
-            subscription_id=provider.data['subscription_id'])
-    elif provider.one_of(EC2Provider):
-        cred = Credential(
-            principal=provider.default_endpoint.credentials.principal,
-            secret=provider.default_endpoint.credentials.secret,
-            verify_secret=provider.default_endpoint.credentials.secret)
-
-    collection = appliance.collections.cloud_providers
-
-    collection.discover(cred, provider)
-    view = provider.create_view(CloudProvidersView)
-    view.flash.assert_success_message('Cloud Providers: Discovery successfully initiated')
-
-    request.addfinalizer(CloudProvider.clear_providers)
-    collection.wait_for_new_provider()
 
 
 @pytest.mark.tier(3)
@@ -395,9 +334,9 @@ def test_azure_subscription_required(request, provider):
     """
     provider.subscription_id = ''
     request.addfinalizer(provider.delete_if_exists)
-    flash = ('Credential validation was not successful: '
-            'Incorrect credentials - check your Azure Subscription ID')
-    with pytest.raises(AssertionError, match=flash):
+    with pytest.raises(AssertionError,
+                       match='Credential validation was not successful: Incorrect credentials '
+                             '- check your Azure Subscription ID'):
         provider.create()
 
 
@@ -452,7 +391,6 @@ def test_openstack_provider_has_api_version(appliance):
     assert view.api_version.is_displayed, "API version select is not visible"
 
 
-@pytest.mark.ignore_stream('5.9')
 def test_openstack_provider_has_dashboard(appliance, openstack_provider):
     """Check whether dashboard view is available for Openstack provider
     https://bugzilla.redhat.com/show_bug.cgi?id=1487142
@@ -566,16 +504,14 @@ def test_cloud_names_grid_floating_ips(appliance, ec2_provider, soft_assert):
     view = navigate_to(floating_ips_collection, "All")
     view.toolbar.view_selector.select('Grid View')
     for entity in view.entities.get_all():
-        if appliance.version < '5.9':
-            soft_assert(entity.name)
-        else:
-            soft_assert('title="{}"'.format(entity.data['address']) in entity.data['quadicon'])
+        soft_assert('title="{}"'.format(entity.data['address']) in entity.data['quadicon'])
 
 
 @pytest.mark.tier(3)
 def test_display_network_topology(appliance, openstack_provider):
     """
-        BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1343553
+        Bugzilla:
+            1343553
 
         Steps to Reproduce:
         1. Add RHOS undercloud provider
@@ -664,7 +600,6 @@ class TestProvidersRESTAPI(object):
         # if it's not empty, check type
         if security_groups:
             assert 'SecurityGroup' in security_groups[0]['type']
-
 
 
 @pytest.mark.provider([CloudProvider], override=True, selector=ONE)

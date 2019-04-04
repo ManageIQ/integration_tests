@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.wait import wait_for
@@ -11,13 +10,8 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=['+embedded_ansible']),
-    pytest.mark.uncollectif(lambda appliance: appliance.version < '5.8',
-                            reason="Ansible was added only in 5.8"),
     pytest.mark.ignore_stream('upstream'),
     test_requirements.ansible,
-    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
-                            reason="5.8 pod appliance doesn't support embedded ansible"),
-    pytest.mark.meta(blockers=[BZ(1640533, forced_streams=["5.10"])])
 ]
 
 
@@ -114,20 +108,18 @@ class TestReposRESTAPI(object):
             casecomponent: Rest
             caseimportance: medium
             initialEstimate: 1/4h
+
+        Bugzilla:
+            1477520
         """
         del_action = getattr(repository.action.delete, method.upper())
         del_action()
         assert_response(appliance)
         repository.wait_not_exists(num_sec=300, delay=5)
 
-        if appliance.version < '5.9' and BZ(1511148).blocks:
+        with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
             del_action()
-            assert_response(appliance, success=False)
-        else:
-            # testing BZ 1477520
-            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                del_action()
-            assert_response(appliance, http_status=404)
+        assert_response(appliance, http_status=404)
 
     def test_delete_repository_from_collection(self, appliance, repository):
         """Deletes repository from collection using REST API

@@ -468,10 +468,6 @@ def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_reque
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[
-    BZ(1519275, forced_streams=['5.9']),
-    BZ(1515841, forced_streams=['5.9'])
-])
 def test_service_ansible_execution_ttl(request, service_catalog, ansible_catalog_item, service,
          service_request):
     """Test if long running processes allowed to finish. There is a code that guarantees to have 100
@@ -484,6 +480,10 @@ def test_service_ansible_execution_ttl(request, service_catalog, ansible_catalog
         caseimportance: medium
         initialEstimate: 2h
         tags: ansible_embed
+
+    Bugzilla:
+        1519275
+        1515841
     """
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
@@ -510,7 +510,9 @@ def test_custom_button_ansible_credential_list(custom_service_button, service_ca
         service_request, appliance):
     """Test if credential list matches when the Ansible Playbook Service Dialog is invoked from a
     Button versus a Service Order Screen.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1448918
+
+    Bugzilla:
+        1448918
 
     Polarion:
         assignee: sbulage
@@ -536,8 +538,11 @@ def test_custom_button_ansible_credential_list(custom_service_button, service_ca
 @pytest.mark.tier(3)
 def test_ansible_group_id_in_payload(service_catalog, service_request, service):
     """Test if group id is presented in manageiq payload.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1480019
+
     In order to get manageiq payload the service's standard output should be parsed.
+
+    Bugzilla:
+        1480019
 
     Polarion:
         assignee: sbulage

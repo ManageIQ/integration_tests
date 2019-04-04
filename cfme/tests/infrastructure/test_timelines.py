@@ -266,7 +266,7 @@ class VMEvent(object):
                         break
                     elif (
                         self.event == 'create' and
-                        BZ(1687493, forced_stream=["5.9", "5.10"],
+                        BZ(1687493,
                            unblock=lambda provider: not provider.one_of(RHEVMProvider)).blocks and
                         self.vm.name in evt.message and evt.event_type in self.tl_event
                     ):
@@ -507,14 +507,15 @@ def test_infra_timeline_rename_event(new_vm, soft_assert):
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.meta(blockers=[BZ(1550488, forced_streams=["5.9", "5.10"],
-                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_infra_timeline_delete_event(new_vm, soft_assert):
     """Test that the event delete is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
 
     Metadata:
         test_flag: events, provision, timelines
+
+    Bugzilla:
+        1550488
 
     Polarion:
         assignee: jdupuy

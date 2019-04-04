@@ -195,9 +195,6 @@ def get_vddk_url(provider):
         major = str(provider.version)
         minor = "0"
     vddk_version = "v{}_{}".format(major, minor)
-    # cf. BZ 1651702 vddk_version 6_7 does not currently work with CFME, so use v6_5
-    if BZ(1651702, forced_streams=['5.9', '5.10']).blocks:
-        vddk_version = "v6_5"
     try:
         url = conf.cfme_data.basic_info.vddk_url.get(vddk_version)
     except (KeyError, AttributeError):
