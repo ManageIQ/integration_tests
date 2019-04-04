@@ -194,9 +194,11 @@ def service_vm(appliance, provider, catalog_item):
     if not provision_request.is_finished():
         pytest.skip("Failed to provision service '{}'".format(catalog_item.name))
 
-    service = MyService(appliance, catalog_item.name, vm_name)
+    service = MyService(appliance, catalog_item.name, vm_name=vm_name)
     yield service, vm
 
     vm.cleanup_on_provider()
     if service.exists:
         service.delete()
+    if provision_request.exists:
+        provision_request.remove_request_rest()

@@ -26,7 +26,9 @@ from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import Calendar
+from widgetastic_manageiq import EntitiesConditionalView
 from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import JSBaseEntity
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import ParametrizedSummaryTable
 from widgetastic_manageiq import Search
@@ -113,6 +115,11 @@ class MyServiceDetailsEntities(View):
     vm = SummaryTable(title='Totals for Service VMs ')
     smart_management = SummaryTable(title='Smart Management')
     generic_objects = SummaryTable(title='Generic Objects')
+    vms = EntitiesConditionalView()
+
+    @property
+    def entity_class(self):
+        return JSBaseEntity
 
 
 class MyServiceDetailView(MyServicesView):
@@ -415,14 +422,13 @@ class MyServiceReconfigure(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Reconfigure this Service')
 
 
-# FIXME: This nav destination needs a new widget for VMs on the Service details page
-# @navigator.register(MyService, 'VMDetails')
-# class MyServiceVMDetails(CFMENavigateStep):
-#     VIEW = ServiceVMDetailsView
-#     prerequisite = NavigateToSibling('Details')
-#
-#     def step(self, *args, **kwargs):
-#         self.prerequisite_view.entities.get_entity(name=self.obj.vm_name).click()
+@navigator.register(MyService, "VMDetails")
+class MyServiceVMDetails(CFMENavigateStep):
+    VIEW = ServiceVMDetailsView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.vms.get_entity(name=self.obj.vm_name).click()
 
 
 @navigator.register(MyService, 'GenericObjectInstance')

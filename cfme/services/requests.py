@@ -193,6 +193,16 @@ class Request(BaseEntity):
         view = navigate_to(self, 'Details')
         view.toolbar.delete.click(handle_alert=not cancel)
 
+    @variable(alias="rest")
+    def remove_request_rest(self):
+        if "service" in self.rest.request_type:
+            request = self.appliance.rest_api.collections.service_requests.find_by(id=self.rest.id)
+            request[0].action.delete()
+        else:
+            raise NotImplementedError(
+                "{} does not support delete operation via REST".format(self.rest.request_type)
+            )
+
     @variable(alias='rest')
     def is_finished(self):
         """Helper function checks if a request is completed
