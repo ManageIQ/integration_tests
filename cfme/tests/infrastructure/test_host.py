@@ -137,7 +137,10 @@ def test_multiple_host_good_creds(setup_provider, provider, creds):
         pytest.skip('not enough hosts to run test')
     """  Tests multiple host credentialing  with good credentials """
     host = random.choice(provider.data["hosts"])
-    host_creds = credentials[host['credentials'][creds]]
+    host_creds = credentials.get(host['credentials'].get(creds, None), None)
+    if not host_creds:
+        pytest.skip("This host {} doesn't have necessary creds {}. skipping test. "
+                    "Please check yaml data".format(host, creds))
     cred = Credential(principal=host_creds.username, secret=host_creds.password)
 
     edit_view = navigate_and_select_quads(provider=provider)
