@@ -6,6 +6,12 @@ from cfme import test_requirements
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 
 
+pytestmark = [
+    pytest.mark.provider([SCVMMProvider], scope="module"),
+    pytest.mark.usefixtures("setup_provider_modscope")
+]
+
+
 @pytest.fixture
 def testing_vm_without_dvd(provider, small_template):
     vm_name = "test_no_dvd_{}".format(fauxfactory.gen_alpha())
@@ -18,8 +24,6 @@ def testing_vm_without_dvd(provider, small_template):
 
 
 @pytest.mark.tier(0)
-@pytest.mark.meta(blockers=[1178961])
-@pytest.mark.provider([SCVMMProvider], scope="module")
 def test_no_dvd_ruins_refresh(provider, testing_vm_without_dvd):
     """
     Polarion:
@@ -34,7 +38,7 @@ def test_no_dvd_ruins_refresh(provider, testing_vm_without_dvd):
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_template_info_scvmm2016():
+def test_template_info_scvmm():
     """
     The purpose of this test is to verify that the same number of
     templates in scvmm are in cfme.  Take the time to spot check a random
@@ -46,24 +50,12 @@ def test_template_info_scvmm2016():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_template_info_scvmm():
-    """
-    The purpose of this test is to verify that the same number of
-    templates in scvmm are in cfme.  Take the time to spot check a random
-    template and check that the details correspond to SCVMM details.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.4
+        testSteps:
+            1. Add SCVMM as a provider to CFME
+            2. View templates for SCVMM in CFME
+        expectedResults:
+            1.
+            2. Templates in VMM should match those in CFME
     """
     pass
 
@@ -82,7 +74,12 @@ def test_vm_mac_scvmm():
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/20h
-        setup: https://bugzilla.redhat.com/show_bug.cgi?id=1514461
+        testSteps:
+            1. Add SCVMM to CFME
+            2. Navigate to the details page of a VM (e.g. cu-24x7)
+        expectedResults:
+            1.
+            2. MAC Address should match what is in SCVMM
     """
     pass
 
@@ -91,8 +88,7 @@ def test_vm_mac_scvmm():
 @pytest.mark.tier(1)
 def test_create_appliance_on_scvmm_using_the_vhd_image():
     """
-    Log into qeblade33 and download the VHD appliance image.  Create a new
-    VM, attach the VHD disk, and boot system.
+    View the documentation at access.redhat.com for help with this.
 
     Polarion:
         assignee: jdupuy
@@ -101,27 +97,12 @@ def test_create_appliance_on_scvmm_using_the_vhd_image():
         subtype1: usability
         title: Create Appliance on SCVMM using the VHD image.
         upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_provider_summary_scvmm2016():
-    """
-    The purpose of this test is to verify that the information on the
-    provider summary is substantially the same as what is on SCVMM.
-    Since SCVMM-2016 only has a short sequence of test cases, you must use
-    this test case as the catch all to go in and spend 15-30 minutes and
-    check as many links from this page and verify both the navigation and
-    the content.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
+        testSteps:
+            1. Download VHD image from http://file.cloudforms.lab.eng.rdu2.redhat.com/builds/cfme/
+            2. Attach disk and deploy template
+        expectedResults:
+            1.
+            2. CFME should be running in SCVMM
     """
     pass
 
@@ -132,10 +113,7 @@ def test_provider_summary_scvmm():
     """
     The purpose of this test is to verify that the information on the
     provider summary is substantially the same as what is on SCVMM.
-    Since SCVMM-SP1 only has a short sequence of test cases, you must use
-    this test case as the catch all to go in and spend 15-30 minutes and
-    check as many links from this page and verify both the navigation and
-    the content.
+    Note: when automated this test will likely be broken up into many tests.
 
     Polarion:
         assignee: jdupuy
@@ -143,6 +121,14 @@ def test_provider_summary_scvmm():
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.4
+        testSteps:
+            1. Add SCVMM as a provider in SCVMM
+            2. Navigate to the provider summary page
+            3. Click some of the links on this page
+        expectedResults:
+            1.
+            2. Information on the provider summary page should match what is in SCVMM UI
+            3. Links should go to the proper destination
     """
     pass
 
@@ -151,34 +137,20 @@ def test_provider_summary_scvmm():
 @pytest.mark.tier(2)
 def test_host_info_scvmm():
     """
-    The purpose of this test is to verify that SCVMM-SP1 hosts are not
-    only added, but that the host information details are correct.  Take
-    the time to spot check at least one host.
+    Testing to make sure that the host info is correct in CFME
 
     Polarion:
         assignee: jdupuy
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
-        startsin: 5.4
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_host_info_scvmm2016():
-    """
-    The purpose of this test is to verify that SCVMM-2016 hosts are not
-    only added, but that the host information details are correct.  Take
-    the time to spot check at least one host.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/12h
-        startsin: 5.7
+        startsin: 5.10
+        testSteps:
+            1. Add SCVMM as a provider in CFME
+            2. Navigate to infra->hosts page
+        expectedResults:
+            1.
+            2. All hosts should be present and information should be correct
     """
     pass
 
@@ -188,13 +160,13 @@ def test_host_info_scvmm2016():
 @pytest.mark.tier(1)
 def test_check_disk_allocation_size_scvmm():
     """
+    Test datastore used space is the correct value, c.f.
+        https://github.com/ManageIQ/manageiq-providers-scvmm/issues/17
+    Note, may have to edit settings on hyper-v host for checkpoint type:
+        if set to production, try setting to standard
+
     Bugzilla:
         1490440
-
-    Steps to Reproduce:
-    1.Provision VM and check it"s "Total Datastore Used Space"
-    2.go to VMM and create Vm"s Checkpoint
-    3.open VM Details check - "Total Datastore Used Space"
 
     Polarion:
         assignee: jdupuy
@@ -202,6 +174,14 @@ def test_check_disk_allocation_size_scvmm():
         caseimportance: medium
         initialEstimate: 1/2h
         title: Check disk allocation size [SCVMM]
+        testSteps:
+            1. Provision VM and check it's "Total Datastore Used Space"
+            2. go to VMM and create Vm's Checkpoint
+            3. open VM Details check - "Total Datastore Used Space"
+        expectedResults:
+            1.
+            2.
+            3. The value should match what is in SCVMM
     """
     pass
 
