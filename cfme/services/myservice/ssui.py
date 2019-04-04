@@ -25,6 +25,7 @@ from widgetastic_manageiq import SSUIAppendToBodyDropdown
 from widgetastic_manageiq import SSUIDropdown
 from widgetastic_manageiq import SSUIlist
 from widgetastic_manageiq import SSUIPaginationPane
+from widgetastic_manageiq import TimelinesChart
 
 
 class MyServicesView(SSUIBaseLoggedInPage):
@@ -168,6 +169,23 @@ class RetireServiceView(MyServicesView):
         return (
             self.retire.is_displayed and
             self.title.text == title)
+
+
+class MyServiceVMDetailsView(MyServicesView):
+    # TODO: This view needs enhancement by FA owner.
+    #  TimelinesChart Widget not supporting completely need improvements as per SSUI.
+
+    snapshots = SSUIDropdown("Snapshots")
+    power_operations = SSUIDropdown("Power Operations")
+    timeline = TimelinesChart(locator='.//*[@class="timeline"]')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_myservices
+            and self.timeline.is_displayed
+            and self.power_operations.is_displayed
+        )
 
 
 @MiqImplementationContext.external_for(MyService.update, ViaSSUI)
@@ -349,3 +367,13 @@ class MyServiceRetire(SSUINavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.lifecycle.item_select('Retire')
+
+
+@navigator.register(MyService, "VMDetails")
+class MyServiceVMDetails(SSUINavigateStep):
+    VIEW = MyServiceVMDetailsView
+
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.service.click_at(self.obj.vm_name)
