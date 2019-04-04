@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-# from datetime import datetime
-# from datetime import timedelta
-
-import datetime
 import pytest
 
 from cfme import test_requirements
