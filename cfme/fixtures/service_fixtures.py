@@ -30,7 +30,7 @@ def catalog(request, appliance):
     return _catalog(request, appliance)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def catalog_item(appliance, provider, provisioning, dialog, catalog):
     catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
     return catalog_item
@@ -158,3 +158,27 @@ def order_service(appliance, provider, provisioning, dialog, catalog, request):
     vm_name = '{}0001'.format(catalog_item.prov_data['catalog']['vm_name'])
     vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
     vm.cleanup_on_provider()
+
+
+@pytest.fixture(scope="module")
+def service_vm(appliance, provider, catalog_item):
+    """ This is global fixture to get service and vm/instance provision by service."""
+
+    collection = provider.appliance.provider_based_collection(provider)
+    vm_name = "{}0001".format(catalog_item.prov_data["catalog"]["vm_name"])
+    vm = collection.instantiate("{}0001".format(vm_name), provider).cleanup_on_provider()
+
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    provision_request = service_catalogs.order()
+    logger.info("Waiting for service provision request for service %s", catalog_item.name)
+    provision_request.wait_for_request()
+
+    if not provision_request.is_finished():
+        pytest.skip("Failed to provision service '{}'".format(catalog_item.name))
+
+    service = MyService(appliance, catalog_item.name, vm_name)
+    yield service, vm
+
+    vm.cleanup_on_provider()
+    if service.exists:
+        service.delete()

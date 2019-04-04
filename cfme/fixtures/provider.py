@@ -382,7 +382,7 @@ def big_template_modscope(provider):
     return _get_template(provider, 'big_template')
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def provisioning(provider):
     try:
         return provider.data['provisioning']
