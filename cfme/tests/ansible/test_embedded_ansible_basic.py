@@ -152,6 +152,28 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
 
 @pytest.mark.rhel_testing
 @pytest.mark.tier(1)
+def test_embedded_ansible_repository_invalid_url_crud(request, appliance, wait_for_ansible):
+    """
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: critical
+        initialEstimate: 1/6h
+        tags: ansible_embed
+    """
+    repositories = appliance.collections.ansible_repositories
+    repository = repositories.create(
+        name=fauxfactory.gen_alpha(),
+        url='https://github.com/sbulage/invalid_repo_url.git',
+        description=fauxfactory.gen_alpha())
+    view = navigate_to(repository, "Details")
+    assert view.entities.summary("Properties").get_text_of("Status") == "failed"
+
+    repository.delete_if_exists()
+
+
+@pytest.mark.rhel_testing
+@pytest.mark.tier(1)
 @pytest.mark.parametrize(("credential_type", "credentials"), CREDENTIALS,
     ids=[cred[0] for cred in CREDENTIALS])
 @pytest.mark.uncollectif(lambda appliance, credential_type: appliance.version < "5.9.2.1" and
