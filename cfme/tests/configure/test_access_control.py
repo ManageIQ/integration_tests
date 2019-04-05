@@ -9,6 +9,7 @@ from cfme.base.credential import Credential
 from cfme.common.provider import base_types
 from cfme.configure.access_control import AddUserView
 from cfme.configure.tasks import TasksView
+from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.exceptions import RBACOperationBlocked
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
@@ -1927,5 +1928,74 @@ def test_tenant_visibility_miq_ae_namespaces_all_parents():
         tags: cfme_tenancy
         initialEstimate: 1/4h
         startsin: 5.5
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_tags_manual_features():
+    """
+    Test that user can edit tags of an VM when he has role created by disabling 'Everything'
+    and then enabling every other checkbox.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: high
+        initialEstimate: 1/5h
+        startsin: 5.11
+        setup:
+            1. Have an infra provider added and testvm created
+        testSteps:
+            1. Create new role. Disable 'Everything' and then manually enable each check box
+                except 'Everything'.
+            2. Create new group based on this role; Create new user as a member of this group
+            3. Login as newly created user
+            4. Navigate to testing vm and try to Policy -> Edit Tags
+        expectedResults:
+            1. New role created
+            2. New group created; New user created
+            3. Login successful
+            4. Edit Tags screen displayed; no error in evm.log
+    Bugzilla:
+        1684472
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.provider([OpenshiftProvider], override=True)
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_host_clusters_pod_filter():
+    """
+    Test that user with Hosts & Clusters filter is able to see pods belonging to that filter only
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: high
+        initialEstimate: 1/4h
+        startsin: 5.10.3
+        setup:
+            1. Have at least two OCP providers added with some pods
+        testSteps:
+            1. Create new role with Everything -> Compute enabled only
+            2. Create new group based on this role and in Hosts & Clusters tab check one of the
+                OCP providers
+            3. Create an user as a member of this group
+            4. Login as the new user and navigate to Compute -> Containers -> Providers
+            5. Navigate to Compute -> Containers -> Pods
+        expectedResults:
+            1. Role created
+            2. Group created
+            3. User created
+            4. Only one OCP provider displayed; this is the one checked in Hosts & Clusters
+            5. Only pods from one OCP provider are displayed
+    Bugzilla:
+        1631694
     """
     pass

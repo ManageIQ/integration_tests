@@ -84,3 +84,32 @@ def test_vm_genealogy_detected(
             raise pytest.fail("The parent template not detected!")
         assert small_template.name in vm_crud_ancestors, \
             "{} is not in {}'s ancestors".format(small_template.name, vm_crud.name)
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@test_requirements.genealogy
+def test_compare_button_enabled():
+    """
+    Test that compare button is enabled
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/6h
+        startsin: 5.10.4
+        setup:
+            1. Have a provider with some VMs added
+        testSteps:
+            1. Set the parent-child relationship for at least two VMs
+            2. Open one of the VM's genealogy screen from its summary
+            3. Check at least two checkboxes in the genealogy tree
+        expectedResults:
+            1. Genealogy set
+            2. Genealogy screen displayed
+            3. Compare button enabled
+    Bugzilla:
+        1694712
+    """
+    pass
