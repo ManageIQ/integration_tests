@@ -681,3 +681,30 @@ def test_custom_button_dialog_service_obj(
             assert False, "Expected {count} requests not found in automation log".format(
                 count=str(1)
             )
+
+
+@pytest.mark.manual
+def test_custom_button_open_url_service_obj(objects, button_group):
+    """ Test Open url functionality of custom button.
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/2h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.11
+        casecomponent: CustomButton
+        tags: custom_button
+        testSteps:
+            1. Create ruby method for url functionality
+            2. Create custom button group with the Object type
+            3. Create a custom button with open_url option and respective method
+            4. Navigate to object Detail page
+            5. Execute custom button
+            6. Check new tab open or not with respective url
+
+    Bugzilla:
+        1550002
+    """
+    pass

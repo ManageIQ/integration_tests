@@ -419,7 +419,7 @@ def test_custom_button_expression_infra_obj(
 
 
 @pytest.mark.uncollectif(lambda button_group: "VM_INSTANCE" not in button_group)
-def test_open_url(request, setup_obj, button_group, method):
+def test_custom_button_open_url_infra_obj(request, setup_obj, button_group, method):
     """ Test Open url functionality of custom button.
 
     Polarion:
