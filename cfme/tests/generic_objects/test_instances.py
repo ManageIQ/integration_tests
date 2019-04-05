@@ -254,3 +254,23 @@ def test_generic_objects_tag_rest(appliance, generic_object, tags):
         generic_object.remove_tag(tag)
         tag_available = generic_object.get_tags()
         assert tag.id not in [t.id for t in tag_available]
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("5.10")
+def test_import_export_generic_object():
+    """
+    Bugzillas:
+        * 1595259
+
+    Polarion:
+        assignee: jdupuy
+        initialEstimate: 1/6h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.11
+        casecomponent: GenericObjects
+
+    """
+    pass
