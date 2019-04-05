@@ -1,9 +1,11 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
+    test_requirements.ansible,
 ]
 
 
@@ -25,6 +27,7 @@ def test_embedded_ansible_enable(enabled_embedded_appliance):
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running, num_sec=30)
     assert wait_for(func=lambda: enabled_embedded_appliance.is_rabbitmq_running, num_sec=30)
@@ -45,6 +48,7 @@ def test_embedded_ansible_disable(enabled_embedded_appliance):
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
+        tags: ansible_embed
     """
     assert wait_for(func=lambda: enabled_embedded_appliance.is_rabbitmq_running, num_sec=30)
     assert wait_for(func=lambda: enabled_embedded_appliance.is_nginx_running, num_sec=30)
@@ -82,3 +86,49 @@ def test_embedded_ansible_disable(enabled_embedded_appliance):
         assert wait_for(is_nginx_stopped, func_args=[enabled_embedded_appliance], num_sec=30)
     else:
         assert wait_for(is_ansible_pod_stopped, func_args=[enabled_embedded_appliance], num_sec=180)
+
+
+@pytest.mark.tier(1)
+def test_embed_tower_event_catcher_process(appliance, enabled_embedded_appliance):
+    """
+    EventCatcher process is started after Ansible role is enabled (rails
+    evm:status)
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: critical
+        initialEstimate: 1/4h
+        tags: ansible_embed
+    """
+    result = appliance.ssh_client.run_command(
+        "cd /var/www/miq/vmdb; rake evm:status | grep 'EmbeddedAnsible'"
+    ).output
+
+    checks = [
+        "EmbeddedAnsible",
+        "EmbeddedAnsible::Automation::EventCatcher",
+        "EmbeddedAnsible::Automation::Refresh",
+    ]
+
+    for data in result.splitlines():
+        for i in checks:
+            if i in data:
+                assert "started" in data
+
+
+@pytest.mark.tier(1)
+def test_embed_tower_logs(appliance, enabled_embedded_appliance):
+    """
+    Separate log files should be generated for Ansible to aid debugging.
+    p1 (/var/log/tower)
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: critical
+        initialEstimate: 1/4h
+        tags: ansible_embed
+    """
+    log_status = appliance.ssh_client.run_command("ls /var/log/tower/")
+    assert log_status.success
