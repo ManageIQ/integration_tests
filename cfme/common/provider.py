@@ -422,6 +422,24 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             events_connection["endpoint"]["security_protocol"] = security_protocol
         connection_configs.append(events_connection)
 
+    def _fill_smartstate_endpoint_dicts(self, provider_attributes, connection_configs):
+        """Fills dicts with smartstate endpoint data.
+
+        Helper method for ``self.create_rest``
+        """
+        if "smartstate" not in self.endpoints:
+            return
+
+        endpoint_rsa = self.endpoints["smartstate"]
+        if isinstance(provider_attributes["credentials"], dict):
+            provider_attributes["credentials"] = [provider_attributes["credentials"]]
+
+        provider_attributes["credentials"].append({
+            "userid": endpoint_rsa.credentials.principal,
+            "password": endpoint_rsa.credentials.secret,
+            "auth_type": "smartstate_docker",
+        })
+
     def _compile_connection_configurations(self, provider_attributes, connection_configs):
         """Compiles together all dicts with data for ``connection_configurations``.
 
@@ -469,6 +487,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         self._fill_candu_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_rsa_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_amqp_endpoint_dicts(provider_attributes, connection_configs)
+        self._fill_smartstate_endpoint_dicts(provider_attributes, connection_configs)
         self._compile_connection_configurations(provider_attributes, connection_configs)
 
         try:
