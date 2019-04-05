@@ -70,6 +70,11 @@ class ScheduleAddEditEntities(View):
     start_hour = BootstrapSelect("start_hour")
     start_minute = BootstrapSelect("start_min")
 
+    # After selecting action_type == automation tasks
+    request = Input(name='object_request')
+    object_type = BootstrapSelect('target_class')
+    object_selection = BootstrapSelect('target_id')
+
 
 class ScheduleAllView(ConfigurationView):
     """ Shedule All view on the shedule configuration page"""

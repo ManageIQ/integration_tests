@@ -200,7 +200,6 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, request, cu
 
     )
 
-
     @request.addfinalizer
     def _finalize():
         if schedule.exists:

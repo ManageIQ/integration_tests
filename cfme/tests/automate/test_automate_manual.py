@@ -970,27 +970,3 @@ def test_user_requester_for_lifecycle_provision():
          1671563
     """
     pass
-
-
-@pytest.mark.tier(1)
-def test_automate_schedule_crud():
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        initialEstimate: 1/15h
-        startsin: 5.8
-        tags: automate
-        testSteps:
-            1. Create a schedule, selecting Automation Tasks under Action.
-            2. Select a value from the dropdown list under Object Attribute Type.
-            3. Undo the selection by selecting "<Choose>" from the dropdown.
-        expectedResults:
-            1.
-            2.
-            3. No pop-up window with Internal Server Error.
-
-    Bugzilla:
-         1479570
-    """
-    pass
