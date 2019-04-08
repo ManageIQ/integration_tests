@@ -656,7 +656,7 @@ def test_retire_vm_with_vm_user_role(new_user, appliance, testing_vm):
                                                    from_details=True)
 
 
-@pytest.fixture(params=['archived_vm', 'orphaned_vm'])
+@pytest.fixture(params=['archived', 'orphaned'])
 def archive_orphan_vm(request, provider, testing_vm):
     """This fixture is used to create archived or orphaned VM"""
     if request.param == "archived_vm":
@@ -669,7 +669,7 @@ def archive_orphan_vm(request, provider, testing_vm):
         provider.delete_if_exists(cancel=False)
         testing_vm.wait_for_vm_state_change(desired_state='orphaned', timeout=720,
                                             from_details=False, from_any_provider=True)
-    yield request.param
+    yield (request.param, testing_vm)
 
 
 def test_power_options_on_archived_orphaned_vms_all_page(archive_orphan_vm, testing_vm):
@@ -721,4 +721,6 @@ def test_power_options_on_archived_orphaned_vms_all_page(archive_orphan_vm, test
             action = 'Start'
         elif action == 'Power Off':
             action = 'Stop'
+        # for m in view.flash.messages:
+        #     m.dismiss()
         view.flash.assert_message('{} action does not apply to selected items'.format(action))
