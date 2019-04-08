@@ -433,7 +433,9 @@ def copy_role(appliance, orig_name, new_name=None):
 
 
 def tenants(request, appliance, num=1, **kwargs):
-    parent = appliance.rest_api.collections.tenants.get(name='My Company')
+    parent = kwargs.pop(
+        "parent", appliance.rest_api.collections.tenants.get(name="My Company")
+    )
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric()
