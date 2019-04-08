@@ -5,8 +5,10 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.automate.simulation import simulate
+from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.automate, pytest.mark.tier(2)]
 
@@ -222,3 +224,47 @@ def test_automate_simulate_retry(klass, domain, namespace, original_class):
 
     # Checking whether 'Retry' button is displayed
     assert view.retry_button.is_displayed
+
+
+@pytest.fixture(scope='module')
+def service_catalog(request, dialog, catalog):
+    """This fixture is used to create generic service catalog item"""
+    cat_item = _service_templates(
+        request, dialog.appliance, service_dialog=dialog, service_catalog=catalog, num=1
+    )[0]
+    yield cat_item
+    cat_item.action.delete()
+
+
+@pytest.mark.tier(1)
+def test_task_id_for_method_automation_log(service_catalog, appliance):
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/30h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: Automate
+        tags: automate
+        setup:
+            1. Add existing or new automate method to newly created domain or create generic service
+        testSteps:
+            1. Run that instance using simulation or order service catalog item
+            2. See automation log
+        expectedResults:
+            1.
+            2. Task id should be included in automation log for method logs.
+
+    Bugzilla:
+        1592428
+    """
+    service_catalog.action.order()
+
+    # Need to wait for some seconds to get automation logs
+    wait_for(lambda: False, silent_failure=True, timeout=20)
+    result = appliance.ssh_client.run_command(
+        "grep 'Q-task_id' /var/www/miq/vmdb/log/automation.log"
+    )
+    assert result.success

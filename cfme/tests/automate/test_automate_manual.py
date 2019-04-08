@@ -724,33 +724,6 @@ def test_check_system_request_calls_depr_configurationmanagement():
 
 
 @pytest.mark.tier(1)
-def test_task_id_for_method_automation_log():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.9
-        casecomponent: Automate
-        tags: automate
-        testSteps:
-            1. Add existing or new automate method to newly created domain
-            2. Run that instance using simulation
-            3. See automation log
-        expectedResults:
-            1.
-            2.
-            3. Task id should be included in automation log for method logs.
-
-    Bugzilla:
-        1592428
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_list_of_diff_vm_storages_via_rails():
     """
     Polarion:
