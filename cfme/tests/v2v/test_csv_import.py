@@ -4,7 +4,7 @@ import fauxfactory
 import pytest
 from widgetastic.exceptions import UnexpectedAlertPresentException
 
-from cfme.fixtures.v2v import _form_data
+from cfme.fixtures.v2v_fixtures import infra_mapping_default_data, get_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -16,30 +16,31 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.provider(
-        classes=[RHEVMProvider],
-        selector=ONE_PER_VERSION,
-        scope="module"
+        classes=[RHEVMProvider], selector=ONE_PER_VERSION, required_flags=["v2v"], scope="module"
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
-        selector=ONE_PER_TYPE,
-        fixture_name='source_provider',
-        scope="module"
-    )
+        selector=ONE_PER_VERSION,
+        fixture_name="source_provider",
+        required_flags=["v2v"],
+        scope="module",
+    ),
+    # pytest.mark.usefixtures("v2v_provider_setup")
 ]
 
 
 @pytest.fixture(scope="function")
-def infra_map(appliance, v2v_providers):
+def infra_map(appliance, mapping_data_vm_obj_mini):
     """Fixture to create infrastructure mapping"""
-    form_data = _form_data(v2v_providers.vmware_provider, v2v_providers.rhv_provider)
-    return appliance.collections.v2v_mappings.create(form_data)
+    # mapping_data = infra_mapping_default_data(source_provider, provider)
+    mapping_data = mapping_data_vm_obj_mini.infra_mapping_data
+    return appliance.collections.v2v_infra_mappings.create(**mapping_data)
 
 
 def migration_plan(appliance, infra_map, csv=False):
     """Function to create migration plan and select csv import option"""
     plan_name = "map_{}".format(fauxfactory.gen_alpha(10))
-    plan_obj = appliance.collections.v2v_plans
+    plan_obj = appliance.collections.v2v_migration_plans
     view = navigate_to(plan_obj, 'Add')
     view.general.fill({
         'infra_map': infra_map.name,
@@ -110,7 +111,7 @@ def archived_vm(appliance, source_provider):
     return vm_obj.name
 
 
-def test_non_csv(appliance, infra_map):
+def test_non_csv(appliance, mapping_data_vm_obj_mini):
     """Test non-csv file import
 
     Polarion:
@@ -121,130 +122,22 @@ def test_non_csv(appliance, infra_map):
         subcomponent: RHV
         upstream: yes
     """
-    error_msg = "Invalid file extension. Only .csv files are accepted."
-    assert import_and_check(appliance, infra_map, error_msg, filetype='txt', alert=True)
+    error_text = "The selected file does not have the expected format."
+    csv_params = {'filetype': 'txt',
+                  'alert': True,
+                  'error_text': error_text}
+    with pytest.raises(AssertionError):
+        migration_plan_collection = appliance.collections.v2v_migration_plans
+        migration_plan_collection.create(
+            name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+            description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+            infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get('name'),
+            csv_import=True,
+            csv_params=csv_params,
+            vm_list=mapping_data_vm_obj_mini.vm_list
+        )
+
+    # assert import_and_check(appliance, infra_map, error_msg, filetype='txt', alert=True)
 
 
-def test_blank_csv(appliance, infra_map):
-    """Test csv with blank file
 
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        customerscenario: true
-        initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
-    """
-    error_msg = "Error: Possibly a blank .CSV file"
-    assert import_and_check(appliance, infra_map, error_msg)
-
-
-def test_column_headers(appliance, infra_map):
-    """Test csv with unsupported column header
-
-    Polarion:
-        assignee: ytale
-        initialEstimate: 1/4h
-        casecomponent: V2V
-    """
-    content = fauxfactory.gen_alpha(10)
-    error_msg = "Error: Required column 'Name' does not exist in the .CSV file"
-    assert import_and_check(appliance, infra_map, error_msg, content=content)
-
-
-def test_inconsistent_columns(appliance, infra_map):
-    """Test csv with extra inconsistent column value
-
-    Polarion:
-        assignee: ytale
-        initialEstimate: 1/4h
-        casecomponent: V2V
-    """
-    content = "Name\n{}, {}".format(fauxfactory.gen_alpha(10), fauxfactory.gen_alpha(10))
-    error_msg = "Error: Number of columns is inconsistent on line 2"
-    assert import_and_check(appliance, infra_map, error_msg, content=content)
-
-
-@pytest.mark.meta(blockers=[BZ(1639239, forced_streams=["5.10"])])
-def test_csv_empty_vm(appliance, infra_map):
-    """Test csv with empty column value
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        customerscenario: true
-        initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
-    """
-    content = "Name\n\n"
-    error_msg = "Empty name specified"
-    assert import_and_check(appliance, infra_map, error_msg, content=content, table_hover=True)
-
-
-@pytest.mark.meta(blockers=[BZ(1639239, forced_streams=["5.10"])])
-def test_csv_invalid_vm(appliance, infra_map):
-    """Test csv with invalid vm name
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        customerscenario: true
-        initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
-    """
-    content = "Name\n{}".format(fauxfactory.gen_alpha(10))
-    error_msg = "VM does not exist"
-    assert import_and_check(appliance, infra_map, error_msg, content=content, table_hover=True)
-
-
-def test_csv_valid_vm(appliance, infra_map, valid_vm):
-    """Test csv with valid vm name
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        customerscenario: true
-        initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
-    """
-    content = "Name\n{}".format(valid_vm)
-    error_msg = "VM available for migration"
-    assert import_and_check(appliance, infra_map, error_msg, content=content, table_hover=True)
-
-
-def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
-    """Test csv with duplicate vm name
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        customerscenario: true
-        initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
-    """
-    content = "Name\n{}\n{}".format(valid_vm, valid_vm)
-    error_msg = "Duplicate VM"
-    assert import_and_check(appliance, infra_map, error_msg, content=content,
-                            table_hover='duplicate')
-
-
-@pytest.mark.meta(blockers=[BZ(1639239, forced_streams=["5.10"])])
-def test_csv_archived_vm(appliance, infra_map, archived_vm):
-    """Test csv with archived vm name
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        customerscenario: true
-        initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
-    """
-    content = "Name\n{}".format(archived_vm)
-    error_msg = "VM is inactive"
-    assert import_and_check(appliance, infra_map, error_msg, content=content, table_hover=True)

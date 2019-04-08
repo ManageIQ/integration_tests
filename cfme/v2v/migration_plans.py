@@ -175,11 +175,11 @@ class AddMigrationPlanView(View):
 
         @property
         def is_displayed(self):
-            return self.table.is_displayed and (
+            return ((self.table.is_displayed or self.hidden_field.is_displayed) and
                 len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0
             )
 
-        def csv_import(self, vm_list):
+        def csv_import(self, values):
             """
             Vm's can be imported using csv for migration.
             Opens a temporary csv with Columns Name and Provider
@@ -187,13 +187,26 @@ class AddMigrationPlanView(View):
             Args:
                 vm_list: list of vm's to be imported through csv
             """
-            temp_file = tempfile.NamedTemporaryFile(suffix=".csv")
-            with open(temp_file.name, "w") as file:
-                headers = ["Name", "Provider"]
-                writer = csv.DictWriter(file, fieldnames=headers)
-                writer.writeheader()
-                for vm in vm_list:
-                    writer.writerow({"Name": vm.name, "Provider": vm.provider.name})
+            csv_params = values.get('csv_params')
+            # vm_list = values.get('vm_list')
+            filetype = 'csv'
+            temp_file = tempfile.NamedTemporaryFile(suffix='.{}'.format(filetype))
+
+            if csv_params:
+                if csv_params.get('filetype'):
+                    filetype = csv_params.get('filetype')
+                content = csv_params.get('content')
+
+            if content:
+                with open(temp_file.name, 'w') as file:
+                    file.write(content)
+            if filetype == "csv":
+                with open(temp_file.name, "w") as file:
+                    headers = ["Name", "Provider"]
+                    writer = csv.DictWriter(file, fieldnames=headers)
+                    writer.writeheader()
+                    for vm in values.get('vm_list'):
+                        writer.writerow({"Name": vm.name, "Provider": vm.provider.name})
             self.hidden_field.fill(temp_file.name)
 
         def fill(self, values):
@@ -205,9 +218,14 @@ class AddMigrationPlanView(View):
                  values : List of Vm's
             """
             csv_import = values.get('csv_import')
+            csv_params = values.get('csv_params')
             vm_list = values.get('vm_list')
             if csv_import:
-                self.csv_import(vm_list)
+                self.csv_import(values)
+                if csv_params.get('alert'):
+                    error_msg = self.browser.get_alert().text
+                    self.browser.handle_alert()
+                    assert (error_msg == csv_params.get('error_text'))
             for vm in vm_list:
                 self.search_box.fill(vm.name)
                 for row in self.table.rows():
@@ -456,6 +474,7 @@ class MigrationPlanCollection(BaseCollection):
         vm_list,
         description=None,
         csv_import=False,
+        csv_params=None,
         target_provider=None,
         osp_security_group=None,
         osp_flavor=None,
@@ -489,11 +508,12 @@ class MigrationPlanCollection(BaseCollection):
         view.general.fill({"infra_map": infra_map,
                            "name": name,
                            "description": description,
-                           "csv_import": radio_btn})
+                           "select_vm": radio_btn})
 
         view.vms.wait_displayed()
         view.vms.fill({
             'csv_import': csv_import,
+            'csv_params': csv_params,
             'vm_list': vm_list})
 
         # For OSP we need to fill this extra tab

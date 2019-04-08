@@ -7,6 +7,7 @@ from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.fixtures.provider import rhel7_minimal
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -298,6 +299,23 @@ def infra_mapping_default_data(source_provider, provider):
     }
     return infra_mapping_data
 
+
+@pytest.fixture(scope="function")
+def mapping_data_vm_obj_mini(request, appliance, source_provider, provider):
+    """Fixture which provides minimal mapping data, vm and map object for migration plan"""
+    infra_mapping_data = infra_mapping_default_data(source_provider, provider)
+    vm_obj = get_vm(request, appliance, source_provider, template=rhel7_minimal)
+
+    infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
+    mapping = infrastructure_mapping_collection.create(**infra_mapping_data)
+
+    @request.addfinalizer
+    def _cleanup():
+        vm_obj.cleanup_on_provider()
+        infrastructure_mapping_collection.delete(mapping)
+
+    return FormDataVmObj(
+        infra_mapping_data=infra_mapping_data, vm_list=[vm_obj])
 
 @pytest.fixture(scope="function")
 def mapping_data_multiple_vm_obj_single_datastore(request, appliance, source_provider, provider):
