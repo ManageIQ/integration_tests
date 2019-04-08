@@ -74,8 +74,9 @@ def tags(request, appliance, categories):
     return _creating_skeleton(request, appliance, 'tags', tags, substr_search=True)
 
 
+"""
 def dialog_rest(request, appliance):
-    """Creates service dialog using REST API."""
+    Creates service dialog using REST API.
     uid = fauxfactory.gen_alphanumeric()
     data = {
         "description": "my dialog {}".format(uid),
@@ -118,9 +119,10 @@ def dialog_rest(request, appliance):
 
     service_dialog = _creating_skeleton(request, appliance, "service_dialogs", [data])
     return service_dialog[0]
+"""
 
 
-def ansible_dialog_rest(request, appliance):
+def dialog_rest(request, appliance):
     """Creates service dialog using REST API."""
     uid = fauxfactory.gen_alphanumeric()
     data = {
@@ -221,9 +223,9 @@ def ansible_dialog_rest(request, appliance):
         ]
     }
 
-    ansible_service_dialog = _creating_skeleton(request, appliance, "ansible_service_dialogs",
+    service_dialog = _creating_skeleton(request, appliance, "service_dialogs",
         [data])
-    return ansible_service_dialog[0]
+    return service_dialog[0]
 
 
 def dialog(request, appliance):
