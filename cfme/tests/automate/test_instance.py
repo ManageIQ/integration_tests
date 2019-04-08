@@ -219,3 +219,59 @@ def test_automate_relationship_trailing_spaces(request, klass, namespace, domain
             assert result.output == ""
         else:
             assert search in result.output
+
+
+@pytest.fixture(scope="module")
+def copy_instance(domain):
+    """
+    This fixture copies the instance '/ManageIQ/System/Request/ansible_tower_job' to new domain.
+    """
+    domain.parent.instantiate(name="ManageIQ").namespaces.instantiate(
+        name="System"
+    ).classes.instantiate(name="Request").instances.instantiate(name="ansible_tower_job").copy_to(
+        domain.name
+    )
+    instance = (
+        domain.namespaces.instantiate(name="System")
+        .classes.instantiate(name="Request")
+        .instances.instantiate(name="ansible_tower_job")
+    )
+    yield instance
+
+
+@pytest.mark.tier(1)
+def test_check_system_request_calls_depr_configurationmanagement(appliance, copy_instance):
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseimportance: low
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: Automate
+        tags: automate
+        setup:
+            1. Copy /System/Request/ansible_tower_job instance to new domain
+        testSteps:
+            1. Run that instance(ansible_tower_job) using simulation
+            2. See automation log
+        expectedResults:
+            1.
+            2. The /System/Request/ansible_tower_job instance should call the newer
+               "/AutomationManagement/AnsibleTower/Operations/StateMachines/Job/default method"
+
+    Bugzilla:
+        1615444
+    """
+    search = '/AutomationManagement/AnsibleTower/Operations/StateMachines/Job/default'
+
+    # Executing the automate instance - 'ansible_tower_job' using simulation
+    simulate(
+        appliance=appliance,
+        request=copy_instance.name
+    )
+    result = appliance.ssh_client.run_command(
+        "grep {} /var/www/miq/vmdb/log/automation.log".format(search)
+    )
+    assert result.success
