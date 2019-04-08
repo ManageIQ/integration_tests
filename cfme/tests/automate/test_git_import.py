@@ -271,13 +271,10 @@ def test_refresh_git_current_user(imported_domain, new_user):
 
     # Collecting list of all tasks performed by users
     all_tasks = view.tabs.alltasks.table.read()
-    expected_task = None
     for task in all_tasks:
         if task['Task Name'] == 'Refresh git repository':
-            expected_task = task
+            assert task['User'] == 'admin'
             break
-    if expected_task:
-        assert expected_task['User'] == 'admin'
     else:
         raise NameError("Task not found")
 
@@ -288,12 +285,9 @@ def test_refresh_git_current_user(imported_domain, new_user):
 
         # Collecting list of all tasks performed by users
         all_tasks = view.tabs.alltasks.table.read()
-        expected_task = None
         for task in all_tasks:
             if task['Task Name'] == 'Refresh git repository':
-                expected_task = task
+                assert task['User'] == new_user.credential.principal
                 break
-        if expected_task:
-            assert expected_task['User'] == new_user.credential.principal
         else:
             raise NameError("Task not found")

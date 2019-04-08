@@ -282,15 +282,19 @@ class Domain(BaseEntity, Fillable):
         view = navigate_to(self, 'Refresh')
 
         # It refreshes the domain for default values of 'branch_or_tag' and 'git_branch'; if these
-        # values are not provided while calling 'refresh'.
-        select_branch_or_tag = branch_or_tag or view.branch_or_tag.selected_option
-        select_git_branch = git_branch or view.git_branches.selected_option
+        # values are not provided while calling 'refresh' then imported domain should be refreshed
+        # with default values of 'branch_or_tag' and 'git_branches'.
 
-        view.branch_or_tag.select_by_visible_text(select_branch_or_tag)
-        view.git_branches.select_by_visible_text(select_git_branch)
-        view.save_button.click()
+        changed = view.fill(
+            {
+                'branch_or_tag': branch_or_tag or view.branch_or_tag.selected_option,
+                'git_branches': git_branch or view.git_branches.selected_option
+            }
+        )
 
-        if cancel:
+        if changed and not cancel:
+            view.save_button.click()
+        else:
             view.cancel_button.click()
         view.flash.assert_no_error()
 
