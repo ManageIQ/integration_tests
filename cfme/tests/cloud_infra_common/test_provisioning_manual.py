@@ -59,6 +59,27 @@ def test_none_public_ip_provision_azure():
 
 
 @pytest.mark.manual
+@pytest.mark.tier(2)
+def test_public_ip_reuse_azure():
+    """
+    Testing Public Ip reuse
+    prerequirements:
+    Free Public IP associated with Network interface but not assigned to
+    any VM
+    Select PubIP on Environment tab during provisioning
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: Provisioning
+        caseimportance: medium
+        initialEstimate: 1/6h
+        startsin: 5.7
+        tags: provision
+    """
+    pass
+
+
+@pytest.mark.manual
 @test_requirements.provision
 @pytest.mark.tier(2)
 def test_template_list_of_provider():

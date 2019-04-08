@@ -1488,45 +1488,6 @@ def test_orchestration_link_mismatch():
 
 
 @pytest.mark.manual
-@test_requirements.log_depot
-@pytest.mark.tier(2)
-def test_log_azure_settings_azure():
-    """
-    In configuration\server\advanced you can set the log level for the
-    azure specific azure.log file.  Need to changes the values and verify
-    that the correct info is recording.  For this test, at least set it to
-    DEBUG.
-    tail -f azure.log | grep --line-buffered ERROR or WARN or something.
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.log_depot
-@pytest.mark.tier(1)
-def test_log_collect_all_zone_unconfigured():
-    """
-    check collect all logs under zone when both levels are unconfigured.
-    Expected result - all buttons are disabled
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Configuration
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.upgrade
 @pytest.mark.tier(2)
 def test_upgrade_rubyrep_to_pglogical():
@@ -5047,25 +5008,6 @@ def test_storage_volume_in_use_delete_openstack():
 
 
 @pytest.mark.manual
-@test_requirements.configuration
-def test_configuration_region_description_change():
-    """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1350808 Go to Settings
-    -> Configure -> Settings
-    Details -> Region
-    Change region description
-    Check whether description was changed
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/20h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_add_delete_add_provider():
     """
     Polarion:
@@ -5376,29 +5318,6 @@ def test_rightsize_memory_values_correct_rhv41():
 
 
 @pytest.mark.manual
-def test_vpc_env_selection():
-    """
-    Test selection of components in environment page of cloud instances
-    with and without selected virtual private cloud
-    Related to BZ 1315945
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: WebUI
-        initialEstimate: 1d
-        testSteps:
-            1. Provision an Azure Instance from an Image.
-            2. At the environment page, try to select components without vpc
-            3. At the environment page, try to select components without vpc with vpc
-        expectedResults:
-            1. Instance provisioned and added successfully
-            2. Items are selected successfully
-            3. Items are selected successfully
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_passwords_are_not_registered_in_plain_text_in_auth_logs():
@@ -5414,22 +5333,6 @@ def test_verify_passwords_are_not_registered_in_plain_text_in_auth_logs():
         caseimportance: medium
         initialEstimate: 1/4h
         title: verify passwords are not registered in plain text in auth logs.
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_add_provider_without_subscription_azure():
-    """
-    1.Add Azure Provider w/0 subscription
-    2.Validate
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseposneg: negative
-        initialEstimate: 1/10h
     """
     pass
 
@@ -6919,27 +6822,6 @@ def test_optimize_memory_usage_by_making_object_in_hash():
 
 
 @pytest.mark.manual
-@test_requirements.general_ui
-@pytest.mark.tier(1)
-def test_key_pairs_quadicon():
-    """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1352914
-    Requirement: Have a cloud provider with at least one key pair
-    1. Go to Compute -> Cloud -> Key Pairs
-    2. Set View to Grid
-    3. Cloud with two keys icon should be displayed(auth_key_pair.png)
-    4. Same in Key Pairs summary.
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: low
-        initialEstimate: 1/20h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_targeted_refresh_volume():
     """
     #AWS naming is EBS
@@ -7199,23 +7081,6 @@ def test_gap_collection_vsphere6():
     Polarion:
         assignee: nachandr
         casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_tagvis_tag_and_vm_combination():
-    """
-    Combine My Company tag restriction tab with VM&Tepmlates restriction
-    tab
-    Vm , template should match both tab restrictions
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -7895,29 +7760,6 @@ def test_automated_locale_switching():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_stack_template_azure():
-    """
-    There was a new field added to Orchestration stacks to show which
-    image was used to create it.  You need to verify the end points of
-    this image are displayed correctly.
-    This just needs to be checked every once in a while.  Perhaps once per
-    build.  Should be able to automate it by comparing the yaml entries to
-    the value.
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: low
-        initialEstimate: 1/8h
-        setup: Create a stack based on a cloud image.  Go to stack details and check
-               the
-        upstream: yes
     """
     pass
 
@@ -9181,27 +9023,6 @@ def test_osp_test_user_can_download_pre_migration_ansible_playbook_log():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_public_ip_reuse_azure():
-    """
-    Testing Public Ip reuse
-    prerequirements:
-    Free Public IP associated with Network interface but not assigned to
-    any VM
-    Select PubIP on Environment tab during provisioning
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.7
-        tags: provision
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.html5
 @pytest.mark.tier(2)
 def test_html5_console_disabled_vsphere65_opsui_ssui():
@@ -9559,39 +9380,6 @@ def test_verify_invalid_user_login_fails():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_subscription_multiple_azure():
-    """
-    Azure cloud providers are added to an appliance, not only by region
-    like other cloud providers, but by subscription as well.  This allows
-    customer to further refine access permissions.
-    For CFME-QE, we have two official subscriptions.  Dajo"s MSDN account
-    9ee63d8e-aee7-4121-861c-d67a5b8d231e and our PayGo account c9e72ccc-
-    b20e-48bd-a0c8-879c6dbcbfbb
-    Need to add one provider for the same account and region for each of
-    the above subscriptions.  The rest of the data is in the yamls  The
-    test passes when each "provider" contains only the relevant data.  You
-    can verify this inside of Azure.
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        setup: Create an appliance
-        startsin: 5.7
-        upstream: yes
-        testSteps:
-            1. Add a provider with subscription 1
-            2. Add a provider with subscription 2
-        expectedResults:
-            1. Correct subscription VMs and data appear
-            2. Correct subscription VMs and data appear.
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.right_size
 @pytest.mark.tier(1)
 def test_rightsize_memory_rhv41():
@@ -9738,24 +9526,6 @@ def test_osp_vmware65_test_vm_migration_with_rhel_69():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware65-Test VM migration with RHEL 6.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_refresh_azure_provider_with_empty_ipv6_config_on_vm():
-    """
-    test case to cover -
-    https://bugzilla.redhat.com/show_bug.cgi?id=1468700
-    1) prepare azure  with https://mojo.redhat.com/docs/DOC-1145084
-    2) refresh provider - check logs
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/4h
     """
     pass
 
@@ -9964,44 +9734,6 @@ def test_osp_test_user_can_run_pre_migration_ansible_playbook():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test user can run pre migration ansible playbook
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_vm_terminate_deletedisk_azure():
-    """
-    New for 5.6.1, when terminating a VM in Azure, we need to go to the
-    storage account and make sure the disk has also been removed.  You can
-    check the VM details for the exact disk location prior to deleting.
-    Note that Azure itself does not delete the disk when a VM is deleted,
-    so this may initially cause some confusion.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1353306
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.6.1
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_tagvis_configuration_management_configured_system():
-    """
-    Tag a configuration management's configured system and check for its
-    visibility
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/8h
     """
     pass
 
@@ -13400,26 +13132,6 @@ def test_cluster_tagged_crosshair_op_vsphere55():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_refresh_with_empty_iot_hub_azure():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1495318
-    "For QE, if it helps - to reproduce reliably create an IoT Hub in
-    Azure (using free tier pricing is good enough):
-    $ az iot hub create --name rmanes-iothub --resource-group iot_rg"
-    1.Prepare env ^^
-    2.Refresh provider
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: low
-        initialEstimate: 1/6h
     """
     pass
 
@@ -16990,24 +16702,6 @@ def test_osp_vmware67_test_vm_migration_with_windows_2012_server():
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-def test_username_fields_error_azure():
-    """
-    1.Provision Azure Instance
-    2.Use "admin" as username / "password" as password
-    3.Verify that we have Error Flash messages for both fields
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
 def test_verify_benchmark_timings_are_correct():
     """
     Bug 1424716 - Benchmark timings are incorrect for all workers in
@@ -17083,45 +16777,6 @@ def test_cloud_init_with_cfme():
         endsin: 5.4
         initialEstimate: 1/2h
         startsin: 5.4
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_regions_gov_azure():
-    """
-    This test verifies that Azure Government regions are not included in
-    the default region list as most users will receive errors if they try
-    to use them.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1412363
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/8h
-        setup: Check the region list when adding a Azure Provider.
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.log_depot
-@pytest.mark.tier(1)
-def test_log_collect_all_zone_multiple_servers():
-    """
-    using any type of depot check collect all log function under zone.
-    Zone should have multiplie servers under it. Zone and all servers
-    should have their own settings
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/2h
     """
     pass
 
