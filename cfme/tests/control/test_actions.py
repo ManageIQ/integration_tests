@@ -11,10 +11,9 @@ Required YAML keys:
         nothing terrible happens, but provisioning can be then assigned to a datastore that does not
         work (iso datastore or whatever), therefore failing the provision.
 """
-from functools import partial
-
 import fauxfactory
 import pytest
+from _pytest.outcomes import Failed
 from wrapanapi import VmState
 
 from . import do_scan
@@ -31,9 +30,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.utils.pretty import Pretty
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
-from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
@@ -41,131 +39,42 @@ pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles="+automate +smartproxy +smartstate"),
     pytest.mark.tier(2),
-    test_requirements.control
+    test_requirements.control,
 ]
 
 
-class VMWrapper(Pretty):
-    """This class binds a provider_mgmt object with VM name. Useful for on/off operation"""
-    __slots__ = ("_prov", "_vm", "api")
-    pretty_attrs = ['_vm', '_prov']
-
-    def __init__(self, provider, vm_name, api):
-        self._prov = provider
-        self._vm = vm_name
-        self.api = api
-
-    @property
-    def crud(self):
-        """Instantiate BaseVM derived class for correct provider type"""
-        collection = self._prov.appliance.provider_based_collection(self._prov)
-        return collection.instantiate(self.name, self._prov)
-
-    @property
-    def mgmt(self):
-        return self.crud.mgmt
-
-    @property
-    def name(self):
-        return self._vm
-
-    @property
-    def provider(self):
-        return self._prov.mgmt
-
-    def __getattr__(self, key):
-        """Creates partial functions proxying to mgmt_system.<function_name>(vm_name)"""
-        func = getattr(self._prov.mgmt, key)
-        return partial(func, self._vm)
-
-
-def get_vm_object(appliance, vm_name):
-    """Looks up the CFME database for the VM.
-
-    Args:
-        vm_name: VM name
-
-    Returns:
-        If found, returns a REST object
-        If not, `None`
-    """
-    try:
-        return appliance.rest_api.collections.vms.find_by(name=vm_name)[0]
-    except IndexError:
-        return None
-
-
-@pytest.fixture(scope="module")
-def vm_name(provider):
-    return random_vm_name("action", max_length=16)
-
-
-def _get_vm(request, provider, template_name, vm_name):
+def _get_vm(request, provider, template_name):
+    vm_name = "long-" + random_vm_name("action", max_length=16)
     if provider.one_of(RHEVMProvider):
         kwargs = {"cluster": provider.data["default_cluster"]}
     elif provider.one_of(OpenStackProvider):
         kwargs = {}
-        if 'small_template' in provider.data.templates:
-            kwargs = {"flavor_name": provider.data.provisioning.get('instance_type')}
+        if "small_template" in provider.data.templates:
+            kwargs = {"flavor_name": provider.data.provisioning.get("instance_type")}
     elif provider.one_of(SCVMMProvider):
         kwargs = {
-            "host_group": provider.data.get("provisioning", {}).get("host_group", "All Hosts")}
+            "host_group": provider.data.get("provisioning", {}).get("host_group", "All Hosts")
+        }
     else:
         kwargs = {}
 
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate(vm_name, provider, template_name)
-
-    try:
-        deploy_template(
-            provider.key,
-            vm_name,
-            template_name=template_name,
-            allow_skip="default",
-            power_on=True,
-            **kwargs
-        )
-    except TimedOutError:
-        message = "{} failed provisioning, check its status!".format(provider.key)
-        logger.exception(message)
-        try:
-            vm.cleanup_on_provider()
-        except TimedOutError:
-            logger.error("Could not delete VM %s!", vm_name)
-        # If this happened, we should skip all tests from this provider in this module
-        pytest.skip(message)
-
+    vm.create_on_provider(delete_on_failure=True, find_in_cfme=True, **kwargs)
     request.addfinalizer(vm.cleanup_on_provider)
-
-    # Make it appear in the provider
     provider.refresh_provider_relationships()
 
-    # Get the REST API object
-    api = wait_for(
-        get_vm_object,
-        func_args=[provider.appliance, vm_name],
-        message="VM object {} appears in CFME".format(vm),
-        fail_condition=None,
-        num_sec=600,
-        delay=15,
-    )[0]
-
-    return VMWrapper(provider, vm_name, api)
+    return vm
 
 
 @pytest.fixture(scope="module")
-def vm(request, provider, setup_provider_modscope, small_template_modscope, vm_name):
-    return _get_vm(request, provider, small_template_modscope.name, vm_name)
+def vm(request, provider, setup_provider_modscope, small_template_modscope):
+    return _get_vm(request, provider, small_template_modscope.name)
 
 
 @pytest.fixture(scope="module")
 def vm_big(request, provider, setup_provider_modscope, big_template_modscope):
-    return _get_vm(
-        request,
-        provider,
-        big_template_modscope.name,
-        random_vm_name("action", max_length=16)
-    )
+    return _get_vm(request, provider, big_template_modscope.name)
 
 
 @pytest.fixture(scope="module")
@@ -184,34 +93,47 @@ def compliance_condition(appliance):
     _compliance_condition = condition_collection.create(
         conditions.VMCondition,
         fauxfactory.gen_alpha(),
-        expression="fill_tag(VM and Instance.My Company Tags : Service Level, Gold)"
+        expression="fill_tag(VM and Instance.My Company Tags : Service Level, Gold)",
     )
     yield _compliance_condition
-    _compliance_condition.delete()
+    _compliance_condition.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
-def compliance_policy(vm_name, policy_name, appliance):
+def compliance_policy(vm, policy_name, appliance):
     compliance_policy = appliance.collections.policies.create(
         policies.VMCompliancePolicy,
-        "complaince_{}".format(policy_name),
-        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
+        "compliance_{}".format(policy_name),
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm.name),
     )
     return compliance_policy
 
 
 @pytest.fixture(scope="module")
-def policy_for_testing(provider, vm_name, policy_name, policy_profile_name, compliance_policy,
-        compliance_condition, appliance):
+def compliance_tag(appliance):
+    category = appliance.collections.categories.instantiate("Service Level")
+    tag = category.collections.tags.instantiate(name="gold", display_name="Gold")
+    return tag
+
+
+@pytest.fixture(scope="module")
+def policy_for_testing(
+    provider,
+    vm,
+    policy_name,
+    policy_profile_name,
+    compliance_policy,
+    compliance_condition,
+    appliance,
+):
     control_policy = appliance.collections.policies.create(
         policies.VMControlPolicy,
         policy_name,
-        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm.name),
     )
     policy_profile_collection = appliance.collections.policy_profiles
     policy_profile = policy_profile_collection.create(
-        policy_profile_name,
-        policies=[control_policy, compliance_policy]
+        policy_profile_name, policies=[control_policy, compliance_policy]
     )
     provider.assign_policy_profiles(policy_profile_name)
     yield control_policy
@@ -230,12 +152,12 @@ def host(provider, setup_provider_modscope):
 def host_policy(appliance, host):
     control_policy = appliance.collections.policies.create(
         policies.HostControlPolicy,
-        "action_testing: host policy {}".format(fauxfactory.gen_alphanumeric())
+        "action_testing: host policy {}".format(fauxfactory.gen_alphanumeric()),
     )
     policy_profile_collection = appliance.collections.policy_profiles
     policy_profile = policy_profile_collection.create(
         "action_testing: host policy profile {}".format(fauxfactory.gen_alphanumeric()),
-        policies=[control_policy]
+        policies=[control_policy],
     )
     host.assign_policy_profiles(policy_profile.description)
     yield control_policy
@@ -249,27 +171,20 @@ def vm_on(vm):
     """ Ensures that the VM is on when the control goes to the test."""
     vm.mgmt.wait_for_steady_state()
     vm.mgmt.ensure_state(VmState.RUNNING)
-    # Make sure the state is consistent
-    vm.crud.refresh_relationships(from_details=True)
-    vm.crud.wait_for_vm_state_change(desired_state=vm.crud.STATE_ON, from_details=True)
-    return vm
+    return
 
 
 @pytest.fixture(scope="function")
-def vm_off(provider, vm):
+def vm_off(vm):
     """ Ensures that the VM is off when the control goes to the test."""
     vm.mgmt.wait_for_steady_state()
     vm.mgmt.ensure_state(VmState.STOPPED)
-    # Make sure the state is consistent
-    vm.crud.refresh_relationships(from_details=True)
-    vm.crud.wait_for_vm_state_change(desired_state=vm.crud.STATE_OFF, from_details=True)
-    return vm
+    return
 
 
 @pytest.mark.rhel_testing
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
-    scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
 )
 def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_for_testing):
     """ This test tests action 'Start Virtual Machine'
@@ -302,8 +217,7 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
-    scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
 )
 def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Stop Virtual Machine'
@@ -336,8 +250,7 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
-    scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
 )
 def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Suspend Virtual Machine'
@@ -361,6 +274,8 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, poli
         policy_for_testing.unassign_events("VM Power On")
     # Start the VM
     vm.mgmt.start()
+    # Ensure vm is running
+    vm.mgmt.ensure_state(VmState.RUNNING)
     # Wait for VM be suspended by CFME
     try:
         vm.mgmt.wait_for_state(VmState.SUSPENDED, timeout=600, delay=5)
@@ -369,8 +284,7 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, poli
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
-    scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
 )
 def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Prevent current event from proceeding'
@@ -395,25 +309,27 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
         policy_for_testing.unassign_events("VM Power On Request")
 
     # Request VM's start (through UI)
-    vm.crud.power_control_from_cfme(option=vm.crud.POWER_ON, cancel=False)
+    vm.power_control_from_cfme(option=vm.POWER_ON, cancel=False)
     try:
-        vm.mgmt.wait_for_state(VmState.RUNNING, timeout=600, delay=5)
+        vm.mgmt.wait_for_state(VmState.RUNNING, timeout=180, delay=5)
     except TimedOutError:
         pass  # VM did not start, so that's what we want
     else:
         pytest.fail("CFME did not prevent starting of the VM {}".format(vm.name))
 
 
-@pytest.mark.meta(blockers=[BZ(1439331)])
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
-    scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
 )
+@pytest.mark.meta(blockers=[BZ(1702018)])
 def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
     """This test sets the policy that prevents VM retiring.
 
     Metadata:
         test_flag: actions, provision
+
+    Bugzilla:
+        1702018
 
     Polarion:
         assignee: jdupuy
@@ -427,10 +343,17 @@ def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
     def _cleanup():
         policy_for_testing.unassign_events("VM Retire Request")
 
-    vm.crud.retire()
+    vm.retire()
+
+    def _fail_func():
+        view = navigate_to(vm, "Details")
+        vm.refresh_relationships(from_details=True)
+        view.toolbar.reload.click()
+        return
+
     try:
-        wait_for(lambda: vm.crud.is_retired, num_sec=600, delay=15,
-                 message="Waiting for vm retiring")
+        wait_for(lambda: vm.is_retired, num_sec=300, delay=15, message="Waiting for vm retiring",
+                 fail_func=_fail_func)
     except TimedOutError:
         pass
     else:
@@ -461,15 +384,20 @@ def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, p
     def _cleanup():
         policy_for_testing.unassign_events("VM Analysis Request")
 
-    wait_for_ssa_enabled(vm.crud)
+    policy_result = LogValidator(
+        "/var/www/miq/vmdb/log/policy.log",
+        matched_patterns=[
+            '.*Prevent current event from proceeding.*VM Analysis Request.*{}'.format(vm.name)
+        ]
+    )
+    policy_result.fix_before_start()
+
+    wait_for_ssa_enabled(vm)
+
     try:
-        do_scan(vm.crud)
+        do_scan(vm)
     except TimedOutError:
-        result = appliance.ssh_client.run_command(
-            "grep 'Prevent current event from proceeding.*VM Analysis Request.*{}'"
-            " /var/www/miq/vmdb/log/policy.log".format(vm.name)
-        )
-        assert result.success, 'Action "Prevent current event from proceeding" hasn\'t been invoked'
+        policy_result.validate_logs()
     else:
         pytest.fail("CFME did not prevent analysing the VM {}".format(vm.name))
 
@@ -498,6 +426,14 @@ def test_action_prevent_host_ssa(request, appliance, host, host_policy):
     def _cleanup():
         host_policy.unassign_events("Host Analysis Request")
 
+    policy_result = LogValidator(
+        "/var/www/miq/vmdb/log/policy.log",
+        matched_patterns=[
+            '.*Prevent current event from proceeding.*Host Analysis Request.*{}'.format(host.name)
+        ]
+    )
+    policy_result.fix_before_start()
+
     view = navigate_to(host, "Details")
 
     def _scan():
@@ -509,22 +445,19 @@ def test_action_prevent_host_ssa(request, appliance, host, host_policy):
     try:
         wait_for(
             lambda: _scan() != original,
-            num_sec=60, delay=5, fail_func=view.browser.refresh,
-            message="Check if Drift History field is changed")
-    except TimedOutError:
-        event_string = 'Prevent current event from proceeding'
-        result = appliance.ssh_client.run_command(
-            "grep '{}.*Host Analysis Request.*{}' /var/www/miq/vmdb/log/policy.log"
-            .format(event_string, host.name)
+            num_sec=60,
+            delay=5,
+            fail_func=view.browser.refresh,
+            message="Check if Drift History field is changed",
         )
-        assert result.success, 'Action "{}" has not been invoked'.format(event_string)
+    except TimedOutError:
+        policy_result.validate_logs()
     else:
         pytest.fail("CFME did not prevent analysing the Host {}".format(host.name))
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
-    scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
 )
 def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testing):
     """ This test tests action 'Generate log message'.
@@ -540,6 +473,17 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testi
         initialEstimate: 1/6h
         casecomponent: Control
     """
+    policy_result = LogValidator(
+        "/var/www/miq/vmdb/log/policy.log",
+        matched_patterns=[
+            r'.*policy: \[{}\], event: \[VM Power On\], entity name: \[{}\]'.format(
+                policy_for_testing.description,
+                vm.name
+            )
+        ]
+    )
+    policy_result.fix_before_start()
+
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Generate log message"])
 
@@ -548,31 +492,20 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testi
         policy_for_testing.unassign_events("VM Power On")
 
     # Start the VM
-    vm.mgmt.start()
-    policy_desc = policy_for_testing.description
+    vm.mgmt.ensure_state(VmState.RUNNING)
 
-    # Search the logs
-    def search_logs():
-        result = appliance.ssh_client.run_command(
-            "cat /var/www/miq/vmdb/log/policy.log | grep '{}'".format(policy_desc))
-        if result.failed:  # Nothing found, so shortcut
+    def validate_logs():
+        try:
+            policy_result.validate_logs()
+            return True
+        except Failed:
             return False
-        for line in result.output.strip().split("\n"):
-            if "Policy success" not in line:
-                continue
-            match_string = "policy: [{}], event: [VM Power On], entity name: [{}]".format(
-                policy_desc, vm.name)
-            if match_string in line:
-                logger.info("Found corresponding log message: %s", line.strip())
-                return True
-        else:
-            return False
-    wait_for(search_logs, num_sec=180, message="log search")
+
+    wait_for(validate_logs, num_sec=180, message="log search", delay=5)
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
-    scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
 )
 def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testing):
     """ This test tests action 'Generate Audit Event'.
@@ -588,6 +521,15 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
         initialEstimate: 1/6h
         casecomponent: Control
     """
+    policy_result = LogValidator(
+        "/var/www/miq/vmdb/log/audit.log",
+        matched_patterns=[
+            r'.*policy: \[{}\], event: \[VM Power On\]'.format(
+                policy_for_testing.description
+            )
+        ]
+    )
+    policy_result.fix_before_start()
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Generate Audit Event"])
 
@@ -596,37 +538,30 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
         policy_for_testing.unassign_events("VM Power On")
 
     # Start the VM
-    vm.mgmt.start()
-    policy_desc = policy_for_testing.description
+    vm.mgmt.ensure_state(VmState.RUNNING)
 
     # Search the logs
-    def search_logs():
-        result = appliance.ssh_client.run_command(
-            "cat /var/www/miq/vmdb/log/audit.log | grep '{}'".format(policy_desc)
-        )
-        if result.failed:  # Nothing found, so shortcut
+    def validate_logs():
+        try:
+            policy_result.validate_logs()
+            return True
+        except Failed:
             return False
-        for line in result.output.strip().split("\n"):
-            if "Policy success" not in line or "MiqAction.action_audit" not in line:
-                continue
-            match_string = "policy: [{}], event: [VM Power On]".format(policy_desc)
-            if match_string in line:
-                logger.info("Found corresponding log message: %s", line.strip())
-                return True
-        else:
-            return False
-    wait_for(search_logs, num_sec=180, message="log search")
+
+    wait_for(validate_logs, num_sec=180, message="log search", delay=5)
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
-def test_action_create_snapshot_and_delete_last(
-    appliance,
-    request,
-    vm,
-    vm_on,
-    policy_for_testing,
-    provider
-):
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1549529,
+            forced_streams=["5.10", "upstream"],
+            unblock=lambda provider: provider.one_of(VMwareProvider),
+        )
+    ]
+)
+def test_action_create_snapshot_and_delete_last(appliance, request, vm, vm_on, policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and when it is
@@ -645,7 +580,7 @@ def test_action_create_snapshot_and_delete_last(
     snapshot_create_action = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
-        action_values={"snapshot_name": snapshot_name}
+        action_values={"snapshot_name": snapshot_name},
     )
     policy_for_testing.assign_actions_to_event("VM Power Off", [snapshot_create_action])
     policy_for_testing.assign_actions_to_event("VM Power On", ["Delete Most Recent Snapshot"])
@@ -655,24 +590,40 @@ def test_action_create_snapshot_and_delete_last(
         policy_for_testing.unassign_events("VM Power Off", "VM Power On")
         snapshot_create_action.delete()
 
-    snapshots_before = vm.crud.total_snapshots
+    snapshots_before = vm.total_snapshots
     # Power off to invoke snapshot creation
-    vm.mgmt.stop()
-    wait_for(lambda: vm.crud.total_snapshots > snapshots_before, num_sec=800,
-             message="wait for snapshot appear", delay=5)
-    assert vm.crud.current_snapshot_description == "Created by EVM Policy Action"
-    assert vm.crud.current_snapshot_name == snapshot_name
+    vm.mgmt.ensure_state(VmState.STOPPED)
+    wait_for(
+        lambda: vm.total_snapshots > snapshots_before,
+        num_sec=800,
+        message="wait for snapshot appear",
+        delay=5,
+    )
+    assert vm.current_snapshot_description == "Created by EVM Policy Action"
+    assert vm.current_snapshot_name == snapshot_name
     # Snapshot created and validated, so let's delete it
-    snapshots_before = vm.crud.total_snapshots
+    snapshots_before = vm.total_snapshots
     # Power on to invoke last snapshot deletion
-    vm.mgmt.start()
-    wait_for(lambda: vm.crud.total_snapshots < snapshots_before, num_sec=800,
-             message="wait for snapshot deleted", delay=5)
+    vm.mgmt.ensure_state(VmState.RUNNING)
+    wait_for(
+        lambda: vm.total_snapshots < snapshots_before,
+        num_sec=800,
+        message="wait for snapshot deleted",
+        delay=5,
+    )
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
-def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on,
-        policy_for_testing, provider):
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1549529,
+            forced_streams=["5.10", "upstream"],
+            unblock=lambda provider: provider.one_of(VMwareProvider),
+        )
+    ]
+)
+def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on, policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and then it cycles
@@ -692,13 +643,13 @@ def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on,
     snapshot_create_action = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
-        action_values={"snapshot_name": snapshot_name}
+        action_values={"snapshot_name": snapshot_name},
     )
     policy_for_testing.assign_actions_to_event("VM Power Off", [snapshot_create_action])
 
     @request.addfinalizer
     def finalize():
-        policy_for_testing.unassign_events("VM Power Off")
+        policy_for_testing.unassign_events("VM Power Off", "VM Power On")
         snapshot_create_action.delete()
 
     def create_one_snapshot(n):
@@ -707,29 +658,39 @@ def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on,
             n: Sequential number of snapshot for logging.
         """
         # Power off to invoke snapshot creation
-        snapshots_before = vm.crud.total_snapshots
-        vm.mgmt.stop()
-        wait_for(lambda: vm.crud.total_snapshots > snapshots_before, num_sec=800,
-                 message="wait for snapshot %d to appear" % (n + 1), delay=5)
-        current_snapshot = vm.crud.current_snapshot_name
-        logger.debug('Current Snapshot Name: {}'.format(current_snapshot))
+        snapshots_before = vm.total_snapshots
+        vm.mgmt.ensure_state(VmState.STOPPED)
+        wait_for(
+            lambda: vm.total_snapshots > snapshots_before,
+            num_sec=800,
+            message="wait for snapshot %d to appear" % (n + 1),
+            delay=5,
+        )
+        current_snapshot = vm.current_snapshot_name
+        logger.debug("Current Snapshot Name: {}".format(current_snapshot))
         assert current_snapshot == snapshot_name
-        vm.mgmt.start()
+        vm.mgmt.ensure_state(VmState.RUNNING)
 
     for i in range(4):
         create_one_snapshot(i)
-    policy_for_testing.assign_events()
-    vm.mgmt.stop()
+    # unassign original event
+    policy_for_testing.unassign_events("VM Power Off")
+    vm.mgmt.ensure_state(VmState.STOPPED)
     policy_for_testing.assign_actions_to_event("VM Power On", ["Delete all Snapshots"])
     # Power on to invoke all snapshots deletion
-    vm.mgmt.start()
-    wait_for(lambda: vm.crud.total_snapshots == 0, num_sec=800,
-             message="wait for snapshots to be deleted", delay=5)
+    vm.mgmt.ensure_state(VmState.RUNNING)
+    wait_for(
+        lambda: vm.total_snapshots == 0,
+        num_sec=800,
+        message="wait for snapshots to be deleted",
+        delay=5,
+    )
 
 
 @pytest.mark.provider([VMwareProvider], scope="module")
-def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm_off,
-        policy_for_testing):
+def test_action_initiate_smartstate_analysis(
+    request, configure_fleecing, vm, vm_off, policy_for_testing
+):
     """ This test tests actions 'Initiate SmartState Analysis for VM'.
 
     This test sets the policy that it analyses VM after it's powered on. Then it checks whether
@@ -752,17 +713,17 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
         policy_for_testing.unassign_events("VM Power On")
 
     # Start the VM
-    vm.crud.power_control_from_cfme(option=vm.crud.POWER_ON, cancel=False, from_details=True)
-    wait_for_ssa_enabled(vm.crud)
+    vm.power_control_from_cfme(option=vm.POWER_ON, cancel=False, from_details=True)
+    wait_for_ssa_enabled(vm)
     try:
-        do_scan(vm.crud)
+        do_scan(vm)
     except TimedOutError:
         pytest.fail("CFME did not finish analysing the VM {}".format(vm.name))
 
 
 # TODO: Rework to use REST
 # def test_action_raise_automation_event(
-#         request, policy_for_testing, vm, vm_on, ssh_client, vm_crud_refresh):
+#         request, policy_for_testing, vm, vm_on, ssh_client, vm_refresh):
 #     """ This test tests actions 'Raise Automation Event'.
 
 #     This test sets the policy that it raises an automation event VM after it's powered on.
@@ -798,8 +759,7 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
 
 # Purely custom actions
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
-    scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
 )
 def test_action_tag(request, vm, vm_off, policy_for_testing, appliance):
     """ Tests action tag
@@ -812,14 +772,16 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, appliance):
         initialEstimate: 1/6h
         casecomponent: Control
     """
-    if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
-           for tag in vm.crud.get_tags()):
-        vm.crud.remove_tag("Service Level", "Gold")
+    if any(
+        tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+        for tag in vm.get_tags()
+    ):
+        vm.remove_tag("Service Level", "Gold")
 
     tag_assign_action = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Tag",
-        action_values={"tag": ("My Company Tags", "Service Level", "Gold")}
+        action_values={"tag": ("My Company Tags", "Service Level", "Gold")},
     )
     policy_for_testing.assign_actions_to_event("VM Power On", [tag_assign_action])
 
@@ -828,21 +790,23 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, appliance):
         policy_for_testing.unassign_events("VM Power On")
         tag_assign_action.delete()
 
-    vm.mgmt.start()
+    vm.mgmt.ensure_state(VmState.RUNNING)
+    vm.wait_for_vm_state_change(desired_state=vm.STATE_ON, from_details=True)
     try:
         wait_for(
-            lambda: any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
-                        for tag in vm.crud.get_tags()),
+            lambda: any(
+                tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+                for tag in vm.get_tags()
+            ),
             num_sec=600,
-            message="tag presence check"
+            message="tag presence check",
         )
     except TimedOutError:
         pytest.fail("Tags were not assigned!")
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
-    scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
 )
 def test_action_untag(request, vm, vm_off, policy_for_testing, appliance, tag):
     """ Tests action untag
@@ -855,22 +819,26 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, appliance, tag):
         initialEstimate: 1/6h
         casecomponent: Control
     """
-    if not any(vm_tag.category.display_name == tag.category.display_name and
-               vm_tag.display_name == tag.display_name
-               for vm_tag in vm.crud.get_tags()):
-        vm.crud.add_tag(tag)
+    if not any(
+        vm_tag.category.display_name == tag.category.display_name
+        and vm_tag.display_name == tag.display_name
+        for vm_tag in vm.get_tags()
+    ):
+        vm.add_tag(tag)
 
     @request.addfinalizer
     def _remove_tag():
-        if any(vm_tag.category.display_name == tag.category.display_name and
-               vm_tag.display_name == tag.display_name
-               for vm_tag in vm.crud.get_tags()):
-            vm.crud.remove_tag(tag)
+        if any(
+            vm_tag.category.display_name == tag.category.display_name
+            and vm_tag.display_name == tag.display_name
+            for vm_tag in vm.get_tags()
+        ):
+            vm.remove_tag(tag)
 
     tag_unassign_action = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Remove Tags",
-        action_values={"remove_tag": [tag.category.display_name]}
+        action_values={"remove_tag": [tag.category.display_name]},
     )
     policy_for_testing.assign_actions_to_event("VM Power On", [tag_unassign_action])
 
@@ -879,15 +847,16 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, appliance, tag):
         policy_for_testing.unassign_events("VM Power On")
         tag_unassign_action.delete()
 
-    vm.mgmt.start()
+    vm.mgmt.ensure_state(VmState.RUNNING)
     try:
-
         wait_for(
-            lambda: not any(vm_tag.category.display_name == tag.category.display_name and
-                            vm_tag.display_name == tag.display_name
-                            for vm_tag in vm.crud.get_tags()),
+            lambda: not any(
+                vm_tag.category.display_name == tag.category.display_name
+                and vm_tag.display_name == tag.display_name
+                for vm_tag in vm.get_tags()
+            ),
             num_sec=600,
-            message="tag presence check"
+            message="tag presence check",
         )
     except TimedOutError:
         pytest.fail("Tags were not unassigned!")
@@ -895,14 +864,16 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, appliance, tag):
 
 @pytest.mark.provider([VMwareProvider], scope="module")
 @pytest.mark.meta(blockers=[BZ(1685201)])
-def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, policy_for_testing,
-        compliance_policy):
+def test_action_cancel_clone(
+    appliance, request, provider, vm_big, policy_for_testing, compliance_policy
+):
     """This test checks if 'Cancel vCenter task' action works.
     For this test we need big template otherwise CFME won't have enough time
     to cancel the task https://bugzilla.redhat.com/show_bug.cgi?id=1383372#c9
 
     Bugzilla:
         1383372
+        1685201
 
     Polarion:
         assignee: jdupuy
@@ -910,42 +881,47 @@ def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, poli
         casecomponent: Control
     """
     with update(policy_for_testing):
-        policy_for_testing.scope = (
-            "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_big.name))
+        policy_for_testing.scope = "fill_field(VM and Instance : Name, INCLUDES, {})".format(
+            vm_big.name
+        )
     with update(compliance_policy):
-        compliance_policy.scope = (
-            "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_big.name))
+        compliance_policy.scope = "fill_field(VM and Instance : Name, INCLUDES, {})".format(
+            vm_big.name
+        )
     policy_for_testing.assign_events("VM Clone Start")
-    policy_for_testing.assign_actions_to_event(
-        "VM Clone Start", ["Cancel vCenter Task"])
+    policy_for_testing.assign_actions_to_event("VM Clone Start", ["Cancel vCenter Task"])
     clone_vm_name = "{}-clone".format(vm_big.name)
 
     @request.addfinalizer
     def finalize():
         policy_for_testing.unassign_events("VM Clone Start")
-        with update(policy_for_testing):
-            policy_for_testing.scope = (
-                "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name))
-        with update(compliance_policy):
-            compliance_policy.scope = (
-                "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name))
         collection = provider.appliance.provider_based_collection(provider)
         collection.instantiate(clone_vm_name, provider).cleanup_on_provider()
+        # reset the policy scope to the original vm
+        with update(policy_for_testing):
+            policy_for_testing.scope = "fill_field(VM and Instance : Name, INCLUDES, {})".format(
+                vm.name
+            )
+        with update(compliance_policy):
+            compliance_policy.scope = "fill_field(VM and Instance : Name, INCLUDES, {})".format(
+                vm.name
+            )
 
-    vm_big.crud.clone_vm(fauxfactory.gen_email(), "first", "last", clone_vm_name, "VMware")
+    vm_big.clone_vm(fauxfactory.gen_email(), "first", "last", clone_vm_name, "VMware")
     request_description = clone_vm_name
-    clone_request = appliance.collections.requests.instantiate(description=request_description,
-                                                               partial_check=True)
-    clone_request.wait_for_request(method='ui')
+    clone_request = appliance.collections.requests.instantiate(
+        description=request_description, partial_check=True
+    )
+    clone_request.wait_for_request(method="ui")
     assert clone_request.status == "Error"
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
-    scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
 )
-def test_action_check_compliance(request, provider, vm, vm_name, policy_for_testing,
-        compliance_policy, compliance_condition, tag):
+def test_action_check_compliance(
+    request, vm, policy_for_testing, compliance_policy, compliance_condition, compliance_tag
+):
     """Tests action "Check Host or VM Compliance". Policy profile should have control and compliance
     policies. Control policy initiates compliance check and compliance policy determines is the vm
     compliant or not. After reloading vm details screen the compliance status should be changed.
@@ -959,18 +935,22 @@ def test_action_check_compliance(request, provider, vm, vm_name, policy_for_test
         casecomponent: Control
     """
     compliance_policy.assign_conditions(compliance_condition)
-    if any(vm_tag.category.display_name == tag.category.display_name and
-           vm_tag.display_name == tag.display_name
-           for vm_tag in vm.crud.get_tags()):
-        vm.crud.remove_tag(tag)
+    if any(
+        vm_tag.category.display_name == compliance_tag.category.display_name
+        and vm_tag.display_name == compliance_tag.display_name
+        for vm_tag in vm.get_tags()
+    ):
+        vm.remove_tag(compliance_tag)
 
     @request.addfinalizer
     def _remove_tag():
         compliance_policy.assign_conditions()
-        if any(vm_tag.category.display_name == tag.category.display_name and
-               vm_tag.display_name == tag.display_name
-               for vm_tag in vm.crud.get_tags()):
-            vm.crud.remove_tag(tag)
+        if any(
+            vm_tag.category.display_name == compliance_tag.category.display_name
+            and vm_tag.display_name == compliance_tag.display_name
+            for vm_tag in vm.get_tags()
+        ):
+            vm.remove_tag(compliance_tag)
 
     policy_for_testing.assign_actions_to_event("Tag Complete", ["Check Host or VM Compliance"])
 
@@ -978,7 +958,5 @@ def test_action_check_compliance(request, provider, vm, vm_name, policy_for_test
     def _cleanup():
         policy_for_testing.unassign_events("Tag Complete")
 
-    vm.crud.add_tag(tag)
-    view = navigate_to(vm.crud, "Details")
-    view.toolbar.reload.click()
-    assert vm.crud.compliant
+    vm.add_tag(compliance_tag)
+    vm.check_compliance()
