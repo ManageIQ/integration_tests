@@ -226,11 +226,15 @@ def copy_instance(domain):
     """
     This fixture copies the instance '/ManageIQ/System/Request/ansible_tower_job' to new domain.
     """
-    domain.parent.instantiate(name="ManageIQ").namespaces.instantiate(
-        name="System"
-    ).classes.instantiate(name="Request").instances.instantiate(name="ansible_tower_job").copy_to(
-        domain.name
+    # Instantiating class 'Request'
+    klass = (
+        domain.parent.instantiate(name="ManageIQ")
+        .namespaces.instantiate(name="System")
+        .classes.instantiate(name="Request")
     )
+
+    # Instantiating instance 'ansible_tower_job' and copying it to new domain
+    klass.instances.instantiate(name="ansible_tower_job").copy_to(domain.name)
     instance = (
         domain.namespaces.instantiate(name="System")
         .classes.instantiate(name="Request")
@@ -240,7 +244,7 @@ def copy_instance(domain):
 
 
 @pytest.mark.tier(1)
-def test_check_system_request_calls_depr_configurationmanagement(appliance, copy_instance):
+def test_check_system_request_calls_depr_conf_mgmt(appliance, copy_instance):
     """
     Polarion:
         assignee: ghubale
