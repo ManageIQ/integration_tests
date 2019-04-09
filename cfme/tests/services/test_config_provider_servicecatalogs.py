@@ -81,7 +81,7 @@ def test_order_tower_catalog_item(appliance, catalog_item, request, job_type):
         casecomponent: Services
         caseimportance: high
     """
-    dialog_values = {'Limit': "10.8.198.0"}
+    dialog_values = {'limit': "10.8.198.0"}
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name,
         dialog_values=dialog_values)
     service_catalogs.order()
