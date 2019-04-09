@@ -72,16 +72,7 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
     return temp_appliance_preconfig_funcscope_upgrade
 
 
-@pytest.mark.ignore_stream('upstream')
-@pytest.mark.tier(2)
-def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
-    """
-    Polarion:
-        assignee: jhenner
-        initialEstimate: 1/4h
-        casecomponent: Appliance
-    """
-    app = temp_appliance_extended_db
+def download_and_migrate_db(app, db_url, db_desc):
     # Download the database
     logger.info("Downloading database: {}".format(db_desc))
     url_basename = os_path.basename(db_url)
