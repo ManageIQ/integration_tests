@@ -701,49 +701,6 @@ def test_automate_buttons_requests():
 
 
 @pytest.mark.tier(1)
-def test_refresh_git_current_user():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.9
-        casecomponent: Automate
-        tags: automate
-        testSteps:
-            1. created non-super user 'ganesh' along with default 'admin' user.
-            2. Using admin user imported git repo.:
-               'https://github.com/ramrexx/CloudForms_Essentials.git'
-            3. Logged in with admin and refreshed domain- 'CloudForms_Essentials'.
-               Then checked all tasks.
-            4. Found user name 'admin' next to 'Refresh git repository'.
-            5. Then checked instances in that domain by logging in with user 'ganesh' and 'admin'.
-            6. Logged in with non-super user 'ganesh' and refreshed domain- 'CloudForms_Essentials'.
-               Then checked all tasks.
-            7. Found user name 'ganesh' next to 'Refresh git repository'.
-            8. Then checked instances in that domain by logging in with user 'ganesh' and 'admin'.
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5. It shows that
-               e.g. 'Automate Instance [Provisioning - Updated 2019-01-15 11:41:43 UTC by admin]'
-            6.
-            7.
-            8. It shows that
-               e.g. 'Automate Instance [Provisioning - Updated 2019-01-15 11:44:43 UTC by ganesh]'
-               Hence, correct user that calls refresh automation domain from git branch is shown.
-    Bugzilla:
-        1592428
->>>>>>> New Test:
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_list_of_diff_vm_storages_via_rails():
     """
     Polarion:

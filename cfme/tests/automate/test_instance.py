@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
@@ -263,19 +264,19 @@ def test_check_system_request_calls_depr_conf_mgmt(appliance, copy_instance):
         expectedResults:
             1.
             2. The /System/Request/ansible_tower_job instance should call the newer
-               "/AutomationManagement/AnsibleTower/Operations/StateMachines/Job/default method"
+               "/AutomationManagement/AnsibleTower/Operations/StateMachines/Job/default" method
 
     Bugzilla:
         1615444
     """
     search = '/AutomationManagement/AnsibleTower/Operations/StateMachines/Job/default'
-
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*{}.*".format(search)]
+    )
+    result.fix_before_start()
     # Executing the automate instance - 'ansible_tower_job' using simulation
     simulate(
         appliance=appliance,
         request=copy_instance.name
     )
-    result = appliance.ssh_client.run_command(
-        "grep {} /var/www/miq/vmdb/log/automation.log".format(search)
-    )
-    assert result.success
+    result.validate_logs()
