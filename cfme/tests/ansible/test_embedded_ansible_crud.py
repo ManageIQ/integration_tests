@@ -1,6 +1,7 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -89,7 +90,7 @@ def test_embedded_ansible_disable(enabled_embedded_appliance):
 
 
 @pytest.mark.tier(1)
-def test_embed_tower_event_catcher_process(appliance, enabled_embedded_appliance):
+def test_embedded_ansible_event_catcher_process(appliance, enabled_embedded_appliance):
     """
     EventCatcher process is started after Ansible role is enabled (rails
     evm:status)
@@ -101,24 +102,17 @@ def test_embed_tower_event_catcher_process(appliance, enabled_embedded_appliance
         initialEstimate: 1/4h
         tags: ansible_embed
     """
-    result = appliance.ssh_client.run_command(
-        "cd /var/www/miq/vmdb; rake evm:status | grep 'EmbeddedAnsible'"
+    result = appliance.ssh_client.run_rake_command(
+        "evm:status | grep 'EmbeddedAnsible'"
     ).output
 
-    checks = [
-        "EmbeddedAnsible",
-        "EmbeddedAnsible::Automation::EventCatcher",
-        "EmbeddedAnsible::Automation::Refresh",
-    ]
-
     for data in result.splitlines():
-        for i in checks:
-            if i in data:
-                assert "started" in data
+        logger.info("Checking service/process %s started or not", data)
+        assert "started" in data
 
 
 @pytest.mark.tier(1)
-def test_embed_tower_logs(appliance, enabled_embedded_appliance):
+def test_embedded_ansible_logs(appliance, enabled_embedded_appliance):
     """
     Separate log files should be generated for Ansible to aid debugging.
     p1 (/var/log/tower)
@@ -130,5 +124,27 @@ def test_embed_tower_logs(appliance, enabled_embedded_appliance):
         initialEstimate: 1/4h
         tags: ansible_embed
     """
-    log_status = appliance.ssh_client.run_command("ls /var/log/tower/")
-    assert log_status.success
+    log_checks = [
+        "callback_receiver.log",
+        "dispatcher.log",
+        "fact_receiver.log",
+        "management_playbooks.log",
+        "task_system.log",
+        "tower.log",
+        "tower_rbac_migrations.log",
+        "tower_system_tracking_migrations.log",
+    ]
+
+    # Asserting log folder is present
+    tower_log_folder = appliance.ssh_client.run_command("ls /var/log/tower/")
+    assert tower_log_folder.success
+
+    # Removing setup log file from list and asserting it separately
+    # Setup log file contains date/time string in it.
+    logs = tower_log_folder.output.splitlines()
+    setup_log = logs.pop(4)
+    assert "setup" in setup_log
+
+    # Asserting remaining log files based on log_checks
+    for data in logs:
+        assert data in log_checks
