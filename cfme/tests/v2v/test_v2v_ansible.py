@@ -2,13 +2,15 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.fixtures.provider import rhel7_minimal
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.fixtures.provider import rhel7_minimal
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE_PER_VERSION, ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
 from cfme.utils.wait import wait_for
 
 
