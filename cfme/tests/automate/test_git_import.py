@@ -110,3 +110,69 @@ def test_automate_git_import_multiple_domains(request, appliance):
         domain = repo.import_domain_from(branch="origin/master")
         request.addfinalizer(domain.delete_if_exists)
         assert not domain.exists
+
+
+@pytest.mark.tier(2)
+@pytest.mark.parametrize(
+    ("url", "param_type", "param_value", "verify_ssl"),
+    [
+        (
+            'https://github.com/ramrexx/CloudForms_Essentials.git',
+            'branch',
+            'origin/cf4.1',
+            True
+        ),
+        (
+            'https://github.com/RedHatQE/ManageIQ-automate-git.git',
+            'tag',
+            '0.1',
+            False
+        ),
+        (
+            "https://github.com/RedHatQE/ManageIQ-automate-git.git",
+            "branch",
+            "origin/master",
+            False,
+        ),
+        (
+            "https://github.com/ganeshhubale/ManageIQ-automate-git.git",
+            "branch",
+            "origin/test",
+            False,
+        ),
+    ],
+    ids=["with_branch", "with_tag", "with_top_level_domain", "without_top_level_domain"],
+)
+def test_domain_import_git(
+    request, appliance, url, param_type, param_value, verify_ssl
+):
+    """This test case Verifies that a domain can be imported from git and Importing domain from git
+       should work with or without the top level domain directory.
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/6h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.7
+        casecomponent: Automate
+        tags: automate
+        title: Test automate git domain import top level directory
+        testSteps:
+            1. Enable server role: git Repositories Owner
+            2. Navigate to Automation > Automate > Import/Export
+            3. Create a Git Repository with the contents of a domain directory without including
+               the domain directory.
+        expectedResults:
+            1.
+            2.
+            3. Import should work with or without the top level domain directory.
+
+    Bugzilla:
+        1389823
+    """
+    repo = AutomateGitRepository(url=url, verify_ssl=verify_ssl, appliance=appliance)
+    domain = repo.import_domain_from(**{param_type: param_value})
+    request.addfinalizer(domain.delete)
+    assert domain.exists

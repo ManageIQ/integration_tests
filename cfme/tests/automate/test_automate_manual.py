@@ -6,37 +6,6 @@ from cfme import test_requirements
 pytestmark = [test_requirements.automate, pytest.mark.manual]
 
 
-@pytest.mark.tier(3)
-def test_automate_git_domain_import_top_level_directory():
-    """
-    Importing domain from git should work with or without the top level domain directory.
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/6h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.7
-        casecomponent: Automate
-        tags: automate
-        title: Test automate git domain import top level directory
-        testSteps:
-            1. Enable server role: git Repositories Owner
-            2. Navigate to Automation > Automate > Import/Export
-            3. Create a Git Repository with the contents of a domain directory without including
-               the domain directory.
-        expectedResults:
-            1.
-            2.
-            3. Import should work with or without the top level domain directory.
-
-    Bugzilla:
-        1389823
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_customize_request_security_group():
     """
