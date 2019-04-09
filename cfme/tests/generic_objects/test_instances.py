@@ -260,8 +260,8 @@ def test_generic_objects_tag_rest(appliance, generic_object, tags):
 @pytest.mark.ignore_stream("5.10")
 def test_import_export_generic_object():
     """
-    Bugzillas:
-        * 1595259
+    Bugzilla:
+        1595259
 
     Polarion:
         assignee: jdupuy
@@ -271,6 +271,13 @@ def test_import_export_generic_object():
         testtype: functional
         startsin: 5.11
         casecomponent: GenericObjects
-
+        testSteps:
+            1. Import a generic object yaml
+            2. Create a generic object
+            3. Export a generic object
+        expectedResults:
+            1. The generic object should be present in CFME
+            2.
+            3. The generic object should be exported to a yaml file
     """
     pass
