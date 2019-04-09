@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.rest.gen_data import categories as _categories
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.rest import assert_response
@@ -9,6 +10,17 @@ from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
+
+
+@pytest.fixture
+def custom_category(appliance):
+    category = appliance.collections.categories.create(
+        name=fauxfactory.gen_alphanumeric(8).lower(),
+        description=fauxfactory.gen_alphanumeric(32),
+        display_name=fauxfactory.gen_alphanumeric(32),
+    )
+    yield category
+    category.delete_if_exists()
 
 
 @pytest.mark.tier(2)
@@ -33,6 +45,34 @@ def test_category_crud(appliance, soft_assert):
     soft_assert(view.flash.assert_message('Category "{}" was saved'.format(cg.name)))
     cg.delete()
     soft_assert(view.flash.assert_message('Category "{}": Delete successful'.format(cg.name)))
+
+
+@test_requirements.rest
+@pytest.mark.tier(3)
+def test_query_custom_category_via_api(appliance, custom_category):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
+        initialEstimate: 1/10h
+        setup:
+            1. Navigate to `Configuration` and select `Region`.
+            2. Click on Tags and create a custom category.
+        testSteps:
+            1. GET all the categories via REST API
+        expectedResults:
+            1. Newly created custom category must be present in the list of categories
+                returned by the response.
+
+    Bugzilla:
+        1650556
+    """
+    # collecting names and checking if the name of newly created category is present in the list
+    all_categories_name = [
+        cat.name for cat in appliance.rest_api.collections.categories.all
+    ]
+    assert custom_category.name in all_categories_name
 
 
 class TestCategoriesViaREST(object):
