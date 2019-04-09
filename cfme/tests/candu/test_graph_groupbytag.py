@@ -2,6 +2,7 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.infrastructure.provider import InfraProvider
 from cfme.common.candu_views import UtilizationZoomView
 from cfme.tests.candu import compare_data_with_unit
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -12,11 +13,11 @@ pytestmark = [
     test_requirements.c_and_u
 ]
 
-HOST_GRAPHS = ['host_cpu',
-               'host_memory',
-               'host_disk',
-               'host_network',
-               'host_cpu_state']
+GRAPHS = ['cpu',
+          'memory',
+          'disk',
+          'network',
+          'cpu_state']
 
 INTERVAL = ['Hourly', 'Daily']
 
@@ -28,31 +29,34 @@ ENTITY = ['Host', 'Cluster']
 
 
 @pytest.fixture(scope='function')
-def entity_object(temp_appliance_extended_db, ENTITY):
-    if ENTITY == 'Host':
-        vm = temp_appliance_extended_db.rest_api.collections.vms.get(name=CANDU_VM)
+def entity_object(temp_appliance_extended_db, entity):
+    vm = temp_appliance_extended_db.rest_api.collections.vms.get(name=CANDU_VM)
+    if entity == 'Host':
         vm_host = vm.host.name
         return temp_appliance_extended_db.collections.hosts.instantiate(name=vm_host)
-    elif ENTITY == 'Cluster':
-        collection = provider.appliance.collections.clusters
-        cluster_name = provider.data["cap_and_util"]["cluster"]
-        return collection.instantiate(name=cluster_name, provider=provider)
+    elif entity == 'Cluster':
+        provider = temp_appliance_extended_db.rest_api.collections.providers.get(id=vm.ems_id)
+        cluster = temp_appliance_extended_db.rest_api.collections.clusters.get(id=vm.ems_cluster_id)
+        provider_object = temp_appliance_extended_db.collections.infra_providers.instantiate(
+            InfraProvider, name=provider.name)
+        return temp_appliance_extended_db.collections.clusters.instantiate(
+            name=cluster.name, provider=provider_object)
 
 
 @pytest.mark.parametrize('gp_by', GROUP_BY, ids=['vm_tag'])
 @pytest.mark.parametrize('interval', INTERVAL)
-@pytest.mark.parametrize('graph_type', HOST_GRAPHS)
+@pytest.mark.parametrize('graph_type', GRAPHS)
 @pytest.mark.parametrize('entity', ENTITY)
-def test_tagwise(candu_db_restore, interval, graph_type, gp_by, entity_object):
+def test_tagwise(candu_db_restore, interval, graph_type, gp_by, entity, entity_object):
     """Tests for grouping host graphs by VM tag for hourly and Daily intervals
 
     prerequisites:
         * DB from an appliance on which C&U is enabled
         * DB should have C&U data collection enabled for Tag category
-        * DB should have a VM tagged with proper tag category
+        * DB should have a VM and VM/host tagged with proper tag category
 
     Steps:
-        * Navigate to Host Utilization Page
+        * Navigate to Host/Cluster Utilization Page
         * Select interval(Hourly or Daily)
         * Select group by option with VM tag
         * Check graph displayed or not
