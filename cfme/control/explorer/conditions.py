@@ -16,6 +16,7 @@ from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from widgetastic_manageiq.expression_editor import ExpressionEditor
@@ -73,7 +74,8 @@ class ConditionsAllView(ControlExplorerView):
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == "All Conditions" and
+            # there is a BZ 1683697 that some Condition view is shown for All Conditions
+            self.title.text == "All Conditions" if not BZ(1683697).blocks else True and
             self.conditions.is_opened and
             self.conditions.tree.currently_selected == ["All Conditions"]
         )
@@ -117,7 +119,7 @@ class ConditionClassAllView(ControlExplorerView):
             self.title.text == "All {} Conditions".format(self.context["object"].FIELD_VALUE) and
             self.conditions.is_opened and
             self.conditions.tree.currently_selected == [
-                "All Conditions","{} Conditions".format(self.context["object"].TREE_NODE)
+                "All Conditions", "{} Conditions".format(self.context["object"].TREE_NODE)
             ]
         )
 
@@ -245,11 +247,11 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
 
         Returns: :py:class:`bool` signalizing the presence of the Condition in the database.
         """
-        conditions = self.appliance.db.client["conditions"]
-        return self.appliance.db.client.session\
-            .query(conditions.description)\
-            .filter(conditions.description == self.description)\
-            .count() > 0
+        try:
+            self.appliance.rest_api.collections.conditions.get(description=self.description)
+            return True
+        except ValueError:
+            return False
 
 
 @attr.s
