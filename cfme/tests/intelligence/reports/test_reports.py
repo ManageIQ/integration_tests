@@ -1,3 +1,4 @@
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
@@ -5,6 +6,32 @@ from cfme.rest.gen_data import users as _users
 from cfme.utils.rest import assert_response
 
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
+
+
+@pytest.fixture
+def create_custom_tag(appliance):
+    # cannot create a category with uppercase in the name
+    category_name = fauxfactory.gen_alphanumeric().lower()
+
+    # command to create the new category
+    setup_command = (
+        '\'cat = Classification.create_category!(name: "{cat_name}", '
+        'description: "description_{cat_name}", read_only: true);'
+        'cat.add_entry(name: "{cat_name}_entry", description: "{cat_name}_entry_description")\''
+    ).format(cat_name=category_name)
+
+    # command to delete the created category
+    teardown_command = "'cat = Classification.find_by_name(\"{}\");cat.delete()'".format(
+        category_name
+    )
+
+    output = appliance.ssh_client.run_rails_command(setup_command)
+    assert output.success
+
+    yield category_name
+
+    output = appliance.ssh_client.run_rails_command(teardown_command)
+    assert output.success
 
 
 @pytest.fixture(scope="function")
@@ -43,3 +70,37 @@ def test_non_admin_user_reports_access_rest(appliance, request, rbac_api):
     report_data = rbac_api.collections.reports.all
     assert_response(appliance)
     assert len(report_data)
+
+
+@pytest.mark.tier(1)
+def test_reports_custom_tags(appliance, request, create_custom_tag):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: low
+        initialEstimate: 1/3h
+        setup:
+            1. Add custom tags to appliance using black console
+                i. ssh to appliance, vmdb; rails c
+                ii. cat = Classification.create_category!(
+                    name: "rocat1", description: "read_only cat 1", read_only: true)
+                iii. cat.add_entry(name: "roent1", description: "read_only entry 1")
+        testSteps:
+            1. Create a new report with the newly created custom tag/category.
+        expectedResults:
+            1. Report must be created successfully.
+    """
+    category_name = create_custom_tag
+    report_data = {
+        "menu_name": "Custom Category Report {}".format(category_name),
+        "title": "Custom Category Report Title {}".format(category_name),
+        "base_report_on": "Availability Zones",
+        "report_fields": [
+            "Cloud Manager.My Company Tags : description_{}".format(category_name),
+            "VMs.My Company Tags : description_{}".format(category_name),
+        ],
+    }
+    report = appliance.collections.reports.create(**report_data)
+    request.addfinalizer(report.delete)
+    assert report.exists

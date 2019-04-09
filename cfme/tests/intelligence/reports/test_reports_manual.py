@@ -458,30 +458,6 @@ def test_custom_reports_with_timelines(report_type):
 @pytest.mark.manual
 @test_requirements.report
 @pytest.mark.tier(1)
-def test_reports_custom_tags():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: low
-        initialEstimate: 1/3h
-        setup:
-            1. Add custom tags to appliance using black console
-                i. ssh to appliance, vmdb; rails c
-                ii. cat = Classification.create_category!(
-                    name: "rocat1", description: "read_only cat 1", read_only: true)
-                iii. cat.add_entry(name: "roent1", description: "read_only entry 1")
-        testSteps:
-            1. Create new or Edit existing report and look for the tag category in list of columns.
-        expectedResults:
-            2. Custom tag must be visible in the list of columns
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
 def test_sent_text_custom_report_with_long_condition():
     """
     Polarion:
