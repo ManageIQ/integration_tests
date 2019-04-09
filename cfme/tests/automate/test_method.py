@@ -7,6 +7,7 @@ from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.automate.simulation import simulate
 from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -227,17 +228,18 @@ def test_automate_simulate_retry(klass, domain, namespace, original_class):
 
 
 @pytest.fixture(scope='module')
-def service_catalog(request, dialog, catalog):
+def service_catalog_item(request, dialog, catalog):
     """This fixture is used to create generic service catalog item"""
     cat_item = _service_templates(
         request, dialog.appliance, service_dialog=dialog, service_catalog=catalog, num=1
     )[0]
     yield cat_item
-    cat_item.action.delete()
+    if cat_item.exists:
+        cat_item.action.delete()
 
 
 @pytest.mark.tier(1)
-def test_task_id_for_method_automation_log(service_catalog, appliance):
+def test_task_id_for_method_automation_log(service_catalog_item):
     """
     Polarion:
         assignee: ghubale
@@ -260,11 +262,14 @@ def test_task_id_for_method_automation_log(service_catalog, appliance):
     Bugzilla:
         1592428
     """
-    service_catalog.action.order()
-
-    # Need to wait for some seconds to get automation logs
-    wait_for(lambda: False, silent_failure=True, timeout=20)
-    result = appliance.ssh_client.run_command(
-        "grep 'Q-task_id' /var/www/miq/vmdb/log/automation.log"
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*Q-task_id.*"]
     )
-    assert result.success
+    result.fix_before_start()
+    service_request = service_catalog_item.action.order()
+
+    # Need to wait until automation logs with 'Q-task_id' are generated, which happens after the
+    # service_request becomes active.
+    wait_for(lambda: service_request.request_state == "active", fail_func=service_request.reload,
+             timeout=60, delay=3)
+    result.validate_logs()
