@@ -554,26 +554,6 @@ def test_automate_git_import_case_insensitive():
 
 
 @pytest.mark.tier(1)
-def test_custom_button_enable():
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
-        startsin: 5.9
-        tags: automate
-        testSteps:
-            1. Add Button Group
-            2. Add a button to the newly created button group
-            3. Add an expression for enabling button
-            4. Add the Button group to a page
-            5. Check that button is enabled; if enabled pass else fail.
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_assert_failed_substitution():
     """
     Polarion:
@@ -664,29 +644,6 @@ def test_automate_restrict_domain_crud():
 
     Bugzilla:
         1365493
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_custom_button_visibility():
-    """
-    This test is required to test the visibility option in the customize
-    button.
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
-        tags: automate
-        startsin: 5.9
-        testSteps:
-            1. Create Button Group
-            2. Create a Button for the button group
-            3. Add the Button group to a page
-            4. Make write a positive visibility expression
-            5. If button is visible and clickable then pass else fail
     """
     pass
 
@@ -937,5 +894,30 @@ def test_user_requester_for_lifecycle_provision():
 
     Bugzilla:
          1671563
+    """
+    pass
+
+
+@pytest.mark.tier(1)
+def test_vm_naming_number_padding():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: Automate
+        tags: automate
+        setup:
+            1. Add any provider
+        testSteps:
+            1. Provision more than 10 VMs
+        expectedResults:
+            1. VMs should be generated with respective numbering
+
+    Bugzilla:
+        1688672
     """
     pass
