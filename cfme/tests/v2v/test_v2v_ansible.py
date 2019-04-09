@@ -2,15 +2,13 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import rhel7_minimal
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.markers.env_markers.provider import ONE_PER_VERSION
+from cfme.markers.env_markers.provider import ONE_PER_VERSION, ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
-from cfme.utils.conf import credentials
+from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.wait import wait_for
 
 
@@ -94,7 +92,23 @@ def catalog_item(request, appliance, machine_credential, ansible_repository, pla
 )
 def test_migration_playbooks(request, appliance, source_provider, provider,
                              ansible_repository, mapping_data_vm_obj_single_datastore):
-    """Test for migrating vms with pre and post playbooks"""
+    """Test for migrating vms with pre and post playbooks
+
+       Polarion:
+        assignee: sshveta
+        caseimportance: medium
+        casecomponent: v2v
+        initialEstimate: 1/4h
+        Prerequisite :
+            1. Enable embedded ansible role
+            2. Create repository
+            3. Create credentials
+        testSteps:
+            1. Create ansible catalog item with provision.yml playbook
+            2. Create ansible catalog item with retire.yml playbook
+            3. Migrate VM from vmware to RHV/OSP using the above catalog items
+    """
+
     creds = credentials[source_provider.data.templates.get("rhel7_minimal").creds]
     CREDENTIALS = (
         "Machine",
@@ -134,15 +148,16 @@ def test_migration_playbooks(request, appliance, source_provider, provider,
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping.name,
         vm_list=mapping_data_vm_obj_single_datastore.vm_list,
-        start_migration=True,
+        target_provider=provider,
         pre_playbook=provision_catalog.name,
         post_playbook=retire_catalog.name,
+        pre_checkbox=True,
+        post_checkbox=True
     )
+    assert migration_plan.plan_started
+    assert migration_plan.in_progress
+    assert migration_plan.completed
+    assert migration_plan.successful
 
-    assert migration_plan.is_plan_started()
-
-    assert migration_plan.is_plan_in_progress()
-    assert migration_plan.is_migration_complete(migration_plan.name)
-
-    migrated_vm = get_migrated_vm_obj(src_vm_obj, provider.osp_provider)
+    migrated_vm = get_migrated_vm_obj(src_vm_obj, provider)
     assert src_vm_obj.mac_address == migrated_vm.mac_address
