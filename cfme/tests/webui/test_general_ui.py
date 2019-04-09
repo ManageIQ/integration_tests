@@ -458,10 +458,11 @@ def test_configure_icons_roles_by_server():
 
 
 @pytest.mark.manual
+@test_requirements.general_ui
 @pytest.mark.tier(0)
 def test_create_filter_with_multiple_conditions():
     """
-        Polarion:
+    Polarion:
         assignee: pvala
         casecomponent: WebUI
         caseimportance: medium
@@ -472,8 +473,55 @@ def test_create_filter_with_multiple_conditions():
         testSteps:
             1. Create an expression with multiple types of condition. Eg: arg_1 AND arg_2 OR arg_3
         expectedResults:
-            2. Expression must be created successfully.
+            1. Expression must be created successfully.
 
-        Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1660460
+    Bugzilla:
+        * 1660460
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.general_ui
+@pytest.mark.tier(2)
+def test_welcoming_page():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/5h
+        setup:
+            1. Login to a new appliance.
+        testSteps:
+            1. Check if the welcome/landing page contains `Add a Provider` action.
+        expectedResults:
+            1. Welcome/Landing page must show the next action, ie. `Add a Provider
+
+    Bugzilla:
+        * 1678190
+    """
+    pass
+
+
+@pytest.mark.manual()
+@test_requirements.general_ui
+@pytest.mark.tier(0)
+def test_custom_navigation_menu():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/5h
+        setup:
+            1. Create a custom navigation menu.
+        testSteps:
+            1. Check if the custom menu is visible in the left Navigation Bar.
+        expectedResults:
+            1. Custom menu must be visible.
+
+    Bugzilla:
+        * 1678151
     """
     pass
