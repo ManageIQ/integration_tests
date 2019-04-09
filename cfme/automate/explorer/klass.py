@@ -518,10 +518,8 @@ class ClassSchema(Navigatable):
                 'Edit of schema for Automate Class "{}" was cancelled by the user'.format(
                     self.klass.name))
 
-    def _delete_field(
-            self, page, field):
+    def _delete_field(self, page, field):
         page.schema.fields(field).delete()
-
         page.flash.assert_no_error()
 
         return True

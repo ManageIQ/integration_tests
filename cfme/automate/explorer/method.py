@@ -31,6 +31,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Input
+from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import ScriptBox
 from widgetastic_manageiq import SummaryFormItem
 
@@ -229,6 +230,34 @@ class PlaybookInputParameters(View):
         return self.all_vars
 
 
+class EntryPoint(Text, ClickableMixin):
+    def fill(self, value):
+        """Used to select the automate method from automate domain"""
+        if value:
+            self.click()
+            self.parent_view.embedded_view.wait_displayed('15s')
+            self.parent_view.embedded_view.tree.click_path(*value)
+            return True
+        return None
+
+
+class EmbeddedView(View):
+    """This view is for embedding automate method"""
+    title = Text(
+        './/div[contains(@class, "modal-header ng-scope")]/h4[contains(@class, "modal-title")]'
+    )
+    include_domain = Text(
+        './/div[contains(@class, "bootstrap-switch-container")]/span[contains(@class, '
+        '"bootstrap-switch-label")]'
+    )
+    close = Text('.//button[contains(@ng-click, "closeModal")]')
+    tree = ManageIQTree("treeview-entrypoint_selection")
+
+    @property
+    def is_displayed(self):
+        return self.title.text == "Select Item"
+
+
 class MethodAddView(AutomateExplorerView):
     title = Text('#explorer_title_text')
 
@@ -252,6 +281,10 @@ class MethodAddView(AutomateExplorerView):
     escalate_privilege = BootstrapSwitch('provisioning_become_enabled')
     verbosity = PlaybookBootstrapSelect('provisioning_verbosity')
     playbook_input_parameters = PlaybookInputParameters()
+
+    # Add embedded method
+    embedded_method = EntryPoint('//*[@id="automate-inline-method-select"]//button')
+    embedded_view = View.nested(EmbeddedView)
 
     add_button = Button('Add')
     cancel_button = Button('Cancel')
@@ -291,6 +324,10 @@ class MethodEditView(AutomateExplorerView):
     verbosity = PlaybookBootstrapSelect('provisioning_verbosity')
     playbook_input_parameters = PlaybookInputParameters()
 
+    # Edit embedded method
+    embedded_method = EntryPoint('//*[@id="automate-inline-method-select"]//button')
+    embedded_view = View.nested(EmbeddedView)
+
     save_button = Button('Save')
     reset_button = Button('Reset')
     cancel_button = Button('Cancel')
@@ -321,7 +358,8 @@ class Method(BaseEntity, Copiable):
     def __init__(self, collection, name=None, display_name=None, location='inline', script=None,
                  data=None, repository=None, playbook=None, machine_credential=None, hosts=None,
                  max_ttl=None, logging_output=None, escalate_privilege=None, verbosity=None,
-                 playbook_input_parameters=None, cancel=False, validate=True, inputs=None):
+                 playbook_input_parameters=None, cancel=False, validate=True, inputs=None,
+                 embedded_method=None):
         super(Method, self).__init__(collection)
 
         self.name = name
@@ -340,6 +378,7 @@ class Method(BaseEntity, Copiable):
         self.verbosity = verbosity
         self.playbook_input_parameters = playbook_input_parameters
         self.inputs = inputs
+        self.embedded_method = embedded_method
 
     __repr__ = object.__repr__
 
@@ -438,7 +477,8 @@ class MethodCollection(BaseCollection):
             self, name=None, display_name=None, location='inline', script=None, data=None,
             cancel=False, validate=True, repository=None, playbook=None, machine_credential=None,
             hosts=None, max_ttl=None, logging_output=None, escalate_privilege=None, verbosity=None,
-            playbook_input_parameters=None, inputs=None):
+            playbook_input_parameters=None, inputs=None, embedded_method=None):
+
         add_page = navigate_to(self, 'Add')
 
         if self.browser.product_version < '5.11':
@@ -455,6 +495,7 @@ class MethodCollection(BaseCollection):
                 'script': script,
                 'data': data,
                 'inputs': inputs,
+                'embedded_method': embedded_method
             })
         if location == 'playbook':
             add_page.fill({
