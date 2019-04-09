@@ -1,23 +1,16 @@
 # -*- coding: utf-8 -*-
-import time
-
 import pytest
 
 from cfme import test_requirements
 from cfme.common.provider import BaseProvider
-from cfme.exceptions import CFMEException
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import all_required
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
-
-
-pytestmark = [
-    pytest.mark.tier(2),
-    test_requirements.discovery,
-]
+from cfme.utils.wait import wait_for
 
 
 @pytest.fixture(scope="module")
@@ -31,33 +24,9 @@ def vm_crud(vm_name, provider):
     return collection.instantiate(vm_name, provider)
 
 
-def if_scvmm_refresh_provider(provider):
-    # No eventing from SCVMM so force a relationship refresh
-    if isinstance(provider, SCVMMProvider):
-        provider.refresh_provider_relationships()
-
-
-def wait_for_vm_state_changes(vm, timeout=600):
-
-    count = 0
-    while count < timeout:
-        try:
-            vm_state = vm.find_quadicon(from_any_provider=True).data['state'].lower()
-            logger.info("Quadicon state for %s is %s", vm.name, repr(vm_state))
-            if "archived" in vm_state:
-                return True
-            elif "orphaned" in vm_state:
-                raise CFMEException("VM should be Archived but it is Orphaned now.")
-        except Exception as e:
-            logger.exception(e)
-            pass
-        time.sleep(15)
-        count += 15
-    if count > timeout:
-        raise CFMEException("VM should be Archived but it is Orphaned now.")
-
-
 @pytest.mark.rhv2
+@pytest.mark.tier(2)
+@test_requirements.discovery
 @pytest.mark.provider(
     [BaseProvider],
     scope='module',
@@ -83,23 +52,31 @@ def test_vm_discovery(request, setup_provider, provider, vm_crud):
     @request.addfinalizer
     def _cleanup():
         vm_crud.cleanup_on_provider()
-        if_scvmm_refresh_provider(provider)
-
+        if provider.one_of(SCVMMProvider):
+            provider.refresh_provider_relationships()
     try:
         vm_crud.create_on_provider(allow_skip="default")
     except KeyError:
         msg = 'Missing template for provider {}'.format(provider.key)
         logger.exception(msg)
         pytest.skip(msg)
-    if_scvmm_refresh_provider(provider)
+    if provider.one_of(SCVMMProvider):
+        provider.refresh_provider_relationships()
 
     try:
         vm_crud.wait_to_appear(timeout=600, load_details=False)
     except TimedOutError:
         pytest.fail("VM was not found in CFME")
     vm_crud.cleanup_on_provider()
-    if_scvmm_refresh_provider(provider)
-    wait_for_vm_state_changes(vm_crud)
+    if provider.one_of(SCVMMProvider):
+        provider.refresh_provider_relationships()
+    wait_for(
+        lambda: 'archived' in vm_crud.find_quadicon(from_any_provider=True).data['state'].lower(),
+        num_sec=600,
+        delay=10,
+        handle_exception=True,
+        message='Waiting for archived state'
+    )
 
 
 def provider_classes(appliance):
@@ -119,13 +96,12 @@ def provider_classes(appliance):
 
 
 @pytest.mark.tier(0)
+@pytest.mark.meta(automates=[BZ(1671844)])
 def test_provider_type_support(appliance, soft_assert):
     """Test availability of GCE provider in downstream CFME builds
 
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1671844
-
     Polarion:
-        assignee: mshriver
+        assignee: anikifor
         initialEstimate: 1/10h
         casecomponent: WebUI
     """
