@@ -444,7 +444,7 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
 
 
 @pytest.mark.parametrize('auth_type', ext_auth_options, ids=[opt.name for opt in ext_auth_options])
-def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configured_appliance):
+def test_appliance_console_external_auth(auth_type, ipa_crud, configured_appliance):
     """ Commands:
     1. 'ap' launches appliance_console,
     2. RETURN clears info screen,
@@ -462,9 +462,7 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to true.*'.format(auth_type.option)],
-                            hostname=configured_appliance.hostname,
-                            username=app_creds['sshlogin'],
-                            password=app_creds['sshpass'])
+                            hostname=configured_appliance.hostname)
     evm_tail.fix_before_start()
     command_set = ('ap', RETURN, '13', auth_type.index, '5', RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set, timeout=30)
@@ -472,9 +470,7 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to false.*'.format(auth_type.option)],
-                            hostname=configured_appliance.hostname,
-                            username=app_creds['sshlogin'],
-                            password=app_creds['sshpass'])
+                            hostname=configured_appliance.hostname)
 
     evm_tail.fix_before_start()
     command_set = ('ap', RETURN, '13', auth_type.index, '5', RETURN, RETURN)
@@ -482,7 +478,7 @@ def test_appliance_console_external_auth(auth_type, app_creds, ipa_crud, configu
     evm_tail.validate_logs()
 
 
-def test_appliance_console_external_auth_all(app_creds, configured_appliance):
+def test_appliance_console_external_auth_all(configured_appliance):
     """ Commands:
     1. 'ap' launches appliance_console,
     2. RETURN clears info screen,
@@ -500,9 +496,7 @@ def test_appliance_console_external_auth_all(app_creds, configured_appliance):
                             matched_patterns=['.*sso_enabled to true.*',
                                               '.*saml_enabled to true.*',
                                               '.*local_login_disabled to true.*'],
-                            hostname=configured_appliance.hostname,
-                            username=app_creds['sshlogin'],
-                            password=app_creds['password'])
+                            hostname=configured_appliance.hostname)
     evm_tail.fix_before_start()
     command_set = ('ap', RETURN, TimedCommand('13', 20), '1', '2', TimedCommand('5', 20),
                    RETURN, RETURN)
@@ -513,9 +507,7 @@ def test_appliance_console_external_auth_all(app_creds, configured_appliance):
                             matched_patterns=['.*sso_enabled to false.*',
                                               '.*saml_enabled to false.*',
                                               '.*local_login_disabled to false.*'],
-                            hostname=configured_appliance.hostname,
-                            username=app_creds['sshlogin'],
-                            password=app_creds['password'])
+                            hostname=configured_appliance.hostname)
 
     evm_tail.fix_before_start()
     command_set = ('ap', RETURN, TimedCommand('13', 20), '1', '2', TimedCommand('5', 20),

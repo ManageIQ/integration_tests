@@ -155,10 +155,8 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
 
     evm_tail_no_blacklist = LogValidator(
         '/var/www/miq/vmdb/log/evm.log',
-        matched_patterns=['.*event\_type\=\>\"POD\_CREATED\".*'],
-        hostname=appliance.hostname,
-        username=app_creds['sshlogin'],
-        password=app_creds['password'])
+        matched_patterns=['.*event\_type\=\>\"POD\_CREATED\".*']
+    )
     evm_tail_no_blacklist.fix_before_start()
 
     create_pod(provider=provider, namespace=project_name)

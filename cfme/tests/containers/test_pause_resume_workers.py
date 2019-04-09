@@ -58,7 +58,7 @@ def test_pause_and_resume_provider_workers(appliance, provider):
 
 
 @pytest.mark.parametrize('from_collections', [True, False], ids=['from_collection', 'from_entity'])
-def test_pause_and_resume_single_provider_api(appliance, provider, from_collections, app_creds,
+def test_pause_and_resume_single_provider_api(appliance, provider, from_collections,
                                               soft_assert, request):
     """
     Test enabling and disabling a single provider via the CFME API through the ManageIQ API Client
@@ -75,10 +75,7 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
 
     evm_tail_disable = LogValidator('/var/www/miq/vmdb/log/evm.log',
                                     matched_patterns=['.*Disabling EMS \[{}\] id \[{}\].*'
-                                                      .format(provider.name, str(provider.id))],
-                                    hostname=appliance.hostname,
-                                    username=app_creds['sshlogin'],
-                                    password=app_creds['password'])
+                                                      .format(provider.name, str(provider.id))])
     evm_tail_disable.fix_before_start()
     if from_collections:
         rep_disable = appliance.collections.containers_providers.pause_providers(provider)
@@ -115,10 +112,7 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
         ), 'Project {p} exists even though provider has been disabled'.format(p=project_name))
     evm_tail_enable = LogValidator('/var/www/miq/vmdb/log/evm.log',
                                    matched_patterns=['.*Enabling EMS \[{}\] id \[{}\].*'
-                                                     .format(provider.name, str(provider.id))],
-                                   hostname=appliance.hostname,
-                                   username=app_creds['sshlogin'],
-                                   password=app_creds['password'])
+                                                     .format(provider.name, str(provider.id))])
     evm_tail_enable.fix_before_start()
     if from_collections:
         rep_enable = appliance.collections.containers_providers.resume_providers(provider)
