@@ -285,10 +285,6 @@ def test_open_url_availability(appliance):
 
 
 @pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE_PER_TYPE)
-@pytest.mark.uncollectif(
-    lambda appliance: appliance.version < "5.10",
-    reason="BZ-1646905 still not backported to lower version",
-)
 def test_custom_button_quotes(appliance, provider, setup_provider, dialog, request):
     """ Test custom button and group allows quotes or not
 
@@ -313,7 +309,6 @@ def test_custom_button_quotes(appliance, provider, setup_provider, dialog, reque
     Bugzilla:
         1646905
     """
-    # ToDo: collect test for 5.9; If developer backport BZ-1646905
     collection = appliance.collections.button_groups
     group = collection.create(
         text="Group's", hover="Group's Hover", type=getattr(collection, "PROVIDER")

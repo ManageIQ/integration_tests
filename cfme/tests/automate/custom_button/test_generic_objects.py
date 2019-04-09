@@ -54,7 +54,6 @@ def setup_obj(appliance, button_group):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.ignore_stream("5.9")
 @pytest.mark.parametrize(
     "display", DISPLAY_NAV.keys(), ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
 )
@@ -98,16 +97,6 @@ def test_custom_button_display_evm_obj(request, display, setup_obj, button_group
         assert custom_button_group.has_item(button.text)
 
 
-@pytest.mark.ignore_stream("5.9")
-@pytest.mark.meta(
-    blockers=[
-        BZ(
-            1642939,
-            forced_streams=["5.10"],
-            unblock=lambda button_group: "GROUP" not in button_group,
-        )
-    ]
-)
 @pytest.mark.parametrize("submit", SUBMIT, ids=["_".join(item.split()) for item in SUBMIT])
 def test_custom_button_automate_evm_obj(appliance, request, submit, setup_obj, button_group):
     """ Test custom button for automate and requests count as per submit
@@ -133,7 +122,8 @@ def test_custom_button_automate_evm_obj(appliance, request, submit, setup_obj, b
             9. One by one: separate requests for all entities execution
 
     Bugzilla:
-        1628224, 1642939
+        1628224
+        1642939
     """
 
     group, obj_type = button_group
@@ -188,7 +178,6 @@ def test_custom_button_automate_evm_obj(appliance, request, submit, setup_obj, b
             )
 
 
-@pytest.mark.ignore_stream("5.9")
 def test_custom_button_dialog_evm_obj(appliance, dialog, request, setup_obj, button_group):
     """ Test custom button with dialog and InspectMe method
 
@@ -254,7 +243,6 @@ def test_custom_button_dialog_evm_obj(appliance, dialog, request, setup_obj, but
         assert False, "Expected 1 requests not found in automation log"
 
 
-@pytest.mark.ignore_stream("5.9")
 @pytest.mark.parametrize("expression", ["enablement", "visibility"])
 def test_custom_button_expression_evm_obj(appliance, request, setup_obj, button_group, expression):
     """ Test custom button as per expression enablement/visibility.

@@ -47,14 +47,6 @@ def get_host_data_by_name(provider_key, host_name):
 
 
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[
-                  BZ(1584261, forced_streams=['5.8'],
-                     unblock=lambda creds: creds == 'default'),
-                  BZ(1584280, forced_streams=['5.9'],
-                     unblock=lambda provider, creds: not provider.one_of(RHEVMProvider) or
-                     creds != 'web_services'),
-                  BZ(1619626, forced_streams=['5.9', '5.10'],
-                     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
 @pytest.mark.uncollectif(
@@ -66,10 +58,10 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
     """
     Tests host credentialing  with good credentials
 
-    Steps:
-    1) Add Host credentials
-    2) Validate + Save
-    3) Verify Valid creds on Host Details page
+    Bugzilla:
+        1584261
+        1584280
+        1619626
 
     Metadata:
         test_flag: inventory
@@ -77,6 +69,10 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
     Polarion:
         assignee: nachandr
         initialEstimate: 1/12h
+        testSteps:
+            1. Add Host credentials
+            2. Validate + Save
+            3. Verify Valid creds on Host Details page
     """
     test_host = random.choice(provider.data["hosts"])
     host_data = get_host_data_by_name(provider.key, test_host.name)
@@ -112,13 +108,6 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[
-                  BZ(1584246, forced_streams=['5.8', '5.9'],
-                     unblock=lambda provider: not provider.one_of(VMwareProvider)),
-                  BZ(1584261, forced_streams=['5.8'],
-                     unblock=lambda creds: creds == 'default'),
-                  BZ(1619626, forced_streams=['5.9', '5.10'],
-                     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
 @pytest.mark.uncollectif(
@@ -130,10 +119,10 @@ def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
     """
     Tests host credentialing  with bad credentials
 
-    Steps:
-    1) Add Host credentials
-    2) Validate + Save bad credentials
-    3) Verify invalid creds on Host Details page
+    Bugzilla:
+        1584261
+        1584280
+        1619626
 
     Metadata:
         test_flag: inventory
@@ -142,6 +131,10 @@ def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
         assignee: nachandr
         caseimportance: medium
         initialEstimate: 1/15h
+        testSteps:
+            1. Add Host credentials
+            2. Validate + Save bad credentials
+            3. Verify invalid creds on Host Details page
     """
     test_host = random.choice(provider.data["hosts"])
     host_data = get_host_data_by_name(provider.key, test_host.name)

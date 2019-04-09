@@ -31,7 +31,6 @@ def widgets(dashboards):
     dashboards.default.collections.widgets.reset()
 
 
-@pytest.mark.meta(blockers=[BZ(1533792, forced_streams=['5.9'])])
 def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
     """
     Polarion:
@@ -66,7 +65,7 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
 
 @pytest.mark.rhel_testing
 @pytest.mark.parametrize("number_dashboards", range(1, 4))
-@pytest.mark.meta(blockers=[BZ(1666712, forced_streams=['5.10'])])
+@pytest.mark.meta(blockers=[BZ(1666712)])
 def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, appliance):
     """Create some custom dashboards and check their presence. Then check their contents.
 
@@ -170,7 +169,8 @@ def test_widgets_reorder(dashboards, soft_assert, request):
 @pytest.mark.tier(3)
 def test_dashboard_layouts_match():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1518766
+    Bugzilla:
+        1518766
 
     Polarion:
         assignee: jhenner
@@ -186,7 +186,8 @@ def test_dashboard_layouts_match():
 @pytest.mark.tier(3)
 def test_dashboard_widgets_fullscreen():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1518901
+    Bugzilla:
+        1518901
 
     Polarion:
         assignee: jhenner

@@ -138,31 +138,23 @@ class ResourcePool(Pretty, BaseEntity, Taggable):
             wait: Whether or not to wait for the delete, defaults to False
         """
         view = navigate_to(self, 'Details')
-        if self.appliance.version < '5.9':
-            item_name = 'Remove Resource Pool'
-        else:
-            item_name = 'Remove Resource Pool from Inventory'
-        view.toolbar.configuration.item_select(item_name, handle_alert=not cancel)
+        view.toolbar.configuration.item_select('Remove Resource Pool from Inventory',
+                                               handle_alert=not cancel)
 
-        # cancel doesn't redirect, confirmation does
-        view.flush_widget_cache()
         if cancel:
-            view = self.create_view(ResourcePoolDetailsView)
+            view = self.create_view(ResourcePoolDetailsView, wait=10)
         else:
-            view = self.create_view(ResourcePoolAllView)
-        wait_for(lambda: view.is_displayed, fail_condition=False, num_sec=10, delay=1)
+            view = self.create_view(ResourcePoolAllView, wait=10)
 
         # flash message only displayed if it was deleted
         if not cancel:
-            msg = 'The selected Resource Pools was deleted'
-            view.flash.assert_success_message(msg)
+            view.flash.assert_success_message('The selected Resource Pools was deleted')
 
         if wait:
             def refresh():
                 if self.provider:
                     self.provider.refresh_provider_relationships()
                 view.browser.refresh()
-                view.flush_widget_cache()
 
             wait_for(lambda: not self.exists, fail_condition=False, fail_func=refresh, num_sec=500,
                      message='Wait for resource pool to be deleted')
@@ -175,7 +167,6 @@ class ResourcePool(Pretty, BaseEntity, Taggable):
             if self.provider:
                 self.provider.refresh_provider_relationships()
             view.browser.refresh()
-            view.flush_widget_cache()
 
         wait_for(lambda: self.exists, fail_condition=False, num_sec=1000, fail_func=refresh,
                  message='Wait resource pool to appear')

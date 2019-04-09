@@ -5,7 +5,6 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.long_running,
@@ -41,10 +40,6 @@ def dialog(appliance, copy_instance, create_method):
     service_dialogs = appliance.collections.service_dialogs
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     sd = service_dialogs.create(label=dialog, description="my dialog")
-    if appliance.version >= "5.9":
-        choose_type = "Dropdown"
-    else:
-        choose_type = "Drop Down List"
     tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
         tab_desc="my tab desc")
     box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
@@ -54,7 +49,7 @@ def dialog(appliance, copy_instance, create_method):
             'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
             'ele_name': fauxfactory.gen_alphanumeric(),
             'ele_desc': fauxfactory.gen_alphanumeric(),
-            'choose_type': choose_type
+            'choose_type': "Dropdown"
         },
         'options': {
             'dynamic_chkbox': True
@@ -100,9 +95,11 @@ def copy_instance(request, copy_domain, appliance):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1514584, forced_streams=["5.7", "5.8", "5.9"])])
 def test_dynamicdropdown_dialog(appliance, dialog, catalog):
     """
+    Bugzilla:
+        1514584
+
     Polarion:
         assignee: nansari
         casecomponent: Services

@@ -103,12 +103,10 @@ def test_zone_add_dupe(appliance, request):
         description=description)
     request.addfinalizer(zone.delete)
 
-    if current_appliance.version >= 5.9:
-        error_flash = "Name is not unique within region {}"\
-            .format(appliance.server.zone.region.number)
-    else:
-        error_flash = "Name has already been taken"
-    with pytest.raises(Exception, match=error_flash):
+    with pytest.raises(
+        Exception,
+        match="Name is not unique within region {}".format(appliance.server.zone.region.number)
+    ):
         zc.create(
             name=name,
             description=description)

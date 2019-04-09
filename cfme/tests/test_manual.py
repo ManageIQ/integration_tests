@@ -5,7 +5,7 @@ import pytest
 
 from cfme import test_requirements
 
-pytestmark = [pytest.mark.ignore_stream('5.9', '5.10', 'upstream')]
+pytestmark = [pytest.mark.ignore_stream('5.10', 'upstream')]
 
 
 @pytest.mark.manual
@@ -6331,23 +6331,6 @@ def test_candu_graphs_vm_compare_cluster_vsphere65():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.cloud_init
-@pytest.mark.tier(1)
-def test_cloud_init_cfme():
-    """
-    test adding cloud init payload to cfme appliance (infra-PXE clod init)
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
-        endsin: 5.4
-        initialEstimate: 1/2h
-        startsin: 5.4
     """
     pass
 
@@ -16760,23 +16743,6 @@ def test_verify_that_changing_groups_in_the_webui_updates_dashboard_items():
             1. Login successful
             2. Group switch successful
             3. Dashboard items are updated from to reflect that access of the new group
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.cloud_init
-@pytest.mark.tier(1)
-def test_cloud_init_with_cfme():
-    """
-    test cloud init payload with latest cfme image
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
-        endsin: 5.4
-        initialEstimate: 1/2h
-        startsin: 5.4
     """
     pass
 

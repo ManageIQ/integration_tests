@@ -57,7 +57,6 @@ def test_pause_and_resume_provider_workers(appliance, provider):
     assert ems_worker_state, "Diagnostics shows that workers are not running after resume provider"
 
 
-@pytest.mark.ignore_stream('5.9')
 @pytest.mark.parametrize('from_collections', [True, False], ids=['from_collection', 'from_entity'])
 def test_pause_and_resume_single_provider_api(appliance, provider, from_collections, app_creds,
                                               soft_assert, request):

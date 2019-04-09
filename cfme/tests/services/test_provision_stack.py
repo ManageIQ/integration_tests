@@ -63,22 +63,12 @@ def stack_data(appliance, provider, provisioning):
         }
     else:
         stack_prov = provisioning['stack_provisioning']
-        if appliance.version < '5.9':
-            stack_data = {
-                'stack_name': stackname,
-                'stack_timeout': stack_timeout,
-                'virtualMachineName': vm_name,
-                'KeyName': stack_prov['key_name'],
-                'InstanceType': stack_prov['instance_type'],
-                'SSHLocation': provisioning['ssh_location']
-            }
-        else:
-            stack_data = {
-                'stack_name': stackname,
-                'stack_timeout': stack_timeout,
-                'param_virtualMachineName': vm_name,
-                'param_KeyName': stack_prov['key_name']
-            }
+        stack_data = {
+            'stack_name': stackname,
+            'stack_timeout': stack_timeout,
+            'param_virtualMachineName': vm_name,
+            'param_KeyName': stack_prov['key_name']
+        }
     return stack_data
 
 

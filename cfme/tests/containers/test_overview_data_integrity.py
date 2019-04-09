@@ -92,8 +92,9 @@ def test_container_overview_data_integrity_node_utilization():
     Note: There is no clear way to verify this bug. Steps below are what are believed to be
     sufficient verification
 
-    Bugzillas:
-        * 1650351, 1663520
+    Bugzilla:
+        1650351
+        1663520
 
     Polarion:
         assignee: juwatts
@@ -102,7 +103,6 @@ def test_container_overview_data_integrity_node_utilization():
         initialEstimate: 1/2h
         setup:
             1. In the advanced settings, set the key hawkular_force_legacy to false for 5.10
-            or true for 5.9.
             2. Enable metric collection permissions on the appliance
         testSteps:
             1. Add an Openshift provider that has cluster metrics enabled

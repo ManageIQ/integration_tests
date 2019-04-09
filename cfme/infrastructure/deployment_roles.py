@@ -191,18 +191,14 @@ class DeploymentRoles(BaseEntity, PolicyProfileAssignable):
 
     def delete(self, cancel=False):
         view = navigate_to(self, 'Details')
-        if self.appliance.version < '5.9':
-            remove_item = 'Remove item'
-        else:
-            remove_item = 'Remove item from Inventory'
-        view.toolbar.configuration.item_select(remove_item,
+        view.toolbar.configuration.item_select('Remove item from Inventory',
                                                handle_alert=not cancel)
 
         if not cancel:
-            view = self.create_view(DeploymentRoleAllView)
-            assert view.is_displayed
-            view.flash.assert_success_message("The selected Clusters / "
-                                              "Deployment Roles was deleted")
+            view = self.create_view(DeploymentRoleAllView, wait=5)
+            view.flash.assert_success_message(
+                "The selected Clusters / Deployment Roles was deleted"
+            )
 
 
 @attr.s

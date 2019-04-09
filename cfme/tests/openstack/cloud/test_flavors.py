@@ -133,11 +133,10 @@ def instance_with_private_flavor(provider, private_flavor):
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_create_instance_with_zero_disk_flavor(new_instance, soft_assert):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
         initialEstimate: 1/4h
     """
     view = navigate_to(new_instance, 'Details')
@@ -166,7 +165,7 @@ def test_create_instance_with_zero_disk_flavor(new_instance, soft_assert):
 def test_flavor_crud(appliance, provider, request):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
         initialEstimate: 1/4h
     """
     collection = appliance.collections.cloud_flavors
@@ -200,11 +199,10 @@ def test_flavor_crud(appliance, provider, request):
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_flavors_details_from_list_view(appliance, soft_assert, private_flavor):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
         initialEstimate: 1/4h
     """
     collection = appliance.collections.cloud_flavors
@@ -218,11 +216,10 @@ def test_flavors_details_from_list_view(appliance, soft_assert, private_flavor):
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_flavor_details(appliance, soft_assert, private_flavor):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
         initialEstimate: 1/4h
     """
     view = navigate_to(private_flavor, 'Details')
@@ -239,7 +236,6 @@ def test_flavor_details(appliance, soft_assert, private_flavor):
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_create_instance_with_private_flavor(instance_with_private_flavor, provider, soft_assert):
     view = navigate_to(instance_with_private_flavor, 'Details')
     prov_data = provider.data['provisioning']

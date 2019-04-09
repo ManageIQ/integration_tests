@@ -485,7 +485,6 @@ class TestTagsViaREST(object):
         assert_response(appliance, success=False, results_num=tags_count)
         _check_tags_counts()
 
-    @pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
     @pytest.mark.tier(3)
     def test_query_by_multiple_tags(self, appliance, tags, services):
         """Tests support for multiple tag specification in query.

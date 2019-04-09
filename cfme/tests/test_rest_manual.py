@@ -5,7 +5,6 @@ import pytest
 from cfme import test_requirements
 
 
-@pytest.mark.ignore_stream("5.9")
 @pytest.mark.manual
 @test_requirements.rest
 @pytest.mark.tier(3)
@@ -83,7 +82,10 @@ def test_populate_default_dialog_values(auth_type):
         expectedResults:
             1. Response must include default values that were initially set.
 
-        Bugzilla: 1635673, 1650252, 1639413
+        Bugzilla:
+            1635673
+            1650252
+            1639413
     """
     pass
 
@@ -105,7 +107,8 @@ def test_filter_by_flavor_via_api():
         expectedResults:
             1. Should receive a 200 OK response. Should not get any internal server error.
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1596069
+    Bugzilla:
+        1596069
     """
     pass
 
@@ -128,7 +131,8 @@ def test_query_custom_category_via_api():
         expectedResults:
             1. Custom Category must be included in the response
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1650556
+    Bugzilla:
+        1650556
     """
     pass
 
@@ -167,7 +171,8 @@ def test_bulk_query_attributes():
                 }]
             }
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1643342
+    Bugzilla:
+        1643342
     """
     pass
 
@@ -188,7 +193,8 @@ def test_create_rhev_provider_with_metric():
             1. Provider must be added with all the details provided.
                 In this case metric data. no data should be missing.
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1656502
+    Bugzilla:
+        1656502
     """
     pass
 
@@ -223,7 +229,8 @@ def test_custom_logos_via_api():
                 }
             }
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1578076
+    Bugzilla:
+        1578076
     """
     pass
 
@@ -243,7 +250,8 @@ def test_add_ansible_tower_rest():
         expectedResults:
             1. Provider must be added and validated successfully.
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1621888
+    Bugzilla:
+        1621888
     """
     pass
 
@@ -267,7 +275,9 @@ def test_delete_vm_disk_via_api():
         expectedResults:
             1. The disk must be deleted successfully.
 
-    Bugzilla: 1666593, 1620161
+    Bugzilla:
+        1666593
+        1620161
     """
     pass
 
@@ -290,7 +300,8 @@ def test_add_vm_disk_via_api():
         expectedResults:
             1. The disk must be added successfully.
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1618517
+    Bugzilla:
+        1618517
     """
     pass
 
@@ -314,7 +325,8 @@ def test_deny_service_ordering_via_api():
         expectedResults:
             1. Service must not be ordered and response must return error.
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1632416
+    Bugzilla:
+        1632416
     """
     pass
 

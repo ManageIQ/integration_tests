@@ -47,13 +47,11 @@ def test_session_timeout(request, appliance):
 
 
 @pytest.mark.tier(0)
-@pytest.mark.ignore_stream('5.8')  # Modifying settings via rest in 5.9+
-@pytest.mark.meta(blockers=[BZ(1553394)])
 def test_bind_timeout_rest(appliance, request):
     """Sets the session timeout via REST
 
-    Notes:
-        Written for BZ 1553394
+    Bugzilla:
+        1553394
 
     Polarion:
         assignee: pvala

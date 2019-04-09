@@ -48,11 +48,11 @@ def test_restart_workers(appliance):
 
 @pytest.mark.tier(2)
 @pytest.mark.parametrize("dropdown", [x.dropdown for x in DROPDOWNS], ids=[x.id for x in DROPDOWNS])
-@pytest.mark.meta(blockers=[BZ(1656873, forced_streams="5.9")])
+@pytest.mark.meta(blockers=[BZ(1656873)])
 def test_set_memory_threshold_in_ui(appliance, dropdown):
     """
-    Bugzillas:
-        * 1656873
+    Bugzilla:
+        1656873
 
     Polarion:
         assignee: anikifor

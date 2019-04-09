@@ -998,14 +998,12 @@ class ISODatastore(Updateable, Pretty, Navigatable):
         """
 
         view = navigate_to(self, 'Details')
-        msg = 'Remove this ISO Datastore'
-        if self.appliance.version >= '5.9':
-            msg = 'Remove this ISO Datastore from Inventory'
-        view.toolbar.configuration.item_select(msg, handle_alert=not cancel)
+        view.toolbar.configuration.item_select('Remove this ISO Datastore from Inventory',
+                                               handle_alert=not cancel)
         if not cancel:
             main_view = self.create_view(PXEDatastoresView)
-            msg = 'ISO Datastore "{}": Delete successful'.format(self.provider)
-            main_view.flash.assert_success_message(msg)
+            main_view.flash.assert_success_message('ISO Datastore "{}": Delete successful'
+                                                   .format(self.provider))
         else:
             navigate_to(self, 'Details')
 

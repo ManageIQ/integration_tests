@@ -482,9 +482,7 @@ class ApplianceDB(AppliancePlugin):
                 db_mounted = True
 
         if not db_mounted and not db_disk:
-            self.logger.warning(
-                'Failed to find a mounted DB disk, or a free unpartitioned disk. '
-                'On 5.9.0.3+ db setup will fail')
+            self.logger.warning('Failed to find a mounted DB disk, or a free unpartitioned disk.')
 
         if self.appliance.has_cli:
             base_command = 'appliance_console_cli --region {}'.format(region)

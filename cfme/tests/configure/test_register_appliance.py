@@ -5,11 +5,8 @@ import pytest
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
-from cfme.utils.version import Version
-from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
 REG_METHODS = ('rhsm', 'sat6')
@@ -71,10 +68,10 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture(scope="function")
 def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
     """Requests appliance from sprout and configures rpms for crud update"""
-    if appliance.version >= '5.9':
+    try:
         url = cfme_data['basic_info']['rpmrebuild_59']
-    else:
-        url = cfme_data['basic_info']['rpmrebuild']
+    except (KeyError, AttributeError):
+            pytest.skip('Failed looking up rpmrebuild_59 in cfme_data.basic_info')
     run = temp_appliance_preconfig_funcscope.ssh_client.run_command
     run('curl -o /etc/yum.repos.d/rpmrebuild.repo {}'.format(url))
     run('yum install rpmrebuild createrepo -y')
@@ -207,11 +204,7 @@ def test_rhsm_registration_check_repo_names(
 
     # TODO We need the context manager here as RedHatUpdates doesn't yet support Collections.
     with temp_appliance_preconfig_funcscope:
-        repo_names = VersionPicker({
-            Version.lowest(): repos.pre_592,
-            Version('5.9.3'): repos.post_592,
-            Version('5.10.0'): repos.post_510
-        }).pick(temp_appliance_preconfig_funcscope.version)
+        repo_names = repos.post_510
         view = navigate_to(RedHatUpdates, 'Edit')
         soft_assert(
             view.repo_name.read() == 'cf-me-{}-for-rhel-7-rpms {}'.format(ver, repo_names))
@@ -223,7 +216,6 @@ def test_rhsm_registration_check_repo_names(
 
 
 @pytest.mark.rhel_testing
-@pytest.mark.meta(blockers=[BZ(1500878, forced_streams=['5.9', 'upstream'])])
 def test_rh_updates(appliance_preupdate, appliance):
     """ Tests whether the update button in the webui functions correctly
 

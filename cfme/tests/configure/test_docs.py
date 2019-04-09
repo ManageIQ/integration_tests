@@ -113,7 +113,7 @@ def test_contents(appliance, soft_assert):
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-@pytest.mark.ignore_stream("upstream", "5.9")
+@pytest.mark.ignore_stream("upstream")
 def test_info(appliance, soft_assert):
     """
     Test the alt/title and href attributes.

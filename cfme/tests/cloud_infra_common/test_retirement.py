@@ -18,13 +18,10 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.timeutil import parsetime
-from cfme.utils.version import LOWEST
-from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.meta(blockers=[BZ(1626971, forced_streams=['5.10'])]),
     pytest.mark.tier(1),
     pytest.mark.long_running,
     test_requirements.retirement,
@@ -91,10 +88,7 @@ def verify_retirement_state(retire_vm):
         message="Wait for VM '{}' to enter retired state".format(retire_vm.name)
     )
 
-    retirement_states = VersionPicker({
-        LOWEST: ['off', 'suspended', 'unknown', 'terminated'],
-        '5.10': ['retired']
-    }).pick()
+    retirement_states = ['retired']
     view = retire_vm.load_details()
     assert view.entities.summary('Power Management').get_text_of('Power State') in retirement_states
 
@@ -165,8 +159,10 @@ def test_retirement_now(retire_vm):
     verify_retirement_date(retire_vm, expected_date=retire_times)
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider),
-                         reason='Only valid for EC2 provider')
+@pytest.mark.provider(gen_func=providers,
+                      filters=[ProviderFilter(classes=[EC2Provider],
+                                              required_flags=['provision', 'retire'])],
+                      override=True)
 @pytest.mark.parametrize('tagged', [True, False], ids=['tagged', 'untagged'])
 def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged, appliance):
     """Tests on-demand retirement of an instance/vm
@@ -205,7 +201,6 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged, appliance)
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1627758, forced_streams=['5.9', '5.10'])])
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
 def test_set_retirement_date(retire_vm, warn):
     """Tests setting retirement date and verifies configured date is reflected in UI
@@ -224,9 +219,7 @@ def test_set_retirement_date(retire_vm, warn):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1627758, forced_streams=['5.9', '5.10'])])
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
-@pytest.mark.ignore_stream('5.8')
 @pytest.mark.uncollectif(lambda provider: provider.one_of(InfraProvider))  # TODO remove when common
 def test_set_retirement_offset(retire_vm, warn):
     """Tests setting the retirement by offset
@@ -255,7 +248,6 @@ def test_set_retirement_offset(retire_vm, warn):
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1627758, forced_streams=['5.9', '5.10'])])
 def test_unset_retirement_date(retire_vm):
     """Tests cancelling a scheduled retirement by removing the set date
 
@@ -274,7 +266,6 @@ def test_unset_retirement_date(retire_vm):
 
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1627758, forced_streams=['5.9', '5.10'])])
 @pytest.mark.parametrize('remove_date', [True, False], ids=['remove_date', 'set_future_date'])
 def test_resume_retired_instance(retire_vm, provider, remove_date):
     """Test resuming a retired instance, should be supported for infra and cloud, though the

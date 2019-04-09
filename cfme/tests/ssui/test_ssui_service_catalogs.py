@@ -4,12 +4,10 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import providers
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
-from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 
 pytestmark = [
@@ -28,8 +26,6 @@ pytestmark = [
 
 
 @pytest.mark.rhv2
-@pytest.mark.meta(blockers=[BZ(1633540, forced_streams=['5.10'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_catalog_crud_ssui(appliance, setup_provider,
                                    context, order_service):
@@ -47,12 +43,9 @@ def test_service_catalog_crud_ssui(appliance, setup_provider,
 
     catalog_item = order_service
     with appliance.context.use(context):
-        if appliance.version >= '5.9':
-            dialog_values = {'service_name': "ssui_{}".format(fauxfactory.gen_alphanumeric())}
-            service = ServiceCatalogs(appliance, name=catalog_item.name,
-                                      dialog_values=dialog_values)
-        else:
-            service = ServiceCatalogs(appliance, name=catalog_item.name)
+        dialog_values = {'service_name': "ssui_{}".format(fauxfactory.gen_alphanumeric())}
+        service = ServiceCatalogs(appliance, name=catalog_item.name,
+                                  dialog_values=dialog_values)
         service.add_to_shopping_cart()
         service.order()
 

@@ -15,20 +15,15 @@ def all_possible_roles():
 
 
 @pytest.fixture(scope="module", params=server_roles_conf['sets'].keys())
-def roles(request, all_possible_roles, appliance):
+def roles(request, all_possible_roles):
     result = {}
-    for role in all_possible_roles:
-        result[role] = role in cfme_data.get("server_roles", {})["sets"][request.param]
+    try:
+        for role in all_possible_roles:
+            result[role] = role in cfme_data.get("server_roles", {})["sets"][request.param]
+    except (KeyError, AttributeError):
+        pytest.skip('Failed looking up role {} in cfme_data.server_roles.sets'.format(role))
     # Hard-coded protection
     result["user_interface"] = True
-
-    # ansible role introduced in CFME 5.8
-    if appliance.version < '5.8' and result.get('embedded_ansible'):
-        del result['embedded_ansible']
-
-    # RHN Mirror role removed from CFME 5.9
-    if appliance.version > '5.9':
-        del result['rhn_mirror']
 
     return result
 

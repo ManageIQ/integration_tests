@@ -15,20 +15,14 @@ def category(appliance):
         Returns random created category object
         Object can be used in all test run session
     """
-    if BZ(1517285, forced_streams='5.9').blocks:
-        display_name = 'test-{}'.format(fauxfactory.gen_alphanumeric(length=27))
-    # display_name should be with max length of 32
-    else:
-        display_name = fauxfactory.gen_alphanumeric(length=32)
 
     cg = appliance.collections.categories.create(
         name=fauxfactory.gen_alpha(8).lower(),
         description=fauxfactory.gen_alphanumeric(length=32),
-        display_name=display_name
+        display_name=fauxfactory.gen_alphanumeric(length=32)
     )
     yield cg
-    if cg.exists:
-        cg.delete()
+    cg.delete_if_exists()
 
 
 @pytest.fixture(scope="session")
@@ -42,8 +36,7 @@ def tag(category):
         display_name=fauxfactory.gen_alphanumeric(length=32)
     )
     yield tag
-    if tag.exists:
-        tag.delete()
+    tag.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -55,7 +48,7 @@ def role(appliance):
         name='role{}'.format(fauxfactory.gen_alphanumeric()),
         vm_restriction='None')
     yield role
-    role.delete()
+    role.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -69,7 +62,7 @@ def group_with_tag(appliance, role, category, tag):
         tag=([category.display_name, tag.display_name], True)
     )
     yield group
-    group.delete()
+    group.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -86,7 +79,7 @@ def user_restricted(appliance, group_with_tag, new_credential):
         cost_center='Workload',
         value_assign='Database')
     yield user
-    user.delete()
+    user.delete_if_exists()
 
 
 @pytest.fixture(scope="module")

@@ -24,7 +24,6 @@ def reset_nonleaf(config):
 
 
 @pytest.mark.parametrize("configurer", (reset_leaf, reset_nonleaf))
-@pytest.mark.ignore_stream("5.9")
 def test_advanced_config_reset_pzed(appliance, vmdb_config, configurer):
     """Check whether we can use "<<reset>>" string to reset the leaf element
     of the advanced config.

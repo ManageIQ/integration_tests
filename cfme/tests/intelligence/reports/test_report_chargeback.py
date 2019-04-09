@@ -3,13 +3,11 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 pytestmark = [pytest.mark.tier(3)]
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.meta(blockers=[BZ(1531600, forced_streams=["5.9"])]),
     test_requirements.chargeback,
 ]
 

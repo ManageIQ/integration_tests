@@ -3,10 +3,8 @@ import pytest
 
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
-from cfme.markers.env_markers.provider import ONE
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
@@ -101,21 +99,19 @@ def prepare_proxy_invalid(provider, appliance):
     appliance.reset_proxy()
 
 
-@pytest.mark.meta(blockers=[
-    BZ(1623862, forced_streams=['5.9', '5.10'],
-       unblock=lambda provider: provider.one_of(AzureProvider))])
 def test_proxy_valid(appliance, proxy_machine, proxy_ssh, prepare_proxy_default, provider):
     """ Check whether valid proxy settings works.
 
-    Steps:
-     * Configure appliance to use proxy for default provider.
-     * Configure appliance to use not use proxy for specific provider.
-     * Chceck whether the provider is accessed trough proxy by chceking the
-       proxy logs.
+    Bugzilla:
+        1623862
 
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
+        testSteps:
+            1. Configure appliance to use proxy for default provider.
+            2. Configure appliance to use not use proxy for specific provider.
+            3. Chceck whether the provider is accessed trough proxy by chceking the proxy logs.
     """
     provider.refresh_provider_relationships()
     validate_proxy_logs(provider, proxy_ssh, appliance.hostname)
@@ -128,22 +124,21 @@ def test_proxy_valid(appliance, proxy_machine, proxy_ssh, prepare_proxy_default,
     )
 
 
-@pytest.mark.meta(blockers=[
-    BZ(1623862, forced_streams=['5.9', '5.10'],
-       unblock=lambda provider: provider.one_of(AzureProvider))])
 def test_proxy_override(appliance, proxy_ssh, prepare_proxy_specific, provider):
     """ Check whether invalid default and valid specific provider proxy settings
     results in provider refresh working.
 
-    Steps:
-     * Configure default proxy to invalid entry.
-     * Configure specific proxy to valid entry.
-     * Check whether the provider is accessed trough proxy by checking the proxy logs.
-     * Wait for the provider refresh to complete to check the settings worked.
+    Bugzilla:
+        1623862
 
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
+        testSteps:
+            1. Configure default proxy to invalid entry.
+            2. Configure specific proxy to valid entry.
+            3. Check whether the provider is accessed trough proxy by checking the proxy logs.
+            4. Wait for the provider refresh to complete to check the settings worked.
     """
     provider.refresh_provider_relationships()
     validate_proxy_logs(provider, proxy_ssh, appliance.hostname)
@@ -156,19 +151,20 @@ def test_proxy_override(appliance, proxy_ssh, prepare_proxy_specific, provider):
     )
 
 
-@pytest.mark.meta(blockers=[BZ(1623550, forced_streams=['5.9', '5.10'])])
 def test_proxy_invalid(appliance, prepare_proxy_invalid, provider):
     """ Check whether invalid default and invalid specific provider proxy settings
      results in provider refresh not working.
 
-    Steps:
-     * Configure default proxy to invalid entry.
-     * Configure specific proxy to invalid entry.
-     * Wait for the provider refresh to complete to check the settings causes error.
+    Bugzilla:
+        1623550
 
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
+        testSteps:
+            1. Configure default proxy to invalid entry.
+            2. Configure specific proxy to invalid entry.
+            3. Wait for the provider refresh to complete to check the settings causes error.
     """
     provider.refresh_provider_relationships()
 

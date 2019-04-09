@@ -76,7 +76,7 @@ def parse_cmd_line():
 
 def get_stream_from_image_url(image_url, quiet=False):
     """Get default image URL for a given stream name"""
-    # strip trailing / from URL, and strip build number or link (5.9.2.3, latest, stable)
+    # strip trailing / from URL, and strip build number or link (5.11.0.1, latest, stable)
     # to get just https://url/builds/[cfme/manageiq]/[build-stream]
     image_base = '/'.join(image_url.strip('/').split('/')[:-1])
     if not quiet:  # don't log (goes to stdout) when just printing name, for Jenkins

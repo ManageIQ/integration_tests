@@ -227,8 +227,7 @@ def setup_nfs_samba_backup(appl1):
 
 @pytest.mark.rhel_testing
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
-                         reason='Test only for downstream version of product')
+@pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_local(request, get_appliances_with_providers):
     """ Test single appliance backup and restore, configures appliance with providers,
     backs up database, restores it to fresh appliance and checks for matching providers.
@@ -262,8 +261,7 @@ def test_appliance_console_restore_db_local(request, get_appliances_with_provide
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream or appliance.version < '5.9',
-                         reason='Test not supported below 5.9')
+@pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansible):
     """
     Polarion:
@@ -305,8 +303,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
-                         reason='Test only for downstream version of product')
+@pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_pg_basebackup_replicated(
         request, get_replicated_appliances_with_providers):
     """
@@ -350,8 +347,7 @@ def test_appliance_console_restore_pg_basebackup_replicated(
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
-                         reason='Test only for downstream version of product')
+@pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_external(request, get_ext_appliances_with_providers):
     """Configure ext environment with providers, run backup/restore on configuration,
     Confirm that providers still exist after restore and provisioning works.
@@ -393,8 +389,7 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
-                         reason='Test only for downstream version of product')
+@pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_replicated(
         request, get_replicated_appliances_with_providers):
     """
@@ -441,8 +436,7 @@ def test_appliance_console_restore_db_replicated(
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
-                         reason='Test only for downstream version of product')
+@pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_providers):
     """Configure HA environment with providers, run backup/restore on configuration,
     Confirm that ha failover continues to work correctly and providers still exist.
@@ -493,8 +487,7 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
-                         reason='Test only for downstream version of product')
+@pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers):
     """ Test single appliance backup and restore through nfs, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
@@ -531,8 +524,7 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream,
-                         reason='Test only for downstream version of product')
+@pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_samba(request, get_appliances_with_providers):
     """ Test single appliance backup and restore through smb, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.

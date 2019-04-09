@@ -40,16 +40,15 @@ def test_sdn_api_inventory_networks(provider, appliance):
 
 
 @pytest.mark.provider([AzureProvider, EC2Provider], override=True, scope='function')
-@pytest.mark.meta(blockers=[BZ(1550605, forced_streams=["5.9", "5.8"],
-                  unblock=lambda provider: not provider.one_of(AzureProvider))])
-@pytest.mark.uncollectif(lambda provider, appliance: provider.one_of(EC2Provider) and
-                         appliance.version < "5.9", reason='RFE for 5.9')
 def test_sdn_api_inventory_routers(provider, appliance):
     """Pulls the list of routers from the Provider API and from the appliance. Compare the 2
     results. If Similar, then test is successful
 
     Metadata:
         test_flag: sdn, inventory
+
+    Bugzilla:
+        1550605
 
     Polarion:
         assignee: mmojzis

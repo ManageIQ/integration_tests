@@ -71,15 +71,12 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
         initialEstimate: 1/3h
     """
 
-    # tabs changed, hack until configure.tasks is refactored for collections and versioned widgets
-    destination = 'AllTasks' if appliance.version >= '5.9' else 'AllOtherTasks'
-
     # get drift history num
     view = navigate_to(a_host, 'Details')
     drift_num_orig = int(view.entities.summary('Relationships').get_text_of('Drift History'))
 
     # clear table
-    col = appliance.collections.tasks.filter({'tab': destination})
+    col = appliance.collections.tasks.filter({'tab': 'AllTasks'})
     col.delete_all()
 
     # initiate 1st analysis
@@ -90,7 +87,7 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     wait_for(
         lambda: (view.entities.summary('Relationships').get_text_of('Drift History') ==
                  str(drift_num_orig + 1)),
-        delay=20,
+        delay=10,
         num_sec=360,
         message="Waiting for Drift History count to increase",
         fail_func=appliance.server.browser.refresh
@@ -111,7 +108,7 @@ def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_c
     wait_for(
         lambda: (view.entities.summary('Relationships').get_text_of('Drift History') ==
                  str(drift_num_orig + 2)),
-        delay=20,
+        delay=10,
         num_sec=360,
         message="Waiting for Drift History count to increase",
         fail_func=appliance.server.browser.refresh

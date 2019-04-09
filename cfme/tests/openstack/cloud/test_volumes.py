@@ -113,7 +113,6 @@ def test_delete_volume(volume):
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_create_volume_with_type(volume_with_type, provider):
     """
     Polarion:
@@ -126,7 +125,6 @@ def test_create_volume_with_type(volume_with_type, provider):
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_edit_volume_with_type(volume_with_type, appliance):
     """
     Polarion:
@@ -141,7 +139,6 @@ def test_edit_volume_with_type(volume_with_type, appliance):
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_delete_volume_with_type(volume_with_type):
     """
     Polarion:

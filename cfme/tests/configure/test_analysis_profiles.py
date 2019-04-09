@@ -357,7 +357,6 @@ def test_analysis_profile_description_validation(analysis_profile_collection):
 # Arguments of parametrize are product_features trees for Managing Quotas and Dialogs with RBAC
 @test_requirements.rbac
 @pytest.mark.tier(1)
-@pytest.mark.ignore_stream('5.9')
 @pytest.mark.parametrize(
     'product_features',
     PRODUCT_FEATURES_QUOTA + PRODUCT_FEATURES_DIALOG,

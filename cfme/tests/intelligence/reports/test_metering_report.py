@@ -21,7 +21,6 @@ from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
@@ -32,10 +31,6 @@ pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't su
 
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.ignore_stream('5.8'),
-    pytest.mark.meta(blockers=[BZ(1511099, forced_streams=["5.9"],
-                                  unblock=lambda provider: not provider.one_of(GCEProvider)),
-                               ]),
     pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope='module'),
     test_requirements.chargeback,
 ]

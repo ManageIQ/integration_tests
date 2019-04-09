@@ -483,7 +483,6 @@ def test_open_url(request, setup_obj, button_group, method):
     blockers=[
         BZ(
             1668023,
-            forced_streams=["5.10"],
             unblock=lambda button_group, btn_dialog: not ("HOSTS" in button_group and btn_dialog),
         ),
         BZ(
@@ -492,7 +491,6 @@ def test_open_url(request, setup_obj, button_group, method):
         ),
     ]
 )
-@pytest.mark.ignore_stream("5.9")
 @pytest.mark.parametrize("btn_dialog", [False, True], ids=["simple", "dialog"])
 def test_custom_button_events_infra_obj(request, dialog, setup_obj, button_group, btn_dialog):
     """Test custom button events

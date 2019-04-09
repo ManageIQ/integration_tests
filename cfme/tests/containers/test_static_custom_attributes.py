@@ -11,7 +11,6 @@ from manageiq_client.api import APIException
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.provider.openshift import CustomAttribute
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 pytestmark = [
@@ -235,7 +234,6 @@ def test_delete_non_exist_attribute(provider):
                     .format(ca.value))
 
 
-@pytest.mark.meta(blockers=[BZ(1544800, forced_streams=["5.8", "5.9"])])
 def test_add_already_exist_attribute(provider):
     """
     Polarion:

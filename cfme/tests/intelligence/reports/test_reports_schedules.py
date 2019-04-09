@@ -108,7 +108,6 @@ def test_schedule_queue(appliance, request, interval, schedule_data):
     view.flash.assert_message("The selected Schedule has been queued to run")
 
 
-@pytest.mark.ignore_stream("5.9")
 @pytest.mark.parametrize("email", INVALID_EMAILS)
 def test_report_schedules_invalid_email(appliance, schedule_data, email):
     """
@@ -118,7 +117,9 @@ def test_report_schedules_invalid_email(appliance, schedule_data, email):
     Patterns such as: xyz@example@example.com, xyz@example, ?/><!$%@example.com
     BZ(1684491) has been filed for this.
 
-    Bugzilla: 1684491
+    Bugzilla:
+        1684491
+
     Polarion:
         assignee: pvala
         casecomponent: Reporting

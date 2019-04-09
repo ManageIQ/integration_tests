@@ -230,8 +230,7 @@ class TestServiceRESTAPI(object):
         """
         outcome = query_resource_attributes(services[0])
         for failure in outcome.failed:
-            if failure.name == "reconfigure_dialog"and BZ(
-                    1663972, forced_streams=["5.9", "5.10", "upstream"]).blocks:
+            if failure.name == "reconfigure_dialog"and BZ(1663972).blocks:
                 continue
             soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
@@ -293,12 +292,14 @@ class TestServiceRESTAPI(object):
             service.reload()
             assert service.name == new_names[i]
 
-    # POST method is not available on < 5.8, as described in BZ 1414852
     def test_delete_service_post(self, services):
         """Tests deleting services from detail using POST method.
 
         Metadata:
             test_flag: rest
+
+        Bugzilla:
+            * 1414852
 
         Polarion:
             assignee: nansari
@@ -642,7 +643,6 @@ class TestServiceRESTAPI(object):
         child.reload()
         assert child.ancestry == str(parent.id)
 
-    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.8')
     @pytest.mark.meta(blockers=[BZ(1496936)])
     def test_add_child_resource(self, request, appliance):
         """Tests adding parent reference to already existing service using add_resource.
@@ -665,9 +665,6 @@ class TestServiceRESTAPI(object):
         child.reload()
         assert child.ancestry == str(parent.id)
 
-    @pytest.mark.skipif(
-        store.current_appliance.version < '5.9',
-        reason='BZ 1416903 was fixed only for versions >= 5.9')
     def test_power_parent_service(self, request, appliance, vm_service):
         """Tests that power operations triggered on service parent affects child service.
 
@@ -731,9 +728,6 @@ class TestServiceRESTAPI(object):
 
 class TestServiceDialogsRESTAPI(object):
     def check_returned_dialog(self, appliance):
-        # full dialog is returned only in >= 5.9
-        if appliance.version < '5.9':
-            return
         returned = appliance.rest_api.response.json()
         if 'results' in returned:
             results = returned['results']
@@ -923,12 +917,14 @@ class TestServiceTemplateRESTAPI(object):
         """
         delete_resources_from_collection(service_templates)
 
-    # POST method is not available on < 5.8, as described in BZ 1427338
     def test_delete_service_template_post(self, service_templates):
         """Tests deleting service templates from detail using POST method.
 
         Metadata:
             test_flag: rest
+
+        Bugzilla:
+            * 1427338
 
         Polarion:
             assignee: nansari
@@ -1045,9 +1041,6 @@ class TestServiceCatalogsRESTAPI(object):
         """
         outcome = query_resource_attributes(service_catalogs[0])
         for failure in outcome.failed:
-            if failure.name == 'service_templates' and BZ(
-                    1546942, forced_streams=['5.8']).blocks:
-                continue
             soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
 
@@ -1171,9 +1164,7 @@ class TestServiceCatalogsRESTAPI(object):
         results = results['results']
         assert_response(appliance)
 
-        # testing BZ 1480281 that was fixed only for versions >= 5.9
-        if appliance.version >= '5.9':
-            assert 'href' in results[0], "BZ 1480281 doesn't seem to be fixed"
+        assert 'href' in results[0], "BZ 1480281 doesn't seem to be fixed"
 
         def _order_finished(service_request):
             service_request.reload()
@@ -1606,7 +1597,6 @@ class TestOrchestrationTemplatesRESTAPI(object):
         delete_resources_from_collection(orchestration_templates, not_found=True)
 
     @pytest.mark.tier(3)
-    @pytest.mark.meta(blockers=[BZ(1414881, forced_streams=['5.7', '5.8', 'upstream'])])
     def test_delete_orchestration_templates_from_detail_post(self, orchestration_templates):
         """Tests deleting orchestration templates from detail using POST method.
 
@@ -1757,8 +1747,6 @@ class TestOrchestrationTemplatesRESTAPI(object):
             assert_response(appliance, http_status=400)
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
-    @pytest.mark.meta(blockers=[BZ(1510215, forced_streams=['5.9', 'upstream'])])
     def test_invalid_template_type(self, appliance):
         """Tests that template creation fails gracefully when invalid type is specified.
 
@@ -1850,13 +1838,14 @@ class TestServiceOrderCart(object):
         assert second_cart.state == 'cart'
 
     @pytest.mark.tier(3)
-    # not testing on version < 5.9 due to BZ1493785 that was fixed only in 5.9
-    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
     def test_create_cart(self, request, appliance, service_templates):
         """Tests creating a cart with service requests.
 
         Metadata:
             test_flag: rest
+
+        Bugzilla:
+            1493785
 
         Polarion:
             assignee: nansari

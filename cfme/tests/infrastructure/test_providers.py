@@ -217,14 +217,15 @@ def test_api_port_max_character_validation_infra(appliance):
 
 @pytest.mark.rhv1
 @pytest.mark.usefixtures('has_no_infra_providers')
-@pytest.mark.meta(blockers=[BZ(1559796, forced_streams=['5.8', '5.9'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.tier(1)
 def test_providers_discovery(request, appliance, provider):
     """Tests provider discovery
 
     Metadata:
         test_flag: crud
+
+    Bugzilla:
+        1559796
 
     Polarion:
         assignee: pvala
@@ -389,12 +390,11 @@ def test_infra_discovery_screen(appliance):
     view.rhevm.click()
     assert not view.rhevm.selected
 
-    if appliance.version >= '5.9.2':
-        assert view.osp_infra.is_displayed
-        view.osp_infra.click()
-        assert view.osp_infra.selected
-        view.osp_infra.click()
-        assert not view.osp_infra.selected
+    assert view.osp_infra.is_displayed
+    view.osp_infra.click()
+    assert view.osp_infra.selected
+    view.osp_infra.click()
+    assert not view.osp_infra.selected
 
     view.start.click()
     assert view.flash.assert_message("At least 1 item must be selected for discovery")

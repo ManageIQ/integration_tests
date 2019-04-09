@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import query_resource_attributes
 from cfme.utils.version import LOWEST
@@ -66,8 +65,7 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
 
     if provider.one_of(RHEVMProvider):
         result['vm_fields']['provision_type'] = 'native_clone'
-        if provider.appliance.version > '5.9.0.16':
-            result['vm_fields']['vlan'] = '<Template>'
+        result['vm_fields']['vlan'] = '<Template>'
 
     return result
 
@@ -265,12 +263,14 @@ def test_create_pending_provision_requests(request, appliance, provider, small_t
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1592326, forced_streams=['5.8', '5.9', '5.10'])])
 def test_provision_attributes(appliance, provider, small_template, soft_assert):
     """Tests that it's possible to display additional attributes in /api/provision_requests/:id.
 
     Metadata:
         test_flag: rest, provision
+
+    Bugzilla:
+        1592326
 
     Polarion:
         assignee: pvala

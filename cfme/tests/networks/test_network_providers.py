@@ -12,9 +12,7 @@ from cfme.utils.update import update
 
 pytestmark = [
     pytest.mark.provider([NetworkProvider], scope="module"),
-    test_requirements.discovery,
-    pytest.mark.ignore_stream('5.8'),
-    pytest.mark.meta(blockers=[BZ(1518301, forced_streams=['5.9'])])
+    test_requirements.discovery
 ]
 
 

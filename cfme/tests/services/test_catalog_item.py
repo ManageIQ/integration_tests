@@ -151,7 +151,7 @@ def test_edit_tags_catalog_item(catalog_item):
     catalog_item.remove_tag(tag)
 
 
-@pytest.mark.meta(blockers=[BZ(1531512, forced_streams=["5.9", "5.10", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1531512, forced_streams=["5.10", "upstream"])])
 def test_catalog_item_duplicate_name(appliance, dialog, catalog):
     """
     Polarion:

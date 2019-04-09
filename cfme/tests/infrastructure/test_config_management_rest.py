@@ -160,11 +160,10 @@ class TestAuthenticationsRESTAPI(object):
             assert_response(appliance)
             auth.wait_not_exists(num_sec=180, delay=5)
 
-            # the BZ1476869 is fixed for versions >= 5.9
-            if appliance.version >= '5.9':
-                with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                    auth.action.delete.POST()
-                assert_response(appliance, http_status=404)
+            # BZ1476869
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
+                auth.action.delete.POST()
+            assert_response(appliance, http_status=404)
 
     def test_delete_authentications_from_detail_delete(self, appliance, authentications):
         """Tests deleting authentications from detail using DELETE method.
@@ -183,11 +182,10 @@ class TestAuthenticationsRESTAPI(object):
             assert_response(appliance)
             auth.wait_not_exists(num_sec=180, delay=5)
 
-            # the BZ1476869 is fixed for versions >= 5.9
-            if appliance.version >= '5.9':
-                with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-                    auth.action.delete.DELETE()
-                assert_response(appliance, http_status=404)
+            # BZ1476869
+            with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
+                auth.action.delete.DELETE()
+            assert_response(appliance, http_status=404)
 
     def test_delete_authentications_from_collection(self, appliance, authentications):
         """Tests deleting authentications from collection.

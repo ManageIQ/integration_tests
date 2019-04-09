@@ -70,12 +70,8 @@ def test_container_reports_base_on_options(soft_assert, appliance):
         initialEstimate: 1/6h
     """
     view = navigate_to(appliance.collections.reports, 'Add')
-    if appliance.version < '5.9':
-        chargeback_for_images = 'Chargeback Container Images'
-    else:
-        chargeback_for_images = 'Chargeback for Images'
     for base_on in (
-        chargeback_for_images,
+        'Chargeback for Images',
         'Container Images',
         'Container Services',
         'Container Templates',
@@ -236,7 +232,6 @@ def test_report_projects_by_number_of_pods(appliance, soft_assert):
                     .format(row['Project Name'], pods_count, row['Number of Pods']))
 
 
-@pytest.mark.meta(blockers=[BZ(1539378, forced_streams=["5.9"])])
 def test_report_projects_by_cpu_usage(appliance, soft_assert, vporizer):
     """Testing 'Projects By CPU Usage' report, see polarion case for more info
 
@@ -258,7 +253,6 @@ def test_report_projects_by_cpu_usage(appliance, soft_assert, vporizer):
                     .format(row['Name'], usage_db, usage_report))
 
 
-@pytest.mark.meta(blockers=[BZ(1539378, forced_streams=["5.9"])])
 def test_report_projects_by_memory_usage(appliance, soft_assert, vporizer):
     """Testing 'Projects By Memory Usage' report, see polarion case for more info
 
@@ -315,7 +309,6 @@ def test_report_pod_counts_for_container_images_by_project(appliance, provider, 
                         .format(expected_image, pod_name, pod_images))
 
 
-@pytest.mark.meta(blockers=[1529963], forced_stream=['5.8', '5.9'])
 def test_report_recently_discovered_pods(appliance, provider, soft_assert):
     """Testing 'Recently Discovered Pods' report, see polarion case for more info
 

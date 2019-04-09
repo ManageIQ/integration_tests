@@ -11,7 +11,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
-from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -167,8 +166,7 @@ def _collection_not_in_this_version(appliance, collection_name):
     return (
         (collection_name not in COLLECTIONS_IN_UPSTREAM and appliance.version.is_in_series(
             'upstream')) or
-        (collection_name not in COLLECTIONS_IN_510 and appliance.version.is_in_series('5.10')) or
-        (collection_name not in COLLECTIONS_IN_59 and appliance.version.is_in_series('5.9'))
+        (collection_name not in COLLECTIONS_IN_510 and appliance.version.is_in_series('5.10'))
     )
 
 
@@ -213,7 +211,8 @@ def test_collections_actions(appliance, collection_name):
     Other methods (like DELETE) are allowed for individual resources inside collections,
     not in collections itself.
 
-    Testing BZ 1392595
+    Bugzilla:
+        1392595
 
     Metadata:
         test_flag: rest
@@ -485,17 +484,15 @@ def test_datetime_filtering(appliance, provider):
     older_resources = _get_filtered_resources('<')
     newer_resources = _get_filtered_resources('>')
     matching_resources = _get_filtered_resources('=')
-    # this will fail once BZ1437529 is fixed
-    # should be: ``assert matching_resources``
-    assert not matching_resources
+    # BZ1437529
+    assert matching_resources
     if older_resources:
         last_older = collection.get(id=older_resources[-1]['id'])
         assert last_older.created_on < baseline_vm.created_on
     if newer_resources:
         first_newer = collection.get(id=newer_resources[0]['id'])
-        # this will fail once BZ1437529 is fixed
-        # should be: ``assert first_newer.created_on > baseline_vm.created_on``
-        assert first_newer.created_on == baseline_vm.created_on
+        # BZ1437529
+        assert first_newer.created_on > baseline_vm.created_on
 
 
 def test_date_filtering(appliance, provider):
@@ -658,27 +655,16 @@ def test_rest_paging(appliance, paging):
         collection_name == 'metric_rollups' or  # needs additional parameters
         _collection_not_in_this_version(appliance, collection_name)
 )
-@pytest.mark.meta(blockers=[
-    BZ(
-        1547852,
-        forced_streams=['5.9', 'upstream'],
-        unblock=lambda collection_name: collection_name != 'pictures'
-    ),
-    BZ(
-        1503852,
-        forced_streams=['5.9', 'upstream'],
-        unblock=lambda collection_name: collection_name not in {'requests', 'service_requests'}
-    ),
-    BZ(
-        1510238,
-        forced_streams=['5.9', 'upstream'],
-        unblock=lambda collection_name: collection_name != 'vms'
-    )])
 def test_attributes_present(appliance, collection_name):
     """Tests that the expected attributes are present in all collections.
 
     Metadata:
         test_flag: rest
+
+    Bugzilla:
+        1510238
+        1503852
+        1547852
 
     Polarion:
         assignee: pvala
@@ -747,7 +733,6 @@ def test_collection_class_invalid(appliance, provider):
             collection_class='ManageIQ::Providers::Nonexistent::Vm')
 
 
-@pytest.mark.meta(blockers=[BZ(1504693, forced_streams=['5.9', 'upstream'])])
 def test_bulk_delete(request, appliance):
     """Tests bulk delete from collection.
 
@@ -822,10 +807,9 @@ class TestPicturesRESTAPI(object):
         picture = self.create_picture(appliance)
         outcome = query_resource_attributes(picture)
 
-        bad_attrs = ('href_slug', 'region_description', 'region_number', 'image_href')
+        # BZ 1547852, some attrs were not working
+        # bad_attrs = ('href_slug', 'region_description', 'region_number', 'image_href')
         for failure in outcome.failed:
-            if failure.name in bad_attrs and BZ(1547852, forced_streams=['5.9']).blocks:
-                continue
             soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
 
@@ -1037,7 +1021,8 @@ class TestNotificationsRESTAPI(object):
     def test_delete_notifications_from_detail(self, appliance, generate_notifications, method):
         """Tests delete notifications from detail.
 
-        Tests BZ 1420872
+        Bugzilla:
+            1420872
 
         Metadata:
             test_flag: rest

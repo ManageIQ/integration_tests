@@ -236,9 +236,6 @@ class TestAutomationRequestsRESTAPI(object):
         deny_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
     @pytest.mark.tier(3)
-    @pytest.mark.skipif(
-        store.current_appliance.version < '5.9',
-        reason='BZ 1418338 was fixed only for versions >= 5.9')
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
@@ -247,6 +244,9 @@ class TestAutomationRequestsRESTAPI(object):
 
         Metadata:
             test_flag: rest, requests
+
+        Bugzilla:
+            1418338
 
         Polarion:
             assignee: pvala

@@ -83,9 +83,7 @@ def test_webmks_vm_console(request, appliance, provider, vm_obj, configure_webso
     request.addfinalizer(vm_console.close_console_window)
     request.addfinalizer(appliance.server.logout)
     try:
-        if appliance.version >= '5.9':
-            # Since connection status element is only available in latest 5.9
-            assert vm_console.wait_for_connect(180), "VM Console did not reach 'connected' state"
+        assert vm_console.wait_for_connect(180), "VM Console did not reach 'connected' state"
         # Get the login screen image, and make sure it is a jpeg file:
         screen = vm_console.get_screen(180)
         assert imghdr.what('', screen) == 'jpeg'
@@ -144,21 +142,25 @@ def test_webmks_vm_console(request, appliance, provider, vm_obj, configure_webso
         vm_console.send_keys("touch blather\n")
         vm_console.send_keys("\n\n")
 
-        if appliance.version >= '5.9':
-            # Since these buttons are only available in latest 5.9
-            vm_console.send_ctrl_alt_delete()
-            assert vm_console.wait_for_text(text_to_find="login:", timeout=200,
-                to_disappear=True), ("Text 'login:' never disappeared, indicating failure"
-                " of CTRL+ALT+DEL button functionality, please check if OS reboots on "
-                "CTRL+ALT+DEL key combination and CTRL+ALT+DEL button on HTML5 Console is working.")
-            assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
-                " didn't prompt for Login")
-            assert vm_console.send_fullscreen(), ("VM Console Toggle Full Screen button does"
-                " not work")
+        vm_console.send_ctrl_alt_delete()
+        assert vm_console.wait_for_text(text_to_find="login:", timeout=200,
+            to_disappear=True), (
+            "Text 'login:' never disappeared, indicating failure"
+            " of CTRL+ALT+DEL button functionality, please check if OS reboots on "
+            "CTRL+ALT+DEL key combination and CTRL+ALT+DEL button on HTML5 Console is working.")
+        assert vm_console.wait_for_text(text_to_find="login:", timeout=200), (
+            "VM Console didn't prompt for Login")
+        assert vm_console.send_fullscreen(), ("VM Console Toggle Full Screen button does not work")
 
-        wait_for(func=ssh_client.run_command, func_args=["ls blather"],
-            func_kwargs={'ensure_user': True}, handle_exception=True,
-            fail_condition=lambda result: result.rc != 0, delay=1, num_sec=60)
+        wait_for(
+            func=ssh_client.run_command,
+            func_args=["ls blather"],
+            func_kwargs={'ensure_user': True},
+            handle_exception=True,
+            fail_condition=lambda result: result.failed,  # rc != 0
+            delay=1,
+            num_sec=60
+        )
         # if file was created in previous steps it will be removed here
         # we will get instance of SSHResult
         # Sometimes Openstack drops characters from word 'blather' hence try to remove

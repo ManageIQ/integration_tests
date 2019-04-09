@@ -61,7 +61,7 @@ class NewDashboardView(DashboardFormCommon):
             self.dashboards.tree.currently_selected == [
                 "All Dashboards",
                 "All Groups",
-                self.context["object"]._group
+                self.context["object"].group
             ]
         )
 
@@ -154,14 +154,10 @@ class DefaultDashboardDetailsView(DashboardDetailsView):
 class Dashboard(BaseEntity, Updateable, Pretty):
     pretty_attrs = ["name", "group", "title", "widgets"]
     name = attr.ib()
-    _group = attr.ib()
+    group = attr.ib()
     title = attr.ib(default=None)
     locked = attr.ib(default=None)
     widgets = attr.ib(default=None)
-
-    @property
-    def group(self):
-        return self._group
 
     def update(self, updates):
         """Update this Dashboard in the UI.
@@ -177,18 +173,13 @@ class Dashboard(BaseEntity, Updateable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(DashboardDetailsView, override=updates, wait='10s')
+        view = self.create_view(DashboardDetailsView, override=updates, wait=10)
         view.flash.assert_no_error()
-        if self.appliance.version < "5.9":
-            success_msg = 'Dashboard "{}" was saved'.format(self.name)
-            cancel_msg = 'Edit of Dashboard "{}" was cancelled by the user'.format(self.name)
-        else:
-            success_msg = 'Dashboard "{}" was saved'.format(self.title)
-            cancel_msg = 'Edit of Dashboard "{}" was cancelled by the user'.format(self.title)
         if changed:
-            view.flash.assert_message(success_msg)
+            view.flash.assert_message('Dashboard "{}" was saved'.format(self.title))
         else:
-            view.flash.assert_message(cancel_msg)
+            view.flash.assert_message('Edit of Dashboard "{}" was cancelled by the user'
+                                      .format(self.title))
 
     def delete(self, cancel=False):
         """Delete this Dashboard in the UI.
@@ -205,8 +196,7 @@ class Dashboard(BaseEntity, Updateable, Pretty):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            view = self.create_view(DashboardAllGroupsView)
-            assert view.is_displayed
+            view = self.create_view(DashboardAllGroupsView, wait=10)
             view.flash.assert_no_error()
 
 
@@ -214,9 +204,11 @@ class Dashboard(BaseEntity, Updateable, Pretty):
 class DashboardsCollection(BaseCollection):
     ENTITY = Dashboard
 
+    group = attr.ib(default=None)
+
     def create(self, name, group, title=None, locked=None, widgets=None):
         """Create this Dashboard in the UI."""
-        self._group = group
+        self.group = group
         view = navigate_to(self, "Add")
         dashboard = self.instantiate(name, group, title=title, locked=locked, widgets=widgets)
         view.fill({
@@ -226,13 +218,8 @@ class DashboardsCollection(BaseCollection):
             "widget_picker": dashboard.widgets
         })
         view.add_button.click()
-        view = dashboard.create_view(DashboardAllGroupsView)
-        assert view.is_displayed
-        if self.appliance.version < "5.9":
-            msg_part = dashboard.name
-        else:
-            msg_part = dashboard.title
-        view.flash.assert_success_message('Dashboard "{}" was saved'.format(msg_part))
+        view = dashboard.create_view(DashboardAllGroupsView, wait=10)
+        view.flash.assert_success_message('Dashboard "{}" was saved'.format(dashboard.title))
         return dashboard
 
 
@@ -264,8 +251,7 @@ class DefaultDashboard(Updateable, Pretty, Navigatable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(DefaultDashboardDetailsView)
-        assert view.is_displayed
+        view = self.create_view(DefaultDashboardDetailsView, wait=10)
         # TODO move these checks to certain tests
         # if changed:
         #     view.flash.assert_success_message('Dashboard "{}" was saved'.format(self.name))
@@ -284,7 +270,7 @@ class DashboardNew(CFMENavigateStep):
         self.prerequisite_view.dashboards.tree.click_path(
             "All Dashboards",
             "All Groups",
-            self.obj._group
+            self.obj.group
         )
         self.prerequisite_view.configuration.item_select("Add a new Dashboard")
 

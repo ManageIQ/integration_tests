@@ -7,7 +7,6 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
@@ -145,10 +144,6 @@ class TestRESTSnapshots(object):
         delete_resources_from_collection(
             [snapshot], vm.snapshots, not_found=True, num_sec=300, delay=5)
 
-    @pytest.mark.meta(
-        blockers=[BZ(1550551, forced_streams=['5.8', '5.9', 'upstream'],
-            unblock=lambda provider: not provider.one_of(RHEVMProvider))]
-    )
     def test_delete_snapshot_race(self, request, appliance, collection, vm):
         """Tests creation of snapshot while delete is in progress.
 

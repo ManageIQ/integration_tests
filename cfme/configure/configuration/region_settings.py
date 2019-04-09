@@ -131,10 +131,7 @@ class TagsAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self, *args, **kwargs):
-        if self.obj.appliance.version < '5.9':
-            self.prerequisite_view.company_tags.select()
-        else:
-            self.prerequisite_view.tags.company_tags.select()
+        self.prerequisite_view.tags.company_tags.select()
         self.view.fill({'category_dropdown': self.obj.parent.display_name})
 
 
@@ -318,10 +315,7 @@ class CategoryAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self, *args, **kwargs):
-        if self.obj.appliance.version < '5.9':
-            self.prerequisite_view.company_categories.select()
-        else:
-            self.prerequisite_view.tags.company_categories.select()
+        self.prerequisite_view.tags.company_categories.select()
 
 
 @navigator.register(CategoriesCollection, 'Add')
@@ -489,10 +483,7 @@ class MapTagsAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 
     def step(self, *args, **kwargs):
-        if self.obj.appliance.version < '5.9':
-            self.prerequisite_view.map_tags.select()
-        else:
-            self.prerequisite_view.tags.map_tags.select()
+        self.prerequisite_view.tags.map_tags.select()
 
 
 @navigator.register(MapTagsCollection, 'Add')

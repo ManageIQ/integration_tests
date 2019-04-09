@@ -112,7 +112,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
         # Enable alerts collection before adding the provider to avoid missing active
         # alert after adding the provider
         # For more info: https://bugzilla.redhat.com/show_bug.cgi?id=1514950
-        if self.appliance.version >= '5.9' and getattr(self, "alerts_type") == "Prometheus":
+        if getattr(self, "alerts_type") == "Prometheus":
             alert_profiles = self.appliance.collections.alert_profiles
             provider_profile = alert_profiles.instantiate(ProviderAlertProfile,
                                                           "Prometheus Provider Profile")
@@ -139,29 +139,21 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
                    'prov_type': ('OpenShift Container Platform' if self.appliance.is_downstream
                                  else 'OpenShift')}
 
-        if self.appliance.version >= '5.9':
-            mapping['metrics_type'] = self.metrics_type
-            mapping['alerts_type'] = self.alerts_type
-            mapping['proxy'] = {
-                'http_proxy': self.http_proxy
-            }
-            mapping['advanced'] = {
-                'adv_http': self.adv_http,
-                'adv_https': self.adv_https,
-                'no_proxy': self.no_proxy,
-                'image_repo': self.image_repo,
-                'image_reg': self.image_reg,
-                'image_tag': self.image_tag,
-                'cve_loc': self.cve_loc
-            }
-            if self.appliance.version >= '5.10':
-                mapping['virt_type'] = self.virt_type
-        else:
-            mapping['metrics_type'] = None
-            mapping['alerts_type'] = None
-            mapping['virt_type'] = None
-            mapping['proxy'] = None
-            mapping['advanced'] = None
+        mapping['metrics_type'] = self.metrics_type
+        mapping['alerts_type'] = self.alerts_type
+        mapping['proxy'] = {
+            'http_proxy': self.http_proxy
+        }
+        mapping['advanced'] = {
+            'adv_http': self.adv_http,
+            'adv_https': self.adv_https,
+            'no_proxy': self.no_proxy,
+            'image_repo': self.image_repo,
+            'image_reg': self.image_reg,
+            'image_tag': self.image_tag,
+            'cve_loc': self.cve_loc
+        }
+        mapping['virt_type'] = self.virt_type
 
         return mapping
 

@@ -194,23 +194,21 @@ class Cluster(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
             wait: Whether or not to wait for the delete to complete, defaults to False
         """
         view = navigate_to(self, 'Details')
-        msg = 'Remove item'
-        if self.appliance.version >= '5.9':
-            msg = 'Remove item from Inventory'
-        view.toolbar.configuration.item_select(msg, handle_alert=not cancel)
+        view.toolbar.configuration.item_select('Remove item from Inventory',
+                                               handle_alert=not cancel)
 
         # cancel doesn't redirect, confirmation does
         view.flush_widget_cache()
         if cancel:
-            view = self.create_view(ClusterDetailsView)
+            view = self.create_view(ClusterDetailsView, wait=10)
         else:
-            view = self.create_view(ClusterAllView)
-        wait_for(lambda: view.is_displayed, fail_condition=False, num_sec=10, delay=1)
+            view = self.create_view(ClusterAllView, wait=10)
 
         # flash message only displayed if it was deleted
         if not cancel:
-            msg = 'The selected Clusters / Deployment Roles was deleted'
-            view.flash.assert_success_message(msg)
+            view.flash.assert_success_message(
+                'The selected Clusters / Deployment Roles was deleted'
+            )
 
         if wait:
             self.provider.refresh_provider_relationships()
@@ -222,7 +220,7 @@ class Cluster(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
             return wait_for(lambda: not self.exists,
                             timeout=timeout,
                             message='Wait for cluster to disappear',
-                            delay=10,
+                            delay=5,
                             fail_func=self.browser.refresh)
         except TimedOutError:
             logger.error('Timed out waiting for cluster to disappear, continuing')
@@ -234,8 +232,7 @@ class Cluster(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
         def refresh():
             if self.provider:
                 self.provider.refresh_provider_relationships()
-            view.browser.selenium.refresh()
-            view.flush_widget_cache()
+            view.browser.refresh()
 
         wait_for(lambda: self.exists, fail_condition=False, num_sec=1000, fail_func=refresh,
                  message='Wait cluster to appear')
@@ -328,14 +325,11 @@ class ClusterCollection(BaseCollection):
             raise ValueError(
                 'Some Clusters {!r} were not found in the UI'.format(
                     cluster_names - checked_cluster_names))
-        if self.appliance.version < '5.9':
-            view.toolbar.configuration.item_select('Remove selected items', handle_alert=True)
-        else:
-            view.toolbar.configuration.item_select(
-                'Remove selected items from Inventory', handle_alert=True)
+        view.toolbar.configuration.item_select('Remove selected items from Inventory',
+                                               handle_alert=True)
         view.flash.assert_no_error()
-        flash_msg = ('Delete initiated for {} Clusters / Deployment Roles from the CFME Database'.
-            format(len(clusters)))
+        flash_msg = ('Delete initiated for {} Clusters / Deployment Roles from the CFME Database'
+                     .format(len(clusters)))
         view.flash.assert_message(flash_msg)
         for cluster in clusters:
             cluster.wait_for_disappear()

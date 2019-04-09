@@ -398,20 +398,14 @@ def test_custom_button_expression_cloud_obj(
     blockers=[
         BZ(
             1668023,
-            forced_streams=["5.10"],
             unblock=lambda button_group, btn_dialog: not (
                 bool([obj for obj in ["PROVIDER", "CLOUD_NETWORK"] if obj in button_group])
                 and btn_dialog
             ),
         ),
-        BZ(
-            1680525,
-            forced_streams=["5.10"],
-            unblock=lambda button_group: "CLOUD_NETWORK" not in button_group,
-        ),
+        BZ(1680525, unblock=lambda button_group: "CLOUD_NETWORK" not in button_group)
     ]
 )
-@pytest.mark.ignore_stream("5.9")
 @pytest.mark.parametrize("btn_dialog", [False, True], ids=["simple", "dialog"])
 def test_custom_button_events_cloud_obj(request, dialog, setup_objs, button_group, btn_dialog):
     """Test custom button events
@@ -432,7 +426,8 @@ def test_custom_button_events_cloud_obj(request, dialog, setup_objs, button_grou
             3. Assert event count
 
     Bugzilla:
-        1668023, 1680525
+        1668023
+        1680525
     """
     group, obj_type = button_group
     dialog_ = dialog if btn_dialog else None

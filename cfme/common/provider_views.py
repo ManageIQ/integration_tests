@@ -464,9 +464,9 @@ class CloudProviderAddView(ProviderAddView):
                 self.title.text == 'Add New Cloud Provider')
 
 
-class ContainerProviderSettingView(ProvidersView):
+class ContainerProviderSettingView(View):
     """
-       Settings view for builds 5.9 and up
+       Settings view for Container Providers
       """
 
     @View.nested
@@ -490,32 +490,27 @@ class ContainerProviderSettingView(ProvidersView):
 
 class ContainerProviderAddView(ProviderAddView):
     """
-     represents Container Provider Add View
-    """
-    prov_type = BootstrapSelect(id='ems_type')
-
-    @property
-    def is_displayed(self):
-        return (super(ProviderAddView, self).is_displayed and
-                self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
-                self.title.text == 'Add New Containers Provider')
-
-
-class ContainerProviderAddViewUpdated(ContainerProviderAddView, ContainerProviderSettingView):
-    """
-     Additional widgets for builds 5.9 and up
+     Additional widgets for Container
     """
     COND_WIDGETS = ['prov_type', 'metrics_type', 'alerts_type', 'virt_type']
 
+    prov_type = BootstrapSelect(id='ems_type')
     metrics_type = BootstrapSelect(id='metrics_selection')
     alerts_type = BootstrapSelect(id='alerts_selection')
     virt_type = BootstrapSelect(id='virtualization_selection')
+    included_settings = View.include(ContainerProviderSettingView, use_parent=True)
 
     def before_fill(self, values):
         for widget_name in self.COND_WIDGETS:
             widget = getattr(self, widget_name)
             if widget.is_displayed:
                 widget.fill(values.get(widget_name) or 'Disabled')
+
+    @property
+    def is_displayed(self):
+        return (super(ProviderAddView, self).is_displayed and
+                self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
+                self.title.text == 'Add New Containers Provider')
 
 
 class PhysicalProviderAddView(ProviderAddView):
@@ -547,19 +542,21 @@ class ProviderEditView(ProviderAddView):
     @property
     def is_displayed(self):
         provider_obj = self.context['object']
-        expected_title = ("Edit {type} Providers '{name}'".format(
-            type=provider_obj.string_name, name=provider_obj.name))
+        expected_title = "Edit {type} Providers '{name}'".format(type=provider_obj.string_name,
+                                                                 name=provider_obj.name)
 
-        return (self.logged_in_as_current_user and
-                self.title.text == expected_title and
-                self.navigation.currently_selected == [
-                    'Compute',
-                    ('Clouds' if provider_obj.string_name == "Cloud" else provider_obj.string_name),
-                    'Providers'
-                ])
+        return (
+            self.logged_in_as_current_user and
+            self.title.text == expected_title and
+            self.navigation.currently_selected == [
+                'Compute',
+                ('Clouds' if provider_obj.string_name == "Cloud" else provider_obj.string_name),
+                'Providers'
+            ]
+        )
 
 
-class ContainerProviderEditViewUpdated(ProviderEditView, ContainerProviderSettingView):
+class ContainerProviderEditView(ProviderEditView):
     """
      Additional widgets for builds 5.9 and up
     """
@@ -569,6 +566,7 @@ class ContainerProviderEditViewUpdated(ProviderEditView, ContainerProviderSettin
     metrics_type = BootstrapSelect(id='metrics_selection')
     alerts_type = BootstrapSelect(id='alerts_selection')
     virt_type = BootstrapSelect(id='virtualization_selection')
+    included_settings = View.include(ContainerProviderSettingView, use_parent=True)
 
     def before_fill(self, values):
         for widget in self.COND_WIDGETS:

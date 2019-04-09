@@ -151,7 +151,7 @@ class VolumeBackup(BaseEntity, Taggable):
     provider = attr.ib()
 
     def restore(self, name):
-        """Restore the volume backup. this feature included in 5.9 and above.
+        """Restore the volume backup.
 
         Args:
             name: volume name

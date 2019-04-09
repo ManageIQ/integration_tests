@@ -11,7 +11,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
@@ -378,10 +377,12 @@ class TestVmDetailsPowerControlPerProvider(object):
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1634713, forced_streams=['5.9', '5.10', 'upstream'])])
 def test_no_template_power_control(provider, soft_assert):
     """ Ensures that no power button is displayed for templates.
-    See BZ1496383 and BZ1634713
+    Bugzilla:
+        1496383
+        1634713
+
 
     Prerequisities:
         * An infra provider that has some templates.
@@ -398,7 +399,7 @@ def test_no_template_power_control(provider, soft_assert):
         test_flag: power_control
 
     Polarion:
-        assignee: bsquizza
+        assignee: ghubale
         initialEstimate: 1/10h
     """
     view = navigate_to(provider, 'ProviderTemplates')
@@ -427,10 +428,6 @@ def test_no_template_power_control(provider, soft_assert):
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1520489, forced_streams=['5.9'],
-                               unblock=lambda provider: not provider.one_of(SCVMMProvider)),
-                            BZ(1659340, forced_streams=['5.9', '5.10'],
-                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_no_power_controls_on_archived_vm(appliance, testing_vm, archived_vm, soft_assert):
     """ Ensures that no power button is displayed from details view of archived vm
 
@@ -441,6 +438,10 @@ def test_no_power_controls_on_archived_vm(appliance, testing_vm, archived_vm, so
         * Verify the Power toolbar button is not visible
     Metadata:
         test_flag: power_control
+
+    Bugzilla:
+        1520489
+        1659340
 
     Polarion:
         assignee: bsquizza
@@ -456,8 +457,6 @@ def test_no_power_controls_on_archived_vm(appliance, testing_vm, archived_vm, so
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1520489, forced_streams=['5.9'],
-                               unblock=lambda provider: not provider.one_of(SCVMMProvider))])
 def test_archived_vm_status(testing_vm, archived_vm):
     """Tests archived vm status
 
@@ -522,8 +521,6 @@ def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True, scope='function')
-@pytest.mark.meta(blockers=[BZ(1571830, forced_streams=['5.9', '5.10'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
 
@@ -553,8 +550,6 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
     soft_assert(testing_vm_tools.mgmt.is_running, "vm not running")
 
 
-@pytest.mark.meta(blockers=[BZ(1571895, forced_streams=['5.9', '5.10'],
-                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True)
 def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset

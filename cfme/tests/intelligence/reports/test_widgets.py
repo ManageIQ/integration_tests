@@ -119,7 +119,6 @@ def test_widgets_reorder_in_reports(request, dashboard):
 
 @test_requirements.automate
 @pytest.mark.tier(1)
-@pytest.mark.ignore_stream('5.9')
 def test_generate_widget_content_by_automate(request, appliance, klass, namespace, domain):
     """
     Polarion:

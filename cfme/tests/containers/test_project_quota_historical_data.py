@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-pytestmark = [
-    pytest.mark.tier(0),
-    pytest.mark.ignore_stream('5.9')]
+pytestmark = [pytest.mark.tier(0)]
 
 
 @pytest.mark.manual

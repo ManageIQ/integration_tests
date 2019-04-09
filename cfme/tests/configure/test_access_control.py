@@ -117,7 +117,6 @@ def test_user_crud(appliance, group_collection):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 def test_user_assign_multiple_groups(appliance, request, group_collection):
     """Assign a user to multiple groups
 
@@ -150,7 +149,6 @@ def test_user_assign_multiple_groups(appliance, request, group_collection):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance: appliance.version < '5.9')
 def test_user_change_groups(appliance, group_collection):
     """Assign a user to multiple groups and confirm that the user can successfully change groups
 
@@ -182,10 +180,12 @@ def test_user_change_groups(appliance, group_collection):
                     view.current_groupname, group))
 
 
-# @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
 @pytest.mark.tier(2)
 def test_user_login(appliance, group_collection):
     """
+    Bugzilla:
+        1035399
+
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
@@ -421,7 +421,6 @@ def test_delete_default_user(appliance):
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[BZ(1090877)])
-@pytest.mark.meta(blockers=[BZ(1408479)], forced_streams=["5.7", "upstream"])
 def test_current_user_login_delete(appliance, request):
     """Test for deleting current user login.
 
@@ -486,9 +485,6 @@ def test_group_crud(group_collection):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda appliance, tag_value: appliance.version < '5.9' and
-                         tag_value == 'tag_expression',
-                         reason="Tag expression not available for 5.8 version")
 def test_group_crud_with_tag(provider, tag_value, group_collection):
     """Test for verifying group create with tag defined
 
@@ -967,7 +963,6 @@ def _go_to(cls_or_obj, dest='All'):
         ]
     ]
 )
-@pytest.mark.meta(blockers=[1262759])
 def test_permissions(appliance, product_features, allowed_actions, disallowed_actions):
     """ Test that that under the specified role the allowed acctions succeed
         and the disallowed actions fail
@@ -1357,11 +1352,10 @@ def tenant_unique_tenant_project_name_on_parent_level(request, appliance, object
         name=name_of_tenant,
         description=tenant_description,
         parent=object_type.get_root_tenant())
-    if appliance.version.is_in_series('5.9'):
-        msg = 'Failed to add a new tenant resource - Name should be unique per parent'
-    else:
-        msg = 'Failed to add a new tenant resource - Tenant: Name should be unique per parent'
-    with pytest.raises(Exception, match=msg):
+
+    with pytest.raises(Exception,
+                       match='Failed to add a new tenant resource - '
+                             'Tenant: Name should be unique per parent'):
         tenant2 = object_type.create(
             name=name_of_tenant,
             description=tenant_description,

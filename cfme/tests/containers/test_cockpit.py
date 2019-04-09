@@ -16,8 +16,6 @@ pytestmark = [
                          scope='function')]
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9",
-                         reason='Cockpit Feature is only available in 5.9 and greater')
 @pytest.mark.parametrize('cockpit', [False, True], ids=['disabled', 'enabled'])
 def test_cockpit_button_access(appliance, provider, cockpit, request):
     """ The test verifies the existence of cockpit "Web Console"

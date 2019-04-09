@@ -66,7 +66,7 @@ def address(self):
 def prepare_server_name(name):
     # there is a bug in CF 5.10 UI when it has different number of spaces in different html attrs
     # this is temporary workaround until BZ(1668849)  is fixed
-    if BZ(1668849, forced_streams=['5.9', '5.10']).blocks:
+    if BZ(1668849).blocks:
         new_name = re.escape(name)
         new_name = new_name.replace(r'\ ', r'\s*')
         new_name = re.compile(new_name)
@@ -1025,8 +1025,6 @@ class RegionView(ConfigurationView):
     company_tags = View.nested(CompanyTags)
     import_tags = View.nested(ImportTags)
     map_tags = View.nested(MapTags)
-
-    # available starting from 5.9 version, not available in 5.7, 5.8
     tags = View.nested(TagsView)
 
     @property
@@ -1097,10 +1095,7 @@ class ImportTags(CFMENavigateStep):
         return False
 
     def step(self, *args, **kwargs):
-        if self.obj.appliance.version < '5.9':
-            self.prerequisite_view.import_tags.select()
-        else:
-            self.prerequisite_view.tags.import_tags.select()
+        self.prerequisite_view.tags.import_tags.select()
 
 
 @navigator.register(Region)
@@ -1112,10 +1107,7 @@ class Import(CFMENavigateStep):
         return False
 
     def step(self, *args, **kwargs):
-        if self.obj.appliance.version < '5.9':
-            self.prerequisite_view.imports.select()
-        else:
-            self.prerequisite_view.tags.imports.select()
+        self.prerequisite_view.tags.imports.select()
 
 
 @navigator.register(Region)
@@ -1717,14 +1709,11 @@ class AutomateImportExportView(AutomateImportExportBaseView):
 
     @property
     def is_displayed(self):
-        # TODO: Remove check if the fix for BZ 1686054 is back ported to 5.9z
-        if self.browser.product_version < "5.10":
-            title = "Reset all components in the following domains: ManageIQ"
-        else:
-            title = "Reset all components in the following domains: RedHat, ManageIQ"
+        title = "Reset all components in the following domains: RedHat, ManageIQ"
 
-        return (self.in_import_export and self.export_all.is_displayed and self.reset_title.text
-                == title)
+        return (self.in_import_export and
+                self.export_all.is_displayed and
+                self.reset_title.text == title)
 
 
 @navigator.register(Server)

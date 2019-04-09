@@ -45,21 +45,17 @@ class GCEProvider(CloudProvider):
     settings_key = 'ems_google'
 
     project = attr.ib(default=None)
-    region = attr.ib(default=None)
-    region_name = attr.ib(default=None)
+    region = attr.ib(default=None)  # deprecated in 5.9.2
+    region_name = attr.ib(default=None)  # deprecated in 5.9.2
 
     @property
     def view_value_mapping(self):
         endpoints = {
             'name': self.name,
             'prov_type': 'Google Compute Engine',
-            'region': self.region_name,
             'project_id': self.project
         }
 
-        if self.appliance.version >= '5.9.2':
-            # from 5.9.2 we are not supporting region selection for GCE
-            del endpoints['region']
         return endpoints
 
     @classmethod
@@ -70,8 +66,8 @@ class GCEProvider(CloudProvider):
             name=prov_config['name'],
             project=prov_config['project'],
             zone=prov_config['zone'],
-            region=prov_config['region'],
-            region_name=prov_config['region_name'],
+            region=prov_config.get('region'),
+            region_name=prov_config.get('region_name'),
             endpoints={endpoint.name: endpoint},
             key=prov_key)
 

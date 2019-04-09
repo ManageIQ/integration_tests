@@ -78,11 +78,6 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
             'customize': {
                 'admin_username': provisioning['customize_username'],
                 'root_password': provisioning['customize_password']}})
-    if provider.one_of(AzureProvider) and appliance.version < '5.10':
-        # in 5.9 instance types are lowercase
-        recursive_update(inst_args, {
-            'properties': {
-                'instance_type': partial_match((provisioning.get('instance_type', None)).lower())}})
 
     catalog_item = appliance.collections.catalog_items.create(
         provider.catalog_item_type,

@@ -37,7 +37,7 @@ def main():
 @click.argument('appliance-ip', default=None, required=False)
 @click.option('--cfme-only', is_flag=True, help='Upgrade cfme packages only')
 @click.option('--update-to', default='5.9.z', help='Supported versions 5.9.z,'
-              ' 5.10.z (.z means latest and default is 5.9.z)')
+              ' 5.10.z (.z means latest and default is 5.9.z)')  # leaving 59z support for upgrades
 def upgrade_appliance(appliance_ip, cfme_only, update_to):
     """Upgrades an appliance"""
     supported_version_repo_map = {

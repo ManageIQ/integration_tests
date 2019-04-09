@@ -6,17 +6,15 @@ import yaml
 
 from cfme.utils.path import data_path
 
+
 @pytest.fixture
 def default_alerts(appliance):
     file_name = data_path.join('ui/control/default_alerts.yaml').strpath
     alerts = {}
     if os.path.exists(file_name):
-        with open(file_name,'r') as f:
+        with open(file_name, 'r') as f:
             all_alerts = yaml.safe_load(f)
-            alerts = (
-                all_alerts.get('v5.10') if appliance.version >= '5.10'
-                else all_alerts.get('v5.9')
-            )
+            alerts = (all_alerts.get('v5.10'))
     else:
         pytest.skip('Could not find {}, skipping test.'.format(file_name))
 
@@ -33,12 +31,13 @@ def default_alerts(appliance):
             timeline_event=alert.get('Event on Timeline'),
             mgmt_event=alert.get('Management Event Raised')
         )
-        for key,alert in alerts.items()
+        for key, alert in alerts.items()
     ]
     return default_alerts
 
+
 @pytest.mark.smoke
-def test_default_alerts(appliance,default_alerts):
+def test_default_alerts(appliance, default_alerts):
     """ Tests the default pre-configured alerts on the appliance and
         ensures that they have not changed between versions.
 

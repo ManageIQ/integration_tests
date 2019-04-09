@@ -8,7 +8,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import mark_vm_as_template
 from cfme.rest.gen_data import vm as _vm
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
@@ -61,6 +60,9 @@ def test_query_template_attributes(request, appliance, provider, soft_assert):
     Metadata:
         test_flag: rest
 
+    Bugzilla:
+        1546995
+
     Polarion:
         assignee: pvala
         casecomponent: Rest
@@ -76,9 +78,7 @@ def test_query_template_attributes(request, appliance, provider, soft_assert):
 
     outcome = query_resource_attributes(template_rest)
     for failure in outcome.failed:
-        if failure.type == 'attribute' and failure.name == 'policy_events' and BZ(
-                1546995, forced_streams=['5.8', '5.9', 'upstream']).blocks:
-            continue
+        # BZ1546995
         soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
             failure.type, failure.name, failure.response.status_code, failure.error))
 
@@ -120,7 +120,8 @@ def test_set_ownership(appliance, template, from_detail):
 def test_delete_template_from_detail_post(template):
     """Tests deletion of template from detail using POST method.
 
-    Testing BZ1422807
+    Bugzilla:
+        1422807
 
     Metadata:
         test_flag: rest

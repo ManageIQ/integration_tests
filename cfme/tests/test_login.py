@@ -68,21 +68,15 @@ def test_bad_password(context, request, appliance):
     cred = Credential(principal=username, secret=password)
     user = appliance.collections.users.instantiate(credential=cred, name='Administrator')
 
-    error_message = VersionPicker({
-        LOWEST: "Incorrect username or password",
-        '5.10': "Login failed: Unauthorized"
-    }).pick(appliance.version)
-
     with appliance.context.use(context):
-        with pytest.raises(Exception, match=error_message):
+        with pytest.raises(Exception, match="Login failed: Unauthorized"):
             appliance.server.login(user)
-        if appliance.version >= '5.9':
-            view = appliance.browser.create_view(LoginPage)
-            assert view.password.read() == '' and view.username.read() == ''
+        view = appliance.browser.create_view(LoginPage)
+        assert view.password.read() == '' and view.username.read() == ''
 
 
 @pytest.mark.parametrize('context', [ViaUI])
-@pytest.mark.meta(blockers=[BZ(1632718, forced_streams=['5.10'])])
+@pytest.mark.meta(blockers=[BZ(1632718)])
 def test_update_password(context, request, appliance):
     """ Test updating password from the login screen.
 
@@ -101,10 +95,7 @@ def test_update_password(context, request, appliance):
         credential=new_creds,
         groups=user_group
     )
-    error_message = VersionPicker({
-        LOWEST: "Incorrect username or password",
-        '5.10': "Login failed: Unauthorized"
-    }).pick(appliance.version)
+    error_message = "Login failed: Unauthorized"
 
     # Try to login as the new user to verify it has been created
     logged_in_page = appliance.server.login(user)

@@ -1050,13 +1050,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     def event_listener(self):
         """Returns an instance of the event listening class pointed to this appliance."""
-        # There is no REST API for event streams on versions < 5.9
-        if self.version <= '5.9':
-            from cfme.utils.events_db import DbEventListener
-            return DbEventListener(self)
-        else:
-            from cfme.utils.events import RestEventListener
-            return RestEventListener(self)
+        from cfme.utils.events import RestEventListener
+        return RestEventListener(self)
 
     def diagnose_evm_failure(self):
         """Go through various EVM processes, trying to figure out what fails
@@ -1750,13 +1745,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     @property
     def _ansible_pod_name(self):
         if self.is_pod:
-            if self.version >= '5.9':
-                get_ansible_name = ("basename $(oc get pods -lname=ansible "
-                                    "-o name --namespace={n})".format(n=self.project))
-                return str(self.ssh_client.run_command(get_ansible_name, ensure_host=True)).strip()
-            else:
-                # ansible stuff lives in the same container with main app in 5.8
-                return self.container
+            get_ansible_name = ("basename $(oc get pods -lname=ansible "
+                                "-o name --namespace={n})".format(n=self.project))
+            return str(self.ssh_client.run_command(get_ansible_name, ensure_host=True)).strip()
         else:
             return None
 
@@ -3046,7 +3037,7 @@ class DummyAppliance(object):
     """a dummy with minimal attribute set"""
     hostname = 'DummyApplianceHostname'
     browser_steal = False
-    version = attr.ib(default=Version('5.9.0'), converter=_version_for_version_or_stream)
+    version = attr.ib(default=Version('5.10.3'), converter=_version_for_version_or_stream)
     is_downstream = True
     is_pod = False
     is_dev = False

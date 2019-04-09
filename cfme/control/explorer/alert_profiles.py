@@ -277,40 +277,28 @@ class AlertProfileDetails(CFMENavigateStep):
 
 
 class ClusterAlertProfile(BaseAlertProfile):
-
     TYPE = "Cluster / Deployment Role"
 
 
 class DatastoreAlertProfile(BaseAlertProfile):
-
     TYPE = "Datastore"
 
 
 class HostAlertProfile(BaseAlertProfile):
-
     TYPE = "Host / Node"
 
 
 class ProviderAlertProfile(BaseAlertProfile):
-
     TYPE = "Provider"
 
 
 class ServerAlertProfile(BaseAlertProfile):
-
     TYPE = "Server"
 
 
 class VMInstanceAlertProfile(BaseAlertProfile):
-
     TYPE = "VM and Instance"
 
 
 class NodeAlertProfile(BaseAlertProfile):
-
-    @property
-    def TYPE(self):  # noqa
-        if self.appliance.version < "5.9.2":
-            return "Node"
-        else:
-            return "Container Node"
+    TYPE = "Container Node"

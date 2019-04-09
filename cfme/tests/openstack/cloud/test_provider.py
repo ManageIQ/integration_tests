@@ -16,7 +16,6 @@ CARDS = [("Flavors", "list_flavor"), ("Images", "list_templates"),
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 @pytest.mark.parametrize('card, api', CARDS)
 def test_cloud_provider_cards(provider, card, api):
     """
@@ -32,7 +31,6 @@ def test_cloud_provider_cards(provider, card, api):
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_dashboard_card_availability_zones(provider):
     """
     Polarion:
@@ -46,7 +44,6 @@ def test_dashboard_card_availability_zones(provider):
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_dashboard_card_tenants(provider):
     """
     Polarion:
@@ -62,7 +59,6 @@ def test_dashboard_card_tenants(provider):
 
 
 @pytest.mark.rfe
-@pytest.mark.ignore_stream('5.9')
 def test_dashboard_card_security_groups(provider):
     """
     Polarion:

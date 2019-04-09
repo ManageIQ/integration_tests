@@ -19,9 +19,6 @@ pytestmark = [
     pytest.mark.long_running,
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, scope="module"),
     test_requirements.ansible,
-    pytest.mark.uncollectif(lambda appliance: appliance.version < "5.9" and appliance.is_pod,
-                            reason="5.8 pod appliance doesn't support embedded ansible"),
-    pytest.mark.meta(blockers=[BZ(1640533, forced_streams=["5.10"])])
 ]
 
 
@@ -44,19 +41,14 @@ def ansible_repository(appliance, wait_for_ansible):
     except KeyError:
         pytest.skip("Skipping since no such key found in yaml")
     view = navigate_to(repository, "Details")
-    if appliance.version < "5.9":
-        refresh = view.browser.refresh
-    else:
-        refresh = view.toolbar.refresh.click
     wait_for(
         lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
         timeout=60,
-        fail_func=refresh
+        fail_func=view.toolbar.refresh.click
     )
     yield repository
 
-    if repository.exists:
-        repository.delete()
+    repository.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -76,8 +68,7 @@ def ansible_catalog_item(appliance, ansible_repository):
     )
     yield cat_item
 
-    if cat_item.exists:
-        cat_item.delete()
+    cat_item.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -94,8 +85,7 @@ def ansible_action(appliance, ansible_catalog_item):
     )
     yield action
 
-    if action.exists:
-        action.delete()
+    action.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -129,18 +119,16 @@ def ansible_credential(wait_for_ansible, appliance, full_template_modscope):
     )
     yield credential
 
-    if credential.exists:
-        credential.delete()
+    credential.delete_if_exists()
 
 
 @pytest.fixture
 def service_request(appliance, ansible_catalog_item):
     request_desc = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request_ = appliance.collections.requests.instantiate(request_desc)
-    yield service_request_
+    _service_request = appliance.collections.requests.instantiate(request_desc)
+    yield _service_request
 
-    if service_request_.exists:
-        service_request_.remove_request()
+    _service_request.delete_if_exists()
 
 
 @pytest.fixture

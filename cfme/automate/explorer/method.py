@@ -387,10 +387,7 @@ class Method(BaseEntity, Copiable):
 
     @property
     def tree_path(self):
-        if self.appliance.version < '5.9':
-            icon_name_map = {'inline': 'product-method'}
-        else:
-            icon_name_map = {'inline': 'fa-ruby', 'playbook': 'vendor-ansible'}
+        icon_name_map = {'inline': 'fa-ruby', 'playbook': 'vendor-ansible'}
         if self.display_name:
             return self.parent_obj.tree_path + [
                 (icon_name_map[self.location], '{} ({})'.format(self.display_name, self.name))]
@@ -467,7 +464,7 @@ class MethodCollection(BaseCollection):
                 'playbook_input_parameters': playbook_input_parameters
             })
             validate = False
-        if validate and not BZ(1499881, forced_streams=['5.9']).blocks:
+        if validate:
             add_page.validate_button.click()
             add_page.wait_displayed()
             add_page.flash.assert_no_error()

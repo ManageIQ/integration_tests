@@ -55,9 +55,6 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
-from cfme.utils.version import UPSTREAM
-from cfme.utils.version import Version
-from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import CompareToolBarActionsView
@@ -399,9 +396,7 @@ class InfraVmSnapshotAddView(InfraVmView):
     title = Text('#explorer_title_text')
     name = TextInput('name')
     description = TextInput('description')
-    snapshot_vm_memory = VersionPicker({
-        Version.lowest(): Checkbox('snap_memory'),
-        '5.10': SnapshotMemorySwitch()})
+    snapshot_vm_memory = SnapshotMemorySwitch()
     create = Button('Create')
     cancel = Button('Cancel')
 
@@ -689,12 +684,10 @@ class InfraVm(VM):
 
             view.toolbar.delete.item_select('Delete Selected Snapshot', handle_alert=not cancel)
             if not cancel:
-                flash_message = VersionPicker({
-                    UPSTREAM: "Delete Snapshot initiated for 1 "
-                              "VM and Instance from the ManageIQ Database",
-                    '5.9': "Delete Snapshot initiated for 1 VM and Instance from the CFME Database"
-                }).pick(self.parent_vm.appliance.version)
-                view.flash.assert_message(flash_message)
+                # TODO: test this in test_snapshot_crud, just assert_no_error here
+                view.flash.assert_message(
+                    "Delete Snapshot initiated for 1 VM and Instance from the ManageIQ Database"
+                )
 
             wait_for(lambda: not self.exists, num_sec=300, delay=20, fail_func=view.browser.refresh,
                      message="Waiting for snapshot delete")
@@ -704,14 +697,11 @@ class InfraVm(VM):
             view.toolbar.delete.item_select('Delete All Existing Snapshots',
                                             handle_alert=not cancel)
             if not cancel:
-                flash_message = VersionPicker({
-                    UPSTREAM: "Delete All Snapshots initiated for 1 VM "
-                              "and Instance from the ManageIQ Database",
-                    '5.9': "Delete All Snapshots initiated for 1 VM "
-                           "and Instance from the CFME Database"
-                }).pick(self.parent_vm.appliance.version)
-
-                view.flash.assert_message(flash_message)
+                # TODO: test this in test_snapshot_crud, just assert_no_error here
+                view.flash.assert_message(
+                    "Delete All Snapshots initiated for 1 VM and Instance from the "
+                    "ManageIQ Database"
+                )
 
         def revert_to(self, cancel=False):
             title = getattr(self, self.parent_vm.provider.SNAPSHOT_TITLE)
@@ -725,13 +715,11 @@ class InfraVm(VM):
 
             view.toolbar.revert.click(handle_alert=not cancel)
             if not cancel:
-                flash_message = VersionPicker({
-                    UPSTREAM: "Revert to a Snapshot initiated for 1 VM and Instance "
-                              "from the ManageIQ Database",
-                    '5.9': "Revert to a Snapshot initiated for 1 VM and Instance from "
-                           "the CFME Database"
-                }).pick(self.parent_vm.appliance.version)
-                view.flash.assert_message(flash_message)
+                # TODO: test this in test_snapshot_crud, just assert_no_error here
+                view.flash.assert_message(
+                    "Revert to a Snapshot initiated for 1 VM and Instance "
+                    "from the ManageIQ Database"
+                )
 
         def refresh(self):
             view = navigate_to(self.parent_vm, 'SnapshotsAll')
@@ -1087,10 +1075,7 @@ class InfraVm(VM):
             inst_args['vm_fields']['provision_type'] = 'native_clone'
             cluster_id = self.appliance.rest_api.collections.clusters.get(name='Default').id
             inst_args['vm_fields']['placement_cluster_name'] = cluster_id
-            # TODO Workaround for BZ 1541036/1449157. <Template> uses template vnic_profile
-            # shouldn't be default
-            if self.appliance.version > '5.9.0.16':
-                inst_args['vm_fields']['vlan'] = '<Template>'
+            # BZ 1541036/1449157. <Template> uses template vnic_profile
 
         return inst_args
 
