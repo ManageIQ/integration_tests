@@ -19,13 +19,13 @@ GRAPHS = ['cpu',
           'network',
           'cpu_state']
 
-INTERVAL = ['Hourly', 'Daily']
+INTERVAL = ['hourly', 'daily']
 
 GROUP_BY = ['VM Location']
 
 CANDU_VM = 'cu-24x7'
 
-ENTITY = ['Host', 'Cluster']
+ENTITY = ['host', 'cluster']
 
 
 @pytest.fixture(scope='function')
@@ -72,15 +72,18 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, entity, entity_o
         initialEstimate: 1/4h
         casecomponent: CandU
     """
-    view = navigate_to(entity_object, 'candu')
+    if entity == 'host':
+        view = navigate_to(entity_object, 'candu')
+    elif entity == 'cluster':
+        view = navigate_to(entity_object, 'Utilization')
     data = {'interval': interval, 'group_by': gp_by}
     view.options.fill(data)
 
     # Check graph displayed or not
     try:
-        graph = getattr(view.interval_type, graph_type)
+        graph = getattr(view.interval_type, entity + '_' + graph_type)
     except AttributeError:
-        pytest.fail('{} graph was not displayed'.format(graph_type))
+        pytest.fail('{}_{} graph was not displayed'.format(entity, graph_type))
     assert graph.is_displayed
 
     graph.zoom_in()
