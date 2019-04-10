@@ -25,7 +25,7 @@ def parser(filename, exp=None):
     if not exp:
         exp = ""
 
-    p = re.findall('\s*def\s*[a-zA-Z0-9_]*?(test_.*?{}.*?)\('.format(exp), data)
+    p = re.findall(r'\s*def\s*[a-zA-Z0-9_]*?(test_.*?{}.*?)\('.format(exp), data)
     for test in p:
         if isinstance(test, six.string_types):
             print("{} :: {}".format(filename, test))

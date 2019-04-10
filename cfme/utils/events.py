@@ -230,12 +230,12 @@ class RestEventListener(Thread):
                 # Match events
                 try:
                     for event_entity in matched_events:
-                            got_event = Event(self._appliance).build_from_entity(event_entity)
-                            if exp_event['event'].matches(got_event):
-                                if exp_event['callback']:
-                                    exp_event['callback'](exp_event=exp_event['event'],
-                                                          got_event=got_event)
-                                exp_event['matched_events'].append(got_event)
+                        got_event = Event(self._appliance).build_from_entity(event_entity)
+                        if exp_event['event'].matches(got_event):
+                            if exp_event['callback']:
+                                exp_event['callback'](exp_event=exp_event['event'],
+                                                      got_event=got_event)
+                            exp_event['matched_events'].append(got_event)
                 except Exception:
                     logger.exception("An exception during matching events occurred.")
 

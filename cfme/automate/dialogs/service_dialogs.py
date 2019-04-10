@@ -4,13 +4,11 @@ from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.utils import Fillable
 from widgetastic.widget import Text
-from widgetastic_patternfly import CandidateNotFound
 
 from . import AddDialogView
 from . import AutomateCustomizationView
 from . import EditDialogView
 from .dialog_tab import TabCollection
-from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -119,7 +117,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
 
     def step(self, *args, **kwargs):
-            self.view.service_dialogs.tree.click_path(*self.obj.tree_path)
+        self.view.service_dialogs.tree.click_path(*self.obj.tree_path)
 
 
 @navigator.register(DialogCollection)

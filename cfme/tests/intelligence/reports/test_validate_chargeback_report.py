@@ -22,7 +22,6 @@ cfme/tests/intelligence/chargeback/test_resource_allocation.py
 import math
 import re
 from datetime import date
-from functools import partial
 
 import fauxfactory
 import pytest
@@ -37,7 +36,6 @@ from cfme.cloud.provider.gce import GCEProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
@@ -300,12 +298,14 @@ def resource_usage(vm_ownership, appliance, provider):
     # Convert storage used in bytes to GB
     average_storage_used = average_storage_used * math.pow(2, -30)
 
-    yield {"average_cpu_used_in_mhz": average_cpu_used_in_mhz,
-            "average_memory_used_in_mb": average_memory_used_in_mb,
-            "average_network_io": average_network_io,
-            "average_disk_io": average_disk_io,
-            "average_storage_used": average_storage_used,
-            "consumed_hours": consumed_hours}
+    yield dict(
+        average_cpu_used_in_mhz=average_cpu_used_in_mhz,
+        average_memory_used_in_mb=average_memory_used_in_mb,
+        average_network_io=average_network_io,
+        average_disk_io=average_disk_io,
+        average_storage_used=average_storage_used,
+        consumed_hours=consumed_hours
+    )
     appliance.server.settings.enable_server_roles(
         'ems_metrics_coordinator', 'ems_metrics_collector')
 

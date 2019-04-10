@@ -5,7 +5,6 @@ import pytest
 from cfme import test_requirements
 from cfme.utils.log import logger
 
-pytestmark = [pytest.mark.tier(3)]
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.chargeback,
@@ -16,7 +15,7 @@ def _cleanup_report(report):
     try:
         logger.info('Cleaning up report %s', report.menu_name)
         report.delete()
-    except:
+    except Exception:
         logger.warning('Failed to clean up report %s', report.menu_name)
 
 

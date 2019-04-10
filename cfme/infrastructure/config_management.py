@@ -439,7 +439,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     @property
     def systems(self):
         """Returns 'ConfigSystem' configured systems (hosts) available on this manager"""
-        return reduce(lambda x, y: x + y, [prof.systems for prof in self.config_profiles])
+        return sum([prof.systems for prof in self.config_profiles])
 
     @property
     def yaml_data(self):

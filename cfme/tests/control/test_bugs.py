@@ -394,62 +394,62 @@ def test_alert_ram_reconfigured(hardware_reconfigured_alert):
 @pytest.mark.tier(2)
 @test_requirements.alert
 def test_alert_for_disk_usage(setup_disk_usage_alert):
-        """
-        Bugzilla:
-            1658670
-            1672698
+    """
+    Bugzilla:
+        1658670
+        1672698
 
-        Polarion:
-            assignee: jdupuy
-            casecomponent: Control
-            caseimportance: medium
-            initialEstimate: 1/6hr
-            testSteps:
-                1. Go to Control > Explorer > Alerts
-                2. Configuration > Add new alert
-                3. Based on = Server
-                4. What to evaluate = Expression (Custom)
-                5. Driving Event =
-                    "Appliance Operation: Server High /var/www/miq/vmdb/log Disk Usage"
-                6. Assign the alert to a Alert Profile
-                7. Assign the Alert Profile to the Server
-                8. In advanced config, change:
-                      events:
-                      :disk_usage_gt_percent: 80
-                    to:
-                      events:
-                      :disk_usage_gt_percent: 1
-                9. dd a file in /var/www/miq/vmdb/log large enough to trigger 1% disk usage
-            expectedResults:
-                1.
-                2.
-                3.
-                4.
-                5.
-                6.
-                7.
-                8.
-                9. the alert should fire, and the event of type
-                    "evm_server_log_disk_usage" should trigger
-        """
-        alert, timestamp, query = setup_disk_usage_alert
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Control
+        caseimportance: medium
+        initialEstimate: 1/6hr
+        testSteps:
+            1. Go to Control > Explorer > Alerts
+            2. Configuration > Add new alert
+            3. Based on = Server
+            4. What to evaluate = Expression (Custom)
+            5. Driving Event =
+                "Appliance Operation: Server High /var/www/miq/vmdb/log Disk Usage"
+            6. Assign the alert to a Alert Profile
+            7. Assign the Alert Profile to the Server
+            8. In advanced config, change:
+                  events:
+                  :disk_usage_gt_percent: 80
+                to:
+                  events:
+                  :disk_usage_gt_percent: 1
+            9. dd a file in /var/www/miq/vmdb/log large enough to trigger 1% disk usage
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7.
+            8.
+            9. the alert should fire, and the event of type
+                "evm_server_log_disk_usage" should trigger
+    """
+    alert, timestamp, query = setup_disk_usage_alert
 
-        def _check_query():
-            query_result = query.all()
-            if query_result:
-                # here query_result[0][0] and query_result[0][1] correspond to the description and
-                # timestamp pulled from the database, respectively
-                return alert.description == query_result[0][0] and timestamp < query_result[0][1]
-            else:
-                return False
+    def _check_query():
+        query_result = query.all()
+        if query_result:
+            # here query_result[0][0] and query_result[0][1] correspond to the description and
+            # timestamp pulled from the database, respectively
+            return alert.description == query_result[0][0] and timestamp < query_result[0][1]
+        else:
+            return False
 
-        # wait for the alert to appear in the miq_alert_statuses table
-        wait_for(
-            _check_query,
-            delay=5,
-            num_sec=600,
-            message="Waiting for alert {} to appear in DB".format(alert.description)
-        )
+    # wait for the alert to appear in the miq_alert_statuses table
+    wait_for(
+        _check_query,
+        delay=5,
+        num_sec=600,
+        message="Waiting for alert {} to appear in DB".format(alert.description)
+    )
 
 
 @pytest.mark.parametrize(

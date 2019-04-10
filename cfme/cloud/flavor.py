@@ -176,7 +176,6 @@ class Flavor(BaseEntity, Taggable):
     is_public = attr.ib(default=True)
     tenant = attr.ib(default=None)
 
-
     def delete(self, cancel=False):
         """Delete current falvor """
         view = navigate_to(self, 'Details')
@@ -203,8 +202,20 @@ class Flavor(BaseEntity, Taggable):
 class FlavorCollection(BaseCollection, TaggableCollection):
     ENTITY = Flavor
 
-    def create(self, name, provider, ram, vcpus, disk, swap, rxtx, is_public=True, tenant=None, cancel=False):
-        """Create new falvor"""
+    def create(
+        self,
+        name,
+        provider,
+        ram,
+        vcpus,
+        disk,
+        swap,
+        rxtx,
+        is_public=True,
+        tenant=None,
+        cancel=False
+    ):
+        """Create new flavor"""
         view = navigate_to(self, 'Add')
         form_params = {'provider': provider.name,
                        'flavor_name': name,
@@ -266,7 +277,7 @@ class FlavorDetails(CFMENavigateStep):
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
             raise ItemNotFound('Could not locate flavor "{}" on provider {}'
-                                 .format(self.obj.name, self.obj.provider.name))
+                               .format(self.obj.name, self.obj.provider.name))
         row.click()
 
 

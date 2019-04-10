@@ -731,7 +731,7 @@ def test_rolename_required_error_validation(appliance):
     # When trying to create a role with no name, the Add button is disabled.
     # We are waiting for an Exception saying that there are no success
     # or fail messages, because the Add button cannot be clicked.
-    with pytest.raises(Exception, match="Available messages: \[\]"):
+    with pytest.raises(Exception, match=r"Available messages: \[\]"):
         appliance.collections.roles.create(
             name=None,
             vm_restriction='Only User Owned'
@@ -885,8 +885,8 @@ def test_permission_edit(appliance, request, product_features):
     group = group_collection(appliance).create(description=group_description, role=role.name)
     user = new_user(appliance, [group])
     with user:
-            # Navigation should succeed with valid permissions
-            navigate_to(appliance.collections.infra_vms, 'VMsOnly')
+        # Navigation should succeed with valid permissions
+        navigate_to(appliance.collections.infra_vms, 'VMsOnly')
 
     appliance.server.login_admin()
     role.update({'product_features': [(['Everything'], True)] +

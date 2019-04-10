@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""polarion(\*tcid): Marker for marking tests as automation for polarion test cases."""
+"""polarion(*tcid): Marker for marking tests as automation for polarion test cases."""
 import attr
 import pytest
 

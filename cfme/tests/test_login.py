@@ -8,9 +8,7 @@ from cfme.utils import conf
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
 from cfme.utils.blockers import BZ
-from cfme.utils.version import LOWEST
 from cfme.utils.version import UPSTREAM
-from cfme.utils.version import VersionPicker
 
 pytestmark = pytest.mark.usefixtures('browser')
 
@@ -52,7 +50,7 @@ def test_login(context, method, appliance):
 @pytest.mark.sauce
 @pytest.mark.parametrize('context', [ViaUI])
 # BZ 1632718 is only relevant for Chrome browser
-@pytest.mark.meta(blockers=[BZ(1632718, forced_streams=['5.10'])])
+@pytest.mark.meta(blockers=[BZ(1632718)])
 def test_bad_password(context, request, appliance):
     """ Tests logging in with a bad password.
 

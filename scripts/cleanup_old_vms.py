@@ -10,7 +10,6 @@ from multiprocessing import Manager
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
 from operator import attrgetter
-from textwrap import dedent
 
 import pytz
 from tabulate import tabulate
@@ -183,7 +182,7 @@ def scan_vm(provider_key, vm, delta, scan_failure_queue):
         pass
 
     if failure:
-            scan_failure_queue.put(VmReport(provider_key, vm.name, FAIL, status, NULL))
+        scan_failure_queue.put(VmReport(provider_key, vm.name, FAIL, status, NULL))
 
     vm_delta = now - vm_creation_time
     logger.info('%r: VM %r age: %s', provider_key, vm.name, vm_delta)

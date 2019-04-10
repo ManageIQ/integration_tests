@@ -2,7 +2,6 @@ import pytest
 from deepdiff import DeepDiff
 
 from cfme.roles import role_access_ui_510z
-from cfme.utils.appliance import find_appliance
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -17,7 +16,6 @@ def pytest_generate_tests(metafunc):
         tuple containing (group_name, context)
         where group_name is a string and context is ViaUI/SSUI
     """
-    appliance = find_appliance(metafunc)
     parameter_list = []
     id_list = []
     # TODO: Include SSUI role_access dict and VIASSUI context
@@ -37,12 +35,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="Is a rails server")
-@pytest.mark.meta(blockers=[
-    BZ(1530683,
-       unblock=lambda group_name: group_name not in
-       ['evmgroup-user', 'evmgroup-approver', 'evmgroup-auditor', 'evmgroup-operator',
-        'evmgroup-support', 'evmgroup-security'])
-])
+@pytest.mark.meta(automates=[BZ(1530683)])
 def test_group_roles(appliance, setup_aws_auth_provider, group_name, role_access, context,
                      soft_assert):
     """Basic default AWS_IAM group role auth + RBAC test

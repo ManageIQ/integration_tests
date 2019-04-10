@@ -136,7 +136,7 @@ def test_migrations_vm_attributes(request, appliance, v2v_providers, host_creds,
     src_vm_obj = form_data_vm_obj_single_datastore.vm_list[0]
     source_view = navigate_to(src_vm_obj, "Details")
     summary = source_view.entities.summary("Properties").get_text_of("Container")
-    source_cpu, source_socket, source_core, source_memory = re.findall("\d+", summary)
+    source_cpu, source_socket, source_core, source_memory = re.findall(r"\d+", summary)
 
     migration_plan_collection = appliance.collections.v2v_plans
     migration_plan = migration_plan_collection.create(
@@ -180,7 +180,7 @@ def test_migrations_vm_attributes(request, appliance, v2v_providers, host_creds,
     assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
     view = navigate_to(get_migrated_vm_obj(src_vm_obj, v2v_providers.rhv_provider), "Details")
     summary = view.entities.summary("Properties").get_text_of("Container")
-    target_cpu, target_socket, target_core, target_memory = re.findall("\d+", summary)
+    target_cpu, target_socket, target_core, target_memory = re.findall(r"\d+", summary)
     # cpu on source and target vm
     assert source_cpu == target_cpu
     # sockets on source and target vm

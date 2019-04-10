@@ -139,6 +139,7 @@ class VolumeRestoreView(VolumeBackupView):
 
     entities = View.nested(VolumeRestoreEntities)
 
+
 @attr.s
 class VolumeBackup(BaseEntity, Taggable):
     """ Model of an Storage Volume Backups in cfme
@@ -267,8 +268,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-            self.prerequisite_view.navigation.select(
-                'Storage', 'Block Storage', 'Volume Backups')
+        self.prerequisite_view.navigation.select('Storage', 'Block Storage', 'Volume Backups')
 
 
 @navigator.register(VolumeBackup, 'Details')

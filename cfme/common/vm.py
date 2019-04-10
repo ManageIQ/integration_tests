@@ -182,7 +182,6 @@ class BaseVM(
             self.find_quadicon().check()
             view.toolbar.configuration.item_select(self.REMOVE_SELECTED, handle_alert=not cancel)
 
-
     @property
     def ip_address(self):
         """Fetches IP Address of VM"""
@@ -684,11 +683,10 @@ class VM(BaseVM):
             view = navigate_to(self.parent, 'All')
 
         if self.is_pwr_option_available_in_cfme(option=option, from_details=from_details):
-
-                view.toolbar.power.item_select(option, handle_alert=not cancel)
-                logger.info(
-                    "Power control action of VM/instance %s, option %s, cancel %s executed",
-                    self.name, option, str(cancel))
+            view.toolbar.power.item_select(option, handle_alert=not cancel)
+            logger.info(
+                "Power control action of VM/instance %s, option %s, cancel %s executed",
+                self.name, option, str(cancel))
         else:
             raise OptionNotAvailable(option + " is not visible or enabled")
 

@@ -5,7 +5,6 @@ from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.widget import Text
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
 
 from . import AutomateExplorerView

@@ -30,7 +30,7 @@ def ping_connection(dbapi_connection, connection_record, connection_proxy):
     cursor = dbapi_connection.cursor()
     try:
         cursor.execute("SELECT 1")
-    except StandardError:
+    except Exception:
         raise DisconnectionError
     cursor.close()
 
@@ -143,7 +143,7 @@ class Db(Mapping):
         """Check if this db is equal to another db"""
         try:
             return self.hostname == other.hostname
-        except:
+        except Exception:
             return False
 
     def __ne__(self, other):

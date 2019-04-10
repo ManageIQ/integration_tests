@@ -23,8 +23,8 @@ def dialog_cat_item(appliance, catalog):
         'options': {
             'validation_switch': True,
             'validation': "^([a-z0-9]+_*)*[a-z0-9]+$"
-            }
         }
+    }
     if appliance.version < '5.10':
         element_data["options"].pop("validation_switch", None)
     sd = service_dialog.create(label=dialog, description="my dialog")

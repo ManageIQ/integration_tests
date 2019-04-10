@@ -179,7 +179,7 @@ class ProviderFilter(object):
                         continue
                     try:
                         curr_ver = provider.appliance.version
-                    except:
+                    except Exception:
                         return True
                     ver = type(curr_ver)(ver)
                     if not comparator(curr_ver, ver):
@@ -292,7 +292,7 @@ def list_provider_keys(provider_type=None):
     """
     try:
         all_keys = conf.cfme_data.management_systems.keys()
-    except:
+    except (KeyError, AttributeError):
         all_keys = []
 
     if provider_type:

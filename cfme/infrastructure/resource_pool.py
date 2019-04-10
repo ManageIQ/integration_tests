@@ -94,6 +94,7 @@ class ResourcePoolAllView(ResourcePoolView):
         navigation = BootstrapNav('.//div/ul')
         tree = ManageIQTree()
 
+
 class ResourcePoolDetailsView(ResourcePoolView):
     """The details page of a resource pool"""
     @property

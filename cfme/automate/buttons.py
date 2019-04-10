@@ -15,7 +15,6 @@ from widgetastic.widget import View
 from widgetastic.xpath import quote
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
 
 from . import AutomateCustomizationView
@@ -748,6 +747,7 @@ class ButtonGroup(BaseEntity, Updateable):
             view = self.create_view(ButtonGroupObjectTypeView, wait="10s")
             view.flash.assert_no_error()
             view.flash.assert_message('Button Group "{}": Delete successful'.format(self.hover))
+
 
 @attr.s
 class ButtonGroupCollection(BaseCollection):

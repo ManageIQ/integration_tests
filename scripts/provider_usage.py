@@ -89,4 +89,4 @@ template_env = Environment(
 )
 str_data = template_env.get_template('usage_report.html').render(**template_data)
 with open('provider_usage.html', 'w') as f:
-            f.write(str_data)
+    f.write(str_data)

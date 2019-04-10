@@ -395,7 +395,7 @@ def generate_worker_charts(workers, top_workers, charts_dir):
 
 def get_first_miqtop(top_log_file):
     # Find first miqtop log line
-    p = subprocess.Popen(['grep', '-m', '1', '^miqtop\:', top_log_file], stdout=subprocess.PIPE)
+    p = subprocess.Popen(['grep', '-m', '1', r'^miqtop\:', top_log_file], stdout=subprocess.PIPE)
     greppedtop, err = p.communicate()
     str_start = greppedtop.index('is->')
     miqtop_time = du_parser.parse(greppedtop[str_start:], fuzzy=True, ignoretz=True)
@@ -622,7 +622,7 @@ def top_to_appliance(top_file):
     miqtop_time, timezone_offset = get_first_miqtop(top_file)
 
     runningtime = time()
-    grep_pattern = '^top\s\-\s\\|^miqtop\:\\|^Cpu(s)\:\\|^Mem\:\\|^Swap\:'
+    grep_pattern = r'^top\s\-\s\\|^miqtop\:\\|^Cpu(s)\:\\|^Mem\:\\|^Swap\:'
     # Use grep to reduce # of lines to sort through
     p = subprocess.Popen(['grep', grep_pattern, top_file], stdout=subprocess.PIPE)
     greppedtop, err = p.communicate()
@@ -716,8 +716,8 @@ def top_to_workers(workers, top_file):
     runningtime = time()
     grep_pids = ''
     for wkr in workers:
-        grep_pids = '{}^{}\s\\|'.format(grep_pids, workers[wkr].pid)
-    grep_pattern = '{}^top\s\-\s\\|^miqtop\:'.format(grep_pids)
+        grep_pids = r'{}^{}\s\\|'.format(grep_pids, workers[wkr].pid)
+    grep_pattern = r'{}^top\s\-\s\\|^miqtop\:'.format(grep_pids)
     # Use grep to reduce # of lines to sort through
     p = subprocess.Popen(['grep', grep_pattern, top_file], stdout=subprocess.PIPE)
     greppedtop, err = p.communicate()

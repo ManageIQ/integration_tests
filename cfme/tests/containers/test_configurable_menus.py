@@ -4,7 +4,6 @@ import pytest
 from cfme.base.login import BaseLoggedInPage
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.version import current_version
 
 
 pytestmark = [pytest.mark.provider([ContainersProvider], scope='function')]

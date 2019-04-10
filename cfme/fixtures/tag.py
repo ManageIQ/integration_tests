@@ -5,7 +5,6 @@ from cfme.base.credential import Credential
 from cfme.cloud.tenant import Tenant
 from cfme.infrastructure.host import Host
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 

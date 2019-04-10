@@ -359,7 +359,7 @@ class ProvisionView(BaseLoggedInPage):
             # image was not found, therefore raise an exception
             except IndexError:
                 raise ItemNotFound('Cannot find template "{}" for provider "{}"'
-                                       .format(template_name, provider_name))
+                                   .format(template_name, provider_name))
 
         def before_fill(self, values):
             # Provision from image is a two part form,

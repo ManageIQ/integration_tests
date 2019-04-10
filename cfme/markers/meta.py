@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""meta(\*\*metadata): Marker for metadata addition.
+"""meta(**metadata): Marker for metadata addition.
 
 To add metadata to a test simply pass the kwargs as plugins wish.
 
@@ -134,8 +134,8 @@ def run_plugins(item, when):
     from cfme.utils.log import logger
     possible_plugins = []
     for plug in plugin._plugins:
-        if all([meta in item._metadata.keys() for meta in plug.metas])\
-                and plug.kwargs.get("run", plugin.DEFAULT) == when:
+        if (all([meta in item._metadata.keys() for meta in plug.metas]) and
+                plug.kwargs.get("run", plugin.DEFAULT) == when):
             possible_plugins.append(plug)
     by_names = {}
     for plug in possible_plugins:

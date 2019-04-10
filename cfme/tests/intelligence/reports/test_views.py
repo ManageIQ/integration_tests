@@ -6,7 +6,6 @@ from cfme import test_requirements
 from cfme.common.provider import BaseProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.tier(3),

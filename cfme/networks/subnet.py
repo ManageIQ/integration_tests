@@ -17,7 +17,6 @@ from cfme.networks.views import SubnetEditView
 from cfme.networks.views import SubnetNetworkPortView
 from cfme.networks.views import SubnetView
 from cfme.utils import providers
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator

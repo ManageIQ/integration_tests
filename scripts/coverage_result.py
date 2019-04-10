@@ -35,9 +35,9 @@ def compute_coverage(branch):
         if '.py' != filename.ext:
             continue
         the_file += "git_output_checker"
-        the_diffs = re.findall('(@@.*?@@.*?(?=@@|git_output_checker))', the_file, re.M | re.S, )
+        the_diffs = re.findall(r'(@@.*?@@.*?(?=@@|git_output_checker))', the_file, re.M | re.S, )
         for diff in the_diffs:
-            diff_args = re.match('@@ -(\d+)(,(\d+))*\s+\+(\d+)(,(\d+))*', diff).groups()
+            diff_args = re.match(r'@@ -(\d+)(,(\d+))*\s+\+(\d+)(,(\d+))*', diff).groups()
             if diff_args[5]:
                 for extra_line in range(int(diff_args[5])):
                     file_data[filename].append(extra_line + int(diff_args[3]))

@@ -337,7 +337,9 @@ def test_instance_attach_detach_volume_with_type(volume_with_type, new_instance,
     new_instance.attach_volume(volume_with_type.name)
     view = appliance.browser.create_view(navigator.get_class(new_instance, 'Details').VIEW)
     view.flash.assert_success_message(
-        'Attaching Cloud Volume "{}" to {} finished'.format(volume_with_type.name, new_instance.name))
+        'Attaching Cloud Volume "{}" to {} finished'
+        .format(volume_with_type.name, new_instance.name)
+    )
 
     @wait_for_decorator(delay=10, timeout=300,
                         message="Waiting for volume to be attached to instance")
@@ -348,7 +350,9 @@ def test_instance_attach_detach_volume_with_type(volume_with_type, new_instance,
     new_instance.detach_volume(volume_with_type.name)
     view = appliance.browser.create_view(navigator.get_class(new_instance, 'Details').VIEW)
     view.flash.assert_success_message(
-        'Detaching Cloud Volume "{}" from {} finished'.format(volume_with_type.name, new_instance.name))
+        'Detaching Cloud Volume "{}" from {} finished'
+        .format(volume_with_type.name, new_instance.name)
+    )
 
     @wait_for_decorator(delay=10, timeout=300,
                         message="Waiting for volume to be detached from instance")

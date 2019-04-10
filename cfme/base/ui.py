@@ -1122,8 +1122,8 @@ class HelpMenu(CFMENavigateStep):
         self.prerequisite_view.help_menu.select()
 
 
-@navigator.register(Region)
-class Advanced(CFMENavigateStep):
+@navigator.register(Region, 'Advanced')
+class RegionAdvanced(CFMENavigateStep):
     VIEW = RegionView
     prerequisite = NavigateToSibling('Details')
 
@@ -1398,7 +1398,7 @@ class SmartProxyAffinity(CFMENavigateStep):
 
 
 @navigator.register(Zone, 'Advanced')
-class Advanced(CFMENavigateStep):
+class ZoneAdvanced(CFMENavigateStep):
     VIEW = ZoneDetailsView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Zones')
 

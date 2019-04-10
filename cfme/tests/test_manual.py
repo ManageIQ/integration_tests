@@ -1769,7 +1769,6 @@ def test_host_tagged_crosshair_op_vsphere55():
     pass
 
 
-
 @pytest.mark.manual
 @test_requirements.rbac
 def test_verify_only_groups_with_ssui_access_can_access_the_ssui_when_switching_groups():
@@ -3313,7 +3312,7 @@ def test_ec2_targeted_refresh_instance():
     Instance RUNNING
     Instance STOPPED
     Instance UPDATE
-    Instance DELETE \ Instance Terminate
+    Instance DELETE - or - Instance TERMINATE
 
     Polarion:
         assignee: mmojzis
@@ -4305,6 +4304,7 @@ def test_authentication_ldap_switch_groups():
         initialEstimate: 1/4h
     """
     pass
+
 
 @pytest.mark.manual
 @test_requirements.config_management

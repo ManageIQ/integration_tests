@@ -6,7 +6,6 @@ from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.volume import VolumeDetailsView
 from cfme.storage.volume import VolumeSnapshotView
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for

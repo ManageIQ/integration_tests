@@ -244,7 +244,7 @@ class DockerBot(object):
                                 files.append(filen['filename'])
                         if filen['filename'].endswith('requirements/frozen.txt'):
                             self.requirements_update = True
-                except:
+                except Exception:
                     return None
                 page += 1
             return files
@@ -367,7 +367,7 @@ class DockerBot(object):
 
     def display_banner(self):
         if self.args['banner']:
-            banner = """
+            banner = r"""
 ==================================================================
                ____             __             ____        __
      :        / __ \____  _____/ /_____  _____/ __ )____  / /_
@@ -422,7 +422,7 @@ class DockerBot(object):
         try:
             with open('.yaml_key') as f:
                 key = f.read()
-        except:
+        except Exception:
             key = None
         return key
 
@@ -523,7 +523,7 @@ class DockerBot(object):
     def handle_output(self):
         if self.args['output']:
             print
-            print("======================== \/ OUTPUT \/ ============================")
+            print(r"======================== \/ OUTPUT \/ ============================")
             print
             f = open(os.path.join(self.log_path, 'setup.txt'))
             print(f.read())

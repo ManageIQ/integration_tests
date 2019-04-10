@@ -74,14 +74,14 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
     """
 
     evm_tail_disable = LogValidator('/var/www/miq/vmdb/log/evm.log',
-                                    matched_patterns=['.*Disabling EMS \[{}\] id \[{}\].*'
+                                    matched_patterns=[r'.*Disabling EMS \[{}\] id \[{}\].*'
                                                       .format(provider.name, str(provider.id))])
     evm_tail_disable.fix_before_start()
     if from_collections:
         rep_disable = appliance.collections.containers_providers.pause_providers(provider)
         # collections class returns a list of dicts containing the API response.
-        soft_assert(rep_disable[0].get('success'), 'Disabling provider {} failed'
-                    .format(provider.name))
+        soft_assert(rep_disable[0].get('success'),
+                    'Disabling provider {} failed'.format(provider.name))
     else:
         rep_disable = provider.pause()
         # entity class returns a dict containing the API response
@@ -107,11 +107,15 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
     # Objects to appear in the GUI immediately
     soft_assert(
         wait_for(
-            lambda: not project.exists, delay=5, num_sec=100,
+            lambda: not project.exists,
+            delay=5,
+            num_sec=100,
             message="waiting for project to display"
-        ), 'Project {p} exists even though provider has been disabled'.format(p=project_name))
+        ),
+        'Project {p} exists even though provider has been disabled'.format(p=project_name)
+    )
     evm_tail_enable = LogValidator('/var/www/miq/vmdb/log/evm.log',
-                                   matched_patterns=['.*Enabling EMS \[{}\] id \[{}\].*'
+                                   matched_patterns=[r'.*Enabling EMS \[{}\] id \[{}\].*'
                                                      .format(provider.name, str(provider.id))])
     evm_tail_enable.fix_before_start()
     if from_collections:
@@ -126,10 +130,13 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
     provider.refresh_provider_relationships()
     soft_assert(
         wait_for(
-            lambda: project.exists, delay=5, num_sec=100,
+            lambda: project.exists,
+            delay=5,
+            num_sec=100,
             message="waiting for project to display"
-        ), 'Project {p} does not exists even though provider has been enabled'
-        .format(p=project_name))
+        ),
+        'Project {p} does not exists even though provider has been enabled'.format(p=project_name)
+    )
 
 # TODO Add the following test when multi provider marker is implemented
 

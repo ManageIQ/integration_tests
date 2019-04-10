@@ -18,7 +18,6 @@ from cfme.networks.views import NetworkRouterAddView
 from cfme.networks.views import NetworkRouterDetailsView
 from cfme.networks.views import NetworkRouterEditView
 from cfme.networks.views import NetworkRouterView
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator

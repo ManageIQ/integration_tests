@@ -245,7 +245,7 @@ def local_group(appliance):
 
 @pytest.fixture(scope='function')
 def local_user(appliance, auth_user, user_type, auth_provider, local_group):
-        # list of created users, instantiating the Credential and formatting the user name in loop
+    # list of created users, instantiating the Credential and formatting the user name in loop
     user = appliance.collections.users.create(
         name=auth_user.fullname or auth_user.username,  # fullname could be empty
         credential=Credential(

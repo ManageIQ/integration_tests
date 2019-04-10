@@ -16,7 +16,9 @@ pytestmark = [
     test_requirements.c_and_u,
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider(
-        [VMwareProvider, RHEVMProvider], selector=ONE_PER_TYPE, required_fields=[["cap_and_util", "cluster"]]
+        [VMwareProvider, RHEVMProvider],
+        selector=ONE_PER_TYPE,
+        required_fields=[["cap_and_util", "cluster"]]
     ),
 ]
 

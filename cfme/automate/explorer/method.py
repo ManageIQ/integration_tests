@@ -15,7 +15,6 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import BootstrapSwitch
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import CandidateNotFound
 
 from . import AutomateExplorerView
 from . import check_tree_path
@@ -28,7 +27,6 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker

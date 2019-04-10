@@ -19,18 +19,15 @@ from widgetastic_patternfly import Input
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
 from cfme.common import Taggable
-from cfme.exceptions import CFMEException
 from cfme.exceptions import RBACOperationBlocked
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.utils.wait import wait_for
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import SummaryForm
 from widgetastic_manageiq import SummaryFormItem
@@ -171,6 +168,16 @@ class User(Updateable, Pretty, BaseEntity, Taggable):
             self.appliance.user = self._restore_user
             self._restore_user = None
 
+    @property
+    def description(self):
+        return self.credential.principal
+
+    @property
+    def my_settings(self):
+        from cfme.configure.settings import MySettings
+        my_settings = MySettings(appliance=self.appliance)
+        return my_settings
+
     def update(self, updates):
         """ Update user method
 
@@ -293,17 +300,6 @@ class User(Updateable, Pretty, BaseEntity, Taggable):
             self.browser.execute_script(
                 self.browser.get_attribute(
                     'onClick', self.browser.element(view.cancel_password_change)))
-
-
-    @property
-    def description(self):
-        return self.credential.principal
-
-    @property
-    def my_settings(self):
-        from cfme.configure.settings import MySettings
-        my_settings = MySettings(appliance=self.appliance)
-        return my_settings
 
 
 @attr.s

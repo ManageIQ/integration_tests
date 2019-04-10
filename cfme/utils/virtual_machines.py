@@ -65,15 +65,12 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
                 template = provider_crud.mgmt.get_template(template_name)
             vm = template.deploy(timeout=timeout, **deploy_args)
             logger.info("Provisioned VM/instance %r", vm)
-        except Exception as e:
-            logger.exception(
-                'Could not provisioning VM/instance %s (%s: %s)',
-                vm_name, type(e).__name__, str(e)
-            )
+        except Exception:
+            logger.exception('Could not provisioning VM/instance %s', vm_name)
             for vm_to_cleanup in provider_crud.mgmt.find_vms(vm_name):
                 try:
                     vm_to_cleanup.cleanup()
-                except Exception as e:
+                except Exception:
                     logger.exception("Unable to clean up vm: %r", vm_to_cleanup.name)
             raise
     except skip_exceptions as e:

@@ -18,53 +18,53 @@ pytestmark = [
 
 
 TEST_POD = {
-  "kind": "Pod",
-  "apiVersion": "v1",
-  "metadata": {
-    "name": "hello-openshift",
-    "creationTimestamp": None,
-    "labels": {
-      "name": "hello-openshift"
-    }
-  },
-  "spec": {
-    "containers": [
-      {
+    "kind": "Pod",
+    "apiVersion": "v1",
+    "metadata": {
         "name": "hello-openshift",
-        "image": "openshift/hello-openshift",
-        "ports": [
-          {
-            "containerPort": 8080,
-            "protocol": "TCP"
-          }
-        ],
-        "resources": {},
-        "volumeMounts": [
-          {
-            "name": "tmp",
-            "mountPath": "/tmp"
-          }
-        ],
-        "terminationMessagePath": "/dev/termination-log",
-        "imagePullPolicy": "IfNotPresent",
-        "capabilities": {},
-        "securityContext": {
-          "capabilities": {},
-          "privileged": False
+        "creationTimestamp": None,
+        "labels": {
+            "name": "hello-openshift"
         }
-      }
-    ],
-    "volumes": [
-      {
-        "name":"tmp",
-        "emptyDir": {}
-      }
-    ],
-    "restartPolicy": "Always",
-    "dnsPolicy": "ClusterFirst",
-    "serviceAccount": ""
-  },
-  "status": {}
+    },
+    "spec": {
+        "containers": [
+            {
+                "name": "hello-openshift",
+                "image": "openshift/hello-openshift",
+                "ports": [
+                    {
+                        "containerPort": 8080,
+                        "protocol": "TCP"
+                    }
+                ],
+                "resources": {},
+                "volumeMounts": [
+                    {
+                        "name": "tmp",
+                        "mountPath": "/tmp"
+                    }
+                ],
+                "terminationMessagePath": "/dev/termination-log",
+                "imagePullPolicy": "IfNotPresent",
+                "capabilities": {},
+                "securityContext": {
+                    "capabilities": {},
+                    "privileged": False
+                }
+            }
+        ],
+        "volumes": [
+            {
+                "name": "tmp",
+                "emptyDir": {}
+            }
+        ],
+        "restartPolicy": "Always",
+        "dnsPolicy": "ClusterFirst",
+        "serviceAccount": ""
+    },
+    "status": {}
 }
 
 
@@ -155,7 +155,7 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
 
     evm_tail_no_blacklist = LogValidator(
         '/var/www/miq/vmdb/log/evm.log',
-        matched_patterns=['.*event\_type\=\>\"POD\_CREATED\".*']
+        matched_patterns=[r'.*event\_type\=\>\"POD\_CREATED\".*']
     )
     evm_tail_no_blacklist.fix_before_start()
 
@@ -181,7 +181,7 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
 
     evm_tail_blacklist = LogValidator(
         '/var/www/miq/vmdb/log/evm.log',
-        failure_patterns=['.*event\_type\=\>\"POD\_CREATED\".*'],
+        failure_patterns=[r'.*event\_type\=\>\"POD\_CREATED\".*'],
         hostname=appliance.hostname,
         username=app_creds['sshlogin'],
         password=app_creds['password'])

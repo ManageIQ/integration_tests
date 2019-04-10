@@ -16,9 +16,7 @@ def _is_yaml_file(path):
 
 def _warn_on_unknown_encryption(path):
     if path.suffix == '.eyaml' and not Path('.yaml_key').is_file():
-            print(
-                "WARNING:", path, "is encrypted, "
-                "please remember follow the documentation on yaml keys")
+        print("WARNING:", path, "is encrypted, please follow the documentation on yaml keys")
 
 
 def _check_missmatching_symlink(src, target):

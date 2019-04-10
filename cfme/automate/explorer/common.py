@@ -7,7 +7,6 @@ from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from widgetastic_manageiq import Input
 
 
@@ -34,9 +33,8 @@ class Copiable(object):
             d = Fillable.coerce(domain)
             if copy_page.to_domain_text.is_displayed:
                 if copy_page.to_domain_text.text != d:
-                    raise ValueError(
-                        'Wanted to select {} but the only domain possible is {}'.format(
-                            copy_page.to_domain_text.text, d))
+                    raise ValueError('Wanted to select {} but the only domain possible is {}'
+                                     .format(copy_page.to_domain_text.text, d))
             else:
                 fill_values['to_domain_select'] = d
 
@@ -45,11 +43,11 @@ class Copiable(object):
             copy_page.copy_button.click()
             # Attention! Now we should be on a different page but the flash message is the same!
             copy_page.flash.assert_no_error()
-            copy_page.flash.assert_message(
-                    'Copy selected Automate {} was saved'.format(type(self).__name__))
+            copy_page.flash.assert_message('Copy selected Automate {} was saved'
+                                           .format(self.__class__))
         else:
             copy_page.cancel_button.click()
             # Attention! Now we should be on a different page but the flash message is the same!
             copy_page.flash.assert_no_error()
-            copy_page.flash.assert_message(
-                'Copy Automate {} was cancelled by the user'.format(type(self).__name__))
+            copy_page.flash.assert_message('Copy Automate {} was cancelled by the user'
+                                           .format(self.__class__))

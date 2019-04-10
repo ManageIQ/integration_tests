@@ -10,7 +10,6 @@ from cfme.modeling.base import parent_of_type
 from cfme.networks import ValidateStatsMixin
 from cfme.networks.views import NetworkPortDetailsView
 from cfme.networks.views import NetworkPortView
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator

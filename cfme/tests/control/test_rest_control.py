@@ -7,12 +7,10 @@ from manageiq_client.api import APIException
 from cfme import test_requirements
 from cfme.rest.gen_data import conditions as _conditions
 from cfme.rest.gen_data import policies as _policies
-from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
 from cfme.utils.rest import query_resource_attributes
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 pytestmark = [

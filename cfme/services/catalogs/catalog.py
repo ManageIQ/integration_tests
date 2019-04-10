@@ -15,7 +15,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.utils.wait import wait_for
 from widgetastic_manageiq import MultiBoxSelect
 
 

@@ -11,7 +11,6 @@ from cfme.control.explorer.policies import HostCompliancePolicy
 from cfme.control.explorer.policies import VMCompliancePolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [

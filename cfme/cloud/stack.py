@@ -28,6 +28,7 @@ from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Table
 
+
 class StackToolbar(View):
     """The toolbar on the stacks page"""
     configuration = Dropdown('Configuration')
@@ -336,12 +337,13 @@ class StackCollection(BaseCollection):
                 break
 
         if stack_names == checked_stack_names:
-            view.toolbar.configuration.item_select(
-                    'Remove Orchestration Stacks from Inventory', handle_alert=True)
+            view.toolbar.configuration.item_select('Remove Orchestration Stacks from Inventory',
+                                                   handle_alert=True)
             view.flash.assert_no_error()
-            flash_msg = 'Delete initiated for {} Orchestration Stacks from the CFME Database'.format(
-                    len(stacks))
-            view.flash.assert_success_message(flash_msg)
+            view.flash.assert_success_message(
+                'Delete initiated for {} Orchestration Stacks from the CFME Database'
+                .format(len(stacks))
+            )
 
             for stack in stacks:
                 wait_for(lambda: not stack.exists, num_sec=15 * 60,

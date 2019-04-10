@@ -199,9 +199,10 @@ class AttachInstanceView(VolumeView):
     def is_displayed(self):
         expected_title = 'Attach Cloud Volume "{name}"'.format(name=self.context['object'].name)
         return (
-                self.in_volume and
-                self.entities.title.text == expected_title and
-                self.entities.breadcrumb.active_location == expected_title)
+            self.in_volume and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title
+        )
 
     instance = BootstrapSelect('vm_id')
     mountpoint = Input(name='device_path')
@@ -222,9 +223,10 @@ class DetachInstanceView(VolumeView):
     def is_displayed(self):
         expected_title = 'Detach Cloud Volume "{name}"'.format(name=self.context['object'].name)
         return (
-                self.in_volume and
-                self.entities.title.text == expected_title and
-                self.entities.breadcrumb.active_location == expected_title)
+            self.in_volume and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title
+        )
 
     instance = BootstrapSelect(name='vm_id')
     detach = Button('Detach')
@@ -414,7 +416,16 @@ class VolumeCollection(BaseCollection, TaggableCollection):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     ENTITY = Volume
 
-    def create(self, name, storage_manager, tenant, provider, volume_type=None, size=1, cancel=False):
+    def create(
+        self,
+        name,
+        storage_manager,
+        tenant,
+        provider,
+        volume_type=None,
+        size=1,
+        cancel=False
+    ):
         """Create new storage volume
 
         Args:

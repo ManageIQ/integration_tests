@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-from widgetastic_patternfly import Button as WButton
 
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
@@ -11,7 +10,6 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs.ui import OrderServiceCatalogView
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.update import update

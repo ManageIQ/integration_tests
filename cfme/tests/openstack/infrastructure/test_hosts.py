@@ -232,7 +232,6 @@ def test_host_subnets(provider, appliance, host_collection, soft_assert):
         initialEstimate: 1/4h
     """
     hosts = host_collection.all()
-    net_collection = appliance.collections.cloud_networks
 
     for host in hosts:
         view = navigate_to(host, 'Details')

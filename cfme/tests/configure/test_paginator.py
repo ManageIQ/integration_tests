@@ -97,13 +97,6 @@ def schedule(appliance):
     schedule.delete()
 
 
-@pytest.mark.uncollectif(
-    lambda appliance, place_info: (
-            appliance.version < '5.10' and
-            (('regions' in place_info[0] and 'Advanced' in place_info[2]) or
-             ('zones' in place_info[0] and 'Advanced' in place_info[2]))),
-    reason="Advanced tab for Region and Zone records doesn't exist < 5.10"
-)
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])

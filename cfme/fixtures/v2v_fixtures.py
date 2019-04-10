@@ -89,7 +89,7 @@ def host_credentials(appliance, transformation_method, v2v_providers):
         logger.exception("Exception when trying to add the host credentials.")
         pytest.skip("No data for hosts in providers, failed to retrieve hosts and add creds.")
     # Configure conversion host for RHEV migration
-    if rhv_hosts is not None :
+    if rhv_hosts is not None:
         set_conversion_instance_for_rhev(appliance, transformation_method, rhv_hosts)
     if v2v_providers.osp_provider is not None:
         set_conversion_instance_for_osp(appliance, v2v_providers.osp_provider,
@@ -209,7 +209,7 @@ def set_conversion_instance_for_osp(appliance, osp_provider, transformation_meth
             pytest.skip("Failed to set conversion hosts:".format(set_conv_host.output))
 
 
-def get_vm(request, appliance, source_provider, template, datastore=None):
+def get_vm(request, appliance, source_provider, template, datastore='nfs'):
     """ Helper method that takes template , source provider and datastore
         and creates VM on source provider to migrate .
 
@@ -223,8 +223,6 @@ def get_vm(request, appliance, source_provider, template, datastore=None):
 
         returns: Vm object
     """
-    if datastore is None:
-        datastore = "nfs"
     source_datastores_list = source_provider.data.get("datastores", [])
     source_datastore = [d.name for d in source_datastores_list if d.type == datastore][0]
     collection = source_provider.appliance.provider_based_collection(source_provider)
@@ -516,19 +514,17 @@ def component_generator(selector, source_provider, provider, source_type=None, t
 
     source_data = source_provider.data.get(selector, [])
     target_data = provider.data.get(selector, [])
-    component = None
 
     if not (source_data and target_data):
         pytest.skip("No source and target data")
 
-    if selector is "clusters":
+    if selector == "clusters":
         sources = source_data or None
         targets = target_data or None
         component = InfraMapping.ClusterComponent(
             [partial_match(sources[0])], [partial_match(targets[0])]
         )
-    elif selector is "datastores":
-
+    elif selector == "datastores":
         # Ignoring target_type for osp and setting new value
         if provider.one_of(OpenStackProvider):
             target_type = "volume"

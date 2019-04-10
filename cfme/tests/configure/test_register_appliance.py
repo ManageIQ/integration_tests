@@ -71,7 +71,7 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
     try:
         url = cfme_data['basic_info']['rpmrebuild_59']
     except (KeyError, AttributeError):
-            pytest.skip('Failed looking up rpmrebuild_59 in cfme_data.basic_info')
+        pytest.skip('Failed looking up rpmrebuild_59 in cfme_data.basic_info')
     run = temp_appliance_preconfig_funcscope.ssh_client.run_command
     run('curl -o /etc/yum.repos.d/rpmrebuild.repo {}'.format(url))
     run('yum install rpmrebuild createrepo -y')

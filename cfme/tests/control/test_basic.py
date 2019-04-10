@@ -17,7 +17,6 @@ from cfme.control.explorer import conditions
 from cfme.control.explorer import policies
 from cfme.control.explorer.alert_profiles import AlertProfileDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for

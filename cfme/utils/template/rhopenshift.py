@@ -67,7 +67,7 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
     @log_wrap('updating tags and docker pull')
     def update_tags(self):
         result = self.execute_ssh_command(
-            'find {} -type f -name "cfme-openshift-*" -exec tail -1 {{}} \;'
+            r'find {} -type f -name "cfme-openshift-*" -exec tail -1 {{}} \;'
             .format(self.destination_directory))
 
         if result.failed or not result.output:

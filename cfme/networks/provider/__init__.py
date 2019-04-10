@@ -27,7 +27,6 @@ from cfme.networks.views import OneProviderNetworkPortView
 from cfme.networks.views import OneProviderNetworkRouterView
 from cfme.networks.views import OneProviderSecurityGroupView
 from cfme.networks.views import OneProviderSubnetView
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator

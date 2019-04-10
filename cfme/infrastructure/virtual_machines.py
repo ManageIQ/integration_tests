@@ -13,7 +13,6 @@ from navmazing import NavigateToSibling
 from navmazing import NavigationDestinationNotFound
 from widgetastic.utils import Parameter
 from widgetastic.utils import partial_match
-from widgetastic.widget import Checkbox
 from widgetastic.widget import NoSuchElementException
 from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Text

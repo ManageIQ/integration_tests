@@ -14,10 +14,8 @@ def pytest_sessionfinish(session, exitstatus):
         logger.debug('Closing ssh connection on %r', ssh_client)
         try:
             ssh_client.close()
-        except:
-            logger.debug(
-                'Closing ssh connection on %r failed, but ignoring',
-                ssh_client)
+        except Exception:
+            logger.debug('Closing ssh connection on %r failed, but ignoring', ssh_client)
     for session in ssh._client_session:
         with diaper:
             session.close()

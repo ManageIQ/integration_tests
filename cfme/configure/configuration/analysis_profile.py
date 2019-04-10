@@ -8,7 +8,6 @@ from widgetastic.widget import ConditionalSwitchableView
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import TextInput
 

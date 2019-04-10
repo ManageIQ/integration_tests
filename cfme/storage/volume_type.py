@@ -15,7 +15,6 @@ from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.storage.volume import VolumeToolbar
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.update import Updateable
 from widgetastic_manageiq import BaseEntitiesView
@@ -78,7 +77,6 @@ class VolumeTypeDetailsView(VolumeTypeView):
 class VolumeType(BaseEntity, Updateable, Taggable):
     name = attr.ib()
     provider = attr.ib()
-
 
     def refresh(self):
         """Refresh provider relationships and browser"""

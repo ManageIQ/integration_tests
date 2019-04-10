@@ -11,7 +11,6 @@ from cfme.services.myservice import MyService
 from cfme.services.workloads import TemplatesImages
 from cfme.services.workloads import VmsInstances
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 
 Param = namedtuple("Param", ["collection", "destination", "entity", "filter", "my_filters"])
 

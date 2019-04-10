@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 

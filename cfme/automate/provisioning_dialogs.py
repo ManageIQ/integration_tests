@@ -6,7 +6,6 @@ from widgetastic.widget import Text
 from widgetastic.widget import TextInput
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
-from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Dropdown
 
 from . import AutomateCustomizationView
@@ -204,8 +203,7 @@ class ProvisioningDialogsCollection(BaseCollection):
             flash_msg = 'Dialog "{}" was added'.format(dialog.description)
             btn = view.form.add
         btn.click()
-        view = dialog.create_view(ProvDiagAllView if cancel else ProvDiagDetailsView,
-                                           wait='10s')
+        view = dialog.create_view(ProvDiagAllView if cancel else ProvDiagDetailsView, wait='10s')
         view.flash.assert_success_message(flash_msg)
         return dialog
 
