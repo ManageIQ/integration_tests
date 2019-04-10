@@ -376,8 +376,9 @@ def policy_and_condition(request, appliance):
         fauxfactory.gen_alphanumeric()
     )
     yield policy, condition
-    policy.delete()
-    condition.delete()
+    policy.delete_if_exists()
+    condition.delete_if_exists()
+
 
 @pytest.fixture
 def setup_for_monitor_alerts(appliance):
