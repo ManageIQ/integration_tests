@@ -19,7 +19,7 @@ GRAPHS = ['cpu',
           'network',
           'cpu_state']
 
-INTERVAL = ['hourly', 'daily']
+INTERVAL = ['Hourly', 'Daily']
 
 GROUP_BY = ['VM Location']
 
@@ -31,10 +31,10 @@ ENTITY = ['host', 'cluster']
 @pytest.fixture(scope='function')
 def entity_object(temp_appliance_extended_db, entity):
     vm = temp_appliance_extended_db.rest_api.collections.vms.get(name=CANDU_VM)
-    if entity == 'Host':
+    if entity == 'host':
         vm_host = vm.host.name
         return temp_appliance_extended_db.collections.hosts.instantiate(name=vm_host)
-    elif entity == 'Cluster':
+    elif entity == 'cluster':
         provider = temp_appliance_extended_db.rest_api.collections.providers.get(id=vm.ems_id)
         cluster = temp_appliance_extended_db.rest_api.collections.clusters.get(id=vm.ems_cluster_id)
         provider_object = temp_appliance_extended_db.collections.infra_providers.instantiate(
