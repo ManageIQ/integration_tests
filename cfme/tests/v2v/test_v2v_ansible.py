@@ -94,21 +94,21 @@ def catalog_item(request, appliance, machine_credential, ansible_repository, pla
 )
 def test_migration_playbooks(request, appliance, source_provider, provider,
                              ansible_repository, mapping_data_vm_obj_single_datastore):
-    """Test for migrating vms with pre and post playbooks
+    """
+    Test for migrating vms with pre and post playbooks
 
-       Polarion:
+    Polarion:
         assignee: sshveta
         caseimportance: medium
-        casecomponent: v2v
+        casecomponent: V2V
         initialEstimate: 1/4h
-        Prerequisite :
+        testSteps:
             1. Enable embedded ansible role
             2. Create repository
             3. Create credentials
-        testSteps:
-            1. Create ansible catalog item with provision.yml playbook
-            2. Create ansible catalog item with retire.yml playbook
-            3. Migrate VM from vmware to RHV/OSP using the above catalog items
+            4. Create ansible catalog item with provision.yml playbook
+            5. Create ansible catalog item with retire.yml playbook
+            6. Migrate VM from vmware to RHV/OSP using the above catalog items
     """
 
     creds = credentials[source_provider.data.templates.get("rhel7_minimal").creds]
