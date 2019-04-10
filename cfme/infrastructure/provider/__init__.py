@@ -92,6 +92,7 @@ class InfraProvider(BaseProvider, CloudInfraProviderMixin, Pretty, Fillable,
     db_types = ["InfraManager"]
     hosts_menu_item = "Hosts"
     vm_name = "Virtual Machines"
+    collection_name = 'infra_providers'
 
     name = attr.ib(default=None)
     key = attr.ib(default=None)

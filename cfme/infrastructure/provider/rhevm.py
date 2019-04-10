@@ -68,6 +68,7 @@ class RHEVMProvider(InfraProvider):
     mgmt_class = RHEVMSystem
     db_types = ["Redhat::InfraManager"]
     endpoints_form = RHEVMEndpointForm
+    ems_pretty_name = 'Red Hat Virtualization'
     discover_dict = {"rhevm": True}
     settings_key = 'ems_redhat'
     # xpath locators for elements, to be used by selenium

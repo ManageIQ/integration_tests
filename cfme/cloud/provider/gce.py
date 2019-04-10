@@ -43,6 +43,7 @@ class GCEProvider(CloudProvider):
     db_types = ["Google::CloudManager"]
     endpoints_form = GCEEndpointForm
     settings_key = 'ems_google'
+    ems_pretty_name = 'Google Compute Engine'
 
     project = attr.ib(default=None)
     region = attr.ib(default=None)  # deprecated in 5.9.2

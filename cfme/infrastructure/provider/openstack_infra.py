@@ -74,6 +74,7 @@ class OpenstackInfraProvider(InfraProvider):
     mgmt_class = OpenstackInfraSystem
     db_types = ["Openstack::InfraManager"]
     endpoints_form = OpenStackInfraEndpointForm
+    ems_pretty_name = 'OpenStack Platform Director'
     hosts_menu_item = "Nodes"
     bad_credentials_error_msg = (
         'Credential validation was not successful: ',

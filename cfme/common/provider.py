@@ -104,6 +104,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
     settings_key = None
     vm_class = None  # Set on type specific provider classes for VM/instance class
     template_class = None  # Set on type specific provider classes for VM template class
+    ems_pretty_name = None  # Set on type specific provider classes for ems type selection in UI
 
     endpoints = attr.ib(default=attr.Factory(factory=dict))
 

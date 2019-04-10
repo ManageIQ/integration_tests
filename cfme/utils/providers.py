@@ -162,6 +162,8 @@ class ProviderFilter(object):
             # to restricted_version; in addition, restricted_version should turn into
             # "version_restrictions" and it should be a sequence of restrictions with operators
             # so that we can create ranges like ">= 5.6" and "<= 5.8"
+            # FIXME in addition to comment above, we really need this to use supportability.yaml
+            # and not depend on provider yaml data for CFME/MIQ provider support mapping
             version_restrictions = []
             since_version = provider.data.get('since_version')
             if since_version:
