@@ -702,7 +702,12 @@ def test_custom_button_open_url_service_obj(objects, button_group):
             3. Create a custom button with open_url option and respective method
             4. Navigate to object Detail page
             5. Execute custom button
-            6. Check new tab open or not with respective url
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. New tab should open with respective url
 
     Bugzilla:
         1550002

@@ -438,7 +438,13 @@ def test_custom_button_open_url_infra_obj(request, setup_obj, button_group, meth
             4. Create a custom button with open_url option and respective method
             5. Navigate to object Detail page
             6. Execute custom button
-            7. Check new tab open or not with respective url
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6. New tab should open with respective url
     """
 
     group, obj_type = button_group
