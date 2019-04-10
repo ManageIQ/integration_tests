@@ -8,7 +8,8 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 
 pytestmark = [
     pytest.mark.provider([SCVMMProvider], scope="module"),
-    pytest.mark.usefixtures("setup_provider_modscope")
+    pytest.mark.usefixtures("setup_provider_modscope"),
+    test_requirements.scvmm
 ]
 
 
@@ -98,7 +99,7 @@ def test_create_appliance_on_scvmm_using_the_vhd_image():
         title: Create Appliance on SCVMM using the VHD image.
         upstream: yes
         testSteps:
-            1. Download VHD image from http://file.cloudforms.lab.eng.rdu2.redhat.com/builds/cfme/
+            1. Download VHD image
             2. Attach disk and deploy template
         expectedResults:
             1.
@@ -156,7 +157,6 @@ def test_host_info_scvmm():
 
 
 @pytest.mark.manual
-@test_requirements.snapshot
 @pytest.mark.tier(1)
 def test_check_disk_allocation_size_scvmm():
     """
@@ -167,6 +167,7 @@ def test_check_disk_allocation_size_scvmm():
 
     Bugzilla:
         1490440
+        1700909
 
     Polarion:
         assignee: jdupuy
