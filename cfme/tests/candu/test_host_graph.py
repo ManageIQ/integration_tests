@@ -137,7 +137,7 @@ def test_host_graph_screen(provider, interval, graph_type, host, enable_candu):
     view = navigate_to(host, 'candu')
     view.options.interval.fill(interval)
 
-    # Check garph displayed or not
+    # Check graph displayed or not
     try:
         graph = getattr(view.interval_type, graph_type)
     except AttributeError as e:
