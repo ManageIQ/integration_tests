@@ -176,8 +176,8 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
     assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running, num_sec=90)
-    assert wait_for(func=lambda: enabled_embedded_appliance.is_rabbitmq_running, num_sec=60)
-    assert wait_for(func=lambda: enabled_embedded_appliance.is_nginx_running, num_sec=60)
+    assert wait_for(func=lambda: enabled_embedded_appliance.rabbitmq_server.running, num_sec=60)
+    assert wait_for(func=lambda: enabled_embedded_appliance.nginx.running, num_sec=60)
     repositories = enabled_embedded_appliance.collections.ansible_repositories
     name = "example_{}".format(fauxfactory.gen_alpha())
     description = "edited_{}".format(fauxfactory.gen_alpha())

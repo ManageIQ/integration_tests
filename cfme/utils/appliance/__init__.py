@@ -313,7 +313,10 @@ class IPAppliance(object):
     evmserverd = SystemdService.declare(unit_name='evmserverd')
     httpd = SystemdService.declare(unit_name='httpd')
     merkyl = SystemdService.declare(unit_name='merkyl')
+    nginx = SystemdService.declare(unit_name='nginx')
+    rabbitmq_server = SystemdService.declare(unit_name='rabbitmq-server')
     sssd = SystemdService.declare(unit_name='sssd')
+    supervisord = SystemdService.declare(unit_name='supervisord')
     db = ApplianceDB.declare()
 
     CONFIG_MAPPING = {
@@ -1743,7 +1746,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                  num_sec=timeout)
 
     @property
-    def _ansible_pod_name(self):
+    def ansible_pod_name(self):
         if self.is_pod:
             get_ansible_name = ("basename $(oc get pods -lname=ansible "
                                 "-o name --namespace={n})".format(n=self.project))
@@ -1752,30 +1755,12 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             return None
 
     @property
-    def is_supervisord_running(self):
-        output = self.ssh_client.run_command("systemctl status supervisord",
-                                             container=self._ansible_pod_name)
-        return output.success
-
-    @property
-    def is_nginx_running(self):
-        output = self.ssh_client.run_command("systemctl status nginx",
-                                             container=self._ansible_pod_name)
-        return output.success
-
-    @property
-    def is_rabbitmq_running(self):
-        output = self.ssh_client.run_command("systemctl status rabbitmq-server",
-                                             container=self._ansible_pod_name)
-        return output.success
-
-    @property
     def is_embedded_ansible_role_enabled(self):
         return self.server_roles.get("embedded_ansible", False)
 
     @property
     def is_embedded_ansible_running(self):
-        return self.is_embedded_ansible_role_enabled and self.is_supervisord_running
+        return self.is_embedded_ansible_role_enabled and self.supervisord.running
 
     def wait_for_embedded_ansible(self, timeout=1200):
         """Waits for embedded ansible to be ready
