@@ -90,7 +90,7 @@ def test_embedded_ansible_disable(enabled_embedded_appliance):
 
 
 @pytest.mark.tier(1)
-def test_embedded_ansible_event_catcher_process(appliance, enabled_embedded_appliance):
+def test_embedded_ansible_event_catcher_process(enabled_embedded_appliance):
     """
     EventCatcher process is started after Ansible role is enabled (rails
     evm:status)
@@ -102,7 +102,7 @@ def test_embedded_ansible_event_catcher_process(appliance, enabled_embedded_appl
         initialEstimate: 1/4h
         tags: ansible_embed
     """
-    result = appliance.ssh_client.run_rake_command(
+    result = enabled_embedded_appliance.ssh_client.run_rake_command(
         "evm:status | grep 'EmbeddedAnsible'"
     ).output
 
@@ -112,7 +112,7 @@ def test_embedded_ansible_event_catcher_process(appliance, enabled_embedded_appl
 
 
 @pytest.mark.tier(1)
-def test_embedded_ansible_logs(appliance, enabled_embedded_appliance):
+def test_embedded_ansible_logs(enabled_embedded_appliance):
     """
     Separate log files should be generated for Ansible to aid debugging.
     p1 (/var/log/tower)
@@ -136,15 +136,15 @@ def test_embedded_ansible_logs(appliance, enabled_embedded_appliance):
     ]
 
     # Asserting log folder is present
-    tower_log_folder = appliance.ssh_client.run_command("ls /var/log/tower/")
+    tower_log_folder = enabled_embedded_appliance.ssh_client.run_command(
+        "ls /var/log/tower/"
+    )
     assert tower_log_folder.success
 
-    # Removing setup log file from list and asserting it separately
-    # Setup log file contains date/time string in it.
     logs = tower_log_folder.output.splitlines()
-    setup_log = logs.pop(4)
-    assert "setup" in setup_log
-
-    # Asserting remaining log files based on log_checks
-    for data in logs:
-        assert data in log_checks
+    diff = tuple(set(logs) - set(log_checks))
+    # Asserting all files except setup file.
+    assert 1 == len(diff)
+    # Retriving setup log file from list and asserting with length
+    # Setup log file contains date/time string in it.
+    assert "setup" in diff[0]
