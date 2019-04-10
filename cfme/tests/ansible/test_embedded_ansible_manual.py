@@ -329,21 +329,6 @@ def test_embed_tower_repo_list():
 
 
 @pytest.mark.tier(1)
-def test_embed_tower_event_catcher_collect():
-    """
-    EventCatcher process collects all activity from api/acitivity_streamis
-    and is writing data into PG DB
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/4h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_embed_tower_repos_available():
     """
     Repositories are included under Ansible, Check Empty State pattern is
@@ -719,21 +704,6 @@ def test_embed_tower_order_service_extra_vars():
     """
     https://bugzilla.redhat.com/show_bug.cgi?id=1444831
     Execute playbook with extra variables which will be passed to Tower.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/4h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_logs():
-    """
-    Separate log files should be generated for Ansible to aid debugging.
-    p1 (/var/log/tower)
 
     Polarion:
         assignee: sbulage
