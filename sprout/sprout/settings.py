@@ -160,7 +160,7 @@ CACHES = {
 CLEANUP_RULES = [
     # appliance name , max appliance lifetime
     {'name': r'^i(-|_)', 'lifetime': dict(hours=6)},
-    {'name': r'^(external(-|_)|s(-|_)tpl|s(-|_)appl)', 'lifetime': dict(hours=12)},
+    {'name': r'^(external(-|_)|s(-|_)tpl|(.*?(-|_))?s(-|_)appl)', 'lifetime': dict(hours=12)},
     {'name': r'^jenkins(-|_)template', 'lifetime': dict(hours=4)},
     {'name': r'^jenkins(-|_)', 'lifetime': dict(hours=4)},
     {'name': r'^sprout(-|_)', 'lifetime': dict(hours=4)},
