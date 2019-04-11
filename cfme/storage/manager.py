@@ -257,14 +257,15 @@ class StorageManagerVolumesAll(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        volume_count = self.prerequisite_view.entities.relationships.get_text_of("Cloud Volumes")
-        if int(volume_count) > 0:
+        volume_count = int(
+            self.prerequisite_view.entities.relationships.get_text_of("Cloud Volumes"))
+        if volume_count > 0:
             self.prerequisite_view.entities.relationships.click_at("Cloud Volumes")
         else:
             raise ItemNotFound('{} has no volumes'.format(self.obj.name))
 
 
-@navigator.register(StorageManager, 'VolumesAdd')
+@navigator.register(StorageManager, 'AddVolume')
 class StorageManagerVolumesAdd(CFMENavigateStep):
     VIEW = VolumeAddView
     prerequisite = NavigateToSibling('Volumes')

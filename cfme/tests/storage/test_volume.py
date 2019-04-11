@@ -115,8 +115,6 @@ def test_storage_volume_create_cancelled_validation(appliance, provider, from_ma
     view.flash.assert_message('Add of new Cloud Volume was cancelled by the user')
 
 
-@pytest.mark.uncollectif(lambda appliance, from_manager: appliance.version < '5.10' and
-                         from_manager == "from_manager")
 @pytest.mark.tier(1)
 def test_storage_volume_crud(appliance, provider, from_manager):
     """ Test storage volume crud
@@ -143,45 +141,38 @@ def test_storage_volume_crud(appliance, provider, from_manager):
     if provider.one_of(OpenStackProvider):
         updates = {'volume_name': new_name}
 
-    if from_manager:
-        storage_manager = appliance.collections.block_managers.filter(
-            {"provider": provider}).all()[0]
-    else:
-        storage_manager = None
-    volume = volume.update(updates, storage_manager)
+    storage_manager = appliance.collections.block_managers.filter({"provider": provider}).all()[0]
+    volume = volume.update(updates, storage_manager, from_manager)
     if provider.one_of(EC2Provider):
         wait_for(lambda: volume.size == '{} GB'.format(updates.get('volume_size')), delay=15,
                  timeout=900)
 
     updates = {'volume_name': old_name}
-    volume = volume.update(updates, storage_manager)
+    volume = volume.update(updates, storage_manager, from_manager)
 
     # delete volume
-    volume.delete(wait=True, storage_manager=storage_manager)
+    volume.delete(wait=True, storage_manager=storage_manager, from_manager=from_manager)
     assert not volume.exists
 
 
-@pytest.mark.uncollectif(lambda appliance, from_manager: appliance.version < '5.10' and
-                         from_manager == "from_manager")
-@pytest.mark.meta(blockers=[BZ(1684939, forced_streams=["5.9", "5.10", "upstream"],
-                               unblock=lambda provider: provider.one_of(EC2Provider))])
+@pytest.mark.meta(blockers=[BZ(1684939, unblock=lambda provider: provider.one_of(EC2Provider))])
 @pytest.mark.tier(1)
 def test_storage_volume_attach_detach(appliance, provider, instance_fixture, from_manager):
     volume = create_volume(appliance, provider, from_manager, az=instance_fixture.
                            vm_default_args["environment"]["availability_zone"], should_assert=True)
     storage_manager = appliance.collections.block_managers.filter(
         {"provider": provider}).all()[0]
-    stor_manager = storage_manager if from_manager else None
 
     # attach
     volume.attach_instance(name=instance_fixture.name, mountpoint='/dev/sdm',
-                           storage_manager=stor_manager)
+                           storage_manager=storage_manager, from_manager=from_manager)
     if provider.one_of(OpenStackProvider):
         storage_manager.refresh()
     wait_for(lambda: volume.status == 'in-use', delay=15, timeout=600)
 
     # detach
-    volume.detach_instance(name=instance_fixture.name, storage_manager=stor_manager)
+    volume.detach_instance(name=instance_fixture.name, storage_manager=storage_manager,
+                           from_manager=from_manager)
     if provider.one_of(OpenStackProvider):
         storage_manager.refresh()
     wait_for(lambda: volume.status == 'available', delay=15, timeout=600)

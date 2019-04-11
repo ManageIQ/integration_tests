@@ -37,7 +37,6 @@ from widgetastic_manageiq import BootstrapSelect
 from widgetastic_manageiq import BootstrapSwitch
 from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ManageIQTree
-from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
 
@@ -86,7 +85,6 @@ class VolumeView(BaseLoggedInPage):
 class VolumeAllView(VolumeView):
     toolbar = View.nested(VolumeToolbar)
     search = View.nested(Search)
-    paginator = PaginationPane()
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
     @property
@@ -268,9 +266,9 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         except TimedOutError:
             logger.error('Timed out waiting for Volume to disappear, continuing')
 
-    def update(self, updates, storage_manager=None):
+    def update(self, updates, storage_manager=None, from_manager=None):
         """Edit cloud volume"""
-        if storage_manager:
+        if from_manager:
             view = navigate_to(storage_manager, 'Volumes')
             view.entities.get_entity(name=self.name).check()
             view.toolbar.configuration.item_select('Edit selected Cloud Volume')
@@ -287,9 +285,9 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         return volume_collection.instantiate(
             name=updates.get('volume_name'), provider=self.provider)
 
-    def delete(self, wait=True, storage_manager=None):
+    def delete(self, wait=True, storage_manager=None, from_manager=None):
         """Delete the Volume"""
-        if storage_manager:
+        if from_manager:
             view = navigate_to(storage_manager, 'Volumes')
             view.entities.get_entity(name=self.name).check()
             view.toolbar.configuration.item_select(
@@ -345,8 +343,8 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
                 return snapshot_collection.instantiate(name, self.provider)
 
     def attach_instance(self, name, mountpoint=None, cancel=False, reset=False,
-                        storage_manager=None):
-        if storage_manager:
+                        storage_manager=None, from_manager=None):
+        if from_manager:
             view = navigate_to(storage_manager, 'Volumes')
             view.entities.get_entity(name=self.name).check()
             view.toolbar.configuration.item_select('Attach selected Cloud Volume to an Instance')
@@ -370,8 +368,8 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
                 view = self.create_view(VolumeDetailsView)
                 view.flash.assert_no_error()
 
-    def detach_instance(self, name, cancel=False, storage_manager=None):
-        if storage_manager:
+    def detach_instance(self, name, cancel=False, storage_manager=None, from_manager=None):
+        if from_manager:
             view = navigate_to(storage_manager, 'Volumes')
             view.entities.get_entity(name=self.name).check()
             view.toolbar.configuration.item_select('Detach selected Cloud Volume from an Instance')
@@ -470,7 +468,7 @@ class VolumeCollection(BaseCollection, TaggableCollection):
             name: volume name
             storage_manager: storage manager name
             tenant: tenant name
-            size: volume size in GB
+            volume_size: volume size in GB
             provider: provider
             cancel: bool
 
@@ -478,7 +476,7 @@ class VolumeCollection(BaseCollection, TaggableCollection):
             object for the :py:class: cfme.storage.volume.Volume
         """
         if from_manager:
-            view = navigate_to(storage_manager, 'VolumesAdd')
+            view = navigate_to(storage_manager, 'AddVolume')
         else:
             view = navigate_to(self, 'Add')
 
@@ -524,9 +522,9 @@ class VolumeCollection(BaseCollection, TaggableCollection):
         else:
             raise ItemNotFound('No Cloud Volume for Deletion')
 
-    def all(self, storage_manager=None):
+    def all(self, storage_manager=None, from_manager=None):
         """returning all Volumes objects for respective storage manager type"""
-        if storage_manager:
+        if from_manager:
             view = navigate_to(storage_manager, 'Volumes')
         else:
             view = navigate_to(self, 'All')
