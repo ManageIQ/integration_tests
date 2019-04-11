@@ -79,9 +79,15 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, entity, entity_o
     data = {'interval': interval, 'group_by': gp_by}
     view.options.fill(data)
 
+    graph_zoom = ["cluster_host", "cluster_vm"]
+    avg_graph = graph_type if graph_type in graph_zoom else "{}_vm_host_avg".format(graph_type)
+
     # Check graph displayed or not
     try:
-        graph = getattr(view.interval_type, entity + '_' + graph_type)
+        if entity == 'host':
+            graph = getattr(view.interval_type, entity + '_' + graph_type)
+        elif entity == 'cluster':
+            avg_graph = getattr(view, avg_graph)
     except AttributeError:
         pytest.fail('{}_{} graph was not displayed'.format(entity, graph_type))
     assert graph.is_displayed
