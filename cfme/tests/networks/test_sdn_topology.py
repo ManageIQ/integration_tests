@@ -30,6 +30,7 @@ def test_topology_search(request, elements_collection):
 
     Polarion:
         assignee: anikifor
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
     elements = elements_collection.all()
@@ -60,6 +61,7 @@ def test_topology_toggle_display(elements_collection):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
     vis_terms = {True: 'Visible', False: 'Hidden'}

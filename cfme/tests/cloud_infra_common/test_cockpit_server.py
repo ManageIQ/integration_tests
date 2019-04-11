@@ -37,6 +37,7 @@ def test_cockpit_server_role(appliance, provider, setup_provider, new_vm, enable
     Polarion:
         assignee: nansari
         caseimportance: medium
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
 

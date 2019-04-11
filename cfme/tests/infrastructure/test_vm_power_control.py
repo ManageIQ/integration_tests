@@ -158,7 +158,8 @@ class TestControlOnQuadicons(object):
             test_flag: power_control, provision
 
         Polarion:
-            assignee: bsquizza
+            assignee: ghubale
+            casecomponent: Infra
             initialEstimate: 1/10h
         """
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=720)
@@ -396,6 +397,7 @@ def test_no_template_power_control(provider, soft_assert):
 
     Polarion:
         assignee: ghubale
+        casecomponent: Infra
         initialEstimate: 1/10h
     """
     view = navigate_to(provider, 'ProviderTemplates')
@@ -440,7 +442,8 @@ def test_no_power_controls_on_archived_vm(appliance, testing_vm, archived_vm, so
         1659340
 
     Polarion:
-        assignee: bsquizza
+        assignee: ghubale
+        casecomponent: Infra
         initialEstimate: 1/10h
     """
     view = navigate_to(testing_vm, 'AnyProviderDetails', use_resetter=False)
@@ -492,7 +495,8 @@ def test_vm_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_r
         test_flag: power_control
 
     Polarion:
-        assignee: bsquizza
+        assignee: ghubale
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     testing_vm.wait_for_vm_state_change(
@@ -508,7 +512,8 @@ def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_
         test_flag: power_control
 
     Polarion:
-        assignee: bsquizza
+        assignee: ghubale
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     testing_vm.wait_for_vm_state_change(

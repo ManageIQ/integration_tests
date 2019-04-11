@@ -33,6 +33,7 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: SmartState
         initialEstimate: 1/4h
     """
     from_ts = int(time.time() * 1000)

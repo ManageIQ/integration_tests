@@ -18,6 +18,7 @@ def test_physical_servers_view_displayed(physical_server_collection):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_servers_view = navigate_to(physical_server_collection, 'All')
@@ -29,6 +30,7 @@ def test_physical_servers_view_dropdowns(physical_server_collection):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_servers_view = navigate_to(physical_server_collection, 'All')

@@ -30,6 +30,7 @@ def test_redfish_physical_server_details_stats(physical_server):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_server.validate_stats(ui=True)
@@ -43,6 +44,11 @@ def test_redfish_power_buttons(physical_server, provider):
     will get a flash that tells us of success regardless of the state that the
     physical server is in. Here we only test that the request in the gui
     succeeds.
+
+    Polarion:
+        assignee: rhcf3_machine
+        casecomponent: Infra
+        initialEstimate: 1/4h
     """
     power_actions = [
         ("power_off", lambda: physical_server.power_off()),

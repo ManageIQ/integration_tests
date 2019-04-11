@@ -254,6 +254,7 @@ def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, r
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/4h
     """
     prov_child_visibility(relationship, visibility=False)

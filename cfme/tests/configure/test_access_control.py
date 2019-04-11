@@ -103,6 +103,7 @@ def test_user_crud(appliance, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group_name = 'EvmGroup-user'
@@ -128,6 +129,7 @@ def test_user_assign_multiple_groups(appliance, request, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group_names = [
@@ -155,6 +157,7 @@ def test_user_change_groups(appliance, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/4h
+        casecomponent: Configuration
     """
     group_names = [
         'EvmGroup-super_administrator', 'EvmGroup-administrator', 'EvmGroup-approver',
@@ -189,6 +192,7 @@ def test_user_login(appliance, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group_name = 'EvmGroup-user'
@@ -214,6 +218,7 @@ def test_user_duplicate_username(appliance, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group_name = 'EvmGroup-user'
@@ -242,6 +247,7 @@ def test_user_allow_duplicate_name(appliance, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group_name = 'EvmGroup-user'
@@ -263,6 +269,7 @@ def test_username_required_error_validation(appliance, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group_name = 'EvmGroup-user'
@@ -283,6 +290,7 @@ def test_userid_required_error_validation(appliance, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group_name = 'EvmGroup-user'
@@ -306,6 +314,7 @@ def test_user_password_required_error_validation(appliance, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group_name = 'EvmGroup-user'
@@ -331,6 +340,7 @@ def test_user_group_error_validation(appliance):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     with pytest.raises(Exception, match="A User must be assigned to a Group"):
@@ -347,6 +357,7 @@ def test_user_email_error_validation(appliance, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group = group_collection.instantiate(description='EvmGroup-user')
@@ -365,6 +376,7 @@ def test_user_edit_tag(appliance, group_collection, tag):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/8h
+        casecomponent: Configuration
     """
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
@@ -385,6 +397,7 @@ def test_user_remove_tag(appliance, group_collection):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/8h
+        casecomponent: Tagging
     """
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
@@ -412,6 +425,7 @@ def test_delete_default_user(appliance):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     user = appliance.collections.users.instantiate(name='Administrator')
@@ -433,6 +447,7 @@ def test_current_user_login_delete(appliance, request):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group_name = "EvmGroup-super_administrator"
@@ -461,6 +476,7 @@ def test_tagvis_user(user_restricted, check_item_visibility):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/8h
+        casecomponent: Tagging
     """
     check_item_visibility(user_restricted, user_restricted)
 
@@ -473,6 +489,7 @@ def test_group_crud(group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     role = 'EvmRole-administrator'
@@ -498,6 +515,7 @@ def test_group_crud_with_tag(provider, tag_value, group_collection):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/8h
+        casecomponent: Tagging
     """
     tag_for_create, tag_for_update = tag_value
 
@@ -527,6 +545,7 @@ def test_group_duplicate_name(group_collection):
         assignee: apagac
         initialEstimate: 1/8h
         tags: rbac
+        casecomponent: Configuration
     """
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
@@ -547,6 +566,7 @@ def test_group_edit_tag(group_collection):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/8h
+        casecomponent: Tagging
     """
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
@@ -567,6 +587,7 @@ def test_group_remove_tag(group_collection):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/8h
+        casecomponent: Tagging
     """
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
@@ -589,6 +610,7 @@ def test_group_description_required_error_validation(group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     error_text = "Description can't be blank"
@@ -612,6 +634,7 @@ def test_delete_default_group(group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group = group_collection.instantiate(description='EvmGroup-administrator')
@@ -627,6 +650,7 @@ def test_delete_group_with_assigned_user(appliance, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     role = 'EvmRole-approver'
@@ -648,6 +672,7 @@ def test_edit_default_group(group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group = group_collection.instantiate(description='EvmGroup-approver')
@@ -669,6 +694,7 @@ def test_edit_sequence_usergroups(request, group_collection):
 
     Polarion:
         assignee: apagac
+        casecomponent: Configuration
         initialEstimate: 1/8h
         tags: rbac
     """
@@ -694,6 +720,7 @@ def test_tagvis_group(user_restricted, group_with_tag, check_item_visibility):
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/8h
     """
     check_item_visibility(group_with_tag, user_restricted)
@@ -707,6 +734,7 @@ def test_role_crud(appliance):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     role = _mk_role(appliance, name=None, vm_restriction=None,
@@ -726,6 +754,7 @@ def test_rolename_required_error_validation(appliance):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     # When trying to create a role with no name, the Add button is disabled.
@@ -743,6 +772,7 @@ def test_rolename_duplicate_validation(appliance):
     """
     Polarion:
         assignee: apagac
+        casecomponent: Configuration
         initialEstimate: 1/8h
         tags: rbac
     """
@@ -769,6 +799,7 @@ def test_delete_default_roles(appliance):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     role = appliance.collections.roles.instantiate(name='EvmRole-approver')
@@ -789,6 +820,7 @@ def test_edit_default_roles(appliance):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     role = appliance.collections.roles.instantiate(name='EvmRole-auditor')
@@ -805,6 +837,7 @@ def test_delete_roles_with_assigned_group(appliance, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     role = new_role(appliance)
@@ -821,6 +854,7 @@ def test_assign_user_to_new_group(appliance, group_collection):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     role = new_role(appliance)  # call function to get role
@@ -873,6 +907,7 @@ def test_permission_edit(appliance, request, product_features):
     Polarion:
         assignee: apagac
         caseimportance: medium
+        casecomponent: Configuration
         initialEstimate: 1h
         tags: rbac
     """
@@ -981,6 +1016,7 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
     Polarion:
         assignee: apagac
         caseimportance: medium
+        casecomponent: Configuration
         initialEstimate: 1h
         tags: rbac
     """
@@ -1034,6 +1070,7 @@ def test_permissions_role_crud(appliance):
     Polarion:
         assignee: apagac
         initialEstimate: 1/5h
+        casecomponent: Configuration
         tags: rbac
     """
     single_task_permission_test(appliance,
@@ -1048,6 +1085,7 @@ def test_permissions_vm_provisioning(appliance, provider):
     Polarion:
         assignee: apagac
         caseimportance: medium
+        casecomponent: Configuration
         initialEstimate: 1/5h
         tags: rbac
     """
@@ -1104,6 +1142,7 @@ def test_user_change_password(appliance, request):
     Polarion:
         assignee: apagac
         initialEstimate: 1/8h
+        casecomponent: Configuration
         tags: rbac
     """
     group_name = 'EvmGroup-user'
@@ -1134,7 +1173,7 @@ def test_tenant_quota_input_validate(appliance):
     """
     Polarion:
         assignee: ghubale
-        casecomponent: Infra
+        casecomponent: Quota
         tags: quota
         initialEstimate: 1/8h
     """
@@ -1332,92 +1371,50 @@ def test_superadmin_child_tenant_crud(request, appliance, number_of_childrens):
         tenant_update.name = "{}edited".format(tenant_update.name)
 
 
-def tenant_unique_tenant_project_name_on_parent_level(request, appliance, object_type):
+@pytest.mark.tier(3)
+@pytest.mark.parametrize('collection_name', ['tenants', 'projects'])
+def test_unique_name_on_parent_level(request, appliance, collection_name):
     """Tenant or Project has always unique name on parent level. Same name cannot be used twice.
 
     Prerequisities:
         * This test is not depending on any other test and can be executed against fresh appliance.
 
-    Steps:
-        * Create tenant or project
-        * Create another tenant or project with the same name
-        * Creation will fail because object with the same name exists
-        * Delete created objects
+    Polarion:
+        assignee: mnadeem
+        casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
+        initialEstimate: 1/20h
+        testSteps:
+            1. Create tenant/project
+            2. Create another tenant/project with the same name
+            3. Creation will fail because object with the same name exists
+            4. Delete created objects
     """
-
+    object_collection = getattr(appliance.collections, collection_name)
     name_of_tenant = fauxfactory.gen_alphanumeric()
     tenant_description = 'description'
 
-    tenant = object_type.create(
+    tenant = object_collection.create(
         name=name_of_tenant,
         description=tenant_description,
-        parent=object_type.get_root_tenant())
+        parent=object_collection.get_root_tenant())
 
     with pytest.raises(Exception,
                        match='Failed to add a new tenant resource - '
                              'Tenant: Name should be unique per parent'):
-        tenant2 = object_type.create(
+        tenant2 = object_collection.create(
             name=name_of_tenant,
             description=tenant_description,
-            parent=object_type.get_root_tenant())
+            parent=object_collection.get_root_tenant())
 
     tenant.delete()
 
-    @request.addfinalizer
-    def _delete_tenant():
-        if tenant.exists:
-            tenant.delete()
-        try:
-            if tenant2.exists:
-                tenant2.delete()
-        except NameError:
-            pass
-
-
-@pytest.mark.tier(3)
-def test_unique_tenant_name_on_parent_level(request, appliance):
-    """Tenant has always unique name on parent level. Same name cannot be used twice.
-
-    Prerequisities:
-        * This test is not depending on any other test and can be executed against fresh appliance.
-
-    Polarion:
-        assignee: mnadeem
-        casecomponent: Configuration
-        caseimportance: high
-        tags: cfme_tenancy
-        initialEstimate: 1/20h
-        testSteps:
-            1. Create tenant
-            2. Create another tenant with the same name
-            3. Creation will fail because object with the same name exists
-            4. Delete created objects
-    """
-    tenant_unique_tenant_project_name_on_parent_level(request, appliance,
-                                                      appliance.collections.tenants)
-
-
-@pytest.mark.tier(3)
-def test_unique_project_name_on_parent_level(request, appliance):
-    """Tenant has always unique name on parent level. Same name cannot be used twice.
-
-    Prerequisities:
-        * This test is not depending on any other test and can be executed against fresh appliance.
-
-    Polarion:
-        assignee: mnadeem
-        casecomponent: Configuration
-        caseimportance: high
-        tags: cfme_tenancy
-        initialEstimate: 1/20h
-        testSteps:
-            1. Create project
-            2. Create another project with the same name
-            3. Creation will fail because object with the same name exists
-            4. Delete created objects
-    """
-    tenant_unique_tenant_project_name_on_parent_level(request, appliance,
-                                                      appliance.collections.projects)
+    tenant.delete_if_exists()
+    try:
+        tenant2.delete_if_exists()
+    except NameError:
+        pass
 
 
 @pytest.mark.tier(2)
@@ -1520,6 +1517,7 @@ def test_tenant_osp_mapping_refresh():
     Polarion:
         assignee: mnadeem
         caseimportance: medium
+        casecomponent: Appliance
         tags: cfme_tenancy
         initialEstimate: 1/4h
         startsin: 5.7

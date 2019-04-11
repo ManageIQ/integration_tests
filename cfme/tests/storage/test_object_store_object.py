@@ -45,6 +45,7 @@ def test_object_add_remove_tag(storage_object):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: Tagging
     """
     # add tag with category Department and tag communication
     added_tag = storage_object.add_tag()

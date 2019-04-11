@@ -28,6 +28,7 @@ def test_refresh_relationships(physical_servers_collection, physical_servers, pr
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     view = navigate_to(physical_servers_collection, "All")
@@ -76,6 +77,7 @@ def test_server_actions(physical_servers_collection, physical_servers, provider,
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     view = provider.create_view(PhysicalServersView)
@@ -104,6 +106,7 @@ def test_manage_button(physical_servers_collection, physical_servers):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_servers_collection.select_entity_rows(physical_servers)
@@ -115,6 +118,7 @@ def test_edit_tag(physical_servers_collection, physical_servers):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_servers_collection.select_entity_rows(physical_servers)
@@ -127,6 +131,7 @@ def test_lifecycle_provision(physical_servers_collection, physical_servers):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_servers_collection.select_entity_rows(physical_servers)

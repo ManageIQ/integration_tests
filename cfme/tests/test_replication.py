@@ -10,8 +10,8 @@ def test_replication_powertoggle():
     power toggle from global to remote
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Infra
+        assignee: mnadeem
+        casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/12h
     """
@@ -25,8 +25,8 @@ def test_replication_central_admin_vm_retirement():
     retire a vm via CA
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Infra
+        assignee: mnadeem
+        casecomponent: Replication
         initialEstimate: 1/12h
     """
     pass
@@ -37,8 +37,9 @@ def test_replication_central_admin_vm_retirement():
 def test_replication_central_admin_service_provisioning():
     """
     Polarion:
-        assignee: tpapaioa
+        assignee: mnadeem
         caseimportance: medium
+        casecomponent: Replication
         initialEstimate: 1/4h
     """
     pass
@@ -52,8 +53,8 @@ def test_replication_appliance_add_single_subscription():
     Add one remote subscription to global region
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Configuration
+        assignee: mnadeem
+        casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/12h
         startsin: 5.7
@@ -69,8 +70,8 @@ def test_replication_delete_remote_from_global():
     Delete remote subscription from global region
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Infra
+        assignee: mnadeem
+        casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/5h
     """
@@ -83,8 +84,8 @@ def test_replication_low_bandwidth():
     ~5MB/s up/down
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Infra
+        assignee: mnadeem
+        casecomponent: Replication
         initialEstimate: 1/4h
     """
     pass
@@ -98,8 +99,8 @@ def test_replication_re_add_deleted_remote():
     Re-add deleted remote region
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Infra
+        assignee: mnadeem
+        casecomponent: Replication
         initialEstimate: 1/12h
     """
     pass
@@ -112,8 +113,9 @@ def test_replication_central_admin_ansible_playbook_service_from_global():
     Playbook service is ordered from the master region catalog.
 
     Polarion:
-        assignee: tpapaioa
-        casecomponent: Ansible
+        assignee: mnadeem
+        casecomponent: Replication
+        subcomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -129,8 +131,8 @@ def test_replication_remote_to_global_by_ip_pglogical():
     (provider,event,etc)
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Infra
+        assignee: mnadeem
+        casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/4h
         startsin: 5.6
@@ -147,8 +149,8 @@ def test_replication_appliance_set_type_global_ui():
     UI
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Infra
+        assignee: mnadeem
+        casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/6h
         testtype: integration
@@ -164,8 +166,8 @@ def test_replication_appliance_add_multi_subscription():
     add two or more subscriptions to global
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Configuration
+        assignee: mnadeem
+        casecomponent: Replication
         initialEstimate: 1/4h
         startsin: 5.7
     """
@@ -180,8 +182,8 @@ def test_replication_appliance_set_type_remote_ui():
     Can the appliance be set to the "remote" type in the ui
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Infra
+        assignee: mnadeem
+        casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/12h
         testtype: integration
@@ -195,8 +197,8 @@ def test_replication_network_dropped_packets():
     10% dropped packets
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Infra
+        assignee: mnadeem
+        casecomponent: Replication
         initialEstimate: 1/4h
     """
     pass
@@ -210,8 +212,8 @@ def test_replication_global_region_dashboard():
     Global dashboard show remote data
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
+        assignee: mnadeem
+        casecomponent: Replication
         initialEstimate: 1/4h
     """
     pass
@@ -225,8 +227,8 @@ def test_replication_global_to_remote_new_vm_from_template():
     Create a new VM from template in remote region from global region
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Provisioning
+        assignee: mnadeem
+        casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/6h
     """
@@ -240,8 +242,8 @@ def test_replication_central_admin_vm_reconfigure():
     reconfigure a VM via CA
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Infra
+        assignee: mnadeem
+        casecomponent: Replication
         initialEstimate: 1/12h
     """
     pass
@@ -252,9 +254,10 @@ def test_replication_central_admin_vm_reconfigure():
 def test_replication_central_admin_adhoc_provision_template():
     """
     Polarion:
-        assignee: tpapaioa
+        assignee: mnadeem
         caseimportance: medium
         initialEstimate: 1/6h
+        casecomponent: Replication
     """
     pass
 
@@ -267,8 +270,8 @@ def test_replication_subscription_revalidation_pglogical():
     have been validated and successfully saved.
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
+        assignee: mnadeem
+        casecomponent: Replication
         caseimportance: medium
         initialEstimate: 1/12h
         testSteps:

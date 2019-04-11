@@ -119,8 +119,9 @@ def test_edit_vm(request, vm, appliance, from_detail):
 def test_delete_vm_from_detail(vm, method):
     """
     Polarion:
-        assignee: mkourim
+        assignee: pvala
         initialEstimate: 1/4h
+        casecomponent: Rest
     """
     delete_resources_from_detail([vm], method=method, num_sec=300, delay=10)
 
@@ -129,7 +130,8 @@ def test_delete_vm_from_detail(vm, method):
 def test_delete_vm_from_collection(vm):
     """
     Polarion:
-        assignee: mkourim
+        assignee: pvala
         initialEstimate: 1/4h
+        casecomponent: Rest
     """
     delete_resources_from_collection([vm], not_found=True, num_sec=300, delay=10)

@@ -227,6 +227,7 @@ def test_monthly_charges(appliance, has_no_providers_modscope, setup_provider, c
 
     Polarion:
         assignee: nachandr
+        casecomponent: SelfServiceUI
         initialEstimate: 1/4h
     """
     with appliance.context.use(context):

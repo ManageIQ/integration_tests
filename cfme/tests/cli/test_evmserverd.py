@@ -34,7 +34,8 @@ def test_evmserverd_stop(appliance, request):
             stopping the service are present.
 
     Polarion:
-        assignee: mshriver
+        assignee: sbulage
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/4h
     """

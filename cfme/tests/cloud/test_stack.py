@@ -32,6 +32,7 @@ def test_security_group_link(stack):
     Polarion:
         assignee: nansari
         initialEstimate: 1/4h
+        casecomponent: Stack
     """
     try:
         view = navigate_to(stack, 'RelationshipSecurityGroups')
@@ -51,6 +52,7 @@ def test_parameters_link(stack):
     Polarion:
         assignee: nansari
         initialEstimate: 1/8h
+        casecomponent: Stack
     """
     try:
         view = navigate_to(stack, 'RelationshipParameters')
@@ -70,6 +72,7 @@ def test_outputs_link(stack):
     Polarion:
         assignee: nansari
         initialEstimate: 1/4h
+        casecomponent: Stack
     """
     try:
         view = navigate_to(stack, 'RelationshipOutputs')
@@ -88,6 +91,7 @@ def test_outputs_link_url(appliance, stack):
     Polarion:
         assignee: nansari
         initialEstimate: 1/4h
+        casecomponent: Stack
     """
     try:
         view = navigate_to(stack, 'RelationshipOutputs')
@@ -109,6 +113,7 @@ def test_resources_link(stack):
     Polarion:
         assignee: nansari
         initialEstimate: 1/4h
+        casecomponent: Stack
     """
     try:
         view = navigate_to(stack, 'RelationshipResources')
@@ -127,7 +132,7 @@ def test_edit_tags_stack(request, stack):
     """
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: low
         initialEstimate: 1/8h
     """
@@ -141,6 +146,7 @@ def test_delete_stack(stack, provider, request):
     Polarion:
         assignee: mmojzis
         initialEstimate: 1/4h
+        casecomponent: Stack
     """
     stack.delete()
     assert not stack.exists
@@ -153,6 +159,7 @@ def test_collection_delete(provider, setup_provider_modscope, appliance):
     Polarion:
         assignee: mmojzis
         initialEstimate: 1/4h
+        casecomponent: Stack
     """
     collection = appliance.collections.cloud_stacks
 

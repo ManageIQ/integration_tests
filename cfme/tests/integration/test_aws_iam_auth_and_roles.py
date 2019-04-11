@@ -48,6 +48,7 @@ def test_group_roles(appliance, setup_aws_auth_provider, group_name, role_access
     Polarion:
         assignee: apagac
         caseimportance: medium
+        casecomponent: Auth
         initialEstimate: 1/4h
         tags: rbac
     """

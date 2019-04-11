@@ -927,6 +927,7 @@ class TestServiceTemplateRESTAPI(object):
 
         Polarion:
             assignee: nansari
+            casecomponent: Rest
             initialEstimate: 1/4h
             tags: service
         """

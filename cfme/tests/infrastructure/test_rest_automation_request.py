@@ -161,6 +161,7 @@ class TestAutomationRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
+            casecomponent: Rest
             initialEstimate: 1/4h
         """
         query_resource_attributes(requests_pending[0], soft_assert=soft_assert)

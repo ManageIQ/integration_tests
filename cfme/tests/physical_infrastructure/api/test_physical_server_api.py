@@ -42,6 +42,7 @@ def test_get_physical_server(physical_server, appliance):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     existent_server = appliance.rest_api.get_entity('physical_servers', physical_server.id)
@@ -53,6 +54,7 @@ def test_get_nonexistent_physical_server(appliance):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     nonexistent = appliance.rest_api.get_entity('physical_servers', 999999)
@@ -65,6 +67,7 @@ def test_invalid_action(physical_server, appliance):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     payload = {
@@ -78,6 +81,7 @@ def test_refresh_physical_server(appliance, physical_server):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     assert getattr(physical_server.action, "refresh")()
@@ -111,6 +115,7 @@ def test_server_actions(physical_server, appliance, provider, action,
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
 

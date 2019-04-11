@@ -14,6 +14,7 @@ def test_get_switch(physical_switch, appliance):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     existent_switch = appliance.rest_api.get_entity('switches', physical_switch.id)
@@ -25,6 +26,7 @@ def test_get_nonexistent_physical_switch(appliance):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     nonexistent = appliance.rest_api.get_entity('switches', 999999)
@@ -37,6 +39,7 @@ def test_invalid_action(physical_switch, appliance):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     payload = {
@@ -50,6 +53,7 @@ def test_refresh_physical_switch(appliance, physical_switch):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     assert getattr(physical_switch.action, "refresh")()

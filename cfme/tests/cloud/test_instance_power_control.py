@@ -247,7 +247,8 @@ def test_stop(appliance, provider, testing_instance, ensure_vm_running, soft_ass
         test_flag: power_control, provision
 
     Polarion:
-        assignee: bsquizza
+        assignee: ghubale
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
@@ -289,7 +290,8 @@ def test_soft_reboot(appliance, provider, testing_instance, ensure_vm_running, s
         test_flag: power_control, provision
 
     Polarion:
-        assignee: bsquizza
+        assignee: ghubale
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
@@ -322,7 +324,8 @@ def test_power_on_or_off_multiple(provider, testing_instance, testing_instance2,
         test_flag: power_control, provision
 
     Polarion:
-        assignee: bsquizza
+        assignee: ghubale
+        casecomponent: Cloud
         initialEstimate: 1/8h
     """
     # The instances *should* be on after provisioning... but we'll make sure here...

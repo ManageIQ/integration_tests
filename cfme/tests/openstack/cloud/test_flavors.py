@@ -136,6 +136,7 @@ def test_create_instance_with_zero_disk_flavor(new_instance, soft_assert):
     """
     Polarion:
         assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(new_instance, 'Details')
@@ -165,6 +166,7 @@ def test_flavor_crud(appliance, provider, request):
     """
     Polarion:
         assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     collection = appliance.collections.cloud_flavors
@@ -202,6 +204,7 @@ def test_flavors_details_from_list_view(appliance, soft_assert, private_flavor):
     """
     Polarion:
         assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     collection = appliance.collections.cloud_flavors
@@ -219,6 +222,7 @@ def test_flavor_details(appliance, soft_assert, private_flavor):
     """
     Polarion:
         assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(private_flavor, 'Details')
@@ -236,6 +240,12 @@ def test_flavor_details(appliance, soft_assert, private_flavor):
 
 @pytest.mark.rfe
 def test_create_instance_with_private_flavor(instance_with_private_flavor, provider, soft_assert):
+    """
+    Polarion:
+        assignee: mnadeem
+        casecomponent: Cloud
+        initialEstimate: 1/4h
+    """
     view = navigate_to(instance_with_private_flavor, 'Details')
     prov_data = provider.data['provisioning']
     power_state = view.entities.summary('Power Management').get_text_of('Power State')

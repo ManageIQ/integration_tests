@@ -40,6 +40,7 @@ def test_sdn_prov_balancers_number(network_prov_with_load_balancers):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     for prov, sum_all in network_prov_with_load_balancers:
@@ -56,6 +57,7 @@ def test_sdn_balancers_detail(provider, network_prov_with_load_balancers):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     for prov, _ in network_prov_with_load_balancers:
@@ -83,6 +85,7 @@ def test_sdn_balancers_tagvis(check_item_visibility, visibility, network_prov_wi
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/4h
     """
     network_prov = random.choice(network_prov_with_load_balancers)[0]

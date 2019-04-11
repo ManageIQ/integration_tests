@@ -41,6 +41,7 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
 
     Polarion:
         assignee: nansari
+        casecomponent: Services
         initialEstimate: 1/4h
     """
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)

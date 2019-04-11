@@ -23,6 +23,7 @@ def test_sdn_api_inventory_networks(provider, appliance):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/10h
     """
     prov_networks = sorted(provider.mgmt.list_network())
@@ -51,6 +52,7 @@ def test_sdn_api_inventory_routers(provider, appliance):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/10h
     """
     prov_routers = sorted(provider.mgmt.list_router())
@@ -69,6 +71,7 @@ def test_sdn_api_inventory_subnets(provider, appliance):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/10h
     """
     prov_subnets = []
@@ -95,6 +98,7 @@ def test_sdn_api_inventory_security_groups(provider, appliance):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/10h
     """
     prov_sec_gp = sorted(provider.mgmt.list_security_group())
@@ -114,6 +118,7 @@ def test_sdn_api_inventory_loadbalancers(provider, appliance):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/10h
     """
     prov_load_balancers = sorted(provider.mgmt.list_load_balancer())
@@ -147,6 +152,7 @@ def test_sdn_nsg_firewall_rules(provider, appliance, secgroup_with_rule):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
 

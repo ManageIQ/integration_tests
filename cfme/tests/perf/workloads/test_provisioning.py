@@ -81,6 +81,7 @@ def test_provisioning(appliance, request, scenario):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Provisioning
         initialEstimate: 1/4h
     """
 

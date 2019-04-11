@@ -79,6 +79,7 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     app = temp_appliance_extended_db
     # Download the database
@@ -132,6 +133,7 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     app = temp_appliance_remote
     app2 = temp_appliance_global_region

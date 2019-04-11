@@ -108,6 +108,7 @@ def test_proxy_valid(appliance, proxy_machine, proxy_ssh, prepare_proxy_default,
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
+        casecomponent: Appliance
         testSteps:
             1. Configure appliance to use proxy for default provider.
             2. Configure appliance to use not use proxy for specific provider.
@@ -133,6 +134,7 @@ def test_proxy_override(appliance, proxy_ssh, prepare_proxy_specific, provider):
 
     Polarion:
         assignee: jhenner
+        casecomponent: Appliance
         initialEstimate: 1/4h
         testSteps:
             1. Configure default proxy to invalid entry.
@@ -161,6 +163,7 @@ def test_proxy_invalid(appliance, prepare_proxy_invalid, provider):
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
+        casecomponent: Appliance
         testSteps:
             1. Configure default proxy to invalid entry.
             2. Configure specific proxy to invalid entry.
@@ -170,8 +173,7 @@ def test_proxy_invalid(appliance, prepare_proxy_invalid, provider):
 
     view = navigate_to(provider, 'Details')
 
-    if appliance.version >= '5.10':
-        view.toolbar.view_selector.select('Summary View')
+    view.toolbar.view_selector.select('Summary View')
 
     def last_refresh_failed():
         view.toolbar.reload.click()

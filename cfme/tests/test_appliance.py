@@ -30,6 +30,7 @@ def test_rpms_present(appliance, package):
         assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
+        casecomponent: Appliance
     """
     result = appliance.ssh_client.run_command('rpm -q {}'.format(package))
     assert 'is not installed' not in result.output
@@ -44,6 +45,7 @@ def test_selinux_enabled(appliance):
         assignee: jhenner
         initialEstimate: 1/11h
         testtype: functional
+        casecomponent: Appliance
     """
     result = appliance.ssh_client.run_command('getenforce').output
     assert 'Enforcing' in result
@@ -56,6 +58,7 @@ def test_firewalld_running(appliance):
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     result = appliance.ssh_client.run_command('systemctl status firewalld').output
     assert 'active (running)' in result
@@ -70,6 +73,7 @@ def test_evm_running(appliance):
         caseimportance: critical
         initialEstimate: 1/4h
         testtype: functional
+        casecomponent: Appliance
     """
     result = appliance.ssh_client.run_command('systemctl status evmserverd').output
     assert 'active (running)' in result
@@ -91,6 +95,7 @@ def test_service_enabled(appliance, service):
         caseimportance: critical
         initialEstimate: 1/6h
         testtype: functional
+        casecomponent: Appliance
     """
     if service == 'postgresql':
         service = '{}-postgresql'.format(appliance.db.postgres_version)
@@ -116,6 +121,7 @@ def test_iptables_rules(appliance, proto, port):
         assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
+        casecomponent: Appliance
         upstream: no
     """
     # get the current iptables state, nicely formatted for us by iptables-save
@@ -144,6 +150,7 @@ def test_memory_total(appliance):
         assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
+        casecomponent: Appliance
     """
     result = appliance.ssh_client.run_command(
         r'free -g | grep Mem: | awk \'{ print $2 }\'').output
@@ -158,6 +165,7 @@ def test_cpu_total(appliance):
         assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
+        casecomponent: Appliance
     """
     result = appliance.ssh_client.run_command(
         r'lscpu | grep ^CPU\(s\): | awk \'{ print $2 }\'').output
@@ -173,6 +181,7 @@ def test_certificates_present(appliance, soft_assert):
         initialEstimate: 1/4h
         testtype: functional
         upstream: no
+        casecomponent: Appliance
     """
 
     rhsm_ca_cert = '/etc/rhsm/ca/redhat-uep.pem'
@@ -210,6 +219,7 @@ def test_html5_ssl_files_present(appliance, soft_assert):
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     cert = conf.cfme_data['vm_console']['cert']
     cert_file = os.path.join(cert.install_dir, 'server.cer')
@@ -232,6 +242,7 @@ def test_db_connection(appliance):
         assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
+        casecomponent: Appliance
     """
     databases = appliance.db.client.session.query(appliance.db.client['miq_databases']).all()
     assert len(databases) > 0
@@ -243,6 +254,7 @@ def test_asset_precompiled(appliance):
         assignee: jhenner
         initialEstimate: 1/4h
         testtype: functional
+        casecomponent: Appliance
     """
     assert appliance.ssh_client.run_command("test -d /var/www/miq/vmdb/public/assets").success, (
         "Assets not precompiled")
@@ -256,6 +268,7 @@ def test_keys_included(appliance, soft_assert):
         initialEstimate: 1/4h
         testtype: functional
         upstream: no
+        casecomponent: Appliance
     """
     keys = ['v0_key', 'v1_key', 'v2_key']
     for k in keys:
@@ -270,6 +283,7 @@ def test_appliance_console_packages(appliance):
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     assert appliance.ssh_client.run_command('scl --list | grep -v rh-ruby').success
 
@@ -301,7 +315,7 @@ def test_appliance_executing_script():
 
     Polarion:
         assignee: jhenner
-        casecomponent: Configuration
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -338,7 +352,7 @@ def test_appliance_exec_scripts():
 
     Polarion:
         assignee: jhenner
-        casecomponent: Configuration
+        casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
@@ -354,8 +368,8 @@ def test_appliance_replicate_database_disconnection_with_backlog():
     Test replication re-connect with backlog
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
+        assignee: mnadeem
+        casecomponent: Replication
         initialEstimate: 1/2h
     """
     pass
@@ -369,8 +383,8 @@ def test_appliance_replicate_database_disconnection():
     test replication re-connection w/ no backlog
 
     Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
+        assignee: mnadeem
+        casecomponent: Replication
         initialEstimate: 1/2h
     """
     pass

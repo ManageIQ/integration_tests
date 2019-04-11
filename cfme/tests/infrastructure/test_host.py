@@ -86,8 +86,9 @@ def test_discover_host(request, provider, appliance, host_ips):
     """Tests hosts discovery.
 
     Polarion:
-        assignee: mkourim
+        assignee: nachandr
         initialEstimate: 1/4h
+        casecomponent: Infra
     """
     if provider.delete_if_exists(cancel=False):
         provider.wait_for_delete()
@@ -131,7 +132,8 @@ def test_multiple_host_good_creds(setup_provider, provider, creds):
         1201092
 
     Polarion:
-        assignee: mkourim
+        assignee: nachandr
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     if len(provider.data.get('hosts', {})) < 2:
@@ -168,6 +170,7 @@ def test_multiple_host_bad_creds(setup_provider, provider):
     Polarion:
         assignee: nachandr
         caseimportance: medium
+        casecomponent: Infra
         initialEstimate: 1/15h
     """
     if len(provider.data.get('hosts', {})) < 2:
@@ -200,6 +203,7 @@ def test_tag_host_after_provider_delete(provider, appliance, setup_provider, req
     Polarion:
         assignee: anikifor
         initialEstimate: 1/8h
+        casecomponent: Tagging
     """
     host_on_provider = provider.hosts.all()[0]
     provider.delete(cancel=False)
@@ -226,6 +230,7 @@ def test_250_vmware_hosts_loading(appliance, create_250_hosts, view_type):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     # Without the patch, this will cause the process to consume roughly 10+ Gigs of RAM
     # due to a poorly optimized database query

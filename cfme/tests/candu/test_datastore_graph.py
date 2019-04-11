@@ -44,6 +44,7 @@ def test_datastore_graph_screen(provider, interval, graph_type, enable_candu):
     Polarion:
         assignee: nachandr
         caseimportance: medium
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     vm_collection = provider.appliance.provider_based_collection(provider)

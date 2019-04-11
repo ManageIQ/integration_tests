@@ -48,6 +48,7 @@ def test_pull_splitter_persistence(request, appliance, model_object, destination
     Polarion:
         assignee: anikifor
         caseimportance: low
+        casecomponent: WebUI
         initialEstimate: 1/20h
 
     Bugzilla:

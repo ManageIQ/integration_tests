@@ -101,6 +101,7 @@ def test_update_yum(appliance_preupdate, appliance):
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     appliance_preupdate.evmserverd.stop()
@@ -121,6 +122,7 @@ def test_update_webui(appliance_with_providers, appliance, request, old_version)
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     update_appliance(appliance_with_providers)
@@ -142,6 +144,7 @@ def test_update_scap_webui(appliance_with_providers, appliance, request, old_ver
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     appliance_with_providers.appliance_console.scap_harden_appliance()
@@ -169,6 +172,7 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     update_appliance(enabled_embedded_appliance)
@@ -206,6 +210,7 @@ def test_update_distributed_webui(ext_appliances_with_providers, appliance, requ
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     update_appliance(ext_appliances_with_providers[0])
@@ -233,6 +238,7 @@ def test_update_replicated_webui(replicated_appliances_with_providers, appliance
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     providers_before_upgrade = set(replicated_appliances_with_providers[0].managed_provider_names)
@@ -267,6 +273,7 @@ def test_update_ha_webui(ha_appliances_with_providers, appliance, request, old_v
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     update_appliance(ha_appliances_with_providers[2])

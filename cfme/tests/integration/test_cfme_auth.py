@@ -125,7 +125,8 @@ def test_login_evm_group(appliance, auth_user, user_obj, soft_assert):
         Test will configure auth and login
 
     Polarion:
-        assignee: mpusater
+        assignee: apagac
+        casecomponent: Auth
         initialEstimate: 1/4h
     """
     # get a list of groups for the user that match evm default group names
@@ -189,7 +190,8 @@ def test_login_retrieve_group(appliance, request, auth_mode, auth_provider, soft
             * this test fetches the auth_modes from yaml and generates tests per auth_mode.
 
     Polarion:
-        assignee: mpusater
+        assignee: apagac
+        casecomponent: Auth
         initialEstimate: 1/4h
     """
     # get a list of (user_obj, groupname) tuples, creating the user object inline
@@ -271,7 +273,7 @@ def test_login_local_group(appliance, local_user, local_group, soft_assert):
     Polarion:
         assignee: apagac
         initialEstimate: 1/4h
-        casecomponent: Appliance
+        casecomponent: Auth
     """
     # modify auth settings to not get groups
     appliance.server.authentication.auth_settings = {'auth_settings': {'get_groups': False}}
@@ -299,7 +301,7 @@ def test_user_group_switching(appliance, auth_user, auth_mode, auth_provider, so
     Polarion:
         assignee: apagac
         initialEstimate: 1/4h
-        casecomponent: Appliance
+        casecomponent: Auth
     """
     retrieved_groups = []
     for group in auth_user.groups:

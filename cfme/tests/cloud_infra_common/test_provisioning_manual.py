@@ -198,6 +198,7 @@ def test_provision_request_info():
     Polarion:
         assignee: jhenner
         caseimportance: medium
+        casecomponent: Provisioning
         initialEstimate: 1/6h
     """
     pass

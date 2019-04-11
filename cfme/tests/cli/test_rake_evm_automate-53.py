@@ -50,7 +50,8 @@ def test_evm_automate_import_export_works_upstream(appliance, rake, soft_assert)
         * Verify the file exists.
 
     Polarion:
-        assignee: dmisharo
+        assignee: sbulage
+        casecomponent: Automate
         initialEstimate: 1/3h
     """
     appliance.ssh_client.put_file(
@@ -80,8 +81,9 @@ def test_evm_automate_simulate_upstream(rake, qe_ae_data, appliance):
             ``check content``
 
     Polarion:
-        assignee: dmisharo
+        assignee: sbulage
         caseimportance: low
+        casecomponent: Automate
         initialEstimate: 1/4h
     """
     appliance.ssh_client.run_command("rm -f /var/www/miq/vmdb/check_file")
@@ -109,7 +111,8 @@ def test_evm_automate_convert(request, rake, appliance):
             ``relay_events.rb`` is present in the directory hierarchy.
 
     Polarion:
-        assignee: dmisharo
+        assignee: sbulage
+        casecomponent: Automate
         initialEstimate: 1/6h
     """
     appliance.ssh_client.put_file(

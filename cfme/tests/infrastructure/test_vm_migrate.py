@@ -5,7 +5,6 @@ from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 
 
@@ -36,7 +35,6 @@ def new_vm(setup_provider, provider):
 
 
 @pytest.mark.rhv1
-@pytest.mark.meta(blockers=[BZ(1627297, forced_streams=['5.10'])])
 def test_vm_migrate(appliance, new_vm, provider):
     """Tests migration of a vm
 
@@ -44,7 +42,8 @@ def test_vm_migrate(appliance, new_vm, provider):
         test_flag: migrate, provision
 
     Polarion:
-        assignee: rpfannsc
+        assignee: mnadeem
+        casecomponent: Provisioning
         initialEstimate: 1/4h
     """
     # auto_test_services should exist to test migrate VM
@@ -71,7 +70,7 @@ def test_vm_migrate_should_create_notifications_when_migrations_fail():
     """
     Polarion:
         assignee: mdnadeem
-        casecomponent: Services
+        casecomponent: WebUI
         testtype: functional
         initialEstimate: 1/4h
         startsin: 5.10

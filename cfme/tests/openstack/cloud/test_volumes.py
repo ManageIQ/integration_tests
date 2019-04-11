@@ -80,6 +80,7 @@ def test_create_volume(volume, provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     assert volume.exists
@@ -92,6 +93,7 @@ def test_edit_volume(volume, appliance):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     new_name = fauxfactory.gen_alpha()
@@ -106,6 +108,7 @@ def test_delete_volume(volume):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     volume.delete()
@@ -117,6 +120,7 @@ def test_create_volume_with_type(volume_with_type, provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     assert volume_with_type.exists
@@ -129,6 +133,7 @@ def test_edit_volume_with_type(volume_with_type, appliance):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     new_name = fauxfactory.gen_alpha()
@@ -143,6 +148,7 @@ def test_delete_volume_with_type(volume_with_type):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     volume_with_type.delete()
@@ -151,6 +157,12 @@ def test_delete_volume_with_type(volume_with_type):
 
 @pytest.mark.regression
 def test_volume_attach_detach_instance(volume, new_instance, appliance):
+    """
+    Polarion:
+        assignee: mnadeem
+        casecomponent: Cloud
+        initialEstimate: 1/4h
+    """
     # TODO: Test Reset and Cancel
     initial_instance_count = volume.instance_count
     volume.attach_instance(new_instance.name)

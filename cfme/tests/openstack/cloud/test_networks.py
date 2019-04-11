@@ -116,6 +116,7 @@ def test_create_network(network, provider):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     assert network.exists
@@ -129,6 +130,7 @@ def test_edit_network(network):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     network.edit(name=fauxfactory.gen_alpha())
@@ -145,6 +147,7 @@ def test_delete_network(network):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     network.delete()
@@ -161,6 +164,7 @@ def test_create_subnet(subnet, provider):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     assert subnet.exists
@@ -177,6 +181,7 @@ def test_edit_subnet(subnet):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     subnet.edit(new_name=fauxfactory.gen_alpha())
@@ -192,6 +197,7 @@ def test_delete_subnet(subnet):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     subnet.delete()
@@ -208,6 +214,7 @@ def test_create_router(router, provider):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     assert router.exists
@@ -220,6 +227,7 @@ def test_create_router_with_gateway(router_with_gw, provider):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     assert router_with_gw.exists
@@ -233,6 +241,7 @@ def test_edit_router(router):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     router.edit(name=fauxfactory.gen_alpha())
@@ -249,6 +258,7 @@ def test_delete_router(router, appliance):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     router.delete()
@@ -266,6 +276,7 @@ def test_clear_router_gateway(router_with_gw):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     router_with_gw.edit(change_external_gw=False)
@@ -284,6 +295,7 @@ def test_add_gateway_to_router(router, ext_subnet):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     router.edit(change_external_gw=True, ext_network=ext_subnet.network,
@@ -301,6 +313,7 @@ def test_add_interface_to_router(router, subnet):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(router, 'Details')
@@ -322,6 +335,7 @@ def test_list_networks(provider, appliance):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     networks = [n.label for n in provider.mgmt.api.networks.list()]

@@ -58,6 +58,7 @@ def test_workload_memory_leak(request, scenario, appliance, provider):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     from_ts = int(time.time() * 1000)

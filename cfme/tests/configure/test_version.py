@@ -16,6 +16,7 @@ def test_appliance_version(appliance):
 
     Polarion:
         assignee: jhenner
+        casecomponent: Appliance
         caseimportance: high
         initialEstimate: 1/4h
     """

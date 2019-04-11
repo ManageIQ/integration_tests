@@ -76,6 +76,7 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
     Polarion:
         assignee: anikifor
         caseimportance: medium
+        casecomponent: Configuration
         initialEstimate: 1/2h
         testtype: integration
     """
@@ -336,6 +337,7 @@ def test_analysis_profile_description_validation(analysis_profile_collection):
 
     Polarion:
         assignee: anikifor
+        casecomponent: Configuration
         initialEstimate: 1/4h
     """
     with pytest.raises(AssertionError):

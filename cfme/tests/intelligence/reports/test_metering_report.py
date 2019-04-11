@@ -274,8 +274,9 @@ def test_validate_cpu_usage(resource_usage, metering_report):
     """Test to validate CPU usage.This metric is not collected for cloud providers.
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         caseimportance: medium
+        casecomponent: Reporting
         initialEstimate: 1/4h
     """
     for groups in metering_report:
@@ -298,6 +299,7 @@ def test_validate_memory_usage(resource_usage, metering_report):
     Polarion:
         assignee: tpapaioa
         initialEstimate: 1/4h
+        casecomponent: Reporting
     """
     for groups in metering_report:
         if groups["Memory Used"]:
@@ -315,9 +317,10 @@ def test_validate_network_usage(resource_usage, metering_report):
     """Test to validate network usage.
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         caseimportance: medium
         initialEstimate: 1/4h
+        casecomponent: Reporting
     """
     for groups in metering_report:
         if groups["Network I/O Used"]:
@@ -336,6 +339,7 @@ def test_validate_disk_usage(resource_usage, metering_report):
     Polarion:
         assignee: tpapaioa
         initialEstimate: 1/4h
+        casecomponent: Reporting
     """
     for groups in metering_report:
         if groups["Disk I/O Used"]:
@@ -353,6 +357,7 @@ def test_validate_storage_usage(resource_usage, metering_report):
     Polarion:
         assignee: tpapaioa
         initialEstimate: 1/4h
+        casecomponent: Reporting
     """
     for groups in metering_report:
         if groups["Storage Used"]:

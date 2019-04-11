@@ -38,6 +38,7 @@ def test_provider_log_exists(log_exists):
 
     Polarion:
         assignee: anikifor
+        casecomponent: Configuration
         initialEstimate: 1/4h
     """
     assert log_exists

@@ -74,6 +74,7 @@ def test_cluster_graph_screen(provider, cluster, host, graph_type, interval, ena
     Polarion:
         assignee: nachandr
         caseimportance: medium
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     host.capture_historical_data()

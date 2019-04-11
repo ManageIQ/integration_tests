@@ -22,6 +22,7 @@ def test_add_cancelled_validation(request, appliance):
     Polarion:
         assignee: mmojzis
         initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     collection = appliance.collections.network_providers
     try:
@@ -44,6 +45,7 @@ def test_network_provider_add_with_bad_credentials(provider):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
     default_credentials = provider.default_endpoint.credentials
@@ -69,6 +71,7 @@ def test_network_provider_crud(provider, has_no_networks_providers):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     provider.create()

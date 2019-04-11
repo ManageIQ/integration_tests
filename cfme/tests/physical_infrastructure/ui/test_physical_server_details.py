@@ -19,6 +19,7 @@ def test_physical_server_details(physical_server):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_server_view = navigate_to(physical_server, 'Details')
@@ -30,6 +31,7 @@ def test_physical_server_details_dropdowns(physical_server):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_server_view = navigate_to(physical_server, 'Details')
@@ -67,6 +69,7 @@ def test_network_devices(physical_server):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
 
@@ -82,6 +85,7 @@ def test_storage_devices(physical_server):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
 
@@ -97,6 +101,7 @@ def test_physical_server_details_stats(physical_server):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_server.validate_stats(ui=True)

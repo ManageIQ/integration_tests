@@ -58,6 +58,7 @@ docstrings:
     required_fields:
         - assignee
         - initialEstimate
+        - casecomponent
 
     marker_fields:
         caselevel: "@pytest.mark.tier"
@@ -96,6 +97,7 @@ docstrings:
         casecomponent:
             - Ansible
             - Appliance
+            - Auth
             - Automate
             - CandU
             - CustomButton
@@ -109,6 +111,7 @@ docstrings:
             - Optimize
             - Provisioning
             - Quota
+            - Replication
             - Reporting
             - Rest
             - SelfServiceUI

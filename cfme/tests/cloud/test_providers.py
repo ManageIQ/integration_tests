@@ -136,7 +136,7 @@ def test_type_required_validation_cloud(request, appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: Cloud
+        casecomponent: WebUI
         caseimportance: high
         initialEstimate: 1/10h
     """
@@ -153,7 +153,7 @@ def test_name_required_validation_cloud(request, appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: Cloud
+        casecomponent: WebUI
         caseimportance: high
         initialEstimate: 1/15h
     """
@@ -176,6 +176,7 @@ def test_region_required_validation(request, soft_assert, appliance):
     Polarion:
         assignee: anikifor
         caseimportance: low
+        casecomponent: WebUI
         initialEstimate: 1/6h
     """
     collection = appliance.collections.cloud_providers
@@ -196,7 +197,7 @@ def test_host_name_required_validation_cloud(request, appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: Cloud
+        casecomponent: WebUI
         caseimportance: high
         initialEstimate: 1/15h
     """
@@ -222,6 +223,7 @@ def test_api_port_blank_validation(request, appliance):
 
     Polarion:
         assignee: anikifor
+        casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/6h
     """
@@ -249,7 +251,7 @@ def test_name_max_character_validation_cloud(request, cloud_provider):
 
     Polarion:
         assignee: pvala
-        casecomponent: Cloud
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/15h
     """
@@ -266,7 +268,7 @@ def test_hostname_max_character_validation_cloud(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: Cloud
+        casecomponent: WebUI
         caseimportance: high
         initialEstimate: 1/15h
     """
@@ -294,7 +296,7 @@ def test_api_port_max_character_validation_cloud(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: Cloud
+        casecomponent: WebUI
         caseimportance: high
         initialEstimate: 1/15h
     """
@@ -324,7 +326,7 @@ def test_azure_subscription_required(request, provider):
 
     Polarion:
         assignee: anikifor
-        casecomponent: Cloud
+        casecomponent: WebUI
         caseposneg: negative
         initialEstimate: 1/10h
         testSteps:
@@ -354,6 +356,7 @@ def test_azure_multiple_subscription(appliance, request, soft_assert):
 
     Polarion:
         assignee: anikifor
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     pf = ProviderFilter(classes=[AzureProvider], required_flags=['crud'])
@@ -383,6 +386,7 @@ def test_openstack_provider_has_api_version(appliance):
 
     Polarion:
         assignee: anikifor
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
     view = navigate_to(appliance.collections.cloud_providers, 'Add')
@@ -422,6 +426,7 @@ def test_select_key_pair_none_while_provisioning(appliance, request, has_no_clou
 
     Polarion:
         assignee: mmojzis
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
     if 'govcloud' in provider.data.tags:
@@ -459,6 +464,7 @@ def test_azure_instance_password_requirements(appliance, request,
 
     Polarion:
         assignee: anikifor
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
     view = navigate_to(appliance.collections.cloud_instances, 'Provision')
@@ -497,6 +503,7 @@ def test_cloud_names_grid_floating_ips(appliance, ec2_provider, soft_assert):
     Polarion:
         assignee: anikifor
         caseimportance: medium
+        casecomponent: WebUI
         initialEstimate: 1/30h
     """
     floating_ips_collection = appliance.collections.network_floating_ips
@@ -520,7 +527,7 @@ def test_display_network_topology(appliance, openstack_provider):
 
     Polarion:
         assignee: anikifor
-        casecomponent: Provisioning
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -608,6 +615,7 @@ def test_tagvis_provision_fields(setup_provider, request, appliance, user_restri
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/3h
     """
@@ -643,7 +651,8 @@ def test_domain_id_validation(request, provider):
         * Validate without Domain ID
 
     Polarion:
-        assignee: rhcf3_machine
+        assignee: anikifor
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
     prov = provider

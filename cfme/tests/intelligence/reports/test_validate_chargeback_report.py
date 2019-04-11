@@ -518,6 +518,7 @@ def test_validate_default_rate_cpu_usage_cost(chargeback_costs_default, chargeba
     Polarion:
         assignee: tpapaioa
         caseimportance: medium
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     for groups in chargeback_report_default:
@@ -540,6 +541,7 @@ def test_validate_default_rate_memory_usage_cost(chargeback_costs_default,
     Polarion:
         assignee: tpapaioa
         caseimportance: medium
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     for groups in chargeback_report_default:
@@ -560,6 +562,7 @@ def test_validate_default_rate_network_usage_cost(chargeback_costs_default,
     Polarion:
         assignee: tpapaioa
         caseimportance: medium
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     for groups in chargeback_report_default:
@@ -578,6 +581,7 @@ def test_validate_default_rate_disk_usage_cost(chargeback_costs_default, chargeb
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     for groups in chargeback_report_default:
@@ -597,6 +601,7 @@ def test_validate_default_rate_storage_usage_cost(chargeback_costs_default,
     Polarion:
         assignee: tpapaioa
         initialEstimate: 1/12h
+        casecomponent: Reporting
     """
     for groups in chargeback_report_default:
         if groups["Storage Used Cost"]:
@@ -614,8 +619,9 @@ def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback
 
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         caseimportance: medium
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     for groups in chargeback_report_custom:
@@ -635,6 +641,7 @@ def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeb
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     for groups in chargeback_report_custom:
@@ -653,6 +660,7 @@ def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, charge
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     for groups in chargeback_report_custom:
@@ -671,6 +679,7 @@ def test_validate_custom_rate_disk_usage_cost(chargeback_costs_custom, chargebac
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: Reporting
         initialEstimate: 1/4h
     """
     for groups in chargeback_report_custom:
@@ -689,6 +698,7 @@ def test_validate_custom_rate_storage_usage_cost(chargeback_costs_custom, charge
     Polarion:
         assignee: tpapaioa
         caseimportance: medium
+        casecomponent: Reporting
         initialEstimate: 1/12h
     """
     for groups in chargeback_report_custom:

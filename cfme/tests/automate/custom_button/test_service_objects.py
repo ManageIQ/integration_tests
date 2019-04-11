@@ -385,6 +385,7 @@ def test_custom_button_expression_service_obj(
         caseimportance: medium
         caseposneg: positive
         testtype: functional
+        casecomponent: CustomButton
         startsin: 5.9
         testSteps:
             1. Create custom button group with the Object type

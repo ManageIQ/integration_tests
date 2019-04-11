@@ -401,6 +401,7 @@ def test_validate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_cust
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     if not chargeback_report_custom[0]["CPU Used Cost"]:
@@ -423,6 +424,7 @@ def test_validate_memory_usage_cost(chargeback_costs_custom, chargeback_report_c
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     if not chargeback_report_custom[0]["Memory Used Cost"]:
@@ -445,6 +447,7 @@ def test_validate_network_usage_cost(chargeback_costs_custom, chargeback_report_
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     if not chargeback_report_custom[0]["Network I/O Used Cost"]:
@@ -467,6 +470,7 @@ def test_validate_disk_usage_cost(chargeback_costs_custom, chargeback_report_cus
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     if not chargeback_report_custom[0]["Disk I/O Used Cost"]:
@@ -488,6 +492,7 @@ def test_validate_storage_usage_cost(chargeback_costs_custom, chargeback_report_
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     if not chargeback_report_custom[0]["Storage Used Cost"]:

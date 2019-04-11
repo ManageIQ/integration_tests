@@ -322,6 +322,7 @@ def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, con
     Polarion:
         assignee: sshveta
         initialEstimate: 1/4h
+        casecomponent: V2V
     """
     infrastructure_mapping_collection = appliance.collections.v2v_mappings
     migration_plan_collection = appliance.collections.v2v_plans

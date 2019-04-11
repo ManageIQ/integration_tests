@@ -17,6 +17,7 @@ def test_csrf_post(appliance):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     dashboard = navigate_to(appliance.server, 'Dashboard')
     dashboard.csrf_token = "Bogus!"

@@ -31,6 +31,7 @@ def test_delete_instance_appear_after_refresh(appliance, provider):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
     instance_name = provider.data['remove_test']['instance']
@@ -70,6 +71,7 @@ def test_delete_stack_appear_after_refresh(appliance, provider, provisioning,
 
     Polarion:
         assignee: mmojzis
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
 

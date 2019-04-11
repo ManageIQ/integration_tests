@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.utils.version import current_version
-
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_vmware_console_support(request, appliance):
     """Tests that the VMware Console Support setting may be changed.
 
     Polarion:
         assignee: apagac
         caseimportance: medium
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     old_vm_console_type = appliance.server.settings.vmware_console_values['console_type']

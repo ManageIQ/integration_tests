@@ -220,9 +220,11 @@ def test_reconfig_vm_negative_cancel(provider, full_vm, ensure_vm_stopped):
 def test_vm_reconfig_add_remove_hw_hot(
         provider, full_vm, enable_hot_plugin, ensure_vm_running, change_type):
     """Change number of CPU sockets and amount of memory while VM is runnng.
-        Changing number of cores per socket on running VM is not supported by RHV.
+    Changing number of cores per socket on running VM is not supported by RHV.
+
     Polarion:
         assignee: nansari
+        casecomponent: Infra
         initialEstimate: 1/4h
         tags: reconfigure
     """

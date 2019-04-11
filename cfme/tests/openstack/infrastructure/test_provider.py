@@ -15,7 +15,8 @@ pytestmark = [
 def test_api_port(provider):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view_details = navigate_to(provider, 'Details')
@@ -28,7 +29,8 @@ def test_api_port(provider):
 def test_credentials_quads(provider):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(provider, 'All')
@@ -44,7 +46,8 @@ def test_credentials_quads(provider):
 def test_delete_provider(provider):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     provider.delete(cancel=False)
