@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import random
+import re
+
 import fauxfactory
 import pytest
 from riggerlib import recursive_update
@@ -7,7 +10,11 @@ from widgetastic.utils import partial_match
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.fixtures.service_fixtures import create_catalog_item
+from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
+from cfme.utils.update import update
 
 
 pytestmark = [
@@ -298,3 +305,192 @@ def test_project_quota_enforce_via_lifecycle_cloud(
         provision_request.wait_for_request(method="ui")
         request.addfinalizer(provision_request.remove_request)
         assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+@pytest.fixture
+def admin_email(appliance):
+    """Required for user quota tagging services to work, as it's mandatory for it's functioning."""
+    user = appliance.collections.users
+    admin = user.instantiate(name='Administrator')
+    with update(admin):
+        admin.email = fauxfactory.gen_email()
+    yield
+    with update(admin):
+        admin.email = ''
+
+
+@pytest.fixture(scope="module")
+def automate_flavour_method(appliance, klass, namespace):
+    """This fixture used to create automate method using following script"""
+    script = """
+                FLAVOR_CLASS = 'Flavor'.freeze\n
+                begin\n
+                    values_hash = {}\n
+                    cloud_flavors = $evm.vmdb(FLAVOR_CLASS).all\n
+                $evm.log("info", "Listing Root Object Attributes:")\n
+                $evm.root.attributes.sort.each { |k, v| $evm.log("info", "\t#{k}: #{v}") }\n
+                $evm.log("info", "===========================================")\n
+                    unless cloud_flavors.empty?\n
+                        cloud_flavors.each do |flavor|\n
+                            values_hash[flavor.id] = flavor.name\n
+                    end\n
+                end\n
+                list_values = {\n
+                    'sort_by'    => :value,\n
+                    'data_type'  => :string,\n
+                    'required'   => true,\n
+                    'values'     => values_hash\n
+                }\n
+                list_values.each { |key, value| $evm.object[key] = value }\n
+                rescue => err\n
+                  $evm.log(:error, "[#{err}]\n#{err.backtrace.join("\n")}")\n
+                  exit MIQ_STOP\n
+                end\n
+    """
+    klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location='inline',
+        script=script
+    )
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={'execute': {'value': method.name}}
+    )
+    yield instance
+    instance.delete()
+    method.delete()
+
+
+@pytest.fixture
+def set_roottenant_quota(request, appliance):
+    field, value = request.param
+    roottenant = appliance.collections.tenants.get_root_tenant()
+    roottenant.set_quota(**{'{}_cb'.format(field): True, field: value})
+    yield
+    roottenant.set_quota(**{'{}_cb'.format(field): False})
+
+
+@pytest.fixture(scope="module")
+def dialog(appliance, automate_flavour_method):
+    """This fixture is used to create dynamic service dialog"""
+    data = {
+        "buttons": "submit,cancel",
+        "label": "flavour_dialog_{}".format(fauxfactory.gen_alphanumeric()),
+        "dialog_tabs": [
+            {
+                "display": 'edit',
+                "label": "New Tab",
+                "position": 0,
+                "dialog_groups": [
+                    {
+                        "display": "edit",
+                        "label": "New section",
+                        "position": 0,
+                        "dialog_fields": [
+                            {
+                                "name": "option_0_instance_type",
+                                "description": "flavor_dialog",
+                                "data_type": "string",
+                                "display": "edit",
+                                'display_method_options': {},
+                                'required_method_options': {},
+                                'default_value': '',
+                                'values_method_options': {},
+                                "required": True,
+                                "label": "instance_type",
+                                "dynamic": True,
+                                'show_refresh_button': True,
+                                'load_values_on_init': True,
+                                'read_only': False,
+                                'auto_refresh': False,
+                                'visible': True,
+                                "type": "DialogFieldDropDownList",
+                                "resource_action": {
+                                    "resource_type": "DialogField",
+                                    "ae_namespace": automate_flavour_method.namespace.name,
+                                    "ae_class": automate_flavour_method.klass.name,
+                                    "ae_instance": automate_flavour_method.name,
+                                },
+                            },
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+    dialog_rest = appliance.rest_api.collections.service_dialogs.action.create(**data)[0]
+    yield appliance.collections.service_dialogs.instantiate(label=dialog_rest.label)
+    dialog_rest.action.delete()
+
+
+def get_result(request, appliance, catalog, catalog_item_name, dialog_values=None):
+    """Returns the quota requested by particular type of flavor type"""
+    service_catalogs = ServiceCatalogs(appliance, catalog, catalog_item_name, dialog_values)
+    service_catalogs.order()
+    # nav to requests page to check quota validation
+    request_description = 'Provisioning Service [{0}] from [{0}]'.format(catalog_item_name)
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(provision_request.remove_request)
+    assert provision_request.row.reason.text == "Quota Exceeded"
+    last_message = provision_request.row.last_message.text
+    result = re.findall(r'requested.*\w', last_message)
+
+    # Service request needs to delete because we are not able to order same catalog item multiple
+    # times using automation.
+    delete_request = appliance.rest_api.collections.service_requests.get(
+        description=request_description)
+    delete_request.action.delete()
+
+    return result
+
+
+# first arg of parametrize is the list of fixture or parameter,
+# second arg is a list of lists, with a test is to be generated
+# indirect is the list where we define which fixture is to be passed values indirectly.
+@pytest.mark.meta(blockers=[BZ(1704439)])
+@pytest.mark.tier(1)
+@pytest.mark.parametrize(
+    ['set_roottenant_quota'],
+    [
+        [('storage', 0.001)]
+    ],
+    indirect=['set_roottenant_quota'],
+    ids=['max_storage']
+)
+def test_custom_service_dialog_quota_flavors(request, provider, provisioning, dialog, catalog,
+                                             appliance, automate_flavour_method, admin_email,
+                                             set_roottenant_quota):
+    """Test quota with instance/flavor type in custom dialog
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
+        startsin: 5.8
+        casecomponent: Quota
+
+    Bugzilla:
+        1499193
+        1581288
+        1657628
+    """
+    catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
+    request.addfinalizer(catalog_item.delete_if_exists)
+    result = []
+
+    # Fetching all the flavours related to particular provider and collecting two flavors randomly
+    flavors = random.sample(appliance.rest_api.collections.flavors.all, 2)
+
+    # Ordering service catalog item with different flavor types
+    for flavor in flavors:
+        flavor_type = {'option_0_instance_type': flavor.name}
+        requested_storage = get_result(
+            request=request, appliance=appliance, catalog=catalog_item.catalog,
+            catalog_item_name=catalog_item.name, dialog_values=flavor_type
+        )
+        result.append(requested_storage)
+    assert result[0] != result[1]
