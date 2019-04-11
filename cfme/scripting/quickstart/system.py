@@ -14,7 +14,7 @@ HAS_YUM = os.path.exists('/usr/bin/yum')
 HAS_APT = os.path.exists('/usr/bin/apt-get')
 
 OS_RELEASE_FILE = '/etc/os-release'
-OS_NAME_REGEX = r'^NAME="?([\w\s]*?)"?$'
+OS_NAME_REGEX = r'^NAME="?([\w\s\/]*?)"?$'
 OS_VERSION_REGEX = r'^VERSION_ID="?([\S]*?)"?$'
 
 REQUIRED_PACKAGES = None
