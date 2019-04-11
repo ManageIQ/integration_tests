@@ -410,7 +410,7 @@ def test_concurrent_migrations(request, appliance, v2v_providers, host_creds, co
     )
 
     settings_view = navigate_to(mapping, "MigrationSettings")
-    settings_view.max_limit.set_value(1)
+    settings_view.max_limit.set_value(3)
     settings_view.apply_btn.click()
 
     @request.addfinalizer
