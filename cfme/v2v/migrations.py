@@ -334,7 +334,7 @@ class MigrationDashboardView(BaseLoggedInPage):
     sort_type_dropdown = SelectorDropdown('id', 'sortTypeMenu')
     sort_direction = Text(locator=".//span[contains(@class,'sort-direction')]")
     # TODO: XPATH requested to devel (repo:miq_v2v_ui_plugin issues:415)
-    progress_card = MigrationProgressBar(locator='.//div[3]/div/div[3]/div[3]/div/div')
+    progress_card = MigrationProgressBar()
     not_started_plans = MigrationDashboardStatusCard(name="Not Started")
     in_progress_plans = MigrationDashboardStatusCard(name="In Progress")
     completed_plans = MigrationDashboardStatusCard(name="Complete")
