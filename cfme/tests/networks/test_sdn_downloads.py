@@ -96,7 +96,8 @@ def test_download_pdf_summary(appliance, collection_type, provider):
 @pytest.mark.tier(1)
 def test_pdf_summary_infra_provider():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1651194
+    Bugzilla:
+        1651194
 
     Polarion:
         assignee: anikifor

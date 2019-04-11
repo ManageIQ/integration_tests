@@ -284,7 +284,8 @@ def test_quota_with_invalid_service_request():
                Q-task_id([miq_provision_787])"
 
     Bugzilla:
-        1534589, 1531914
+        1534589
+        1531914
     """
     pass
 
@@ -322,8 +323,8 @@ def test_simultaneous_tenant_quota():
                are cancelled
 
     Bugzilla:
-        1456819, 1401251
-
+        1456819
+        1401251
     """
     pass
 

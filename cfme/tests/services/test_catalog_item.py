@@ -390,7 +390,8 @@ def test_copy_catalog_item():
             1. Create catalog and catalog item
             2. Make a copy of catalog item
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1678149
+    Bugzilla:
+        1678149
     """
     pass
 
@@ -410,6 +411,7 @@ def test_service_select_tenants():
             2. Create catalog item with tenants
             3. login with tenant and check the services
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1678123
+    Bugzilla:
+        1678123
     """
     pass

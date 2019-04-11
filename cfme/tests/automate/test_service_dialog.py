@@ -354,7 +354,8 @@ def test_mandatory_entry_point_with_dynamic_element(appliance):
 @pytest.mark.tier(1)
 def test_copying_customization_dialog():
     """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1342260
+    Bugzilla:
+        1342260
 
     Polarion:
         assignee: anikifor

@@ -1752,7 +1752,9 @@ def test_superadmin_child_tenant_delete_parent_catalog(appliance, group_collecti
     You"re able to see Catalog items of parent and ancestor tenants.  If
     your role has permission to modify catalog items / delete them, and
     you can to see ones from ancestor tenants, then you can delete them.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1375713
+
+    Bugzilla:
+        1375713
 
     Polarion:
         assignee: mnadeem

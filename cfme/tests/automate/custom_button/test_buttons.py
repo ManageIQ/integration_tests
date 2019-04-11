@@ -126,7 +126,8 @@ def test_button_crud(appliance, dialog, request, buttongroup, obj_type):
             6. Assert that the button no longer exists.
 
     Bugzilla:
-        1143019, 1205235
+        1143019
+        1205235
     """
     button_gp = buttongroup(obj_type)
     button = button_gp.buttons.create(
@@ -171,7 +172,8 @@ def test_button_avp_displayed(appliance, dialog, request):
             2. Locate the section with attribute/value pairs.
 
     Bugzilla:
-        1229348, 1460774
+        1229348
+        1460774
     """
     # This is optional, our nav tree does not have unassigned button
     buttongroup = appliance.collections.button_groups.create(

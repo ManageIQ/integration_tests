@@ -10,7 +10,8 @@ from cfme import test_requirements
 @pytest.mark.tier(3)
 def test_validate_landing_pages_for_rbac():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1450012
+    Bugzilla:
+        1450012
 
     Polarion:
         assignee: pvala

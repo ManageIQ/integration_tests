@@ -834,7 +834,9 @@ def test_appliance_console_check_default_ip():
 def test_appliance_ssl():
     """
     Test ssl connections to postgres database from other appliances.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1482697
+
+    Bugzilla:
+        1482697
 
     Polarion:
         assignee: sbulage
@@ -877,7 +879,9 @@ def test_appliance_console_restore_ha_standby_node():
 def test_appliance_console_cancel():
     """
     Test option to navigate back from all submenus in appliance_console
-    https://bugzilla.redhat.com/show_bug.cgi?id=1438844
+
+    Bugzilla:
+        1438844
 
     Polarion:
         assignee: sbulage
@@ -924,7 +928,9 @@ def test_appliance_console_network_conf_negative():
 def test_appliance_console_vmdb_httpd():
     """
     check that httpd starts after restarting vmdb
-    https://bugzilla.redhat.com/show_bug.cgi?id=1337525
+
+    Bugzilla:
+        1337525
 
     Polarion:
         assignee: sbulage
@@ -1066,7 +1072,9 @@ def test_appliance_console_extend_storage_negative():
 def test_appliance_console_static_dns():
     """
     test setting secondary dns and check it"s saved as the new default
-    https://bugzilla.redhat.com/show_bug.cgi?id=1439348
+
+    Bugzilla:
+        1439348
 
     Polarion:
         assignee: sbulage

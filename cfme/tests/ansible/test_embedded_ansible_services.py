@@ -539,6 +539,9 @@ def test_custom_button_ansible_credential_list(custom_service_button, service_ca
 def test_ansible_group_id_in_payload(service_catalog, service_request, service):
     """Test if group id is presented in manageiq payload.
 
+    Bugzilla:
+        1480019
+
     In order to get manageiq payload the service's standard output should be parsed.
 
     Bugzilla:

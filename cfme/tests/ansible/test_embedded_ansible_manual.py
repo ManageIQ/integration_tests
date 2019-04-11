@@ -173,7 +173,10 @@ def test_embed_tower_exec_play_stdout():
 @pytest.mark.tier(2)
 def test_embed_ansible_next_gen():
     """
-    Follow BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1511126
+    Follow BZ referenced below for test steps
+
+    Bugzilla:
+        1511126
 
     Polarion:
         assignee: sbulage
@@ -255,7 +258,9 @@ def test_embed_tower_ui_requests_notifications_negative():
     add a repo with the same name as a current repo and check the
     notifications display correctly. With a Red banner to show it was
     unsuccessful.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1471868
+
+    Bugzilla:
+        1471868
 
     Polarion:
         assignee: sbulage
@@ -270,7 +275,9 @@ def test_embed_tower_ui_requests_notifications_negative():
 def test_embed_tower_repo_tag():
     """
     RBAC - tag Ansible repo and allow new user see only this repo.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1526217
+
+    Bugzilla:
+        1526217
 
     Polarion:
         assignee: sbulage
@@ -365,7 +372,9 @@ def test_embed_tower_exec_play_against_openstack():
     """
     Execute playbook against Openstack provider.
     Workaround must be applied:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1511017
+
+    Bugzilla:
+        1511017
 
     Polarion:
         assignee: sbulage
@@ -398,7 +407,9 @@ def test_embed_tower_ui_requests_notifications():
     After all processes are running and websockets role is enabled, add a
     new repo to embedded tower and check the notifications display
     correctly. With a Green banner to show it was successful.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1471868
+
+    Bugzilla:
+        1471868
 
     Polarion:
         assignee: sbulage
@@ -540,7 +551,9 @@ def test_embed_ansible_catalog_items():
     """
     test adding new playbook catalogs and items to remote and global
     region
-    https://bugzilla.redhat.com/show_bug.cgi?id=1449696
+
+    Bugzilla:
+        1449696
 
     Polarion:
         assignee: sbulage
@@ -571,7 +584,9 @@ def test_embed_tower_add_private_repo():
 @pytest.mark.tier(3)
 def test_service_ansible_service_name():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1505929
+    Bugzilla:
+        1505929
+
     After creating the service using ansible playbook type add a new text
     field to service dialog named "service_name" and then use that service
     to order the service which will have a different name than the service
@@ -592,7 +607,9 @@ def test_embed_tower_repo_url_validation():
     """
     After all processes are running fill out a new repo with resolvable
     /un-resolvable url, use the validation button to check its correct.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1478958
+
+    Bugzilla:
+        1478958
 
     Polarion:
         assignee: sbulage
@@ -606,7 +623,9 @@ def test_embed_tower_repo_url_validation():
 @pytest.mark.tier(1)
 def test_embed_tower_playbooks_tag():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1526218
+    Bugzilla:
+        1526218
+
     RBAC - tag playbooks and allow user to see just this taged playbook.
 
     Polarion:
@@ -687,7 +706,9 @@ def test_embed_tower_add_machine_credentials_machine_root_pass():
 @pytest.mark.tier(1)
 def test_embed_tower_creds_tag():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1526219
+    Bugzilla:
+        1526219
+
     RBAC - tag credentials and allow new user see just this credential.
 
     Polarion:
@@ -702,7 +723,9 @@ def test_embed_tower_creds_tag():
 @pytest.mark.tier(2)
 def test_embed_tower_order_service_extra_vars():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1444831
+    Bugzilla:
+        1444831
+
     Execute playbook with extra variables which will be passed to Tower.
 
     Polarion:
@@ -717,7 +740,8 @@ def test_embed_tower_order_service_extra_vars():
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_with_already_existing_catalog_item_name():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1509809
+    Bugzilla:
+        1509809
 
     Polarion:
         assignee: sbulage
@@ -749,8 +773,10 @@ def test_service_ansible_verbosity():
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_cloud_credentials():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1444092When the service is
-    viewed in my services it should also show that the cloud credentials
+    Bugzilla:
+        1444092
+
+    When the service is viewed in my services it should also show that the cloud credentials
     were attached to the service.
 
     Polarion:
@@ -783,8 +809,10 @@ def test_service_ansible_playbook_order_credentials_usecredsfromservicedialog():
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_machine_credentials_service_details_opsui():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1515561  When the service
-    is viewed in my services it should also show that the cloud and
+    Bugzilla:
+        1515561
+
+    When the service is viewed in my services it should also show that the cloud and
     machine credentials were attached to the service.
 
     Polarion:
@@ -800,8 +828,10 @@ def test_service_ansible_playbook_machine_credentials_service_details_opsui():
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_machine_credentials_service_details_sui():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1540689  When the service
-    is viewed in my services it should also show that the cloud and
+    Bugzilla:
+        1540689
+
+    When the service is viewed in my services it should also show that the cloud and
     machine credentials were attached to the service.
 
     Polarion:
@@ -817,8 +847,10 @@ def test_service_ansible_playbook_machine_credentials_service_details_sui():
 @pytest.mark.tier(3)
 def test_custom_button_order_ansible_playbook_service():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1449361 An Ansible Service
-    Playbook can be ordered from a Custom Button
+    Bugzilla:
+        1449361
+
+    An Ansible Service Playbook can be ordered from a Custom Button
 
     Polarion:
         assignee: sbulage
@@ -833,10 +865,11 @@ def test_custom_button_order_ansible_playbook_service():
 @pytest.mark.tier(3)
 def test_service_ansible_overridden_extra_vars():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1444107Once a Ansible
-    Playbook Service Dialog is built, it has default parameters, which can
-    be overridden at "ordering" time. Check if the overridden parameters
-    are passed.
+    Bugzilla:
+        1444107
+
+    Once a Ansible Playbook Service Dialog is built, it has default parameters, which can
+    be overridden at "ordering" time. Check if the overridden parameters are passed.
 
     Polarion:
         assignee: sbulage
@@ -851,7 +884,11 @@ def test_service_ansible_overridden_extra_vars():
 @pytest.mark.tier(3)
 def test_service_ansible_linked_vms_opsui_sui():
     """
-    Associated with BZhttps://bugzilla.redhat.com/show_bug.cgi?id=1510797
+    Associated with BZ
+
+    Bugzilla:
+        1510797
+
     Please follow the steps below to recreate the scenario: 1. Enable
     Embedded Ansible role.
     2. Wait until it will be enabled.
@@ -888,7 +925,9 @@ def test_service_ansible_linked_vms_opsui_sui():
 def test_service_ansible_playbook_standard_output_non_ascii_hostname():
     """
     Look for Standard ouptut
-    https://bugzilla.redhat.com/show_bug.cgi?id=1534039
+
+    Bugzilla:
+        1534039
 
     Polarion:
         assignee: sbulage
@@ -920,7 +959,10 @@ def test_service_ansible_playbook_retire_non_ascii():
 @pytest.mark.tier(3)
 def test_automate_ansible_playbook_method_type_verbosity():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1542665
+
+    Bugzilla:
+        1542665
+
     Check if ansible playbook method  can work with different verbosity
     levels.
 

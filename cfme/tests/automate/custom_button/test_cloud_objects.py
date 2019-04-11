@@ -172,7 +172,10 @@ def test_custom_button_dialog_cloud_obj(appliance, dialog, request, setup_objs, 
             8. Check for the proper flash message related to button execution
 
     Bugzilla:
-        1635797, 1555331, 1574403, 1640592
+        1635797
+        1555331
+        1574403
+        1640592
     """
 
     group, obj_type = button_group
@@ -247,7 +250,8 @@ def test_custom_button_automate_cloud_obj(appliance, request, submit, setup_objs
             9 One by one: separate requests for all entities execution
 
     Bugzilla:
-        1628224, 1642147
+        1628224
+        1642147
     """
 
     group, obj_type = button_group

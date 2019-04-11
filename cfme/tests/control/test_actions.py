@@ -425,7 +425,9 @@ def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, p
     """Tests preventing Smart State Analysis.
 
     This test sets the policy that prevents VM analysis.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1433084
+
+    Bugzilla:
+        1433084
 
     Metadata:
         test_flag: actions, provision
@@ -456,7 +458,9 @@ def test_action_prevent_host_ssa(request, appliance, host, host_policy):
     """Tests preventing Smart State Analysis on a host.
 
     This test sets the policy that prevents host analysis.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1437910
+
+    Bugzilla:
+        1437910
 
     Metadata:
         test_flag: actions, provision
@@ -859,6 +863,9 @@ def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, poli
     """This test checks if 'Cancel vCenter task' action works.
     For this test we need big template otherwise CFME won't have enough time
     to cancel the task https://bugzilla.redhat.com/show_bug.cgi?id=1383372#c9
+
+    Bugzilla:
+        1383372
 
     Polarion:
         assignee: jdupuy

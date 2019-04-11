@@ -148,7 +148,8 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
                  other tenants quota.
 
     Bugzilla:
-        1655012, 1468795
+        1655012
+        1468795
     """
     user_ = []
     role_ = []

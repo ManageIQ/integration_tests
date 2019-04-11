@@ -11,12 +11,12 @@ def test_upgrade_dedicated_db_migration_local():
     Test that you can locally migrate a dedicated database after upgrade.
     Previously it was missing the database.yml during setup with would
     case the rake task to fail.
+
     Bugzilla:
         1478986
         1561075
         1590846
         1578957
-
 
     Polarion:
         assignee: jhenner
@@ -114,7 +114,9 @@ def test_upgrade_custom_css():
 @pytest.mark.tier(2)
 def test_upgrade_custom_widgets():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1375313
+    Bugzilla:
+        1375313
+
     Upgrade appliance with custom widgets added
 
     Polarion:
@@ -142,7 +144,8 @@ def test_upgrade_custom_widgets():
 def test_rh_rhsm_sat6_cred_save_crud():
     """
     Switch between rhsm and sat6 setup
-    https://bugzilla.redhat.com/show_bug.cgi?id=1463389
+    Bugzilla:
+        1463389
 
     Polarion:
         assignee: jhenner
@@ -205,7 +208,9 @@ def test_upgrade_multi_ext_inplace():
 @pytest.mark.tier(2)
 def test_update_custom_widgets():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1375313
+    Bugzilla:
+        1375313
+
     Upgrade appliance with custom widgets added
 
     Polarion:
@@ -279,7 +284,9 @@ def test_rh_registration_ui_proxy():
 @pytest.mark.tier(2)
 def test_update_webui_custom_css():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1553841
+    Bugzilla:
+        1553841
+
     Test css customization"s function correctly after webui update.
 
     Polarion:
@@ -305,7 +312,9 @@ def test_update_webui_custom_css():
 def test_rh_registration_proxy_crud():
     """
     Check proxy settings get added and removed from /etc/rhsm/rhsm.conf
-    https://bugzilla.redhat.com/show_bug.cgi?id=1463289
+
+    Bugzilla:
+        1463289
 
     Polarion:
         assignee: jhenner
@@ -333,7 +342,9 @@ def test_rh_unregistration_ui():
     """
     Check that you can unregister an appliance from subscriptions through
     the ui.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1464387
+
+    Bugzilla:
+        1464387
 
     Polarion:
         assignee: jhenner
@@ -422,7 +433,9 @@ def test_update_webui_ipv6():
 def test_upgrade_check_repo_names():
     """
     Checks default rpm repos on a upgraded appliance
-    https://bugzilla.redhat.com/show_bug.cgi?id=1411890
+
+    Bugzilla:
+        1411890
 
     Polarion:
         assignee: jhenner
@@ -549,7 +562,9 @@ def test_update_webui_ha():
 def test_rh_rhsm_reregistering():
     """
     Switch between rhsm and sat6 registration
-    https://bugzilla.redhat.com/show_bug.cgi?id=1461716
+
+    Bugzilla:
+        1461716
 
     Polarion:
         assignee: jhenner

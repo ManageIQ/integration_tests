@@ -397,7 +397,8 @@ def test_custom_button_expression_service_obj(
             5. Check: button should enable/visible with tag
 
     Bugzilla:
-        1509959, 1513498
+        1509959
+        1513498
     """
 
     # ToDo: Add support for Generic Object by adding tagging ability from All page.
@@ -522,8 +523,11 @@ def test_custom_button_on_vm_resource_detail(context):
             7. Check for the flash message "Order Request was Submitted" and
                check automation log for the request (Note request as per method attach to button in
                step-1).
+
     Bugzilla:
-        1427430, 1450473, 1454910
+        1427430
+        1450473
+        1454910
     """
     pass
 

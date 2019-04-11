@@ -281,7 +281,8 @@ def test_object_attribute_type_in_automate_schedule(appliance):
             5. No pop-up window with Internal Server Error.
 
     Bugzilla:
-         1479570, 1686762
+         1479570
+         1686762
     """
     view = navigate_to(appliance.collections.system_schedules, 'Add')
     view.form.action_type.select_by_visible_text('Automation Tasks')

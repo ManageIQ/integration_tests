@@ -285,6 +285,7 @@ def test_copy_catalog_bundle():
             2. Create catalog bundle
             3. Make a copy of catalog bundle
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1678149
+    Bugzilla:
+        1678149
     """
     pass

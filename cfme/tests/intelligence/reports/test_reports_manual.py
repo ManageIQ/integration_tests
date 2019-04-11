@@ -10,7 +10,10 @@ from cfme import test_requirements
 @pytest.mark.tier(1)
 def test_reports_should_generate_with_no_errors_in_logs():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1592480#c21
+    Bugzilla:
+        1592480
+
+    See comment 21 of BZ above
 
     Polarion:
         assignee: pvala
@@ -42,7 +45,8 @@ def test_reports_should_generate_with_no_errors_in_logs():
 @pytest.mark.tier(1)
 def test_reports_generate_persistent_volumes():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1563861
+    Bugzilla:
+        1563861
 
     Polarion:
         assignee: pvala
@@ -92,7 +96,8 @@ def test_reports_import_invalid_file():
 @pytest.mark.tier(1)
 def test_reports_generate_custom_conditional_filter_report():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1521167
+    Bugzilla:
+        1521167
 
     Polarion:
         assignee: pvala
@@ -188,7 +193,8 @@ def test_reports_create_schedule_for_base_report_one_time_a_day():
 @pytest.mark.tier(1)
 def test_after_setting_certain_types_of_filters_filter_tab_should_be_accessible_and_editable():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1519809
+    Bugzilla:
+        1519809
 
     Polarion:
         assignee: pvala
@@ -218,7 +224,8 @@ def test_after_setting_certain_types_of_filters_filter_tab_should_be_accessible_
 @pytest.mark.tier(1)
 def test_date_should_be_change_in_editing_reports_scheduled():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1446052
+    Bugzilla:
+        1446052
 
     Polarion:
         assignee: pvala
@@ -245,7 +252,8 @@ def test_date_should_be_change_in_editing_reports_scheduled():
 @pytest.mark.tier(1)
 def test_report_export_import_run_custom_report():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1498471
+    Bugzilla:
+        1498471
 
     Polarion:
         assignee: pvala
@@ -297,7 +305,8 @@ def test_reports_create_schedule_for_base_report_hourly():
 @pytest.mark.tier(1)
 def test_report_secondary_display_filter_should_be_editable():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1565171
+    Bugzilla:
+        1565171
 
     Polarion:
         assignee: pvala
@@ -374,7 +383,8 @@ def test_import_export_report():
 @pytest.mark.tier(1)
 def test_reports_manage_report_menu_accordion_with_users():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1535023
+    Bugzilla:
+        1535023
 
     Polarion:
         assignee: pvala
@@ -498,7 +508,8 @@ def test_sent_text_custom_report_with_long_condition():
         expectedResults:
             1. There should be no error in the log and report must be sent successfully.
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1677839
+    Bugzilla:
+        1677839
     """
     pass
 
@@ -522,7 +533,8 @@ def test_vm_volume_free_space_less_than_20_percent():
             1. It should report only those VMs which has volume free space less than
                 or equal to 20%.
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1686281
+    Bugzilla:
+        1686281
     """
     pass
 
@@ -548,7 +560,8 @@ def test_reports_filter_content():
             1.
             2. Content must be filtered.
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1678150
+    Bugzilla:
+        1678150
     """
     pass
 
@@ -577,6 +590,7 @@ def test_reports_sort_column():
             2.
             3. Both the orders must be same.
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1678150
+    Bugzilla:
+        1678150
     """
     pass

@@ -122,7 +122,8 @@ def test_updated_tag_name_on_vm(provider, tag, request):
     This test checks that tags don't disappear from the UI after their name (not displayed name) is
     changed.
 
-    https://bugzilla.redhat.com/show_bug.cgi?id=1668730
+    Bugzilla:
+        1668730
 
     Polarion:
         assignee: anikifor

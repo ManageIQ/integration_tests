@@ -22,7 +22,8 @@ def test_empty_region_description(appliance):
 def test_description_change(appliance, request):
     """Test changing region description
 
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1350808
+    Bugzilla:
+        1350808
 
     Polarion:
         assignee: jhenner

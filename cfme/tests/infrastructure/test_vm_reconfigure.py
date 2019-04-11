@@ -359,8 +359,8 @@ def test_reconfigure_vm_vmware_mem_multiple():
 def test_vm_reconfig_attach_iso_vsphere67_nested():
     """
 
-    Bugzillas:
-        * 1533728
+    Bugzilla:
+        1533728
 
     Polarion:
         assignee: nansari
@@ -446,7 +446,7 @@ def test_reconfigure_add_disk_cold():
     """ Test adding 16th disk to test how a new scsi controller is handled.
 
     Bugzilla:
-        * 1337310
+        1337310
 
     Polarion:
         assignee: nansari
@@ -471,7 +471,7 @@ def test_reconfigure_add_disk_cold_controller_sas():
     """
 
     Bugzilla:
-        * 1445874
+        1445874
 
     Polarion:
         assignee: nansari

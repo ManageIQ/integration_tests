@@ -324,7 +324,8 @@ def test_host_refresh_relationships(provider, setup_provider):
 @pytest.mark.tier(1)
 def test_inventory_refresh_westindia_azure():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1473619
+    Bugzilla:
+        1473619
 
     Polarion:
         assignee: anikifor

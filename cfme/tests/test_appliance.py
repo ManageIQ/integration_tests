@@ -291,6 +291,7 @@ def test_appliance_console_packages(appliance):
 def test_appliance_chrony_conf():
     """
     check that iburst exists within /etc/chrony.conf.
+
     Bugzilla:
         1308606
 
@@ -393,6 +394,7 @@ def test_appliance_replicate_database_disconnection():
 def test_appliance_log_error():
     """
     check logs for errors such as
+
     Bugzilla:
         1392087
 

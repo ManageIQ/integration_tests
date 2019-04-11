@@ -388,7 +388,8 @@ def test_change_truncate_long_text_save_button_enabled(appliance):
         This test checks if setting long_text enables the save button
         and if it is saved successfully
 
-        BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1650461
+    Bugzilla:
+        1650461
 
     Polarion:
         assignee: pvala

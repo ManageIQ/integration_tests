@@ -281,7 +281,9 @@ def test_error_message_azure():
     field.  Users will no longer have to drill down to Stack/Resources to
     figure out the error.
     This is currently working correctly as of 5.8.0.12
-    https://bugzilla.redhat.com/show_bug.cgi?id=1410794
+
+    Bugzilla:
+        1410794
 
     Polarion:
         assignee: anikifor

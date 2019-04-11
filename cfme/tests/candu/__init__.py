@@ -38,7 +38,8 @@ def compare_data_with_unit(table_data, graph_data, legends, tolerance=1):
     Note: Mainly, when we check graph for some tag the unit in table reading missing. The unit
         conversion totally depends on manual observation.
 
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1367560
+    Bugzilla:
+        1367560
     """
     for row in table_data:
         for key, data in graph_data.items():

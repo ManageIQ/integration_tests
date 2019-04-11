@@ -41,6 +41,9 @@ def test_ssa_datastore_files_unicode():
     """
     Make sure https://bugzilla.redhat.com/show_bug.cgi?id=1221149 is fixed
 
+    Bugzilla:
+        1221149
+
     Polarion:
         assignee: sbulage
         casecomponent: SmartState
@@ -836,7 +839,9 @@ def test_ssa_vm_azure_region():
     """
     1. Add an Azure Instance in one region and assign it to a Resource
     Group from another region.
-    BZ link: https://bugzilla.redhat.com/show_bug.cgi?id=1503295
+
+    Bugzilla:
+        1503295
 
     Polarion:
         assignee: sbulage
@@ -920,7 +925,9 @@ def test_ssa_vm_ec2_rhel():
     Perform SSA on RHEL instance.
     Cross-check whether smartstate instance created from AMI mentioned in
     production.yml.
-    BZ:https://bugzilla.redhat.com/show_bug.cgi?id=1547228
+
+    Bugzilla:
+        1547228
 
     Polarion:
         assignee: sbulage
@@ -934,7 +941,8 @@ def test_ssa_vm_ec2_rhel():
 
 def test_ssa_vm_ec2_agent_tracker():
     """
-    BZ link:  https://bugzilla.redhat.com/show_bug.cgi?id=1557452
+    Bugzilla:
+        1557452
 
     Polarion:
         assignee: sbulage
@@ -1198,7 +1206,8 @@ def test_ssa_vm_cancel_task():
     """
     Start SSA on VM and wait snapshot to create.
     Cancel the task immediately.
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1538347
+    Bugzilla:
+        1538347
 
     Polarion:
         assignee: sbulage
@@ -1264,7 +1273,9 @@ def test_ssa_vm_ec2_vpc():
     3. Turn on "DNS resolution", "DNS hostname" to "yes";
     4. Deploy an agent on this VPC;
     5. Run SSA job;
-    BZ link: https://bugzilla.redhat.com/show_bug.cgi?id=1557377
+
+    Bugzilla:
+        1557377
 
     Polarion:
         assignee: sbulage
@@ -1824,6 +1835,9 @@ def test_ssa_with_snapshot_scvmm2():
     test.
     I"ll do these one off tests for a while.
 
+    Bugzilla:
+        1376172
+
     Polarion:
         assignee: sbulage
         casecomponent: SmartState
@@ -2109,6 +2123,9 @@ def test_ssa_files_azure_rhel():
 def test_ssa_vm_files_unicode():
     """
     Make sure https://bugzilla.redhat.com/show_bug.cgi?id=1221149 is fixed
+
+    Bugzilla:
+        1221149
 
     Polarion:
         assignee: sbulage

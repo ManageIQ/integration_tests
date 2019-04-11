@@ -298,7 +298,12 @@ def test_custom_button_dialog_infra_obj(appliance, dialog, request, setup_obj, b
             7. Check for the proper flash message related to button execution
 
     Bugzilla:
-        1635797, 1555331, 1574403, 1640592, 1641669, 1685555
+        1635797
+        1555331
+        1574403
+        1640592
+        1641669
+        1685555
     """
 
     group, obj_type = button_group
