@@ -300,53 +300,49 @@ class Visual(Updateable, NavigatableMixin):
     @property
     def grid_view_limit(self):
         view = navigate_to(self.my_settings, 'Visual')
-        value = re.findall('\d+', view.tabs.visual.default_items_per_page.grid_view.read())
+        value = re.findall(r'\d+', view.tabs.visual.default_items_per_page.grid_view.read())
         return int(value[0])
 
     @grid_view_limit.setter
     def grid_view_limit(self, value):
         view = navigate_to(self.my_settings, 'Visual')
-        value_to_fill = str(value)
-        if view.tabs.visual.default_items_per_page.grid_view.fill(value_to_fill):
+        if view.tabs.visual.default_items_per_page.grid_view.fill(str(value)):
             view.tabs.visual.save.click()
 
     @property
     def tile_view_limit(self):
         view = navigate_to(self.my_settings, 'Visual')
-        value = re.findall('\d+', view.tabs.visual.default_items_per_page.tile_view.read())
+        value = re.findall(r'\d+', view.tabs.visual.default_items_per_page.tile_view.read())
         return int(value[0])
 
     @tile_view_limit.setter
     def tile_view_limit(self, value):
         view = navigate_to(self.my_settings, 'Visual')
-        value_to_fill = str(value)
-        if view.tabs.visual.default_items_per_page.tile_view.fill(value_to_fill):
+        if view.tabs.visual.default_items_per_page.tile_view.fill(str(value)):
             view.tabs.visual.save.click()
 
     @property
     def list_view_limit(self):
         view = navigate_to(self.my_settings, 'Visual')
-        value = re.findall('\d+', view.tabs.visual.default_items_per_page.list_view.read())
+        value = re.findall(r'\d+', view.tabs.visual.default_items_per_page.list_view.read())
         return int(value[0])
 
     @list_view_limit.setter
     def list_view_limit(self, value):
         view = navigate_to(self.my_settings, 'Visual')
-        value_to_fill = str(value)
-        if view.tabs.visual.default_items_per_page.list_view.fill(value_to_fill):
+        if view.tabs.visual.default_items_per_page.list_view.fill(str(value)):
             view.tabs.visual.save.click()
 
     @property
     def report_view_limit(self):
         view = navigate_to(self.my_settings, 'Visual')
-        value = re.findall('\d+', view.tabs.visual.default_items_per_page.reports.read())
+        value = re.findall(r'\d+', view.tabs.visual.default_items_per_page.reports.read())
         return int(value[0])
 
     @report_view_limit.setter
     def report_view_limit(self, value):
         view = navigate_to(self.my_settings, 'Visual')
-        value_to_fill = str(value)
-        if view.tabs.visual.default_items_per_page.reports.fill(value_to_fill):
+        if view.tabs.visual.default_items_per_page.reports.fill(str(value)):
             view.tabs.visual.save.click()
 
     @property

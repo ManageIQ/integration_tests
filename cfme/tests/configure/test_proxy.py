@@ -6,7 +6,6 @@ from cfme.cloud.provider.gce import GCEProvider
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
-from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
@@ -31,11 +30,12 @@ def proxy_machine():
     proxy_provider_key = data["provider"]
     proxy_template_name = data["template_name"]
     proxy_port = data['port']
-    prov = get_mgmt(proxy_provider_key)
     vm = deploy_template(proxy_provider_key,
                          depot_machine_name,
                          template_name=proxy_template_name)
-    wait_for(func=lambda: vm.ip is not None, num_sec=300, delay=10,
+    wait_for(func=lambda: vm.ip is not None,
+             num_sec=300,
+             delay=10,
              message='Waiting for instance "{}" ip to be present.'.format(vm.name))
 
     yield vm.ip, proxy_port

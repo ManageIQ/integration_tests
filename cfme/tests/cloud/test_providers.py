@@ -9,7 +9,6 @@ from wait_for import wait_for
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 
 from cfme import test_requirements
-from cfme.base.credential import Credential
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider

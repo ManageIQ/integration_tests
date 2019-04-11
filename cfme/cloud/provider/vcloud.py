@@ -8,7 +8,6 @@ from cfme.common.provider import Credential
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.varmeth import variable
 from widgetastic_manageiq import WaitTab

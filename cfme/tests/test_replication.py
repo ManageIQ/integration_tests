@@ -2,6 +2,7 @@ import pytest
 
 from cfme import test_requirements
 
+
 @pytest.mark.manual
 @test_requirements.rep
 def test_replication_powertoggle():

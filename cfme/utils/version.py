@@ -38,14 +38,14 @@ def current_version():
 def appliance_build_datetime():
     try:
         return store.current_appliance.build_datetime
-    except:
+    except Exception:
         return None
 
 
 def appliance_build_date():
     try:
         return store.current_appliance.build_date
-    except:
+    except Exception:
         return None
 
 
@@ -66,7 +66,7 @@ def parsedate(o):
 def appliance_has_netapp():
     try:
         return store.current_appliance.has_netapp()
-    except:
+    except Exception:
         return None
 
 

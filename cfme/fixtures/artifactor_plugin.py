@@ -178,13 +178,14 @@ def pytest_runtest_protocol(item):
         session_stream = appliance.version.stream()
         if str(session_ver) not in session_build:
             session_build = "{}-{}".format(str(session_ver), session_build)
+        session_fw_version = None
         try:
             proc = subprocess.Popen(['git', 'describe', '--tags'],
                                     stdout=subprocess.PIPE)
             proc.wait()
             session_fw_version = proc.stdout.read().strip()
-        except:
-            session_fw_version = None
+        except Exception:
+            pass  # already set session_fw_version to None
         fire_art_hook(
             item.config, 'session_info',
             version=session_ver,
@@ -201,11 +202,12 @@ def pytest_runtest_protocol(item):
     if requirement:
         requirement = requirement.args[0]
 
+    param_dict = {}
     try:
         params = item.callspec.params
         param_dict = {p: get_name(v) for p, v in params.items()}
-    except:
-        param_dict = {}
+    except Exception:
+        pass  # already set param_dict
     ip = appliance.hostname
     # This pre_start_test hook is needed so that filedump is able to make get the test
     # object set up before the logger starts logging. As the logger fires a nested hook
@@ -245,6 +247,7 @@ def pytest_runtest_teardown(item, nextitem):
         'git_commit': os.environ.get('GIT_COMMIT'),
         'job_name': os.environ.get('JOB_NAME')
     }
+    param_dict = None
     try:
         caps = app.browser.widgetastic.selenium.capabilities
         param_dict = {
@@ -252,10 +255,9 @@ def pytest_runtest_teardown(item, nextitem):
             'browserPlatform': caps['platform'],
             'browserVersion': caps['version']
         }
-    except Exception as e:
-        logger.error("Couldn't grab browser env_vars")
-        logger.error(e)
-        param_dict = None
+    except Exception:
+        logger.exception("Couldn't grab browser env_vars")
+        pass  # already set param_dict
 
     fire_art_test_hook(
         item, 'ostriz_send', env_params=param_dict,
@@ -267,10 +269,7 @@ def pytest_runtest_logreport(report):
         return  # each node does its own reporting
     config = pytest.config  # tech debt
     name, location = get_test_idents(report)
-    if hasattr(report, 'wasxfail'):
-        xfail = True
-    else:
-        xfail = False
+    xfail = hasattr(report, 'wasxfail')
 
     if hasattr(report, 'skipped'):
         if report.skipped:

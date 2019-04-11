@@ -6,7 +6,6 @@ from widgetastic_patternfly import CandidateNotFound
 from cfme import test_requirements
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection

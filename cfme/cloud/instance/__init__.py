@@ -292,7 +292,6 @@ class Instance(VM):
         except ItemNotFound:
             raise ItemNotFound("Instance '{}' not found in UI!".format(self.name))
 
-
     def power_control_from_cfme(self, *args, **kwargs):
         """Power controls a VM from within CFME using details or collection
 

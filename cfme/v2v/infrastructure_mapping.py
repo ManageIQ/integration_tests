@@ -222,10 +222,8 @@ class InfrastructureMapping(BaseEntity):
             }
         Returns: dict, see above
         """
-        target_provider = None
-        if self.appliance.version >= "5.10":
-            target_provider = ("Red Hat Virtualization" if self.plan_type is "rhv"
-                               else "Red Hat OpenStack Platform")
+        target_provider = ("Red Hat Virtualization" if self.plan_type == "rhv"
+                           else "Red Hat OpenStack Platform")
         return {
             "general": {"name": self.name, "description": self.description,
                         "plan_type": target_provider},

@@ -13,7 +13,6 @@ from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
 
 from . import CloudIntelReportsView
@@ -26,11 +25,9 @@ from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
-from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import ReportToolBarViewSelector
@@ -142,6 +139,7 @@ class ReportCopyView(ReportAddView):
             self.report_title.text == "Adding a new Report" and
             self.reports.tree.currently_selected == self.context["object"].tree_path
         )
+
 
 class ReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
@@ -267,6 +265,7 @@ class ReportScheduleView(SchedulesFormCommon):
             and self.title.text == "Adding a new Schedule"
             and self.reports.tree.currently_selected == self.context["object"].tree_path
         )
+
 
 @attr.s
 class Report(BaseEntity, Updateable):

@@ -38,7 +38,7 @@ def run_command(cmd):
 
 
 # copy scripts
-run_command("cp " + options.scripts + " /var/www/miq/vmdb/")
+run_command("cp {} /var/www/miq/vmdb/".format(options.scripts))
 
 # changedir and untar scripts
 run_command("cd /var/www/miq/vmdb/;tar xvf " + options.scripts)
@@ -47,21 +47,27 @@ run_command("cd /var/www/miq/vmdb/;tar xvf " + options.scripts)
 run_command('systemctl stop evmserverd')
 
 # check pg connections and execute restore script
-psql_output = run_command('psql -d vmdb_production -U root -c ' +
-    '"SELECT count(*) from pg_stat_activity"')
+psql_output = run_command(
+    'psql -d vmdb_production -U root -c ' +
+    '"SELECT count(*) from pg_stat_activity"'
+)
 count = psql_output.split("\n")[2].strip()
 if count > 2:
-    logger.info("Too many postgres threads(" + str(count) + ")... restarting")
+    logger.info("Too many postgres threads({})... restarting".format(count))
     run_command("systemctl restart {}-postgresql".format(current_appliance.db.postgres_version))
     time.sleep(60)
-run_command("cd /var/www/miq/vmdb/backup_and_restore/;./miq_vmdb_background_restore " +
-    options.backupfile + " > /tmp/restore.out 2>&1")
+run_command(
+    "cd /var/www/miq/vmdb/backup_and_restore/;"
+    "./miq_vmdb_background_restore {} > /tmp/restore.out 2>&1".format(options.backupfile)
+)
 run_command("cat /tmp/restore.out")
 logger.info('Restore completed successfully')
 
 # if states relation exists then truncate table
-psql_output = run_command('psql -d vmdb_production -U root -c ' +
-    '"SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = \'states\')" ')
+psql_output = run_command(
+    'psql -d vmdb_production -U root -c '
+    '"SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = \'states\')" '
+)
 table_output = psql_output.split("\n")[2].strip()
 if "t" in table_output:
     out = run_command('psql -d vmdb_production -U root -c "truncate table states"')
@@ -77,8 +83,10 @@ logger.info('rake completed')
 run_command("cd /var/www/miq/vmdb;rake db:migrate:status")
 
 # find version and if v4 run upgrade fixes
-psql_output = run_command('psql -d vmdb_production -U root -c ' +
-    '"SELECT distinct (version) from miq_servers"')
+psql_output = run_command(
+    'psql -d vmdb_production -U root -c ' +
+    '"SELECT distinct (version) from miq_servers"'
+)
 version = psql_output.split("\n")[2].strip()
 if "4." in version and options.fixscripts:
     run_command("cp " + options.fixscripts + " /var/www/miq/vmdb/tools/")
@@ -97,8 +105,10 @@ f.write(region_output)
 f.close()
 
 # reset user passwords
-psql_output = run_command('psql -d vmdb_production -U root -c "update users set password_digest ' +
-    '= \'\$2a\$10\$cyjSQmNq6zf9LuyWIfzSF\.95Hxuxv3KqDQMGFiRxIxacWD0uFIQEi\'"')
+psql_output = run_command(
+    r'psql -d vmdb_production -U root -c "update users set password_digest '
+    r'= \'\$2a\$10\$cyjSQmNq6zf9LuyWIfzSF\.95Hxuxv3KqDQMGFiRxIxacWD0uFIQEi\'"'
+)
 
 # start evm now?
 if options.evmstart:

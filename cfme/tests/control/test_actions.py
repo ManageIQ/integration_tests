@@ -117,7 +117,7 @@ def _get_vm(request, provider, template_name, vm_name):
     vm = collection.instantiate(vm_name, provider, template_name)
 
     try:
-        vm_mgmt = deploy_template(
+        deploy_template(
             provider.key,
             vm_name,
             template_name=template_name,
@@ -125,18 +125,18 @@ def _get_vm(request, provider, template_name, vm_name):
             power_on=True,
             **kwargs
         )
-    except TimedOutError as e:
-        logger.exception(e)
+    except TimedOutError:
+        message = "{} failed provisioning, check its status!".format(provider.key)
+        logger.exception(message)
         try:
             vm.cleanup_on_provider()
         except TimedOutError:
-            logger.warning("Could not delete VM %s!", vm_name)
-        finally:
-            # If this happened, we should skip all tests from this provider in this module
-            pytest.skip("{} is quite likely overloaded! Check its status!\n{}: {}".format(
-                provider.key, type(e).__name__, str(e)))
+            logger.error("Could not delete VM %s!", vm_name)
+    finally:
+        # If this happened, we should skip all tests from this provider in this module
+        pytest.skip(message)
 
-    request.addfinalizer(lambda: vm.cleanup_on_provider())
+    request.addfinalizer(vm.cleanup_on_provider)
 
     # Make it appear in the provider
     provider.refresh_provider_relationships()
@@ -484,12 +484,12 @@ def test_action_prevent_host_ssa(request, appliance, host, host_policy):
             num_sec=60, delay=5, fail_func=view.browser.refresh,
             message="Check if Drift History field is changed")
     except TimedOutError:
-            result = appliance.ssh_client.run_command(
-                "grep 'Prevent current event from proceeding.*Host Analysis Request.*{}' "
-                "/var/www/miq/vmdb/log/policy.log".format(host.name)
-            )
-            assert result.success, (
-                'Action "Prevent current event from proceeding" hasn\'t been invoked')
+        event_string = 'Prevent current event from proceeding'
+        result = appliance.ssh_client.run_command(
+            "grep '{}.*Host Analysis Request.*{}' /var/www/miq/vmdb/log/policy.log"
+            .format(event_string, host.name)
+        )
+        assert result.success, 'Action "{}" has not been invoked'.format(event_string)
     else:
         pytest.fail("CFME did not prevent analysing the Host {}".format(host.name))
 

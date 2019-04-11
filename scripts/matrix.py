@@ -67,7 +67,7 @@ for test_data in elem:
     if test_data.tag == 'testcase':
         item_class = test_data.attrib['classname']
         item_name = test_data.attrib['name']
-        item_param = re.findall('\.*(\[.*\])', item_name)
+        item_param = re.findall(r'\.*(\[.*\])', item_name)
 
         if item_param:
             item_name = item_name.replace(item_param[0], '')

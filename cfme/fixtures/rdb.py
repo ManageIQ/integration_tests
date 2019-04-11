@@ -106,10 +106,7 @@ class Rdb(Pdb):
     do_c = do_cont = do_continue
 
     def interaction(self, *args, **kwargs):
-        if sys.version_info.major == 3:
-            print(self._prompt_msg, stream=self.stdout)
-        else:
-            print >> self.stdout, self._prompt_msg
+        print(self._prompt_msg, stream=self.stdout)
         Pdb.interaction(self, *args, **kwargs)
 
     def set_trace(self, *args, **kwargs):

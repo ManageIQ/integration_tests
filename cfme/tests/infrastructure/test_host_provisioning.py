@@ -150,10 +150,11 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
                                                                 provider=provider)
                 host_renamed_obj2.delete(cancel=False)
                 host_renamed_obj2.wait_for_delete()
-        except:
+        except Exception:
             # The mgmt_sys classes raise Exception :\
-            logger.warning('Failed to clean up host %s on provider %s',
-                prov_host_name, provider.key)
+            logger.exception('Failed to clean up host %s on provider %s',
+                             prov_host_name,
+                             provider.key)
 
     request.addfinalizer(cleanup_host)
 

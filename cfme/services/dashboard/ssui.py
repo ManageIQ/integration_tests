@@ -11,7 +11,6 @@ from cfme.utils.appliance.implementations.ssui import navigate_to
 from cfme.utils.appliance.implementations.ssui import navigator
 from cfme.utils.appliance.implementations.ssui import SSUINavigateStep
 from cfme.utils.appliance.implementations.ssui import ViaSSUI
-from cfme.utils.wait import wait_for
 from widgetastic_manageiq import SSUIAggregatecard
 from widgetastic_manageiq import SSUIlist
 from widgetastic_manageiq import SSUIPaginationPane

@@ -62,10 +62,8 @@ import pytest
 from py.error import ENOENT
 from py.path import local
 
-from cfme.exceptions import ApplianceVersionException
 from cfme.fixtures.pytest_store import store
 from cfme.utils import conf
-from cfme.utils.conf import cfme_data
 from cfme.utils.log import create_sublogger
 from cfme.utils.path import conf_path
 from cfme.utils.path import log_path
@@ -121,14 +119,6 @@ class CoverageManager(object):
         else:
             sublogger_name = 'coverage'
         self.log = create_sublogger(sublogger_name)
-        # We don't know exactly when the forking architecture change
-        # occurred in CFME, but this code does not accurately gather
-        # coverage statistics from anything below CFME 5.8.   So if the
-        # version is below 5.8, we set our functions to noops.
-        if self.ipapp.version < '5.8':
-            raise ApplianceVersionException(
-                msg='Coverage statistics collection is only supported in appliances >= 5.8',
-                version=self.ipapp.version)
 
     @property
     def collection_appliance(self):
@@ -232,7 +222,7 @@ class CoverageManager(object):
         # Before merging, archive and collect all the raw coverage results
         ssh_client = self.collection_appliance.ssh_client
         ssh_client.run_command('cd /var/www/miq/vmdb/;'
-            'tar czf /tmp/ui-coverage-raw.tgz coverage/')
+                               'tar czf /tmp/ui-coverage-raw.tgz coverage/')
         ssh_client.get_file('/tmp/ui-coverage-raw.tgz', coverage_results_archive.strpath)
 
     def _upload_coverage_merger(self):
@@ -250,7 +240,7 @@ class CoverageManager(object):
         # Now bring the report back (tar it, get it, untar it)
         ssh_client = self.collection_appliance.ssh_client
         ssh_client.run_command('cd /var/www/miq/vmdb/coverage;'
-            'tar czf /tmp/ui-coverage-results.tgz merged/')
+                               'tar czf /tmp/ui-coverage-results.tgz merged/')
         ssh_client.get_file('/tmp/ui-coverage-results.tgz', coverage_results_archive.strpath)
         subprocess.Popen(['/usr/bin/env', 'tar', '-xaf', coverage_results_archive.strpath,
             '-C', coverage_output_dir.strpath]).wait()
@@ -294,20 +284,20 @@ class UiCoveragePlugin(object):
 # TODO
 # When the coverage reporting breaks out, we'll want to have this handy,
 # so I'm commenting it out instead of outright deleting it :)
-#         try:
-#             global ui_coverage_percent
-#             last_run = json.safe_load(log_path.join('coverage', 'merged', '.last_run.json').open())
-#             ui_coverage_percent = last_run['result']['covered_percent']
-#             style = {'bold': True}
-#             if ui_coverage_percent > 40:
-#                 style['green'] = True
-#             else:
-#                 style['red'] = True
-#             store.write_line('UI Coverage Result: {}%'.format(ui_coverage_percent),
-#                 **style)
-#         except Exception as ex:
-#             logger.error('Error printing coverage report to terminal')
-#             logger.exception(ex)
+#     try:
+#         global ui_coverage_percent
+#         last_run = json.safe_load(log_path.join('coverage', 'merged', '.last_run.json').open())
+#         ui_coverage_percent = last_run['result']['covered_percent']
+#         style = {'bold': True}
+#         if ui_coverage_percent > 40:
+#             style['green'] = True
+#         else:
+#             style['red'] = True
+#         store.write_line('UI Coverage Result: {}%'.format(ui_coverage_percent),
+#             **style)
+#     except Exception as ex:
+#         logger.error('Error printing coverage report to terminal')
+#         logger.exception(ex)
 
 
 def pytest_addoption(parser):

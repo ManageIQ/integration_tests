@@ -100,9 +100,9 @@ class InProgressPlansView(MigrationPlanView):
 
     @property
     def is_displayed(self):
-            return (self.in_migration_plan and
-                    self.progress_card.is_displayed and
-                    self.title.text == 'In Progress Plans')
+        return (self.in_migration_plan and
+                self.progress_card.is_displayed and
+                self.title.text == 'In Progress Plans')
 
 
 class CompletedPlansView(MigrationPlanView):
@@ -110,9 +110,9 @@ class CompletedPlansView(MigrationPlanView):
 
     @property
     def is_displayed(self):
-            return (self.in_migration_plan and
-                    self.plans_completed_list.is_displayed and
-                    self.title.text == 'Completed Plans')
+        return (self.in_migration_plan and
+                self.plans_completed_list.is_displayed and
+                self.title.text == 'Completed Plans')
 
 
 class ArchivedPlansView(MigrationPlanView):
@@ -120,9 +120,9 @@ class ArchivedPlansView(MigrationPlanView):
 
     @property
     def is_displayed(self):
-            return (self.in_migration_plan and
-                    self.archived_plans_list.is_displayed and
-                    self.title.text == 'Archived Plans')
+        return (self.in_migration_plan and
+                self.archived_plans_list.is_displayed and
+                self.title.text == 'Archived Plans')
 
 
 class AddMigrationPlanView(View):

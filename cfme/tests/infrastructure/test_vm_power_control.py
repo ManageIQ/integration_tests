@@ -11,6 +11,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
@@ -304,6 +305,7 @@ class TestVmDetailsPowerControlPerProvider(object):
         soft_assert(testing_vm.mgmt.is_running, "vm not running")
 
     @pytest.mark.rhv3
+    @pytest.mark.meta(automates=[BZ(1174858)])
     def test_suspend(self, appliance, testing_vm, ensure_vm_running, soft_assert):
         """Tests suspend
 
@@ -318,22 +320,17 @@ class TestVmDetailsPowerControlPerProvider(object):
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
         view = navigate_to(testing_vm, "Details")
         last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
-        testing_vm.power_control_from_cfme(option=testing_vm.SUSPEND, cancel=False,
+        testing_vm.power_control_from_cfme(option=testing_vm.SUSPEND,
+                                           cancel=False,
                                            from_details=True)
 
         view.flash.assert_success_message(text='Suspend initiated', partial=True)
 
         if_scvmm_refresh_provider(testing_vm.provider)
-        try:
-            testing_vm.wait_for_vm_state_change(
-                desired_state=testing_vm.STATE_SUSPENDED, timeout=450, from_details=True)
-        except TimedOutError as e:
-            if testing_vm.provider.one_of(RHEVMProvider):
-                logger.warning('working around bz1174858, ignoring timeout')
-            else:
-                raise
+        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_SUSPENDED,
+                                            timeout=450,
+                                            from_details=True)
         soft_assert(testing_vm.mgmt.is_suspended, "vm not suspended")
-        # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1101604
         if not testing_vm.provider.one_of(RHEVMProvider):
             new_last_boot_time = view.entities.summary("Power Management").get_text_of(
                 "Last Boot Time")
@@ -341,8 +338,7 @@ class TestVmDetailsPowerControlPerProvider(object):
                         "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
     @pytest.mark.rhv1
-    def test_start_from_suspend(
-            self, appliance, testing_vm, ensure_vm_suspended, soft_assert):
+    def test_start_from_suspend(self, appliance, testing_vm, ensure_vm_suspended, soft_assert):
         """Tests start from suspend
 
         Polarion:

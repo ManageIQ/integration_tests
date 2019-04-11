@@ -5,7 +5,6 @@ import pytest
 import cfme.tests.configure.test_access_control as tac
 from cfme import test_requirements
 from cfme.services.catalogs.catalog import CatalogsView
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.service, pytest.mark.tier(2)]

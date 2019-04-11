@@ -6,7 +6,6 @@ import yaml
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.path import data_path
 
 

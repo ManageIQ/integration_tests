@@ -250,7 +250,7 @@ class InfraMappingWizardResultsView(View):
 
 
 class InfraMappingWizard(View):
-    """Infrastructure Mapping Wizard Modal Widget.
+    r"""Infrastructure Mapping Wizard Modal Widget.
     Usage:
         fill: takes values of following format:
             {

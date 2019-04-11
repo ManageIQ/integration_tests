@@ -118,9 +118,8 @@ class ConditionClassAllView(ControlExplorerView):
             self.in_control_explorer and
             self.title.text == "All {} Conditions".format(self.context["object"].FIELD_VALUE) and
             self.conditions.is_opened and
-            self.conditions.tree.currently_selected == [
-                "All Conditions", "{} Conditions".format(self.context["object"].TREE_NODE)
-            ]
+            self.conditions.tree.currently_selected ==
+            ["All Conditions", "{} Conditions".format(self.context["object"].TREE_NODE)]
         )
 
 

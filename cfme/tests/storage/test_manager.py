@@ -7,7 +7,6 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.storage.manager import StorageManagerDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -15,7 +14,7 @@ pytestmark = [
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([EC2Provider, OpenStackProvider], scope="module"),
     pytest.mark.uncollectif(
-        lambda manager, provider: provider.one_of(EC2Provider) and "object_manager" in manager,
+        lambda manager, provider: provider.one_of(EC2Provider) and "object_managers" in manager,
         reason="Object Storage not supported by EC2Provider",
     ),
 ]
@@ -29,12 +28,13 @@ def provider_cleanup(provider):
         provider.wait_for_delete()
 
 
-@pytest.fixture(params=["object_manager", "block_manager"])
+@pytest.fixture(params=["object_managers", "block_managers"])
 def manager(request, appliance, provider):
-    if request.param == "object_manger":
-        collection = appliance.collections.object_managers.filter({"provider": provider})
-    else:
-        collection = appliance.collections.block_managers.filter({"provider": provider})
+    try:
+        collection = getattr(appliance.collections, request.param).filter({"provider": provider})
+    except AttributeError:
+        pytest.skip('Appliance collections did not include parametrized storage manager type ({})'
+                    .format(request.param))
     yield collection.all()[0]
 
 

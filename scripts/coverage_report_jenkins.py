@@ -217,11 +217,12 @@ def gen_project_key(name, version):
     # I'm on purpose allowing for any number of version components after 2
     # in case the version string changes (but still has major and minor at
     # at the beginning.
-    match = re.search('^(?P<major>\d+)\.(?P<minor>\d+)', version)
+    match = re.search(r'^(?P<major>\d+)\.(?P<minor>\d+)', version)
     if not match:
         raise ValueError(
-            'Start of version string must match: "(\d+).(\d+)", e.g. 5.9  received: {}'.format(
-                version))
+            r'Start of version string must match: "(\d+).(\d+)", e.g. 5.9  received: {}'
+            .format(version)
+        )
 
     project_key = '{name}_{major}_{minor}_ruby_coverage'.format(
         name=name,

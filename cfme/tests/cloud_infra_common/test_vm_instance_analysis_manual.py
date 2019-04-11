@@ -2122,7 +2122,7 @@ def test_ssa_vm_files_unicode():
 
 
 def test_ssa_files_windows_utf_8_files():
-    """
+    r"""
     Configure SSA to include c:\windows\debug\* and verify its content
 
     Polarion:

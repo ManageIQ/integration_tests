@@ -121,13 +121,13 @@ def get_values_from_conf(provider, script_type):
 # TODO Avoid reading files every time
 def read_yml(script, value):
     with open(yml_path + script + yml, 'r') as f:
-            doc = load(f)
+        doc = load(f)
     return doc[0]['tasks'][0]['manageiq_provider'][value]
 
 
 def get_yml_value(script, value):
     with open(path.join(basic_yml_path, script) + yml, 'r') as f:
-            doc = load(f)
+        doc = load(f)
     return doc[0]['tasks'][0]['manageiq_provider'][value]
 
 

@@ -16,7 +16,6 @@ import pytest
 
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils import conf
-from cfme.utils.blockers import BZ
 
 
 @contextmanager

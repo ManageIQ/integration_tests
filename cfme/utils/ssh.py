@@ -78,10 +78,12 @@ class SSHResult(object):
 
     def __cmp__(self, other):
         # Handling comparison to strings or numbers
+        # py3.6 compatible cmp syntax
+        # TODO: remove for full py3.6 compatibility
         if isinstance(other, int):
-            return cmp(self.rc, other)
+            return (self.rc > other) - (self.rc < other)
         elif isinstance(other, six.string_types):
-            return cmp(self.output, other)
+            return (self.output > other) - (self.output < other)
         else:
             raise ValueError('You can only compare SSHResult with str or int')
 
@@ -624,7 +626,7 @@ class SSHClient(paramiko.SSHClient):
                 'called from block in',
                 'Please use .* instead',
                 'key :terminate is duplicated and overwritten',
-                '--------\+--',
+                r'--------\+--',
                 'Checking EVM status...'
             ]))
         data = self.run_rake_command("evm:status")

@@ -17,7 +17,8 @@ pwd = None
 
 def tot_time(string):
     """Takes the lease string and converts it to minutes to pass to sprout"""
-    mtch = re.match('^((?P<days>\d+)+d)?\s?((?P<hours>\d+)+h)?\s?((?P<minutes>\d+)+m)?\s?', string)
+    mtch = re.match(r'^((?P<days>\d+)+d)?\s?((?P<hours>\d+)+h)?\s?((?P<minutes>\d+)+m)?\s?',
+                    string)
     tot = int(mtch.group('days') or 0) * 24 * 60
     tot += int(mtch.group('hours') or 0) * 60
     tot += int(mtch.group('minutes')or 0)

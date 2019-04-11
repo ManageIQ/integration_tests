@@ -19,7 +19,6 @@ from cfme.utils import clear_property_cache
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.wait import TimedOutError
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import UpDownSelect
 

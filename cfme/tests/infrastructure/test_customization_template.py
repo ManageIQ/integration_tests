@@ -4,7 +4,6 @@ import pytest
 
 from cfme.infrastructure.pxe import SystemImageType
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [pytest.mark.tier(3)]

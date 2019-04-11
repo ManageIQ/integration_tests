@@ -594,9 +594,9 @@ def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
     wait_for(appliance_is_connective, handle_exception=True, delay=1, timeout=30)
 
     soft_assert(unconfigured_appliance.ssh_client.run_command(
-        "ip a show dev eth0 | grep 'inet\s.*dynamic'").success)
-    soft_assert(unconfigured_appliance.ssh_client.run_command
-        ("ip a show dev eth0 | grep 'inet6\s.*dynamic'").success)
+        r"ip a show dev eth0 | grep 'inet\s.*dynamic'").success)
+    soft_assert(unconfigured_appliance.ssh_client.run_command(
+        r"ip a show dev eth0 | grep 'inet6\s.*dynamic'").success)
 
 
 @pytest.mark.tier(1)

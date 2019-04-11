@@ -15,7 +15,6 @@ from cfme.networks.views import CloudNetworkDetailsView
 from cfme.networks.views import CloudNetworkEditView
 from cfme.networks.views import CloudNetworkView
 from cfme.utils import providers
-from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator

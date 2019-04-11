@@ -75,7 +75,7 @@ def net_check(port, addr=None, force=False):
                 _ports[addr][port] = True
             except socket.error:
                 _ports[addr][port] = False
-        except:
+        except Exception:
             _ports[addr][port] = False
     return _ports[addr][port]
 

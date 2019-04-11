@@ -13,7 +13,6 @@ from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Text
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
 
 from . import AutomateExplorerView
@@ -28,7 +27,6 @@ from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.version import LOWEST
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker

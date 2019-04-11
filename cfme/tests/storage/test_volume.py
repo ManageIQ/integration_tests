@@ -5,7 +5,6 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.volume import VolumeAllView
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.update import update
 

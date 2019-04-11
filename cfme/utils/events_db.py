@@ -216,10 +216,7 @@ class Event(object):
             # weird thing happens here. getattr sometimes takes value not equal to python_type
             # so, force type conversion has to be done
             if evt_value and evt_type is not default_type:
-                if evt_type is unicode:
-                    evt_value = evt_value.encode('utf8')
-                else:
-                    evt_value = default_type(evt_value)
+                evt_value = default_type(str(evt_value, 'utf8'))
 
             self.add_attrs(EventAttr(**{attr: evt_value}))
 

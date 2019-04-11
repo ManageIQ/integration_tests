@@ -467,12 +467,12 @@ def form_data_vm_obj_single_network(request, appliance, source_provider, provide
 def _form_data_mapping(selector, source_provider, provider, source_list=None, target_list=None):
     source_data = source_provider.data.get(selector, [])
     target_data = provider.data.get(selector, [])
-    if selector is "clusters":
+    if selector == "clusters":
         source = source_data if source_data else None
         target = target_data if target_data else None
         skip_test = not source or not target
     else:
-        if selector is "datastores":
+        if selector == "datastores":
             source = [d.name for d in source_data if d.type == source_list]
             target = [d.name for d in target_data if d.type == target_list]
         else:

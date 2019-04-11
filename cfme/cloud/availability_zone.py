@@ -211,7 +211,7 @@ class AvailabilityZoneDetails(CFMENavigateStep):
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
             raise ItemNotFound('Could not locate Availability Zone "{}" on provider {}'
-                                           .format(self.obj.name, self.obj.provider.name))
+                               .format(self.obj.name, self.obj.provider.name))
         row.click()
 
 

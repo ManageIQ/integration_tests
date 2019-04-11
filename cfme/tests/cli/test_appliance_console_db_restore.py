@@ -16,6 +16,7 @@ from cfme.utils.ssh import SSHClient
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
+
 def provider_app_crud(provider_class, appliance):
     try:
         prov = list_providers_by_class(provider_class)[0]

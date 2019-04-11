@@ -327,7 +327,6 @@ class ServerInformation(Updateable, Pretty):
         except Exception:
             self.update_server_roles_db(original_roles)
 
-
 # ============================= VMware Console Form =================================
 
     def update_vmware_console(self, updates, reset=False):
@@ -390,7 +389,6 @@ class ServerInformation(Updateable, Pretty):
     def ntp_servers_fields_keys(self):
         """ Returns(list): ntp servers fields names"""
         return self._ntp_servers
-
 
 # ============================= SMTP Server Form =================================
 
@@ -497,8 +495,6 @@ class ServerInformation(Updateable, Pretty):
         else:
             logger.info('Settings were not changed')
 
-
-# ============================= AUTHENTICATION TAB ===================================
 
 class DatabaseAuthenticationView(View):
     """ Database Authentication View, empty"""

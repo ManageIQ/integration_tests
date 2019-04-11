@@ -22,7 +22,7 @@ def main():
     commits = []
     for line in lc_info:
         if line.startswith('+'):
-            commits.append(re.search('(?:[-+]\s)([a-f0-9]+)(?:\s.*)', line).groups()[0])
+            commits.append(re.search(r'(?:[-+]\s)([a-f0-9]+)(?:\s.*)', line).groups()[0])
     PRs = defaultdict(list)
     for commit in commits:
         cmd = ['git', 'log', '--merges', '--ancestry-path', '--oneline',
@@ -32,7 +32,7 @@ def main():
         lcinfo = proc.stdout.readlines()
         lines = lcinfo[::-1]
         for line in lines:
-            pr = re.search('(?:.+\sMerge pull request #)(\d+)(?:\sfrom)', line).groups()[0]
+            pr = re.search(r'(?:.+\sMerge pull request #)(\d+)(?:\sfrom)', line).groups()[0]
             if pr:
                 PRs[pr].append(commit)
                 break

@@ -61,7 +61,7 @@ def test_single_vm_scheduled_migration(request, appliance, v2v_providers, host_c
     soft_assert('Migration scheduled' in view.migration_plans_not_started_list.
         get_clock(migration_plan.name))
     view.migration_plans_not_started_list.schedule_migration(migration_plan.name)
-    soft_assert(view.migration_plans_not_started_list.get_clock(migration_plan.name) is '')
+    soft_assert(view.migration_plans_not_started_list.get_clock(migration_plan.name) == '')
     view.migration_plans_not_started_list.schedule_migration(migration_plan.name, after_mins=3)
     view.switch_to('In Progress Plans')
     wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],

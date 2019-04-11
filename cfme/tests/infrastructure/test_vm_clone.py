@@ -70,4 +70,4 @@ def test_vm_clone_neg(provider, clone_vm_name, create_vm):
     """
     provision_type = 'VMware'
     with pytest.raises(DropdownItemNotFound):
-            create_vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name, provision_type)
+        create_vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name, provision_type)

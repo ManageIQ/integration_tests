@@ -3,13 +3,13 @@
 Useful for eg. running only crud tests.
 Tests will be marked automatically if:
 
-* their name starts with crud\_
-* their name ends with \_crud
-* their name contains \_crud\_
+* their name starts with crud_
+* their name ends with _crud
+* their name contains _crud_
 """
 import re
 
-matcher = re.compile(r"^crud_|_crud_|_crud$")
+matcher = re.compile(r'^crud_|_crud_|_crud$')
 marker = "crud"
 
 

@@ -52,7 +52,7 @@ def soft_get(obj,
         all_fields = dir(obj)
     found_fields = []
     if not case_sensitive:
-            dont_include = [s.lower() for s in dont_include]
+        dont_include = [s.lower() for s in dont_include]
     for field in all_fields:
         origin_field = field
         if not case_sensitive:

@@ -9,7 +9,6 @@ from six.moves.urllib.parse import urlparse
 from cfme.utils import conf
 from cfme.utils import testgen
 from cfme.utils.pretty import Pretty
-from cfme.utils.providers import get_crud
 from cfme.utils.ssh import SSHClient
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for

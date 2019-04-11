@@ -53,8 +53,9 @@ def test_configuration_database_garbage_collection(appliance):
     """
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=[
-                                '.*Queued the action: \[Database GC\] being run for user:.*'],
-                            failure_patterns=['.*ERROR.*'])
+                                r'.*Queued the action: \[Database GC\] being run for user:.*'
+                            ],
+                            failure_patterns=[r'.*ERROR.*'])
     evm_tail.fix_before_start()
     view = navigate_to(appliance.server.zone.region, 'Database')
     view.submit_db_garbage_collection_button.click()

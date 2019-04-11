@@ -79,7 +79,6 @@ def volume_backup_with_type(appliance, provider):
     else:
         pytest.skip('Skipping volume backup tests, provider side volume creation fails')
 
-
     if volume_backup.exists:
         backup_collection.delete(volume_backup)
 
@@ -103,7 +102,6 @@ def incremental_backup(volume_backup, provider):
         yield incremental_backup
     else:
         pytest.skip('Skipping incremental backup fixture: volume not available')
-
 
     try:
         if incremental_backup.exists:
@@ -196,7 +194,6 @@ def test_incr_backup_of_attached_volume_crud(appliance, provider, request, attac
     wait_for(lambda: not incr_backup_of_attached_volume.exists, delay=5, timeout=600,
              fail_func=incr_backup_of_attached_volume.refresh,
              message='Wait for Backup to disappear')
-
 
 
 @pytest.mark.rfe

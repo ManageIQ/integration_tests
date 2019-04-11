@@ -16,7 +16,7 @@ pytestmark = [
 def dropdown_dialog(appliance, request):
     service_dialog = appliance.collections.service_dialogs
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
-    element_data ={
+    element_data = {
         'element_information': {
             'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
             'ele_name': fauxfactory.gen_alphanumeric(),

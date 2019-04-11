@@ -4,7 +4,6 @@ from riggerlib import recursive_update
 
 from . import Instance
 from . import InstanceCollection
-from cfme.exceptions import OptionNotAvailable
 
 
 @attr.s

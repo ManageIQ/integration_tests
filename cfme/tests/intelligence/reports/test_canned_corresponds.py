@@ -5,7 +5,6 @@ from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.net import ip_address
 from cfme.utils.net import resolve_hostname
 from cfme.utils.providers import get_crud_by_name

@@ -7,7 +7,6 @@ from wrapanapi.utils import eval_strings
 
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.wait import TimedOutError
 
 
@@ -76,8 +75,8 @@ def test_container_reports_base_on_options(soft_assert, appliance):
         'Container Services',
         'Container Templates',
         'Containers',
-        re.compile('Performance - Container\s*Nodes'),
-        re.compile('Performance - Container\s*Projects'),
+        re.compile(r'Performance - Container\s*Nodes'),
+        re.compile(r'Performance - Container\s*Projects'),
         'Performance - Containers'
     ):
         compare = (base_on.match if hasattr(base_on, 'match') else base_on.__eq__)

@@ -282,17 +282,17 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             Args:
                 selection: The item in Collect menu ('Collect all logs' or 'Collect current logs')
         """
-        if self.second_server_collect and not self.zone_collect:
-            view = navigate_to(self, 'DiagnosticsCollectLogsSlave')
-        else:
-            view = navigate_to(self, 'DiagnosticsCollectLogs')
+        view = navigate_to(
+            self,
+            'DiagnosticsCollectLogsSlave' if self.second_server_collect and not self.zone_collect
+            else 'DiagnosticsCollectLogs')
         last_collection = self.last_collection
         # Initiate the collection
-        wait_for(lambda: view.toolbar.collect.item_enabled(selection),
-                 delay=20,
-                 timeout=7*60,
+        wait_for(view.toolbar.collect.item_enabled,
+                 func_args=[selection],
+                 delay=5,
+                 timeout=600,
                  handle_exception=True,
-                 fail_condition=False,
                  fail_func=self.browser.refresh)
         view.toolbar.collect.item_select(selection, handle_alert=None)
         if self.browser.alert_present:

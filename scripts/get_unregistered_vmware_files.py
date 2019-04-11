@@ -6,10 +6,14 @@ from collections import defaultdict
 
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.log import add_stdout_handler
 from cfme.utils.log import logger
 from cfme.utils.providers import get_mgmt
 from cfme.utils.providers import list_provider_keys
 from cfme.utils.ssh import SSHClient
+
+
+add_stdout_handler(logger)  # log to stdout
 
 
 def parse_cmd_line():
@@ -79,17 +83,24 @@ def list_orphaned_files_per_host(host_name, host_datastore_urls, provider_key, v
                         file_path = '~/' + datastore_path[0] + fil
                         if file_path not in unregistered_files:
                             unregistered_files.append(file_path)
-                            print('{}\t\t{}\t\t{}\t\t{}'.format(
-                                hostname[0], file_path, file_type, number_of_files))
+                            logger.info(
+                                '{host}\t\t{path}\t\t{ftype}\t\t{num}'
+                                .format(
+                                    host=hostname[0],
+                                    path=file_path,
+                                    ftype=file_type,
+                                    num=number_of_files
+                                )
+                            )
 
-    except Exception as e:
-        logger.error(e)
+    except Exception:
+        logger.exception('Exception listing orphaned files per host')
         return False
 
 
 def get_registered_vm_files(provider_key):
     try:
-        print("{} processing all the registered files..".format(provider_key))
+        logger.info("%s processing all the registered files..", provider_key)
         vm_registered_files = defaultdict(set)
         provider = get_mgmt(provider_key)
         for vm in provider.list_vms():
@@ -97,25 +108,21 @@ def get_registered_vm_files(provider_key):
                 vm_file_path = vm.get_config_files_path()
                 vm_directory_name = re.findall(r'\s(.*)/\w*', vm_file_path)
                 vm_registered_files[vm_directory_name[0]] = vm.name
-            except Exception as e:
-                logger.error(e)
-                logger.error('Failed to get creation/boot time for {} on {}'.format(
-                    vm.name, provider_key))
+            except Exception:
+                logger.exception('Failed to get creation/boot time for %s on %s',
+                                 vm.name, provider_key)
                 continue
-        print("\n**************************REGISTERED FILES ON {}***********************\n".format(
-            provider_key))
+        logger.info("\n**************************REGISTERED FILES ON %s***********************\n",
+                    provider_key)
         for k, v in vm_registered_files.items():
-            print('FILE_NAME: {}\nVM_NAME: {}\n'.format(k, v))
+            logger.info('FILE_NAME: %s\nVM_NAME: %s\n', k, v)
         return vm_registered_files
-    except Exception as ex:
-            # Print out the error message too because logs in the job get deleted
-        print('{} failed ({}: {})'.format(provider_key, type(ex).__name__, str(ex)))
-        logger.error('failed to process vms from provider {}'.format(provider_key))
-        logger.exception(ex)
+    except Exception:
+        logger.exception('failed to process vms from provider %s', provider_key)
 
 
 def get_datastores_per_host(provider_key):
-    print('{} processing to get datastores per host'.format(provider_key))
+    logger.info('%s processing to get datastores per host', provider_key)
     try:
         provider = get_mgmt(provider_key)
 
@@ -124,23 +131,20 @@ def get_datastores_per_host(provider_key):
         host_datastore_url = {host: provider.list_host_datastore_url(host) for host in hosts}
         unregistered_files = []
 
-        print("\n*********************UNREGISTERED FILES ON: {}**********************\n".format(
-            provider_key))
-        print('HOST_NAME\t\tFILE_PATH\t\tTEMPLATE_VM_ISO\t\tNUMBER_OF_FILES\n')
+        logger.info("\n*********************UNREGISTERED FILES ON: %s**********************\n",
+                    provider_key)
+        logger.info('HOST_NAME\t\tFILE_PATH\t\tTEMPLATE_VM_ISO\t\tNUMBER_OF_FILES\n')
         for host in host_datastore_url:
             try:
                 list_orphaned_files_per_host(host, host_datastore_url[host],
                                              provider_key, vm_registered_files,
                                              unregistered_files)
-            except Exception as e:
-                logger.error(e)
+            except Exception:
+                logger.exception('Exception calling list_orphaned_files_per_host')
                 continue
 
-    except Exception as ex:
-            # Print out the error message too because logs in the job get deleted
-        print('{} failed ({}: {})'.format(provider_key, type(ex).__name__, str(ex)))
-        logger.error('failed to process vms from provider {}'.format(provider_key))
-        logger.exception(ex)
+    except Exception:
+        logger.exception('failed to process vms from provider %s', provider_key)
 
 
 def get_orphaned_vmware_files(provider=None):

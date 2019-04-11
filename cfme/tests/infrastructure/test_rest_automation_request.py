@@ -4,7 +4,6 @@ import pytest
 from manageiq_client.api import ManageIQClient as MiqApi
 
 from cfme import test_requirements
-from cfme.fixtures.pytest_store import store
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import automation_requests_data as _automation_requests_data

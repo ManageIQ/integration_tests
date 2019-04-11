@@ -562,7 +562,7 @@ class IPAppliance(object):
                 dst = os.path.join('/etc/systemd/system', filename)
                 copy_cmd = 'cp {} {}'.format(src, dst)
                 assert ssh.run_command(copy_cmd).success
-                exec_pre = """
+                exec_pre = r"""
 [Service]
 ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line; \
                                do ipcrm sem $line; done"
@@ -817,7 +817,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     @cached_property
     def miqqe_version(self):
         """Returns version of applied JS patch or None if not present"""
-        result = self.ssh_client.run_command('grep "[0-9]\\+" /var/www/miq/vmdb/.miqqe_version')
+        result = self.ssh_client.run_command(r'grep "[0-9]\\+" /var/www/miq/vmdb/.miqqe_version')
         if result.success:
             return int(result.output)
         return None
@@ -2497,10 +2497,10 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                     # regex finds lines for loopback addrs where resolvable hostname set
                     # sed replaces with the ljust (space padded) loopback addr
                     ssh_client.run_command(
-                        "sed -i -r -e 's|({}\s..*){}|{}|' /etc/hosts".format(addr,
-                                                                             resolve_esc,
-                                                                             fill),
-                        ensure_host=True)
+                        r"sed -i -r -e 's|({}\s..*){}|{}|' /etc/hosts"
+                        .format(addr, resolve_esc, fill),
+                        ensure_host=True
+                    )
 
     def provider_based_collection(self, provider, coll_type='vms'):
         """Given a provider, fetches a collection for the given collection type
