@@ -1,8 +1,12 @@
+import zlib
 from collections import namedtuple
+from configparser import ConfigParser
 from contextlib import contextmanager
 
 import fauxfactory
 import pytest
+import requests
+from lxml import etree
 from paramiko_expect import SSHClientInteraction
 from six import iteritems
 
@@ -19,8 +23,21 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import list_providers_by_class
+from cfme.utils.single import single
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
+
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
+
+try:
+    from urlparse import urljoin
+except ImportError:
+    from urllib.parse import urljoin
+
 
 TimedCommand = namedtuple("TimedCommand", ["command", "timeout"])
 
@@ -147,6 +164,32 @@ def app_creds_modscope():
     }
 
 
+def get_puddle_cfme_version(repo_file_path):
+    """ Gets the version of cfme package in the the [cfme] repo on repo_file_path """
+    namespaces = {'repo': 'http://linux.duke.edu/metadata/repo',
+                 'common': 'http://linux.duke.edu/metadata/common'}
+
+    repofile = requests.get(repo_file_path).text
+    cp = ConfigParser()
+    cp.readfp(StringIO(repofile))
+
+    cfme_baseurl = cp.get('cfme', 'baseurl')
+    repomd_response = requests.get(urljoin(cfme_baseurl, './repodata/repomd.xml'))
+    assert repomd_response.ok
+    repomd_root = etree.fromstring(repomd_response.content)
+    cfme_primary_path = single(repomd_root.xpath(
+        "repo:data[@type='primary']/repo:location/@href",
+        namespaces=namespaces))
+    cfme_primary_response = requests.get(urljoin(cfme_baseurl, cfme_primary_path))
+    assert cfme_primary_response.ok
+    primary_xml = zlib.decompress(cfme_primary_response.content, zlib.MAX_WBITS | 16)
+    fl_root = etree.fromstring(primary_xml)
+    repo_cfme_version = single(fl_root.xpath(
+        "common:package[common:name='cfme']/common:version/@ver",
+        namespaces=namespaces))
+    return repo_cfme_version
+
+
 @contextmanager
 def get_apps(appliance, old_version, count, preconfigured, pytest_config):
     """Requests appliance from sprout based on old_versions, edits partitions and adds
@@ -160,6 +203,7 @@ def get_apps(appliance, old_version, count, preconfigured, pytest_config):
         if a.startswith(old_version):
             usable.append(Version(a))
     usable_sorted = sorted(usable, key=lambda o: o.version)
+    picked_version = usable_sorted[-1]
     apps = []
     pool_id = None
     try:
@@ -168,18 +212,20 @@ def get_apps(appliance, old_version, count, preconfigured, pytest_config):
             preconfigured=preconfigured,
             provider_type="rhevm",
             lease_time=180,
-            version=str(usable_sorted[-1]),
+            version=str(picked_version),
         )
-        urls = cfme_data["basic_info"][update_url]
+        url = cfme_data["basic_info"][update_url]
+        assert get_puddle_cfme_version(url) == appliance.version
         for app in apps:
             app.db.extend_partition()
             app.ssh_client.run_command(
-                "curl {} -o /etc/yum.repos.d/update.repo".format(urls)
+                "curl {} -o /etc/yum.repos.d/update.repo".format(url)
             )
+
         yield apps
     except AuthException:
         msg = ('Sprout credentials key or yaml maps missing or invalid,'
-               'unable to provision appliance version %s'.format(str(usable_sorted[-1])))
+               'unable to provision appliance version %s'.format(str(picked_version)))
         logger.exception(msg)
         pytest.skip(msg)
     finally:
