@@ -67,6 +67,7 @@ def test_tagvis_tag_datacenter_combination(testing_vis_object, group_tag_datacen
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/8h
     """
     check_item_visibility(testing_vis_object, visibility)

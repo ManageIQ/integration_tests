@@ -21,6 +21,7 @@ def test_group_roles(
     Polarion:
         assignee: apagac
         caseimportance: medium
+        casecomponent: Auth
         initialEstimate: 1/4h
         tags: rbac
     """

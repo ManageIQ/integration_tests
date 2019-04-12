@@ -27,6 +27,7 @@ def test_refresh_vms(appliance, request, scenario):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     from_ts = int(time.time() * 1000)

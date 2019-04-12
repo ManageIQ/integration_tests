@@ -37,6 +37,7 @@ def test_add_remove_tag(container):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: Tagging
     """
 
     # add tag with category Department and tag communication

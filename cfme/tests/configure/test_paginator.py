@@ -107,6 +107,7 @@ def test_paginator_config_pages(appliance, place_info):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     place_name, place_class, place_navigation, paginator_expected_result = place_info
     if place_class:

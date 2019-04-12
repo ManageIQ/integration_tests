@@ -21,6 +21,7 @@ def test_cloud_provider_cards(provider, card, api):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(provider, 'Details')
@@ -35,6 +36,7 @@ def test_dashboard_card_availability_zones(provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(provider, 'Details')
@@ -48,6 +50,7 @@ def test_dashboard_card_tenants(provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     collection = provider.appliance.collections.cloud_tenants
@@ -63,6 +66,7 @@ def test_dashboard_card_security_groups(provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(provider, 'Details')

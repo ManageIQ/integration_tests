@@ -67,6 +67,7 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
 
     Polarion:
         assignee: nachandr
+        casecomponent: Infra
         initialEstimate: 1/12h
         testSteps:
             1. Add Host credentials
@@ -128,6 +129,7 @@ def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
 
     Polarion:
         assignee: nachandr
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/15h
         testSteps:

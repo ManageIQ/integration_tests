@@ -3,13 +3,21 @@ import pytest
 from Crypto.PublicKey import RSA
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils.blockers import BZ
-from cfme.utils.wait import TimedOutError
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([OpenStackProvider], scope="module")
 ]
+
+
+@pytest.fixture()
+def keypair(appliance, provider):
+    key = appliance.collections.cloud_keypairs.create(
+        name=fauxfactory.gen_alphanumeric(),
+        provider=provider
+    )
+    assert key.exists
+    yield key
 
 
 @pytest.mark.tier(3)
@@ -21,17 +29,14 @@ def test_keypair_crud(appliance, provider):
         * Also delete it.
 
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
-    try:
-        keypair = appliance.collections.cloud_keypairs.create(name=fauxfactory.gen_alphanumeric(),
-                                                              provider=provider)
-    except TimedOutError:
-        if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
-            pytest.skip('Timed out creating keypair, BZ1444520')
-        else:
-            pytest.fail('Timed out creating keypair')
+    keypair = appliance.collections.cloud_keypairs.create(
+        name=fauxfactory.gen_alphanumeric(),
+        provider=provider
+    )
     assert keypair.exists
 
     keypair.delete(wait=True)
@@ -39,7 +44,7 @@ def test_keypair_crud(appliance, provider):
 
 
 @pytest.mark.tier(3)
-def test_keypair_crud_with_key(openstack_provider, appliance):
+def test_keypair_crud_with_key(provider, appliance):
     """ This will test whether it will create new Keypair and then deletes it.
 
     Steps:
@@ -48,20 +53,17 @@ def test_keypair_crud_with_key(openstack_provider, appliance):
         * Also delete it.
 
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     key = RSA.generate(1024)
     public_key = key.publickey().exportKey('OpenSSH')
-    try:
-        keypair = appliance.collections.cloud_keypairs.create(fauxfactory.gen_alphanumeric(),
-                                                              openstack_provider,
-                                                              public_key)
-    except TimedOutError:
-        if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
-            pytest.skip('Timed out creating keypair, BZ1444520')
-        else:
-            pytest.fail('Timed out creating keypair')
+    keypair = appliance.collections.cloud_keypairs.create(
+        fauxfactory.gen_alphanumeric(),
+        provider,
+        public_key
+    )
     assert keypair.exists
 
     keypair.delete(wait=True)
@@ -69,7 +71,7 @@ def test_keypair_crud_with_key(openstack_provider, appliance):
 
 
 @pytest.mark.tier(3)
-def test_keypair_create_cancel(openstack_provider, appliance):
+def test_keypair_create_cancel(provider, appliance):
     """ This will test cancelling on adding a keypair
 
     Steps:
@@ -78,17 +80,20 @@ def test_keypair_create_cancel(openstack_provider, appliance):
         * Also delete it.
 
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
-    keypair = appliance.collections.cloud_keypairs.create(name="",
-                                                          provider=openstack_provider,
-                                                          cancel=True)
+    keypair = appliance.collections.cloud_keypairs.create(
+        name="",
+        provider=provider,
+        cancel=True
+    )
 
     assert not keypair.exists
 
 
-def test_keypair_add_and_remove_tag(openstack_provider, appliance):
+def test_keypair_add_and_remove_tag(keypair):
     """ This will test whether it will add and remove tag for newly created Keypair or not
     and then deletes it.
 
@@ -101,18 +106,9 @@ def test_keypair_add_and_remove_tag(openstack_provider, appliance):
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/4h
     """
-    try:
-        keypair = appliance.collections.cloud_keypairs.create(name=fauxfactory.gen_alphanumeric(),
-                                                              provider=openstack_provider)
-    except TimedOutError:
-        if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
-            pytest.skip('Timed out creating keypair, BZ1444520')
-        else:
-            pytest.fail('Timed out creating keypair')
-    assert keypair.exists
-
     added_tag = keypair.add_tag()
     tagged_value = keypair.get_tags()
     assert (
@@ -130,3 +126,14 @@ def test_keypair_add_and_remove_tag(openstack_provider, appliance):
     keypair.delete(wait=True)
 
     assert not keypair.exists
+
+
+@pytest.mark.rfe
+def test_download_private_key(keypair):
+    """
+    Polarion:
+        assignee: mnadeem
+        casecomponent: Cloud
+        initialEstimate: 1/4h
+    """
+    keypair.download_private_key()

@@ -20,6 +20,7 @@ def test_get_hardware(appliance, physical_server):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     physical_server.reload(attributes=['hardware'])
@@ -32,6 +33,7 @@ def test_get_hardware_attributes(appliance, physical_server, attribute):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     expanded_attribute = 'hardware.{}'.format(attribute)
@@ -44,6 +46,7 @@ def test_get_asset_detail(appliance, physical_server):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     physical_server.reload(attributes=['asset_detail'])

@@ -23,6 +23,7 @@ def test_physical_infra_provider_crud(provider, has_no_providers):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     provider.create()

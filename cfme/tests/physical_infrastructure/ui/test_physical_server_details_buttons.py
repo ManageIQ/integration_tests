@@ -22,6 +22,7 @@ def test_refresh_relationships(physical_server, provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     last_refresh = provider.last_refresh_date()
@@ -34,6 +35,7 @@ def test_power_off(physical_server, provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_server.power_off()
@@ -45,6 +47,7 @@ def test_power_on(physical_server, provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_server.power_on()
@@ -56,6 +59,7 @@ def test_power_off_immediately(physical_server, provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_server.power_off_immediately()
@@ -67,6 +71,7 @@ def test_restart(physical_server, provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_server.restart()
@@ -78,6 +83,7 @@ def test_restart_immediately(physical_server, provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_server.restart_immediately()
@@ -90,6 +96,7 @@ def test_turn_on_led(physical_server, provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_server.turn_on_led()
@@ -101,6 +108,7 @@ def test_turn_off_led(physical_server, provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_server.turn_off_led()
@@ -112,6 +120,7 @@ def test_turn_blink_led(physical_server, provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_server.turn_blink_led()
@@ -124,6 +133,7 @@ def test_lifecycle_provision(physical_server):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     view = navigate_to(physical_server, "Provision")
@@ -135,6 +145,7 @@ def test_monitoring_button(physical_server):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     view = navigate_to(physical_server, "Timelines")

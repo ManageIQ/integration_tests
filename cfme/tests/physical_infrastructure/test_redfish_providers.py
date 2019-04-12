@@ -15,6 +15,7 @@ def test_redfish_provider_crud(provider, has_no_physical_providers):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     provider.create()

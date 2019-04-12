@@ -25,6 +25,7 @@ def test_workload_capacity_and_utilization(request, scenario, appliance):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     from_ts = int(time.time() * 1000)

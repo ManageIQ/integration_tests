@@ -95,6 +95,7 @@ def test_tag_ansible_repository(repository, tag_place, check_tag_place):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: Tagging
     """
     check_tag_place(repository, tag_place)
 
@@ -106,6 +107,7 @@ def test_tag_ansible_credential(credential, tag_place, check_tag_place):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: Tagging
     """
     check_tag_place(credential, tag_place)
 
@@ -117,6 +119,7 @@ def test_tag_ansible_playbook(playbook, tag_place, check_tag_place):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: Tagging
     """
     check_tag_place(playbook, tag_place)
 
@@ -128,6 +131,7 @@ def test_tagvis_ansible_repository(repository, check_item_visibility, visibility
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: Tagging
     """
     check_item_visibility(repository, visibility)
 
@@ -139,6 +143,7 @@ def test_tagvis_ansible_credential(credential, check_item_visibility, visibility
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: Tagging
     """
     check_item_visibility(credential, visibility)
 
@@ -150,6 +155,7 @@ def test_tagvis_playbook(playbook, check_item_visibility, visibility):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: Tagging
     """
     check_item_visibility(playbook, visibility)
 

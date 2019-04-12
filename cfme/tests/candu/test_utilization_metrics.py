@@ -119,6 +119,7 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
     """
     Polarion:
         assignee: nachandr
+        casecomponent: CandU
         initialEstimate: 1/12h
     """
     vm_name = provider.data['cap_and_util']['capandu_vm']
@@ -148,6 +149,7 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
     Polarion:
         assignee: nachandr
         caseimportance: medium
+        casecomponent: CandU
         initialEstimate: 1/12h
     """
     vm_name = provider.data['cap_and_util']['capandu_vm']
@@ -176,6 +178,7 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
     Polarion:
         assignee: nachandr
         initialEstimate: 1/12h
+        casecomponent: CandU
     """
     vm_name = provider.data['cap_and_util']['capandu_vm']
     query = query_metric_db(appliance, provider, 'net_usage_rate_average',
@@ -199,6 +202,7 @@ def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
         assignee: nachandr
         caseimportance: medium
         initialEstimate: 1/8h
+        casecomponent: CandU
     """
     vm_name = provider.data['cap_and_util']['capandu_vm']
     query = query_metric_db(appliance, provider, 'disk_usage_rate_average',
@@ -216,6 +220,7 @@ def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
     """
     Polarion:
         assignee: nachandr
+        casecomponent: CandU
         initialEstimate: 1/12h
     """
     host_name = get_host_name(provider)
@@ -235,6 +240,7 @@ def test_raw_metric_host_memory(metrics_collection, appliance, provider):
     Polarion:
         assignee: nachandr
         caseimportance: low
+        casecomponent: CandU
         initialEstimate: 1/12h
     """
     host_name = get_host_name(provider)
@@ -254,6 +260,7 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
     Polarion:
         assignee: nachandr
         initialEstimate: 1/12h
+        casecomponent: CandU
     """
     host_name = get_host_name(provider)
     query = query_metric_db(appliance, provider, 'net_usage_rate_average',
@@ -272,6 +279,7 @@ def test_raw_metric_host_disk(metrics_collection, appliance, provider):
     Polarion:
         assignee: nachandr
         caseimportance: medium
+        casecomponent: CandU
         initialEstimate: 1/12h
     """
     host_name = get_host_name(provider)

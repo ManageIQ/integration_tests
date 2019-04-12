@@ -409,6 +409,7 @@ def test_timeout():
     Polarion:
         assignee: anikifor
         caseimportance: medium
+        casecomponent: WebUI
         initialEstimate: 1/4h
         testSteps:
             1. Set timeout to 5 minutes.

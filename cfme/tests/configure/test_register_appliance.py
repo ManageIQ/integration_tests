@@ -93,6 +93,7 @@ def test_rh_creds_validation(reg_method, reg_data, proxy_url, proxy_creds):
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Configuration
         initialEstimate: 1/12h
     """
     repo = reg_data.get('enable_repo')
@@ -134,6 +135,7 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Configuration
         initialEstimate: 1/12h
     """
     repo = reg_data.get('enable_repo')
@@ -197,6 +199,7 @@ def test_rhsm_registration_check_repo_names(
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Configuration
         initialEstimate: 1/4h
     """
     ver = temp_appliance_preconfig_funcscope.version.series()
@@ -222,6 +225,7 @@ def test_rh_updates(appliance_preupdate, appliance):
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Configuration
         initialEstimate: 1/4h
     """
 

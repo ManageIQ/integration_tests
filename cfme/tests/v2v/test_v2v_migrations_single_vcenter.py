@@ -246,6 +246,7 @@ def test_migration_long_name(request, appliance, v2v_providers, host_creds, conv
     Polarion:
         assignee: sshveta
         initialEstimate: 1h
+        casecomponent: V2V
     """
     source_datastores_list = v2v_providers.vmware_provider.data.get("datastores", [])
     source_datastore = [d.name for d in source_datastores_list if d.type == "nfs"][0]
@@ -334,6 +335,7 @@ def test_migration_with_edited_mapping(request, appliance, v2v_providers, edited
             assignee: sshveta
             caseimportance: medium
             initialEstimate: 1/4h
+            casecomponent: V2V
         """
     _form_data, edited_form_data = edited_form_data
     infrastructure_mapping_collection = appliance.collections.v2v_mappings

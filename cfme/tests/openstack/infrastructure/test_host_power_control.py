@@ -46,7 +46,8 @@ def host_off(host_collection, provider):
 def test_host_power_off(host_on):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     host_on.power_off()
@@ -59,7 +60,8 @@ def test_host_power_off(host_on):
 def test_host_power_on(host_off):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     host_off.power_on()

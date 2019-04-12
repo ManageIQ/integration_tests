@@ -28,6 +28,7 @@ def test_creating_entities_emits_events(register_event, with_nuage_sandbox):
     Polarion:
         assignee: rhcf3_machine
         initialEstimate: 1/4h
+        casecomponent: Events
     """
     listener = register_event
     sandbox = with_nuage_sandbox
@@ -68,6 +69,7 @@ def test_creating_entities_triggers_targeted_refresh(targeted_refresh, with_nuag
     Polarion:
         assignee: rhcf3_machine
         initialEstimate: 1/4h
+        casecomponent: Events
     """
     sandbox = with_nuage_sandbox
     with targeted_refresh.timeout():

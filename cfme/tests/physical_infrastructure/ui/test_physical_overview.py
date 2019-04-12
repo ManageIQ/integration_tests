@@ -13,6 +13,7 @@ def test_physical_overview_page(appliance):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     providers = appliance.collections.physical_providers
@@ -24,6 +25,7 @@ def test_physical_overview_servers_number(appliance, provider):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     providers = appliance.collections.physical_providers
@@ -36,6 +38,7 @@ def test_physical_overview_switches_number(appliance):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     providers = appliance.collections.physical_providers

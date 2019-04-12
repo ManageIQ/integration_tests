@@ -63,6 +63,7 @@ def test_paginator_service_dialogs(some_dialogs, soft_assert, appliance):
 
     Polarion:
         assignee: anikifor
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
     service_dialog = appliance.collections.service_dialogs

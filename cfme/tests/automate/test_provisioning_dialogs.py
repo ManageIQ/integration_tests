@@ -67,7 +67,7 @@ for name in ProvisioningDialogsCollection.ALLOWED_TYPES:
 def test_provisioning_dialogs_sorting(appliance, name, by, order):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: nansari
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/30h

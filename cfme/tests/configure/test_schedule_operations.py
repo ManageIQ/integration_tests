@@ -94,6 +94,7 @@ def test_schedule_analysis_in_the_past(appliance, current_server_time, request):
     """
     Polarion:
         assignee: jhenner
+        casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -123,6 +124,7 @@ def test_create_multiple_schedules_in_one_timezone(appliance, request):
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Reporting
         initialEstimate: 1/4h
     """
     schedule_list = []
@@ -144,6 +146,7 @@ def test_inactive_schedule(appliance, current_server_time):
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Reporting
         initialEstimate: 1/4h
     """
     current_time, _ = current_server_time
@@ -169,6 +172,7 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, request, cu
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Reporting
         initialEstimate: 1/4h
     """
     run_time, time_diff, time_num = run_types

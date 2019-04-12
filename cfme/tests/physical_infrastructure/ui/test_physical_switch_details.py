@@ -19,6 +19,7 @@ def test_physical_switch_details(physical_switch):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_switch_view = navigate_to(physical_switch, 'Details')
@@ -30,6 +31,7 @@ def test_physical_switch_details_dropdowns(physical_switch):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_switch_view = navigate_to(physical_switch, 'Details')

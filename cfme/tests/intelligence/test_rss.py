@@ -11,6 +11,7 @@ def test_verify_rss_links(appliance):
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     view = navigate_to(appliance.server, 'RSS')
     for row in view.table.rows():

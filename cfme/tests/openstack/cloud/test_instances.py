@@ -108,7 +108,8 @@ def test_create_instance(new_instance, soft_assert):
     """Creates an instance and verifies it appears on UI
 
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(new_instance, 'Details')
@@ -136,7 +137,8 @@ def test_create_instance(new_instance, soft_assert):
 def test_stop_instance(new_instance):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
@@ -151,7 +153,8 @@ def test_stop_instance(new_instance):
 def test_suspend_instance(new_instance):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
@@ -166,7 +169,8 @@ def test_suspend_instance(new_instance):
 def test_pause_instance(new_instance):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
@@ -181,7 +185,8 @@ def test_pause_instance(new_instance):
 def test_shelve_instance(new_instance):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
@@ -200,7 +205,8 @@ def test_shelve_instance(new_instance):
 def test_shelve_offload_instance(new_instance):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
@@ -222,7 +228,8 @@ def test_shelve_offload_instance(new_instance):
 def test_start_instance(new_instance):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     new_instance.mgmt.ensure_state(VmState.STOPPED)
@@ -240,6 +247,7 @@ def test_soft_reboot_instance(new_instance):
     """
     Polarion:
         assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
@@ -257,6 +265,7 @@ def test_hard_reboot_instance(new_instance):
     """
     Polarion:
         assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
@@ -274,6 +283,7 @@ def test_delete_instance(new_instance, provider):
     """
     Polarion:
         assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     new_instance.power_control_from_cfme(from_details=True,
@@ -299,6 +309,7 @@ def test_instance_operating_system_linux(new_instance):
     """
     Polarion:
         assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(new_instance, 'Details')
@@ -312,6 +323,7 @@ def test_instance_attach_volume(volume, new_instance, appliance):
     """
     Polarion:
         assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     initial_volume_count = new_instance.volume_count
@@ -331,6 +343,7 @@ def test_instance_attach_detach_volume_with_type(volume_with_type, new_instance,
     """
     Polarion:
         assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     initial_volume_count = new_instance.volume_count

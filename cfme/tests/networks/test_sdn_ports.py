@@ -26,6 +26,7 @@ def test_sdn_port_detail_name(provider, appliance):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
     port_collection = NetworkPortCollection(appliance)
@@ -49,6 +50,7 @@ def test_sdn_port_net_prov(provider, appliance):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
     prov_collection = NetworkProviderCollection(appliance)

@@ -134,6 +134,7 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Provisioning
         initialEstimate: 1/6h
     """
     prov_data['catalog']["vm_name"] = vm_name
@@ -190,6 +191,7 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
 
     Polarion:
         assignee: jhenner
+        casecomponent: Provisioning
         caseimportance: high
         initialEstimate: 1/6h
     """
@@ -236,6 +238,7 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Provisioning
         initialEstimate: 1/4h
     """
     prov_data['catalog']['vm_name'] = vm_name
@@ -270,6 +273,7 @@ def test_tag(provisioner, prov_data, provider, vm_name):
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/8h
     """
     prov_data['catalog']['vm_name'] = vm_name
@@ -304,6 +308,7 @@ def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Provisioning
         initialEstimate: 1/4h
     """
     now = datetime.utcnow()
@@ -352,6 +357,7 @@ def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, v
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Provisioning
         initialEstimate: 1/4h
     """
     prov_data['catalog']['vm_name'] = vm_name
@@ -401,6 +407,7 @@ def test_provision_vm_with_2_nics(provisioner, provisioning, prov_data, vm_name)
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Provisioning
         initialEstimate: 1/4h
         testSteps:
             1. Open the provisioning dialog.
@@ -435,6 +442,7 @@ def test_vmware_default_placement(provisioner, prov_data, provider, setup_provid
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: Provisioning
         initialEstimate: 1/4h
     """
     template_name = provider.data['provisioning']['template']

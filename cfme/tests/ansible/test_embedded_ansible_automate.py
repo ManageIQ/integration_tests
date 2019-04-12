@@ -236,7 +236,7 @@ def test_automate_ansible_playbook_method_type_crud(appliance, ansible_repositor
     """CRUD test for ansible playbook method.
 
     Polarion:
-        assignee: dmisharo
+        assignee: sbulage
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/12h
@@ -260,7 +260,7 @@ def test_automate_ansible_playbook_method_type(request, appliance, domain, names
     """Tests execution an ansible playbook via ansible playbook method using Simulation.
 
     Polarion:
-        assignee: dmisharo
+        assignee: sbulage
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
@@ -282,7 +282,7 @@ def test_automate_ansible_playbook_method_type(request, appliance, domain, names
 def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: sbulage
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
@@ -318,7 +318,8 @@ def test_embedded_ansible_custom_button_localhost(full_template_vm_modscope, cus
         appliance, service_request, service, ansible_catalog_item):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: sbulage
+        casecomponent: Ansible
         initialEstimate: 1/4h
     """
     with update(custom_vm_button):
@@ -341,7 +342,8 @@ def test_embedded_ansible_custom_button_target_machine(full_template_vm_modscope
         ansible_credential, appliance, service_request, service):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: sbulage
+        casecomponent: Ansible
         initialEstimate: 1/4h
     """
     with update(custom_vm_button):
@@ -364,7 +366,8 @@ def test_embedded_ansible_custom_button_specific_hosts(full_template_vm_modscope
         ansible_credential, appliance, service_request, service):
     """
     Polarion:
-        assignee: dmisharo
+        assignee: sbulage
+        casecomponent: Ansible
         initialEstimate: 1/4h
     """
     with update(custom_vm_button):

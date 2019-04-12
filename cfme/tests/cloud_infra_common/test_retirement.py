@@ -146,6 +146,7 @@ def test_retirement_now(retire_vm):
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: Provisioning
         initialEstimate: 1/6h
     """
     # For 5.7 capture two times to assert the retire time is within a window.
@@ -170,6 +171,7 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged, appliance)
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: Provisioning
         initialEstimate: 1/6h
     """
     # Tag the VM with lifecycle for full retirement based on parameter
@@ -208,6 +210,7 @@ def test_set_retirement_date(retire_vm, warn):
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: Provisioning
         initialEstimate: 1/6h
     """
     # TODO retirement supports datetime (no tz) in gaprindashvili/59z, update accordingly
@@ -227,6 +230,7 @@ def test_set_retirement_offset(retire_vm, warn):
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: Provisioning
         initialEstimate: 1/15h
     """
     num_hours = 3
@@ -252,6 +256,7 @@ def test_unset_retirement_date(retire_vm):
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: Provisioning
         initialEstimate: 1/6h
     """
     num_days = 3
@@ -276,6 +281,7 @@ def test_resume_retired_instance(retire_vm, provider, remove_date):
 
     Polarion:
         assignee: tpapaioa
+        casecomponent: Provisioning
         initialEstimate: 1/2h
     """
     num_days = 5

@@ -15,7 +15,8 @@ pytestmark = [
 def test_number_of_cpu(provider, soft_assert):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view_details = navigate_to(provider, 'Details')
@@ -31,7 +32,8 @@ def test_number_of_cpu(provider, soft_assert):
 def test_node_memory(provider):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view_details = navigate_to(provider, 'Details')

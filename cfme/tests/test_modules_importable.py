@@ -31,6 +31,7 @@ def test_import_own_module(module_path):
     """
     Polarion:
         assignee: mshriver
+        casecomponent: Appliance
         initialEstimate: 1/4h
     """
     if module_path in KNOWN_FAILURES:

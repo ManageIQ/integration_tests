@@ -92,7 +92,8 @@ def test_set_ownership(appliance, template, from_detail):
         test_flag: rest
 
     Polarion:
-        assignee: nansari
+        assignee: pvala
+        casecomponent: Rest
         initialEstimate: 1/8h
     """
     if "set_ownership" not in appliance.rest_api.collections.templates.action.all:

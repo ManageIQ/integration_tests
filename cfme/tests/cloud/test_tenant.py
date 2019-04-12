@@ -55,6 +55,7 @@ def test_tenant_crud(tenant):
     Polarion:
         assignee: rhcf3_machine
         initialEstimate: 1/4h
+        casecomponent: Cloud
     """
 
     with update(tenant):

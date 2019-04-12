@@ -16,6 +16,7 @@ def test_zone_crud(soft_assert):
         assignee: anikifor
         caseimportance: low
         initialEstimate: 1/15h
+        casecomponent: WebUI
     """
     zc = current_appliance.collections.zones
     # CREATE
@@ -46,7 +47,7 @@ def test_zone_add_cancel_validation():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/20h
     """
@@ -67,7 +68,7 @@ def test_zone_change_appliance_zone(request, appliance):
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/15h
     """
@@ -92,6 +93,7 @@ def test_zone_add_dupe(appliance, request):
     """
     Polarion:
         assignee: anikifor
+        casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/4h
     """
@@ -118,6 +120,7 @@ def test_zone_add_maxlength(request, soft_assert):
     """
     Polarion:
         assignee: anikifor
+        casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/4h
     """
@@ -138,7 +141,7 @@ def test_zone_add_blank_name():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: WebUI
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/8h
@@ -157,7 +160,7 @@ def test_zone_add_blank_description():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: WebUI
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/8h
@@ -179,7 +182,7 @@ def test_add_zone_windows_domain_credentials(request):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
-        casecomponent: Configuration
+        casecomponent: WebUI
     """
     zc = current_appliance.collections.zones.all()
     values = {'username': 'userid',
@@ -208,7 +211,7 @@ def test_remove_zone_windows_domain_credentials():
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
-        casecomponent: Configuration
+        casecomponent: WebUI
     """
     zc = current_appliance.collections.zones.all()
     values = {'username': 'userid',

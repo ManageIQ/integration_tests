@@ -288,7 +288,8 @@ def test_delete_button_should_appear_after_save_vm(request, vm_view):
     """Delete button appears only after load, not after save
 
     Polarion:
-        assignee: mmojzis
+        assignee: anikifor
+        casecomponent: WebUI
         initialEstimate: 1/10h
     """
     filter_name = fauxfactory.gen_alphanumeric()

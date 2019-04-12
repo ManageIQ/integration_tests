@@ -131,6 +131,7 @@ def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, r
 
     Polarion:
         assignee: nansari
+        casecomponent: Services
         initialEstimate: 1/4h
     """
     vm_name = catalog_item.prov_data['catalog']["vm_name"]

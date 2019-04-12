@@ -59,6 +59,7 @@ def test_metrics_collection(clean_setup_provider, provider, enable_candu):
     Polarion:
         assignee: nachandr
         initialEstimate: 1/4h
+        casecomponent: CandU
     """
     metrics_tbl = store.current_appliance.db.client['metrics']
     mgmt_systems_tbl = store.current_appliance.db.client['ext_management_systems']

@@ -104,6 +104,7 @@ def test_tag_cloud_objects(tagging_check, cloud_test_item, tag_place):
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/12h
     """
     tagging_check(cloud_test_item, tag_place)
@@ -124,6 +125,7 @@ def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/4h
     """
     check_item_visibility(cloud_test_item, visibility)
@@ -137,6 +139,7 @@ def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/12h
     """
     tagging_check(infra_test_item, tag_place)
@@ -156,6 +159,7 @@ def test_tagvis_infra_object(infra_test_item, check_item_visibility, visibility,
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/12h
     """
     check_item_visibility(infra_test_item, visibility)
@@ -172,7 +176,7 @@ def test_tagvis_tag_host_vm_combination():
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -185,7 +189,7 @@ def test_tagvis_config_manager_provider():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.9
@@ -206,7 +210,7 @@ def test_tagvis_storage_provider_children():
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
         testSteps:
@@ -226,7 +230,7 @@ def test_tagvis_cluster_change():
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -243,7 +247,7 @@ def test_tagvis_vm_and_template_modified():
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -259,7 +263,7 @@ def test_tagvis_host_change():
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -275,7 +279,7 @@ def test_tagvis_tag_and_cluster_combination():
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -291,7 +295,7 @@ def test_tagvis_tag_cluster_vm_combination():
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -309,7 +313,7 @@ def test_tagvis_cluster_and_vm_combination():
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -325,7 +329,7 @@ def test_tagvis_tag_and_host_combination():
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -342,7 +346,7 @@ def test_tagvis_tag_and_vm_combination():
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -358,7 +362,7 @@ def test_tagvis_ldap_group_host():
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -371,7 +375,7 @@ def test_tagvis_cloud_host_aggregates():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: Cloud
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
         testSteps:
@@ -392,7 +396,7 @@ def test_tagvis_storage_managers():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
         testSteps:
@@ -416,7 +420,7 @@ def test_tagvis_configuration_management_configured_system():
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
     """
@@ -429,7 +433,7 @@ def test_tagvis_group_filter_network_provider():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: Cloud
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
         testSteps:
@@ -450,7 +454,7 @@ def test_tagvis_infra_networking_switch():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: Infra
+        casecomponent: Tagging
         caseimportance: low
         initialEstimate: 1/8h
         testSteps:
@@ -471,7 +475,7 @@ def test_tagvis_performance_reports():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/3h
         testSteps:

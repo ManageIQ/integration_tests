@@ -55,6 +55,7 @@ def test_dialog_element_regex_validation(appliance, dialog_cat_item):
 
     Polarion:
         assignee: nansari
+        casecomponent: Services
         caseimportance: high
         initialEstimate: 1/16h
     """

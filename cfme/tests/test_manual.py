@@ -636,6 +636,7 @@ def test_ec2_public_images():
         assignee: mmojzis
         caseimportance: critical
         initialEstimate: 2/3h
+        casecomponent: Cloud
     """
     pass
 
@@ -1263,6 +1264,7 @@ def test_storage_ebs_volume_crud():
         assignee: mmojzis
         initialEstimate: 1/4h
         startsin: 5.8
+        casecomponent: Cloud
     """
     pass
 
@@ -1604,9 +1606,10 @@ def test_edit_provider_request_task():
     Note: Only Option field can be edited
 
     Polarion:
-        assignee: mkourim
+        assignee: pvala
         caseimportance: medium
         initialEstimate: 1/4h
+        casecomponent: Rest
     """
     pass
 
@@ -3478,6 +3481,7 @@ def test_group_quota_via_ssui():
     Polarion:
         assignee: sshveta
         initialEstimate: 1/4h
+        casecomponent: SelfServiceUI
     """
     pass
 
@@ -4093,7 +4097,7 @@ def test_provider_specific_vm():
     2) Repeat it for all the providers
 
     Polarion:
-        assignee: mkourim
+        assignee: pvala
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
@@ -4399,6 +4403,7 @@ def test_update_yum_bad_version_59017():
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     pass
 
@@ -4506,6 +4511,7 @@ def test_verify_ldap_group_lookup_fails_with_correct_error_message_for_invalid_u
     Polarion:
         assignee: apagac
         caseimportance: low
+        casecomponent: WebUI
         caseposneg: negative
         initialEstimate: 1/4h
         title: verify ldap group lookup fails with correct error message
@@ -4617,6 +4623,7 @@ def test_storage_ebs_snapshot_create():
     Polarion:
         assignee: mmojzis
         caseimportance: medium
+        casecomponent: Cloud
         initialEstimate: 1/5h
         startsin: 5.8
     """
@@ -4788,8 +4795,9 @@ def test_edit_request_task():
     Note: Only Option field can be edited
 
     Polarion:
-        assignee: mkourim
+        assignee: pvala
         caseimportance: medium
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     pass
@@ -5092,6 +5100,7 @@ def test_storage_object_store_container_edit_tag_openstack():
     Polarion:
         assignee: mmojzis
         caseimportance: medium
+        casecomponent: Cloud
         initialEstimate: 1/8h
         startsin: 5.7
     """
@@ -5113,6 +5122,7 @@ def test_storage_ebs_volume_detach():
     Polarion:
         assignee: mmojzis
         initialEstimate: 1/6h
+        casecomponent: Cloud
         startsin: 5.8
     """
     pass
@@ -6119,6 +6129,7 @@ def test_config_manager_remove_objects_ansible_tower_310():
     Polarion:
         assignee: nachandr
         caseimportance: medium
+        casecomponent: Ansible
         initialEstimate: 1/4h
         startsin: 5.7
     """
@@ -6265,6 +6276,7 @@ def test_ec2_flavor_list_up_to_date():
         assignee: mmojzis
         casecomponent: Cloud
         initialEstimate: 1/3h
+        casecomponent: Cloud
     """
     pass
 
@@ -6280,6 +6292,7 @@ def test_verify_ldap_user_login_when_email_has_an_apostrophe_character():
     Polarion:
         assignee: apagac
         caseimportance: low
+        casecomponent: Auth
         initialEstimate: 1/3h
         title: verify ldap user login when email has an apostrophe character
     """
@@ -6687,6 +6700,7 @@ def test_verify_two_factor_authentication_works_with_user_password_and_otp():
     Polarion:
         assignee: apagac
         initialEstimate: 1/3h
+        casecomponent: Appliance
         title: verify two factor authentication works with user password and otp.
     """
     pass
@@ -6955,8 +6969,9 @@ def test_tenant_parent_name_rest():
     reflected in api calls
 
     Polarion:
-        assignee: mkourim
+        assignee: pvala
         caseimportance: medium
+        casecomponent: Rest
         initialEstimate: 1/4h
         upstream: yes
     """
@@ -6968,7 +6983,7 @@ def test_tenant_parent_name_rest():
 @pytest.mark.tier(2)
 def test_utilization_host():
     """
-    Verify гutilication data from host
+    Verify utilication data from host
 
     Polarion:
         assignee: nachandr
@@ -7489,7 +7504,7 @@ def test_automate_method_copy():
     Additional info: https://bugzilla.redhat.com/show_bug.cgi?id=1500956
 
     Polarion:
-        assignee: dmisharo
+        assignee: ghubale
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/8h
@@ -8026,6 +8041,7 @@ def test_storage_ebs_snapshot_delete():
     Polarion:
         assignee: mmojzis
         caseimportance: medium
+        casecomponent: Cloud
         initialEstimate: 1/15h
         startsin: 5.8
     """
@@ -8043,6 +8059,7 @@ def test_embedded_ansible_update_bad_version_59017():
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
+        casecomponent: Appliance
     """
     pass
 
@@ -8150,6 +8167,7 @@ def test_ec2_security_group_record_values():
     Polarion:
         assignee: mmojzis
         caseimportance: medium
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     pass
@@ -8861,6 +8879,7 @@ def test_storage_ebs_volume_attach():
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/6h
         startsin: 5.8
     """
@@ -9106,7 +9125,7 @@ def test_orphaned_vms_get_excluded_from_used_quota_counts():
     https://bugzilla.redhat.com/show_bug.cgi?id=1515979
 
     Polarion:
-        assignee: mkourim
+        assignee: ghubale
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
@@ -9457,8 +9476,9 @@ def test_automation_request_task():
     Note: Only Option field can be edited
 
     Polarion:
-        assignee: mkourim
+        assignee: pvala
         caseimportance: medium
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     pass
@@ -9552,8 +9572,9 @@ def test_active_tasks_get_timed_out_when_they_run_too_long():
 def test_replication_central_admin_adhoc_provision_template():
     """
     Polarion:
-        assignee: tpapaioa
+        assignee: jhenner
         caseimportance: medium
+        casecomponent: Replication
         initialEstimate: 1/6h
     """
     pass
@@ -12525,6 +12546,7 @@ def test_storage_ebs_added_in_ec2_provider():
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/10h
         startsin: 5.8
     """
@@ -12601,6 +12623,7 @@ def test_storage_ebs_volume_crud_from_manager_list():
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/4h
         startsin: 5.8
     """
@@ -12842,6 +12865,7 @@ def test_candu_collection_tab():
 
     Polarion:
         assignee: nachandr
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     pass
@@ -12912,6 +12936,7 @@ def test_storage_ebs_added():
     Polarion:
         assignee: mmojzis
         caseimportance: critical
+        casecomponent: Cloud
         initialEstimate: 1/10h
         startsin: 5.8
     """
@@ -12996,6 +13021,7 @@ def test_config_manager_add_multiple_times_ansible_tower_243():
         assignee: nachandr
         caseimportance: medium
         caseposneg: negative
+        casecomponent: Ansible
         initialEstimate: 1/4h
         startsin: 5.7
     """

@@ -401,6 +401,7 @@ def test_product_info(appliance):
     Polarion:
         assignee: pvala
         initialEstimate: 1/3h
+        casecomponent: Rest
     """
     assert all(item in appliance.rest_api.product_info for item in
                ('copyright', 'name', 'name_full', 'support_website', 'support_website_text'))

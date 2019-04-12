@@ -35,6 +35,7 @@ def test_tag_vis_vm(tagged_vm, user_restricted):
     """
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/4h
     """
     with user_restricted:
@@ -133,6 +134,7 @@ def test_tag_expression_and_condition(
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/4h
     """
     first_vm, _ = vms_for_tagging
@@ -163,6 +165,7 @@ def test_tag_expression_or_condition(
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/4h
     """
     first_vm, second_vm = vms_for_tagging
@@ -193,6 +196,7 @@ def test_tag_expression_not_condition(
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/4h
     """
     first_vm, second_vm = vms_for_tagging
@@ -221,6 +225,7 @@ def test_tag_expression_not_and_condition(
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/4h
     """
     first_vm, second_vm = vms_for_tagging
@@ -256,6 +261,7 @@ def test_tag_expression_not_or_condition(
 
     Polarion:
         assignee: anikifor
+        casecomponent: Tagging
         initialEstimate: 1/4h
     """
     first_vm, _ = vms_for_tagging
@@ -280,7 +286,7 @@ def test_tag_expression_and_with_or_with_not():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.9
@@ -297,7 +303,7 @@ def test_tag_expression_and_with_or():
     """
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.9

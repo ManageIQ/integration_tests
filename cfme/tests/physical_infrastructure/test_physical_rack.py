@@ -23,6 +23,7 @@ def test_physical_rack_details_dropdowns(physical_rack):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_rack.refresh()
@@ -33,6 +34,7 @@ def test_physical_racks_view_dropdowns(appliance, physical_rack):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Infra
         initialEstimate: 1/4h
     """
     physical_racks_view = navigate_to(appliance.collections.physical_racks, 'All')

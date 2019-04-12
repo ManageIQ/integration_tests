@@ -118,6 +118,7 @@ def test_verify_rss_links_from_dashboards(dashboards):
     Polarion:
         assignee: jhenner
         caseimportance: high
+        casecomponent: WebUI
         initialEstimate: 1/4h
     """
     wait_for(

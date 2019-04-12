@@ -24,6 +24,7 @@ def test_idle(appliance, request, scenario):
 
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: CandU
         initialEstimate: 1/4h
     """
     from_ts = int(time.time() * 1000)

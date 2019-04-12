@@ -67,6 +67,7 @@ def test_host_most_recent_hour_graph_screen(graph_type, provider, host, enable_c
     Polarion:
         assignee: nachandr
         initialEstimate: 1/4h
+        casecomponent: CandU
     """
 
     host.wait_candu_data_available(timeout=1200)
@@ -126,6 +127,7 @@ def test_host_graph_screen(provider, interval, graph_type, host, enable_candu):
         assignee: nachandr
         caseimportance: medium
         initialEstimate: 1/4h
+        casecomponent: CandU
     """
     wait_for(
         host.capture_historical_data,

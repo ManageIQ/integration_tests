@@ -63,6 +63,7 @@ def test_tagvis_network_provider_children(provider, appliance, request, relation
     Polarion:
         assignee: anikifor
         initialEstimate: 1/8h
+        casecomponent: Tagging
     """
     collection = appliance.collections.network_providers.filter({'provider': provider})
     network_provider = collection.all()[0]
@@ -104,5 +105,6 @@ def test_network_tagvis(check_item_visibility, entity, visibility):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: Tagging
     """
     check_item_visibility(entity, visibility)

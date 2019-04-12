@@ -71,7 +71,8 @@ def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
         1627758
 
     Polarion:
-        assignee: tpapaioa
+        assignee: ghubale
+        casecomponent: Automate
         initialEstimate: 1/3h
     """
     num_days = 5

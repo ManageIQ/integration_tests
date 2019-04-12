@@ -148,6 +148,7 @@ def test_create_volume_backup(volume_backup):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     assert volume_backup.exists
@@ -159,6 +160,7 @@ def test_create_volume_incremental_backup(incremental_backup):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     assert incremental_backup.exists
@@ -170,6 +172,7 @@ def test_incr_backup_of_attached_volume_crud(appliance, provider, request, attac
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     backup_name = fauxfactory.gen_alpha()
@@ -201,6 +204,7 @@ def test_create_backup_of_volume_with_type(volume_backup_with_type):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     assert volume_backup_with_type.exists
@@ -212,6 +216,7 @@ def test_restore_volume_backup(volume_backup):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     if volume_backup.status == 'available':
@@ -225,6 +230,7 @@ def test_restore_incremental_backup(incremental_backup):
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     if incremental_backup.status == 'available':

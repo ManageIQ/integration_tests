@@ -47,6 +47,7 @@ def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
     """
     Polarion:
         assignee: jhenner
+        casecomponent: Provisioning
         initialEstimate: 1/6h
     """
     provision_type = 'VMware'
@@ -66,6 +67,7 @@ def test_vm_clone_neg(provider, clone_vm_name, create_vm):
 
     Polarion:
         assignee: jhenner
+        casecomponent: Provisioning
         initialEstimate: 1/6h
     """
     provision_type = 'VMware'

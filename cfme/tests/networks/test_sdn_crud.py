@@ -25,6 +25,7 @@ def test_sdn_crud(provider, appliance):
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
         initialEstimate: 1/2h
     """
     collection = appliance.collections.network_providers.filter({'provider': provider})

@@ -47,6 +47,7 @@ def test_get_physical_infra_provider_power_event(appliance, physical_server, pro
     """
     Polarion:
         assignee: rhcf3_machine
+        casecomponent: Rest
         initialEstimate: 1/4h
     """
     previous_num_events = enumerate_physical_infra_provider_events(appliance)

@@ -57,6 +57,7 @@ def test_provision_vm_to_virtual_network(appliance, setup_provider, provider,
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Provisioning
         initialEstimate: 1/4h
     """
     vm_name = random_vm_name('provd')

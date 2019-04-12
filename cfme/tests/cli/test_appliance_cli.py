@@ -30,7 +30,7 @@ def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: Configuration
+        casecomponent: Appliance
         initialEstimate: 1/6h
     """
     app = temp_appliance_preconfig_funcscope
@@ -119,7 +119,7 @@ def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: Configuration
+        casecomponent: Appliance
         initialEstimate: 1/3h
     """
     hostname = dedicated_db_appliance.hostname
@@ -137,6 +137,7 @@ def test_appliance_console_cli_external_auth(auth_type, ipa_crud, configured_app
     Polarion:
         assignee: sbulage
         caseimportance: high
+        casecomponent: Auth
         initialEstimate: 1/4h
     """
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
@@ -170,6 +171,7 @@ def test_appliance_console_cli_ipa(ipa_crud, configured_appliance, no_ipa_config
         assignee: sbulage
         caseimportance: high
         initialEstimate: 1/4h
+        casecomponent: Auth
     """
     ipa_args = ipa_crud.as_external_value()
     configured_appliance.appliance_console_cli.configure_ipa(**ipa_args)
@@ -184,7 +186,7 @@ def test_appliance_console_cli_extend_storage(unconfigured_appliance):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: Configuration
+        casecomponent: Appliance
         initialEstimate: 1/6h
     """
     unconfigured_appliance.ssh_client.run_command('appliance_console_cli -t /dev/vdb')
@@ -200,7 +202,7 @@ def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: Configuration
+        casecomponent: Appliance
         initialEstimate: 1/6h
     """
     unconfigured_appliance.ssh_client.run_command('appliance_console_cli -l /dev/vdb')
@@ -217,7 +219,7 @@ def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, ap
     Polarion:
         assignee: sbulage
         caseimportance: high
-        casecomponent: Configuration
+        casecomponent: Appliance
         initialEstimate: 1/6h
     """
     unconfigured_appliance.appliance_console_cli.configure_appliance_dedicated_db(

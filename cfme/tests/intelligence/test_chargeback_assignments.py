@@ -19,6 +19,7 @@ def test_assign_compute_enterprise(appliance, virtualcenter_provider):
     Polarion:
         assignee: tpapaioa
         initialEstimate: 1/4h
+        casecomponent: CandU
     """
     view = navigate_to(appliance.server, 'Chargeback')
 
@@ -41,6 +42,8 @@ def test_assign_compute_provider(appliance, virtualcenter_provider):
     Polarion:
         assignee: tpapaioa
         initialEstimate: 1/4h
+        casecomponent: CandU
+
     """
     view = navigate_to(appliance.server, 'Chargeback')
 
@@ -137,6 +140,7 @@ def test_assign_storage_datastores(appliance, virtualcenter_provider):
     Polarion:
         assignee: tpapaioa
         initialEstimate: 1/4h
+        casecomponent: CandU
     """
     view = navigate_to(appliance.server, 'Chargeback')
 

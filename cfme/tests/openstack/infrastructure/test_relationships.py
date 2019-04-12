@@ -20,7 +20,8 @@ pytestmark = [
 def test_assigned_roles(provider):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(provider, 'Details')
@@ -35,7 +36,8 @@ def test_assigned_roles(provider):
 def test_nodes(provider):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(provider, 'Details')
@@ -48,7 +50,8 @@ def test_nodes(provider):
 def test_templates(provider, soft_assert):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(provider, 'Details')
@@ -68,7 +71,8 @@ def test_templates(provider, soft_assert):
 def test_stacks(provider):
     """
     Polarion:
-        assignee: rhcf3_machine
+        assignee: mnadeem
+        casecomponent: Cloud
         initialEstimate: 1/4h
     """
     view = navigate_to(provider, 'Details')

@@ -194,6 +194,7 @@ def test_advanced_search_registry_element(request, appliance):
     Polarion:
         assignee: anikifor
         initialEstimate: 1/4h
+        casecomponent: WebUI
     """
     view = navigate_to(VmsInstances(appliance=appliance), 'All')
     view.search.open_advanced_search()
