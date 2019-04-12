@@ -65,3 +65,26 @@ def test_dialog_element_regex_validation(appliance, dialog_cat_item):
     wait_for(lambda: view.submit_button.disabled, timeout=7)
     view.fields(ele_name).fill("test_123")
     wait_for(lambda: not view.submit_button.disabled, timeout=7)
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_dialog_text_area_element_regex_validation():
+    """ Tests Service Dialog Elements with regex validation
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        startsin: 5.10
+        caseimportance: high
+        testSteps:
+            1. Create a dialog. Set regex_validation in text area
+            2. Use the dialog in a catalog.
+            3. Order catalog.
+        expectedResults:
+            1.
+            2.
+            3. Regex validation should work
+    """
+    pass

@@ -59,8 +59,59 @@ def test_dropdownlist_required_dialog_element(appliance, catalog_item):
     Polarion:
         assignee: nansari
         initialEstimate: 1/4h
+        testtype: functional
         casecomponent: Services
+        startsin: 5.10
     """
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     view = navigate_to(service_catalogs, 'Order')
     assert view.submit_button.disabled
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.parametrize('element_type', ['text_box', 'checkbox', 'text_area', 'radiobutton',
+                                          'date_picker', 'timepicker', 'tagcontrol'])
+def test_required_dialog_elements(element_type):
+    """ Tests service text_box dialog required element
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        caseimportance: high
+        startsin: 5.10
+        testSteps:
+            1. Create a dialog. Set required true to element
+            2. Use the dialog in a catalog.
+            3. Order catalog.
+         expectedResults:
+            1.
+            2.
+            3. Submit button should be disabled
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_validate_not_required_dialog_element():
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        caseimportance: high
+        startsin: 5.10
+        testSteps:
+            1. Create a dialog with a field which needs to 'Validate' but is not 'Required'
+            2. Execute the dialog as a Catalog Service
+            3. Try submitting the dialog only with the 'Required' Fields
+        expectedResults:
+            1.
+            2.
+            3. It should be able to submit the form with only 'Required' fields
+
+    Bugzilla:
+        1692736
+    """
+    pass

@@ -141,21 +141,6 @@ def test_dialogs_should_only_run_once():
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
-def test_dialog_dropdown_elements_should_honour_defaults():
-    """ Dialog dropdown elements should honour defaults
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.8
-        tags: service
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
 def test_triggered_refresh_shouldnt_occurs_for_dialog_after_changing_type_to_static():
     """ Triggered Refresh shouldn't Occurs for Dialog After Changing Type to Static
     Polarion:
@@ -184,23 +169,6 @@ def test_timepicker_should_show_date_when_chosen_once():
         tags: service
     Bugzilla:
         1638079
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_check_default_value_setting_for_all_options_in_dialog():
-    """ Check default value setting for all options in Dialog
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.7
-        tags: service
-    Bugzilla:
-        1471964
     """
     pass
 
@@ -490,21 +458,25 @@ def test_dialog_dropdown_ui_values_in_the_dropdown_should_be_visible_in_edit_mod
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_service_dialog_default_values_should_be_rendered_in_dialog_fields():
+@pytest.mark.tier(1)
+@pytest.mark.parametrize('element_type', ['dropdown', 'text_box', 'checkbox', 'text_area',
+                                          'radiobutton', 'date_picker', 'timepicker', 'tagcontrol'])
+def test_dialog_elements_should_display_default_value(element_type):
     """
     Polarion:
         assignee: nansari
         casecomponent: Services
-        testtype: functional
         initialEstimate: 1/8h
-        startsin: 5.7
-        tags: service
+        startsin: 5.10
+        caseimportance: high
         testSteps:
-            1. Create a dialog .set default value
-            2. Use the dialog in a catalog .
+            1. Create a dialog. Set default value
+            2. Use the dialog in a catalog.
             3. Order catalog.
-            4. Default values should be shown
+        expectedResults:
+            1.
+            2.
+            3. Default values should be shown
     Bugzilla:
         1385898
     """
