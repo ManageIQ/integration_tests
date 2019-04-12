@@ -392,9 +392,10 @@ class ConfigurationView(BaseLoggedInPage):
     @property
     def in_configuration(self):
         return (
-            self.accordions.settings.is_displayed and
-            self.accordions.accesscontrol.is_displayed and
-            self.accordions.diagnostics.is_displayed and
+            self.navigation.currently_selected == [] and
+            self.accordions.settings.is_displayed or
+            self.accordions.accesscontrol.is_displayed or
+            self.accordions.diagnostics.is_displayed or
             self.accordions.database.is_displayed)
 
     @property
