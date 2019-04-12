@@ -50,7 +50,10 @@ class LogDepotType(object):
             ftp_password = self.credentials["password"]
             # if it's not anonymous using predefined credentials
             upload_dir = "/"
-        return FTPClient(self.machine_ip, ftp_user_name, ftp_password, upload_dir)
+        return FTPClient(self.machine_ip,
+                         ftp_user_name,
+                         ftp_password,
+                         upload_dir)
 
 
 def pytest_generate_tests(metafunc):
@@ -73,33 +76,24 @@ def pytest_generate_tests(metafunc):
                 hostname: ftp.example.com
                 use_for_log_collection: True
     """
-    if metafunc.function.__name__ == "test_collect_unconfigured":
+    if metafunc.function.__name__ == 'test_collect_unconfigured':
         return
 
-    fixtures = ["log_depot"]
+    fixtures = ['log_depot']
     data = conf.cfme_data.get("log_db_operations", {})
     depots = []
     ids = []
     if not data:
-        pytest.skip("No log_db_operations information!")
-    creds = conf.credentials[data["credentials"]]
-    for protocol, proto_data in data["protocols"].items():
-        if proto_data["use_for_log_collection"]:
-            depots.append(
-                [
-                    LogDepotType(
-                        protocol,
-                        creds,
-                        proto_data.get("sub_folder"),
-                        proto_data.get("path_on_host"),
-                    )
-                ]
-            )
+        pytest.skip('No log_db_operations information!')
+    creds = conf.credentials[data['credentials']]
+    for protocol, proto_data in data['protocols'].items():
+        if proto_data['use_for_log_collection']:
+            depots.append([LogDepotType(
+                protocol, creds,
+                proto_data.get('sub_folder'), proto_data.get('path_on_host'))])
             ids.append(protocol)
-    if metafunc.function.__name__ in [
-        "test_collect_multiple_servers",
-        "test_collect_single_servers",
-    ]:
+    if metafunc.function.__name__ in ['test_collect_multiple_servers',
+                                      "test_collect_single_servers"]:
         ids = ids[:1]
         depots = depots[:1]
     testgen.parametrize(metafunc, fixtures, depots, ids=ids, scope="function")
@@ -117,34 +111,25 @@ def depot_machine_ip(appliance):
     data = conf.cfme_data.get("log_db_operations", {})
     depot_provider_key = data["log_db_depot_template"]["provider"]
     depot_template_name = data["log_db_depot_template"]["template_name"]
-    vm = deploy_template(
-        depot_provider_key,
-        depot_machine_name,
-        template_name=depot_template_name,
-        timeout=1200,
-    )
+    vm = deploy_template(depot_provider_key,
+                         depot_machine_name,
+                         template_name=depot_template_name,
+                         timeout=1200)
     try:
         wait_for(lambda: vm.ip is not None, timeout=600)
     except TimedOutError:
-        pytest.skip("Depot VM does not have IP address")
+        pytest.skip('Depot VM does not have IP address')
     yield vm.ip
     vm.cleanup()
 
 
 @pytest.fixture(scope="module")
-def configured_external_appliance(
-    temp_appliance_preconfig, app_creds_modscope, temp_appliance_unconfig
-):
+def configured_external_appliance(temp_appliance_preconfig, app_creds_modscope,
+                                  temp_appliance_unconfig):
     hostname = temp_appliance_preconfig.hostname
-    temp_appliance_unconfig.appliance_console_cli.configure_appliance_external_join(
-        hostname,
-        app_creds_modscope["username"],
-        app_creds_modscope["password"],
-        "vmdb_production",
-        hostname,
-        app_creds_modscope["sshlogin"],
-        app_creds_modscope["sshpass"],
-    )
+    temp_appliance_unconfig.appliance_console_cli.configure_appliance_external_join(hostname,
+        app_creds_modscope['username'], app_creds_modscope['password'], 'vmdb_production',
+        hostname, app_creds_modscope['sshlogin'], app_creds_modscope['sshpass'])
     temp_appliance_unconfig.evmserverd.start()
     temp_appliance_unconfig.evmserverd.wait_for_running()
     temp_appliance_unconfig.wait_for_web_ui()
@@ -166,7 +151,7 @@ def configured_depot(log_depot, depot_machine_ip, appliance):
     server_log_depot = appliance.server.collect_logs
     with update(server_log_depot):
         server_log_depot.depot_type = log_depot.protocol
-        if log_depot.protocol != "dropbox":
+        if log_depot.protocol != 'dropbox':
             server_log_depot.depot_name = fauxfactory.gen_alphanumeric()
             server_log_depot.uri = uri
             server_log_depot.username = log_depot.credentials.username
@@ -179,27 +164,20 @@ def check_ftp(appliance, ftp, server_name, server_zone_id, check_ansible_logs=Fa
     server_string = server_name + "_" + str(server_zone_id)
     with ftp:
         # Files must have been created after start with server string in it (for ex. EVM_1)
-        date_group = "(_.*?){4}"
-        zip_files = ftp.filesystem.search(
-            re.compile(r"^.*{}{}[.]zip$".format(server_string, date_group)),
-            directories=False,
-        )
+        date_group = '(_.*?){4}'
+        zip_files = ftp.filesystem.search(re.compile(
+            r"^.*{}{}[.]zip$".format(server_string, date_group)), directories=False)
         assert zip_files, "No logs found!"
         # Collection of Models and Dialogs introduced in 5.10
-        if (
-            appliance.version >= "5.10"
-            and not BZ(1656318, forced_streams=["5.10"]).blocks
-        ):
-            models_files = ftp.filesystem.search(
-                re.compile(r"^Models_.*{}[.]zip$".format(server_string)),
-                directories=False,
+        if appliance.version >= '5.10' and not BZ(1656318, forced_streams=["5.10"]).blocks:
+            models_files = ftp.filesystem.search(re.compile(
+                r"^Models_.*{}[.]zip$".format(server_string)), directories=False
             )
-            assert models_files, "No models files found"
-            dialogs_files = ftp.filesystem.search(
-                re.compile(r"^Dialogs_.*{}[.]zip$".format(server_string)),
-                directories=False,
+            assert models_files, 'No models files found'
+            dialogs_files = ftp.filesystem.search(re.compile(
+                r"^Dialogs_.*{}[.]zip$".format(server_string)), directories=False
             )
-            assert dialogs_files, "No dialogs files found"
+            assert dialogs_files, 'No dialogs files found'
 
     # Check the times of the files by names
     datetimes = []
@@ -214,22 +192,16 @@ def check_ftp(appliance, ftp, server_name, server_zone_id, check_ansible_logs=Fa
             date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
             date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
             # if the file is correct, check ansible logs (~/ROOT/var/log/tower/setup-*) are there
-            logs_ansible = (
-                "ROOT/var/log/tower/setup"
-                if zip_file.name.startswith("Current")
+            logs_ansible = "ROOT/var/log/tower/setup" if zip_file.name.startswith("Current") \
                 else "log/ansible_tower"
-            )
-            if (
-                ftp.login != "anonymous" and check_ansible_logs
-            ):  # can't login as anon using SSH
-                with SSHClient(
-                    hostname=ftp.host, username=ftp.login, password=ftp.password
-                ) as log_ssh:
+            if ftp.login != 'anonymous' and check_ansible_logs:  # can't login as anon using SSH
+                with SSHClient(hostname=ftp.host,
+                               username=ftp.login,
+                               password=ftp.password) as log_ssh:
                     result = log_ssh.run_command(
                         "unzip -l ~{} | grep {}".format(zip_file.path, logs_ansible),
-                        ensure_user=True,
-                    )
-                    assert ".log" in result.output
+                        ensure_user=True)
+                    assert '.log' in result.output
                     log_file_size = result.output.split()[0]
                     assert int(log_file_size) > 0, "Log file is empty!"
 
@@ -241,21 +213,17 @@ def check_ftp(appliance, ftp, server_name, server_zone_id, check_ansible_logs=Fa
     if len(datetimes) > 1:
         for i in range(len(datetimes) - 1):
             dt = datetimes[i + 1][0] - datetimes[i][1]
-            assert (
-                dt.total_seconds() >= 0.0
-            ), "Negative gap between log files ({}, {})".format(
-                datetimes[i][2], datetimes[i + 1][2]
+            assert dt.total_seconds() >= 0.0, (
+                "Negative gap between log files ({}, {})".format(
+                    datetimes[i][2], datetimes[i + 1][2])
             )
 
 
 @pytest.fixture
 def service_request(appliance, ansible_catalog_item):
-    request_descr = "Provisioning Service [{name}] from [{name}]".format(
-        name=ansible_catalog_item.name
-    )
-    service_request_ = appliance.collections.requests.instantiate(
-        description=request_descr
-    )
+    request_descr = \
+        "Provisioning Service [{name}] from [{name}]".format(name=ansible_catalog_item.name)
+    service_request_ = appliance.collections.requests.instantiate(description=request_descr)
     yield service_request_
 
     if service_request_.exists():
@@ -264,14 +232,10 @@ def service_request(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
-@pytest.mark.uncollectif(
-    lambda appliance, log_depot: not appliance.is_downstream
-    and log_depot.protocol == "dropbox",
-    reason="Dropbox test only for downstream version of product",
-)
-def test_collect_log_depot(
-    log_depot, appliance, service_request, configured_depot, request
-):
+@pytest.mark.uncollectif(lambda appliance, log_depot:
+                         not appliance.is_downstream and log_depot.protocol == 'dropbox',
+                         reason='Dropbox test only for downstream version of product')
+def test_collect_log_depot(log_depot, appliance, service_request, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
 
     Will be extended and improved.
@@ -297,40 +261,29 @@ def test_collect_log_depot(
 
     # Start the collection
     # set collect_time as time on dropbox and remove TZ for further comparison
-    tz_name = "America/New_York"
-    collect_time = (
-        datetime.now(timezone("UTC")).astimezone(timezone(tz_name)).replace(tzinfo=None)
-    )
+    tz_name = 'America/New_York'
+    collect_time = datetime.now(timezone('UTC')).astimezone(timezone(tz_name)).replace(tzinfo=None)
     configured_depot.collect_all()
     # Check it on FTP
-    if log_depot.protocol != "dropbox":
-        check_ftp(
-            appliance=appliance,
-            ftp=log_depot.ftp,
-            server_name=appliance.server.name,
-            server_zone_id=appliance.server.zone.id,
-            check_ansible_logs=True,
-        )
-    elif (
-        appliance.is_downstream
-    ):  # check for logs on dropbox, not applicable for upstream
+    if log_depot.protocol != 'dropbox':
+        check_ftp(appliance=appliance, ftp=log_depot.ftp, server_name=appliance.server.name,
+                  server_zone_id=appliance.server.zone.id, check_ansible_logs=True)
+    elif appliance.is_downstream:  # check for logs on dropbox, not applicable for upstream
         try:
-            username = conf.credentials["rh_dropbox"]["username"]
-            password = conf.credentials["rh_dropbox"]["password"]
-            host = conf.cfme_data["rh_dropbox"]["download_host"]
+            username = conf.credentials['rh_dropbox']['username']
+            password = conf.credentials['rh_dropbox']['password']
+            host = conf.cfme_data['rh_dropbox']['download_host']
         except KeyError:
-            pytest.skip("There are no Red Hat Dropbox credentials!")
+            pytest.skip('There are no Red Hat Dropbox credentials!')
 
         dropbox = FTP(host=host, user=username, passwd=password)
         contents = dropbox.nlst()
 
-        server_string = "{}_{}".format(appliance.server.name, appliance.server.zone.id)
-        date_group = "(_.*?){4}"
+        server_string = '{}_{}'.format(appliance.server.name, appliance.server.zone.id)
+        date_group = '(_.*?){4}'
         pattern = re.compile(
-            r"(^{})(.*?){}{}[.]zip$".format(
-                CollectLogsBase.ALERT_PROMPT, server_string, date_group
-            )
-        )
+            r"(^{})(.*?){}{}[.]zip$".format(CollectLogsBase.ALERT_PROMPT,
+                                            server_string, date_group))
         zip_files = filter(pattern.match, contents)
         assert zip_files, "No logs found!"
         # Check the time of the last file
@@ -339,9 +292,9 @@ def test_collect_log_depot(
             # files look like "Current_region_0_default_1_EVM_1_20170127_043343_20170127_051010.zip"
             # 20170127_043343 - date and time
             date = zip_file.split("_")
-            date_from = "{}{}".format(date[-4], date[-3])
+            date_from = '{}{}'.format(date[-4], date[-3])
             # removing ".zip" from the name
-            date_to = "{}{}".format(date[-2], date[-1][:-4])
+            date_to = '{}{}'.format(date[-2], date[-1][:-4])
             try:
                 date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
                 date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
@@ -364,36 +317,25 @@ def test_collect_unconfigured(appliance):
     """
     server_log_depot = appliance.server.collect_logs
     with update(server_log_depot):
-        server_log_depot.depot_type = "anon_ftp"
+        server_log_depot.depot_type = 'anon_ftp'
         server_log_depot.depot_name = fauxfactory.gen_alphanumeric()
         server_log_depot.uri = fauxfactory.gen_alphanumeric()
 
-    view = navigate_to(server_log_depot, "DiagnosticsCollectLogs")
+    view = navigate_to(server_log_depot, 'DiagnosticsCollectLogs')
     # check button is enable after adding log depot
-    assert view.toolbar.collect.item_enabled("Collect all logs") is True
+    assert view.toolbar.collect.item_enabled('Collect all logs') is True
     server_log_depot.clear()
     # check button is disable after removing log depot
-    assert view.toolbar.collect.item_enabled("Collect all logs") is False
+    assert view.toolbar.collect.item_enabled('Collect all logs') is False
 
 
-@pytest.mark.parametrize("from_slave", [True, False], ids=["from_slave", "from_master"])
-@pytest.mark.parametrize(
-    "zone_collect", [True, False], ids=["zone_collect", "server_collect"]
-)
-@pytest.mark.parametrize(
-    "collect_type", ["all", "current"], ids=["collect_all", "collect_current"]
-)
+@pytest.mark.parametrize('from_slave', [True, False], ids=['from_slave', 'from_master'])
+@pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
+@pytest.mark.parametrize('collect_type', ['all', 'current'], ids=['collect_all', 'collect_current'])
 @pytest.mark.tier(3)
-def test_collect_multiple_servers(
-    log_depot,
-    temp_appliance_preconfig,
-    depot_machine_ip,
-    request,
-    configured_external_appliance,
-    zone_collect,
-    collect_type,
-    from_slave,
-):
+def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_machine_ip, request,
+                                  configured_external_appliance, zone_collect, collect_type,
+                                  from_slave):
 
     """
     Polarion:
@@ -404,10 +346,7 @@ def test_collect_multiple_servers(
     appliance = temp_appliance_preconfig
     log_depot.machine_ip = depot_machine_ip
     collect_logs = (
-        appliance.server.zone.collect_logs
-        if zone_collect
-        else appliance.server.collect_logs
-    )
+        appliance.server.zone.collect_logs if zone_collect else appliance.server.collect_logs)
     request.addfinalizer(collect_logs.clear)
 
     @request.addfinalizer
@@ -433,7 +372,7 @@ def test_collect_multiple_servers(
             collect_logs.username = log_depot.credentials.username
             collect_logs.password = log_depot.credentials.password
 
-        if collect_type == "all":
+        if collect_type == 'all':
             collect_logs.collect_all()
         else:
             collect_logs.collect_current()
@@ -442,32 +381,19 @@ def test_collect_multiple_servers(
     first_slave_server = slave_servers[0] if slave_servers else None
 
     if from_slave and zone_collect:
-        check_ftp(
-            appliance, log_depot.ftp, first_slave_server.name, first_slave_server.sid
-        )
-        check_ftp(
-            appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id
-        )
+        check_ftp(appliance, log_depot.ftp, first_slave_server.name, first_slave_server.sid)
+        check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id)
     elif from_slave:
-        check_ftp(
-            appliance, log_depot.ftp, first_slave_server.name, first_slave_server.sid
-        )
+        check_ftp(appliance, log_depot.ftp, first_slave_server.name, first_slave_server.sid)
     else:
-        check_ftp(
-            appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id
-        )
+        check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id)
 
 
-@pytest.mark.parametrize(
-    "zone_collect", [True, False], ids=["zone_collect", "server_collect"]
-)
-@pytest.mark.parametrize(
-    "collect_type", ["all", "current"], ids=["collect_all", "collect_current"]
-)
+@pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
+@pytest.mark.parametrize('collect_type', ['all', 'current'], ids=['collect_all', 'collect_current'])
 @pytest.mark.tier(3)
-def test_collect_single_servers(
-    log_depot, appliance, depot_machine_ip, request, zone_collect, collect_type
-):
+def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request, zone_collect,
+                                collect_type):
     """
     Polarion:
         assignee: anikifor
@@ -491,10 +417,7 @@ def test_collect_single_servers(
 
     uri = log_depot.machine_ip + log_depot.access_dir
     collect_logs = (
-        appliance.server.zone.collect_logs
-        if zone_collect
-        else appliance.server.collect_logs
-    )
+        appliance.server.zone.collect_logs if zone_collect else appliance.server.collect_logs)
     with update(collect_logs):
         collect_logs.depot_type = log_depot.protocol
         collect_logs.depot_name = fauxfactory.gen_alphanumeric()
@@ -502,7 +425,7 @@ def test_collect_single_servers(
         collect_logs.username = log_depot.credentials.username
         collect_logs.password = log_depot.credentials.password
     request.addfinalizer(collect_logs.clear)
-    if collect_type == "all":
+    if collect_type == 'all':
         collect_logs.collect_all()
     else:
         collect_logs.collect_current()
