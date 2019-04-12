@@ -15,6 +15,7 @@ def pytest_generate_tests(metafunc):
     Returns:
         tuple containing (group_name, context)
         where group_name is a string and context is ViaUI/SSUI
+        blabla
     """
     parameter_list = []
     id_list = []

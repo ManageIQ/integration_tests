@@ -207,6 +207,7 @@ class AvailabilityZoneDetails(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
+        # some comment
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
