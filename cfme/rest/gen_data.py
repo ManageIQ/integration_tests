@@ -368,9 +368,12 @@ def automation_requests_data(vm, requests_collection=False, approve=True, num=4)
     return [data for _ in range(num)]
 
 
-def groups(request, appliance, role, num=1, **kwargs):
+def groups(request, appliance, role, tenant, num=1, **kwargs):
+    tenant = kwargs.pop("tenant", appliance.rest_api.collections.tenants.get(name="My Company"))
+    if num > 1 and kwargs:
+        raise Exception("kwargs cannot be used when num is more than 1")
+
     data = []
-    tenant = kwargs.get("tenant", appliance.rest_api.collections.tenants.get(name="My Company"))
     for _ in range(num):
         data.append(
             {
@@ -390,6 +393,9 @@ def groups(request, appliance, role, num=1, **kwargs):
 
 
 def roles(request, appliance, num=1, **kwargs):
+    if num > 1 and kwargs:
+        raise Exception("kwargs cannot be used when num is more than 1")
+
     data = []
     for _ in range(num):
         data.append(
@@ -436,6 +442,10 @@ def tenants(request, appliance, num=1, **kwargs):
     parent = kwargs.pop(
         "parent", appliance.rest_api.collections.tenants.get(name="My Company")
     )
+
+    if num > 1 and kwargs:
+        raise Exception("kwargs cannot be used when num is more than 1")
+
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric()
@@ -454,6 +464,9 @@ def tenants(request, appliance, num=1, **kwargs):
 
 
 def users(request, appliance, num=1, **kwargs):
+    if num > 1 and kwargs:
+        raise Exception("kwargs cannot be used when num is more than 1")
+
     data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(4).lower()
