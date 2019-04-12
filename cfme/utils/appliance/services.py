@@ -39,7 +39,8 @@ class SystemdService(AppliancePlugin):
         with self.appliance.ssh_client as ssh:
             cmd = 'systemctl {} {}'.format(quote(command), quote(unit))
             log_callback('Running {}'.format(cmd))
-            result = ssh.run_command(cmd)
+            result = ssh.run_command(cmd,
+                                     container=self.appliance.ansible_pod_name)
 
         if expected_exit_code is not None and result.rc != expected_exit_code:
             # TODO: Bring back address
