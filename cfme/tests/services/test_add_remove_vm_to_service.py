@@ -7,9 +7,6 @@ from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.services.myservice import MyService
-from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils.log import logger
 
 
 pytestmark = [
@@ -47,31 +44,8 @@ def copy_domain(request, appliance):
     return domain
 
 
-@pytest.fixture(scope='function')
-def myservice(appliance, provider, catalog_item, request):
-    vm_name = catalog_item.prov_data["catalog"]["vm_name"]
-    collection = provider.appliance.provider_based_collection(provider)
-    request.addfinalizer(
-        lambda: collection.instantiate('{}0001'.format(vm_name), provider).cleanup_on_provider())
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
-    service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
-    request_description = catalog_item.name
-    provision_request = appliance.collections.requests.instantiate(request_description,
-                                                                   partial_check=True)
-    provision_request.wait_for_request()
-    assert provision_request.is_finished()
-    service = MyService(appliance, catalog_item.name, vm_name)
-    yield service
-
-    try:
-        service.delete()
-    except Exception as ex:
-        logger.warning('Exception while deleting MyService, continuing: {}'.format(ex.message))
-
-
 @pytest.mark.ignore_stream("upstream")
-def test_add_vm_to_service(myservice, request, copy_domain, new_vm, appliance):
+def test_add_vm_to_service(service_vm, request, copy_domain, new_vm, appliance):
     """Tests adding vm to service
 
     Metadata:
@@ -79,8 +53,12 @@ def test_add_vm_to_service(myservice, request, copy_domain, new_vm, appliance):
 
     Polarion:
         assignee: nansari
+        casecomponent: Services
         initialEstimate: 1/4h
+        tags: service
     """
+
+    myservice, _ = service_vm
     method_torso = """
     def add_to_service
         vm      = $evm.root['vm']
