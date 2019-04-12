@@ -6,6 +6,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 
@@ -18,26 +19,38 @@ def wait_for_ansible(appliance):
 
 
 @pytest.fixture(scope="module")
-def ansible_repository(appliance, wait_for_ansible):
+def ansible_repository(request, appliance, wait_for_ansible):
+    """
+    By default cfme_data.ansible_links.playbook_repositories.embedded_ansible is set for the url,
+    but you can specify it explicitly with @pytest.mark.parametrize decorator on your test function.
+
+    Example:
+    @pytest.mark.parametrize('ansible_repository', ['nuage'], indirect=True)
+    def test_function(ansible_repository):
+        ...
+    """
     repositories = appliance.collections.ansible_repositories
     try:
+        playbooks_yaml = cfme_data.ansible_links.playbook_repositories
+        playbook_name = getattr(request, 'param', 'embedded_ansible')
         repository = repositories.create(
             name=fauxfactory.gen_alpha(),
-            url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
-            description=fauxfactory.gen_alpha())
-    except KeyError:
-        pytest.skip("Skipping since no such key found in yaml")
+            url=getattr(playbooks_yaml, playbook_name),
+            description=fauxfactory.gen_alpha()
+        )
+    except (KeyError, AttributeError):
+        message = "Missing ansible_links content in cfme_data, cannot setup repository"
+        logger.exception(message)  # log the exception for debug of the missing content
+        pytest.skip(message)
     view = navigate_to(repository, "Details")
-    refresh = view.toolbar.refresh.click
     wait_for(
         lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
         timeout=60,
-        fail_func=refresh
+        fail_func=view.toolbar.refresh.click
     )
     yield repository
 
-    if repository.exists:
-        repository.delete()
+    repository.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
