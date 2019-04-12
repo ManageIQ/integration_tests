@@ -2,8 +2,8 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.infrastructure.provider import InfraProvider
 from cfme.common.candu_views import UtilizationZoomView
+from cfme.infrastructure.provider import InfraProvider
 from cfme.tests.candu import compare_data_with_unit
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -79,23 +79,35 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, entity, entity_o
     data = {'interval': interval, 'group_by': gp_by}
     view.options.fill(data)
 
-    graph_zoom = ["cluster_host", "cluster_vm"]
-    avg_graph = graph_type if graph_type in graph_zoom else "{}_vm_host_avg".format(graph_type)
+    entity_graph = entity + '_' + graph_type
 
     # Check graph displayed or not
     try:
         if entity == 'host':
-            graph = getattr(view.interval_type, entity + '_' + graph_type)
+            graph = getattr(view.interval_type, entity_graph)
         elif entity == 'cluster':
-            avg_graph = getattr(view, avg_graph)
+            graph = getattr(view, entity_graph)
     except AttributeError:
-        pytest.fail('{}_{} graph was not displayed'.format(entity, graph_type))
+        pytest.fail('{} graph was not displayed'.format(entity_graph))
     assert graph.is_displayed
+
+    # zoom in button not available with normal graph except Host and VM.
+    # We have to use vm or host average graph for zoom in operation.
+    if entity == 'cluster':
+        graph_zoom = ["cluster_host", "cluster_vm"]
+        entity_graph = entity + '_' + graph_type
+        avg_graph = entity_graph if entity_graph in graph_zoom \
+            else '{}_vm_host_avg'.format(entity_graph)
+        try:
+            avg_graph = getattr(view, avg_graph)
+        except AttributeError:
+            pytest.fail('{} graph was not displayed'.format(entity_graph))
 
     graph.zoom_in()
     view = view.browser.create_view(UtilizationZoomView)
 
     # check for chart and tag London available or not in legend list.
+    # wait, some time graph take time to load
     view.flush_widget_cache()
     assert view.chart.is_displayed
     legends = view.chart.all_legends
