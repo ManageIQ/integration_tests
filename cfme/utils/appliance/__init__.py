@@ -2939,7 +2939,7 @@ class ApplianceStack(LocalStack):
         super(ApplianceStack, self).push(obj)
 
         logger.info("Pushed appliance {} on stack (was {} before) ".format(
-            obj.hostname, getattr(was_before, 'hostname', 'empty')))
+            obj.hostname, was_before.hostname if was_before else 'empty'))
         if obj.browser_steal:
             from cfme.utils import browser
             browser.start()
@@ -2947,11 +2947,10 @@ class ApplianceStack(LocalStack):
     def pop(self):
         was_before = super(ApplianceStack, self).pop()
         current = self.top
-        logger.info(
-            "Popped appliance {} from the stack (now there is {})".format(
-                getattr(was_before, 'address', 'empty'),
-                getattr(current, 'address', 'empty')))
-        if getattr(was_before, 'browser_steal', False):
+        logger.info("Popped appliance %s from the stack (now there is %s)",
+            was_before.hostname if was_before else 'empty',
+            current.hostname if current else 'empty')
+        if was_before and was_before.browser_steal:
             from cfme.utils import browser
             browser.start()
         return was_before
