@@ -31,8 +31,7 @@ def test_rest_metric_rollups():
 @pytest.mark.manual
 @test_requirements.rest
 @pytest.mark.tier(3)
-@pytest.mark.parametrize("auth_type", ["token", "basic_auth"])
-def test_populate_default_dialog_values(auth_type):
+def test_filter_by_flavor_via_api():
     """
     Polarion:
         assignee: pvala
@@ -40,31 +39,78 @@ def test_populate_default_dialog_values(auth_type):
         caseimportance: medium
         initialEstimate: 1/10h
         setup:
-            1. Navigate to Configuration(menu) > Server > Advanced
-                and set `run_automate_methods_on_service_api_submit` to `true`.
-            2. Create a new domain, `domain_1`.
-            3. Create a Method, let's say `method_1` (Method is attached in the Bugzilla 1639413z).
-                This method sets value 2 for static element and 7 for dynamic element,
-                both of which must be reflected in the response.
-            4. Create an instance, let's say `instance_1`.
-            5. Create a Dialog with one static element
-                (name="static", value_type="Integer", read_only=True, required=True)
-                with some default value, and one dynamic element
-                (name="dynamic", value_type="Integer", read_only=True, required=True)
-                with the endpoint pointing to `method_1` which returns default value.
-            6. Create a Catalog, say `catalog_1`.
-            7. Create a Generic Catalog item under the newly create Catalog, say `catalog_item_1`.
-            8. Get the `service_catalog` id and `service_template` id.
+            1.Add a cloud provider.
         testSteps:
-            1. Order the service with the given auth_type
-                and check if the response contains default values that were initially set.
+            1. send a GET request: /api/vms?filter[]=flavor.name="<flavor_name>"
         expectedResults:
-            1. Response must include default values that were initially set.
+            1. Should receive a 200 OK response. Should not get any internal server error.
 
-        Bugzilla:
-            1635673
-            1650252
-            1639413
+    Bugzilla:
+        1596069
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rest
+@pytest.mark.tier(3)
+def test_query_custom_category_via_api():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
+        initialEstimate: 1/10h
+        setup:
+            1. Navigate to `Configuration` and select `Region`.
+            2. Click on Tags and create a custom category.
+        testSteps:
+            1. Send a request: GET /api/categories
+        expectedResults:
+            1. Custom Category must be included in the response
+
+    Bugzilla:
+        1650556
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rest
+@pytest.mark.tier(0)
+def test_bulk_query_attributes():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
+        initialEstimate: 1/10h
+        setup:
+            1. Add an infrastructure provider.
+        testSteps:
+            1. Send a request.
+                POST https://xxxx/api/hosts?expand=resources,tags
+                    &attributes=hostname,id,ems_cluster_id,cpu_total_cores,cpu_cores_per_socket
+                Body: {
+                    "action": "query",
+                    "resources": [{
+                        "ems_cluster_id": ":cluster_id"
+                    }]
+                }
+        expectedResults:
+            1. Response: {
+                "results": [{
+                    "href": "https://xxxx/api/hosts/:hosts_id",
+                    "hostname": "xxxx",
+                    "id": ":hosts_id,
+                    "ems_cluster_id": ":cluster_id",
+                    "cpu_total_cores": 20,
+                    "cpu_cores_per_socket": 10
+                }]
+            }
+
+    Bugzilla:
+        1643342
     """
     pass
 
