@@ -85,7 +85,7 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
     @property
     def advanced_settings(self):
         """GET servers/:id/settings api endpoint to query server configuration"""
-        return self.appliance.rest_api.get(url=self._api_settings_url)
+        return self.appliance.rest_api.get(self._api_settings_url)
 
     def update_advanced_settings(self, settings_dict):
         """PATCH settings from the server's api/server/:id/settings endpoint
