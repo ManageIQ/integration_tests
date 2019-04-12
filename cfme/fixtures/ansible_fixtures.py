@@ -6,6 +6,7 @@ from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 
@@ -29,26 +30,27 @@ def ansible_repository(request, appliance, wait_for_ansible):
         ...
     """
     repositories = appliance.collections.ansible_repositories
-    playbooks = cfme_data.ansible_links.playbook_repositories
     try:
-        playbook = getattr(request, 'param', 'embedded_ansible')
+        playbooks_yaml = cfme_data.ansible_links.playbook_repositories
+        playbook_name = getattr(request, 'param', 'embedded_ansible')
         repository = repositories.create(
             name=fauxfactory.gen_alpha(),
-            url=getattr(playbooks, playbook),
-            description=fauxfactory.gen_alpha())
-    except KeyError:
-        pytest.skip("Skipping since no such key found in yaml")
+            url=getattr(playbooks_yaml, playbook_name),
+            description=fauxfactory.gen_alpha()
+        )
+    except (KeyError, AttributeError):
+        message = "Missing ansible_links content in cfme_data, cannot setup repository"
+        logger.exception(message)  # log the exception for debug of the missing content
+        pytest.skip(message)
     view = navigate_to(repository, "Details")
-    refresh = view.toolbar.refresh.click
     wait_for(
         lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
         timeout=60,
-        fail_func=refresh
+        fail_func=view.toolbar.refresh.click
     )
     yield repository
 
-    if repository.exists:
-        repository.delete()
+    repository.delete_if_exists()
 
 
 @pytest.fixture(scope="module")

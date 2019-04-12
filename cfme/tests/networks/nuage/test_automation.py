@@ -72,9 +72,13 @@ def test_embedded_ansible_executed_with_data_upon_event(request,
 
     enterprise = networks_provider.mgmt.create_enterprise()
     request.addfinalizer(lambda: networks_provider.mgmt.delete_enterprise(enterprise))
-    catch_string = '.*I confirm that username is {} and event is raised for {}.*' \
-        .format(username, enterprise.id)
-    evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log', matched_patterns=[catch_string])
+    evm_tail = LogValidator(
+        '/var/www/miq/vmdb/log/evm.log',
+        matched_patterns=[
+            r'.*I confirm that username is {} and event is raised for {}.*'.format(username,
+                                                                                   enterprise.id)
+        ]
+    )
     evm_tail.fix_before_start()
 
     # LogValidator.validate_logs throws `Failed` exception which inherits `BaseException`.
