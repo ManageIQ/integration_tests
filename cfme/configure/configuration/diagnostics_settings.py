@@ -230,7 +230,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             flash_message = "Log Depot Settings were saved"
         else:
             logger.info('Settings were not updated')
-        view = self.create_view(flash_view, wait=10)  # implicit assert
+        view = self.create_view(flash_view, wait=20)  # implicit assert
         view.flash.assert_message(flash_message)
 
     @property
@@ -381,7 +381,7 @@ class ServerCollectLogsView(ServerDiagnosticsView):
             # compare with the selection in accordion as it can be a slave server
             self.title.text ==
             self.form_expected_title(name=name,
-                                     sid=sid,
+                                     sid=int(sid[1]),
                                      current='' if current is None else ' (current)')
         )
 

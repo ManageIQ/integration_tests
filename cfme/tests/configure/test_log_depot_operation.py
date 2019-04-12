@@ -25,7 +25,7 @@ from cfme.utils.update import update
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 
-pytestmark = [test_requirements.log_depot]
+pytestmark = [pytest.mark.long_running, test_requirements.log_depot]
 
 
 class LogDepotType(object):
