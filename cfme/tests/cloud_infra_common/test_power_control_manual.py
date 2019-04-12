@@ -3,9 +3,9 @@ import pytest
 
 from cfme import test_requirements
 
+pytestmark = [test_requirements.power, pytest.mark.manual]
 
-@pytest.mark.manual
-@test_requirements.power
+
 @pytest.mark.tier(2)
 def test_shutdown_guest_scvmm():
     """
@@ -36,8 +36,6 @@ def test_shutdown_guest_scvmm():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.power
 @pytest.mark.tier(1)
 def test_vm_relationship_datastore_fileshare_scvmm():
     """
@@ -67,9 +65,6 @@ def test_vm_relationship_datastore_fileshare_scvmm():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.power
-@test_requirements.power
 @pytest.mark.tier(2)
 def test_suspend_scvmm2016_from_collection():
     """
@@ -98,8 +93,6 @@ def test_suspend_scvmm2016_from_collection():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.power
 @pytest.mark.tier(2)
 def test_restart_guest_scvmm2016():
     """
@@ -133,8 +126,6 @@ def test_restart_guest_scvmm2016():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.power
 @pytest.mark.tier(2)
 def test_restart_guest_scvmm():
     """
@@ -168,8 +159,6 @@ def test_restart_guest_scvmm():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.power
 @pytest.mark.tier(2)
 def test_power_controls_on_archived_vm():
     """
@@ -201,8 +190,6 @@ def test_power_controls_on_archived_vm():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.power
 @pytest.mark.tier(2)
 def test_power_controls_on_vm_in_stack_cloud():
     """
@@ -234,8 +221,6 @@ def test_power_controls_on_vm_in_stack_cloud():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.power
 @pytest.mark.tier(2)
 def test_power_operations_from_global_region():
     """
@@ -271,8 +256,6 @@ def test_power_operations_from_global_region():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.power
 @pytest.mark.tier(2)
 def test_power_options_on_archived_orphaned_vms_all_page():
     """
@@ -304,8 +287,6 @@ def test_power_options_on_archived_orphaned_vms_all_page():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.power
 @pytest.mark.tier(2)
 def test_check_compliance_policy_option_on_vm_summery_page():
     """
@@ -332,5 +313,31 @@ def test_check_compliance_policy_option_on_vm_summery_page():
 
     Bugzilla:
         1560107
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream("5.10")
+def test_power_states_with_respective_provider():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/12h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.11
+        casecomponent: Control
+        tags: power
+        testSteps:
+            1. Provision Azure Instance
+            2. In Instance detail page, select Resume from Lifecycle menu
+        expectedResults:
+            1.
+            2. Should not have Resume button there or disable button upon provider
+
+    Bugzilla:
+        1541447
     """
     pass

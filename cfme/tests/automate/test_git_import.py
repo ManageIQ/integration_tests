@@ -1,11 +1,13 @@
 import pytest
 from six.moves.urllib.parse import urlparse
 
+from cfme import test_requirements
 from cfme.automate.import_export import AutomateGitRepository
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
+    test_requirements.automate,
     pytest.mark.meta(server_roles="+git_owner"),
 ]
 
@@ -168,3 +170,33 @@ def test_domain_import_git(
     domain = repo.import_domain_from(**{param_type: param_value})
     request.addfinalizer(domain.delete)
     assert domain.exists
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+def test_import_export_domain_with_ansible_method():
+    """This test case tests support of Export/Import of Domain with Ansible Method
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.11
+        casecomponent: Automate
+        tags: automate
+        setup:
+            1. Start server_roles - 'git_owner'
+        testSteps:
+            1. Navigate to Automation > Automate > Import/Export
+            2. Import/Export 'Domain' using ansible method
+        expectedResults:
+            1.
+            2. Domain should get imported and seen in domain list
+
+    Bugzilla:
+        1677575
+    """
+    pass

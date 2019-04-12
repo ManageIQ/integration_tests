@@ -3,9 +3,9 @@ import pytest
 
 from cfme import test_requirements
 
+pytestmark = [test_requirements.quota, pytest.mark.manual]
 
-@pytest.mark.manual
-@test_requirements.quota
+
 @pytest.mark.tier(1)
 def test_custom_service_dialog_quota_flavors():
     """
@@ -40,8 +40,6 @@ def test_custom_service_dialog_quota_flavors():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.quota
 @pytest.mark.tier(3)
 def test_quota_for_simultaneous_service_catalog_request_with_different_users():
     """
@@ -75,9 +73,8 @@ def test_quota_for_simultaneous_service_catalog_request_with_different_users():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.quota
 @pytest.mark.tier(2)
+@pytest.mark.ignore_stream('5.10')
 def test_instance_quota_reconfigure_with_flavors():
     """
     Test reconfiguration of instance using flavors after setting quota but this is RFE which is not
@@ -110,8 +107,6 @@ def test_instance_quota_reconfigure_with_flavors():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.service
 @pytest.mark.tier(3)
 def test_quota_for_ansible_service():
     """
@@ -143,8 +138,6 @@ def test_quota_for_ansible_service():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.quota
 @pytest.mark.tier(1)
 def test_quota_calculation_using_service_dialog_overrides():
     """
@@ -185,8 +178,6 @@ def test_quota_calculation_using_service_dialog_overrides():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.quota
 @pytest.mark.tier(3)
 def test_service_template_provisioning_quota_for_number_of_vms_using_custom_dialog():
     """
@@ -219,8 +210,6 @@ def test_service_template_provisioning_quota_for_number_of_vms_using_custom_dial
     pass
 
 
-@pytest.mark.manual
-@test_requirements.quota
 @pytest.mark.tier(3)
 def test_quota_enforcement_for_cloud_volumes():
     """
@@ -254,8 +243,6 @@ def test_quota_enforcement_for_cloud_volumes():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.quota
 @pytest.mark.tier(2)
 def test_quota_with_invalid_service_request():
     """
@@ -302,8 +289,6 @@ def test_quota_with_invalid_service_request():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.quota
 @pytest.mark.tier(2)
 def test_simultaneous_tenant_quota():
     """
@@ -343,8 +328,6 @@ def test_simultaneous_tenant_quota():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.quota
 @pytest.mark.tier(2)
 def test_notification_show_notification_when_quota_is_exceed():
     """
@@ -372,8 +355,6 @@ def test_notification_show_notification_when_quota_is_exceed():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.quota
 @pytest.mark.tier(1)
 def test_quota_not_fails_after_vm_reconfigure_disk_remove():
     """
@@ -402,8 +383,6 @@ def test_quota_not_fails_after_vm_reconfigure_disk_remove():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.quota
 @pytest.mark.tier(1)
 def test_quota_exceed_mail_with_more_info_link():
     """
@@ -426,8 +405,6 @@ def test_quota_exceed_mail_with_more_info_link():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.quota
 @pytest.mark.tier(1)
 def test_dynamic_product_feature_for_tenant_quota():
     """

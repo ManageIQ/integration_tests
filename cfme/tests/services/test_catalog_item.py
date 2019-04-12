@@ -282,7 +282,7 @@ def test_restricted_catalog_items_select_for_catalog_bundle(appliance, request, 
 def test_catalog_all_page_after_deleting_selected_template():
     """
     Polarion:
-        assignee: ghubale
+        assignee: nansari
         initialEstimate: 1/12h
         caseimportance: low
         caseposneg: positive

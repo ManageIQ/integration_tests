@@ -657,7 +657,7 @@ def test_automate_embedded_method():
     Polarion:
         assignee: ghubale
         casecomponent: Automate
-        caseimportance: medium
+        caseimportance: high
         initialEstimate: 1/12h
         tags: automate
 
@@ -876,7 +876,7 @@ def test_user_requester_for_lifecycle_provision():
     Polarion:
         assignee: ghubale
         casecomponent: Automate
-        caseimportance: medium
+        caseimportance: high
         initialEstimate: 1/6h
         tags: automate
         testSteps:
@@ -894,6 +894,27 @@ def test_user_requester_for_lifecycle_provision():
 
     Bugzilla:
          1671563
+    """
+    pass
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+def test_remove_openshift_deployment_in_automate():
+    """This test case will test successful removal of OpenShift Deployment removed from Automate
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.11
+        casecomponent: Automate
+        tags: automate
+
+    Bugzilla:
+        1672937
     """
     pass
 
@@ -921,3 +942,50 @@ def test_vm_naming_number_padding():
         1688672
     """
     pass
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+def test_vm_name_automate_method():
+    """This test case will check redesign of vm_name automated method
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.11
+        casecomponent: Automate
+        tags: automate
+
+    Bugzilla:
+        1677573
+    """
+    pass
+
+
+@pytest.mark.tier(1)
+def test_null_coalescing_fields():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: Automate
+        tags: automate
+        testSteps:
+            1.  Create a Ruby method or Ansible playbook method with Input Parameters.
+            2.  Use Data Type null coalescing
+            3.  Make the default value something like this : ${#var3} || ${#var2} || ${#var1}
+        expectedResults:
+            1.
+            2.
+            3. Normal null coalescing behavior
+
+    Bugzilla:
+        1698184
+    """
