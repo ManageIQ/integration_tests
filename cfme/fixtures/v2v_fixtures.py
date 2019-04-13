@@ -7,6 +7,7 @@ from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.fixtures.provider import rhel7_minimal
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -255,6 +256,13 @@ def get_data(provider, component, default_value):
     return data
 
 
+def get_migrated_vm(src_vm_obj, target_provider):
+    """Returns the migrated_vm from target_provider"""
+    collection = target_provider.appliance.provider_based_collection(target_provider)
+    migrated_vm = collection.instantiate(src_vm_obj.name, target_provider)
+    return migrated_vm
+
+
 def infra_mapping_default_data(source_provider, provider):
     """
     Default data for infrastructure mapping form.
@@ -285,6 +293,23 @@ def infra_mapping_default_data(source_provider, provider):
         ],
     }
     return infra_mapping_data
+
+
+@pytest.fixture(scope="function")
+def mapping_data_vm_obj_mini(request, appliance, source_provider, provider):
+    """Fixture to return minimal mapping data and vm object for migration plan"""
+    infra_mapping_data = infra_mapping_default_data(source_provider, provider)
+    vm_obj = get_vm(request, appliance, source_provider, template=rhel7_minimal)
+
+    infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
+    mapping = infrastructure_mapping_collection.create(**infra_mapping_data)
+
+    @request.addfinalizer
+    def _cleanup():
+        vm_obj.cleanup_on_provider()
+        infrastructure_mapping_collection.delete(mapping)
+
+    return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=[vm_obj])
 
 
 @pytest.fixture(scope="function")
