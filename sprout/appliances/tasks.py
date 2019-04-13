@@ -1790,11 +1790,14 @@ def check_update(self):
 def scavenge_managed_providers(self):
     chord_tasks = []
     for appliance in Appliance.objects.exclude(appliance_pool=None):
-        chord_tasks.append(scavenge_managed_providers_from_appliance.si(appliance.id))
+        if ((appliance.expires_in == 'never' or appliance.expires_in > 7200)
+                and appliance.ready and appliance.ip_address):
+
+            chord_tasks.append(scavenge_managed_providers_from_appliance.si(appliance.id))
     chord(chord_tasks)(calculate_provider_management_usage.s())
 
 
-@singleton_task(soft_time_limit=180)
+@singleton_task(soft_time_limit=20, time_limit=30)
 def scavenge_managed_providers_from_appliance(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
