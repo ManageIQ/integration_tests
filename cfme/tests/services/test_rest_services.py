@@ -3,8 +3,6 @@ import datetime
 
 import fauxfactory
 import pytest
-import requests
-
 from manageiq_client.api import APIException
 from manageiq_client.api import ManageIQClient as MiqApi
 
@@ -37,7 +35,6 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     test_requirements.service,
-    test_requirements.rest,
     pytest.mark.tier(2),
     pytest.mark.provider(
         classes=[InfraProvider],
@@ -2161,7 +2158,7 @@ def automate_env_setup(klass):
 def get_service_template(appliance, request, automate_env_setup):
     instance = automate_env_setup
     data = {
-        "buttons": "submit,cancel",
+        "buttons": "submit, cancel",
         "label": "dialog_{}".format(fauxfactory.gen_alpha()),
         "dialog_tabs": [
             {
@@ -2176,7 +2173,6 @@ def get_service_template(appliance, request, automate_env_setup):
                         "dialog_fields": [
                             {
                                 "name": "static",
-                                "description": "",
                                 "data_type": "integer",
                                 "display": "edit",
                                 "required": True,
@@ -2191,7 +2187,6 @@ def get_service_template(appliance, request, automate_env_setup):
                             },
                             {
                                 "name": "dynamic",
-                                "description": "",
                                 "data_type": "integer",
                                 "display": "edit",
                                 "required": True,
@@ -2232,6 +2227,7 @@ def get_service_template(appliance, request, automate_env_setup):
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("auth_type", ["token", "basic_auth"])
+@test_requirements.rest
 def test_populate_default_dialog_values(
     appliance, request, auth_type, set_run_automate_method, get_service_template
 ):
@@ -2269,17 +2265,11 @@ def test_populate_default_dialog_values(
     """
     if auth_type == "token":
         # obtaining authentication token
-        auth_token_response = requests.get(
-            "https://admin:smartvm@{}/api/auth".format(appliance.hostname), verify=False
-        )
-        assert auth_token_response.status_code == 200
+        auth_token = appliance.rest_api.get(appliance.url_path("/api/auth"))
+        assert_response(appliance)
         # creating new API instance that uses the authentication token
-        api = appliance.new_rest_api_instance(
-            auth={"token": auth_token_response.json()["auth_token"]}
-        )
-        template = api.collections.service_templates.get(
-            id=get_service_template.id
-        )
+        api = appliance.new_rest_api_instance(auth={"token": auth_token["auth_token"]})
+        template = api.collections.service_templates.get(id=get_service_template.id)
     else:
         template = get_service_template
 
