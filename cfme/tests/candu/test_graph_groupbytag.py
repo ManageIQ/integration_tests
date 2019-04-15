@@ -31,6 +31,16 @@ ENTITY = ['host', 'cluster']
 @pytest.fixture(scope='function')
 def entity_object(temp_appliance_extended_db, entity):
     vm = temp_appliance_extended_db.rest_api.collections.vms.get(name=CANDU_VM)
+    provider = temp_appliance_extended_db.rest_api.collections.providers.get(id=vm.ems_id)
+    provider_object = temp_appliance_extended_db.collections.infra_providers.instantiate(
+        InfraProvider, name=provider.name)
+    vm_object = temp_appliance_extended_db.collections.infra_vms.instantiate(
+        CANDU_VM, provider_object)
+    if entity == 'host':
+        return vm_object.host
+    elif entity == 'cluster':
+        return vm_object.cluster
+    """
     if entity == 'host':
         vm_host = vm.host.name
         return temp_appliance_extended_db.collections.hosts.instantiate(name=vm_host)
@@ -38,8 +48,10 @@ def entity_object(temp_appliance_extended_db, entity):
         provider = temp_appliance_extended_db.rest_api.collections.providers.get(id=vm.ems_id)
         provider_object = temp_appliance_extended_db.collections.infra_providers.instantiate(
             InfraProvider, name=provider.name)
-        vm = temp_appliance_extended_db.collections.infra_vms.instantiate(CANDU_VM, provider_object)
-        return vm.cluster
+        vm_object = temp_appliance_extended_db.collections.infra_vms.instantiate(
+            CANDU_VM, provider_object)
+        return vm_object.cluster
+    """
 
 
 @pytest.mark.parametrize('gp_by', GROUP_BY, ids=['vm_tag'])
@@ -78,7 +90,7 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, entity, entity_o
     data = {'interval': interval, 'group_by': gp_by}
     view.options.fill(data)
 
-    entity_graph = entity + '_' + graph_type
+    entity_graph = '{}_{}'.format(entity, graph_type)
 
     # Check graph displayed or not
     try:
@@ -94,9 +106,9 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, entity, entity_o
     # We have to use vm or host average graph for zoom in operation.
     if entity == 'cluster':
         graph_zoom = ["cluster_host", "cluster_vm"]
-        entity_graph = entity + '_' + graph_type
-        avg_graph = entity_graph if entity_graph in graph_zoom \
-            else '{}_vm_host_avg'.format(entity_graph)
+        enity_avg_graph = '{}_vm_host_avg'.format(entity_graph)
+        # entity_graph = entity + '_' + graph_type
+        avg_graph = entity_graph if entity_graph in graph_zoom else enity_avg_graph
         try:
             avg_graph = getattr(view, avg_graph)
         except AttributeError:
