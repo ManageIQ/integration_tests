@@ -3,6 +3,7 @@ import datetime
 
 import fauxfactory
 import pytest
+from manageiq_client.api import APIException
 from manageiq_client.api import ManageIQClient as MiqApi
 
 from cfme import test_requirements
@@ -200,6 +201,26 @@ def cart(appliance, delete_carts):
 
     if cart.exists:
         cart.action.delete()
+
+
+@pytest.fixture
+def deny_service_ordering(appliance):
+    """
+    `allow_api_service_ordering` is set to True by default, which allows ordering services
+    via API. This fixture sets that value to False, so services cannot be ordered via API.
+    """
+    reset_setting = appliance.advanced_settings["product"]["allow_api_service_ordering"]
+    appliance.update_advanced_settings(
+        {"product": {"allow_api_service_ordering": False}}
+    )
+    assert not appliance.advanced_settings["product"]["allow_api_service_ordering"]
+
+    yield
+
+    appliance.update_advanced_settings(
+        {"product": {"allow_api_service_ordering": reset_setting}}
+    )
+    assert appliance.advanced_settings["product"]["allow_api_service_ordering"] == reset_setting
 
 
 def unassign_templates(templates):
@@ -2055,3 +2076,32 @@ class TestServiceOrderCart(object):
             tags: service
         """
         delete_resources_from_collection([cart])
+
+
+@test_requirements.rest
+@pytest.mark.tier(3)
+def test_deny_service_ordering_via_api(
+    appliance, deny_service_ordering, service_templates
+):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
+        initialEstimate: 1/10h
+        setup:
+            1. In advanced settings, update `:product:`-`:allow_api_service_ordering:` to `false`
+            2. Create a dialog, catalog and catalog item.
+        testSteps:
+            1. Order the service via API.
+        expectedResults:
+            1. Service must not be ordered and response must return error.
+
+    Bugzilla:
+        1632416
+    """
+    # more than 1 service templates are created by the fixture, but we only need to access one
+    template = service_templates[0]
+    with pytest.raises(APIException):
+        template.action.order()
+    assert_response(appliance, http_status=400)

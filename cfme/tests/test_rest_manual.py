@@ -309,31 +309,6 @@ def test_add_vm_disk_via_api():
 @pytest.mark.manual
 @test_requirements.rest
 @pytest.mark.tier(3)
-def test_deny_service_ordering_via_api():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: high
-        initialEstimate: 1/10h
-        setup:
-            1. Go to `Configuration` and select `Advanced` tab.
-            2. Under the outermost `:product:`, set `:allow_api_service_ordering:` to `false`
-            3. Create a dialog, catalog and catalog item.
-        testSteps:
-            1. Order the service via API.
-        expectedResults:
-            1. Service must not be ordered and response must return error.
-
-    Bugzilla:
-        1632416
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-@pytest.mark.tier(3)
 @pytest.mark.parametrize("method", ["POST", "DELETE"])
 def test_delete_automate_domain_via_api(method):
     """
