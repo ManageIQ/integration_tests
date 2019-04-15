@@ -17,6 +17,7 @@ from cfme.control.explorer import conditions
 from cfme.control.explorer import policies
 from cfme.control.explorer.alert_profiles import AlertProfileDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -510,10 +511,12 @@ def test_assign_two_random_events_to_control_policy(control_policy, control_poli
     soft_assert(control_policy.is_event_assigned(random_events[1]))
 
 
-# TODO: fix this test in 5.10 in a later PR
 @pytest.mark.tier(2)
 def test_control_assign_actions_to_event(request, policy_class, policy, action):
     """
+    Bugzilla:
+        1700070
+
     Polarion:
         assignee: jdupuy
         casecomponent: Control
@@ -526,6 +529,8 @@ def test_control_assign_actions_to_event(request, policy_class, policy, action):
         request.addfinalizer(policy.assign_events)
     else:
         prefix = policy.TREE_NODE if not policy.TREE_NODE == "Vm" else policy.TREE_NODE.upper()
+        if policy.TREE_NODE == "Physical Infrastructure" and BZ(1700070).blocks:
+            prefix = policy.PRETTY
         event = "{} Compliance Check".format(prefix)
         request.addfinalizer(lambda: policy.assign_actions_to_event(
             event, {"Mark as Non-Compliant": False}))
