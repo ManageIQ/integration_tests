@@ -5,7 +5,6 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.automate.simulation import simulate
-from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
@@ -227,19 +226,8 @@ def test_automate_simulate_retry(klass, domain, namespace, original_class):
     assert view.retry_button.is_displayed
 
 
-@pytest.fixture(scope='module')
-def service_catalog_item(request, dialog, catalog):
-    """This fixture is used to create generic service catalog item"""
-    cat_item = _service_templates(
-        request, dialog.appliance, service_dialog=dialog, service_catalog=catalog, num=1
-    )[0]
-    yield cat_item
-    if cat_item.exists:
-        cat_item.action.delete()
-
-
 @pytest.mark.tier(1)
-def test_task_id_for_method_automation_log(service_catalog_item):
+def test_task_id_for_method_automation_log(request, generic_catalog_item):
     """
     Polarion:
         assignee: ghubale
@@ -266,7 +254,10 @@ def test_task_id_for_method_automation_log(service_catalog_item):
         "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*Q-task_id.*"]
     )
     result.fix_before_start()
-    service_request = service_catalog_item.action.order()
+    service_request = generic_catalog_item.appliance.rest_api.collections.service_templates.get(
+        name=generic_catalog_item.name
+    ).action.order()
+    request.addfinalizer(service_request.action.delete)
 
     # Need to wait until automation logs with 'Q-task_id' are generated, which happens after the
     # service_request becomes active.
