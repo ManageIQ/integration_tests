@@ -16,6 +16,7 @@ import pytest
 
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils import conf
+from cfme.utils.log import logger
 
 
 @contextmanager
@@ -199,9 +200,10 @@ def get_vddk_url(provider):
     except (KeyError, AttributeError):
         pytest.skip('VDDK URL/Version not found in cfme_data.basic_info')
     if url is None:
-        pytest.skip("There is no vddk url for this VMware provider version")
-    else:
-        return url
+        logger.warning("Using VDDK {}, as VDDK {} was unavailable".format("v6_5", vddk_version))
+        url = conf.cfme_data.basic_info.vddk_url.get("v6_5")
+
+    return url
 
 
 @pytest.fixture(scope="function")
