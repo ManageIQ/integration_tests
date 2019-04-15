@@ -36,11 +36,10 @@ def entity_object(temp_appliance_extended_db, entity):
         return temp_appliance_extended_db.collections.hosts.instantiate(name=vm_host)
     elif entity == 'cluster':
         provider = temp_appliance_extended_db.rest_api.collections.providers.get(id=vm.ems_id)
-        cluster = temp_appliance_extended_db.rest_api.collections.clusters.get(id=vm.ems_cluster_id)
         provider_object = temp_appliance_extended_db.collections.infra_providers.instantiate(
             InfraProvider, name=provider.name)
-        return temp_appliance_extended_db.collections.clusters.instantiate(
-            name=cluster.name, provider=provider_object)
+        vm = temp_appliance_extended_db.collections.infra_vms.instantiate(CANDU_VM, provider_object)
+        return vm.cluster
 
 
 @pytest.mark.parametrize('gp_by', GROUP_BY, ids=['vm_tag'])
