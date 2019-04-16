@@ -6,7 +6,9 @@ from cfme import test_requirements
 from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.automate.simulation import simulate
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.automate, pytest.mark.tier(2)]
 
@@ -222,3 +224,43 @@ def test_automate_simulate_retry(klass, domain, namespace, original_class):
 
     # Checking whether 'Retry' button is displayed
     assert view.retry_button.is_displayed
+
+
+@pytest.mark.tier(1)
+def test_task_id_for_method_automation_log(request, generic_catalog_item):
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/30h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: Automate
+        tags: automate
+        setup:
+            1. Add existing or new automate method to newly created domain or create generic service
+        testSteps:
+            1. Run that instance using simulation or order service catalog item
+            2. See automation log
+        expectedResults:
+            1.
+            2. Task id should be included in automation log for method logs.
+
+    Bugzilla:
+        1592428
+    """
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*Q-task_id.*"]
+    )
+    result.fix_before_start()
+    service_request = generic_catalog_item.appliance.rest_api.collections.service_templates.get(
+        name=generic_catalog_item.name
+    ).action.order()
+    request.addfinalizer(service_request.action.delete)
+
+    # Need to wait until automation logs with 'Q-task_id' are generated, which happens after the
+    # service_request becomes active.
+    wait_for(lambda: service_request.request_state == "active", fail_func=service_request.reload,
+             timeout=60, delay=3)
+    result.validate_logs()
