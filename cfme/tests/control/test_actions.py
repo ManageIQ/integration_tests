@@ -132,7 +132,6 @@ def _get_vm(request, provider, template_name, vm_name):
             vm.cleanup_on_provider()
         except TimedOutError:
             logger.error("Could not delete VM %s!", vm_name)
-    finally:
         # If this happened, we should skip all tests from this provider in this module
         pytest.skip(message)
 
