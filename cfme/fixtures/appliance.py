@@ -195,13 +195,20 @@ def get_vddk_url(provider):
         major = str(provider.version)
         minor = "0"
     vddk_version = "v{}_{}".format(major, minor)
+
     try:
-        url = conf.cfme_data.basic_info.vddk_url.get(vddk_version)
+        vddk_urls = conf.cfme_data.basic_info.vddk_url
     except (KeyError, AttributeError):
-        pytest.skip('VDDK URL/Version not found in cfme_data.basic_info')
+        pytest.skip("VDDK URLs not found in cfme_data.basic_info")
+
+    if vddk_version not in vddk_urls:
+        logger.warning("Using VDDK %s, as VDDK %s was unavailable", "v6_5", vddk_version)
+        vddk_version = "v6_5"
+
+    url = vddk_urls.get(vddk_version)
+
     if url is None:
-        logger.warning("Using VDDK {}, as VDDK {} was unavailable".format("v6_5", vddk_version))
-        url = conf.cfme_data.basic_info.vddk_url.get("v6_5")
+        pytest.skip("VDDK {} is unavailable, skipping test".format(vddk_version))
 
     return url
 
