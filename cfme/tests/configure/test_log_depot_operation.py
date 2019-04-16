@@ -19,14 +19,13 @@ from cfme.utils import conf
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClient
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 
-pytestmark = [test_requirements.log_depot]
+pytestmark = [pytest.mark.long_running, test_requirements.log_depot]
 
 
 class LogDepotType(object):
@@ -218,71 +217,6 @@ def check_ftp(appliance, ftp, server_name, server_zone_id, check_ansible_logs=Fa
                 "Negative gap between log files ({}, {})".format(
                     datetimes[i][2], datetimes[i + 1][2])
             )
-
-
-@pytest.fixture(scope="module")
-def wait_for_ansible(appliance):
-    appliance.server.settings.enable_server_roles("embedded_ansible")
-    appliance.wait_for_embedded_ansible()
-    yield
-    appliance.server.settings.disable_server_roles("embedded_ansible")
-
-
-@pytest.fixture(scope="module")
-def ansible_repository(appliance, wait_for_ansible):
-    repositories = appliance.collections.ansible_repositories
-    try:
-        repository = repositories.create(
-            name=fauxfactory.gen_alpha(),
-            url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
-            description=fauxfactory.gen_alpha())
-    except KeyError:
-        pytest.skip("Skipping since no such key found in yaml")
-    view = navigate_to(repository, "Details")
-    refresh = view.toolbar.refresh.click
-    wait_for(
-        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
-        timeout=60,
-        fail_func=refresh
-    )
-    yield repository
-
-    if repository.exists:
-        repository.delete()
-
-
-@pytest.fixture(scope="module")
-def ansible_catalog_item(appliance, ansible_repository):
-    cat_item = appliance.collections.catalog_items.create(
-        appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
-        fauxfactory.gen_alphanumeric(),
-        fauxfactory.gen_alphanumeric(),
-        display_in_catalog=True,
-        provisioning={
-            "repository": ansible_repository.name,
-            "playbook": "dump_all_variables.yml",
-            "machine_credential": "CFME Default Credential",
-            "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric()
-        }
-    )
-    yield cat_item
-
-    if cat_item.exists:
-        cat_item.delete()
-
-
-@pytest.fixture(scope="module")
-def catalog(appliance, ansible_catalog_item):
-    catalog_ = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
-                                                     description='my catalog',
-                                                     items=[ansible_catalog_item.name])
-    ansible_catalog_item.catalog = catalog_
-    yield catalog_
-
-    if catalog_.exists:
-        catalog_.delete()
-        ansible_catalog_item.catalog = None
 
 
 @pytest.fixture

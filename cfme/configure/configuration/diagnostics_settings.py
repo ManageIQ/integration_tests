@@ -379,9 +379,11 @@ class ServerCollectLogsView(ServerDiagnosticsView):
         return (
             self.in_server_collect_logs and
             # compare with the selection in accordion as it can be a slave server
+            # output 'title_template' is '[[1]]' which is not intended.
+            # Converting 'sid' into 'int' is giving desired output.
             self.title.text ==
             self.form_expected_title(name=name,
-                                     sid=sid,
+                                     sid=int(sid[1]),
                                      current='' if current is None else ' (current)')
         )
 
