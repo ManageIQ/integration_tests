@@ -152,8 +152,7 @@ def test_memory_total(appliance):
         testtype: functional
         casecomponent: Appliance
     """
-    result = appliance.ssh_client.run_command(
-        r'free -g | grep Mem: | awk \'{ print $2 }\'').output
+    result = appliance.ssh_client.run_command(r"free -g | grep Mem: | awk '{ print $2 }'").output
     assert int(result) >= 6
 
 
@@ -168,7 +167,8 @@ def test_cpu_total(appliance):
         casecomponent: Appliance
     """
     result = appliance.ssh_client.run_command(
-        r'lscpu | grep ^CPU\(s\): | awk \'{ print $2 }\'').output
+        r"lscpu | grep ^CPU\(s\): | awk '{ print $2 }'"
+    ).output
     assert int(result) >= 4
 
 
