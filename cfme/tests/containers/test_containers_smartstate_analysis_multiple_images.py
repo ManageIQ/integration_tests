@@ -56,7 +56,7 @@ def random_image_instances(appliance):
 
 
 @pytest.mark.polarion('10031')
-def test_check_compliance(provider, random_image_instances, appliance):
+def test_check_compliance_on_multiple_images(provider, random_image_instances, appliance):
 
     """
     Polarion:
@@ -87,7 +87,7 @@ def get_table_attr(instance, table_name, attr):
 
 
 @pytest.mark.parametrize(('test_item'), TEST_ITEMS)
-def test_containers_smartstate_analysis(provider, test_item,
+def test_containers_smartstate_analysis_multiple_images(provider, test_item,
                                         delete_all_container_tasks, soft_assert,
                                         random_image_instances, appliance):
 
