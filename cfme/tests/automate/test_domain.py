@@ -4,6 +4,9 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainAddView
+from cfme.automate.explorer.instance import InstanceCopyView
+from cfme.automate.explorer.klass import ClassCopyView
+from cfme.automate.explorer.method import MethodCopyView
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -291,3 +294,68 @@ def test_object_attribute_type_in_automate_schedule(appliance):
         view.flash.assert_no_error()
         view.form.object_type.select_by_visible_text('<Choose>')
         view.flash.assert_no_error()
+
+
+@pytest.mark.tier(3)
+def test_copy_to_domain(domain):
+    """This test case checks whether automate class, instance and method are successfully copying to
+    domain.
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: low
+        initialEstimate: 1/15h
+        startsin: 5.9
+        tags: automate
+        setup:
+            1. Create new custom domain
+        testSteps:
+            1. Go to Automation > Automate > Explorer
+            2. Select any class, instance and method from ManageIQ domain
+            3. Copy selected things one by one to new custom domain by selecting
+               "Copy this Method/Instance/Class" from configuration toolbar
+        expectedResults:
+            1.
+            2.
+            3. Class, Instance and Method should be copied to new domain and assert message should
+               appear after copying these things to new domain.
+
+    Bugzilla:
+        1500956
+    """
+    # Instantiating default domain - 'ManageIQ'
+    miq = (
+        domain.appliance.collections.domains.instantiate("ManageIQ")
+        .namespaces.instantiate("System")
+        .namespaces.instantiate("CommonMethods")
+    )
+
+    # Instantiating Class - 'MiqAe' from 'ManageIQ' domain
+    original_klass = miq.classes.instantiate("MiqAe")
+
+    # Copy this Class to custom domain
+    original_klass.copy_to(domain=domain)
+    klass = domain.browser.create_view(ClassCopyView)
+    klass.flash.wait_displayed()
+    klass.flash.assert_message("Copy selected Automate Class was saved")
+
+    # Instantiating Instance - 'quota_source' from 'ManageIQ' domain
+    original_instance = miq.classes.instantiate("QuotaMethods").instances.instantiate(
+        "quota_source"
+    )
+
+    # Copy this instance to custom domain
+    original_instance.copy_to(domain=domain)
+    instance = domain.browser.create_view(InstanceCopyView)
+    instance.flash.wait_displayed()
+    instance.flash.assert_message("Copy selected Automate Instance was saved")
+
+    # Instantiating Method - 'rejected' from 'ManageIQ' domain
+    original_method = miq.classes.instantiate("QuotaStateMachine").methods.instantiate("rejected")
+
+    # Copy this method to custom domain
+    original_method.copy_to(domain=domain)
+    method = domain.browser.create_view(MethodCopyView)
+    method.flash.wait_displayed()
+    method.flash.assert_message("Copy selected Automate Method was saved")

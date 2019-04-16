@@ -43,11 +43,7 @@ class Copiable(object):
             copy_page.copy_button.click()
             # Attention! Now we should be on a different page but the flash message is the same!
             copy_page.flash.assert_no_error()
-            copy_page.flash.assert_message('Copy selected Automate {} was saved'
-                                           .format(self.__class__))
         else:
             copy_page.cancel_button.click()
             # Attention! Now we should be on a different page but the flash message is the same!
             copy_page.flash.assert_no_error()
-            copy_page.flash.assert_message('Copy Automate {} was cancelled by the user'
-                                           .format(self.__class__))
