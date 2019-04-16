@@ -7563,35 +7563,6 @@ def test_osp_vmware65_test_vm_migration_with_windows_2012_server():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_automate_method_copy():
-    """
-    Should copy selected automate method/Instance without going into edit
-    mode.
-    Steps:
-    1. Add new domain (In enabled/unlock mode)
-    2. Add namespace in that domain
-    3. Add class in that namespace
-    4. Unlock ManageIQ domain now
-    5. Select Instance/Method from any class in ManageIQ
-    6. From configuration toolbar, select `Copy this method/Instance`
-    Additional info: https://bugzilla.redhat.com/show_bug.cgi?id=1500956
-
-    Bugzilla:
-        1500956
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.9
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_targeted_refresh_subnet():
     """
     Subnet CREATE
@@ -9220,26 +9191,6 @@ def test_duplicate_groups_when_setting_ownership_to_multiple_items():
         caseimportance: medium
         initialEstimate: 1/6h
         title: Test duplicate groups when setting ownership to multiple items
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.quota
-def test_orphaned_vms_get_excluded_from_used_quota_counts():
-    """
-    Test that used Quota gets recounted and reduced, when a VM is
-    orphaned.
-
-    Bugzilla:
-        1515979
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/6h
-        title: Test orphaned VMs get excluded from used quota counts
     """
     pass
 

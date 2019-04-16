@@ -184,6 +184,7 @@ def test_automate_check_quota_regression():
 
 
 @pytest.mark.tier(3)
+@pytest.mark.manual('manualonly')
 def test_automate_git_domain_import_with_no_connection():
     """
 

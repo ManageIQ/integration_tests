@@ -41,6 +41,7 @@ def test_custom_service_dialog_quota_flavors():
 
 
 @pytest.mark.tier(3)
+@pytest.mark.manual('manualonly')
 def test_quota_for_simultaneous_service_catalog_request_with_different_users():
     """
     This test case is to test quota for simultaneous service catalog request with different users.
@@ -244,6 +245,7 @@ def test_quota_enforcement_for_cloud_volumes():
 
 
 @pytest.mark.tier(2)
+@pytest.mark.manual('manualonly')
 def test_quota_with_invalid_service_request():
     """
     This test case is to test quotas with various regions and invalid service requests
@@ -385,6 +387,7 @@ def test_quota_not_fails_after_vm_reconfigure_disk_remove():
 
 
 @pytest.mark.tier(1)
+@pytest.mark.manual('manualonly')
 def test_quota_exceed_mail_with_more_info_link():
     """
     Polarion:
@@ -402,5 +405,33 @@ def test_quota_exceed_mail_with_more_info_link():
 
     Bugzilla:
         1579031
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+def test_orphaned_archived_vms_get_excluded_from_used_quota_counts():
+    """Test that used Quota gets recounted and reduced, when a VM is
+       orphaned/archived.
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/6h
+        title: Test orphaned/archived VMs get excluded from used quota counts
+        testSteps:
+            1. Setup Quota limits for tenant(My Company or create new tenant)
+            2. Provision a VM and check quota denied message for used counts.
+            3. Archive an active VM and repeat step 2.
+            4. Notice the used counts are un-changes.
+        expectedResults:
+            1.
+            2. 'Quota Exceed' message for VM provision request
+            3. VM state should be changed to archived
+            4. Orphaned/Archived VMs excluded in used count
+
+    Bugzilla:
+        1515979
     """
     pass

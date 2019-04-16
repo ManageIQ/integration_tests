@@ -222,6 +222,7 @@ def test_power_controls_on_vm_in_stack_cloud():
 
 
 @pytest.mark.tier(2)
+@pytest.mark.manual('manualonly')
 def test_power_operations_from_global_region():
     """
     This test case is to check power operations from Global region

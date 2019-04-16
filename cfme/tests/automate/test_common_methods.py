@@ -54,26 +54,22 @@ def generate_retirement_date(delta=None):
 def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
     """ Tests extending a retirement using an AE method.
 
-    Prerequisities:
-        * A running VM on any provider.
-
-    Steps:
-        * It creates a button pointing to ``Request/vm_retire_extend`` instance. The button should
-            live in the VM and Instance button group.
-        * Then it sets a retirement date for the VM
-        * Then it waits until the retirement date is set
-        * Then it clicks the button that was created and it waits for the retirement date to extend.
-
-    Metadata:
-        test_flag: retire, provision
-
-    Bugzilla:
-        1627758
-
     Polarion:
         assignee: ghubale
         casecomponent: Automate
         initialEstimate: 1/3h
+        setup:
+            1. A running VM on any provider.
+        testSteps:
+            1. It creates a button pointing to ``Request/vm_retire_extend`` instance. The button
+               should live in the VM and Instance button group.
+            2. Then it sets a retirement date for the VM
+            3. Then it waits until the retirement date is set
+            4. Then it clicks the button that was created and it waits for the retirement date to
+               extend.
+
+    Bugzilla:
+        1627758
     """
     num_days = 5
     soft_assert(testing_vm.retirement_date == 'Never', "The retirement date is not 'Never'!")
