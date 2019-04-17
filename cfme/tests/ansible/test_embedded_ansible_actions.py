@@ -102,7 +102,7 @@ def policy_for_testing(appliance, full_template_vm_modscope, provider, ansible_a
     yield
 
     if policy.exists:
-        policy.assign_events()
+        policy.unassign_events("Tag Complete")
         provider.unassign_policy_profiles(policy_profile.description)
         policy_profile.delete()
         policy.delete()

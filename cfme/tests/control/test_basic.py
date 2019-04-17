@@ -165,7 +165,6 @@ EVENTS = [
     "Host Disconnect",
     "Host Maintenance Enter Request",
     "Host Maintenance Exit Request",
-    "Host Provision Complete",
     "Host Reboot Request",
     "Host Removed from Cluster",
     "Host Reset Request",
@@ -526,7 +525,10 @@ def test_control_assign_actions_to_event(request, policy_class, policy, action):
     if type(policy) in CONTROL_POLICIES:
         event = random.choice(EVENTS)
         policy.assign_events(event)
-        request.addfinalizer(policy.assign_events)
+
+        @request.addfinalizer
+        def _cleanup():
+            policy.unassign_events(event)
     else:
         prefix = policy.TREE_NODE if not policy.TREE_NODE == "Vm" else policy.TREE_NODE.upper()
         if policy.TREE_NODE == "Physical Infrastructure" and BZ(1700070).blocks:

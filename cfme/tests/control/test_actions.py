@@ -288,7 +288,10 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power Off", ["Start Virtual Machine"])
-    request.addfinalizer(policy_for_testing.assign_events)
+
+    @request.addfinalizer
+    def _cleanup():
+        policy_for_testing.unassign_events("VM Power Off")
     # Stop the VM
     vm.mgmt.stop()
     # Wait for VM powered on by CFME
@@ -319,7 +322,10 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Stop Virtual Machine"])
-    request.addfinalizer(policy_for_testing.assign_events)
+
+    @request.addfinalizer
+    def _cleanup():
+        policy_for_testing.unassign_events("VM Power On")
     # Start the VM
     vm.mgmt.start()
     # Wait for VM powered off by CFME
@@ -349,7 +355,10 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, poli
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Suspend Virtual Machine"])
-    request.addfinalizer(policy_for_testing.assign_events)
+
+    @request.addfinalizer
+    def _cleanup():
+        policy_for_testing.unassign_events("VM Power On")
     # Start the VM
     vm.mgmt.start()
     # Wait for VM be suspended by CFME
@@ -380,7 +389,11 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On Request",
         ["Prevent current event from proceeding"])
-    request.addfinalizer(policy_for_testing.assign_events)
+
+    @request.addfinalizer
+    def _cleanup():
+        policy_for_testing.unassign_events("VM Power On Request")
+
     # Request VM's start (through UI)
     vm.crud.power_control_from_cfme(option=vm.crud.POWER_ON, cancel=False)
     try:
@@ -409,7 +422,11 @@ def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
     """
     policy_for_testing.assign_actions_to_event("VM Retire Request",
         ["Prevent current event from proceeding"])
-    request.addfinalizer(policy_for_testing.assign_events)
+
+    @request.addfinalizer
+    def _cleanup():
+        policy_for_testing.unassign_events("VM Retire Request")
+
     vm.crud.retire()
     try:
         wait_for(lambda: vm.crud.is_retired, num_sec=600, delay=15,
@@ -439,7 +456,11 @@ def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, p
     """
     policy_for_testing.assign_actions_to_event("VM Analysis Request",
         ["Prevent current event from proceeding"])
-    request.addfinalizer(policy_for_testing.assign_events)
+
+    @request.addfinalizer
+    def _cleanup():
+        policy_for_testing.unassign_events("VM Analysis Request")
+
     wait_for_ssa_enabled(vm.crud)
     try:
         do_scan(vm.crud)
@@ -472,7 +493,11 @@ def test_action_prevent_host_ssa(request, appliance, host, host_policy):
     """
     host_policy.assign_actions_to_event("Host Analysis Request",
         ["Prevent current event from proceeding"])
-    request.addfinalizer(host_policy.assign_events)
+
+    @request.addfinalizer
+    def _cleanup():
+        host_policy.unassign_events("Host Analysis Request")
+
     view = navigate_to(host, "Details")
 
     def _scan():
@@ -517,7 +542,11 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testi
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Generate log message"])
-    request.addfinalizer(policy_for_testing.assign_events)
+
+    @request.addfinalizer
+    def _cleanup():
+        policy_for_testing.unassign_events("VM Power On")
+
     # Start the VM
     vm.mgmt.start()
     policy_desc = policy_for_testing.description
@@ -561,7 +590,11 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Generate Audit Event"])
-    request.addfinalizer(policy_for_testing.assign_events)
+
+    @request.addfinalizer
+    def _cleanup():
+        policy_for_testing.unassign_events("VM Power On")
+
     # Start the VM
     vm.mgmt.start()
     policy_desc = policy_for_testing.description
@@ -619,7 +652,7 @@ def test_action_create_snapshot_and_delete_last(
 
     @request.addfinalizer
     def finalize():
-        policy_for_testing.assign_events()
+        policy_for_testing.unassign_events("VM Power Off", "VM Power On")
         snapshot_create_action.delete()
 
     snapshots_before = vm.crud.total_snapshots
@@ -665,7 +698,7 @@ def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on,
 
     @request.addfinalizer
     def finalize():
-        policy_for_testing.assign_events()
+        policy_for_testing.unassign_events("VM Power Off")
         snapshot_create_action.delete()
 
     def create_one_snapshot(n):
@@ -713,7 +746,11 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On",
         ["Initiate SmartState Analysis for VM"])
-    request.addfinalizer(policy_for_testing.assign_events)
+
+    @request.addfinalizer
+    def _cleanup():
+        policy_for_testing.unassign_events("VM Power On")
+
     # Start the VM
     vm.crud.power_control_from_cfme(option=vm.crud.POWER_ON, cancel=False, from_details=True)
     wait_for_ssa_enabled(vm.crud)
@@ -788,7 +825,7 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, appliance):
 
     @request.addfinalizer
     def finalize():
-        policy_for_testing.assign_events()
+        policy_for_testing.unassign_events("VM Power On")
         tag_assign_action.delete()
 
     vm.mgmt.start()
@@ -839,7 +876,7 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, appliance, tag):
 
     @request.addfinalizer
     def finalize():
-        policy_for_testing.assign_events()
+        policy_for_testing.unassign_events("VM Power On")
         tag_unassign_action.delete()
 
     vm.mgmt.start()
@@ -885,7 +922,7 @@ def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, poli
 
     @request.addfinalizer
     def finalize():
-        policy_for_testing.assign_events()
+        policy_for_testing.unassign_events("VM Clone Start")
         with update(policy_for_testing):
             policy_for_testing.scope = (
                 "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name))
@@ -936,7 +973,11 @@ def test_action_check_compliance(request, provider, vm, vm_name, policy_for_test
             vm.crud.remove_tag(tag)
 
     policy_for_testing.assign_actions_to_event("Tag Complete", ["Check Host or VM Compliance"])
-    request.addfinalizer(policy_for_testing.assign_events)
+
+    @request.addfinalizer
+    def _cleanup():
+        policy_for_testing.unassign_events("Tag Complete")
+
     vm.crud.add_tag(tag)
     view = navigate_to(vm.crud, "Details")
     view.toolbar.reload.click()

@@ -234,7 +234,7 @@ def ssa_compliance_policy(appliance):
     policy.assign_events("VM Provision Complete")
     policy.assign_actions_to_event("VM Provision Complete", ["Initiate SmartState Analysis for VM"])
     yield policy
-    policy.assign_events()
+    policy.unassign_events("VM Provision Complete")
     policy.delete()
 
 
@@ -406,7 +406,7 @@ def ssa_policy(appliance, ssa_action):
     policy.assign_events("VM Analysis Start")
     policy.assign_actions_to_event("VM Analysis Start", ssa_action)
     yield policy
-    policy.assign_events()
+    policy.unassign_events("VM Analysis Start")
 
 
 def detect_system_type(vm):

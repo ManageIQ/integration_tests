@@ -125,7 +125,7 @@ def generate_policy_event(request, appliance, provider, vm_crud, register_event)
     request.addfinalizer(policy.delete)
 
     policy.assign_events("VM Create Complete")
-    request.addfinalizer(policy.assign_events)
+
     policy.assign_actions_to_event("VM Create Complete", action)
 
     profile = appliance.collections.policy_profiles.create(
