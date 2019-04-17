@@ -1,7 +1,6 @@
 import pytest
 
 from cfme import test_requirements
-# from cfme.rest.gen_data import ansible_dialog_rest as _ansible_dialog_rest
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
@@ -12,8 +11,10 @@ from cfme.utils.log import logger
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
-    pytest.mark.parametrize('job_type', ['template', 'workflow', 'template_survey'],
-        ids=['template_job', 'workflow_job', 'template_job_survey'], scope='module'),
+    pytest.mark.parametrize('job_type', ['template', 'workflow', 'template_survey',
+        'template_limit'],
+        ids=['template_job', 'workflow_job', 'template_survey_job', 'template_limit_job'],
+        scope='module'),
     pytest.mark.ignore_stream('upstream'),
     pytest.mark.uncollectif(lambda appliance,
         job_type: appliance.version < '5.10' and job_type == 'workflow')]
@@ -48,29 +49,24 @@ def config_manager(config_manager_obj):
 
 
 @pytest.fixture(scope="function")
-def catalog_item(appliance, request, config_manager, dialog, catalog, job_type):
+def catalog_item(appliance, request, config_manager, ansible_tower_dialog, catalog, job_type):
     config_manager_obj = config_manager
     provider_name = config_manager_obj.yaml_data.get('name')
     template = config_manager_obj.yaml_data['provisioning_data'][job_type]
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_TOWER,
-        name=dialog.label,
+        name=ansible_tower_dialog.label,
         description="my catalog",
         display_in=True,
         catalog=catalog,
-        dialog=dialog,
+        dialog=ansible_tower_dialog,
         provider='{} Automation Manager'.format(provider_name),
         config_template=template)
     request.addfinalizer(catalog_item.delete)
     return catalog_item
 
-"""
-@pytest.fixture(scope="function")
-def ansible_dialog(request, appliance):
-    _ansible_dialog_rest(request, appliance)
-"""
 
-def test_order_tower_catalog_item(appliance, catalog_item, request, job_type):
+def test_order_tower_catalog_item(appliance, config_manager, catalog_item, request, job_type):
     """Tests ordering of catalog items for Ansible Template and Workflow jobs
     Metadata:
         test_flag: provision
@@ -81,9 +77,15 @@ def test_order_tower_catalog_item(appliance, catalog_item, request, job_type):
         casecomponent: Services
         caseimportance: high
     """
-    dialog_values = {'limit': "10.8.198.0"}
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name,
-        dialog_values=dialog_values)
+    if job_type == 'template_limit':
+        config_manager_obj = config_manager
+        host = config_manager_obj.yaml_data['provisioning_data']['inventory_host']
+        dialog_values = {'limit': host}
+        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name,
+            dialog_values=dialog_values)
+    else:
+        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}
