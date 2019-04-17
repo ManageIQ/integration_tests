@@ -75,7 +75,7 @@ def tags(request, appliance, categories):
 
 
 def dialog_rest(request, appliance):
-    Creates service dialog using REST API.
+    """Creates service dialog using REST API."""
     uid = fauxfactory.gen_alphanumeric()
     data = {
         "description": "my dialog {}".format(uid),
