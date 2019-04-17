@@ -200,6 +200,7 @@ def test_service_state():
             2. Order the catalog item
             3. Go to My services and check service state
 
-    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1678123
+    Bugzilla:
+        1678123
     """
     pass

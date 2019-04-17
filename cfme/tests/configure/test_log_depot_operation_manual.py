@@ -195,7 +195,9 @@ def test_log_collect_current_zone_all_unconfigured():
 def test_log_collection_via_ftp_over_ipv6():
     """
     Bug 1452224 - Log Collection fails via IPv6
-    https://bugzilla.redhat.com/show_bug.cgi?id=1452224
+
+    Bugzilla:
+        1452224
 
     An IPv6 FTP server can be validated for log collection, and log
     collection succeeds.

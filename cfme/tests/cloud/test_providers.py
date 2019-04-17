@@ -396,7 +396,9 @@ def test_openstack_provider_has_api_version(appliance):
 
 def test_openstack_provider_has_dashboard(appliance, openstack_provider):
     """Check whether dashboard view is available for Openstack provider
-    https://bugzilla.redhat.com/show_bug.cgi?id=1487142
+
+    Bugzilla:
+        1487142
 
     Polarion:
         assignee: anikifor
@@ -516,20 +518,20 @@ def test_cloud_names_grid_floating_ips(appliance, ec2_provider, soft_assert):
 @pytest.mark.tier(3)
 def test_display_network_topology(appliance, openstack_provider):
     """
-        Bugzilla:
-            1343553
-
-        Steps to Reproduce:
-        1. Add RHOS undercloud provider
-        2. Make sure it has no floating IPs
-        3. Go to Networks -> Topology
-        4. Topology should be shown without errors.
+    Bugzilla:
+        1343553
 
     Polarion:
         assignee: anikifor
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/8h
+        testSteps:
+            1. Add RHOS undercloud provider
+            2. Make sure it has no floating IPs
+            3. Go to Networks -> Topology
+            4. Topology should be shown without errors.
+
     """
     floating_ips_collection = appliance.collections.network_floating_ips
     view = navigate_to(floating_ips_collection, "All")

@@ -86,7 +86,8 @@ def test_nor_cpu_values_correct_rhv41():
 @test_requirements.rbac
 def test_status_of_a_task_via_api_with_evmrole_administrator():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1535962
+    Bugzilla:
+        1535962
 
     Polarion:
         assignee: apagac
@@ -386,9 +387,10 @@ def test_appliance_terminates_unresponsive_worker_process():
     If a queue message consumes significant memory and takes longer than
     the 10 minute queue timeout, the appliance will kill the worker after
     the stopping_timeout.
-    Steps to test:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1395736#c30
-    https://bugzilla.redhat.com/show_bug.cgi?id=1395736#c31
+    Steps to test (see BZ below, comments 30 and 31).
+
+    Bugzilla:
+        1395736
 
     Polarion:
         assignee: tpapaioa
@@ -493,7 +495,8 @@ def test_osp_vmware67_test_vm_migration_with_windows_2016_server():
 @pytest.mark.tier(1)
 def test_rhos_test_notification_for_snapshot_delete_failure():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1581793
+    Bugzilla:
+        1581793
     Test if cfme can report failure when deleting snapshot from RHOS.
 
     Polarion:
@@ -541,7 +544,8 @@ def test_distributed_zone_failover_cu_data_processor():
 @pytest.mark.tier(3)
 def test_sui_stack_service_vm_detail_page_should_show_correct_data():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1467569
+    Bugzilla:
+        1467569
 
     Polarion:
         assignee: sshveta
@@ -558,7 +562,8 @@ def test_sui_stack_service_vm_detail_page_should_show_correct_data():
 @pytest.mark.tier(1)
 def test_notification_for_snapshot_actions_on_openstack():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1429313
+    Bugzilla:
+        1429313
     Test task notification for snapshot tasks: success and failure of
     create and delete snapshot.
 
@@ -1192,7 +1197,10 @@ def test_that_non_admin_users_can_view_catalog_items_in_ssui():
     """
     Verify user with a non-administrator role can login to the SSUI and
     view catalog items that are tagged for them to see
-    See https://bugzilla.redhat.com/show_bug.cgi?id=1465642
+
+    Bugzilla:
+        1465642
+
     Note: in order for this to work, all ownership limitations must be
     removed.
 
@@ -1272,7 +1280,8 @@ def test_storage_ebs_volume_crud():
 @pytest.mark.manual('manualonly')
 def test_ec2_deploy_cfme_image():
     """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1413835
+    Bugzilla:
+        1413835
     Requirement: CFME image imported as AMI in EC2 environment - should be
     imported automatically with every build
     1) Deploy appliance:
@@ -1389,7 +1398,10 @@ def test_osp_test_migration_plan_filtering_for_plans_table_list_on_overview_and_
 def test_retirement_date_uses_correct_time_zone():
     """
     Bug 1565128 - Wrong timezone when selecting retirement time
-    https://bugzilla.redhat.com/show_bug.cgi?id=1565128
+
+    Bugzilla:
+        1565128
+
     After saving VM retirement date/time (using both "Specific Date and
     Time" and "Time Delay from Now" options), the displayed Retirement
     Date has the correct date and time-zone appropriate time.
@@ -1477,7 +1489,9 @@ def test_azone_cpu_usage_azure():
 @pytest.mark.manual
 def test_orchestration_link_mismatch():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1601523
+
+    Bugzilla:
+        1601523
 
     Polarion:
         assignee: sshveta
@@ -1634,7 +1648,8 @@ def test_distributed_zone_delete_occupied():
 @test_requirements.rbac
 def test_can_add_child_tenant_to_tenant():
     """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1387088
+    Bugzilla:
+        1387088
     1. Go to Configuration -> Access Control
     2. Select a Tenant
     3. Use "Configuration" Toolbar to navigate to "Add child Tenant to
@@ -1679,7 +1694,10 @@ def test_azure_instance_password_requirements_azure():
     Create provision request with password which doesn"t meet requirements
     - warning message should appear in UI
     Additional details are in
-    https://bugzilla.redhat.com/show_bug.cgi?id=1454812
+
+    Bugzilla:
+        1454812
+
     The supplied password must be between 8-123 characters long and must
     satisfy at least 3 of password complexity requirements from the
     following:
@@ -1987,7 +2005,9 @@ def test_webmks_console_firefox_vsphere65_fedora27():
 def test_webmks_console_passwordwithspecialchars():
     """
     VMware WebMKS Remote Console Test based on
-    https://bugzilla.redhat.com/show_bug.cgi?id=1545927
+
+    Bugzilla:
+        1545927
 
     Polarion:
         assignee: apagac
@@ -3377,7 +3397,9 @@ def test_osp_vmware_65_test_vm_name_with_punycode_characters():
 def test_config_manager_accordion_tree():
     """
     Make sure there is accordion tree, once Tower is added to the UI.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1560552
+
+    Bugzilla:
+        1560552
 
     Polarion:
         assignee: nachandr
@@ -3424,7 +3446,9 @@ def test_bottleneck_datastore():
 @pytest.mark.manual
 def test_ec2_api_filter_limit():
     """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1612086
+    Bugzilla:
+        1612086
+
     The easiest way to simulate AWS API Limit for > 200 items is to enable
     and disable public images:
     Requirement: Have an ec2 provider
@@ -3556,7 +3580,9 @@ def test_cluster_graph_by_vm_tag_vsphere6():
 @test_requirements.rbac
 def test_can_add_project_to_tenant():
     """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1387088
+    Bugzilla:
+        1387088
+
     1. Go to Configuration -> Access Control
     2. Select a Tenant
     3. Use "Configuration" Toolbar to navigate to "Add Project to this
@@ -3599,7 +3625,9 @@ def test_osp_test_if_non_csv_files_can_be_imported():
 def test_no_rbac_warnings_in_logs_when_viewing_satellite_provider():
     """
     RBAC-related warnings logged when viewing Satellite provider in web UI
-    https://bugzilla.redhat.com/show_bug.cgi?id=1565266
+
+    Bugzilla:
+        1565266
     1.) Add Satellite provider.
     2.) Click on items under Providers accordion.
     3.) View evm.log. No WARN-level messages should be logged.
@@ -3924,7 +3952,9 @@ def test_upgrade_single_inplace_ipv6():
 @pytest.mark.tier(1)
 def test_notification_for_snapshot_delete_failure():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1449243
+    Bugzilla:
+        1449243
+
     Requires ec2 access via web-ui.
 
     Polarion:
@@ -4069,7 +4099,9 @@ def test_candu_graphs_vm_compare_host_vsphere65():
 @pytest.mark.tier(1)
 def test_sdn_nsg_firewall_rules_azure():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1520196
+    Bugzilla:
+        1520196
+
     1. Add Network Security group on Azure with coma separated port ranges
     `1023,1025` rule inbound/outbound ( ATM this feature is not allowed in
     East US region of Azure - try West/Central)
@@ -4412,7 +4444,8 @@ def test_update_yum_bad_version_59017():
 @test_requirements.rbac
 def test_vm_request_approval_by_user_in_different_group():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1545395
+    Bugzilla:
+        1545395
 
     Polarion:
         assignee: apagac
@@ -4505,8 +4538,10 @@ def test_verify_ldap_group_lookup_fails_with_correct_error_message_for_invalid_u
     1. configure ldap.
     2. specify wrong user details while group look up, verify group lookup
     fails with correct error message.
-    refer the BZ:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1378213
+    refer the BZ below
+
+    Bugzilla:
+        1378213
 
     Polarion:
         assignee: apagac
@@ -4654,7 +4689,8 @@ def test_distributed_delete_offline_worker_appliance():
 @pytest.mark.tier(2)
 def test_playbook_with_already_existing_dialogs_name():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1449345
+    Bugzilla:
+        1449345
 
     Polarion:
         assignee: sshveta
@@ -4707,7 +4743,10 @@ def test_pg_stat_activity_view_in_postgres_should_show_worker_information():
     pg_stat_activity view in postgres should show worker information.
     Bug 1445928 - It is impossible to identify the source
     process/appliance for each connection in pg_stat_activity
-    https://bugzilla.redhat.com/show_bug.cgi?id=1445928
+
+    Bugzilla:
+        1445928
+
     # su - postgres
     # psql vmdb_production
     vmdb_production=# select pid, application_name from pg_stat_activity;
@@ -5168,7 +5207,8 @@ def test_ec2_targeted_refresh_stack():
 @pytest.mark.tier(2)
 def test_ssui_test_snapshot_vm_memory_checkbox_when_creating_snapshot_for_powered_off_vm():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1600043
+    Bugzilla:
+        1600043
 
     Polarion:
         assignee: apagac
@@ -5190,7 +5230,8 @@ def test_ssui_test_snapshot_vm_memory_checkbox_when_creating_snapshot_for_powere
 @pytest.mark.tier(2)
 def test_heat_stacks_in_non_admin_tenants_shall_also_be_collected():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1290005
+    Bugzilla:
+        1290005
 
     Polarion:
         assignee: sshveta
@@ -5626,7 +5667,10 @@ def test_verify_purging_of_old_records():
     VmdbMetric, Metric, and Container-related records are purged
     regularly.
     Bug 1348625 - We might not be purging all tables that we should be
-    https://bugzilla.redhat.com/show_bug.cgi?id=1348625
+
+    Bugzilla:
+        1348625
+
     [----] I, [2017-05-19T07:48:23.994536 #63471:985134]  INFO -- :
     MIQ(DriftState.purge_by_date) Purging Drift states older than
     [2016-11-20 11:48:20 UTC]...Complete - Deleted 0 records"
@@ -5869,8 +5913,9 @@ def test_verify_that_users_can_access_help_documentation():
     """
     Verify that admin and user"s with access to Documentation can view the
     PDF documents
-    Relevant BZ:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1563241
+
+    Bugzilla:
+        1563241
 
     Polarion:
         assignee: apagac
@@ -5915,7 +5960,9 @@ def test_osp_test_user_can_download_post_migration_ansible_playbook_log():
 @test_requirements.rbac
 def test_requests_in_ui_and_api():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1608554
+    Bugzilla:
+        1608554
+
     1. Login with user with Services > My Services > Requests > Operate
     enabled
     2. View Services > Requests
@@ -6140,7 +6187,8 @@ def test_config_manager_remove_objects_ansible_tower_310():
 @pytest.mark.tier(1)
 def test_set_ownership_back_to_default():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1483512
+    Bugzilla:
+        1483512
 
     Polarion:
         assignee: apagac
@@ -6158,7 +6206,10 @@ def test_set_ownership_back_to_default():
 def test_vm_placement_with_duplicated_folder_name_vmware():
     """
     This testcase is related to -
-    https://bugzilla.redhat.com/show_bug.cgi?id=1414136
+
+    Bugzilla:
+        1414136
+
     Description of problem:
     Duplicate folder names between host & vm/templates causes placement
     issues
@@ -6183,7 +6234,10 @@ def test_can_only_select_this_regions_zones_when_changing_server_zone():
     """
     Bug 1470283 - zones of sub region show up as zones appliances of a
     central region can move to
-    https://bugzilla.redhat.com/show_bug.cgi?id=1470283
+
+    Bugzilla:
+        1470283
+
     Configure 1 appliance for use as a reporting db server, with region
     99. Create zones zone-99-a and zone-99-b.
     Configure a 2nd appliance as a remote appliance, with region 0. Create
@@ -6286,8 +6340,8 @@ def test_ec2_flavor_list_up_to_date():
 @pytest.mark.tier(3)
 def test_verify_ldap_user_login_when_email_has_an_apostrophe_character():
     """
-    refer the BZ:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1379420
+    Bugzilla:
+        1379420
 
     Polarion:
         assignee: apagac
@@ -6354,7 +6408,11 @@ def test_candu_graphs_vm_compare_cluster_vsphere65():
 def test_verify_ldap_authentication_works_without_groups_from_ldap_by_uncheck_the_get_user_gro():
     """
     verify LDAP authentication works without groups from LDAP
-    refer this bz: https://bugzilla.redhat.com/show_bug.cgi?id=1302345
+    refer the following BZ.
+
+    Bugzilla:
+        1302345
+
     Steps:
     1.In Configuration->Authentication, set the auth mode to LDAP.
     LDAP Hostname: "cfme-openldap-rhel7.cfme.lab.eng.rdu2.redhat.com"
@@ -6856,7 +6914,9 @@ def test_osp_vmware67_test_vm_migration_from_nfs_storage_in_vmware_to_iscsi_on_o
 @test_requirements.rbac
 def test_view_quotas_without_manage_quota_permisson():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1535556
+    Bugzilla:
+        1535556
+
     1. disable "manage quota" from the role of a user
     2. try to view quotas as that user
     copy the EVMRole-tenant_quota_administrator role, disable Settings ->
@@ -6944,7 +7004,9 @@ def test_bundle_stack_deployment():
 @test_requirements.rbac
 def test_provider_refresh_via_api():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1602413
+    Bugzilla:
+        1602413
+
     1. set up a new user with a new group based on vm_user plus api access
     and refresh access to cloud and infrastructure providers
     2. issue a refresh using the classic ui with that user
@@ -7138,7 +7200,9 @@ def test_group_by_tag_azone_gce():
 @pytest.mark.tier(1)
 def test_snapshot_tree_view_functionality():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1398239
+    Bugzilla:
+        1398239
+
     Just test the snapshot tree view. Create a bunch of snapshots and see
     if the snapshot tree seems right. Check if the last created snapshot
     is active. Revert to some snapshot, then create another bunch of
@@ -7227,7 +7291,10 @@ def test_osp_vmware60_test_vm_with_multiple_disks():
 def test_notification_window_events_show_in_timestamp_order():
     """
     Bug 1469534 - The notification events are out of order
-    https://bugzilla.redhat.com/show_bug.cgi?id=1469534
+
+    Bugzilla:
+        1469534
+
     If multiple event notifications are created near-simultaneously (e.g.,
     several VM"s are provisioned), then clicking on the bell icon in the
     top right of the web UI displays the event notifications in timestamp
@@ -7361,8 +7428,11 @@ def test_verify_orchestration_catalog_items_can_only_use_providers_that_are_visi
 @pytest.mark.tier(2)
 def test_osp_test_osp_volumes_are_cleaned_up_if_migration_fails_to_create_instance():
     """
-    V2V Test for https://bugzilla.redhat.com/show_bug.cgi?id=1651352
-    https://bugzilla.redhat.com/show_bug.cgi?id=1653412
+    V2V Test following BZs
+
+    Bugzilla:
+        1651352
+        1653412
 
     Polarion:
         assignee: ytale
@@ -7399,7 +7469,8 @@ def test_consistent_capitalization_of_cpu_when_creating_compute_chargeback_rate(
 @pytest.mark.tier(2)
 def test_show_tag_info_for_playbook_services():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1449020
+    Bugzilla:
+        1449020
 
     Polarion:
         assignee: sshveta
@@ -7421,6 +7492,9 @@ def test_snapshot_link_in_vm_summary_page_after_deleting_snapshot():
     vm summary page use the history button and try to go back to
     snapshots. Go to the vm summary page again and try to click snapshots
     link, it should work.
+
+    Bugzilla:
+        1395116
 
     Polarion:
         assignee: apagac
@@ -7502,6 +7576,9 @@ def test_automate_method_copy():
     5. Select Instance/Method from any class in ManageIQ
     6. From configuration toolbar, select `Copy this method/Instance`
     Additional info: https://bugzilla.redhat.com/show_bug.cgi?id=1500956
+
+    Bugzilla:
+        1500956
 
     Polarion:
         assignee: ghubale
@@ -7657,8 +7734,10 @@ def test_validate_cost_monthly_usage_network():
 def test_vm_tempate_ownership_nogroup():
     """
     test assigning no groups ownership for vm and templates
-    https://bugzilla.redhat.com/show_bug.cgi?id=1330022
-    https://bugzilla.redhat.com/show_bug.cgi?id=1456681
+    Bugzilla:
+        1330022
+        1456681
+
     UPDATE: There was no movement on BZ 1456681 for a long time. If this
     BZ is not resolved, we don"t know how exactly the ownership should
     behave in certain situations and this testcase will always fail.
@@ -7882,7 +7961,8 @@ def test_check_all_availability_zones_for_amazon_provider():
 @pytest.mark.tier(2)
 def test_sui_timeline_should_display_snapshots_at_the_time_of_creation():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1490510
+    Bugzilla:
+        1490510
 
     Polarion:
         assignee: apagac
@@ -7966,7 +8046,9 @@ def test_config_manager_change_zone():
     """
     Add Ansible Tower in multi appliance, add it to appliance with UI. Try
     to change to zone where worker is enabled.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1353015
+
+    Bugzilla:
+        1353015
 
     Polarion:
         assignee: nachandr
@@ -8162,7 +8244,8 @@ def test_remove_display_name_for_user_in_ldap_and_verify_auth():
 @pytest.mark.manual
 def test_ec2_security_group_record_values():
     """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1540283
+    Bugzilla:
+        1540283
 
     Polarion:
         assignee: mmojzis
@@ -8370,8 +8453,11 @@ def test_distributed_zone_create_duplicate():
 def test_edit_vm():
     """
     Edit infra vm and cloud instance
-    https://bugzilla.redhat.com/show_bug.cgi?id=1399141
-    https://bugzilla.redhat.com/show_bug.cgi?id=1399144
+
+    Bugzilla:
+        1399141
+        1399144
+
     When editing cloud instance, genealogy should be present on the edit
     page.
     When you have two providers - one infra and one cloud - added, there
@@ -8573,7 +8659,10 @@ def test_verify_that_errored_out_queue_messages_are_removed():
     Verify that errored-out queue messages are removed.
     Bug 1460263 - shutdown_and_exit messages get marked as error and never
     removed from miq_queue table
-    https://bugzilla.redhat.com/show_bug.cgi?id=1460263
+
+    Bugzilla:
+        1460263
+
     # appliance_console
     -> Stop EVM Server Processes
     -> Start EVM Server Processes
@@ -8597,7 +8686,10 @@ def test_satellite_credential_validation_times_out_with_error_message():
     """
     Bug 1564601 - Satellite credential validation times out with no error
     message
-    https://bugzilla.redhat.com/show_bug.cgi?id=1564601
+
+    Bugzilla:
+        1564601
+
     When adding a new Satellite configuration provider, if the URL cannot
     be accessed because of a firewall dropping packets, then credential
     validation should time out after 2 minutes with a flash message.
@@ -8636,7 +8728,9 @@ def test_verify_session_timeout_works_fine_for_external_auth():
 @pytest.mark.tier(3)
 def test_button_groups_created_on_orchestration_type_heat_service_catalog_items_are_not_seen_o():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1496190
+
+    Bugzilla:
+        1496190
 
     Polarion:
         assignee: sshveta
@@ -8654,7 +8748,9 @@ def test_button_groups_created_on_orchestration_type_heat_service_catalog_items_
 @pytest.mark.tier(1)
 def test_default_value_on_dropdown_inside_dialog():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1516721
+
+    Bugzilla:
+        1516721
 
     Polarion:
         assignee: apagac
@@ -8896,7 +8992,9 @@ def test_set_hostname_from_appliance_console_and_configure_external_auth():
     1. ssh to appliance, and run appliance_console command
     2. change the appliance hostname with valid FQDN
     3. Verify External auth configuration does not fail.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1360928
+
+    Bugzilla:
+        1360928
 
     Polarion:
         assignee: apagac
@@ -8913,7 +9011,9 @@ def test_set_hostname_from_appliance_console_and_configure_external_auth():
 @pytest.mark.tier(2)
 def test_restricted_user_rbac_for_access_control():
     """
-    Related to BZ#1311399
+    Bugzilla:
+        1311399
+
     Navigate to Configure ==> Configuration ==> Access Control.
     Create a new role with "VM & Template Access Restriction" as "Only
     User or Group Owned" or "Only User Owned".  Make sure all the module
@@ -8941,7 +9041,10 @@ def test_verify_ldap_group_retrieval_works_fine_for_groups_with_descriptions_whi
     """
     verify ldap group retrieval works fine for groups with descriptions
     which are base64 decoded , one random sample having an "é"
-    Refer the BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1367600
+    Refer the following BZ.
+
+    Bugzilla:
+        1367600
 
     Polarion:
         assignee: apagac
@@ -8978,7 +9081,10 @@ def test_osp_vmware65_test_vm_migration_with_really_long_name_upto_64_chars_work
 def test_vms_retirement_state_field_is_capitalized_correctly():
     """
     Bug 1518926 - Inconsistent capitalization for Retirement State field
-    https://bugzilla.redhat.com/show_bug.cgi?id=1518926
+
+    Bugzilla:
+        1518926
+
     When a VM is retiring or retired, the VM should show a "Retirement
     State" field, not "Retirement state".
 
@@ -9101,7 +9207,9 @@ def test_chargeback_report_monthly():
 @pytest.mark.manual
 def test_duplicate_groups_when_setting_ownership_to_multiple_items():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1589009
+    Bugzilla:
+        1589009
+
     1. Navigate to Infrastructure -> Provider -> Vmware
     2. select multiple vms and go to Configuration -> Set ownership
     3. Under group list, duplicate group names listed.
@@ -9122,7 +9230,9 @@ def test_orphaned_vms_get_excluded_from_used_quota_counts():
     """
     Test that used Quota gets recounted and reduced, when a VM is
     orphaned.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1515979
+
+    Bugzilla:
+        1515979
 
     Polarion:
         assignee: ghubale
@@ -9540,7 +9650,10 @@ def test_active_tasks_get_timed_out_when_they_run_too_long():
     active tasks get timed out when they run too long
     Bug 1397600 - After killing reporting worker, report status still says
     Running
-    https://bugzilla.redhat.com/show_bug.cgi?id=1397600
+
+    Bugzilla:
+        1397600
+
     ****
     1.) Set task timeout check frequency and timeout values:
     :task_timeout_check_frequency: 600
@@ -9584,7 +9697,9 @@ def test_replication_central_admin_adhoc_provision_template():
 @test_requirements.rbac
 def test_ordering_service_by_non_admin_user():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1546944
+    Bugzilla:
+        1546944
+
     1. Go to Access Control, Create a role named "service_role" with below
     roles should be enabled i.e. Compute and Services.
     2. Create a user i.e. "service_user" based on this "service_role"
@@ -10190,7 +10305,9 @@ def test_html5_console_firefox_vsphere55_fedora28():
 @pytest.mark.tier(2)
 def test_html5_console_inaddproviderhoststartvncportpresent():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1514594
+    Bugzilla:
+        1514594
+
     Check to see if the Add provider screen has the Host VNC Start Port
     and Host VNC End port.
 
@@ -10731,7 +10848,10 @@ def test_html5_console_firefox_vsphere6_fedora26():
 @pytest.mark.tier(2)
 def test_html5_console_vsphere6_ssui():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1597393VMware VNC Remote
+    Bugzilla:
+        1597393
+
+    VMware VNC Remote
     Console does not work in SSUI with following error:
     There was an error opening the console. undefined
     Steps to Reproduce:
@@ -11047,7 +11167,8 @@ def test_html5_console_firefox_vsphere55_win2012():
 @pytest.mark.tier(2)
 def test_html5_console_rhv():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1573739
+    Bugzilla:
+        1573739
 
     Polarion:
         assignee: apagac
@@ -11261,7 +11382,8 @@ def test_html5_console_chrome_ssui_win7():
 @pytest.mark.tier(2)
 def test_html5_console_check_consistency_of_behavior():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1525692
+    Bugzilla:
+        1525692
 
     Polarion:
         assignee: apagac
@@ -12286,7 +12408,8 @@ def test_azone_disk_io_azure():
 @pytest.mark.tier(2)
 def test_monitor_ansible_playbook_std_output():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1444853
+    Bugzilla:
+        1444853
 
     Polarion:
         assignee: apagac
@@ -12303,7 +12426,9 @@ def test_monitor_ansible_playbook_std_output():
 def test_appliance_log_error():
     """
     check logs for errors such as
-    https://bugzilla.redhat.com/show_bug.cgi?id=1392087
+
+    Bugzilla:
+        1392087
 
     Polarion:
         assignee: jhenner
@@ -12338,7 +12463,10 @@ def test_verify_external_authentication_with_openldap_proxy_to_3_different_domai
     """
     verify external authentication with OpenLDAP proxy to 3 different
     domains
-    refer the bz: https://bugzilla.redhat.com/show_bug.cgi?id=1306436
+    refer the bz below
+
+    Bugzilla:
+        1306436
 
     Polarion:
         assignee: apagac
@@ -12371,7 +12499,8 @@ def test_distributed_zone_failover_notifier_singleton():
 @pytest.mark.tier(1)
 def test_dialog_items_default_values_on_different_screens():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1540273
+    Bugzilla:
+        1540273
 
     Polarion:
         assignee: apagac
@@ -12408,7 +12537,8 @@ def test_verify_user_authentication_works_fine_if_default_evm_groups_are_already
 @test_requirements.snapshot
 def test_creating_second_snapshot_on_suspended_vm():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1419872
+    Bugzilla:
+        1419872
 
     Polarion:
         assignee: apagac
@@ -12575,7 +12705,10 @@ def test_notification_window_can_be_closed_by_clicking_x():
     """
     Bug 1427484 - Add "X" option to enable closing the Notification window
     by it.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1427484
+
+    Bugzilla:
+        1427484
+
     After clicking the bell icon in the top right of the web UI, the "x"
     in the top right corner of the notification window can be clicked to
     close it.
@@ -12594,7 +12727,9 @@ def test_notification_window_can_be_closed_by_clicking_x():
 @pytest.mark.manual
 def test_storage_ebs_volume_crud_from_manager_list():
     """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1449293
+    Bugzilla:
+        1449293
+
     Requires:
     test_storage_ebs_added
     Steps to test:
@@ -12796,7 +12931,9 @@ def test_add_multiple_iso_datastore():
 def test_monitor_ansible_playbook_logging_output():
     """
     bugzilla.redhat.com/1518952
-    https://bugzilla.redhat.com/show_bug.cgi?id=1518952
+
+    Bugzilla:
+        1518952
 
     Polarion:
         assignee: apagac
@@ -12857,7 +12994,9 @@ def test_black_console_ext_auth_options_skip():
 def test_candu_collection_tab():
     """
     Test case to cover -
-    https://bugzilla.redhat.com/show_bug.cgi?id=1393675
+    Bugzilla:
+        1393675
+
     from BZ comments:
     "for QE testing you can only replicate that in the UI by running a
     refresh and immediately destroying the provider and hope that it runs
@@ -13944,7 +14083,10 @@ def test_vmrc_console_novmrccredsinprovider():
     Leave the VMRC Creds blank in the provider add/edit dialog and observe
     behavior trying to launch console. It should fail. Also observe the
     message in VMRC Console Creds tab about what will happen if creds left
-    blank. https://bugzilla.redhat.com/show_bug.cgi?id=1550612
+    blank.
+
+    Bugzilla:
+        1550612
 
     Polarion:
         assignee: apagac
@@ -15371,8 +15513,10 @@ def test_vmrc_console_ie11_vsphere67_win2012():
 def test_vmrc_console_addremovevmwarecreds():
     """
     Add VMware VMRC Console Credentials to a VMware Provider and then
-    Remove it. As per BZ:
-    https://bugzilla.redhat.com/show_bug.cgi?id=1559957
+    Remove it.
+
+    Bugzilla:
+        1559957
 
     Polarion:
         assignee: apagac
@@ -16420,7 +16564,9 @@ def test_vmrc_console_usecredwithlimitedvmrcaccess():
     floppy. So if you can see your VMRC Console can"t do these operations
     with user_interact, mark this test as passed. As the sole purpose of
     this test is to validate correct user and permissions are being used.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1479840
+
+    Bugzilla:
+        1479840
 
     Polarion:
         assignee: apagac
@@ -16715,7 +16861,6 @@ def test_verify_benchmark_timings_are_correct():
     """
     Bug 1424716 - Benchmark timings are incorrect for all workers in
     evm.log
-    https://bugzilla.redhat.com/show_bug.cgi?id=1424716
     Timings logged in evm.log are/seem to be reasonable values:
     [----] I, [2017-09-21T14:53:01.220711 #23936:ded140]  INFO -- :
     MIQ(ManageIQ::Providers::Vmware::InfraManager::Refresher#refresh) EMS:
@@ -16732,6 +16877,9 @@ def test_verify_benchmark_timings_are_correct():
     :db_save_inventory=>9.141719341278076,
     :save_inventory=>9.141741275787354,
     :ems_refresh=>10.612204551696777}
+
+    Bugzilla:
+        1424716
 
     Polarion:
         assignee: tpapaioa

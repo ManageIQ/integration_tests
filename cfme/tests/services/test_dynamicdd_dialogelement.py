@@ -203,7 +203,6 @@ def test_expression_method_definitions_should_not_fail_with_script_error_in_a_di
 @pytest.mark.tier(3)
 def test_dialog_text_box_triggers_fields_shouldnt_refresh_too_soon_often():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1614321
     Polarion:
         assignee: nansari
         casecomponent: Services
@@ -334,12 +333,12 @@ def test_second_dialog_dynamic_element_should_be_able_to_read_the_previous_textb
 @pytest.mark.tier(1)
 def test_automation_executed_on_field_refresh_are_called_twice_in_self_service_dialogs():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1576873
     Polarion:
         assignee: nansari
         casecomponent: Services
         testtype: functional
         initialEstimate: 1/4h
+
     Bugzilla:
         1576873
     """

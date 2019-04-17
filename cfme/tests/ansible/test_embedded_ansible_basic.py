@@ -338,6 +338,9 @@ def test_embedded_ansible_credential_with_private_key(request, wait_for_ansible,
     Adding new ssh credentials via Automation/Ansible/Credentials, add new credentials does not
     actually create new credentials with ssh keys.
 
+    Bugzilla:
+        1439589
+
     Polarion:
         assignee: sbulage
         casecomponent: Ansible

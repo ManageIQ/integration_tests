@@ -72,7 +72,9 @@ def test_template_info_scvmm():
 @pytest.mark.tier(1)
 def test_vm_mac_scvmm():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1514461
+    Bugzilla:
+        1514461
+
     Test case covers this BZ - we can"t get MAC ID of VM at the moment
 
     Polarion:
@@ -186,7 +188,9 @@ def test_host_info_scvmm2016():
 @pytest.mark.tier(1)
 def test_check_disk_allocation_size_scvmm():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1490440
+    Bugzilla:
+        1490440
+
     Steps to Reproduce:
     1.Provision VM and check it"s "Total Datastore Used Space"
     2.go to VMM and create Vm"s Checkpoint
@@ -209,7 +213,9 @@ def test_vm_volume_specchar1_scvmm():
     Special Test to verify that VMs that have Volumes with no drive letter
     assigned don"t cause systemic SCVMM provider errors.  This is a low
     priority test.
-    https://bugzilla.redhat.com/show_bug.cgi?id=1353285
+
+    Bugzilla:
+        1353285
 
     Polarion:
         assignee: jdupuy

@@ -53,8 +53,8 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, host):
         * Check tag assigned to VM available in chart legends
         * Compare table and graph data
 
-    Bugzillas:
-        * 1367560
+    Bugzilla:
+        1367560
 
     Polarion:
         assignee: nachandr

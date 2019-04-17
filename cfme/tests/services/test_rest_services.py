@@ -319,7 +319,7 @@ class TestServiceRESTAPI(object):
             test_flag: rest
 
         Bugzilla:
-            * 1414852
+            1414852
 
         Polarion:
             assignee: nansari
@@ -944,7 +944,7 @@ class TestServiceTemplateRESTAPI(object):
             test_flag: rest
 
         Bugzilla:
-            * 1427338
+            1427338
 
         Polarion:
             assignee: nansari

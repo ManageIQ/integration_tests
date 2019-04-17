@@ -23,7 +23,7 @@ def test_custom_group_on_catalog_item_crud(generic_catalog_item):
             3. Fill info and save button
             4. Delete created button group
     Bugzilla:
-        * 1687289
+        1687289
     """
 
     btn_data = {

@@ -25,8 +25,9 @@ FILL_DATA = {
 @pytest.mark.tier(1)
 def test_control_icons_simulation(appliance):
     """
-    Bugzillas:
-        * 1349147, 1690572
+    Bugzilla:
+        1349147
+        1690572
 
     Polarion:
         assignee: jdupuy

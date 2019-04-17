@@ -86,8 +86,9 @@ def test_vmware_vimapi_hotadd_disk(
             3. After the button is created, it goes to a VM's summary page, clicks the button.
             4. The test waits until the capacity of disks is raised.
 
-    Bugzillas:
-        1211627, 1311221
+    Bugzilla:
+        1211627
+        1311221
     """
     meth = cls.methods.create(
         name='load_value_{}'.format(fauxfactory.gen_alpha()),

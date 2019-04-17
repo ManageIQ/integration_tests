@@ -42,7 +42,10 @@ def test_provision_request_approved_msg():
 def test_none_public_ip_provision_azure():
     """
     Testing provision w/o public IP - to cover -
-    https://bugzilla.redhat.com/show_bug.cgi?id=1497202
+
+    Bugzilla:
+        1497202
+
     1.Provision VM
     2.Verify we don"t have public IP
 
@@ -144,7 +147,10 @@ def test_provision_with_storage_profile_vsphere():
 def test_vm_placement_with_duplicated_folder_name_vmware():
     """
     This testcase is related to -
-    https://bugzilla.redhat.com/show_bug.cgi?id=1414136
+
+    Bugzilla:
+        1414136
+
     Description of problem:
     Duplicate folder names between host & vm/templates causes placement
     issues
@@ -167,7 +173,9 @@ def test_vm_placement_with_duplicated_folder_name_vmware():
 @pytest.mark.tier(1)
 def test_multiple_vm_provision_with_public_ip_azure():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1531275
+    Bugzilla:
+        1531275
+
     Wait for BZ to get resolved first. Design solution still wasn"t made
     "This isn"t a dup of the other ticket, as the distinction is single vs
     multiple VM"s. So, what we need to do is alter the UI to allow two
@@ -213,6 +221,9 @@ def test_provision_image_managed_azure():
     See RFE - https://bugzilla.redhat.com/show_bug.cgi?id=1452227
     See Create Manage Image - https://docs.microsoft.com/en-us/azure
     /virtual-machines/windows/capture-image-resource Section 1
+
+    Bugzilla:
+        1452227
 
     Polarion:
         assignee: jhenner
@@ -299,7 +310,9 @@ def test_provision_host_maintenancemode_scvmm():
 @pytest.mark.tier(1)
 def test_service_provision_managed_image_azure():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1470491
+    Bugzilla:
+        1470491
+
     1. Provision Service using azure managed disk/image
 
     Polarion:
@@ -334,7 +347,9 @@ def test_admin_username_azure():
 @pytest.mark.tier(2)
 def test_create_provisioning_dialog_without_dialog_type():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1344080
+    Bugzilla:
+        1344080
+
     Create provision dialog without selecting dialog type
     Automate - Customization - Provisioning dialog
     Configuration - Add a new dialog
@@ -359,7 +374,9 @@ def test_create_provisioning_dialog_without_dialog_type():
 @pytest.mark.tier(2)
 def test_auto_placement_provision_to_dvswitch_vlan_vmware():
     """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1467399
+    Bugzilla:
+        1467399
+
     Description of problem: issue appeared after 1458363
     Auto_placement provision into DVS vlan fails with Error "Destination
     placement_ds_name not provided]" if provider Network with the same

@@ -11,8 +11,8 @@ def test_timelines_removed(appliance):
     Test that Cloud Intel->Timelines have been removed in upstream and 5.11 builds.
     Designed to pass for CFME 5.10.
 
-    Bugzillas:
-        * 1672933
+    Bugzilla:
+        1672933
 
     Polarion:
         assignee: jdupuy
@@ -33,8 +33,8 @@ def test_rss_removed(appliance):
     Test that Cloud Intel->RSS has been removed in upstream and 5.11 builds.
     Designed to pass for CFME 5.10.
 
-    Bugzillas:
-        * 1672933
+    Bugzilla:
+        1672933
 
     Polarion:
         assignee: jdupuy

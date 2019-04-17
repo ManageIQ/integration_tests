@@ -230,7 +230,9 @@ def test_infrastructure_filter_20k_vms(appliance, create_20k_vms):
 def test_consistent_breadcrumbs():
     """
     BreadCrumbs should be consistent across whole CloudForms UI
-    https://bugzilla.redhat.com/show_bug.cgi?id=1678192
+
+    Bugzilla:
+        1678192
 
     Polarion:
         assignee: anikifor
@@ -272,7 +274,8 @@ def test_ui_pinning_after_relog():
 @test_requirements.general_ui
 def test_ui_notification_icon():
     """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1489798
+    Bugzilla:
+        1489798
 
     Polarion:
         assignee: anikifor
@@ -352,7 +355,8 @@ def test_cloud_icons_instances():
 @pytest.mark.tier(1)
 def test_key_pairs_quadicon():
     """
-    BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1352914
+    Bugzilla:
+        1352914
 
     Polarion:
         assignee: anikifor
@@ -477,7 +481,7 @@ def test_create_filter_with_multiple_conditions():
             1. Expression must be created successfully.
 
     Bugzilla:
-        * 1660460
+        1660460
     """
     pass
 
@@ -500,7 +504,7 @@ def test_welcoming_page():
             1. Welcome/Landing page must show the next action, ie. `Add a Provider
 
     Bugzilla:
-        * 1678190
+        1678190
     """
     pass
 
@@ -523,6 +527,6 @@ def test_custom_navigation_menu():
             1. Custom menu must be visible.
 
     Bugzilla:
-        * 1678151
+        1678151
     """
     pass

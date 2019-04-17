@@ -370,6 +370,9 @@ def test_alert_hardware_reconfigured(request, appliance, configure_fleecing, smt
     depending on what has been done in your step 2, not the result of step 4. Step 4 is just to
     trigger the event.
 
+    Bugzilla:
+        1396544
+
     Metadata:
         test_flag: alerts, provision
 

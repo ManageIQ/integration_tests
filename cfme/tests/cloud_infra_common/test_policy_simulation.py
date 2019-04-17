@@ -31,8 +31,13 @@ pytestmark = [
 )
 def test_policy_simulation_ui(appliance, provider, navigation):
     """
-    Bugzillas:
-        * 1670456, 1686617, 1686619, 1688359, 1550503
+    Bugzilla:
+        1670456
+        1686617
+        1686619
+        1688359
+        1550503
+
     Polarion:
         assignee: jdupuy
         casecomponent: Control
