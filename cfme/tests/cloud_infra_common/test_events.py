@@ -3,6 +3,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.control.explorer.policies import VMControlPolicy
@@ -20,6 +21,7 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.provider(gen_func=providers, filters=[all_prov, excluded],
                          scope='module'),
+    test_requirements.events,
 ]
 
 

@@ -14,7 +14,8 @@ from cfme.utils.rest import query_resource_attributes
 from cfme.utils.wait import wait_for
 
 pytestmark = [
-    test_requirements.rest
+    test_requirements.rest,
+    test_requirements.control
 ]
 
 

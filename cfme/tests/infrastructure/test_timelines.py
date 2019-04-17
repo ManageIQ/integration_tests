@@ -1,6 +1,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.base.ui import ServerDiagnosticsView
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider import InfraProvider
@@ -24,6 +25,8 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.provider(gen_func=providers, filters=[excluded, all_infra_prov]),
     pytest.mark.usefixtures('setup_provider'),
+    test_requirements.timelines,
+    test_requirements.events,
 ]
 
 
