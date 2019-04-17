@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 from wrapanapi.exceptions import NotFoundError
 
+from cfme import test_requirements
 from cfme.base.ui import ServerDiagnosticsView
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -18,7 +19,9 @@ pytestmark = [
     pytest.mark.tier(2),
     # Only onr prov out of the 2 is taken, if not supplying --use-provider=complete
     pytest.mark.provider([AzureProvider, EC2Provider]),
-    pytest.mark.usefixtures('setup_provider')
+    pytest.mark.usefixtures('setup_provider'),
+    test_requirements.timelines,
+    test_requirements.events,
 ]
 
 
