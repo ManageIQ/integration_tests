@@ -306,7 +306,6 @@ class TestVmDetailsPowerControlPerProvider(object):
         soft_assert(testing_vm.mgmt.is_running, "vm not running")
 
     @pytest.mark.rhv3
-    @pytest.mark.meta(automates=[BZ(1174858)])
     def test_suspend(self, appliance, testing_vm, ensure_vm_running, soft_assert):
         """Tests suspend
 
@@ -316,6 +315,9 @@ class TestVmDetailsPowerControlPerProvider(object):
             casecomponent: Infra
             caseimportance: high
             tags: power
+
+        Bugzilla:
+            1174858
         """
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
@@ -376,29 +378,24 @@ class TestVmDetailsPowerControlPerProvider(object):
 @pytest.mark.rhv3
 def test_no_template_power_control(provider, soft_assert):
     """ Ensures that no power button is displayed for templates.
-    Bugzilla:
-        1496383
-        1634713
-
-
-    Prerequisities:
-        * An infra provider that has some templates.
-
-    Steps:
-        * Open the view of all templates of the provider
-        * Verify the Power toolbar button is not visible
-        * Select some template using the checkbox
-        * Verify the Power toolbar button is not visible
-        * Click on some template to get into the details page
-        * Verify the Power toolbar button is not visible
-
-    Metadata:
-        test_flag: power_control
 
     Polarion:
         assignee: ghubale
         casecomponent: Infra
         initialEstimate: 1/10h
+        setup:
+            1. An infra provider that has some templates.
+        testSteps:
+            1. Open the view of all templates of the provider
+            2. Verify the Power toolbar button is not visible
+            3. Select some template using the checkbox
+            4. Verify the Power toolbar button is not visible
+            5. Click on some template to get into the details page
+            6. Verify the Power toolbar button is not visible
+
+    Bugzillas:
+        1496383
+        1634713
     """
     view = navigate_to(provider, 'ProviderTemplates')
     view.toolbar.view_selector.select('Grid View')
@@ -414,44 +411,41 @@ def test_no_template_power_control(provider, soft_assert):
     view = navigate_to(selected_template, 'AllForProvider', use_resetter=False)
     entity = view.entities.get_entity(name=selected_template.name, surf_pages=True)
     entity.check()
-    soft_assert(not view.toolbar.power.is_enabled,
-                "Power displayed when template quadicon checked!")
+    for action in view.toolbar.power.items:
+        # Performing power actions on template
+        view.toolbar.power.item_select(action, handle_alert=True)
+        if action == 'Power On':
+            action = 'Start'
+        elif action == 'Power Off':
+            action = 'Stop'
+        view.flash.assert_message('{} action does not apply to selected items'.format(action))
+        view.flash.dismiss()
 
     # Ensure there isn't a power button on the details page
     entity.click()
-    if provider.appliance.version < '5.10':
-        soft_assert(not view.toolbar.power.is_enabled, "Power enabled in template details!")
-    else:
-        soft_assert(not view.toolbar.power.is_displayed, "Power displayed in template details!")
+    soft_assert(not view.toolbar.power.is_displayed, "Power displayed in template details!")
 
 
 @pytest.mark.rhv3
 def test_no_power_controls_on_archived_vm(appliance, testing_vm, archived_vm, soft_assert):
     """ Ensures that no power button is displayed from details view of archived vm
 
-    Prerequisities:
-        * Archived VM
-    Steps:
-        * Open the view of VM Details
-        * Verify the Power toolbar button is not visible
-    Metadata:
-        test_flag: power_control
-
-    Bugzilla:
-        1520489
-        1659340
-
     Polarion:
         assignee: ghubale
         casecomponent: Infra
         initialEstimate: 1/10h
+        setup:
+            1. Archived VM should be available
+        testSteps:
+            1. Open the view of VM Details
+            2. Verify the Power toolbar button is not visible
+
+    Bugzilla:
+        1520489
+        1659340
     """
     view = navigate_to(testing_vm, 'AnyProviderDetails', use_resetter=False)
-    if appliance.version < "5.10":
-        status = getattr(view.toolbar.power, "is_displayed")
-    else:
-        status = getattr(view.toolbar.power, "is_enabled")
-
+    status = getattr(view.toolbar.power, "is_enabled")
     assert not status, "Power displayed in archived VM's details!"
 
 
@@ -522,6 +516,15 @@ def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True, scope='function')
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1571830,
+            forced_streams=["5.10"],
+            unblock=lambda provider: not provider.one_of(RHEVMProvider),
+        )
+    ]
+)
 def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
 
@@ -552,6 +555,15 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True)
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1571895,
+            forced_streams=["5.10"],
+            unblock=lambda provider: not provider.one_of(RHEVMProvider),
+        )
+    ]
+)
 def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
 
