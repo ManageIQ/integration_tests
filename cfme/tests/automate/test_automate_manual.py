@@ -669,29 +669,6 @@ def test_automate_buttons_requests():
 
 
 @pytest.mark.tier(1)
-def test_check_system_request_calls_depr_configurationmanagement():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseimportance: low
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.10
-        casecomponent: Automate
-        tags: automate
-        testSteps:
-            1. Copy /System/Request/ansible_tower_job instance to new domain
-            2. Run that instance using simulation
-            3. See automation log
-
-    Bugzilla:
-        1615444
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_list_of_diff_vm_storages_via_rails():
     """
     Polarion:
