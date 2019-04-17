@@ -314,38 +314,6 @@ def test_state_machine_variable():
     pass
 
 
-@pytest.mark.tier(2)
-def test_automate_method_copy():
-    """
-    Should copy selected automate method/Instance without going into edit mode.
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-        tags: automate
-        startsin: 5.9
-        upstream: yes
-        testSteps:
-            1. Add new domain (In enabled/unlock mode)
-            2. Add namespace in that domain
-            3. Add class in that namespace
-            4. Unlock ManageIQ domain now
-            5. Select Instance/Method from any class in ManageIQ
-            6. From configuration toolbar, select "Copy this method/Instance"
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Able to copy method with "Copy This Method" toolbar.
-
-    Bugzilla:
-        1500956
-    """
-    pass
-
-
 @pytest.mark.tier(3)
 def test_automate_git_import_deleted_tag():
     """
