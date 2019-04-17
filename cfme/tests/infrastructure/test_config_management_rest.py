@@ -10,18 +10,26 @@ from cfme.utils.testgen import generate
 from cfme.utils.wait import wait_for
 
 
-pytest_generate_tests = generate(gen_func=config_managers, scope='module')
-pytestmark = [test_requirements.config_management]
+pytest_generate_tests = generate(
+    # config_managers generates list of managers from cfme_data
+    gen_func=config_managers,
+    # Filter the config manager types for Tower
+    managers_type='Ansible Tower',
+    scope='module'
+)
+pytestmark = [test_requirements.tower]
 
 
 @pytest.fixture(scope='module')
 def config_manager(config_manager_obj):
     """Fixture that provides a random config manager and sets it up."""
-    if config_manager_obj.type == 'Ansible Tower':
-        config_manager_obj.create(validate=True)
-    else:
-        config_manager_obj.create()
+    if config_manager_obj.type != 'Ansible Tower':
+        pytest.skip('A non "Ansible Tower" configuration manager provider was selected for test,'
+                    'Please verify cfme_data.yaml content.')
+
+    config_manager_obj.create(validate=True)  # actually add it to CFME
     yield config_manager_obj
+
     config_manager_obj.delete()
 
 
@@ -78,7 +86,6 @@ def _check_edited_authentications(appliance, authentications, new_names):
         assert auth.name == record[0].name
 
 
-@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type != 'Ansible Tower')
 class TestAuthenticationsRESTAPI(object):
     def test_query_authentications_attributes(self, authentications, soft_assert):
         """Tests access to authentication attributes.

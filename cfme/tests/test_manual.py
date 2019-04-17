@@ -143,7 +143,7 @@ def test_crosshair_op_cluster_vsphere65():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_field_zone_description_special():
     """
@@ -521,7 +521,7 @@ def test_external_database_appliance():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_cu_data_processor():
     """
@@ -1052,7 +1052,7 @@ def test_osp_vmware_67_test_vm_name_with_punycode_characters():
 
 
 @pytest.mark.manual
-@test_requirements.config_management
+@test_requirements.tower
 @pytest.mark.tier(1)
 def test_config_manager_prov_from_service_survey_ansible_tower_310():
     """
@@ -1171,7 +1171,7 @@ def test_verify_change_update_in_ldap_server_takes_effect_in_the_cfme_authentica
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 def test_distributed_add_provider_to_remote_zone():
     """
     Adding a provider from the global region to a remote zone.
@@ -1333,7 +1333,7 @@ def test_osp_test_migrating_a_vm_using_migration_plan_with_name_which_has_all_sp
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_field_zone_description_long():
     """
@@ -1406,7 +1406,7 @@ def test_retirement_date_uses_correct_time_zone():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 def test_distributed_zone_add_provider_to_nondefault_zone():
     """
     Can a new provider be added the first time to a non default zone.
@@ -1615,7 +1615,7 @@ def test_edit_provider_request_task():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_delete_occupied():
     """
@@ -3373,7 +3373,7 @@ def test_osp_vmware_65_test_vm_name_with_punycode_characters():
 
 
 @pytest.mark.manual
-@test_requirements.config_management
+@test_requirements.tower
 def test_config_manager_accordion_tree():
     """
     Make sure there is accordion tree, once Tower is added to the UI.
@@ -3595,7 +3595,7 @@ def test_osp_test_if_non_csv_files_can_be_imported():
 
 
 @pytest.mark.manual
-@test_requirements.config_management
+@test_requirements.satellite
 def test_no_rbac_warnings_in_logs_when_viewing_satellite_provider():
     """
     RBAC-related warnings logged when viewing Satellite provider in web UI
@@ -3673,7 +3673,7 @@ def test_osp_test_multi_host_migration_execution_if_more_than_one_host_present_m
 
 
 @pytest.mark.manual
-@test_requirements.config_management
+@test_requirements.tower
 @pytest.mark.tier(1)
 def test_config_manager_prov_from_service_limit_ansible_tower_310():
     """
@@ -3718,7 +3718,7 @@ def test_osp_test_creating_multiple_migration_plans_with_same_name():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(3)
 def test_distributed_migrate_embedded_ansible_role():
     """
@@ -4127,7 +4127,7 @@ def test_utilization_utilization_graphs():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_field_zone_name_special():
     """
@@ -4311,7 +4311,7 @@ def test_authentication_ldap_switch_groups():
 
 
 @pytest.mark.manual
-@test_requirements.config_management
+@test_requirements.satellite
 def test_satellite_host_groups_show_up_as_configuration_profiles_satellite_62():
     """
     For the Satellite provider satellite_62, both the centos and fedora-
@@ -4460,7 +4460,7 @@ def test_verify_saml_sso_works_fine_check_both_enable_disable_options():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_mixed_appliance_ip_versions():
     """
@@ -4631,7 +4631,7 @@ def test_storage_ebs_snapshot_create():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(3)
 def test_distributed_delete_offline_worker_appliance():
     """
@@ -4772,7 +4772,7 @@ def test_black_console_ext_auth_options_disable():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_reporting():
     """
@@ -4931,7 +4931,7 @@ def test_switching_user_group_without_disconnecting():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_cu_data_collector():
     """
@@ -5204,7 +5204,7 @@ def test_heat_stacks_in_non_admin_tenants_shall_also_be_collected():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_web_services():
     """
@@ -5677,7 +5677,7 @@ def test_verify_purging_of_old_records():
 
 
 @pytest.mark.manual
-@test_requirements.config_management
+@test_requirements.tower
 @pytest.mark.tier(1)
 def test_config_manager_prov_from_service_ansible_tower_310():
     """
@@ -6116,7 +6116,7 @@ def test_authorized_users_can_login():
 
 
 @pytest.mark.manual
-@test_requirements.config_management
+@test_requirements.tower
 @pytest.mark.tier(1)
 def test_config_manager_remove_objects_ansible_tower_310():
     """
@@ -7156,7 +7156,7 @@ def test_snapshot_tree_view_functionality():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(3)
 def test_distributed_zone_create_new():
     """
@@ -7434,7 +7434,7 @@ def test_snapshot_link_in_vm_summary_page_after_deleting_snapshot():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_cu_coordinator_singleton():
     """
@@ -7960,7 +7960,7 @@ def test_ec2_targeted_refresh_load_balancer():
 
 
 @pytest.mark.manual
-@test_requirements.config_management
+@test_requirements.tower
 @pytest.mark.tier(1)
 def test_config_manager_change_zone():
     """
@@ -8221,7 +8221,7 @@ def test_change_the_search_base_for_user_and_groups_lookup_at_domain_component_(
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_smartstate_analysis():
     """
@@ -8297,7 +8297,7 @@ def test_storage_volume_attach_openstack():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_field_zone_name_whitespace():
     """
@@ -8349,7 +8349,7 @@ def test_snapshot_timeline_crud():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_create_duplicate():
     """
@@ -8484,7 +8484,7 @@ def test_external_auth_configuration_with_ipa():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_field_zone_name_long():
     """
@@ -8555,7 +8555,7 @@ def test_osp_vmware60_test_vm_migration_with_windows_10():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 def test_distributed_zone_in_different_networks():
     """
     Polarion:
@@ -8592,7 +8592,7 @@ def test_verify_that_errored_out_queue_messages_are_removed():
 
 
 @pytest.mark.manual
-@test_requirements.config_management
+@test_requirements.satellite
 def test_satellite_credential_validation_times_out_with_error_message():
     """
     Bug 1564601 - Satellite credential validation times out with no error
@@ -8724,7 +8724,7 @@ def test_verify_user_groups_can_be_retrieved_from_trusted_forest():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_scheduler_singleton():
     """
@@ -9068,7 +9068,7 @@ def test_osp_vmware67_test_vm_migration_from_ubuntu():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_field_zone_description_leading_whitespace():
     """
@@ -9185,7 +9185,7 @@ def test_osp_vmware67_test_vm_migration_with_rhel_69():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_change_appliance_zone():
     """
@@ -9618,7 +9618,7 @@ def test_gap_collection_hourly_graph_vsphere6():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_provider_inventory_singleton():
     """
@@ -9651,7 +9651,7 @@ def test_deployment_multiple_instances():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_provider_operations():
     """
@@ -12179,7 +12179,7 @@ def test_osp_vmware65_test_vm_with_multiple_nics_each_of_those_two_nic_can_have_
 
 
 @pytest.mark.manual
-@test_requirements.config_management
+@test_requirements.tower
 @pytest.mark.tier(1)
 def test_config_manager_override_extra_vars_dialog_vsphere():
     """
@@ -12351,7 +12351,7 @@ def test_verify_external_authentication_with_openldap_proxy_to_3_different_domai
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_notifier_singleton():
     """
@@ -12480,7 +12480,7 @@ def test_credentials_change_password_with_special_characters():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 def test_distributed_diagnostics_servers_view():
     """
     The above should all be shown as different regions 1-4
@@ -12995,7 +12995,7 @@ def test_saml_verify_get_user_groups_from_external_authentication_httpd__option(
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 def test_distributed_zone_mixed_infra():
     """
     Azure,AWS, and local infra
@@ -13010,7 +13010,7 @@ def test_distributed_zone_mixed_infra():
 
 
 @pytest.mark.manual
-@test_requirements.config_management
+@test_requirements.tower
 @pytest.mark.tier(1)
 def test_config_manager_add_multiple_times_ansible_tower_243():
     """
@@ -13195,7 +13195,7 @@ def test_osp_test_in_progress_migrations_can_be_canceled():
 
 
 @pytest.mark.manual
-@test_requirements.config_management
+@test_requirements.tower
 def test_config_manager_job_template_refresh():
     """
     After first Tower refresh, go to Tower UI and change name of 1 job

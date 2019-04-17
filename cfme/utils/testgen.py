@@ -317,7 +317,7 @@ def auth_groups(metafunc, auth_mode):
     return argnames, argvalues, idlist
 
 
-def config_managers(metafunc):
+def config_managers(metafunc, managers_type=None):
     """Provides config managers
     """
     argnames = ['config_manager_obj']
@@ -327,7 +327,12 @@ def config_managers(metafunc):
     data = cfme_data.get('configuration_managers', {})
 
     for cfg_mgr_key in data:
-        argvalues.append([get_config_manager_from_config(cfg_mgr_key)])
+        config_mgr = get_config_manager_from_config(cfg_mgr_key)
+        if managers_type and config_mgr.type != managers_type:
+            logger.info('Checking config managers type for [{}], skipping mismatched: [{}]'
+                        .format(managers_type, config_mgr))
+            continue  # skip it
+        argvalues.append([config_mgr])
         idlist.append(cfg_mgr_key)
     return argnames, argvalues, idlist
 

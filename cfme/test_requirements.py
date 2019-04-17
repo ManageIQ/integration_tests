@@ -1,6 +1,6 @@
 """Test requirements mapping
 
-This module contains predefined pytest markers for CFME product requirements.
+This module contains predefined pytest markers for MIQ/CFME product requirements.
 
 Please import the module instead of elements:
 
@@ -10,61 +10,389 @@ Please import the module instead of elements:
 
     pytestmark = [test_requirements.alert]
 
-    @test_requirments.quota
+    @test_requirements.quota
     def test_quota_alert():
         pass
+
+The markers can have metadata kwargs assigned to them
+These fields will be parsed for dump2polarion export, and will populate the work items in polarion
+
+The first argument to the marker definition is the title of the requirement.
+The assigned name of the marker object is equivalent to the 'short name' of the requirement.
+
+Example:
+    .. code-block:: python
+        # A requirement for automate domain import
+        import = pytest.mark.requirement(
+            'Automate Domain Import',
+            description='Import of automate domain items via a SCM repository'
+            assignee_id='mshriver',
+            approver_ids='izapolsk:approved',
+            severity_id='must_have'
+        )
+
+Included for quick reference, but potentially inaccurate
+See dump2polarion.exporters.requirements_exporter for up-to-date information
+Above module is converting pythonic keys (assignee_id) into polarion compatible keys ('assignee-id')
+Supported requirement metadata fields (and example data)
+    .. code-block:: python
+        {
+            "title": "requirement_complete",
+            "description": "Complete Requirement",
+            "approver_ids": "mkourim:approved",
+            "assignee_id": "mkourim",
+            "category_ids": "category_id1, category_id2",
+            "due_date": "2018-09-30",
+            "planned_in_ids": "planned_id1, planned_id2",
+            "initial_estimate": "1/4h",
+            "priority_id": "high",
+            "severity_id": "should_have",
+            "status_id": "status_id",
+            "reqtype": "functional",
+        }
 
 """
 import pytest
 
-ansible = pytest.mark.requirement("ansible")
-access = pytest.mark.requirement("access")
-alert = pytest.mark.requirement("alert")
-auth = pytest.mark.requirement("auth")
-automate = pytest.mark.requirement("automate")
-black = pytest.mark.requirement("black")
-bottleneck = pytest.mark.requirement("bottleneck")
-c_and_u = pytest.mark.requirement("c_and_u")
-cfme_tenancy = pytest.mark.requirement("cfme_tenancy")
-chargeback = pytest.mark.requirement("chargeback")
-cloud_init = pytest.mark.requirement("cloud_init")
-config_management = pytest.mark.requirement("config_management")
-configuration = pytest.mark.requirement("configuration")
-control = pytest.mark.requirement("control")
-dashboard = pytest.mark.requirement("dashboard")
-discovery = pytest.mark.requirement("discovery")
-distributed = pytest.mark.requirement("distributed")
-drift = pytest.mark.requirement("drift")
-filter = pytest.mark.requirement("filter")
-genealogy = pytest.mark.requirement("genealogy")
-general_ui = pytest.mark.requirement("general_ui")
-generic_objects = pytest.mark.requirement("generic_objects")
-html5 = pytest.mark.requirement("html5")
-ipv6 = pytest.mark.requirement("ipv6")
-log_depot = pytest.mark.requirement("log_depot")
-ownership = pytest.mark.requirement("ownership")
-power = pytest.mark.requirement("power")
-provision = pytest.mark.requirement("provision")
-quota = pytest.mark.requirement("quota")
-rbac = pytest.mark.requirement("rbac")
-reconfigure = pytest.mark.requirement("reconfigure")
-rep = pytest.mark.requirement("rep")
-report = pytest.mark.requirement("report")
-rest = pytest.mark.requirement("rest")
-retirement = pytest.mark.requirement("retirement")
-right_size = pytest.mark.requirement("right_size")
-run_process = pytest.mark.requirement("run_process")
-sdn = pytest.mark.requirement("sdn")
-service = pytest.mark.requirement("service")
-settings = pytest.mark.requirement("settings")
-smartstate = pytest.mark.requirement("smartstate")
-snapshot = pytest.mark.requirement("snapshot")
-ssui = pytest.mark.requirement("ssui")
-stack = pytest.mark.requirement("stack")
-storage = pytest.mark.requirement("storage")
-sysprep = pytest.mark.requirement("sysprep")
-tag = pytest.mark.requirement("tag")
-timelines = pytest.mark.requirement("timelines")
-upgrade = pytest.mark.requirement("upgrade")
-vm_migrate = pytest.mark.requirement("vm_migrate")
-vmrc = pytest.mark.requirement("vmrc")
+ansible = pytest.mark.requirement(
+    "Ansible Automation",
+    description='Ansible Automation Requirement',
+    assignee_id='sbulage',
+)
+
+access = pytest.mark.requirement(
+    "Access",
+    description='Direct integration of SaaS offerings in MIQ/CFME',
+    assignee_id='sbulage',
+)
+
+alert = pytest.mark.requirement(
+    "Alerts",
+    description='Alerting in MIQ',
+    assignee_id='jdupuy',
+)
+
+auth = pytest.mark.requirement(
+    "Authentication",
+    description='Authentication in MIQ/CFME, external authentication provider support',
+    assignee_id='apagac',
+)
+
+automate = pytest.mark.requirement(
+    "Automate",
+    description='Automate and related control behavior',
+    assignee_id='ghubale',
+)
+
+azure = pytest.mark.requirement(
+    'Azure Integration',
+    description='Integration of Azure in MIQ/CFME',
+    assignee_id='anikior',
+)
+
+bottleneck = pytest.mark.requirement(
+    "Optimization and Bottleneck",
+    description='Optimizations and Bottleneck ID, planned deprecation',
+    assignee_id='nachandr',
+)
+
+c_and_u = pytest.mark.requirement(
+    "Capacity and Utilization",
+    description='Capacity and Utilization data collection',
+    assignee_id='nachandr',
+)
+
+multi_tenancy = pytest.mark.requirement(
+    "MIQ Multi-Tenancy",
+    description='Support for Tenants in MIQ/CFME',
+    assignee_id='mnadeem',
+)
+
+chargeback = pytest.mark.requirement(
+    "Chargeback",
+    description='Chargeback rates, calculations, and reports',
+    assignee_id='tpapaioa',
+)
+
+cloud_init = pytest.mark.requirement(
+    "Provisioning with cloud_init",
+    description='Provisioning lifecycle with cloud-init resource configuration',
+    assignee_id='',  # FIXME needs assigned
+)
+
+configuration = pytest.mark.requirement(
+    "Configuration",
+    description='Configuration pages of MIQ/CFME, also partially covered by specific requirements',
+    assignee_id='tpapaioa',
+)
+
+control = pytest.mark.requirement(
+    "Control",
+    description='Control / Compliance policies and enforcement',
+    assignee_id='mmojzis',
+)
+
+dashboard = pytest.mark.requirement(
+    "Dashboard",
+    description='MIQ/CFME Dashboards creation, usability',
+    assignee_id='jhenner',
+)
+
+dialog = pytest.mark.requirement(
+    "Service Dialogs",
+    description='Service dialogs, creation and form behavior on order',
+    assignee_id='nansari',
+)
+
+discovery = pytest.mark.requirement(
+    "Provider Discovery",
+    description='Discovery of Cloud/Infra/etc providers',
+    assignee_id='ndhandre',
+)
+
+distributed = pytest.mark.requirement(
+    "Distributed Appliances",
+    description='Distributed Appliance deployment, configuration, and interaction',
+    assignee_id='tpapaioa',
+)
+
+drift = pytest.mark.requirement(
+    "Drift Analysis",
+    description='Drift benchmarking and analysis of MIQ entities (host, instance)',
+    assignee_id='sbulage',
+)
+
+events = pytest.mark.requirement(
+    "Events",
+    description='Provider event handling in MIQ/CFME (not including timelines)',
+    assignee_id='jdupuy'
+)
+
+filtering = pytest.mark.requirement(
+    "Searching and Filtering",
+    description='Searching and Filtering in the UI/SSUI',
+    assignee_id='anikifor',
+)
+
+genealogy = pytest.mark.requirement(
+    "VM/Instance Genealogy",
+    description='Genealogy of VMs/Instances in MIQ/CFME',
+    assignee_id='apagac',
+)
+
+general_ui = pytest.mark.requirement(
+    "General UI Components",
+    description='General UI verification',
+    assignee_id='anikifor',
+)
+
+generic_objects = pytest.mark.requirement(
+    "Generic Objects",
+    description='Generic Object classes for automate',
+    assignee_id='jdupuy',
+)
+
+html5 = pytest.mark.requirement(
+    "VM Consoles: HTML5/SPICE",
+    description='HTML5 and SPICE VM console support',
+    assignee_id='apagac',
+)
+
+ipv6 = pytest.mark.requirement(
+    "IPv6 Support",
+    description='IPv6 support at all levels of CFME',
+    assignee_id='',
+)
+
+log_depot = pytest.mark.requirement(
+    "Log Collection and Depot",
+    description='MIQ/CFME Log collection and storage',
+    assignee_id='anikifor',
+)
+
+ownership = pytest.mark.requirement(
+    "VM/Instance Ownership",
+    description='Ownership settings for VM/Instances',
+    assignee_id='apagac',
+)
+
+power = pytest.mark.requirement(
+    "Power Control from CFME",
+    description='Power Control operations on virtualization resources',
+    assignee_id='ghubale',
+)
+
+provision = pytest.mark.requirement(
+    "Provisioning Lifecycle",
+    description='Lifecycle and service provisioning on all providers',
+    assignee_id='jhenner',
+)
+
+quota = pytest.mark.requirement(
+    "Quota Setting and Enforcement",
+    description='Setting and enforcement of virtualization resource quota through CFME',
+    assignee_id='ghubale',
+)
+
+rbac = pytest.mark.requirement(
+    "RoleBasedAccessControl (RBAC)",
+    description='Role based access control testing of CFME authorization (Tenants, groups, roles)',
+    assignee_id='apagac',
+)
+
+reconfigure = pytest.mark.requirement(
+    "VM/Instance Reconfiguration",
+    description='Reconfiguration options and execution through CFME',
+    assignee_id='nansari',
+)
+
+relationships = pytest.mark.requirement(
+    'Relationship Discovery',
+    description='Discovery of entities related to providers, '
+                'display and linking of those collections',
+    assignee_id='ghubale',
+)
+
+replication = pytest.mark.requirement(
+    "Appliance Database Replication",
+    description='Replication between appliance instances',
+    assignee_id='jhenner',
+)
+
+report = pytest.mark.requirement(
+    "Reporting",
+    description='Intelligence reporting: creating, scheduling, and queuing reports',
+    assignee_id='pvala',
+)
+
+rest = pytest.mark.requirement(
+    "REST",
+    description='REST API interactions, covering all of MIQ/CFME',
+    assignee_id='pvala',
+)
+
+retirement = pytest.mark.requirement(
+    "VM/Instance Retirement",
+    description='Retirement of VMs/Instances and visibility of objects after retirement',
+    assignee_id='tpapaioa',
+)
+
+rhev = pytest.mark.requirement(
+    'RHEV Integration',
+    description='Integration of RHEVM and RHEVH in MIQ/CFME',
+    assignee_id='anikior',
+)
+
+right_size = pytest.mark.requirement(
+    "Normal Operating Ranges and Right Size Recommendations",
+    description='Normal Operating Ranges and Right Size Recommendations',
+    assignee_id='tpapaioa',
+)
+
+satellite = pytest.mark.requirement(
+    "Configuration Management: Satellite",
+    description='Configuration Management providers, specifically Red Hat Satellite',
+    assignee_id='tpapaioa',
+)
+
+scvmm = pytest.mark.requirement(
+    'SCVMM Integration',
+    description='Support of SCVMM in MIQ/CFME',
+    assignee_id='jdupuy',
+)
+
+sdn = pytest.mark.requirement(
+    "Software Defined Networking",
+    description='Support for software defined network management on cloud providers',
+    assignee_id='mmojzis',
+)
+
+service = pytest.mark.requirement(
+    "Services",
+    description='Services, catalog items, bundles, catalogs, retirement',
+    assignee_id='nansari',
+)
+
+settings = pytest.mark.requirement(
+    "Settings",
+    description='Per-user appliance settings',
+    assignee_id='pvala',
+)
+
+smartstate = pytest.mark.requirement(
+    "Smartstate Analysis",
+    description='Smartstate analysis on all providers',
+    assignee_id='sbulage',
+)
+
+snapshot = pytest.mark.requirement(
+    "VM/Instance Snapshots",
+    description='Snapshot support and management',
+    assignee_id='apagac',
+)
+
+ssui = pytest.mark.requirement(
+    "Self-Service UI",
+    description='SSUI interface and use',
+    assignee_id='nansari',
+)
+
+stack = pytest.mark.requirement(
+    "Orchestration Stacks",
+    description='Cloud provider orchestration stack management and ordering',
+    assignee_id='nansari',
+)
+
+storage = pytest.mark.requirement(
+    "Block/Object Storage",
+    description='Cloud provider storage management for volumes and blocks',
+    assignee_id='mmojzis',
+)
+
+tag = pytest.mark.requirement(
+    "Tagging",
+    description='Tag creation, assignment, visibility',
+    assignee_id='anikifor',
+)
+
+timelines = pytest.mark.requirement(
+    "Event Timelines",
+    description='Event Timelines',
+    assignee_id='jdupuy',
+)
+
+tower = pytest.mark.requirement(
+    "Configuration Management: Tower",
+    description='Configuration Management providers, specifically Ansible Tower',
+    assignee_id='nachandr',
+)
+
+upgrade = pytest.mark.requirement(
+    "CFME Upgrade and Database Migrations",
+    description='Upgrading application and migrating databases',
+    assignee_id='jhenner',
+)
+
+v2v = pytest.mark.requirement(
+    'IMS V2V Migration',
+    description='Migration of Instance/VM from one provider to another using IMS',
+    assignee_id='sshveta',
+)
+
+vm_migrate = pytest.mark.requirement(
+    "VM/Instance Migration",
+    description='Storage/Compute migration of VM/Instances on single provider',
+    assignee_id='mnadeem',
+)
+
+vmrc = pytest.mark.requirement(
+    "VM Consoles: VMWare RC",
+    description='VMWare Remote Console support',
+    assignee_id='apagac',
+)
+
+vmware = pytest.mark.requirement(
+    "VMWare Integration",
+    description='Support of VMWare in MIQ/CFME',
+    assignee_id='kkulkarn'
+)

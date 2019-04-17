@@ -152,8 +152,8 @@ def test_memory_total(appliance):
         testtype: functional
         casecomponent: Appliance
     """
-    result = appliance.ssh_client.run_command(r"free -g | grep Mem: | awk '{ print $2 }'").output
-    assert int(result) >= 6
+    result = appliance.ssh_client.run_command(r"free -g | grep Mem: | awk '{ print $2 }'")
+    assert int(result.output) >= 6
 
 
 # this is based on expected changes tracked in github/ManageIQ/cfme_build repo
@@ -166,10 +166,8 @@ def test_cpu_total(appliance):
         testtype: functional
         casecomponent: Appliance
     """
-    result = appliance.ssh_client.run_command(
-        r"lscpu | grep ^CPU\(s\): | awk '{ print $2 }'"
-    ).output
-    assert int(result) >= 4
+    result = appliance.ssh_client.run_command(r"lscpu | grep ^CPU\(s\): | awk '{ print $2 }'")
+    assert int(result.output) >= 4
 
 
 @pytest.mark.ignore_stream("upstream")
@@ -361,7 +359,7 @@ def test_appliance_exec_scripts():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_appliance_replicate_database_disconnection_with_backlog():
     """
@@ -376,7 +374,7 @@ def test_appliance_replicate_database_disconnection_with_backlog():
 
 
 @pytest.mark.manual
-@test_requirements.rep
+@test_requirements.replication
 @pytest.mark.tier(1)
 def test_appliance_replicate_database_disconnection():
     """
