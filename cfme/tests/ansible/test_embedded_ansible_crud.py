@@ -7,11 +7,11 @@ from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
-    test_requirements.ansible,
+    test_requirements.ansible
 ]
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def embedded_appliance(appliance):
     """Enables embedded ansible role via UI"""
     appliance.enable_embedded_ansible_role()
@@ -32,13 +32,15 @@ def test_embedded_ansible_enable(embedded_appliance):
         tags: ansible_embed
     """
     assert wait_for(lambda: embedded_appliance.is_embedded_ansible_running, num_sec=30)
+    assert wait_for(lambda: embedded_appliance.supervisord.is_active, num_sec=180)
     assert wait_for(lambda: embedded_appliance.rabbitmq_server.running, num_sec=30)
     assert wait_for(lambda: embedded_appliance.nginx.running, num_sec=30)
     endpoint = "api" if embedded_appliance.is_pod else "ansibleapi"
 
     assert embedded_appliance.ssh_client.run_command(
         'curl -kL https://localhost/{endp} | grep "AWX REST API"'.format(endp=endpoint),
-        container=embedded_appliance.ansible_pod_name)
+        container=embedded_appliance.ansible_pod_name,
+    )
 
 
 @pytest.mark.tier(1)
@@ -88,9 +90,7 @@ def test_embedded_ansible_logs(embedded_appliance):
     ]
 
     # Asserting log folder is present
-    tower_log_folder = embedded_appliance.ssh_client.run_command(
-        "ls /var/log/tower/"
-    )
+    tower_log_folder = embedded_appliance.ssh_client.run_command("ls /var/log/tower/")
     assert tower_log_folder.success
 
     logs = tower_log_folder.output.splitlines()
@@ -118,18 +118,17 @@ def test_embedded_ansible_disable(embedded_appliance):
     embedded_appliance.disable_embedded_ansible_role()
 
     if not embedded_appliance.is_pod:
-        assert wait_for(lambda: embedded_appliance.supervisord.running,
-                        fail_cond=False,
-                        num_sec=180)
-        assert wait_for(lambda: embedded_appliance.rabbitmq_server.running,
-                        fail_cond=False,
-                        num_sec=80)
-        assert wait_for(lambda: embedded_appliance.nginx.running,
-                        fail_cond=False,
-                        num_sec=30)
+        assert wait_for(
+            lambda: not embedded_appliance.supervisord.is_active, num_sec=180
+        )
+        assert wait_for(
+            lambda: not embedded_appliance.rabbitmq_server.is_active, num_sec=80
+        )
+        assert wait_for(lambda: not embedded_appliance.nginx.is_active, num_sec=30)
     else:
         @wait_for_decorator(num_sec=300)
         def is_ansible_pod_stopped():
             # todo: implement appropriate methods in appliance
             return embedded_appliance.ssh_client.run_command(
-                'oc get pods|grep ansible', ensure_host=True).failed
+                "oc get pods|grep ansible", ensure_host=True
+            ).failed
