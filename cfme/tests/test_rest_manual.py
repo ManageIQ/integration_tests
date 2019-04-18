@@ -115,30 +115,6 @@ def test_filter_by_flavor_via_api():
 
 @pytest.mark.manual
 @test_requirements.rest
-@pytest.mark.tier(3)
-def test_query_custom_category_via_api():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: medium
-        initialEstimate: 1/10h
-        setup:
-            1. Navigate to `Configuration` and select `Region`.
-            2. Click on Tags and create a custom category.
-        testSteps:
-            1. Send a request: GET /api/categories
-        expectedResults:
-            1. Custom Category must be included in the response
-
-    Bugzilla:
-        1650556
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
 @pytest.mark.tier(0)
 def test_bulk_query_attributes():
     """
