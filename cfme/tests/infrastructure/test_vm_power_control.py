@@ -306,6 +306,7 @@ class TestVmDetailsPowerControlPerProvider(object):
         soft_assert(testing_vm.mgmt.is_running, "vm not running")
 
     @pytest.mark.rhv3
+    @pytest.mark.meta(automates=[BZ(1174858)])
     def test_suspend(self, appliance, testing_vm, ensure_vm_running, soft_assert):
         """Tests suspend
 
@@ -393,7 +394,7 @@ def test_no_template_power_control(provider, soft_assert):
             5. Click on some template to get into the details page
             6. Verify the Power toolbar button is not visible
 
-    Bugzillas:
+    Bugzilla:
         1496383
         1634713
     """
@@ -536,6 +537,9 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
         initialEstimate: 1/6h
         casecomponent: Infra
         tags: power
+
+    Bugzilla:
+        1571830
     """
     wait_for_vm_tools(testing_vm_tools)
     view = navigate_to(testing_vm_tools, "Details")
@@ -573,6 +577,9 @@ def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_
         caseimportance: high
         casecomponent: Infra
         tags: power
+
+    Bugzilla:
+        1571895
     """
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
