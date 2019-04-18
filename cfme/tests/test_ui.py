@@ -1,5 +1,9 @@
+from cfme import test_requirements
 from cfme.fixtures.soft_assert import soft_assert
 from cfme.utils.appliance.implementations.ui import navigate_to
+
+
+pytestmark = [test_requirements.general_ui]
 
 
 def traverse(dic, paths, path=None):
@@ -20,7 +24,7 @@ def traverse(dic, paths, path=None):
 def test_each_page(appliance):
     """
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         initialEstimate: 1/4h
         casecomponent: WebUI
     """

@@ -4,6 +4,7 @@ from xml.sax.saxutils import unescape
 import pytest
 from wait_for import TimedOutError
 
+from cfme import test_requirements
 from cfme.base.ui import Server
 from cfme.exceptions import CannotScrollException
 from cfme.infrastructure.networking import InfraSwitchesCollection
@@ -38,15 +39,15 @@ pytestmark = [
     pytest.mark.parametrize(
         "model_object,destination", LOCATIONS
     ),
+    test_requirements.general_ui
 ]
 
 
-@pytest.mark.requirement('general_ui')
 @pytest.mark.tier(3)
 def test_pull_splitter_persistence(request, appliance, model_object, destination):
     """
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         caseimportance: low
         casecomponent: WebUI
         initialEstimate: 1/20h

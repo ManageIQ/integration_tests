@@ -218,11 +218,12 @@ def test_host_name_required_validation_cloud(request, appliance):
 
 
 @pytest.mark.tier(3)
+@test_requirements.general_ui
 def test_api_port_blank_validation(request, appliance):
     """Test to validate blank api port while adding a provider
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/6h
@@ -380,12 +381,13 @@ def test_azure_multiple_subscription(appliance, request, soft_assert):
                                                                                      prov_b[0]))
 
 
+@test_requirements.general_ui
 @pytest.mark.tier(3)
 def test_openstack_provider_has_api_version(appliance):
     """Check whether the Keystone API version field is present for Openstack.
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         initialEstimate: 1/4h
     """
@@ -515,6 +517,7 @@ def test_cloud_names_grid_floating_ips(appliance, ec2_provider, soft_assert):
         soft_assert('title="{}"'.format(entity.data['address']) in entity.data['quadicon'])
 
 
+@test_requirements.general_ui
 @pytest.mark.tier(3)
 def test_display_network_topology(appliance, openstack_provider):
     """
@@ -522,7 +525,7 @@ def test_display_network_topology(appliance, openstack_provider):
         1343553
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/8h
@@ -639,6 +642,7 @@ def test_tagvis_provision_fields(setup_provider, request, appliance, user_restri
         soft_assert(len(select) == 1 for select in environment_fields_check)
 
 
+@test_requirements.general_ui
 @pytest.mark.tier(3)
 @pytest.mark.provider([OpenStackProvider], override=True)
 def test_domain_id_validation(request, provider):
@@ -653,7 +657,7 @@ def test_domain_id_validation(request, provider):
         * Validate without Domain ID
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         initialEstimate: 1/4h
     """
