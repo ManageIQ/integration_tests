@@ -695,7 +695,7 @@ def test_power_options_on_archived_orphaned_vms_all_page(archive_orphan_vm, test
             3. Select any VM and click on power option drop-down
     """
     infra_vms = testing_vm.appliance.collections.infra_vms
-    if archive_orphan_vm == "archived_vm":
+    if archive_orphan_vm[0] == "archived_vm":
         view = navigate_to(infra_vms, 'ArchivedAll')
 
         # Checking power drop down is disabled on 'ArchivedAll' view
@@ -721,6 +721,5 @@ def test_power_options_on_archived_orphaned_vms_all_page(archive_orphan_vm, test
             action = 'Start'
         elif action == 'Power Off':
             action = 'Stop'
-        # for m in view.flash.messages:
-        #     m.dismiss()
         view.flash.assert_message('{} action does not apply to selected items'.format(action))
+        view.flash.dismiss()

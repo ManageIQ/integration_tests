@@ -744,3 +744,56 @@ class TestInstanceRESTAPI(object):
             testing_instance.STATE_UNKNOWN
         )
         soft_assert(self.verify_vm_power_state(vm, terminated_states), "instance not terminated")
+
+
+def test_power_options_on_archived_instance_all_page(testing_instance):
+    """This test case is to check Power option drop-down button is disabled on archived and orphaned
+       instances all page. Also it performs the power operations on instance and checked expected
+       flash messages.
+       Note: Cloud instances can not be orphaned - BZ: 1701188
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/2h
+        caseimportance: low
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: Control
+        tags: power
+        testSteps:
+            1. Add provider cloud provider
+            2. Navigate to Archived instance all page
+            3. Select any instance and click on power option drop-down
+        expectedResults:
+            1.
+            2.
+            3. As we don't perform any power operations on archived instances. So power
+               button drop-down should not present there at all or it must show desired flash
+               messages for those actions.
+
+    Bugzilla:
+        1701188, 1655477, 1686015
+    """
+    testing_instance.mgmt.delete()
+    testing_instance.wait_for_instance_state_change(desired_state="archived", timeout=1200)
+    cloud_instance = testing_instance.appliance.collections.cloud_instances
+    view = navigate_to(cloud_instance, 'ArchivedAll')
+
+    # Checking power drop down is disabled on 'ArchivedAll' view
+    assert not view.toolbar.power.is_enabled
+
+    # Selecting particular archived instance
+    testing_instance.find_quadicon(archived=True).check()
+
+    # After selecting particular archived instance; 'Power' drop down gets enabled.
+    # Reading all the options available in 'power' drop down
+    for action in view.toolbar.power.items:
+        # Performing power actions on archived instance
+        view.toolbar.power.item_select(action, handle_alert=True)
+        if action == 'Power On':
+            action = 'Start'
+        elif action == 'Power Off':
+            action = 'Stop'
+        view.flash.assert_message('{} action does not apply to selected items'.format(action))
+        view.flash.dismiss()

@@ -298,9 +298,10 @@ class Instance(VM):
         Args:
         Returns: entity of appropriate type
         """
-        view = navigate_to(self.parent, 'All')
-        view.toolbar.view_selector.select('Grid View')
-
+        archived = kwargs.pop('archived', None)
+        if not archived:
+            view = navigate_to(self.parent, 'All')
+        self.view.toolbar.view_selector.select('Grid View')
         try:
             return view.entities.get_entity(name=self.name, surf_pages=True)
         except ItemNotFound:
@@ -491,6 +492,30 @@ class InstanceCollection(VMCollection):
             entities = [e for e in entities if e.name == name]
 
         return entities
+
+
+class ArchivedInstancesAllView(InstanceAllView):
+    """This view is for all Archived Instances page"""
+
+    @property
+    def is_displayed(self):
+        selected = self.view.sidebar.instances_by_provider.tree.currently_selected
+        return (
+            self.in_cloud_instance and
+            self.entities.title.text == 'Archived Instances' and
+            selected == ['Instances by Provider', '<Archived>']
+        )
+
+
+@navigator.register(InstanceCollection, 'ArchivedAll')
+@navigator.register(Instance, 'ArchivedAll')
+class ArchivedInstances(CFMENavigateStep):
+    VIEW = ArchivedInstancesAllView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        self.view.sidebar.instances_by_provider.tree.click_path('Instances by Provider',
+                                                                '<Archived>')
 
 
 @navigator.register(InstanceCollection, 'All')
