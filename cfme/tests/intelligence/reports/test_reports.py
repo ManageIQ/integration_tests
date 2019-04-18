@@ -12,26 +12,27 @@ pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 def create_custom_tag(appliance):
     # cannot create a category with uppercase in the name
     category_name = fauxfactory.gen_alphanumeric().lower()
+    category = appliance.rest_api.collections.categories.action.create(
+        {
+            "name": "{cat_name}".format(cat_name=category_name),
+            "description": "description_{cat_name}".format(cat_name=category_name),
+        }
+    )[0]
+    assert_response(appliance)
 
-    # command to create the new category
-    setup_command = (
-        '\'cat = Classification.create_category!(name: "{cat_name}", '
-        'description: "description_{cat_name}", read_only: true);'
-        'cat.add_entry(name: "{cat_name}_entry", description: "{cat_name}_entry_description")\''
-    ).format(cat_name=category_name)
-
-    # command to delete the created category
-    teardown_command = "'cat = Classification.find_by_name(\"{}\");cat.delete()'".format(
-        category_name
-    )
-
-    output = appliance.ssh_client.run_rails_command(setup_command)
-    assert output.success
+    tag = appliance.rest_api.collections.tags.action.create(
+        {
+            "name": "{cat_name}_entry".format(cat_name=category_name),
+            "description": "{cat_name}_entry_description".format(cat_name=category_name),
+            "category": {"href": category.href},
+        }
+    )[0]
+    assert_response(appliance)
 
     yield category_name
 
-    output = appliance.ssh_client.run_rails_command(teardown_command)
-    assert output.success
+    tag.action.delete()
+    category.action.delete()
 
 
 @pytest.fixture(scope="function")
