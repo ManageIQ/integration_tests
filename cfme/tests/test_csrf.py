@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
+
+
+pytestmark = [test_requirements.general_ui]
 
 
 @pytest.mark.tier(2)
@@ -15,7 +19,7 @@ def test_csrf_post(appliance):
 
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         initialEstimate: 1/4h
         casecomponent: WebUI
     """
@@ -24,15 +28,7 @@ def test_csrf_post(appliance):
     dashboard.reset_widgets(cancel=False)
 
     try:
-        if appliance.version >= '5.10':
-            wait_for(
-                lambda: dashboard.logged_out, num_sec=15, delay=0.2)
-        else:
-            wait_for(
-                lambda: (
-                    dashboard.unexpected_error is not None and
-                    'InvalidAuthenticityToken' in dashboard.unexpected_error),
-                num_sec=15, delay=0.2)
-
+        wait_for(
+            lambda: dashboard.logged_out, num_sec=15, delay=0.2)
     except TimedOutError:
         pytest.fail("CSRF attack succeeded!")

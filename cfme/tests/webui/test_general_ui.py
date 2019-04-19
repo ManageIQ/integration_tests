@@ -7,6 +7,9 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
+pytestmark = [test_requirements.general_ui]
+
+
 @pytest.fixture()
 def import_tags(appliance):
     scripts = [
@@ -94,7 +97,7 @@ def test_add_provider_trailing_whitespaces(provider, soft_assert):
     """Test to validate the hostname and username should be without whitespaces
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         initialEstimate: 1/4h
         casecomponent: WebUI
     """
@@ -118,7 +121,7 @@ def test_configuration_large_number_of_tags(appliance, import_tags, soft_assert)
     """Test page should be loaded within a minute with large number of tags
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
@@ -144,7 +147,7 @@ def test_configuration_help_menu(appliance, set_help_menu_options, soft_assert):
         4) Check if the changes are reflected or not
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
@@ -167,7 +170,7 @@ def test_automate_can_edit_copied_method(appliance, request):
     It should be saved successfully
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/10h
@@ -211,7 +214,7 @@ def test_infrastructure_filter_20k_vms(appliance, create_20k_vms):
         4) There should be filtered 20k vms
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
@@ -225,7 +228,6 @@ def test_infrastructure_filter_20k_vms(appliance, create_20k_vms):
 
 @pytest.mark.ignore_stream('5.10')
 @pytest.mark.manual
-@test_requirements.general_ui
 @pytest.mark.tier(1)
 def test_consistent_breadcrumbs():
     """
@@ -235,7 +237,7 @@ def test_consistent_breadcrumbs():
         1678192
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         caseimportance: high
         initialEstimate: 1/2h
@@ -250,12 +252,11 @@ def test_consistent_breadcrumbs():
 
 
 @pytest.mark.manual
-@test_requirements.general_ui
 @pytest.mark.tier(1)
 def test_ui_pinning_after_relog():
     """
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         caseimportance: medium
         caseposneg: negative
@@ -271,14 +272,13 @@ def test_ui_pinning_after_relog():
 
 
 @pytest.mark.manual
-@test_requirements.general_ui
 def test_ui_notification_icon():
     """
     Bugzilla:
         1489798
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/6h
@@ -297,12 +297,11 @@ def test_ui_notification_icon():
 
 
 @pytest.mark.manual
-@test_requirements.general_ui
 @pytest.mark.tier(1)
 def test_containers_topology_display_names():
     """
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/30h
@@ -315,12 +314,11 @@ def test_containers_topology_display_names():
 
 
 @pytest.mark.manual
-@test_requirements.configuration
 @pytest.mark.tier(1)
 def test_configuration_icons_trusted_forest_settings():
     """
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/20h

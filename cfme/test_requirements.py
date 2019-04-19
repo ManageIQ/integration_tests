@@ -183,7 +183,7 @@ genealogy = pytest.mark.requirement(
 general_ui = pytest.mark.requirement(
     "General UI Components",
     description='General UI verification',
-    assignee_id='anikifor',
+    assignee_id='pvala',
 )
 
 generic_objects = pytest.mark.requirement(
