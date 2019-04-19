@@ -10,7 +10,8 @@ from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.usefixtures("setup_provider"),
-    pytest.mark.provider([OpenStackProvider])
+    pytest.mark.provider([OpenStackProvider], required_fields=[
+        ['provisioning', 'cloud_tenant']])
 ]
 
 VOLUME_SIZE = 1
