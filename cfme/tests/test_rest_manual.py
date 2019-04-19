@@ -235,56 +235,6 @@ def test_add_ansible_tower_rest():
 @pytest.mark.manual
 @test_requirements.rest
 @pytest.mark.tier(3)
-def test_delete_vm_disk_via_api():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: high
-        initialEstimate: 1/10h
-        setup:
-            1. Add an infrastructure provider. Test this vcenter and rhv provider.
-            2. Provision a VM.
-            3. Add a disk to the VM.
-        testSteps:
-            1. Delete the disk via API.
-        expectedResults:
-            1. The disk must be deleted successfully.
-
-    Bugzilla:
-        1666593
-        1620161
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-@pytest.mark.tier(3)
-def test_add_vm_disk_via_api():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: high
-        initialEstimate: 1/10h
-        setup:
-            1. Add an infrastructure provider. Test this vcenter and rhv provider.
-            2. Provision a VM.
-        testSteps:
-            1. Add a disk to the VM.
-        expectedResults:
-            1. The disk must be added successfully.
-
-    Bugzilla:
-        1618517
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-@pytest.mark.tier(3)
 @pytest.mark.parametrize("method", ["POST", "DELETE"])
 def test_delete_automate_domain_via_api(method):
     """

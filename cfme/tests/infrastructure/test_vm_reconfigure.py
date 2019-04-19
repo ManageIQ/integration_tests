@@ -6,6 +6,8 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
+from cfme.utils.rest import assert_response
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 
@@ -488,3 +490,95 @@ def test_reconfigure_add_disk_cold_controller_sas():
             5. Should be SAS like exiting Controller
     """
     pass
+
+
+def vm_reconfig_via_rest(appliance, config_type, vm_id, config_data):
+    payload = {
+        "action": "create",
+        "options": {
+            "src_ids": [vm_id],
+            "request_type": "vm_reconfigure",
+            config_type: config_data,
+        },
+        "auto_approve": False,
+    }
+    appliance.rest_api.collections.requests.action.create(**payload)
+    assert_response(appliance)
+    return
+
+
+@test_requirements.rest
+@pytest.mark.tier(3)
+def test_vm_disk_reconfig_via_rest(appliance, full_vm):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: high
+        initialEstimate: 1/10h
+        setup:
+            1. Add an infrastructure provider. Test for vcenter and rhv provider.
+            2. Provision a VM.
+        testSteps:
+            1. Add a disk to the VM.
+            2. Remove the disk from VM
+        expectedResults:
+            1. The disk must be added successfully.
+            2. The disk must be removed successfully.
+    Bugzilla:
+        1618517
+        1666593
+        1620161
+        1691635
+        1692801
+    """
+    vm_id = appliance.rest_api.collections.vms.get(name=full_vm.name).id
+    # get initial disks for later comparison
+    initial_disks = full_vm.configuration.disks
+
+    # add a disk to VM
+    add_data = [
+        {
+            "disk_size_in_mb": 20,
+            "sync": True,
+            "persistent": True,
+            "thin_provisioned": False,
+            "dependent": True,
+            "bootable": False,
+        }
+    ]
+    vm_reconfig_via_rest(appliance, "disk_add", vm_id, add_data)
+
+    # assert the new disk was added
+    assert wait_for(
+        lambda: full_vm.configuration.num_disks > len(initial_disks),
+        fail_func=full_vm.refresh_relationships,
+        delay=5,
+        timeout=200,
+    )
+
+    # Disk GUID is displayed instead of disk name in the disks table for a rhev VM, and passing
+    # disk GUID to the delete method results in failure, so skip this part until the BZ is fixed.
+    if not (BZ(1691635).blocks and full_vm.provider.one_of(RHEVMProvider)):
+
+        # there will always be 2 disks after the disk has been added
+        disk_added = list(set(full_vm.configuration.disks) - set(initial_disks))[0]
+
+        # remove the newly added disk from VM
+        delete_data = [{"disk_name": disk_added.filename, "delete_backing": False}]
+        vm_reconfig_via_rest(appliance, "disk_remove", vm_id, delete_data)
+
+        # assert the disk was removed
+        try:
+            wait_for(
+                lambda: full_vm.configuration.num_disks == len(initial_disks),
+                fail_func=full_vm.refresh_relationships,
+                delay=5,
+                timeout=200,
+            )
+        except TimedOutError:
+            assert (
+                False
+            ), "Number of disks expected was {expected}, found {actual}".format(
+                expected=len(initial_disks), actual=full_vm.configuration.num_disks
+            )
