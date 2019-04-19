@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils.rest import assert_response
+from cfme.utils.rest import delete_resources_from_detail
 from cfme.utils.rest import query_resource_attributes
 from cfme.utils.testgen import config_managers
 from cfme.utils.testgen import generate
@@ -230,3 +231,69 @@ class TestAuthenticationsRESTAPI(object):
         collection = appliance.rest_api.collections.authentications
         assert 'credential_types' in collection.options()['data']
         assert_response(appliance)
+
+
+@pytest.fixture(scope="module")
+def config_manager_rest(config_manager_obj):
+    """Creates provider using REST API."""
+    config_manager_obj.create_rest()
+    assert_response(config_manager_obj.appliance)
+    rest_entity = config_manager_obj.rest_api_entity
+    rest_entity.reload()
+
+    yield rest_entity
+
+    if rest_entity.exists:
+        rest_entity.action.delete()
+        rest_entity.wait_not_exists()
+
+
+@pytest.mark.tier(3)
+@test_requirements.rest
+def test_config_manager_create(config_manager_rest):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
+        initialEstimate: 1/10h
+
+    Bugzilla:
+        1621888
+    """
+    assert "?provider_class=provider" in config_manager_rest.href
+    assert "::Provider" in config_manager_rest.type
+
+
+@pytest.mark.tier(3)
+@test_requirements.rest
+def test_config_manager_edit(request, config_manager_rest):
+    """Test editing a config manager using REST API.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    new_name = fauxfactory.gen_alpha(30)
+    old_name = config_manager_rest.name
+    request.addfinalizer(lambda: config_manager_rest.action.edit(name=old_name))
+    updated = config_manager_rest.action.edit(name=new_name)
+    config_manager_rest.reload()
+    assert config_manager_rest.name == new_name == updated.name
+
+
+@pytest.mark.tier(3)
+@test_requirements.rest
+@pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
+def test_config_manager_delete_details(config_manager_rest, method):
+    """Tests deletion of the config manager from detail using REST API.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    delete_resources_from_detail([config_manager_rest], method=method)
