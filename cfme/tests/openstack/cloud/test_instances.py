@@ -18,7 +18,10 @@ from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.usefixtures("setup_provider_modscope"),
-    pytest.mark.provider([OpenStackProvider], scope='module')
+    pytest.mark.provider([OpenStackProvider], scope='module', required_fields=[
+        ['provisioning', 'cloud_tenant'],
+        ['provisioning', 'cloud_network'],
+        ['provisioning', 'instance_type']])
 ]
 
 
