@@ -69,7 +69,7 @@ def generated_request(appliance, provider, provisioning, template_name, vm_name)
             {'host_name': {'name': host},
              'datastore_name': {'name': datastore}},
         'network':
-            {'vlan': partial_match(provisioning['vlan'])}
+            {'vlan': partial_match(provisioning['vlan'] if provisioning.get('vlan') else None)}
     }
 
     # Same thing, different names. :\
