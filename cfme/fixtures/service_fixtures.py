@@ -30,7 +30,7 @@ def catalog(request, appliance):
     return _catalog(request, appliance)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def catalog_item(appliance, provider, provisioning, dialog, catalog):
     catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
     return catalog_item
