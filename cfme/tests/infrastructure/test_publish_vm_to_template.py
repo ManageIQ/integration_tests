@@ -3,14 +3,15 @@ from wrapanapi import VmState
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.virtual_machines import deploy_template
 
 pytestmark = [
-    pytest.mark.provider([InfraProvider])
+    pytest.mark.provider([InfraProvider],
+    required_fields=[['templates', 'small_template']])
 ]
 
 
@@ -19,8 +20,11 @@ def vm_crud(provider):
     collection = provider.appliance.provider_based_collection(provider)
     vm_name = random_vm_name(context='pblsh')
     vm = collection.instantiate(vm_name, provider)
-    deploy_template(vm.provider.key, vm_name, provider.data['small_template'],
-                    timeout=2500)
+    try:
+        deploy_template(vm.provider.key, vm_name,
+            provider.data.templates.small_template.name, timeout=2500)
+    except (KeyError, AttributeError):
+        pytest.skip("Skipping as small_template could not be found on the provider")
     vm.wait_to_appear(timeout=900, load_details=False)
     yield vm
 
@@ -32,10 +36,9 @@ def vm_crud(provider):
 
 
 @pytest.mark.rhv2
-@pytest.mark.provider([RHEVMProvider], override=True, scope="module",
+@pytest.mark.provider([RHEVMProvider, VMwareProvider], override=True, scope="module",
                       required_fields=[['templates', 'small_template']],
                       selector=ONE_PER_TYPE)
-@pytest.mark.meta(blockers=[BZ(1622952, forced_streams=['5.10'])])
 def test_publish_vm_to_template(request, setup_provider, vm_crud):
     """ Try to publish VM to template.
     Steps:
