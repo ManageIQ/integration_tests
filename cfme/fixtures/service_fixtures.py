@@ -201,4 +201,4 @@ def service_vm(appliance, provider, catalog_item):
     if service.exists:
         service.delete()
     if provision_request.exists:
-        provision_request.remove_request_rest()
+        provision_request.remove_request(method="rest")
