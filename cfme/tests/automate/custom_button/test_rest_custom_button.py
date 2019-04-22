@@ -14,7 +14,7 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(3),
-    test_requirements.rest,
+    test_requirements.custom_button,
     pytest.mark.uncollectif(
         lambda appliance, obj_type: obj_type not in OBJ_TYPE_59 and appliance.version < "5.10"
     ),

@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 from widgetastic_patternfly import Dropdown
 
+from cfme import test_requirements
 from cfme.tests.automate.custom_button import log_request_check
 from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -10,7 +11,7 @@ from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.tier(2)]
+pytestmark = [pytest.mark.tier(2), test_requirements.custom_button]
 
 
 OBJECTS = ["USER", "GROUP", "TENANT"]

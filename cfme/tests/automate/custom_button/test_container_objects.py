@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 from widgetastic_patternfly import Dropdown
 
+from cfme import test_requirements
 from cfme.containers.provider import ContainersProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import log_request_check
@@ -15,6 +16,7 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(2),
+    test_requirements.custom_button,
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([ContainersProvider], selector=ONE_PER_TYPE),
     pytest.mark.meta(blockers=[BZ(1640304, forced_streams=["5.10"])]),

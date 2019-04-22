@@ -19,7 +19,7 @@ from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
-pytestmark = [test_requirements.automate, pytest.mark.usefixtures("uses_infra_providers")]
+pytestmark = [test_requirements.custom_button, pytest.mark.usefixtures("uses_infra_providers")]
 
 
 @pytest.fixture(scope="module")

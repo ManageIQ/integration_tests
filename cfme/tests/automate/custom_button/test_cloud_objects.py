@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 from widgetastic_patternfly import Dropdown
 
+from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import log_request_check
@@ -16,6 +17,7 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(2),
+    test_requirements.custom_button,
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([OpenStackProvider], selector=ONE_PER_TYPE),
 ]

@@ -102,6 +102,12 @@ c_and_u = pytest.mark.requirement(
     assignee_id='nachandr',
 )
 
+custom_button = pytest.mark.requirement(
+    "Custom Buttons",
+    description='Custom Buttons and Custom Groups',
+    assignee_id='ndhandre',
+)
+
 multi_tenancy = pytest.mark.requirement(
     "MIQ Multi-Tenancy",
     description='Support for Tenants in MIQ/CFME',

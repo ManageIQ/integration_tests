@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 from widgetastic_patternfly import Dropdown
 
+from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -9,6 +10,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.tier(2),
+    test_requirements.custom_button,
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE),
 ]
