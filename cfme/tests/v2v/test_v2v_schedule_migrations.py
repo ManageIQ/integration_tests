@@ -1,83 +1,68 @@
-"""Test to validate basic navigations.Later to be replaced with End-to-End functional testing."""
+"""Tests to validate schedule migration usecases"""
 import fauxfactory
 import pytest
 
-from cfme.fixtures.provider import rhel7_minimal
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.provider(
-        classes=[RHEVMProvider],
+        classes=[RHEVMProvider, OpenStackProvider],
         selector=ONE_PER_VERSION,
-        required_flags=['v2v'],
+        required_flags=["v2v"],
         scope="module"
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
         selector=ONE_PER_TYPE,
-        fixture_name='source_provider',
-        required_flags=['v2v'],
+        fixture_name="source_provider",
+        required_flags=["v2v"],
         scope="module"
-    )
+    ),
+    pytest.mark.usefixtures("v2v_provider_setup")
 ]
 
 
-@pytest.mark.parametrize('form_data_vm_obj_single_datastore', [['nfs', 'nfs', rhel7_minimal]],
- indirect=True)
-def test_single_vm_scheduled_migration(request, appliance, v2v_providers, host_creds,
-                                    conversion_tags, soft_assert,
-                                    form_data_vm_obj_single_datastore):
+@pytest.mark.tier(3)
+def test_schedule_migration(appliance, provider, mapping_data_vm_obj_mini, soft_assert):
     """
+    Test to validate schedule migration plan
+
     Polarion:
-        assignee: kkulkarn
+        assignee: ytale
+        initialEstimate: 1/2h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/4h
-        subcomponent: RHV
-        upstream: yes
+        testSteps:
+            1. Add source and target provider
+            2. Create infra map and migration plan
+            3. Schedule migration plan
     """
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(
-        form_data_vm_obj_single_datastore.form_data)
-
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
-    migration_plan_collection = appliance.collections.v2v_plans
+    migration_plan_collection = appliance.collections.v2v_migration_plans
+    src_vm_obj = mapping_data_vm_obj_mini.vm_list[0]
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
-        .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore.vm_list, start_migration=False)
-    view = navigate_to(migration_plan_collection, 'All')
+        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
+        target_provider=provider,
+        vm_list=mapping_data_vm_obj_mini.vm_list,
+        start_migration=False
+    )
+    view = navigate_to(migration_plan_collection, "NotStarted")
+    view.plans_not_started_list.schedule_migration(migration_plan.name)
+    soft_assert("Migration scheduled" in view.plans_not_started_list.get_clock(migration_plan.name))
 
-    # Test scheduled Migration
-    view.migration_plans_not_started_list.schedule_migration(migration_plan.name, after_mins=3)
-    soft_assert('Migration scheduled' in view.migration_plans_not_started_list.
-        get_clock(migration_plan.name))
-    view.migration_plans_not_started_list.schedule_migration(migration_plan.name)
-    soft_assert(view.migration_plans_not_started_list.get_clock(migration_plan.name) == '')
-    view.migration_plans_not_started_list.schedule_migration(migration_plan.name, after_mins=3)
-    view.switch_to('In Progress Plans')
-    wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
-        message="migration plan is starting, be patient please", delay=30, num_sec=600,
-        handle_exception=True, fail_cond=False)
-
-    # wait until plan is in progress
-    wait_for(func=view.plan_in_progress, func_args=[migration_plan.name],
-        message="migration plan is in progress, be patient please",
-        delay=5, num_sec=1800)
-
-    view.switch_to("Completed Plans")
-    view.wait_displayed()
-    migration_plan_collection.find_completed_plan(migration_plan)
-    logger.info("For plan %s, migration status after completion: %s, total time elapsed: %s",
-        migration_plan.name,
-        view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
-        view.migration_plans_completed_list.get_clock(migration_plan.name))
-    assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
+    assert migration_plan.plan_started
+    assert migration_plan.in_progress
+    assert migration_plan.completed
+    assert migration_plan.successful
+    migrated_vm = get_migrated_vm(src_vm_obj, provider)
+    soft_assert(src_vm_obj.mac_address == migrated_vm.mac_address)
