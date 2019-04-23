@@ -59,34 +59,6 @@ def ansible_amazon_credential(appliance, provider):
 
 
 @pytest.fixture(scope="module")
-def ansible_catalog_item(appliance, ansible_repository):
-    cat_item = appliance.collections.catalog_items.create(
-        appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
-        fauxfactory.gen_alphanumeric(),
-        fauxfactory.gen_alphanumeric(),
-        display_in_catalog=True,
-        provisioning={
-            "repository": ansible_repository.name,
-            "playbook": "dump_all_variables.yml",
-            "machine_credential": "CFME Default Credential",
-            "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
-            "extra_vars": [("some_var", "some_value")]
-        },
-        retirement={
-            "repository": ansible_repository.name,
-            "playbook": "dump_all_variables.yml",
-            "machine_credential": "CFME Default Credential",
-            "extra_vars": [("some_var", "some_value")]
-        }
-    )
-    yield cat_item
-
-    if cat_item.exists:
-        cat_item.delete()
-
-
-@pytest.fixture(scope="module")
 def catalog(appliance, ansible_catalog_item):
     catalog_ = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
                                                      description='my catalog',
