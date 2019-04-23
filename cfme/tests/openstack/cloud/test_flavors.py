@@ -11,7 +11,9 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.usefixtures("setup_provider"),
-    pytest.mark.provider([OpenStackProvider], scope='function')
+    pytest.mark.provider([OpenStackProvider], scope='function', required_fields=[
+        ['provisioning', 'cloud_tenant'],
+        ['provisioning', 'cloud_network']])
 ]
 
 
