@@ -18,8 +18,8 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
 
-pf1 = ProviderFilter(classes=[CloudProvider, InfraProvider], required_flags=['provision',
-                                                                             'cloud_init'])
+pf1 = ProviderFilter(classes=[CloudProvider, InfraProvider], required_fields=[['provisioning',
+                                                                               'ci-template']])
 pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support cloud-init
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
