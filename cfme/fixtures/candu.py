@@ -68,15 +68,6 @@ def candu_tag_vm(provider, enable_candu_category):
 
 
 @pytest.fixture(scope="module")
-def temp_appliance_extended_db(temp_appliance_preconfig):
-    app = temp_appliance_preconfig
-    app.evmserverd.stop()
-    app.db.extend_partition()
-    app.evmserverd.start()
-    return app
-
-
-@pytest.fixture(scope="module")
 def candu_db_restore(temp_appliance_extended_db):
     app = temp_appliance_extended_db
     # get DB backup file

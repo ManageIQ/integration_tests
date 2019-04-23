@@ -30,15 +30,6 @@ def pytest_generate_tests(metafunc):
     return metafunc.parametrize(argnames=argnames, argvalues=argvalues, ids=idlist)
 
 
-@pytest.fixture(scope="module")
-def temp_appliance_extended_db(temp_appliance_preconfig):
-    app = temp_appliance_preconfig
-    app.evmserverd.stop()
-    app.db.extend_partition()
-    app.evmserverd.start()
-    return app
-
-
 @pytest.fixture(scope="function")
 def temp_appliance_remote(temp_appliance_preconfig_funcscope):
     """Needed for db_migrate_replication as you can't drop a remote db due to subscription"""
