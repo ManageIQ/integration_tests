@@ -28,26 +28,35 @@ def pytest_generate_tests(metafunc):
     """The following lines generate appliance versions based from the current build.
     Appliance version is split and z-version is picked out for generating each version
     and appending it to the empty versions list"""
-    versions = []
     version = find_appliance(metafunc).version
+    versions = []
 
-    split_ver = str(version).split(".")
-    try:
-        z_version = int(split_ver[2])
-    except (IndexError, ValueError) as e:
-        logger.exception("Couldn't parse version: %s, skipping", e)
-        versions.append(pytest.param("bad:{!r}".format(version), marks=pytest.mark.uncollect(
-            reason='Could not parse z_version from: {}'.format(version)
-        )))
-    else:
-        if z_version < 1:
-            logger.debug('No previous z-stream version to update from.')
+    old_version_pytest_arg = metafunc.config.getoption('old_version')
+    if old_version_pytest_arg == 'same':
+        versions.append(version)
+    elif old_version_pytest_arg is None:
+        split_ver = str(version).split(".")
+        try:
+            z_version = int(split_ver[2])
+        except (IndexError, ValueError) as e:
+            logger.exception("Couldn't parse version: %s, skipping", e)
             versions.append(pytest.param("bad:{!r}".format(version), marks=pytest.mark.uncollect(
-                reason='No previous z-stream version to update from: {}'.format(version)
+                reason='Could not parse z_version from: {}'.format(version)
             )))
         else:
-            versions.append("{split_ver[0]}.{split_ver[1]}.{z_version}".format(
-                split_ver=split_ver, z_version=z_version - 1))
+            if z_version < 1:
+                reason_str = ('No previous z-stream version to update from: {}'
+                    .format(version))
+                logger.debug(reason_str)
+                versions.append(pytest.param(
+                    "bad:{!r}".format(version),
+                    marks=pytest.mark.uncollect(reason=reason_str)
+                ))
+            else:
+                versions.append("{split_ver[0]}.{split_ver[1]}.{z_version}".format(
+                    split_ver=split_ver, z_version=z_version - 1))
+    else:
+        versions.append(old_version_pytest_arg)
     metafunc.parametrize('old_version', versions, indirect=True)
 
 
