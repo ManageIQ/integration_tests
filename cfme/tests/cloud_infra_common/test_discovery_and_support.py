@@ -26,7 +26,7 @@ def vm_crud(vm_name, provider):
 
 @pytest.mark.rhv2
 @pytest.mark.tier(2)
-@test_requirements.discovery
+@test_requirements.power
 @pytest.mark.provider(
     [BaseProvider],
     scope='module',

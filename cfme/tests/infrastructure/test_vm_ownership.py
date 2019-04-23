@@ -124,16 +124,16 @@ def small_vm(provider, small_template):
         vm.cleanup_on_provider()
 
 
+@test_requirements.power
 @pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE_PER_TYPE)
 def test_rename_vm(small_vm):
-
     """Test for rename the VM.
-       This feature is included in 5.10z.
 
     Polarion:
         assignee: ghubale
         initialEstimate: 1/4h
         casecomponent: Infra
+        startsin: 5.10
         tags: power
         testSteps:
             1. Add VMware provider

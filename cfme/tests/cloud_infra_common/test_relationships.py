@@ -4,6 +4,7 @@ import random
 import pytest
 from navmazing import NavigationDestinationNotFound
 
+from cfme import test_requirements
 from cfme.cloud.availability_zone import ProviderAvailabilityZoneAllView
 from cfme.cloud.flavor import ProviderFlavorAllView
 from cfme.cloud.provider import CloudProvider
@@ -134,6 +135,7 @@ def wait_for_relationship_refresh(provider):
         fail_func=view.browser.refresh)
 
 
+@test_requirements.relationships
 @pytest.mark.rhv3
 @pytest.mark.parametrize("relationship,view", HOST_RELATIONSHIPS,
     ids=[rel[0] for rel in HOST_RELATIONSHIPS])
@@ -157,6 +159,7 @@ def test_host_relationships(appliance, provider, setup_provider, host, relations
     assert relationship_view.is_displayed
 
 
+@test_requirements.relationships
 @pytest.mark.rhv3
 @pytest.mark.parametrize("relationship,view", INFRA_PROVIDER_RELATIONSHIPS,
     ids=[rel[0] for rel in INFRA_PROVIDER_RELATIONSHIPS])
@@ -179,6 +182,7 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
     assert relationship_view.is_displayed
 
 
+@test_requirements.relationships
 @pytest.mark.parametrize("relationship, view", CLOUD_PROVIDER_RELATIONSHIPS,
     ids=[rel[0] for rel in CLOUD_PROVIDER_RELATIONSHIPS])
 @pytest.mark.provider([CloudProvider], selector=ONE_PER_TYPE)
@@ -279,6 +283,7 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
     prov_child_visibility(relationship, visibility=False)
 
 
+@test_requirements.relationships
 @pytest.mark.rhv1
 @pytest.mark.provider([CloudProvider, InfraProvider])
 @pytest.mark.tier(1)
@@ -296,6 +301,7 @@ def test_provider_refresh_relationship(provider, setup_provider):
     wait_for_relationship_refresh(provider)
 
 
+@test_requirements.relationships
 @pytest.mark.rhv2
 @pytest.mark.provider([InfraProvider])
 def test_host_refresh_relationships(provider, setup_provider):
@@ -336,6 +342,7 @@ def test_inventory_refresh_westindia_azure():
     pass
 
 
+@test_requirements.relationships
 @pytest.mark.manual
 @pytest.mark.tier(1)
 def test_change_network_security_groups_per_page_items():
