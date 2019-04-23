@@ -65,6 +65,7 @@ def ansible_catalog_item(appliance, ansible_repository):
             "repository": ansible_repository.name,
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
+            "verbosity": "3 (Debug)",
             "create_new": True,
             "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
             "extra_vars": [("some_var", "some_value")]
@@ -73,13 +74,13 @@ def ansible_catalog_item(appliance, ansible_repository):
             "repository": ansible_repository.name,
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
+            "verbosity": "3 (Debug)",
             "extra_vars": [("some_var", "some_value")]
         }
     )
     yield cat_item
 
-    if cat_item.exists:
-        cat_item.delete()
+    cat_item.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -99,6 +100,26 @@ def ansible_catalog(appliance, ansible_catalog_item):
 def ansible_service_catalog(appliance, ansible_catalog_item, ansible_catalog):
     service_catalog_ = ServiceCatalogs(appliance, ansible_catalog, ansible_catalog_item.name)
     return service_catalog_
+
+
+@pytest.fixture
+def ansible_service_request(appliance, ansible_catalog_item):
+    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+    service_request_ = appliance.collections.requests.instantiate(description=request_descr)
+    yield service_request_
+
+    if service_request_.exists():
+        service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+        appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+
+
+@pytest.fixture
+def ansible_service(appliance, ansible_catalog_item):
+    service_ = MyService(appliance, ansible_catalog_item.name)
+    yield service_
+
+    if service_.exists:
+        service_.delete()
 
 
 @pytest.fixture(scope="module")

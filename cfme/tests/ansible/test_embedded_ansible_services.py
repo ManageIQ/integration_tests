@@ -8,9 +8,7 @@ from widgetastic_patternfly import BootstrapSelect
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.services.myservice import MyService
-from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -39,8 +37,7 @@ def ansible_credential(appliance):
     )
     yield credential
 
-    if credential.exists:
-        credential.delete()
+    credential.delete_if_exists()
 
 
 @pytest.fixture
@@ -50,51 +47,11 @@ def ansible_amazon_credential(appliance, provider):
         fauxfactory.gen_alpha(),
         "Amazon",
         access_key=creds.principal,
-        secret_key=creds.secret
+        secret_key=creds.secret,
     )
     yield credential
 
-    if credential.exists:
-        credential.delete()
-
-
-@pytest.fixture(scope="module")
-def catalog(appliance, ansible_catalog_item):
-    catalog_ = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
-                                                     description='my catalog',
-                                                     items=[ansible_catalog_item.name])
-    ansible_catalog_item.catalog = catalog_
-    yield catalog_
-
-    if catalog_.exists:
-        catalog_.delete()
-        ansible_catalog_item.catalog = None
-
-
-@pytest.fixture(scope="module")
-def service_catalog(appliance, ansible_catalog_item, catalog):
-    service_catalog_ = ServiceCatalogs(appliance, catalog, ansible_catalog_item.name)
-    return service_catalog_
-
-
-@pytest.fixture
-def service_request(appliance, ansible_catalog_item):
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request_ = appliance.collections.requests.instantiate(description=request_descr)
-    yield service_request_
-
-    if service_request_.exists():
-        service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
-        appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-
-
-@pytest.fixture
-def service(appliance, ansible_catalog_item):
-    service_ = MyService(appliance, ansible_catalog_item.name)
-    yield service_
-
-    if service_.exists:
-        service_.delete()
+    credential.delete_if_exists()
 
 
 @pytest.fixture
@@ -108,7 +65,7 @@ def custom_service_button(appliance, ansible_catalog_item):
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
         dialog=ansible_catalog_item.provisioning["provisioning_dialog_name"],
         system="Request",
-        request="Order_Ansible_Playbook"
+        request="Order_Ansible_Playbook",
     )
     yield button
     button.delete_if_exists()
@@ -230,8 +187,9 @@ def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
 
 
 @pytest.mark.tier(2)
-def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catalog_item,
-                                                        service_catalog, request):
+def test_service_ansible_playbook_provision_in_requests(
+    appliance, ansible_catalog_item, ansible_service_catalog, request
+):
     """Tests if ansible playbook service provisioning is shown in service requests.
 
     Polarion:
@@ -241,7 +199,7 @@ def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catal
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    service_catalog.order()
+    ansible_service_catalog.order()
     cat_item_name = ansible_catalog_item.name
     request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
     service_request = appliance.collections.requests.instantiate(description=request_descr)
@@ -253,8 +211,7 @@ def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catal
         if service_request.exists():
             service_request.wait_for_request()
             appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-        if _service.exists:
-            _service.delete()
+        _service.delete_if_exists()
 
     assert service_request.exists()
 
@@ -293,7 +250,9 @@ def test_service_ansible_playbook_confirm(appliance, soft_assert):
 
 
 @pytest.mark.tier(1)
-def test_service_ansible_retirement_remove_resources(request, appliance, ansible_repository):
+def test_service_ansible_retirement_remove_resources(
+    request, appliance, ansible_repository
+):
     """
     Polarion:
         assignee: sbulage
@@ -342,13 +301,26 @@ def test_service_ansible_retirement_remove_resources(request, appliance, ansible
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda host_type, action:
-                         host_type == "blank" and action == "retirement")
-@pytest.mark.parametrize("host_type,order_value,result", SERVICE_CATALOG_VALUES, ids=[
-    value[0] for value in SERVICE_CATALOG_VALUES])
+@pytest.mark.uncollectif(
+    lambda host_type, action: host_type == "blank" and action == "retirement"
+)
+@pytest.mark.parametrize(
+    "host_type,order_value,result",
+    SERVICE_CATALOG_VALUES,
+    ids=[value[0] for value in SERVICE_CATALOG_VALUES],
+)
 @pytest.mark.parametrize("action", ["provisioning", "retirement"])
-def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item, service_catalog,
-        service_request, service, host_type, order_value, result, action):
+def test_service_ansible_playbook_order_retire(
+    appliance,
+    ansible_catalog_item,
+    ansible_service_catalog,
+    ansible_service_request,
+    ansible_service,
+    host_type,
+    order_value,
+    result,
+    action,
+):
     """Test ordering and retiring ansible playbook service against default host, blank field and
     unavailable host.
 
@@ -359,18 +331,19 @@ def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item, 
         caseimportance: medium
         tags: ansible_embed
     """
-    service_catalog.ansible_dialog_values = {"hosts": order_value}
-    service_catalog.order()
-    service_request.wait_for_request()
+    ansible_service_catalog.ansible_dialog_values = {"hosts": order_value}
+    ansible_service_catalog.order()
+    ansible_service_request.wait_for_request()
     if action == "retirement":
-        service.retire()
-    view = navigate_to(service, "Details")
+        ansible_service.retire()
+    view = navigate_to(ansible_service, "Details")
     assert result == view.provisioning.details.get_text_of("Hosts")
 
 
 @pytest.mark.tier(3)
-def test_service_ansible_playbook_plays_table(service_catalog, service_request, service,
-        soft_assert):
+def test_service_ansible_playbook_plays_table(
+    ansible_service_catalog, ansible_service_request, ansible_service, soft_assert
+):
     """Plays table in provisioned and retired service should contain at least one row.
 
     Polarion:
@@ -380,17 +353,18 @@ def test_service_ansible_playbook_plays_table(service_catalog, service_request, 
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    service_catalog.order()
-    service_request.wait_for_request()
-    view = navigate_to(service, "Details")
+    ansible_service_catalog.order()
+    ansible_service_request.wait_for_request()
+    view = navigate_to(ansible_service, "Details")
     soft_assert(view.provisioning.plays.row_count > 1, "Plays table in provisioning tab is empty")
-    service.retire()
+    ansible_service.retire()
     soft_assert(view.provisioning.plays.row_count > 1, "Plays table in retirement tab is empty")
 
 
 @pytest.mark.tier(3)
-def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansible_credential,
-        service_catalog, appliance):
+def test_service_ansible_playbook_order_credentials(
+    ansible_catalog_item, ansible_credential, ansible_service_catalog
+):
     """Test if credentials avaialable in the dropdown in ordering ansible playbook service
     screen.
 
@@ -405,16 +379,16 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
         ansible_catalog_item.provisioning = {
             "machine_credential": ansible_credential.name
         }
-    view = navigate_to(service_catalog, "Order")
+    view = navigate_to(ansible_service_catalog, "Order")
     options = [o.text for o in (view.fields('credential')).visible_widget.all_options]
     assert ansible_credential.name in set(options)
 
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("action", ["provisioning", "retirement"])
-@pytest.mark.meta(blockers=[BZ(1614356, forced_streams=['5.10'])])
-def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_request, service,
-        action):
+def test_service_ansible_playbook_pass_extra_vars(
+    ansible_service_catalog, ansible_service_request, ansible_service, action
+):
     """Test if extra vars passed into ansible during ansible playbook service provision and
     retirement.
 
@@ -425,11 +399,11 @@ def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_reque
         initialEstimate: 1/4h
         tags: ansible_embed
     """
-    service_catalog.order()
-    service_request.wait_for_request()
+    ansible_service_catalog.order()
+    ansible_service_request.wait_for_request()
     if action == "retirement":
-        service.retire()
-    view = navigate_to(service, "Details")
+        ansible_service.retire()
+    view = navigate_to(ansible_service, "Details")
     stdout = getattr(view, action).standart_output
     stdout.wait_displayed()
     pre = stdout.text
@@ -440,8 +414,13 @@ def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_reque
 
 
 @pytest.mark.tier(3)
-def test_service_ansible_execution_ttl(request, service_catalog, ansible_catalog_item, service,
-         service_request):
+def test_service_ansible_execution_ttl(
+    request,
+    ansible_service_catalog,
+    ansible_catalog_item,
+    ansible_service,
+    ansible_service_request,
+):
     """Test if long running processes allowed to finish. There is a code that guarantees to have 100
     retries with a minimum of 1 minute per retry. So we need to run ansible playbook service more
     than 100 minutes and set max ttl greater than ansible playbook running time.
@@ -467,19 +446,24 @@ def test_service_ansible_execution_ttl(request, service_catalog, ansible_catalog
         with update(ansible_catalog_item):
             ansible_catalog_item.provisioning = {
                 "playbook": "dump_all_variables.yml",
-                "max_ttl": ""
+                "max_ttl": "",
             }
 
     request.addfinalizer(_revert)
-    service_catalog.order()
-    service_request.wait_for_request(method="ui", num_sec=200 * 60, delay=120)
-    view = navigate_to(service, "Details")
+    ansible_service_catalog.order()
+    ansible_service_request.wait_for_request(method="ui", num_sec=200 * 60, delay=120)
+    view = navigate_to(ansible_service, "Details")
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
 @pytest.mark.tier(3)
-def test_custom_button_ansible_credential_list(custom_service_button, service_catalog, service,
-        service_request, appliance):
+def test_custom_button_ansible_credential_list(
+    custom_service_button,
+    ansible_service_catalog,
+    ansible_service,
+    ansible_service_request,
+    appliance,
+):
     """Test if credential list matches when the Ansible Playbook Service Dialog is invoked from a
     Button versus a Service Order Screen.
 
@@ -493,11 +477,12 @@ def test_custom_button_ansible_credential_list(custom_service_button, service_ca
         initialEstimate: 1/3h
         tags: ansible_embed
     """
-    service_catalog.order()
-    service_request.wait_for_request()
-    view = navigate_to(service, "Details")
+    ansible_service_catalog.order()
+    ansible_service_request.wait_for_request()
+    view = navigate_to(ansible_service, "Details")
     view.toolbar.custom_button(custom_service_button.group.text).item_select(
-        custom_service_button.text)
+        custom_service_button.text
+    )
     credentials_dropdown = BootstrapSelect(
         appliance.browser.widgetastic,
         locator=".//select[@id='credential']/.."
@@ -508,7 +493,9 @@ def test_custom_button_ansible_credential_list(custom_service_button, service_ca
 
 
 @pytest.mark.tier(3)
-def test_ansible_group_id_in_payload(service_catalog, service_request, service):
+def test_ansible_group_id_in_payload(
+    ansible_service_catalog, ansible_service_request, ansible_service
+):
     """Test if group id is presented in manageiq payload.
 
     Bugzilla:
@@ -526,9 +513,9 @@ def test_ansible_group_id_in_payload(service_catalog, service_request, service):
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    service_catalog.order()
-    service_request.wait_for_request()
-    view = navigate_to(service, "Details")
+    ansible_service_catalog.order()
+    ansible_service_request.wait_for_request()
+    view = navigate_to(ansible_service, "Details")
     stdout = view.provisioning.standart_output
     wait_for(lambda: stdout.is_displayed, timeout=10)
     pre = stdout.text
@@ -542,8 +529,15 @@ def test_ansible_group_id_in_payload(service_catalog, service_request, service):
 
 
 @pytest.mark.provider([EC2Provider], scope="function")
-def test_embed_tower_exec_play_against_amazon(request, provider, setup_provider,
-        ansible_catalog_item, service, ansible_amazon_credential, service_catalog):
+def test_embed_tower_exec_play_against_amazon(
+    request,
+    provider,
+    setup_provider,
+    ansible_catalog_item,
+    ansible_service,
+    ansible_amazon_credential,
+    ansible_service_catalog,
+):
     """
     Polarion:
         assignee: sbulage
@@ -567,7 +561,7 @@ def test_embed_tower_exec_play_against_amazon(request, provider, setup_provider,
                 "cloud_type": "<Choose>"
             }
 
-    service_request = service_catalog.order()
+    service_request = ansible_service_catalog.order()
     service_request.wait_for_request(method="ui", num_sec=300, delay=20)
-    view = navigate_to(service, "Details")
+    view = navigate_to(ansible_service, "Details")
     assert view.provisioning.results.get_text_of("Status") == "successful"
