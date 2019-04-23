@@ -27,7 +27,7 @@ pytestmark = [
         required_flags=["v2v"],
         scope="module",
     ),
-    pytest.mark.usefixtures("v2v_provider_setup")
+    # pytest.mark.usefixtures("v2v_provider_setup")
 ]
 
 
@@ -42,11 +42,8 @@ def infra_map(appliance, source_provider, provider):
     infrastructure_mapping_collection.delete(mapping)
 
 
-def create_plan_and_check(appliance, infra_map,
-                   error_text=None, csv=False,
-                   filetype='csv', content=False,
-                   table_hover=False, alert=False
-                   ):
+def migration_plan(appliance, infra_map, csv=False):
+    """Function to create migration plan and select csv import option"""
     radio_btn = "Import a CSV file with a list of VMs to be migrated"
     plan_obj = appliance.collections.v2v_migration_plans
     view = navigate_to(plan_obj, 'Add')
@@ -56,36 +53,44 @@ def create_plan_and_check(appliance, infra_map,
         "description": fauxfactory.gen_alpha(10),
         "select_vm": radio_btn
     })
-    if not csv:
-        view.general.select_vm.select("Import a CSV file with a list of VMs to be migrated")
-        view.next_btn.click()
+
+    view.next_btn.click()
+    return view
+
+
+def create_plan_and_check(appliance, infra_map,
+                   error_text=None, csv=False,
+                   filetype='csv', content=False,
+                   table_hover=False, alert=False
+                   ):
+    plan_view = migration_plan(appliance, infra_map)
     temp_file = tempfile.NamedTemporaryFile(suffix='.{}'.format(filetype))
     if content:
         with open(temp_file.name, 'w') as f:
             f.write(content)
     try:
-        view.vms.hidden_field.fill(temp_file.name)
+        plan_view.vms.hidden_field.fill(temp_file.name)
     except UnexpectedAlertPresentException:
         pass
     if table_hover:
         wait_for(lambda: view.vms.is_displayed,
                  timeout=60, message='Wait for VMs view', delay=5)
-        view.vms.table[0][1].widget.click()
-        error_msg = view.vms.popover_text.read()
+        plan_view.vms.table[0][1].widget.click()
+        error_msg = plan_view.vms.popover_text.read()
     else:
         if alert:
-            error_msg = view.browser.get_alert().text
-            view.browser.handle_alert()
+            error_msg = plan_view.browser.get_alert().text
+            plan_view.browser.handle_alert()
         else:
-            error_msg = view.vms.error_text.text
-    view.cancel_btn.click()
+            error_msg = plan_view.vms.error_text.text
+    plan_view.cancel_btn.click()
     return bool(error_msg == error_text)
 
 
 @pytest.fixture(scope="function")
 def valid_vm(appliance, infra_map):
     """Fixture to get valid vm name from discovery"""
-    plan_view = create_plan_and_check(appliance, infra_map, csv=True)
+    plan_view = migration_plan(appliance, infra_map, csv=True)
     plan_view.next_btn.click()
     wait_for(lambda: plan_view.vms.is_displayed,
              timeout=60, delay=5, message='Wait for VMs view')
@@ -120,7 +125,6 @@ def test_non_csv(appliance, infra_map):
     """
     error_text = "Invalid file extension. Only .csv files are accepted."
     assert create_plan_and_check(appliance, infra_map, error_text, filetype='txt', alert=True)
-
 
 
 def test_blank_csv(appliance, infra_map):
