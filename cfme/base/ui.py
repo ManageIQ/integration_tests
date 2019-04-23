@@ -324,19 +324,17 @@ class LoginScreen(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         # Can be either blank or logged in
-        from cfme.utils import browser
         logged_in_view = self.create_view(BaseLoggedInPage)
         if logged_in_view.logged_in:
             logged_in_view.logout()
 
         # TODO this is not the place to handle this behavior
-        if not self.view.wait_displayed(timeout=3):
+        if not self.view.wait_displayed(timeout=60):
             # Something is wrong
+            from cfme.utils import browser
             del self.view  # In order to unbind the browser
             browser.quit()
-            browser.ensure_browser_open(self.obj.appliance.server.address())
-            if not self.view.wait_displayed(timeout=3):
-                raise Exception('Could not open the login screen')
+            raise
 
 
 @navigator.register(Server)
