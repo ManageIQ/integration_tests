@@ -20,18 +20,34 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def dialog(request, appliance):
     return _dialog(request, appliance)
 
 
 @pytest.fixture(scope="module")
+def dialog_modscope(request, appliance):
+    return _dialog(request, appliance)
+
+
+@pytest.fixture(scope="function")
 def catalog(request, appliance):
+    return _catalog(request, appliance)
+
+
+@pytest.fixture(scope="module")
+def catalog_modscope(request, appliance):
     return _catalog(request, appliance)
 
 
 @pytest.fixture(scope="function")
 def catalog_item(appliance, provider, provisioning, dialog, catalog):
+    catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
+    return catalog_item
+
+
+@pytest.fixture(scope="module")
+def catalog_item_modscope(appliance, provider, provisioning, dialog, catalog):
     catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
     return catalog_item
 
