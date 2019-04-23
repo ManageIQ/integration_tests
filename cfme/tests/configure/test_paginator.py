@@ -97,6 +97,7 @@ def schedule(appliance):
     schedule.delete()
 
 
+@test_requirements.configuration
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])
@@ -105,7 +106,7 @@ def test_paginator_config_pages(appliance, place_info):
         Check paginator is visible for config pages
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: WebUI
     """
@@ -124,6 +125,7 @@ def test_paginator_config_pages(appliance, place_info):
     assert check_paginator_for_page(view) == paginator_expected_result
 
 
+@test_requirements.configuration
 @pytest.mark.parametrize('place_info', details_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in details_pages])
@@ -133,7 +135,7 @@ def test_paginator_details_page(appliance, place_info, schedule):
         If paginator is present, check that all options are present in items per page.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -173,7 +175,7 @@ def test_configure_diagnostics_pages_cfme_region():
     and check whether all sub pages are showing.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/15h

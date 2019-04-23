@@ -32,3 +32,44 @@ def test_validate_landing_pages_for_rbac():
             1. Landing pages which user has access to must be present in the dropdown list.
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.settings
+@pytest.mark.tier(1)
+def test_my_settings_default_views_alignment():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/20h
+        testSteps:
+            1. Go to My Settings -> Default Views
+        expectedResults:
+            1. All icons are aligned correctly
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.configuration
+@pytest.mark.tier(1)
+def test_configure_icons_roles_by_server():
+    """
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Configuration
+        caseimportance: low
+        initialEstimate: 1/15h
+        testSteps:
+            1. Go to Settings -> Configuration and enable all Server Roles.
+            2.Navigate to Settings -> Configuration -> Diagnostics -> CFME Region ->
+            Roles by Servers.
+            3. Click through all Roles and look for missing icons.
+        expectedResults:
+            1.
+            2.
+            3. No icons are missing
+    """
+    pass

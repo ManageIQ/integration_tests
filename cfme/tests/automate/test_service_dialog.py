@@ -358,7 +358,7 @@ def test_copying_customization_dialog():
         1342260
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h

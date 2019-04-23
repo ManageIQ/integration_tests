@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.configure import about
 from cfme.utils.appliance.implementations.ui import navigate_to
+
+
+pytestmark = [test_requirements.general_ui]
 
 
 @pytest.mark.tier(3)
@@ -11,7 +15,7 @@ def test_server_name(request, appliance):
     """Tests that changing the server name updates the about page
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h

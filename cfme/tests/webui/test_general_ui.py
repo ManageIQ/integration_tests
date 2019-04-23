@@ -336,7 +336,7 @@ def test_configuration_icons_trusted_forest_settings():
 def test_cloud_icons_instances():
     """
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/20h
@@ -349,7 +349,6 @@ def test_cloud_icons_instances():
 
 
 @pytest.mark.manual
-@test_requirements.general_ui
 @pytest.mark.tier(1)
 def test_key_pairs_quadicon():
     """
@@ -357,7 +356,7 @@ def test_key_pairs_quadicon():
         1352914
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/20h
@@ -372,30 +371,13 @@ def test_key_pairs_quadicon():
 
 
 @pytest.mark.manual
-@test_requirements.filtering
-@pytest.mark.tier(2)
-def test_search_is_displayed_myservices():
-    """
-    Polarion:
-        assignee: anikifor
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/30h
-        testSteps:
-            1. Go to Services -> My Services
-            2. Check whether Search Bar and Advanced Search button are displayed
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_misclicking_checkbox_vms():
     """
     BZ1627387
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/8h
@@ -405,11 +387,10 @@ def test_misclicking_checkbox_vms():
 
 
 @pytest.mark.manual
-@test_requirements.general_ui
 def test_timeout():
     """
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         caseimportance: medium
         casecomponent: WebUI
         initialEstimate: 1/4h
@@ -425,67 +406,6 @@ def test_timeout():
 
 
 @pytest.mark.manual
-@test_requirements.configuration
-@pytest.mark.tier(1)
-def test_my_settings_default_views_alignment():
-    """
-    Polarion:
-        assignee: anikifor
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/20h
-        testSteps:
-            1. Go to My Settings -> Default Views
-            2. See that all icons are aligned correctly
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.configuration
-@pytest.mark.tier(1)
-def test_configure_icons_roles_by_server():
-    """
-    Polarion:
-        assignee: anikifor
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/15h
-        testSteps:
-            1. Go to Settings -> Configuration and enable all Server Roles.
-            2.Navigate to Settings -> Configuration -> Diagnostics -> CFME Region ->
-            Roles by Servers.
-            3. Click through all Roles and look for missing icons.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.general_ui
-@pytest.mark.tier(0)
-def test_create_filter_with_multiple_conditions():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/5h
-        setup:
-            1. Navigate to Compute > Infrastructure > Providers.
-            2. Click on Advanced Search Filter.
-        testSteps:
-            1. Create an expression with multiple types of condition. Eg: arg_1 AND arg_2 OR arg_3
-        expectedResults:
-            1. Expression must be created successfully.
-
-    Bugzilla:
-        1660460
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.general_ui
 @pytest.mark.tier(2)
 def test_welcoming_page():
     """
@@ -508,7 +428,6 @@ def test_welcoming_page():
 
 
 @pytest.mark.manual()
-@test_requirements.general_ui
 @pytest.mark.tier(0)
 def test_custom_navigation_menu():
     """
