@@ -300,6 +300,39 @@ def test_vm_reconfig_resize_disk_hot(disk_type, disk_mode):
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.parametrize('disk_type', ['thin', 'thick'])
+@pytest.mark.parametrize(
+    'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
+def test_vm_reconfig_resize_disk_snapshot(disk_type, disk_mode, provider):
+    """
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/6h
+        testtype: functional
+        startsin: 5.11
+        casecomponent: Infra
+        caseposneg: negative
+        tags: reconfigure
+        setup:
+            1. Have a VM running on vsphere provider
+        testSteps:
+            1. Go to Compute -> infrastructure -> Virtual Machines -> Select Vm
+            2. Create a snapshot for selected VM
+            3. Go to VM reconfiguration and try to resize disk of the VM
+        expectedResults:
+            1. VM selected
+            2. Snapshot created
+            3. Resize is not allowed when snapshots are attached
+    Bugzilla:
+        1631448
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
 @pytest.mark.provider([VMwareProvider], override=True)
 @pytest.mark.parametrize(
     'adapters_type', ['DPortGroup', 'VmNetwork', 'MgmtNetwork', 'VmKernel'])
