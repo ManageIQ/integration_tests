@@ -3,7 +3,6 @@ import pytest
 from cfme import test_requirements
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
@@ -126,9 +125,4 @@ def test_embedded_ansible_disable(embedded_appliance):
         )
         assert wait_for(lambda: not embedded_appliance.nginx.is_active, num_sec=30)
     else:
-        @wait_for_decorator(num_sec=300)
-        def is_ansible_pod_stopped():
-            # todo: implement appropriate methods in appliance
-            return embedded_appliance.ssh_client.run_command(
-                "oc get pods|grep ansible", ensure_host=True
-            ).failed
+        assert wait_for(lambda: embedded_appliance.is_ansible_pod_stopped, num_sec=300)

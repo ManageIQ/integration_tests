@@ -1755,6 +1755,12 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             return None
 
     @property
+    def is_ansible_pod_stopped(self):
+        return self.ssh_client.run_command(
+            "oc get pods|grep ansible", ensure_host=True
+        ).failed
+
+    @property
     def is_embedded_ansible_role_enabled(self):
         return self.server_roles.get("embedded_ansible", False)
 
