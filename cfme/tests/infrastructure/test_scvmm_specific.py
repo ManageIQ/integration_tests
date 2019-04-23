@@ -14,18 +14,18 @@ pytestmark = [
 
 
 @pytest.fixture
-def testing_vm_without_dvd(provider, small_template):
-    vm_name = "test_no_dvd_{}".format(fauxfactory.gen_alpha())
+def vm(provider, small_template):
+    vm_name = "test-scvmm-{}".format(fauxfactory.gen_alpha())
     vm = provider.appliance.collections.infra_vms.instantiate(
-        vm_name, provider, small_template.name)
-    vm.create_on_provider()
-    vm.mgmt.disconnect_dvd_drives()
+        vm_name, provider, small_template.name
+    )
+    vm.create_on_provider(find_in_cfme=True)
     yield vm
     vm.cleanup_on_provider()
 
 
 @pytest.mark.tier(0)
-def test_no_dvd_ruins_refresh(provider, testing_vm_without_dvd):
+def test_no_dvd_ruins_refresh(provider, vm):
     """
     Polarion:
         assignee: jdupuy
@@ -33,32 +33,9 @@ def test_no_dvd_ruins_refresh(provider, testing_vm_without_dvd):
         casecomponent: Infra
         caseimportance: high
     """
+    vm.mgmt.disconnect_dvd_drives()
     provider.refresh_provider_relationships()
-    testing_vm_without_dvd.wait_to_appear()
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_template_info_scvmm():
-    """
-    The purpose of this test is to verify that the same number of
-    templates in scvmm are in cfme.  Take the time to spot check a random
-    template and check that the details correspond to SCVMM details.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
-        testSteps:
-            1. Add SCVMM as a provider to CFME
-            2. View templates for SCVMM in CFME
-        expectedResults:
-            1.
-            2. Templates in VMM should match those in CFME
-    """
-    pass
+    vm.wait_to_appear()
 
 
 @pytest.mark.manual
@@ -104,54 +81,6 @@ def test_create_appliance_on_scvmm_using_the_vhd_image():
         expectedResults:
             1.
             2. CFME should be running in SCVMM
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_provider_summary_scvmm():
-    """
-    The purpose of this test is to verify that the information on the
-    provider summary is substantially the same as what is on SCVMM.
-    Note: when automated this test will likely be broken up into many tests.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.4
-        testSteps:
-            1. Add SCVMM as a provider in SCVMM
-            2. Navigate to the provider summary page
-            3. Click some of the links on this page
-        expectedResults:
-            1.
-            2. Information on the provider summary page should match what is in SCVMM UI
-            3. Links should go to the proper destination
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_host_info_scvmm():
-    """
-    Testing to make sure that the host info is correct in CFME
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.10
-        testSteps:
-            1. Add SCVMM as a provider in CFME
-            2. Navigate to infra->hosts page
-        expectedResults:
-            1.
-            2. All hosts should be present and information should be correct
     """
     pass
 
