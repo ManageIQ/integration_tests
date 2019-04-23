@@ -60,7 +60,7 @@ class LogValidator(object):
 
     def _check_skip_logs(self, line):
         for pattern in self.skip_patterns:
-            if re.match(pattern, line):
+            if re.search(pattern, line):
                 logger.info('Skip pattern {} was matched on line {},\
                             so skipping this line'.format(pattern, line))
                 return True
@@ -68,12 +68,12 @@ class LogValidator(object):
 
     def _check_fail_logs(self, line):
         for pattern in self.failure_patterns:
-            if re.match(pattern, line):
+            if re.search(pattern, line):
                 pytest.fail('Failure pattern {} was matched on line {}'.format(pattern, line))
 
     def _check_match_logs(self, line):
         for pattern in self.matched_patterns:
-            if re.match(pattern, line):
+            if re.search(pattern, line):
                 logger.info('Expected pattern {} was matched on line {}'.format(pattern, line))
                 self.matches[pattern] = True
 
