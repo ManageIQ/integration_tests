@@ -2,6 +2,7 @@ import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import RowNotFound
+from widgetastic.utils import WaitFillViewStrategy
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
@@ -219,14 +220,14 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         if reset:
             view.reset_button.click()
             flash_message = 'All changes have been reset'
-            flash_view = ServerCollectLogsEditView
+            flash_view = self.edit_view
         if cancel:
             view.cancel_button.click()
-            flash_view = ServerCollectLogsView
+            flash_view = self.main_view
             flash_message = "Edit Log Depot settings was cancelled by the user"
         elif updated:
             view.save_button.click()
-            flash_view = ServerCollectLogsView
+            flash_view = self.main_view
             flash_message = "Log Depot Settings were saved"
         else:
             logger.info('Settings were not updated')
@@ -376,15 +377,19 @@ class ServerCollectLogsView(ServerDiagnosticsView):
         else:  # no (current) for slave servers
             name, sid = selected_server.split()
             current = None
+
+        try:
+            # output 'title_template' is '[[1]]' which is not intended.
+            # Converting 'sid' into 'int' is giving desired output.
+            sid = int(sid[1])
+        except ValueError:
+            pass
+
         return (
             self.in_server_collect_logs and
             # compare with the selection in accordion as it can be a slave server
-            # output 'title_template' is '[[1]]' which is not intended.
-            # Converting 'sid' into 'int' is giving desired output.
-            self.title.text ==
-            self.form_expected_title(name=name,
-                                     sid=int(sid[1]),
-                                     current='' if current is None else ' (current)')
+            self.title.text == self.form_expected_title(
+                name=name, sid=sid, current='' if current is None else ' (current)')
         )
 
     @property
@@ -425,11 +430,13 @@ class ServerCollectLogsMasterView(ServerCollectLogsView):
 
 
 class CollectLogsBasicEntities(View):
+    fill_strategy = WaitFillViewStrategy("5s")
     depot_name = Input(name='depot_name')
     uri = Input(name='uri')
 
 
 class CollectLogsCredsEntities(View):
+    fill_strategy = WaitFillViewStrategy("5s")
     username = Input(name='log_userid')
     password = Input(name='log_password')
     confirm_password = Input(name='log_verify')
@@ -437,6 +444,7 @@ class CollectLogsCredsEntities(View):
 
 
 class ServerCollectLogsEditView(ServerCollectLogsView):
+    fill_strategy = WaitFillViewStrategy("5s")
     edit_form_title = Text('//form[@id="form_div"]/h3')
     depot_type = BootstrapSelect(id='log_protocol')
     depot_info = View.nested(CollectLogsBasicEntities)
@@ -458,6 +466,9 @@ class ServerCollectLogsEditView(ServerCollectLogsView):
 
 class ServerCollectLog(CollectLogsBase):
     """ Represents Server Collect Log settings """
+    edit_view = ServerCollectLogsEditView
+    main_view = ServerCollectLogsView
+
     def __init__(self, appliance):
         self.appliance = appliance
         CollectLogsBase.__init__(self, appliance=appliance)
@@ -499,6 +510,9 @@ class ZoneDiagnosticsCollectLogsView(ServerDiagnosticsView):
 
 class ZoneCollectLog(CollectLogsBase):
     """ Represents Zone Collect Log settings """
+    edit_view = ServerCollectLogsEditView
+    main_view = ZoneDiagnosticsCollectLogsView
+
     def __init__(self, appliance):
         self.appliance = appliance
         CollectLogsBase.__init__(self, appliance=appliance, zone_collect=True)
