@@ -51,7 +51,6 @@ class SystemdService(AppliancePlugin):
             else:
                 self.logger.error(msg)
             raise SystemdException(msg)
-
         return result
 
     def stop(self, log_callback=None):
@@ -85,6 +84,14 @@ class SystemdService(AppliancePlugin):
     @property
     def enabled(self):
         return self._run_service_command('is-enabled').rc == 0
+
+    @property
+    def is_active(self):
+        result = self._run_service_command("status")
+        if 'inactive' in result.output:
+            return False
+        else:
+            return True
 
     @property
     def running(self):
