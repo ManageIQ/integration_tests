@@ -160,22 +160,6 @@ def test_distributed_field_zone_description_special():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_ldap_password_being_logged_in_plain_text_in_evm_log():
-    """
-    LDAP password being logged in plain text in evm log
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/3h
-        title: LDAP password being logged in plain text in evm log
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_proxy_remove_default():
     """
@@ -333,50 +317,6 @@ def test_verify_httpd_only_running_when_roles_require_it():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Verify httpd only running when roles require it
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(3)
-def test_change_the_domain_sequence_in_sssd_and_verify_user_groups_retrieval():
-    """
-    create user1 in test.com
-    create group1 in test.com
-    assign user1 to group1
-    verify for the group retrived for user1
-    Only group1 should be displayed in the group list in
-    Note:  user should be authenticated with FQDN user1@test.com : group1
-    test.com
-    user1@qetest.com: qegroup1 qetest.com
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        title: Change the domain sequence in sssd, and verify user groups retrieval.
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_black_console_ipa_ntp_negative():
-    """
-    Try to setup IPA on appliance when NTP daemon is stopped on server.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/4h
-        setup: -Provision configured appliance
-               -ssh into IPA server stop NTP daemon
-               -ssh into new appliance
-               -try setting up IPA (https://mojo.redhat.com/docs/DOC-1058778)
-               -after testing remember to start NTP daemon again
     """
     pass
 
@@ -642,22 +582,6 @@ def test_ec2_public_images():
         caseimportance: critical
         initialEstimate: 2/3h
         casecomponent: Cloud
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_black_console_ipa_negative():
-    """
-    test setting up authentication with invalid host settings
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/6h
     """
     pass
 
@@ -1102,25 +1026,6 @@ def test_osp_test_executing_previously_created_migration_plan():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_configure_external_auth_for_ldaps_with_sssdconf_for_single_ldaps_domain():
-    """
-    Look for the steps/instructions at
-    https://mojo.redhat.com/docs/DOC-1085797
-    Verify appliance_console is updated with “External Auth: “ correctly
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/2h
-        title: Configure External auth for ldaps with sssd.conf for single ldaps domain
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.chargeback
 @pytest.mark.tier(2)
 def test_chargeback_report_weekly():
@@ -1149,28 +1054,6 @@ def test_osp_test_immediately_migration_after_migration_plan_creation():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test immediately migration after migration plan creation
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(3)
-def test_verify_change_update_in_ldap_server_takes_effect_in_the_cfme_authentication():
-    """
-    Change user/groups attribute in  ldap domain server.
-    E.g change user display name
-    Verify authentication fails for old display name
-    Verify authentication for new display name for the user.
-    Verify changing cache_credentials = True
-    entry_cache_timeout = 600
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        title: Verify change/update in ldap server takes effect in the CFME authentication.
     """
     pass
 
@@ -1433,28 +1316,6 @@ def test_distributed_zone_add_provider_to_nondefault_zone():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(3)
-def test_saml_verify_user_login_with_and_without_correct_groups_added_to_saml_server():
-    """
-    Create cfme default groups in saml server.
-    Assign user to the default groups. e.g.  EvmGroup-administrator
-    Configure cfme for ldaps external auth as in TC#1
-    Authentication for ldap user is expected to be successful as cfme
-    default groups are already assigned for user in saml server.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/2h
-        title: saml: verify user login with and without correct groups added to SAML server.
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_azone_cpu_usage_gce():
@@ -1664,23 +1525,6 @@ def test_can_add_child_tenant_to_tenant():
         assignee: apagac
         casecomponent: Configuration
         initialEstimate: 1/10h
-        tags: rbac
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_credentials_login_password_with_special_characters():
-    """
-    Alphanumeric password with special characters
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/8h
         tags: rbac
     """
     pass
@@ -3511,40 +3355,6 @@ def test_group_quota_via_ssui():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_black_console_ext_auth_options():
-    """
-    Test enabling ext_auth options through appliance_console
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: -ssh to appliance
-               -run appliance_console
-               -select option "Update External Authentication Options"
-               -select each option to enable it
-               -select option
-               1) Enable Single Sign-On
-               2) Enable SAML
-               3) Enable Local Login
-               -select "Apply updates"
-               -check changes have been made
-        startsin: 5.6
-        testSteps:
-            1. Enable Single Sign-On
-            2. Enable SAML
-            3. Enable Local Login
-        expectedResults:
-            1. check changes in ui
-            2. check changes in ui
-            3. check changes in ui
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(3)
 def test_cluster_graph_by_vm_tag_vsphere65():
@@ -3974,22 +3784,6 @@ def test_notification_for_snapshot_delete_failure():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_authentication_user_created_after_success_login():
-    """
-    Configure CFME for LDAP authentication and add group. Authenticate
-    with LDAP user and check if user exists in Configuration - Access
-    Control - Users.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_host_graph_by_vm_tag_vsphere6():
@@ -4327,22 +4121,6 @@ def test_session_purging_occurs_only_when_session_store_is_sql():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_authentication_ldap_switch_groups():
-    """
-    Test whether user who is member of more LDAP groups is able to switch
-    between them
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.satellite
 def test_satellite_host_groups_show_up_as_configuration_profiles_satellite_62():
     """
@@ -4357,24 +4135,6 @@ def test_satellite_host_groups_show_up_as_configuration_profiles_satellite_62():
         caseimportance: medium
         initialEstimate: 1/15h
         title: Satellite host groups show up as Configuration Profiles [satellite_62]
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_external_auth_details_updated_in_appliance_console_ipa_():
-    """
-    Run appliance_console and verify external_auth details are correctly
-    updated for IPA
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Verify external_auth details updated in appliance_console[IPA].
     """
     pass
 
@@ -4475,24 +4235,6 @@ def test_bottleneck_host():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_saml_sso_works_fine_check_both_enable_disable_options():
-    """
-    Configure external auth as in TC#1 and enable SSO option.
-    Verify SSO option works fine.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/4h
-        title: Verify SAML SSO works fine, check both enable/disable options.
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_mixed_appliance_ip_versions():
@@ -4524,33 +4266,6 @@ def test_ec2_targeted_refresh_network_port():
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_ldap_group_lookup_fails_with_correct_error_message_for_invalid_user_details():
-    """
-    verify ldap group lookup fails with correct error message for invalid
-    config details.
-    1. configure ldap.
-    2. specify wrong user details while group look up, verify group lookup
-    fails with correct error message.
-    refer the BZ below
-
-    Bugzilla:
-        1378213
-
-    Polarion:
-        assignee: apagac
-        caseimportance: low
-        casecomponent: WebUI
-        caseposneg: negative
-        initialEstimate: 1/4h
-        title: verify ldap group lookup fails with correct error message
-               for invalid user details
     """
     pass
 
@@ -4777,40 +4492,6 @@ def test_pg_stat_activity_view_in_postgres_should_show_worker_information():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_black_console_ext_auth_options_disable():
-    """
-    Test disabling ext_auth options through appliance_console
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: -ssh to appliance
-               -run appliance_console
-               -select option "Update External Authentication Options"
-               -select each option to enable it
-               -select option
-               1) Disable Single Sign-On
-               2) Disable SAML
-               3) Disable Local Login
-               -select "Apply updates"
-               -check changes have been made
-        startsin: 5.6
-        testSteps:
-            1. Disable Single Sign-On
-            2. Disable SAML
-            3. Disable Local Login
-        expectedResults:
-            1. check changes in ui
-            2. check changes in ui
-            3. check changes in ui
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_reporting():
@@ -4854,27 +4535,6 @@ def test_osp_test_migration_plan_can_be_unscheduled():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test migration plan can be unscheduled
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_look_up_ldap_groups_option_works_fine():
-    """
-    verify Look Up LDAP Groups option works fine.
-    1. configure external auth
-    2. navigate to "configuration -> Access Control -> Groups -> Add new
-    group"
-    3. Check the option "Look Up LDAP Groups" and verify retrieve groups
-    works fine.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        title: verify Look Up LDAP Groups option works fine.
     """
     pass
 
@@ -4986,32 +4646,6 @@ def test_distributed_zone_failover_cu_data_collector():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_user_validation_works_fine_but_authentication_fails_if_no_group_is_assigned_fo():
-    """
-    Create user in ldap domain server.
-    Do not assign any group to the user.
-    Configure cfme for ldaps external auth as in TC#1
-    Validation for ldap user is expected to be successful but the
-    authentication should fail as there is no group for the user.
-    Check audit.log and evm.log for “unable to match user"s group
-    membership to an EVM role” message.
-    Verify this scenario by "Get User Groups from External Authentication
-    (httpd)" option ENABLED and DISABLED.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: verify user validation works fine but authentication fails
-               if no group is assigned for user.
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_multiple_sources_to_single_target_mapping_for_clusters_ds_network():
     """
     OSP: Test multiple sources to single target mapping (For Clusters, DS,
@@ -5094,6 +4728,22 @@ def test_credentials_change_password_trailing_whitespace():
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.auth
+@pytest.mark.tier(2)
+def test_credentials_login_password_with_special_characters():
+    """
+    Alphanumeric password with special characters
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Appliance
+        caseimportance: medium
+        initialEstimate: 1/8h
     """
     pass
 
@@ -5261,43 +4911,6 @@ def test_distributed_zone_failover_web_services():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_validate_lookup_button_provsioning():
-    """
-    configure ldap and validate for lookup button in provisioning form
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_role_configuration_work_as_expected_for_new_ldap_groups():
-    """
-    Retrieve ldap user groups, assign roles to the group.
-    Login to cfme webui as ldap user and verify user role is working as
-    expected.
-    NOTE: execute rbac test cases.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1h
-        title: verify role configuration work as expected for new ldap groups
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(3)
 def test_crosshair_op_vm_vsphere65():
@@ -5364,26 +4977,6 @@ def test_rightsize_memory_values_correct_rhv41():
         assignee: tpapaioa
         casecomponent: CandU
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_passwords_are_not_registered_in_plain_text_in_auth_logs():
-    """
-    verify passwords are not registered in plain text in auth logs.
-    1. Configure LDAP/External Auth/Database Auth.
-    2. Verify username and passwords are not registered in plain text to
-    audit.log and evm.log
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: verify passwords are not registered in plain text in auth logs.
     """
     pass
 
@@ -5559,33 +5152,6 @@ def test_utilization_cluster():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(1)
-def test_ldap_user_login():
-    """
-    Verify the user login with valid credentials, based on role configured
-    for the user.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        testSteps:
-            1. login with the valid ldap user configured with CFME
-            2. Verify the logged in user details in login page
-            3. verify the feature access for the user based on the role
-               configured/assigned to the user.
-            4. verify the login with invalid credentials for the user login
-        expectedResults:
-            1. Login is expected to be successful for the valid user and credentials.
-            2. username and group name needs be displayed.
-            3. the user is expected to get full access to the features defined for his role.
-            4. Login is expected to fail with invalid credentials.
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_deploy_instance_with_ssh_addition_template():
     """
     Requirement: EC2 provider
@@ -5743,30 +5309,6 @@ def test_config_manager_prov_from_service_ansible_tower_310():
         casecomponent: Provisioning
         initialEstimate: 1h
         startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_disable_local_login_option_works_fine_verify_enable_disable_option():
-    """
-    Configure external auth as in TC#1 and enable “disable local login.”
-    Verify the default “admin” user for cfme no longer allowed to login to
-    CFME
-    ‘"disable local login". can be reset with an administratively
-    privileged user and using the appliance_console "Update Ext Auth"
-    option.
-    Verify “admin” login works fine upon “disable local login” is
-    disabled.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        title: Verify disable local login option works fine. Verify enable/disable option
     """
     pass
 
@@ -6336,24 +5878,6 @@ def test_ec2_flavor_list_up_to_date():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(3)
-def test_verify_ldap_user_login_when_email_has_an_apostrophe_character():
-    """
-    Bugzilla:
-        1379420
-
-    Polarion:
-        assignee: apagac
-        caseimportance: low
-        casecomponent: Auth
-        initialEstimate: 1/3h
-        title: verify ldap user login when email has an apostrophe character
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware67_test_vm_migration_with_windows_10():
     """
     OSP: vmware67-Test VM migration with Windows 10
@@ -6398,70 +5922,6 @@ def test_candu_graphs_vm_compare_cluster_vsphere65():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_ldap_authentication_works_without_groups_from_ldap_by_uncheck_the_get_user_gro():
-    """
-    verify LDAP authentication works without groups from LDAP
-    refer the following BZ.
-
-    Bugzilla:
-        1302345
-
-    Steps:
-    1.In Configuration->Authentication, set the auth mode to LDAP.
-    LDAP Hostname: "cfme-openldap-rhel7.cfme.lab.eng.rdu2.redhat.com"
-    LDAP Port: 389
-    UserType: Distinguished Name (UID=<user>)
-    User Suffix: UID=<user> :  ou=people,ou=prod,dc=psavrocks,dc=com
-    2. uncheck the "Get User Groups from LDAP"
-    3. In Access Control -> Users, created new user
-    "uid=test,ou=people,ou=prod,dc=psavrocks,dc=com" and set Group to
-    EvmGroup-administrator
-    ("uid=test,ou=people,ou=prod,dc=psavrocks,dc=com" user is already
-    created in LDAP Server)
-    4. Logout and tried Login with username: test and password: test,
-    Login failed.
-    Expected results:
-    Base DN should always be visible and should be part of the LDAP
-    Settings, when it is always needed.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/4h
-        title: verify LDAP authentication works without groups from LDAP by
-               uncheck the "Get User Groups from LDAP"
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(3)
-def test_verify_login_fails_for_user_in_cfme_after_changing_the_password_in_saml_for_the_user():
-    """
-    Configure SAML for cfme.
-    Create user and assign group in saml.
-    Create groups in cfme, and login and SAML user.
-    Logout
-    Change user credentials in SAML server.
-    Verify user login  to CFME using old credential fails.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/4h
-        title: Verify login fails for user in CFME after changing the
-               Password in SAML for the user.
     """
     pass
 
@@ -6744,27 +6204,6 @@ def test_proxy_valid_ec2():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_two_factor_authentication_works_with_user_password_and_otp():
-    """
-    Verifies two factor auth using external_authentication:
-    Steps:
-    1. configure CFME for external auth (IPA, SAML etc..)
-    2. configure user for OTP in authentication server.
-    3. verify two factor authentication for CFME works with user password
-    and otp.
-
-    Polarion:
-        assignee: apagac
-        initialEstimate: 1/3h
-        casecomponent: Appliance
-        title: verify two factor authentication works with user password and otp.
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_candu_graphs_cluster_hourly_vsphere55():
@@ -6827,35 +6266,6 @@ def test_chargeback_resource_allocation_storage_allocated():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_ldap_user_group():
-    """
-    verifies the ldap user group by loggin with different users across
-    groups.
-    setup/pre-requisite: configure the ldap with multiple groups and users
-    defined in each group
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        testSteps:
-            1.configure CFME appliance with ldap authentication mode.
-            2. configure Access Control for multiple groups/users defined in the ldap
-            3. login with users in different groups, with valid credentials
-            4. verify the user logged in has no access to the user
-               details/data defined in other groups
-        expectedResults:
-            1. ldap configuration should be successful.
-            2. CFME configuration for multiple users/groups should work without any error.
-            3. login should be successful upon valid credentials input.
-            4. user should have access to only the data defined by him/group
     """
     pass
 
@@ -7813,25 +7223,6 @@ def test_automated_locale_switching():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_the_authentication_mode_is_displayed_correctly_for_new_trusted_forest_table_en():
-    """
-    verify the authentication mode is displayed correctly for new trusted
-    forest table entry.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/6h
-        title: verify the authentication mode is displayed correctly for
-               new trusted forest table entry.
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_policy_to_prevent_source_vm_from_starting_if_migration_is_comaplete():
     """
     OSP: Test policy to prevent source VM from starting if migration is
@@ -7845,32 +7236,6 @@ def test_osp_test_policy_to_prevent_source_vm_from_starting_if_migration_is_coma
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test policy to prevent source VM from starting if migration is comAplete
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(1)
-def test_configure_ldap_authentication():
-    """
-    Verifies the ldap authentication mode configuration/setup on CFME
-    appliance.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        testSteps:
-            1. specify the authentication mode to LDAP.
-            2. specify the valid credentials
-            3. specify the port number, hostname and other details to
-               configure the ldap authentication for CFME appliance.
-        expectedResults:
-            1. No Error is expected to occur by specifying the LDAP authentication mode.
-            2. validation is expected to be successful with valid credentials
-            3. the ldap authentication mode is expected to be successful
-               after specifying the valid details.
     """
     pass
 
@@ -8134,33 +7499,6 @@ def test_candu_graphs_datastore_vsphere6():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_ldap_invalid_user_login():
-    """
-    Verifies scenario"s associated with the invalid user login(negative
-    test case).
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/4h
-        testSteps:
-            1. login with the invalid user.
-            2. configure the ldap with userA in groupA, configure CFME
-               for userA and groupA. Login with userA
-            3. delete the userA in the ldap. try Login with userA to CFME appliance
-        expectedResults:
-            1. login should fail for invalid credentials.
-            2. login should be successful
-            3. login should fail
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware67_test_vm_migration_from_iscsi_storage_in_vmware_to_nfs_on_osp():
     """
     OSP: vmware67-Test VM migration from iSCSI Storage in VMware to NFS on
@@ -8195,24 +7533,6 @@ def test_osp_vmware65_test_vm_with_multiple_disks():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(3)
-def test_remove_display_name_for_user_in_ldap_and_verify_auth():
-    """
-    1. Remove display name for user in ldap and verify auth.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/2h
-        title: Remove display name for user in ldap and verify auth.
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_security_group_record_values():
     """
     Bugzilla:
@@ -8241,35 +7561,6 @@ def test_osp_vmware60_test_vm_migration_from_iscsi_storage_vmware_to_osp():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware60-Test VM migration from iSCSI Storage VMware to OSP
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(3)
-def test_change_the_search_base_for_user_and_groups_lookup_at_domain_component_():
-    """
-    Change the search base for user and groups lookup at domain component
-    . e.g. change the search level from
-    "ou=Groups,ou=prod,dc=qetest,dc=com "
-    To "dc=qetest,dc=com"
-    Change the ‘ldap_group_search_base’ and ‘ldap_user_search_base’ in
-    /etc/sssd/sssd.conf for specific domain.
-    Make sure domain_suffix is updated correctly for your ldap domain
-    under test.
-    Restart sssd service (service sssd restart)
-    Verify configuration with dbus commands (refer MOJO)
-    Verify user/group retrieval in CFME webui.
-    user/group created at any hierarchy level under the tree
-    dc=qetest,dc=com is expected to be retrieved.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        title: Change the search base for user and groups lookup at domain component .
     """
     pass
 
@@ -8519,28 +7810,6 @@ def test_rightsize_cpu_values_correct_vsphere6():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_external_auth_configuration_with_ipa():
-    """
-    Set hostname for the appliance with FQDN
-    Update /etc/hosts with IPA server ip and FQDN
-    Update appliance FQDN to IPA server /etc/hosts
-    Make sure, both the machine can communicate using FQDN.
-    Run appliance_console and follow the steps in https://mojo.redhat.com/
-    docs/DOC-1088176/edit?ID=1088176&draftID=1981816  Configuring CFME
-    with external auth for IPA
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        title: External Auth configuration with IPA
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_field_zone_name_long():
@@ -8553,26 +7822,6 @@ def test_distributed_field_zone_name_long():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/30h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(1)
-def test_verify_retrieve_ldaps_groups_works_fine_for_ldap_user_from_cfme_webui():
-    """
-    Configure external auth as in TC#1
-    Retrieve user groups in Access Control->groups->configuration->New
-    group
-    Monitor the audit.log and evm.log for no errors.
-    validate the data comparing with ldap server data.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        title: verify retrieve ldaps groups works fine for ldap user from CFME webui.
     """
     pass
 
@@ -8752,45 +8001,6 @@ def test_osp_test_imports_with_non_existing_vm_name_should_give_error():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_user_groups_can_be_retrieved_from_trusted_forest():
-    """
-    verify user groups can be retrieved from "trusted forest", when the
-    "import roles from home forest" is unchecked.configuration:
-    1. Create the user "ldaptest" and group "engineering" in ldap:"cfme-
-    qe-ldap", and add "ldaptest" user to "engineering" group.
-    2. Create the user "ldaptest" and group "cfme" in ldap:"cfme-qe-ipa"
-    and add "ldaptest" user to "cfme" group.
-    Steps :
-    1. Login as "admin" and navigate to
-    configure->configuration->authentication
-    2. change the authentication mode to "ldap"
-    3. specify the hostname for the "cfme-qe-ipa", as the primary ldap.
-    4. in the "Role Settings" check "Get User Groups from LDAP", observe
-    that "Trusted Forest Settings" table displayed below. specify "Base
-    DN" and "Bind DN"
-    5. click on "+" to add "Trusted Forest Settings", specify HostName as
-    "cfme-qe-ldap",enter valid Base DN, Bind DN and "Bind Password" click
-    add the trusted forest and click "Save"
-    6. navigate to "access control"-> "groups"->"add new group", check
-    (Look Up LDAP Groups), specify the user "ldaptest", click retrieve.
-    Observe that only the groups(cfme) from Primary ldap (cfme-qe-ipa) are
-    retrieved. no group(engineering) from "cfme-qe-ldap" is reqtrieved.
-    7. manually add the group "engineering", logout and login as
-    "ldaptest". Observe that login fails for the user "ldaptest"
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        title: verify user groups can be retrieved from "trusted forest"
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_scheduler_singleton():
@@ -8807,25 +8017,6 @@ def test_distributed_zone_failover_scheduler_singleton():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_the_trusted_forest_settings_table_display_in_authentication_page():
-    """
-    verify the trusted forest settings table display in authentication
-    page. switch between the authentication modes and check the trusted
-    forest settings table does not disappear.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/6h
-        title: verify the trusted forest settings table display in authentication page.
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware65_test_vm_migration_with_windows_2016_server():
     """
     OSP: vmware65-Test VM migration with Windows 2016 server
@@ -8837,24 +8028,6 @@ def test_osp_vmware65_test_vm_migration_with_windows_2016_server():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware65-Test VM migration with Windows 2016 server
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_switch_groups_works_fine_for_user_with_multiple_groups_assigned():
-    """
-    Assign ldap user to multiple default groups.
-    Login as user and verify switch groups works fine.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Verify switch groups works fine for user with multiple groups assigned.
     """
     pass
 
@@ -8954,30 +8127,6 @@ def test_storage_ebs_volume_attach():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_set_hostname_from_appliance_console_and_configure_external_auth():
-    """
-    set hostname from appliance_console and configure external_auth.
-    Steps:
-    1. ssh to appliance, and run appliance_console command
-    2. change the appliance hostname with valid FQDN
-    3. Verify External auth configuration does not fail.
-
-    Bugzilla:
-        1360928
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/3h
-        title: set hostname from appliance_console and configure external_auth
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.tag
 @pytest.mark.tier(2)
 def test_restricted_user_rbac_for_access_control():
@@ -9001,29 +8150,6 @@ def test_restricted_user_rbac_for_access_control():
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_ldap_group_retrieval_works_fine_for_groups_with_descriptions_which_are_base64_():
-    """
-    verify ldap group retrieval works fine for groups with descriptions
-    which are base64 decoded , one random sample having an "é"
-    Refer the following BZ.
-
-    Bugzilla:
-        1367600
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/4h
-        title: verify ldap group retrieval works fine for groups with
-               descriptions which are base64 decoded
     """
     pass
 
@@ -9212,23 +8338,6 @@ def test_saved_chargeback_report_show_full_screen():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_authentication_user_not_in_ldap_but_in_db():
-    """
-    User is not able to authenticate if he has account in CFME DB but not
-    in LDAP.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware67_test_vm_migration_with_rhel_69():
     """
     OSP: vmware67-Test VM migration with RHEL 6.9
@@ -9399,25 +8508,6 @@ def test_crosshair_op_host_vsphere6():
         caseimportance: low
         initialEstimate: 1/12h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_database_user_login_fails_with_external_auth_configured():
-    """
-    Login with user registered to cfme internal database.
-    Authentication expected to fail, check audit.log and evm.log for
-    correct log messages.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Verify DataBase user login fails with External auth configured.
     """
     pass
 
@@ -12408,28 +11498,6 @@ def test_osp_test_cpu_cores_and_sockets_pre_vs_post_migration():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(3)
-def test_verify_external_authentication_with_openldap_proxy_to_3_different_domains():
-    """
-    verify external authentication with OpenLDAP proxy to 3 different
-    domains
-    refer the bz below
-
-    Bugzilla:
-        1306436
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        title: verify external authentication with OpenLDAP proxy to 3 different domains
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.replication
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_notifier_singleton():
@@ -12459,27 +11527,6 @@ def test_dialog_items_default_values_on_different_screens():
         caseimportance: medium
         initialEstimate: 1/3h
         title: Test dialog items default values on different screens
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(1)
-def test_verify_user_authentication_works_fine_if_default_evm_groups_are_already_created_and_a():
-    """
-    Create cfme default groups in ldaps domain server.
-    Assign user to the default groups. e.g.  EvmGroup-administrator
-    Configure cfme for ldaps external auth as in TC#1
-    Authentication for ldap user is expected to be successful as cfme
-    default groups are already assigned for user in ldap server.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        title: verify user authentication works fine if default evm groups
-               are already created and assigned for user in ldaps
     """
     pass
 
@@ -12521,24 +11568,6 @@ def test_osp_test_security_group_can_be_selected_while_creating_migration_plan()
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test security group can be selected while creating migration plan
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_saml_configuration_works_fine_for_cfme():
-    """
-    Look for the steps/instructions at http://file.rdu.redhat.com/abellott
-    /manageiq_docs/master/auth/saml.html
-    Verify appliance_console is updated with “External Auth: “ correctly
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        initialEstimate: 1/2h
-        title: Verify SAML configuration works fine for CFME
     """
     pass
 
@@ -12734,26 +11763,6 @@ def test_osp_test_earlier_infra_mapping_can_be_viewed_in_migration_plan_wizard()
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(1)
-def test_verify_ldap_authentication_for_the_cfme_default_groups():
-    """
-    verify ldap authentication for the cfme default groups.
-    1. define the user in ldap, and create the group in ldap with the same
-    name as in cfme
-    2. register the user to ldap group.
-    3. verify login, monitor evm.log, aurdit.log for no errors.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        title: verify ldap authentication for the cfme default groups.
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(3)
 def test_cluster_graph_by_host_tag_vsphere6():
@@ -12898,50 +11907,6 @@ def test_monitor_ansible_playbook_logging_output():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_black_console_ext_auth_options_skip():
-    """
-    Test skip update of ext_auth options through appliance_console
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: -ssh to appliance
-               -run appliance_console
-               -select option "Update External Authentication Options"
-               -select each option to enable it
-               -select option
-               1) Enable/Disable Single Sign-On
-               2) Enable/Disable SAML
-               3) Enable/Disable Local Login
-               -select "Skip updates"
-               -check changes have not been made
-        startsin: 5.6
-        testSteps:
-            1. Enable Single Sign-On, SAML, Local Login then select skip updates
-            2. Disable Single Sign-On, SAML, Local Login then select skip updates
-            3. Enable Single Sign-On then select skip updates
-            4. Disable Single Sign-On then select skip updates
-            5. Enable SAML then select skip updates
-            6. Disable SAML then select skip updates
-            7. Enable Local Login then select skip updates
-            8. Disable Local Login then select skip updates
-        expectedResults:
-            1. check changes in ui
-            2. check changes in ui
-            3. check changes in ui
-            4. check changes in ui
-            5. check changes in ui
-            6. check changes in ui
-            7. check changes in ui
-            8. check changes in ui
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_candu_collection_tab():
     """
     Test case to cover -
@@ -12990,27 +11955,6 @@ def test_chargeback_preview():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_multi_domain_configuration_for_external_auth_ldaps():
-    """
-    Look for the steps/instructions at
-    https://mojo.redhat.com/docs/DOC-1085797
-    Verify appliance_console is updated with “External Auth: “ correctly.
-    Verify appliance_console displays all the domains configured. Now it
-    displays only one. There will be BZ.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        title: verify multi domain configuration for external auth ldaps
     """
     pass
 
@@ -13066,25 +12010,6 @@ def test_azone_network_io_azure():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_saml_verify_get_user_groups_from_external_authentication_httpd__option():
-    """
-    Enable “Get User Groups from External Authentication (httpd)” option.
-    Verify “user groups from SAML server are updated correctly and user
-    with correct groups can login. (retrieve groups option is not valid in
-    case of SAML)
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        initialEstimate: 1/2h
-        title: saml: Verify “Get User Groups from External Authentication (httpd)” option.
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.replication
 def test_distributed_zone_mixed_infra():
     """
@@ -13114,30 +12039,6 @@ def test_config_manager_add_multiple_times_ansible_tower_243():
         casecomponent: Ansible
         initialEstimate: 1/4h
         startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_external_auth_configuration_for_ldap_can_be_un_configured_using_appliance_cons():
-    """
-    Run command “appliance_console”
-    Select option for “configure external authentication”
-    Verify “IPA Client already configured on this Appliance, Un-Configure
-    first?” is displayed
-    Answer yes to continue with unconfigure process.
-    Verify Database user login works fine upon external auth un configured
-    and auth mode set to ‘Database’.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/3h
-        title: Verify external auth configuration for ldap can be un
-               configured using appliance_console
     """
     pass
 
@@ -13361,29 +12262,6 @@ def test_snapshot_timeline_verify_data():
             3. timelines page displayed
             4. event displayed on timeline
             5. data should be identical
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(3)
-def test_cfme_features_with_ldap():
-    """
-    verifies the cfme features with authentication mode configured to
-    ldap.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1h
-        testSteps:
-            1. login with ldap user
-            2. verify the CFME features after login with ldap user.
-        expectedResults:
-            1. login should be successful
-            2. All the CFME features should work properly with ldap authentication.
     """
     pass
 
@@ -16983,26 +15861,6 @@ def test_validate_chargeback_cost_resource_maximum_memory():
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(3)
-def test_configure_ldaps_for_customized_port_eg_10636_10389_and_validate_cfme_auth():
-    """
-    Configure ldap/ldaps domain server with customized port.
-    Configure cfme for customized domain ports. Check mojo page for
-    details.
-    Verify ldap user/group authentication.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/2h
-        title: Configure  ldaps for customized port e.g 10636, 10389 and validate CFME auth
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.right_size
 @pytest.mark.tier(2)
 def test_nor_memory_vsphere55():
@@ -17082,24 +15940,6 @@ def test_osp_vmware67_test_vm_migration_from_iscsi_storage_in_vmware_to_iscsi_on
 
 
 @pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(3)
-def test_saml_verify_multiple_appliances_can_be_added_to_the_same_realm():
-    """
-    Verify configuring more than one appliance to SAML authentication as
-    mentioned in Step#1 works fine.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/2h
-        title: saml: Verify multiple appliances can be added to the same REALM.
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.storage
 def test_storage_volume_backup_restore_from_backup_page_openstack():
     """
@@ -17118,25 +15958,6 @@ def test_storage_volume_backup_restore_from_backup_page_openstack():
         caseimportance: medium
         initialEstimate: 1/5h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.auth
-@pytest.mark.tier(2)
-def test_verify_cfme_login_page_redirects_to_saml_login_page_upon_successful_configuration():
-    """
-    click on login to corporate account if local login is enabled,
-    redirects to SAML REALM page for which user is appliance is configured
-    to.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-        title: Verify CFME login page redirects to SAML login page upon
-               successful configuration
     """
     pass
 
