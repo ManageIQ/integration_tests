@@ -1,9 +1,10 @@
 import pytest
 from fauxfactory import gen_numeric_string
 
+from cfme import test_requirements
 from cfme.services.catalogs.catalog_items import DetailsCatalogItemView
 
-pytestmark = [pytest.mark.tier(2)]
+pytestmark = [pytest.mark.tier(2), test_requirements.custom_button]
 
 
 def test_custom_group_on_catalog_item_crud(generic_catalog_item):
