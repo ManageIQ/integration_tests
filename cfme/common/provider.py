@@ -310,22 +310,18 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
                 "auth_type": "default",
                 "auth_key": endpoint_default.credentials.service_account,
             }
-            connection_configs.append(default_connection)
         else:
             raise AssertionError("Provider wasn't added. "
                 "No credentials info found for provider {}.".format(self.name))
 
-        cert = getattr(endpoint_default, "ca_certs", None)
-        if cert and self.appliance.version >= "5.8":
-            default_connection["endpoint"]["certificate_authority"] = cert
-            connection_configs.append(default_connection)
+        if hasattr(endpoint_default, "ca_certs"):
+            default_connection["endpoint"]["certificate_authority"] = endpoint_default.ca_certs
 
         if hasattr(endpoint_default, "verify_tls"):
             default_connection["endpoint"]["verify_ssl"] = 1 if endpoint_default.verify_tls else 0
-            connection_configs.append(default_connection)
+
         if getattr(endpoint_default, "api_port", None):
             default_connection["endpoint"]["port"] = endpoint_default.api_port
-            connection_configs.append(default_connection)
         if getattr(endpoint_default, "security_protocol", None):
             security_protocol = endpoint_default.security_protocol.lower()
             if security_protocol in ('basic (ssl)', 'ssl without validation'):
@@ -334,7 +330,8 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
                 security_protocol = 'ssl-with-validation'
 
             default_connection["endpoint"]["security_protocol"] = security_protocol
-            connection_configs.append(default_connection)
+
+        connection_configs.append(default_connection)
 
     def _fill_candu_endpoint_dicts(self, provider_attributes, connection_configs):
         """Fills dicts with candu endpoint data.
@@ -365,7 +362,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             candu_connection["endpoint"]["verify_ssl"] = 0
         connection_configs.append(candu_connection)
 
-    def _fill_rsa_endpoint_dicts(self, provider_attributes, connection_configs):
+    def _fill_rsa_endpoint_dicts(self, connection_configs):
         """Fills dicts with rsa endpoint data.
 
         Helper method for ``self.create_rest``
@@ -373,15 +370,16 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         if "rsa_keypair" not in self.endpoints:
             return
 
-        endpoint_rsa = self.endpoints["rsa_keypair"]
-        if isinstance(provider_attributes["credentials"], dict):
-            provider_attributes["credentials"] = [provider_attributes["credentials"]]
-
-        provider_attributes["credentials"].append({
-            "userid": endpoint_rsa.credentials.principal,
-            "password": endpoint_rsa.credentials.secret,
-            "auth_type": "ssh_keypair",
-        })
+        endpoint_rsa = self.endpoints["rsa_keypair"].credentials
+        connection_configs.append(
+            {
+                "authentication": {
+                    "userid": endpoint_rsa.principal,
+                    "auth_key": endpoint_rsa.secret,
+                },
+                "endpoint": {"role": "ssh_keypair"}
+            }
+        )
 
     def _fill_amqp_endpoint_dicts(self, provider_attributes, connection_configs):
         """Fills dicts with AMQP events endpoint data.
@@ -479,7 +477,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         self._fill_provider_attributes(provider_attributes)
         self._fill_default_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_candu_endpoint_dicts(provider_attributes, connection_configs)
-        self._fill_rsa_endpoint_dicts(provider_attributes, connection_configs)
+        self._fill_rsa_endpoint_dicts(connection_configs)
         self._fill_amqp_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_smartstate_endpoint_dicts(provider_attributes, connection_configs)
         self._compile_connection_configurations(provider_attributes, connection_configs)
