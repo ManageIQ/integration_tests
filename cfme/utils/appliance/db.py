@@ -434,6 +434,13 @@ class ApplianceDB(AppliancePlugin):
             'mount -a'
         ]
 
+        # Permissions modification for upstream or 5.11+
+        if not self.appliance.is_downstream or self.appliance.version >= '5.11':
+            commands_to_run.extend([
+                'chown postgres:postgres $APPLIANCE_PG_MOUNT_POINT',
+                'chmod 700 $APPLIANCE_PG_MOUNT_POINT'
+            ])
+
         for command in commands_to_run:
             result = self._run_cmd_show_output(command)
             if result.failed:

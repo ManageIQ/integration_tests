@@ -650,7 +650,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             if loosen_pgssl:
                 self.db.loosen_pgssl()
                 restart_evm = True
-            if self.version >= '5.8':
+            if self.version < '5.11':
                 self.configure_vm_console_cert(log_callback=log_callback)
                 restart_evm = True
 
@@ -2378,6 +2378,11 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         cert = conf.cfme_data['vm_console'].get('cert')
         if cert is None:
             raise Exception('vm_console:cert does not exist in cfme_data.yaml')
+
+        # 5.11 and upstream need pyopenssl for this certificate generation
+        # TODO convert the script to py3, use pip3 to install needed packages
+        if not self.is_downstream or self.version >= '5.11':
+            self.ssh_client.run_command('pip install pyopenssl')
 
         cert_file = os.path.join(cert.install_dir, 'server.cer')
         key_file = os.path.join(cert.install_dir, 'server.cer.key')
