@@ -25,10 +25,10 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.update import Updateable
+from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import MultiBoxOrderedSelect
 from widgetastic_manageiq import PotentiallyInvisibleTab
-from widgetastic_manageiq import RadioGroup
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 
@@ -52,27 +52,6 @@ BUILD_TAG_OBJS = [
     "Orchestration Stack",
     "Virtual Infra Switch",
 ]
-
-
-class AutomateRadioGroup(RadioGroup):
-    LABELS = ".//label"
-    BUTTON = './/label[normalize-space(.)={}]/preceding-sibling::input[@type="radio"][1]'
-
-    @property
-    def selected(self):
-        names = self.button_names
-        for name in names:
-            bttn = self.browser.element(self.BUTTON.format(quote(name)))
-            if bttn.get_attribute("checked") is not None:
-                return name
-        else:
-            return names[0]
-
-    def select(self, name):
-        if self.selected != name:
-            self.browser.element(self.BUTTON.format(quote(name))).click()
-            return True
-        return False
 
 
 class ButtonsAllView(AutomateCustomizationView):
