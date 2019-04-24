@@ -8,6 +8,9 @@ from navmazing import NavigateToSibling
 from widgetastic.utils import WaitFillViewStrategy
 from widgetastic.widget import Checkbox
 from widgetastic.widget import ClickableMixin
+from widgetastic.widget import ColourInput
+from widgetastic.widget import ConditionalSwitchableView
+from widgetastic.widget import Select
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
@@ -28,10 +31,12 @@ from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import WaitTab
+from widgetastic_manageiq.expression_editor import ExpressionEditor
 
 
 class EntryPoint(Input, ClickableMixin):
@@ -79,38 +84,60 @@ class BasicInfoForm(ServicesCatalogView):
 
 
 class ButtonGroupForm(ServicesCatalogView):
-    title = Text('#explorer_title_text')
+    title = Text("#explorer_title_text")
 
-    btn_group_text = Input(name='name')
-    btn_group_hvr_text = Input(name='description')
-    btn_image = FonticonPicker('button_icon')
+    text = Input(name="name")
+    display = Checkbox(name="display")
+    hover = Input(name="description")
+    icon = FonticonPicker("button_icon")
+    icon_color = ColourInput(id="button_color")
 
 
 class ButtonForm(ServicesCatalogView):
-    title = Text('#explorer_title_text')
-
-    btn_text = Input(name='name')
-    btn_hvr_text = Input(name='description')
-    btn_image = BootstrapSelect('button_image')
-    select_dialog = BootstrapSelect('dialog_id')
-    system_process = BootstrapSelect('instance_name')
-    request = Input(name='object_request')
+    title = Text("#explorer_title_text")
 
     @View.nested
-    class options(WaitTab):    # noqa
-        TAB_NAME = 'Options'
+    class options(WaitTab):  # noqa
+        btn_type = BootstrapSelect("button_type")
+        form = ConditionalSwitchableView(reference="btn_type")
 
-        btn_text = Input(name='name')
-        btn_hvr_text = Input(name='description')
-        select_dialog = BootstrapSelect('dialog_id')
-        btn_image = FonticonPicker('button_icon')
+        @form.register("Default")
+        class ButtonFormDefaultView(View):  # noqa
+            dialog = BootstrapSelect("dialog_id")
+
+        @form.register("Ansible Playbook")
+        class ButtonFormAnsibleView(View):  # noqa
+            playbook_cat_item = BootstrapSelect("service_template_id")
+            inventory = AutomateRadioGroup(locator=".//input[@name='inventory']/..")
+            hosts = Input(name="hosts")
+
+        text = Input(name="name")
+        display = Checkbox(name="display")
+        hover = Input(name="description")
+        icon = FonticonPicker("button_icon")
+        icon_color = ColourInput(id="button_color")
+        open_url = Checkbox("open_url")
+        display_for = Select(id="display_for")
+        submit = Select(id="submit_how")
 
     @View.nested
-    class advanced(WaitTab):   # noqa
-        TAB_NAME = 'Advanced'
+    class advanced(WaitTab):  # noqa
+        @View.nested
+        class enablement(View):  # noqa
+            title = Text('//*[@id="ab_form"]/div[1]/h3')
+            define_exp = Text(locator='//*[@id="form_enablement_expression_div"]//a/button')
+            expression = ExpressionEditor()
+            disabled_text = Input(id="disabled_text")
 
-        system_process = BootstrapSelect('instance_name')
-        request = Input(name='object_request')
+        @View.nested
+        class visibility(View):  # noqa
+            title = Text('//*[@id="ab_form"]/h3[2]')
+            define_exp = Text(locator='//*[@id="form_visibility_expression_div"]//a/button')
+            expression = ExpressionEditor()
+
+        system = BootstrapSelect("instance_name")
+        message = Input(name="object_message")
+        request = Input(name="object_request")
 
 
 class AllCatalogItemView(ServicesCatalogView):
@@ -295,10 +322,6 @@ class AddButtonView(ButtonForm):
 
 class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
 
-    @property
-    def button_icon_name(self):
-        return 'broom'
-
     def update(self, updates):
         view = navigate_to(self, 'Edit')
         changed = view.fill(updates)
@@ -319,14 +342,15 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
     def add_button_group(self, **kwargs):
         button_name = kwargs.get("text", "gp_{}".format(fauxfactory.gen_alpha()))
         hover_name = kwargs.get("hover", "hover_{}".format(fauxfactory.gen_alpha()))
-        image = kwargs.get("image", "broom")
 
         view = navigate_to(self, "AddButtonGroup")
         view.fill(
             {
-                "btn_group_text": button_name,
-                "btn_group_hvr_text": hover_name,
-                "btn_image": image,
+                "text": button_name,
+                "display": kwargs.get("display", True),
+                "hover": hover_name,
+                "icon": kwargs.get("image", "broom"),
+                "icon_color": kwargs.get("icon_color")
             }
         )
         view.add.click()
@@ -357,29 +381,61 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         if BZ(1687289).blocks:
             view.browser.refresh()
 
-    def add_button(self):
-        button_name = fauxfactory.gen_alpha()
-        view = navigate_to(self, 'AddButton')
+    def add_button(self, **kwargs):
+        text = kwargs.get("text", "btn_{}".format(fauxfactory.gen_alpha()))
+        hover = kwargs.get("hover", "hover_{}".format(fauxfactory.gen_alpha()))
+
+        view = navigate_to(self, "AddButton")
         view.fill(
             {
-                'options':
-                    {
-                        'btn_text': 'btn_text',
-                        'btn_hvr_text': button_name,
-                        'select_dialog': self.dialog,
-                        'btn_image': self.button_icon_name
-                    },
-                'advanced':
-                    {
-                        'system_process': 'Request',
-                        'request': 'InspectMe'
-                    }
+                "options": {
+                    "btn_type": kwargs.get("type"),
+                    "dialog": kwargs.get("dialog"),
+                    "playbook_cat_item": kwargs.get("playbook_cat_item"),
+                    "inventory": kwargs.get("inventor"),
+                    "hosts": kwargs.get("hosts"),
+                    "text": text,
+                    "display": kwargs.get("display", True),
+                    "hover": hover,
+                    "icon": kwargs.get("image", "broom"),
+                    "icon_color": kwargs.get("icon_color"),
+                    "open_url": kwargs.get("open_url"),
+                    "display_for": kwargs.get("display_for"),
+                    "submit": kwargs.get("submit"),
+                },
+                "advanced": {
+                    "system": kwargs.get("system", "Request"),
+                    "request": kwargs.get("request", "InspectMe"),
+                },
             }
         )
         view.add.click()
         view = self.create_view(DetailsCatalogItemView, wait=5)
         view.flash.assert_no_error()
-        return button_name
+        return text
+
+    def button_exists(self, name):
+        view = navigate_to(self, "Details")
+        path = view.catalog_items.tree.read()
+        path.extend(["Actions", name])
+
+        try:
+            view.catalog_items.tree.fill(path)
+            return True
+        except CandidateNotFound:
+            return False
+
+    def delete_button(self, name):
+        view = navigate_to(self, "Details")
+        path = view.catalog_items.tree.read()
+        path.extend(["Actions", name])
+        view.catalog_items.tree.fill(path)
+        view.configuration.item_select("Remove this Button", handle_alert=True)
+        view.flash.assert_no_error()
+
+        # TODO(BZ-1687289): To avoid improper page landing adding a workaround.
+        if BZ(1687289).blocks:
+            view.browser.refresh()
 
     @property
     def catalog_name(self):

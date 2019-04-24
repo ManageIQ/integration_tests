@@ -12,7 +12,6 @@ from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Select
 from widgetastic.widget import Text
 from widgetastic.widget import View
-from widgetastic.xpath import quote
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
