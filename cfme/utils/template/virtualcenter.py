@@ -15,10 +15,6 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
     image_pattern = re.compile(r'<a href="?\'?([^"\']*vsphere[^"\'>]*)')
 
     @cached_property
-    def _vm_mgmt(self):
-        return self.mgmt.get_vm(self.template_name)
-
-    @cached_property
     def _temp_vm_mgmt(self):
         return self.mgmt.get_vm(self.temp_template_name)
 
@@ -71,7 +67,7 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
     def deploy_vm(self):
         # Move the VM to the template datastore and set the correct name
         host = self.template_upload_data.get('host') or self.mgmt.list_host().pop()
-        self._temp_vm_mgmt.clone(vm_name=self.template_name,
+        self._temp_vm_mgmt.clone(vm_name=self.temp_vm_name,
                                  datastore=self._picked_datastore,
                                  host=host,
                                  relocate=True)
@@ -84,7 +80,7 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
     @log_wrap("templatize VM")
     def templatize_vm(self):
         try:
-            self._vm_mgmt.mark_as_template()
+            self._vm_mgmt.mark_as_template(template_name=self.template_name)
             return True
         except Exception:
             return False

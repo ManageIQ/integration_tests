@@ -14,7 +14,7 @@ class OpenstackTemplateUpload(ProviderTemplateUpload):
     def deploy_vm_from_template(self):
         """Deploy a instance from the raw template"""
         self.mgmt.get_template(self.image_name).deploy(
-            vm_name=self.template_name,
+            vm_name=self.temp_vm_name,
             flavor_name=self.provider_data.sprout.flavor_name,
             network_name=self.provider_data.sprout.network_name,
             floating_ip_pool=self.provider_data.sprout.floating_ip_pool,
@@ -25,7 +25,7 @@ class OpenstackTemplateUpload(ProviderTemplateUpload):
     def templatize_vm(self):
         """Templatizes temporary VM"""
         try:
-            self._vm_mgmt.mark_as_template()
+            self._vm_mgmt.mark_as_template(template_name=self.template_name)
             return True
         except Exception:
             return False

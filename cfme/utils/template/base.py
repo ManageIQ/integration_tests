@@ -191,16 +191,13 @@ class ProviderTemplateUpload(object):
         """ Returns credentials + hostname for ssh client auth for a temp_vm."""
 
         def check_ip():
-            vm_name = (self.temp_vm_name if self.provider_data.type == 'rhevm' else
-                       self.template_name)
-            vm = self.mgmt.get_vm(vm_name)
-            ip = vm.ip
+            ip = self._vm_mgmt.ip
             # get_ip_address might return None
             return ip if ip and resolve_hostname(ip) else False
 
         vm_ip, tc = wait_for(check_ip, delay=5, num_sec=600,
                              message="waiting for {} to obtain DHCP"
-                             .format(self.temp_vm_name))
+                             .format(self._vm_mgmt.name))
 
         return {'hostname': vm_ip,
                 'username': credentials['ssh']['username'],
@@ -215,7 +212,7 @@ class ProviderTemplateUpload(object):
 
     @cached_property
     def _vm_mgmt(self):
-        return self.mgmt.get_vm(self.template_name)
+        return self.mgmt.get_vm(self.temp_vm_name)
 
     @staticmethod
     def from_template_upload(key):
@@ -401,9 +398,14 @@ class ProviderTemplateUpload(object):
         for cleanup in upstream_cleanup:
             self.execute_ssh_command('rm -rf {}'.format(cleanup), client_args=client_args)
 
-        logger.info('Finished cleaning out the default setup of a ManageIQ appliance')
+        check_pgsql = self.execute_ssh_command('ls /var/lib/pgsql/data/', client_args=client_args)
 
-        return True
+        if not check_pgsql.output:
+            logger.info('Finished cleaning out the default setup of a ManageIQ appliance')
+            return True
+        else:
+            logger.error('Cleaning the default setup of a ManageIQ appliance has failed')
+            return False
 
     @log_wrap("template upload script")
     def main(self):
