@@ -10,9 +10,8 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def embedded_appliance(appliance):
-    """Enables embedded ansible role via UI"""
     appliance.enable_embedded_ansible_role()
     assert appliance.is_embedded_ansible_running
     yield appliance
@@ -31,7 +30,7 @@ def test_embedded_ansible_enable(embedded_appliance):
         tags: ansible_embed
     """
     assert wait_for(lambda: embedded_appliance.is_embedded_ansible_running, num_sec=30)
-    assert wait_for(lambda: embedded_appliance.supervisord.is_active, num_sec=180)
+    assert wait_for(lambda: embedded_appliance.supervisord.is_active, num_sec=30)
     assert wait_for(lambda: embedded_appliance.rabbitmq_server.running, num_sec=30)
     assert wait_for(lambda: embedded_appliance.nginx.running, num_sec=30)
     endpoint = "api" if embedded_appliance.is_pod else "ansibleapi"
@@ -40,6 +39,33 @@ def test_embedded_ansible_enable(embedded_appliance):
         'curl -kL https://localhost/{endp} | grep "AWX REST API"'.format(endp=endpoint),
         container=embedded_appliance.ansible_pod_name,
     )
+
+
+@pytest.mark.tier(3)
+def test_embedded_ansible_disable(embedded_appliance):
+    """Tests whether the embedded ansible role and all workers have stopped correctly
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: critical
+        initialEstimate: 1/6h
+        tags: ansible_embed
+    """
+    assert wait_for(lambda: embedded_appliance.rabbitmq_server.running, num_sec=30)
+    assert wait_for(lambda: embedded_appliance.nginx.running, num_sec=30)
+    embedded_appliance.disable_embedded_ansible_role()
+
+    if not embedded_appliance.is_pod:
+        assert wait_for(
+            lambda: not embedded_appliance.supervisord.is_active, num_sec=180
+        )
+        assert wait_for(
+            lambda: not embedded_appliance.rabbitmq_server.is_active, num_sec=80
+        )
+        assert wait_for(lambda: not embedded_appliance.nginx.is_active, num_sec=30)
+    else:
+        assert wait_for(lambda: embedded_appliance.is_ansible_pod_stopped, num_sec=300)
 
 
 @pytest.mark.tier(1)
@@ -99,30 +125,3 @@ def test_embedded_ansible_logs(embedded_appliance):
     # Retrieving setup log file from list and asserting with length
     # Setup log file contains date/time string in it.
     assert "setup" in diff[0]
-
-
-@pytest.mark.tier(3)
-def test_embedded_ansible_disable(embedded_appliance):
-    """Tests whether the embedded ansible role and all workers have stopped correctly
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: critical
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    assert wait_for(lambda: embedded_appliance.rabbitmq_server.running, num_sec=30)
-    assert wait_for(lambda: embedded_appliance.nginx.running, num_sec=30)
-    embedded_appliance.disable_embedded_ansible_role()
-
-    if not embedded_appliance.is_pod:
-        assert wait_for(
-            lambda: not embedded_appliance.supervisord.is_active, num_sec=180
-        )
-        assert wait_for(
-            lambda: not embedded_appliance.rabbitmq_server.is_active, num_sec=80
-        )
-        assert wait_for(lambda: not embedded_appliance.nginx.is_active, num_sec=30)
-    else:
-        assert wait_for(lambda: embedded_appliance.is_ansible_pod_stopped, num_sec=300)
