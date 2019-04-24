@@ -47,15 +47,17 @@ def catalog_item(appliance, provider, provisioning, dialog, catalog):
 
 
 @pytest.fixture(scope="module")
-def catalog_item_modscope(appliance, provider, provisioning, dialog, catalog):
-    catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
+def catalog_item_modscope(appliance, provider, provisioning, dialog_modscope, catalog_modscope):
+    catalog_item = create_catalog_item(
+        appliance, provider, provisioning, dialog_modscope, catalog_modscope
+    )
     return catalog_item
 
 
 @pytest.fixture(scope="module")
-def generic_catalog_item(request, appliance, dialog, catalog):
+def generic_catalog_item(request, appliance, dialog_modscope, catalog_modscope):
     cat = _service_templates(
-        request, appliance, service_dialog=dialog, service_catalog=catalog, num=1
+        request, appliance, service_dialog=dialog_modscope, service_catalog=catalog_modscope, num=1
     )[0]
 
     yield appliance.collections.catalog_items.instantiate(
@@ -63,8 +65,8 @@ def generic_catalog_item(request, appliance, dialog, catalog):
         name=cat.name,
         description=cat.description,
         display_in=True,
-        catalog=catalog,
-        dialog=dialog,
+        catalog=catalog_modscope,
+        dialog=dialog_modscope,
     )
 
     if cat.exists:
@@ -176,7 +178,7 @@ def order_service(appliance, provider, provisioning, dialog, catalog, request):
     vm.cleanup_on_provider()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def service_vm(appliance, provider, catalog_item):
     """ This is global fixture to get service and vm/instance provision by service."""
 
