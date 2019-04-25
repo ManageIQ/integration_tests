@@ -423,9 +423,7 @@ def test_codename_in_log(appliance):
     log = '/var/www/miq/vmdb/log/evm.log'
     lv = LogValidator(log,
                       matched_patterns=[r'.*Codename: \w+$'],
-                      hostname=appliance.hostname,
-                      username=conf.credentials['ssh']['username'],
-                      password=conf.credentials['ssh']['password'])
+                      hostname=appliance.hostname)
     lv.fix_before_start()
     appliance.ssh_client.run_command('appliance_console_cli --server=restart')
 
