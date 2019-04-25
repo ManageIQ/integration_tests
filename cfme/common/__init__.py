@@ -751,15 +751,7 @@ class CustomButtonEvents(CFMENavigateStep):
         ent = self.prerequisite_view.entities
         table = ent.summary("Relationships") if hasattr(ent, "summary") else ent.relationships
 
-        # TODO(ndhandre): remove this workaround as BZ-1668691 fix.
-        #  This is temporary workaround to avoid inconsistency in UI.
-
-        cb_text = (
-            "Custom Button Events"
-            if "Custom Button Events" in table.fields
-            else "Custom button events"
-        )
-        if int(table.get_text_of(cb_text)) > 0:
-            table.click_at(cb_text)
+        if int(table.get_text_of("Custom Button Events")) > 0:
+            table.click_at("Custom Button Events")
         else:
             raise DestinationNotFound("Custom button event count 0")
