@@ -401,16 +401,7 @@ def test_custom_button_expression_cloud_obj(
 
 
 @pytest.mark.meta(
-    blockers=[
-        BZ(
-            1668023,
-            unblock=lambda button_group, btn_dialog: not (
-                bool([obj for obj in ["PROVIDER", "CLOUD_NETWORK"] if obj in button_group])
-                and btn_dialog
-            ),
-        ),
-        BZ(1680525, unblock=lambda button_group: "CLOUD_NETWORK" not in button_group)
-    ]
+    blockers=[BZ(1680525, unblock=lambda button_group: "CLOUD_NETWORK" not in button_group)]
 )
 @pytest.mark.parametrize("btn_dialog", [False, True], ids=["simple", "dialog"])
 def test_custom_button_events_cloud_obj(request, dialog, setup_objs, button_group, btn_dialog):
@@ -433,6 +424,7 @@ def test_custom_button_events_cloud_obj(request, dialog, setup_objs, button_grou
 
     Bugzilla:
         1668023
+        1702490
         1680525
     """
     group, obj_type = button_group

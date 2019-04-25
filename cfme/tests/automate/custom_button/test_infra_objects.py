@@ -495,10 +495,6 @@ def test_custom_button_open_url_infra_obj(request, setup_obj, button_group, meth
 @pytest.mark.meta(
     blockers=[
         BZ(
-            1668023,
-            unblock=lambda button_group, btn_dialog: not ("HOSTS" in button_group and btn_dialog),
-        ),
-        BZ(
             1685555,
             unblock=lambda button_group, btn_dialog: not ("SWITCH" in button_group and btn_dialog),
         ),
@@ -525,6 +521,8 @@ def test_custom_button_events_infra_obj(request, dialog, setup_obj, button_group
 
     Bugzilla:
         1668023
+        1702490
+        1685555
     """
     group, obj_type = button_group
     dialog_ = dialog if btn_dialog else None
