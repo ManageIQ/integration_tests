@@ -161,6 +161,9 @@ class AddMigrationPlanView(View):
         import_btn = Button("Import")
         hidden_field = HiddenFileInput(locator='.//input[contains(@accept,".csv")]')
         clear_filters = Text(".//a[text()='Clear All Filters']")
+        error_text = Text('.//h3[contains(@class,"blank-slate-pf-main-action") and '
+                          'contains(text(), "Error:")]')
+        popover_text = Text(locator='.//div[contains(@class, "popover-content")]')
         table = Table(
             './/div[contains(@class, "container-fluid")]/table',
             column_widgets={
