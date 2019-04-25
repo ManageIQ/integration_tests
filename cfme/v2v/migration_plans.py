@@ -146,7 +146,7 @@ class AddMigrationPlanView(View):
         name = TextInput(name="name")
         name_help_text = Text(locator='.//div[contains(@id,"name")]/span')
         description = TextInput(name="description")
-        select_vm = RadioGroup('.//div[contains(@id,"vm_choice_radio")]')
+        choose_vm = RadioGroup('.//div[contains(@id,"vm_choice_radio")]')
         fill_strategy = WaitFillViewStrategy("15s")
 
         @property
@@ -486,13 +486,13 @@ class MigrationPlanCollection(BaseCollection):
         """
         view = navigate_to(self, "Add")
 
-        radio_btn = None
+        import_btn = None
         if csv_import:
-            radio_btn = "Import a CSV file with a list of VMs to be migrated"
+            import_btn = "Import a CSV file with a list of VMs to be migrated"
         view.general.fill({"infra_map": infra_map,
                            "name": name,
                            "description": description,
-                           "csv_import": radio_btn})
+                           "csv_import": import_btn})
 
         view.vms.wait_displayed()
         view.vms.fill({

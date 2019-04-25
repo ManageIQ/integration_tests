@@ -33,22 +33,22 @@ def infra_map(appliance, source_provider, provider):
     """Fixture to create infrastructure mapping"""
     infra_mapping_data = infra_mapping_default_data(
         source_provider, provider)
-    infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
-    mapping = infrastructure_mapping_collection.create(**infra_mapping_data)
+    infra_mapping_collection = appliance.collections.v2v_infra_mappings
+    mapping = infra_mapping_collection.create(**infra_mapping_data)
     yield mapping
-    infrastructure_mapping_collection.delete(mapping)
+    infra_mapping_collection.delete(mapping)
 
 
 def migration_plan(appliance, infra_map, csv=False):
     """Function to create migration plan and select csv import option"""
-    radio_btn = "Import a CSV file with a list of VMs to be migrated"
+    import_btn = "Import a CSV file with a list of VMs to be migrated"
     plan_obj = appliance.collections.v2v_migration_plans
     view = navigate_to(plan_obj, 'Add')
     view.general.fill({
         "infra_map": infra_map.name,
         "name": fauxfactory.gen_alpha(10),
         "description": fauxfactory.gen_alpha(10),
-        "select_vm": radio_btn
+        "choose_vm": import_btn
     })
 
     view.next_btn.click()
@@ -69,6 +69,7 @@ def import_and_check(appliance, infra_map, error_text=None, csv=False,
     if table_hover:
         wait_for(lambda: plan_view.vms.is_displayed,
                  timeout=60, message='Wait for VMs view', delay=5)
+        # click on the checkbox to select VM (column 0)
         plan_view.vms.table[0][1].widget.click()
         error_msg = plan_view.vms.popover_text.read()
     else:
