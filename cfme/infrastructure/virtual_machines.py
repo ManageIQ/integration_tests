@@ -983,8 +983,13 @@ class InfraVm(VM):
 
     @property
     def cluster(self):
-        all_clusters = self.provider.get_clusters()
-        return next(cl for cl in all_clusters if cl.id == self.cluster_id)
+        vm_api = self.appliance.rest_api.collections.vms.get(name=self.name)
+        cluster_api = self.appliance.rest_api.collections.clusters.get(id=vm_api.ems_cluster_id)
+        cluster_api.reload(attributes='name')
+        return self.appliance.collections.clusters.instantiate(
+            name=cluster_api.name,
+            provider=self.provider
+        )
 
     @property
     def host(self):
