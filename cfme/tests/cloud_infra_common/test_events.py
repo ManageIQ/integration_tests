@@ -73,7 +73,11 @@ def test_vm_create(request, appliance, vm_crud, provider, register_event):
     request.addfinalizer(policy.delete)
 
     policy.assign_events("VM Create Complete")
-    request.addfinalizer(policy.assign_events)
+
+    @request.addfinalizer
+    def _cleanup():
+        policy.unassign_events("VM Create Complete")
+
     policy.assign_actions_to_event("VM Create Complete", action)
 
     profile = appliance.collections.policy_profiles.create(

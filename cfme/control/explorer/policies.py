@@ -335,6 +335,7 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
 
         Args:
             events: Events which need to be assigned.
+        Kwargs:
             extend: Do not uncheck existing events.
         """
         events = list(events)
@@ -344,12 +345,45 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         view = navigate_to(self, "Details")
         view.configuration.item_select("Edit this Policy's Event assignments")
         view = self.create_view(EditPolicyEventAssignments, wait="20s")
+        # decide if any events are already assigned
+        events = [event for event in events if not self.is_event_assigned(event)]
+        # select events
         changed = view.fill({"events": events})
         if changed:
             view.save_button.click()
+            view.flash.assert_success_message('Policy "{}" was saved'.format(self.description))
         else:
             view.cancel_button.click()
-        view.flash.assert_success_message('Policy "{}" was saved'.format(self.description))
+            view.flash.assert_success_message(
+                'Edit of Policy "{}" was cancelled by the user'.format(self.description)
+            )
+
+    def unassign_events(self, *events, **kwargs):
+        """Unassign events from this Policy.
+
+        Args:
+            events: Events which need to be unassigned.
+        Kwargs:
+            extend: Do not uncheck existing events.
+        """
+        events = list(events)
+        if kwargs.pop("extend", False):
+            events += self.assigned_events
+        view = navigate_to(self, "Details")
+        view.configuration.item_select("Edit this Policy's Event assignments")
+        view = self.create_view(EditPolicyEventAssignments, wait="20s")
+        # decide if events are assigned
+        events = [event for event in events if self.is_event_assigned(event)]
+        # unassign the events which are assigned
+        changed = view.fill({"events": events})
+        if changed:
+            view.save_button.click()
+            view.flash.assert_success_message('Policy "{}" was saved'.format(self.description))
+        else:
+            view.cancel_button.click()
+            view.flash.assert_success_message(
+                'Edit of Policy "{}" was cancelled by the user'.format(self.description)
+            )
 
     def is_event_assigned(self, event):
         return event in self.assigned_events

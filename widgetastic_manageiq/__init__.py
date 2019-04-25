@@ -394,18 +394,17 @@ class BootstrapSwitchSelect(View):
         return list(set(values) - set(self.selected_text))
 
     def fill(self, values):
-        if set(values) == set(self.selected_text):
-            return False
+        if values:
+            updated = False
+            for value in values:
+                switch = self.switch_by_text(value)
+                before = switch.read()
+                switch.fill(not switch.selected)
+                if not updated and before != switch.read():
+                    updated = True
+            return updated
         else:
-            for value in self._values_to_remove(values):
-                self.switch_by_text(value).fill(False)
-            for value in self._values_to_add(values):
-                self.switch_by_text(value).fill(True)
-            try:
-                del self.selected_text
-            except AttributeError:
-                pass
-            return True
+            return False
 
     def read(self):
         return self.selected_text
