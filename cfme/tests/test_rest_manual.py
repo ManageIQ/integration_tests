@@ -8,27 +8,6 @@ from cfme import test_requirements
 @pytest.mark.manual
 @test_requirements.rest
 @pytest.mark.tier(3)
-def test_cloud_volume_types():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: high
-        initialEstimate: 1/30h
-        startsin: 5.10
-        setup:
-            1. Add a cloud provider to the appliance.
-        testSteps:
-            1. Send GET request: /api/cloud_volume_types/:id
-        expectedResults:
-            1. Successful 200 OK response.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-@pytest.mark.tier(3)
 def test_rest_metric_rollups():
     """
     Polarion:
@@ -86,69 +65,6 @@ def test_populate_default_dialog_values(auth_type):
             1635673
             1650252
             1639413
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-@pytest.mark.tier(3)
-def test_filter_by_flavor_via_api():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: medium
-        initialEstimate: 1/10h
-        setup:
-            1.Add a cloud provider.
-        testSteps:
-            1. send a GET request: /api/vms?filter[]=flavor.name="<flavor_name>"
-        expectedResults:
-            1. Should receive a 200 OK response. Should not get any internal server error.
-
-    Bugzilla:
-        1596069
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-@pytest.mark.tier(0)
-def test_bulk_query_attributes():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: medium
-        initialEstimate: 1/10h
-        setup:
-            1. Add an infrastructure provider.
-        testSteps:
-            1. Send a request.
-                POST https://xxxx/api/hosts?expand=resources,tags
-                    &attributes=hostname,id,ems_cluster_id,cpu_total_cores,cpu_cores_per_socket
-                Body: {
-                    "action": "query",
-                    "resources": [{
-                        "ems_cluster_id": ":cluster_id"
-                    }]
-                }
-        expectedResults:
-            1. Response: {
-                "results": [{
-                    "href": "https://xxxx/api/hosts/:hosts_id",
-                    "hostname": "xxxx",
-                    "id": ":hosts_id,
-                    "ems_cluster_id": ":cluster_id",
-                    "cpu_total_cores": 20,
-                    "cpu_cores_per_socket": 10
-                }]
-            }
-
-    Bugzilla:
-        1643342
     """
     pass
 

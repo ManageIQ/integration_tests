@@ -1,12 +1,16 @@
 """Tests for Openstack cloud Flavors"""
+from random import choice
+
 import fauxfactory
 import pytest
 from widgetastic.utils import partial_match
 
+from cfme import test_requirements
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -284,3 +288,28 @@ def test_create_instance_with_private_flavor(instance_with_private_flavor, provi
     view = navigate_to(instance_with_private_flavor, 'Details')
     power_state = view.entities.summary('Power Management').get_text_of('Power State')
     assert power_state == OpenStackInstance.STATE_ON
+
+
+@test_requirements.rest
+@pytest.mark.tier(3)
+def test_filter_by_flavor_via_api(appliance):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
+        initialEstimate: 1/10h
+        setup:
+            1.Add a cloud provider.
+        testSteps:
+            1. Send a GET request: /api/vms?filter[]=flavor.name="<flavor_name>"
+        expectedResults:
+            1. Should receive a 200 OK response. Should not get any internal server error.
+
+    Bugzilla:
+        1596069
+    """
+    flavor = choice(appliance.rest_api.collections.flavors.all)
+    url = "/api/vms?filter[]=flavor.name='{}'".format(flavor.name)
+    appliance.rest_api.get(appliance.url_path(url))
+    assert_response(appliance)
