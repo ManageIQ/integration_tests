@@ -2,16 +2,15 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import rhel7_minimal
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
-from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 
@@ -21,7 +20,7 @@ pytestmark = [
         server_roles=["+embedded_ansible"]
     ),
     pytest.mark.provider(
-        classes=[RHEVMProvider],
+        classes=[OpenStackProvider, RHEVMProvider],
         selector=ONE_PER_VERSION,
         required_flags=["v2v"],
         scope="module"
@@ -33,6 +32,7 @@ pytestmark = [
         required_flags=["v2v"],
         scope="module"
     ),
+    pytest.mark.usefixtures("v2v_provider_setup"),
 ]
 
 
@@ -90,12 +90,31 @@ def catalog_item(request, appliance, machine_credential, ansible_repository, pla
 
 
 @pytest.mark.parametrize(
-    "form_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True
+    "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True
 )
-def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conversion_tags,
-                             ansible_repository, form_data_vm_obj_single_datastore):
-    """Test for migrating vms with pre and post playbooks"""
-    creds = credentials[v2v_providers.vmware_provider.data.templates.get("rhel7_minimal").creds]
+def test_migration_playbooks(request, appliance, source_provider, provider,
+                             ansible_repository, mapping_data_vm_obj_single_datastore):
+    """
+    Test for migrating vms with pre and post playbooks
+
+    Polarion:
+        assignee: sshveta
+        caseimportance: medium
+        casecomponent: V2V
+        initialEstimate: 1/4h
+        testSteps:
+            1. Enable embedded ansible role
+            2. Create repository
+            3. Create credentials
+            4. Create ansible catalog item with provision.yml playbook
+            5. Create ansible catalog item with retire.yml playbook
+            6. Migrate VM from vmware to RHV/OSP using the above catalog items
+    """
+    try:
+        creds = credentials[source_provider.data.templates.get('rhel7_minimal', {})['creds']]
+    except KeyError:
+        pytest.skip("Credentials not found for template")
+
     CREDENTIALS = (
         "Machine",
         {
@@ -117,62 +136,35 @@ def test_migration_playbooks(request, appliance, v2v_providers, host_creds, conv
         request, appliance, credential.name, ansible_repository, "retire"
     )
 
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(
-        form_data_vm_obj_single_datastore.form_data
-    )
+    infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
+    mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
+    mapping = infrastructure_mapping_collection.create(**mapping_data)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
     # vm_obj is a list, with only 1 VM object, hence [0]
-    src_vm_obj = form_data_vm_obj_single_datastore.vm_list[0]
+    src_vm_obj = mapping_data_vm_obj_single_datastore.vm_list[0]
 
-    migration_plan_collection = appliance.collections.v2v_plans
+    migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping.name,
-        vm_list=form_data_vm_obj_single_datastore.vm_list,
-        start_migration=True,
+        vm_list=mapping_data_vm_obj_single_datastore.vm_list,
+        target_provider=provider,
         pre_playbook=provision_catalog.name,
         post_playbook=retire_catalog.name,
+        pre_checkbox=True,
+        post_checkbox=True
     )
+    # wait_for plan to start/track progress and complete is handled in respective methods
+    # so they can be immediately asserted here .
+    assert migration_plan.plan_started
+    assert migration_plan.in_progress
+    assert migration_plan.completed
+    assert migration_plan.successful
 
-    # explicit wait for spinner of in-progress status card
-    view = appliance.browser.create_view(
-        navigator.get_class(migration_plan_collection, "All").VIEW.pick()
-    )
-    wait_for(
-        func=view.progress_card.is_plan_started,
-        func_args=[migration_plan.name],
-        message="migration plan is starting, be patient please",
-        delay=5,
-        num_sec=280,
-        handle_exception=True,
-        fail_cond=False
-    )
-
-    # wait until plan is in progress
-    wait_for(
-        func=view.plan_in_progress,
-        func_args=[migration_plan.name],
-        message="migration plan is in progress, be patient please",
-        delay=15,
-        num_sec=3600,
-    )
-    view.switch_to("Completed Plans")
-    view.wait_displayed()
-    migration_plan_collection.find_completed_plan(migration_plan)
-    logger.info(
-        "For plan %s, migration status after completion: %s, total time elapsed: %s",
-        migration_plan.name,
-        view.migration_plans_completed_list.get_vm_count_in_plan(migration_plan.name),
-        view.migration_plans_completed_list.get_clock(migration_plan.name),
-    )
-
-    # validate MAC address matches between source and target VMs
-    assert view.migration_plans_completed_list.is_plan_succeeded(migration_plan.name)
-    migrated_vm = get_migrated_vm_obj(src_vm_obj, v2v_providers.rhv_provider)
+    migrated_vm = get_migrated_vm_obj(src_vm_obj, provider)
     assert src_vm_obj.mac_address == migrated_vm.mac_address
