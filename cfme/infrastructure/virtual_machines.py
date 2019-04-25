@@ -685,7 +685,8 @@ class InfraVm(VM):
             if not cancel:
                 # TODO: test this in test_snapshot_crud, just assert_no_error here
                 view.flash.assert_message(
-                    "Delete Snapshot initiated for 1 VM and Instance from the ManageIQ Database"
+                    "Delete Snapshot initiated for 1 VM and Instance from the "
+                    "{} Database".format(self.parent_vm.appliance.product_name)
                 )
 
             wait_for(lambda: not self.exists, num_sec=300, delay=20, fail_func=view.browser.refresh,
@@ -699,7 +700,7 @@ class InfraVm(VM):
                 # TODO: test this in test_snapshot_crud, just assert_no_error here
                 view.flash.assert_message(
                     "Delete All Snapshots initiated for 1 VM and Instance from the "
-                    "ManageIQ Database"
+                    "{} Database".format(self.parent_vm.appliance.product_name)
                 )
 
         def revert_to(self, cancel=False):
@@ -717,7 +718,7 @@ class InfraVm(VM):
                 # TODO: test this in test_snapshot_crud, just assert_no_error here
                 view.flash.assert_message(
                     "Revert to a Snapshot initiated for 1 VM and Instance "
-                    "from the ManageIQ Database"
+                    "from the {} Database".format(self.parent_vm.appliance.product_name)
                 )
 
         def refresh(self):
