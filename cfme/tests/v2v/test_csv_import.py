@@ -27,7 +27,7 @@ pytestmark = [
         required_flags=["v2v"],
         scope="module",
     ),
-    # pytest.mark.usefixtures("v2v_provider_setup")
+    pytest.mark.usefixtures("v2v_provider_setup")
 ]
 
 
@@ -58,11 +58,8 @@ def migration_plan(appliance, infra_map, csv=False):
     return view
 
 
-def create_plan_and_check(appliance, infra_map,
-                   error_text=None, csv=False,
-                   filetype='csv', content=False,
-                   table_hover=False, alert=False
-                   ):
+def import_and_check(appliance, infra_map, error_text=None, csv=False,
+                     filetype='csv', content=False, table_hover=False, alert=False):
     plan_view = migration_plan(appliance, infra_map)
     temp_file = tempfile.NamedTemporaryFile(suffix='.{}'.format(filetype))
     if content:
@@ -73,7 +70,7 @@ def create_plan_and_check(appliance, infra_map,
     except UnexpectedAlertPresentException:
         pass
     if table_hover:
-        wait_for(lambda: view.vms.is_displayed,
+        wait_for(lambda: plan_view.vms.is_displayed,
                  timeout=60, message='Wait for VMs view', delay=5)
         plan_view.vms.table[0][1].widget.click()
         error_msg = plan_view.vms.popover_text.read()
@@ -124,7 +121,7 @@ def test_non_csv(appliance, infra_map):
         upstream: yes
     """
     error_text = "Invalid file extension. Only .csv files are accepted."
-    assert create_plan_and_check(appliance, infra_map, error_text, filetype='txt', alert=True)
+    assert import_and_check(appliance, infra_map, error_text, filetype='txt', alert=True)
 
 
 def test_blank_csv(appliance, infra_map):
@@ -138,7 +135,7 @@ def test_blank_csv(appliance, infra_map):
         upstream: yes
     """
     error_msg = "Error: Possibly a blank .CSV file"
-    assert create_plan_and_check(appliance, infra_map, error_msg)
+    assert import_and_check(appliance, infra_map, error_msg)
 
 
 def test_column_headers(appliance, infra_map):
@@ -150,7 +147,7 @@ def test_column_headers(appliance, infra_map):
     """
     content = fauxfactory.gen_alpha(10)
     error_msg = "Error: Required column 'Name' does not exist in the .CSV file"
-    assert create_plan_and_check(appliance, infra_map, error_msg, content=content)
+    assert import_and_check(appliance, infra_map, error_msg, content=content)
 
 
 def test_inconsistent_columns(appliance, infra_map):
@@ -162,9 +159,10 @@ def test_inconsistent_columns(appliance, infra_map):
     """
     content = "Name\n{}, {}".format(fauxfactory.gen_alpha(10), fauxfactory.gen_alpha(10))
     error_msg = "Error: Number of columns is inconsistent on line 2"
-    assert create_plan_and_check(appliance, infra_map, error_msg, content=content)
+    assert import_and_check(appliance, infra_map, error_msg, content=content)
 
 
+@pytest.mark.meta(blockers=[BZ(1699343, forced_streams=["5.10"])])
 def test_csv_empty_vm(appliance, infra_map):
     """Test csv with empty column value
     Polarion:
@@ -177,10 +175,11 @@ def test_csv_empty_vm(appliance, infra_map):
     """
     content = "Name\n\n"
     error_msg = "Empty name specified"
-    assert create_plan_and_check(appliance, infra_map, error_msg,
+    assert import_and_check(appliance, infra_map, error_msg,
                                  content=content, table_hover=True)
 
 
+@pytest.mark.meta(blockers=[BZ(1699343, forced_streams=["5.10"])])
 def test_csv_invalid_vm(appliance, infra_map):
     """Test csv with invalid vm name
     Polarion:
@@ -193,10 +192,11 @@ def test_csv_invalid_vm(appliance, infra_map):
     """
     content = "Name\n{}".format(fauxfactory.gen_alpha(10))
     error_msg = "VM does not exist"
-    assert create_plan_and_check(appliance, infra_map, error_msg,
+    assert import_and_check(appliance, infra_map, error_msg,
                                  content=content, table_hover=True)
 
 
+@pytest.mark.meta(blockers=[BZ(1699343, forced_streams=["5.10"])])
 def test_csv_valid_vm(appliance, infra_map, valid_vm):
     """Test csv with valid vm name
     Polarion:
@@ -209,10 +209,11 @@ def test_csv_valid_vm(appliance, infra_map, valid_vm):
     """
     content = "Name\n{}".format(valid_vm)
     error_msg = "VM available for migration"
-    assert create_plan_and_check(appliance, infra_map, error_msg,
+    assert import_and_check(appliance, infra_map, error_msg,
                                  content=content, table_hover=True)
 
 
+@pytest.mark.meta(blockers=[BZ(1699343, forced_streams=["5.10"])])
 def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
     """Test csv with duplicate vm name
     Polarion:
@@ -225,10 +226,11 @@ def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
     """
     content = "Name\n{}\n{}".format(valid_vm, valid_vm)
     error_msg = "Duplicate VM"
-    assert create_plan_and_check(appliance, infra_map, error_msg, content=content,
+    assert import_and_check(appliance, infra_map, error_msg, content=content,
                             table_hover='duplicate')
 
 
+@pytest.mark.meta(blockers=[BZ(1699343, forced_streams=["5.10"])])
 def test_csv_archived_vm(appliance, infra_map, archived_vm):
     """Test csv with archived vm name
     Polarion:
@@ -241,6 +243,5 @@ def test_csv_archived_vm(appliance, infra_map, archived_vm):
     """
     content = "Name\n{}".format(archived_vm)
     error_msg = "VM is inactive"
-    assert create_plan_and_check(appliance, infra_map, error_msg,
+    assert import_and_check(appliance, infra_map, error_msg,
                                  content=content, table_hover=True)
-
