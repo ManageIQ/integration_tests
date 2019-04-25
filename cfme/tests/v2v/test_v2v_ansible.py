@@ -110,8 +110,11 @@ def test_migration_playbooks(request, appliance, source_provider, provider,
             5. Create ansible catalog item with retire.yml playbook
             6. Migrate VM from vmware to RHV/OSP using the above catalog items
     """
+    try:
+        creds = credentials[source_provider.data.templates.get('rhel7_minimal', {})['creds']]
+    except KeyError:
+        pytest.skip("Credentials not found for template")
 
-    creds = credentials[source_provider.data.templates.get("rhel7_minimal").creds]
     CREDENTIALS = (
         "Machine",
         {
@@ -156,6 +159,8 @@ def test_migration_playbooks(request, appliance, source_provider, provider,
         pre_checkbox=True,
         post_checkbox=True
     )
+    # wait_for plan to start/track progress and complete is handled in respective methods
+    # so they can be immediately asserted here .
     assert migration_plan.plan_started
     assert migration_plan.in_progress
     assert migration_plan.completed
