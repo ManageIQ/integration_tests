@@ -2,6 +2,7 @@ import random
 
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
@@ -94,13 +95,14 @@ def test_download_pdf_summary(appliance, collection_type, provider):
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
+@test_requirements.general_ui
 def test_pdf_summary_infra_provider():
     """
     Bugzilla:
         1651194
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/8h

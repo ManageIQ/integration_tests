@@ -62,7 +62,7 @@ def test_paginator_service_dialogs(some_dialogs, soft_assert, appliance):
         * During the cycling, assert the paginator does not get stuck.
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         initialEstimate: 1/4h
     """
