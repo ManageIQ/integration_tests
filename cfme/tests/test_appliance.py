@@ -410,7 +410,6 @@ def test_appliance_log_error():
     pass
 
 
-@pytest.mark.ignore_stream('5.9')
 def test_codename_in_log(appliance):
     """
     check whether logs contains a mention of appliance codename
@@ -437,7 +436,6 @@ def test_codename_in_log(appliance):
             return True
 
 
-@pytest.mark.ignore_stream('5.9')
 def test_codename_in_stdout(appliance):
     """
     check whether stdout contains a mention of appliance codename
