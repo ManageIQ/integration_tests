@@ -3,13 +3,10 @@ import tempfile
 import fauxfactory
 import pytest
 from widgetastic.exceptions import UnexpectedAlertPresentException
-from widgetastic.exceptions import WidgetOperationFailed
 
-from cfme.fixtures.v2v_fixtures import mapping_data_vm_obj_mini
 from cfme.fixtures.v2v_fixtures import infra_mapping_default_data
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
