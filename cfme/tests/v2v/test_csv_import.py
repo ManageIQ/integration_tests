@@ -31,7 +31,7 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def infra_map(appliance, source_provider, provider):
     """Fixture to create infrastructure mapping"""
     infra_mapping_data = infra_mapping_default_data(
@@ -176,7 +176,7 @@ def test_csv_empty_vm(appliance, infra_map):
     content = "Name\n\n"
     error_msg = "Empty name specified"
     assert import_and_check(appliance, infra_map, error_msg,
-                                 content=content, table_hover=True)
+                            content=content, table_hover=True)
 
 
 @pytest.mark.meta(blockers=[BZ(1699343, forced_streams=["5.10"])])
@@ -193,7 +193,7 @@ def test_csv_invalid_vm(appliance, infra_map):
     content = "Name\n{}".format(fauxfactory.gen_alpha(10))
     error_msg = "VM does not exist"
     assert import_and_check(appliance, infra_map, error_msg,
-                                 content=content, table_hover=True)
+                            content=content, table_hover=True)
 
 
 @pytest.mark.meta(blockers=[BZ(1699343, forced_streams=["5.10"])])
@@ -210,7 +210,7 @@ def test_csv_valid_vm(appliance, infra_map, valid_vm):
     content = "Name\n{}".format(valid_vm)
     error_msg = "VM available for migration"
     assert import_and_check(appliance, infra_map, error_msg,
-                                 content=content, table_hover=True)
+                            content=content, table_hover=True)
 
 
 @pytest.mark.meta(blockers=[BZ(1699343, forced_streams=["5.10"])])
@@ -244,4 +244,4 @@ def test_csv_archived_vm(appliance, infra_map, archived_vm):
     content = "Name\n{}".format(archived_vm)
     error_msg = "VM is inactive"
     assert import_and_check(appliance, infra_map, error_msg,
-                                 content=content, table_hover=True)
+                            content=content, table_hover=True)
