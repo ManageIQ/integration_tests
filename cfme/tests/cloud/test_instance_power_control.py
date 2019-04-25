@@ -11,6 +11,7 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import RefreshTimer
@@ -746,11 +747,18 @@ class TestInstanceRESTAPI(object):
         soft_assert(self.verify_vm_power_state(vm, terminated_states), "instance not terminated")
 
 
+@pytest.mark.meta(automates=[1701188, 1655477, 1686015, 1738584])
 def test_power_options_on_archived_instance_all_page(testing_instance):
     """This test case is to check Power option drop-down button is disabled on archived and orphaned
        instances all page. Also it performs the power operations on instance and checked expected
        flash messages.
-       Note: Cloud instances can not be orphaned - BZ: 1701188
+       Note: Cloud instances can not be orphaned
+
+    Bugzilla:
+        1701188
+        1655477
+        1686015
+        1738584
 
     Polarion:
         assignee: ghubale
@@ -765,35 +773,28 @@ def test_power_options_on_archived_instance_all_page(testing_instance):
             1. Add provider cloud provider
             2. Navigate to Archived instance all page
             3. Select any instance and click on power option drop-down
-        expectedResults:
-            1.
-            2.
-            3. As we don't perform any power operations on archived instances. So power
-               button drop-down should not present there at all or it must show desired flash
-               messages for those actions.
-
-    Bugzilla:
-        1701188, 1655477, 1686015
     """
     testing_instance.mgmt.delete()
     testing_instance.wait_for_instance_state_change(desired_state="archived", timeout=1200)
     cloud_instance = testing_instance.appliance.collections.cloud_instances
     view = navigate_to(cloud_instance, 'ArchivedAll')
 
-    # Checking power drop down is disabled on 'ArchivedAll' view
-    assert not view.toolbar.power.is_enabled
-
     # Selecting particular archived instance
-    testing_instance.find_quadicon(archived=True).check()
+    testing_instance.find_quadicon(from_archived_all=True).check()
 
     # After selecting particular archived instance; 'Power' drop down gets enabled.
     # Reading all the options available in 'power' drop down
     for action in view.toolbar.power.items:
+        if action == "Resume" and BZ(1738584, forced_streams=['5.10', '5.11']).blocks:
+            continue
+
         # Performing power actions on archived instance
         view.toolbar.power.item_select(action, handle_alert=True)
-        if action == 'Power On':
-            action = 'Start'
-        elif action == 'Power Off':
-            action = 'Stop'
-        view.flash.assert_message('{} action does not apply to selected items'.format(action))
+        if action == 'Soft Reboot':
+            action = 'Restart Guest'
+        elif action == 'Hard Reboot':
+            action = 'Reset'
+        elif action == 'Delete':
+            action = 'Terminate'
+        view.flash.assert_message(f'{action} action does not apply to selected items')
         view.flash.dismiss()
