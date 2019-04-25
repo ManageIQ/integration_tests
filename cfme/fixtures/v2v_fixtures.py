@@ -90,7 +90,7 @@ def host_credentials(appliance, transformation_method, v2v_providers):
         logger.exception("Exception when trying to add the host credentials.")
         pytest.skip("No data for hosts in providers, failed to retrieve hosts and add creds.")
     # Configure conversion host for RHEV migration
-    if rhv_hosts is not None :
+    if rhv_hosts is not None:
         set_conversion_instance_for_rhev(appliance, transformation_method, rhv_hosts)
     if v2v_providers.osp_provider is not None:
         set_conversion_instance_for_osp(appliance, v2v_providers.osp_provider,
@@ -142,11 +142,8 @@ def create_tags(appliance, transformation_method):
 
 def set_conversion_instance_for_rhev(appliance, transformation_method, rhev_hosts):
     """Assigning tags to conversion host.
-       In 5.9 all rhev hosts and tagged with tags V2V - Transformation Host=t
-       and V2V - Transformation Method=vddk/ssh.These tags are automatically removed
-       once the provider is deleted.
 
-       In 5.10 rails console commands are run to configure all the rhev hosts.
+    In 5.10 rails console commands are run to configure all the rhev hosts.
 
     Args:
         appliance:
@@ -156,27 +153,20 @@ def set_conversion_instance_for_rhev(appliance, transformation_method, rhev_host
 
     for host in rhev_hosts:
         # set conversion host via rails console
-        if appliance.version >= "5.10":
-            # Delete all prior conversion hosts otherwise it creates duplicate entries
-            delete_hosts = appliance.ssh_client.run_rails_command("'ConversionHost.delete_all'")
-            if not delete_hosts.success:
-                pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
+        # Delete all prior conversion hosts otherwise it creates duplicate entries
+        delete_hosts = appliance.ssh_client.run_rails_command("'ConversionHost.delete_all'")
+        if not delete_hosts.success:
+            pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
 
-            set_conv_host = appliance.ssh_client.run_rails_command(
-                "'r = Host.find_by(name:{host});\
-            c_host = ConversionHost.create(name:{host},resource:r);\
-            c_host.{method}_transport_supported = true;\
-            c_host.save'".format(host=json.dumps(host.name),
-                                 method=transformation_method.lower())
-            )
-            if not set_conv_host.success:
-                pytest.skip("Failed to set conversion hosts:".format(set_conv_host.output))
-        else:
-            tag1, tag2 = create_tags(appliance, transformation_method)
-            # if _tag_cleanup() returns True, means all tags were removed
-            if _tag_cleanup(host, tag1, tag2):
-                # so we call add_tags to add only required tags
-                host.add_tags(tags=(tag1, tag2))
+        set_conv_host = appliance.ssh_client.run_rails_command(
+            "'r = Host.find_by(name:{host});\
+        c_host = ConversionHost.create(name:{host},resource:r);\
+        c_host.{method}_transport_supported = true;\
+        c_host.save'".format(host=json.dumps(host.name),
+                             method=transformation_method.lower())
+        )
+        if not set_conv_host.success:
+            pytest.skip("Failed to set conversion hosts:".format(set_conv_host.output))
 
 
 def set_conversion_instance_for_osp(appliance, osp_provider, transformation_method='vddk'):
@@ -220,7 +210,7 @@ def set_conversion_instance_for_osp(appliance, osp_provider, transformation_meth
             pytest.skip("Failed to set conversion hosts:".format(set_conv_host.output))
 
 
-def get_vm(request, appliance, source_provider, template, datastore=None):
+def get_vm(request, appliance, source_provider, template, datastore='nfs'):
     """ Helper method that takes template , source provider and datastore
         and creates VM on source provider to migrate .
 
@@ -234,8 +224,6 @@ def get_vm(request, appliance, source_provider, template, datastore=None):
 
         returns: Vm object
     """
-    if datastore is None:
-        datastore = "nfs"
     source_datastores_list = source_provider.data.get("datastores", [])
     source_datastore = [d.name for d in source_datastores_list if d.type == datastore][0]
     collection = source_provider.appliance.provider_based_collection(source_provider)
@@ -266,6 +254,13 @@ def get_data(provider, component, default_value):
     except IndexError:
         data = default_value
     return data
+
+
+def get_migrated_vm(src_vm_obj, target_provider):
+    """Returns the migrated_vm from target_provider"""
+    collection = target_provider.appliance.provider_based_collection(target_provider)
+    migrated_vm = collection.instantiate(src_vm_obj.name, target_provider)
+    return migrated_vm
 
 
 def infra_mapping_default_data(source_provider, provider):
@@ -302,7 +297,7 @@ def infra_mapping_default_data(source_provider, provider):
 
 @pytest.fixture(scope="function")
 def mapping_data_vm_obj_mini(request, appliance, source_provider, provider):
-    """Fixture which provides minimal mapping data, vm and map object for migration plan"""
+    """Fixture to return minimal mapping data and vm object for migration plan"""
     infra_mapping_data = infra_mapping_default_data(source_provider, provider)
     vm_obj = get_vm(request, appliance, source_provider, template=rhel7_minimal)
 
@@ -314,8 +309,8 @@ def mapping_data_vm_obj_mini(request, appliance, source_provider, provider):
         vm_obj.cleanup_on_provider()
         infrastructure_mapping_collection.delete(mapping)
 
-    return FormDataVmObj(
-        infra_mapping_data=infra_mapping_data, vm_list=[vm_obj])
+    return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=[vm_obj])
+
 
 @pytest.fixture(scope="function")
 def mapping_data_multiple_vm_obj_single_datastore(request, appliance, source_provider, provider):
@@ -544,19 +539,17 @@ def component_generator(selector, source_provider, provider, source_type=None, t
 
     source_data = source_provider.data.get(selector, [])
     target_data = provider.data.get(selector, [])
-    component = None
 
     if not (source_data and target_data):
         pytest.skip("No source and target data")
 
-    if selector is "clusters":
+    if selector == "clusters":
         sources = source_data or None
         targets = target_data or None
         component = InfraMapping.ClusterComponent(
             [partial_match(sources[0])], [partial_match(targets[0])]
         )
-    elif selector is "datastores":
-
+    elif selector == "datastores":
         # Ignoring target_type for osp and setting new value
         if provider.one_of(OpenStackProvider):
             target_type = "volume"
