@@ -78,6 +78,7 @@ class ConfigManagementSideBar(View):
 
 class ConfigManagementEntities(BaseEntitiesView):
     """The entities on the page"""
+    table = Table("//div[@id='gtl_div']//table")
 
 
 class ConfigManagementProfileEntities(BaseEntitiesView):
@@ -384,15 +385,21 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             return
         view = navigate_to(self, 'All')
         view.toolbar.view_selector.select('List View')
-        row = view.entities.paginator.find_row_on_pages(view.entities.elements,
-                                                        provider_name=self.ui_name)
-        row[0].check()
+        provider_entity = view.entities.get_entities_by_keys(provider_name=self.ui_name)
+        provider_entity[0].check()
         remove_item = 'Remove selected items from Inventory'
         view.toolbar.configuration.item_select(remove_item, handle_alert=not cancel)
         if not cancel:
             view.flash.assert_success_message('Delete initiated for 1 Provider')
             if wait_deleted:
-                wait_for(func=lambda: self.exists, fail_condition=True, delay=15, num_sec=60)
+                wait_for(
+                    # check the provider is not listed in all providers anymore
+                    func=lambda: not view.entities.get_entities_by_keys(
+                        provider_name=self.ui_name
+                    ), delay=15, fail_func=view.toolbar.refresh.click, num_sec=5 * 60
+                )
+                # check the provider is indeed deleted
+                assert not self.exists
 
     @property
     def exists(self):
@@ -407,9 +414,8 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         """Refreshes relationships and power states of this manager"""
         view = navigate_to(self, 'All')
         view.toolbar.view_selector.select('List View')
-        row = view.entities.paginator.find_row_on_pages(view.entities.elements,
-                                                        provider_name=self.ui_name)
-        row[0].check()
+        provider_entity = view.entities.get_entities_by_keys(provider_name=self.ui_name)[0]
+        provider_entity.check()
         if view.toolbar.configuration.item_enabled('Refresh Relationships and Power states'):
             view.toolbar.configuration.item_select('Refresh Relationships and Power states',
                                                    handle_alert=not cancel)
