@@ -131,11 +131,11 @@ class AddMigrationPlanView(View):
     back_btn = Button("Back")
     next_btn = Button("Next")
     cancel_btn = Button("Cancel")
-    close = Button("Close")
+    close_btn = Button("Close")
     fill_strategy = WaitFillViewStrategy("15s")
 
     def after_fill(self, was_change):
-        self.close.click()
+        self.close_btn.click()
 
     @property
     def is_displayed(self):

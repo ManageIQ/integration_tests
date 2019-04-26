@@ -276,9 +276,7 @@ def infra_mapping_default_data(source_provider, provider):
                                "5.10": "rhv" if provider.one_of(RHEVMProvider) else "osp"}).pick()
     infra_mapping_data = {
         "name": "infra_map_{}".format(fauxfactory.gen_alphanumeric()),
-        "description": "Single Datastore migration of VM from {ds_type1} to {ds_type2}".format(
-            ds_type1="nfs", ds_type2="nfs"
-        ),
+        "description": "migration with vmware to {}".format(plan_type),
         "plan_type": plan_type,
         "clusters": [component_generator("clusters", source_provider, provider)],
         "datastores": [component_generator(
@@ -369,25 +367,9 @@ def mapping_data_single_network(request, source_provider, provider):
                     "vlans", source_provider, provider, request.param[0], request.param[1]
                 )
             ],
-        },
+        }
     )
     return infra_mapping_data
-
-
-@pytest.fixture(scope="function")
-def edited_mapping_data(request, source_provider, provider):
-    infra_mapping_data = infra_mapping_default_data(source_provider, provider)
-    edited_form_data = {
-        "description": "my edited description",
-        "clusters": {},
-        "datastores": {},
-        "networks": [
-            component_generator(
-                "vlans", source_provider, provider, request.param[1][0], request.param[1][1]
-            )
-        ],
-    }
-    return infra_mapping_data, edited_form_data
 
 
 @pytest.fixture(scope="function")
