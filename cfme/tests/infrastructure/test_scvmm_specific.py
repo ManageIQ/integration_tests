@@ -5,6 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [
@@ -12,6 +13,10 @@ pytestmark = [
     pytest.mark.usefixtures("setup_provider_modscope"),
     test_requirements.scvmm
 ]
+
+
+# conversion dict for sizes
+SIZES = {"KB": 1024, "MB": 1024**2, "GB": 1024**3, "TB": 1024**4}
 
 
 @pytest.fixture
@@ -40,6 +45,7 @@ def test_no_dvd_ruins_refresh(provider, vm):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1514461])
 def test_vm_mac_scvmm(provider):
     """
     Bugzilla:
@@ -96,9 +102,9 @@ def test_create_appliance_on_scvmm_using_the_vhd_image():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_check_disk_allocation_size_scvmm():
+@pytest.mark.meta(blockers=[BZ(1700909)], automates=[1700909])
+def test_check_disk_allocation_size_scvmm(vm):
     """
     Test datastore used space is the correct value, c.f.
         https://github.com/ManageIQ/manageiq-providers-scvmm/issues/17
@@ -124,7 +130,31 @@ def test_check_disk_allocation_size_scvmm():
             2.
             3. The value should match what is in SCVMM
     """
-    pass
+    view = navigate_to(vm, "Details")
+    usage_before = view.entities.summary("Datastore Actual Usage Summary").get_text_of(
+        "Total Datastore Used Space"
+    )
+    # create snapshot, note that this will set check_type to "Standard" by default
+    vm.mgmt.create_snapshot()
+    vm.refresh_relationships(from_details=True)
+    view = navigate_to(vm, "Details", force=True)
+    usage_after = view.entities.summary("Datastore Actual Usage Summary").get_text_of(
+        "Total Datastore Used Space"
+    )
+
+    msg = "Usage before snapshot: {}, Usage after snapshot: {}".format(usage_before, usage_after)
+    # convert usage after and before to bytes
+    vb, kb = usage_before.split()
+    va, ka = usage_after.split()
+    usage_before = float(vb) * SIZES[kb]
+    usage_after = float(va) * SIZES[ka]
+    # we assert that the usage after should be greater than the usage before
+    assert usage_after > usage_before, msg
+    # also assert that the Snapshots usage is not 0
+    usage_snapshots = view.entities.summary("Datastore Actual Usage Summary").get_text_of(
+        "Snapshots"
+    )
+    assert usage_snapshots.split()[0] > 0
 
 
 @pytest.mark.manual
