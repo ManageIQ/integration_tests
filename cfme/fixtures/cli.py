@@ -484,7 +484,7 @@ def replicated_appliances_with_providers(multiple_preupdate_appliances):
     # configure appliances
     appl1.configure(region=0)
     appl1.wait_for_web_ui()
-    appl2.configure(region=99)
+    appl2.configure(region=99, key_address=appl1.hostname)
     appl2.wait_for_web_ui()
     # configure replication between appliances
     appl1.set_pglogical_replication(replication_type=":remote")
