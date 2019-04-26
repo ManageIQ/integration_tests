@@ -1,9 +1,11 @@
 import re
 
 import pytest
+from _pytest.outcomes import Failed
 
 from .ssh import SSHTail
 from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 class LogValidator(object):
@@ -81,3 +83,21 @@ class LogValidator(object):
         for pattern in self.matched_patterns:
             if pattern not in self.matches:
                 pytest.fail('Expected pattern {} did not match'.format(pattern))
+
+    def wait_for_log_validation(
+            self, delay=5, num_sec=180, message="waiting for log validation", **kwargs
+    ):
+        """ Wait for log validation, takes the kwargs as wait_for. This function will reduce
+            duplicate functions in tests that wait_for log_validation. It is necessary to create
+            this function since _verify_match_logs raise pytest.fail() when it fails to find the
+            match pattern in the logs.
+
+            Note that you must call fix_before_start() before making use of this function.
+        """
+        def validate():
+            try:
+                self.validate_logs()
+                return True
+            except Failed:
+                return False
+        wait_for(validate, delay=delay, num_sec=num_sec, message=message, **kwargs)
