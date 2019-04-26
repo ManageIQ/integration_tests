@@ -216,10 +216,10 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_update_distributed_webui(ext_appliances_with_providers, appliance, request, old_version,
-                                  soft_assert):
+def test_update_distributed_webui(ext_appliances_with_providers, appliance,
+        request, old_version, soft_assert):
     """ Tests updating an appliance with providers, also confirms that the
-            provisioning continues to function correctly after the update has completed
+    provisioning continues to function correctly after the update has completed
 
     Polarion:
         assignee: jhenner
