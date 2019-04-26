@@ -84,7 +84,9 @@ class LogValidator(object):
             if pattern not in self.matches:
                 pytest.fail('Expected pattern {} did not match'.format(pattern))
 
-    def wait_for_log_validation(self, **kwargs):
+    def wait_for_log_validation(
+            self, delay=5, num_sec=180, message="waiting for log validation", **kwargs
+    ):
         """ Wait for log validation, takes the kwargs as wait_for. This function will reduce
             duplicate functions in tests that wait_for log_validation. It is necessary to create
             this function since _verify_match_logs raise pytest.fail() when it fails to find the
@@ -98,4 +100,4 @@ class LogValidator(object):
                 return True
             except Failed:
                 return False
-        wait_for(validate, **kwargs)
+        wait_for(validate, delay=delay, num_sec=num_sec, message=message, **kwargs)
