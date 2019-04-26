@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # uses Pool.starmap, which is py3 only
 import argparse
 import datetime
@@ -160,11 +160,13 @@ def scan_vm(provider_key, vm, delta, scan_failure_queue):
     # Nested exceptions to try and be safe about the scanned values and to get complete results
     failure = False
     status = NULL
-    vm_creation_time = datetime.datetime(2018, 1, 1, 0, 0).replace(tzinfo=pytz.UTC)
+
     logger.info('%r: Scan VM %r...', provider_key, vm.name)
+    # set default here in case exceptions cause vm_creation_time to not be set
+    vm_creation_time = datetime.datetime(2018, 1, 1, 0, 0).replace(tzinfo=pytz.UTC)
     # get creation time
     try:
-        vm_creation_time = vm.creation_time
+        vm_creation_time = vm.creation_time or vm_creation_time  # could be None, use the default
     except VMInstanceNotFound:
         logger.exception('%r: could not locate VM %s', provider_key, vm.name)
         failure = True
