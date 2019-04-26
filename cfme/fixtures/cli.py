@@ -584,7 +584,6 @@ def update_appliance(appliance):
         )
         if red_hat_updates.platform_updates_available():
             red_hat_updates.update_appliances()
-        return appliance
 
 
 def upgrade_appliances(appliances):

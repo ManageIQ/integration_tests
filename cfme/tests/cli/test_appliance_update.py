@@ -16,6 +16,7 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for_decorator
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 pytestmark = [
@@ -186,33 +187,36 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
         initialEstimate: 1/4h
     """
     update_appliance(enabled_embedded_appliance)
-    wait_for(do_appliance_versions_match, func_args=(appliance, enabled_embedded_appliance),
-             num_sec=900, delay=20, handle_exception=True,
-             message='Waiting for appliance to update')
+    with enabled_embedded_appliance:
+        wait_for(do_appliance_versions_match, func_args=(appliance, enabled_embedded_appliance),
+                num_sec=900, delay=20, handle_exception=True,
+                message='Waiting for appliance to update')
     assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running,
                     num_sec=180)
-    assert wait_for(func=lambda: enabled_embedded_appliance.is_rabbitmq_running,
+    assert wait_for(func=lambda: enabled_embedded_appliance.rabbitmq_server.running,
                     num_sec=60)
-    assert wait_for(func=lambda: enabled_embedded_appliance.is_nginx_running,
+    assert wait_for(func=lambda: enabled_embedded_appliance.nginx.running,
                     num_sec=60)
     enabled_embedded_appliance.wait_for_web_ui()
-    repositories = enabled_embedded_appliance.collections.ansible_repositories
-    name = "example_{}".format(fauxfactory.gen_alpha())
-    description = "edited_{}".format(fauxfactory.gen_alpha())
-    try:
-        repository = repositories.create(
-            name=name,
-            url=cfme_data.ansible_links.playbook_repositories.console_db,
-            description=description)
-    except KeyError:
-        pytest.skip("Skipping since no such key found in yaml")
-    view = navigate_to(repository, "Details")
-    refresh = view.toolbar.refresh.click
-    wait_for(
-        lambda: view.entities.summary("Properties").get_text_of("Status").lower() == "successful",
-        timeout=60,
-        fail_func=refresh
-    )
+
+    with enabled_embedded_appliance:
+        repositories = enabled_embedded_appliance.collections.ansible_repositories
+        name = "example_{}".format(fauxfactory.gen_alpha())
+        description = "edited_{}".format(fauxfactory.gen_alpha())
+        try:
+            repository = repositories.create(
+                name=name,
+                url=cfme_data.ansible_links.playbook_repositories.console_db,
+                description=description)
+        except KeyError:
+            pytest.skip("Skipping since no such key found in yaml")
+        view = navigate_to(repository, "Details")
+        refresh = view.toolbar.refresh.click
+
+        @wait_for_decorator(timeout=60, fail_func=refresh)
+        def success():
+            properties = view.entities.summary("Properties")
+            return properties.get_text_of("Status").lower() == "successful"
 
 
 @pytest.mark.ignore_stream("upstream")
