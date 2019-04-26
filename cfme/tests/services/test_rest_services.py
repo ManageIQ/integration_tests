@@ -2105,3 +2105,179 @@ def test_deny_service_ordering_via_api(
     with pytest.raises(APIException):
         template.action.order()
     assert_response(appliance, http_status=400)
+
+
+@pytest.fixture(scope="module")
+def set_run_automate_method(appliance):
+    reset_setting = appliance.advanced_settings["product"][
+        "run_automate_methods_on_service_api_submit"
+    ]
+    appliance.update_advanced_settings(
+        {"product": {"run_automate_methods_on_service_api_submit": True}}
+    )
+    yield
+    appliance.update_advanced_settings(
+        {"product": {"run_automate_methods_on_service_api_submit": reset_setting}}
+    )
+
+
+@pytest.fixture(scope="module")
+def automate_env_setup(klass):
+    # this script sets default value for the dialog element
+    script = """
+    dialog_field = $evm.object
+    dialog_field["sort_by"] = "value"
+    dialog_field["sort_order"] = "ascending"
+    dialog_field["data_type"] = "integer"
+    dialog_field["required"] = "true"
+    dialog_field["default_value"] = 7
+    dialog_field["values"] = {1 => "one", 2 => "two", 10 => "ten", 7 => "seven", 50 => "fifty"}
+    """
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location="inline",
+        script=script,
+    )
+
+    klass.schema.add_fields({"name": "meth", "type": "Method", "data_type": "Integer"})
+
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={"meth": {"value": method.name}},
+    )
+
+    yield instance
+    method.delete()
+    instance.delete()
+
+
+@pytest.fixture(scope="module")
+def get_service_template(appliance, request, automate_env_setup):
+    instance = automate_env_setup
+    data = {
+        "buttons": "submit, cancel",
+        "label": "dialog_{}".format(fauxfactory.gen_alpha()),
+        "dialog_tabs": [
+            {
+                "display": "edit",
+                "label": "Basic Information",
+                "position": 0,
+                "dialog_groups": [
+                    {
+                        "display": "edit",
+                        "label": "New section",
+                        "position": 0,
+                        "dialog_fields": [
+                            {
+                                "name": "static",
+                                "data_type": "integer",
+                                "display": "edit",
+                                "required": True,
+                                "default_value": "2",
+                                "values": [["1", "One"], ["2", "Two"], ["3", "Three"]],
+                                "label": "Static Dropdown",
+                                "position": 0,
+                                "dynamic": False,
+                                "read_only": True,
+                                "type": "DialogFieldDropDownList",
+                                "resource_action": {"resource_type": "DialogField"},
+                            },
+                            {
+                                "name": "dynamic",
+                                "data_type": "integer",
+                                "display": "edit",
+                                "required": True,
+                                "default_value": "",
+                                "label": "Dynamic Dropdown",
+                                "position": 1,
+                                "dynamic": True,
+                                "read_only": True,
+                                "type": "DialogFieldDropDownList",
+                                "resource_action": {
+                                    "resource_type": "DialogField",
+                                    "ae_namespace": instance.namespace.name,
+                                    "ae_class": instance.klass.name,
+                                    "ae_instance": instance.name,
+                                },
+                            },
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+    service_dialog = appliance.rest_api.collections.service_dialogs.action.create(
+        **data
+    )[0]
+    service_catalog = _service_catalogs(request, appliance, num=1)[0]
+    service_template = _service_templates(
+        request,
+        appliance,
+        service_dialog=service_dialog,
+        service_catalog=service_catalog,
+    )[0]
+    yield service_template
+    service_template.action.delete()
+    service_catalog.action.delete()
+    service_dialog.action.delete()
+
+
+@pytest.mark.tier(3)
+@pytest.mark.parametrize("auth_type", ["token", "basic_auth"])
+@test_requirements.rest
+def test_populate_default_dialog_values(
+    appliance, request, auth_type, set_run_automate_method, get_service_template
+):
+    """
+    This test case checks if the default value set for static and dynamic elements are returned
+    when ordering service via API with both basic and token based authentication.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
+        initialEstimate: 1/10h
+        setup:
+            1. Update appliance advanced settings by setting
+                `run_automate_methods_on_service_api_submit` to `true`.
+            2. Create a new domain, namespace, klass, method, schema, and instance.
+                (Method is attached in the Bugzilla 1639413).
+                This method sets value 7 for dynamic element
+            3. Create a Dialog with one static element(name="static") with some default value,
+                and one dynamic element(name="dynamic") with the endpoint pointing to
+                the newly created instance which returns a default value.
+                (value_type="Integer", read_only=True, required=True)
+            4. Create a catalog and create a generic catalog item assigned to it.
+        testSteps:
+            1. Order the catalog item with the given auth_type
+                and check if the response contains default values that were initially set.
+        expectedResults:
+            1. Response must include default values that were initially set.
+
+    Bugzilla:
+        1635673
+        1650252
+        1639413
+        1660237
+    """
+    if auth_type == "token":
+        # obtaining authentication token
+        auth_token = appliance.rest_api.get(appliance.url_path("/api/auth"))
+        assert_response(appliance)
+        # creating new API instance that uses the authentication token
+        api = appliance.new_rest_api_instance(auth={"token": auth_token["auth_token"]})
+        template = api.collections.service_templates.get(id=get_service_template.id)
+    else:
+        template = get_service_template
+
+    response = template.action.order()
+    assert_response(appliance)
+
+    # every dialog element label changes to `dialog_label` in the response
+    # default value for static element was set while creating the dialog
+    assert response.options["dialog"]["dialog_static"] == 2
+    # default value for dynamic element is returned by the automate method
+    assert response.options["dialog"]["dialog_dynamic"] == 7
