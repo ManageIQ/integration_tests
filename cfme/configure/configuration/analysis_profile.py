@@ -19,6 +19,7 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from widgetastic_manageiq import Checkbox
@@ -31,6 +32,16 @@ from widgetastic_manageiq import WaitTab
 
 
 table_button_classes = [Button.DEFAULT, Button.SMALL, Button.BLOCK]
+
+
+class EventsTable(DynamicTable):
+    # there is a bug in Events tables, Action column has th fields instead of td one
+    # this is temporary fix for that issue
+    @property
+    def _is_header_in_body(self):
+        """Checks whether the header is erroneously specified in the body of table."""
+        bz = BZ(1703141, forced_streams=['5.10'])
+        return False if bz.blocks else super(EventsTable, self)._is_header_in_body
 
 
 class AnalysisProfileToolbar(View):
@@ -105,7 +116,7 @@ class AnalysisProfileBaseAddForm(View):
     @View.nested
     class events(WaitTab):  # noqa
         TAB_NAME = 'Event Log'
-        tab_form = DynamicTable(
+        tab_form = EventsTable(
             locator='.//h3[normalize-space(.)="Event Log Entry"]/following-sibling::table',
             column_widgets={
                 'Name': TextInput(id='entry_name'),
