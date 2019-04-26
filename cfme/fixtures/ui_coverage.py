@@ -307,6 +307,6 @@ def pytest_addoption(parser):
 
 
 def pytest_cmdline_main(config):
-    # Only register the plugin worker if ui coverage is enabled
-    if config.option.ui_coverage:
+    # Only register the plugin worker if ui coverage is enabled and we're not using collect-only
+    if config.option.ui_coverage and not config.option.collectonly:
         config.pluginmanager.register(UiCoveragePlugin(), name="ui-coverage")
