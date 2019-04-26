@@ -211,19 +211,10 @@ class ApplianceDB(AppliancePlugin):
         self.logger.info('Starting DB setup')
         is_pod = kwargs.pop('is_pod', False)
 
-        if self.appliance.is_downstream:
-            # We only execute this on downstream appliances.
-            if is_pod:
-                self.enable_external(db_address=db_address, **kwargs)
-            else:
-                self.enable_internal(key_address=key_address, **kwargs)
-
+        if is_pod:
+            self.enable_external(db_address=db_address, **kwargs)
         else:
-            self.logger.info("Upstream appliance, no need to enable DB...")
-            if not self.appliance.evmserverd.running:
-                self.appliance.evmserverd.start()
-                self.appliance.evmserverd.enable()  # just to be sure here.
-                self.appliance.wait_for_web_ui()
+            self.enable_internal(key_address=key_address, **kwargs)
 
         # Make sure the database is ready
         wait_for(func=lambda: self.is_ready,
