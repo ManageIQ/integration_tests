@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """This module contains REST API specific tests."""
 import random
+from datetime import datetime
+from datetime import timedelta
 
 import fauxfactory
 import pytest
@@ -175,14 +177,12 @@ def _collection_not_in_this_version(appliance, collection_name):
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda appliance, collection_name:
-        collection_name in COLLECTIONS_OMITTED or
+        collection_name == "metric_rollups" or
         _collection_not_in_this_version(appliance, collection_name)
 )
 def test_query_simple_collections(appliance, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
     have no usable actions that we could try to run
-    Steps:
-        * GET /api/<collection_name>
     Metadata:
         test_flag: rest
 
@@ -191,11 +191,22 @@ def test_query_simple_collections(appliance, collection_name):
         casecomponent: Rest
         caseimportance: high
         initialEstimate: 1/3h
+        testSteps:
+            1. Send a GET request: /api/<collection_name>
+        expectedResults:
+            1. Must receive a 200 OK response.
     """
     collection = getattr(appliance.rest_api.collections, collection_name)
-    assert_response(appliance)
-    collection.reload()
-    list(collection)
+
+    if collection_name in COLLECTIONS_OMITTED:
+        # the "settings" and automate_workspaces collections are untypical
+        # as they don't have "resources" and for this reason can't be reloaded (bug in api client)
+        appliance.rest_api.get(collection._href)
+        assert_response(appliance)
+    else:
+        assert_response(appliance)
+        collection.reload()
+        list(collection)
 
 
 @pytest.mark.tier(3)
@@ -405,24 +416,6 @@ def test_product_info(appliance):
     """
     assert all(item in appliance.rest_api.product_info for item in
                ('copyright', 'name', 'name_full', 'support_website', 'support_website_text'))
-
-
-def test_settings_collection(appliance):
-    """Checks that all expected info is present in /api/settings.
-
-    Metadata:
-        test_flag: rest
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    # the "settings" collection is untypical as it doesn't have "resources" and
-    # for this reason can't be reloaded (bug in api client)
-    body = appliance.rest_api.get(appliance.rest_api.collections.settings._href)
-    assert all(item in body.keys() for item in ('product', 'prototype'))
 
 
 def test_identity(appliance):
@@ -1119,3 +1112,37 @@ class TestEventStreamsRESTAPI(object):
                 evt_col.get(id=found_evts[-1].id)
             except (IndexError, ValueError):
                 soft_assert(False, "Couldn't get event {} for vm {}".format(evt, vm_name))
+
+
+@pytest.mark.tier(3)
+@pytest.mark.parametrize("interval", ["hourly", "daily"])
+@pytest.mark.parametrize("resource_type", ["VmOrTemplate", "Service"])
+def test_rest_metric_rollups(appliance, interval, resource_type):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
+        initialEstimate: 1/10h
+        testSteps:
+            1. Send GET request:
+            /api/metric_rollups?resource_type=:resource_type&capture_interval=:interval
+            &start_date=:start_date&end_date=:end_date
+        expectedResults:
+            1. Successful 200 OK response.
+    """
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=2)
+
+    url = (
+        "{entry_point}?resource_type={resource_type}&capture_interval={interval}"
+        "&start_date={start_date}&end_date={end_date}&limit=30"
+    ).format(
+        entry_point=appliance.rest_api.collections.metric_rollups._href,
+        resource_type=resource_type,
+        interval=interval,
+        start_date=start_date.isoformat(),
+        end_date=end_date.isoformat(),
+    )
+    appliance.rest_api.get(url)
+    assert_response(appliance)
