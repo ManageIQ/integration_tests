@@ -377,7 +377,7 @@ class DomainCollection(BaseCollection):
             for domain in domains:
                 if domain.table_display_name == row.name.text:
                     checked_domains.append(domain)
-                    row[0].check()
+                    row[0].click()
                     break
 
             if set(domains) == set(checked_domains):

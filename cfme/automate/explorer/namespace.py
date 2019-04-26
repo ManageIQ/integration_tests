@@ -231,7 +231,7 @@ class NamespaceCollection(BaseCollection):
             for namespace in namespaces:
                 if namespace.name == name:
                     checked_namespaces.append(namespace)
-                    row[0].check()
+                    row[0].click()
                     break
 
             if set(namespaces) == set(checked_namespaces):
