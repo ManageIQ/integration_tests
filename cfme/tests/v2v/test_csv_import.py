@@ -39,7 +39,7 @@ def infra_map(appliance, source_provider, provider):
     infra_mapping_collection.delete(mapping)
 
 
-def migration_plan(appliance, infra_map, csv=False):
+def migration_plan(appliance, infra_map):
     """Function to create migration plan and select csv import option"""
     import_btn = "Import a CSV file with a list of VMs to be migrated"
     plan_obj = appliance.collections.v2v_migration_plans
@@ -55,7 +55,7 @@ def migration_plan(appliance, infra_map, csv=False):
     return view
 
 
-def import_and_check(appliance, infra_map, error_text=None, csv=False,
+def import_and_check(appliance, infra_map, error_text=None,
                      filetype='csv', content=False, table_hover=False, alert=False):
     plan_view = migration_plan(appliance, infra_map)
     temp_file = tempfile.NamedTemporaryFile(suffix='.{}'.format(filetype))
