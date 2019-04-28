@@ -39,9 +39,12 @@ def infra_map(appliance, source_provider, provider):
     infra_mapping_collection.delete(mapping)
 
 
-def migration_plan(appliance, infra_map):
+def migration_plan(appliance, infra_map, csv=True):
     """Function to create migration plan and select csv import option"""
-    import_btn = "Import a CSV file with a list of VMs to be migrated"
+    if csv:
+        import_btn = "Import a CSV file with a list of VMs to be migrated"
+    else:
+        import_btn = "Choose from a list of VMs discovered in the selected infrastructure mapping"
     plan_obj = appliance.collections.v2v_migration_plans
     view = navigate_to(plan_obj, 'Add')
     view.general.fill({
@@ -50,8 +53,6 @@ def migration_plan(appliance, infra_map):
         "description": fauxfactory.gen_alpha(10),
         "choose_vm": import_btn
     })
-
-    view.next_btn.click()
     return view
 
 
@@ -69,8 +70,11 @@ def import_and_check(appliance, infra_map, error_text=None,
     if table_hover:
         wait_for(lambda: plan_view.vms.is_displayed,
                  timeout=60, message='Wait for VMs view', delay=5)
-        # click on the checkbox to select VM (column 0)
-        plan_view.vms.table[0][1].widget.click()
+        if table_hover == 'duplicate':
+            plan_view.vms.table[0][1].widget.click()  # widget stands for tooltip widget
+        else:
+            # click on the checkbox to select VM (column 0)
+            plan_view.vms.table[0][1].widget.click()
         error_msg = plan_view.vms.popover_text.read()
     else:
         if alert:
@@ -85,8 +89,7 @@ def import_and_check(appliance, infra_map, error_text=None,
 @pytest.fixture(scope="function")
 def valid_vm(appliance, infra_map):
     """Fixture to get valid vm name from discovery"""
-    plan_view = migration_plan(appliance, infra_map, csv=True)
-    plan_view.next_btn.click()
+    plan_view = migration_plan(appliance, infra_map, csv=False)
     wait_for(lambda: plan_view.vms.is_displayed,
              timeout=60, delay=5, message='Wait for VMs view')
     vm_name = [row.vm_name.text for row in plan_view.vms.table.rows()][0]
@@ -194,7 +197,6 @@ def test_csv_invalid_vm(appliance, infra_map):
                             content=content, table_hover=True)
 
 
-@pytest.mark.meta(blockers=[BZ(1699343, forced_streams=["5.10"])])
 def test_csv_valid_vm(appliance, infra_map, valid_vm):
     """Test csv with valid vm name
     Polarion:
@@ -211,7 +213,6 @@ def test_csv_valid_vm(appliance, infra_map, valid_vm):
                             content=content, table_hover=True)
 
 
-@pytest.mark.meta(blockers=[BZ(1699343, forced_streams=["5.10"])])
 def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
     """Test csv with duplicate vm name
     Polarion:
@@ -229,6 +230,7 @@ def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
 
 
 @pytest.mark.meta(blockers=[BZ(1699343, forced_streams=["5.10"])])
+@pytest.mark.meta(blockers=[BZ(1703744, forced_streams=["5.11"])])
 def test_csv_archived_vm(appliance, infra_map, archived_vm):
     """Test csv with archived vm name
     Polarion:
