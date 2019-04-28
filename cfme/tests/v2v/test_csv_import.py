@@ -230,7 +230,6 @@ def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
 
 
 @pytest.mark.meta(blockers=[BZ(1699343, forced_streams=["5.10"])])
-@pytest.mark.meta(blockers=[BZ(1703744, forced_streams=["5.11"])])
 def test_csv_archived_vm(appliance, infra_map, archived_vm):
     """Test csv with archived vm name
     Polarion:
