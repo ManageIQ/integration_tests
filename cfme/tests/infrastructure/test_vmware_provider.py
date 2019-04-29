@@ -82,7 +82,7 @@ def test_vmware_guests_linked_clone():
     Ideally they shouldn't mark them all as linked_clone=t
 
     Bugzilla:
-        * 1588908
+        1588908
 
     Polarion:
         assignee: kkulkarn
@@ -115,7 +115,7 @@ def test_vmware_reconfigure_vm_controller_type():
     Controller Type should be listed.
 
     Bugzilla:
-        * 1650441
+        1650441
 
     Polarion:
         assignee: kkulkarn
@@ -173,7 +173,7 @@ def test_vmware_inaccessible_datastore():
     VMware sometimes has datastores that are inaccessible, and CloudForms should indicate that.
 
     Bugzilla:
-        * 1684656
+        1684656
 
     Polarion:
         assignee: kkulkarn
@@ -200,7 +200,7 @@ def test_vmware_cdrom_dropdown_not_blank():
     Test CD/DVD Drives dropdown lists ISO files, dropdown is not blank
 
     Bugzilla:
-        * 1689369
+        1689369
 
     Polarion:
         assignee: kkulkarn
@@ -232,7 +232,7 @@ def test_vmware_inaccessible_datastore_vm_provisioning():
     during provisioning when using "Choose Automatically" as an option under environment tab.
 
     Bugzilla:
-        * 1694137
+        1694137
 
     Polarion:
         assignee: kkulkarn
@@ -260,7 +260,7 @@ def test_vmware_provisioned_vm_host_relationship():
     VMware VMs provisioned through cloudforms should have host relationship.
 
     Bugzilla:
-        * 1657341
+        1657341
 
     Polarion:
         assignee: kkulkarn
@@ -276,5 +276,38 @@ def test_vmware_provisioned_vm_host_relationship():
             1.
             2.See all available templates
             3.CFME Provisioned VM should have host relationship.
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_esxi_reboot_not_orphan_vms():
+    """
+    By mimicking ESXi reboot effect on VMs in CFME, make sure they are not getting marked orphaned.
+
+    Bugzilla:
+        1695008
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: Infra
+        caseimportance: critical
+        initialEstimate: 1/2h
+        testtype: integration
+        testSteps:
+            1.Add VMware provider to CFME
+            2.SSH to CFME appliance and perform following steps in rails console
+                '''
+                ems = ManageIQ::Providers::Vmware::InfraManager.find_by(:name => "name of your vc")
+                vm = ems.vms.last # Or do vms[index] and find a vm to work with
+                puts "ID [#{vm.id}] ems_ref [#{vm.ems_ref}]"
+                vm.update_attributes(:uid_ems => SecureRandom.uuid)
+                '''
+            3.Refresh the provider
+        expectedResults:
+            1.Provider added successfully and is refreshed
+            2.VM's uid_ems is modified
+            3.VM is still active and usable in cloudforms, not archived/orphaned.
     """
     pass
