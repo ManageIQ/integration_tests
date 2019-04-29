@@ -380,8 +380,8 @@ class ServerCollectLogsView(ServerDiagnosticsView):
 
         try:
             # output 'title_template' is '[[1]]' which is not intended.
-            # Converting 'sid' into 'int' is giving desired output.
-            sid = int(sid[1])
+            # stripping square brackets to get the correct output
+            sid = sid.strip('[]')
         except ValueError:
             pass
 
