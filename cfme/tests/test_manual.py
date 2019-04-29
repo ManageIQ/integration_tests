@@ -161,35 +161,6 @@ def test_distributed_field_zone_description_special():
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-def test_proxy_remove_default():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the default proxy settings.  For this test you want to create
-    an default proxy, verified it worked, and then remove the proxy and
-    verify it didn"t use a proxy
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        setup: I think the best way to do this one is start with a bad proxy value,
-               get the connection error, and then remove the proxy values and make
-               sure it starts connecting again.  I"ll have to see if there is a log
-               value we can look at.  Otherwise, you need to shutdown the proxy
-               server to be absolutely sure.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
 def test_proxy_remove_ec2():
     """
     With 5.7 there is a new feature that allows users to specific a
@@ -241,35 +212,6 @@ def test_proxy_remove_gce():
                value we can look at.  Otherwise, you need to shutdown the proxy
                server to be absolutely sure.
                You can also remove by setting host to false
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_remove_azure():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  For this test you want to create an
-    azure proxy, verified it worked, and then remove the proxy and verify
-    it used the default which may or may not be blank.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        setup: I think the best way to do this one is start with a bad proxy value,
-               get the connection error, and then remove the proxy values and make
-               sure it starts connecting again.  I"ll have to see if there is a log
-               value we can look at.  Otherwise, you need to shutdown the proxy
-               server to be absolutely sure.
         startsin: 5.7
         upstream: yes
     """
@@ -1365,34 +1307,6 @@ def test_orchestration_link_mismatch():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_rubyrep_to_pglogical():
-    """
-    Test upgrading appliances in ruby replication and change it over to
-    pglogical
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Configuration
-        caseimportance: medium
-        endsin: 5.9
-        initialEstimate: 1h
-        setup: provision 2 appliances
-               setup rubyrep between them
-               test replication is working
-               stop replication
-               upgrade appliances following version dependent docs found here
-               https://mojo.redhat.com/docs/DOC-1058772
-               configure pglogical replication
-               confirm replication is working correctly
-        startsin: 5.6
-        testtype: upgrade
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.chargeback
 @pytest.mark.tier(2)
 def test_service_chargeback_multiple_vms():
@@ -1526,36 +1440,6 @@ def test_can_add_child_tenant_to_tenant():
         casecomponent: Configuration
         initialEstimate: 1/10h
         tags: rbac
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.provision
-@pytest.mark.tier(2)
-def test_azure_instance_password_requirements_azure():
-    """
-    Create provision request with password which doesn"t meet requirements
-    - warning message should appear in UI
-    Additional details are in
-
-    Bugzilla:
-        1454812
-
-    The supplied password must be between 8-123 characters long and must
-    satisfy at least 3 of password complexity requirements from the
-    following:
-    1) Contains an uppercase character
-    2) Contains a lowercase character
-    3) Contains a numeric digit
-    4) Contains a special character.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Provisioning
-        caseposneg: negative
-        initialEstimate: 1/10h
-        testtype: nonfunctional
     """
     pass
 
@@ -3732,32 +3616,6 @@ def test_ec2_targeted_refresh_floating_ip():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_upgrade_single_inplace_ipv6():
-    """
-    Upgrading a single appliance on ipv6 only env
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/3h
-        setup: provision appliance
-               add provider
-               add repo file to /etc/yum.repos.d/
-               run "yum update"
-               run "rake db:migrate"
-               run "rake evm:automate:reset"
-               run "systemctl start evmserverd"
-               check webui is available
-               add additional provider/provision vms
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.snapshot
 @pytest.mark.tier(1)
 def test_notification_for_snapshot_delete_failure():
@@ -4182,20 +4040,6 @@ def test_osp_test_if_no_password_is_exposed_in_logs_during_migration():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test if no password is exposed in logs during migration
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_update_yum_bad_version_59017():
-    """
-    Tests appliance update between versions
-    Test Source
-
-    Polarion:
-        assignee: jhenner
-        initialEstimate: 1/4h
-        casecomponent: Appliance
     """
     pass
 
@@ -5033,84 +4877,6 @@ def test_osp_test_warnings_after_bad_failed_imports():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_override_gce():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the ec2 proxy settings.  For this test you want to create a
-    bogus setting for the default entry and a correct entry for ec2 so
-    that you can make sure it is switching to ec2 correctly.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        setup: Make sure you create a bad proxy for default and a correct proxy for
-               ec2 so that you are certain we grab the right entry.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_override_ec2():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the ec2 proxy settings.  For this test you want to create a
-    bogus setting for the default entry and a correct entry for ec2 so
-    that you can make sure it is switching to ec2 correctly.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        setup: Make sure you create a bad proxy for default and a correct proxy for
-               ec2 so that you are certain we grab the right entry.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_override_azure():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  For this test you want to create a
-    bogus setting for the default entry and a correct entry for azure so
-    that you can make sure it is switch to azure correctly.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/4h
-        setup: Setup the azure proxy correct and the default proxy incorrectly and
-               make sure azure uses the correct entry.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.storage
 def test_storage_object_store_object_edit_tag_openstack():
     """
@@ -5743,34 +5509,6 @@ def test_set_ownership_back_to_default():
 
 
 @pytest.mark.manual
-@test_requirements.provision
-@pytest.mark.tier(2)
-def test_vm_placement_with_duplicated_folder_name_vmware():
-    """
-    This testcase is related to -
-
-    Bugzilla:
-        1414136
-
-    Description of problem:
-    Duplicate folder names between host & vm/templates causes placement
-    issues
-    Hosts & Clusters shared a common folder name with a folder that also
-    resides in vm & templates inside of VMWare which will cause CloudForms
-    to attempt to place a vm inside of the Host & Clusters folder.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Provisioning
-        caseimportance: low
-        initialEstimate: 1/4h
-        startsin: 5.7
-        testtype: nonfunctional
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.configuration
 def test_can_only_select_this_regions_zones_when_changing_server_zone():
     """
@@ -5927,111 +5665,6 @@ def test_candu_graphs_vm_compare_cluster_vsphere65():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_invalid_azure():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  You just need to fill in the
-    appropriate information, only screw up a few of the values to make
-    sure it reports a connection error.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/2h
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_invalid_gce():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  You just need to fill in the
-    appropriate information, only screw up a few of the values to make
-    sure it reports a connection error.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/8h
-        setup: The only thing different you need to do for this is enter some wrong
-               information and Refresh Relationships.  Wait two minutes and refresh
-               the page.  You"ll definitely get an error if any of the values are
-               wrong.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_invalid_default():
-    """
-    With 5.7 there is a new feature that allows users to specify a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the default proxy settings.  You just need to fill in the
-    appropriate information, only screw up a few of the values to make
-    sure it reports a connection error.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/2h
-        setup: The mojo page has all the information you will need.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_invalid_ec2():
-    """
-    With 5.7 there is a new feature that allows users to specify a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the ec2 proxy settings.  You just need to fill in the
-    appropriate information, only screw up a few of the values to make
-    sure it reports a connection error.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/4h
-        setup: Follow the instructions in the mojo document.
-        startsin: 5.7
-        teardown: You should probably reset or delete the changes.
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_crosshair_op_instance_gce():
@@ -6098,107 +5731,6 @@ def test_osp_test_edit_migration_plan():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test edit migration plan
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_valid_gce():
-    """
-    With 5.7.1 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  You just need to fill in the
-    appropriate information
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/4h
-        setup: Configure advanced settings for GCE proxy.
-               Add gce provider
-               Probably need to check the packets to make sure they are vectoring
-               through the proxy server, or just check the proxy server log.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_valid_default():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  You just need to fill in the
-    appropriate information
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup: Follow the instructions in the mojo doc above.
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_valid_azure():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  You just need to fill in the
-    appropriate information
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup: Configure advanced settings for Azure proxy.
-               Add azure provider
-               Probably need to check the packets to make sure they are vectoring
-               through the proxy server, or just check the proxy server log.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_valid_ec2():
-    """
-    With 5.7 there is a new feature that allows users to specify a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the ec2 proxy settings.  You just need to fill in the
-    appropriate information
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup: Follow the instructions in the mojo doc above as it is easier to
-               change in one place.
-        startsin: 5.7
     """
     pass
 
@@ -7207,22 +6739,6 @@ def test_azone_group_by_tag_ec2():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_automated_locale_switching():
-    """
-    Having the automatic locale selection selected, the appliance"s locale
-    changes accordingly with user"s preferred locale in the browser.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_policy_to_prevent_source_vm_from_starting_if_migration_is_comaplete():
     """
     OSP: Test policy to prevent source VM from starting if migration is
@@ -7325,33 +6841,6 @@ def test_osp_vmware67_test_vm_with_mutliple_nics_with_single_ip_ipv6_to_first_ni
         subcomponent: OSP
         title: OSP: vmware67-Test VM with mutliple NICs with single IP
                (IPv6 to first NIC and IPv4 to second)
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.upgrade
-@pytest.mark.tier(2)
-def test_update_webui_ipv6():
-    """
-    Test updating the appliance to release version from prior version.
-    (i.e 5.5.x to 5.5.x+) IPV6 only env
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/3h
-        setup: -Provision configured appliance
-               -Register it with RHSM using web UI
-               -Create /etc/yum.repos.d/update.repo
-               -populate file with repos from
-               https://mojo.redhat.com/docs/DOC-1058772
-               -check for update in web UI
-               -apply update
-               -appliance should shutdown update and start back up
-               -confirm you can login afterwards
-        startsin: 5.8
     """
     pass
 
@@ -7462,22 +6951,6 @@ def test_storage_ebs_snapshot_delete():
         casecomponent: Cloud
         initialEstimate: 1/15h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_embedded_ansible_update_bad_version_59017():
-    """
-    Tests updating an appliance which has embedded ansible role enabled,
-    also confirms that the
-    role continues to function correctly after the update has completed
-    Test Source
-
-    Polarion:
-        assignee: jhenner
-        initialEstimate: 1/4h
-        casecomponent: Appliance
     """
     pass
 
@@ -8717,19 +8190,6 @@ def test_active_tasks_get_timed_out_when_they_run_too_long():
         initialEstimate: 1/2h
         startsin: 5.7
         title: active tasks get timed out when they run too long
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_replication_central_admin_adhoc_provision_template():
-    """
-    Polarion:
-        assignee: jhenner
-        caseimportance: medium
-        casecomponent: Replication
-        initialEstimate: 1/6h
     """
     pass
 
@@ -11463,25 +10923,6 @@ def test_monitor_ansible_playbook_std_output():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_log_error():
-    """
-    check logs for errors such as
-
-    Bugzilla:
-        1392087
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Appliance
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_cpu_cores_and_sockets_pre_vs_post_migration():
     """
     OSP: Test CPU Cores and Sockets Pre vs Post migration
@@ -11860,27 +11301,6 @@ def test_verify_page_landing_cloud_subnets():
         caseimportance: low
         initialEstimate: 1/10h
         startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.provision
-@pytest.mark.tier(2)
-def test_add_multiple_iso_datastore():
-    """
-    Add two RHEV providers.
-    Under Infrastructure- PXE -ISO datastore - add ISO datastore for first
-    provider
-    Add new datastore button should not be disabled once the datastore was
-    added and second datastore can be added.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Services
-        initialEstimate: 1/8h
-        startsin: 5.5
-        title: Add multiple ISO datastore
     """
     pass
 
