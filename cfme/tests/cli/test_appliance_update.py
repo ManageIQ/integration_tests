@@ -12,8 +12,10 @@ from cfme.test_framework.sprout.client import AuthException
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.appliance import find_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
+from cfme.utils.version import get_stream
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 from cfme.utils.wait import wait_for_decorator
@@ -305,6 +307,10 @@ def test_update_ha_webui(ha_appliances_with_providers, appliance, request, old_v
     wait_for(do_appliance_versions_match, func_args=(appliance, ha_appliances_with_providers[2]),
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
+
+    if BZ(1704835, forced_streams=get_stream(ha_appliances_with_providers[2].version)).blocks:
+        ha_appliances_with_providers[2].evm_failover_monitor.restart()
+
     # Cause failover to occur
     result = ha_appliances_with_providers[0].ssh_client.run_command(
         'systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
