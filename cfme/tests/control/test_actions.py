@@ -13,7 +13,6 @@ Required YAML keys:
 """
 import fauxfactory
 import pytest
-from _pytest.outcomes import Failed
 from wrapanapi import VmState
 
 from . import do_scan
@@ -493,15 +492,8 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testi
 
     # Start the VM
     vm.mgmt.ensure_state(VmState.RUNNING)
-
-    def validate_logs():
-        try:
-            policy_result.validate_logs()
-            return True
-        except Failed:
-            return False
-
-    wait_for(validate_logs, num_sec=180, message="log search", delay=5)
+    # search logs wait_for log_validation
+    policy_result.wait_for_log_validation()
 
 
 @pytest.mark.provider(
@@ -540,15 +532,8 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
     # Start the VM
     vm.mgmt.ensure_state(VmState.RUNNING)
 
-    # Search the logs
-    def validate_logs():
-        try:
-            policy_result.validate_logs()
-            return True
-        except Failed:
-            return False
-
-    wait_for(validate_logs, num_sec=180, message="log search", delay=5)
+    # Search the logs and wait for validation
+    policy_result.wait_for_log_validation()
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")

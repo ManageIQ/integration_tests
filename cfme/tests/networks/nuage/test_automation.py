@@ -1,10 +1,8 @@
 import pytest
-from _pytest.outcomes import Failed
 from wrapanapi.utils.random import random_name
 
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
-from cfme.utils.wait import wait_for
 
 
 def test_auth_attributes_of_nuage_ae_class(appliance):
@@ -80,16 +78,5 @@ def test_embedded_ansible_executed_with_data_upon_event(request,
         ]
     )
     evm_tail.fix_before_start()
-
-    # LogValidator.validate_logs throws `Failed` exception which inherits `BaseException`.
-    # wait_for function checks for `Exception` which inherits `BaseException` when
-    # 'handle_exception' parameter is used. We can't make use of this functionality because
-    # `Failed` exception is not caught with `Exception` class, hence the helper function.
-    def validate_logs():
-        try:
-            evm_tail.validate_logs()
-            return True
-        except Failed:
-            return False
-
-    wait_for(validate_logs, timeout=300, delay=10, fail_condition=False)
+    # search logs and wait for validation
+    evm_tail.wait_for_log_validation(timeout=300, delay=10, fail_condition=False)
