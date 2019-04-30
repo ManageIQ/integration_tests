@@ -1557,7 +1557,13 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def _check_appliance_ui_wait_fn(self):
         # Get the URL, don't verify ssl cert
         try:
-            response = requests.get(self.url, timeout=15, verify=False)
+            # If we don't request text/html, there is a short window during the
+            # appliance HA DB failover when the evmserverd is not in OK state
+            # but returns HTTP 200 while with requesting the text/html, we get
+            # HTTP 500. Browsers are requesting the text/html, so we should.
+            # probably as well.
+            response = requests.get(self.url, timeout=15, verify=False,
+                                    headers={'Accept': 'text/html'})
             if response.status_code == 200:
                 self.log.info("Appliance online")
                 return True
