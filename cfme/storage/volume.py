@@ -13,6 +13,7 @@ from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 
 from cfme.base.ui import BaseLoggedInPage
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
 from cfme.common import TaggableCollection
@@ -270,7 +271,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         """Edit cloud volume"""
         if from_manager:
             view = navigate_to(storage_manager, 'Volumes')
-            view.entities.get_entity(name=self.name).check()
+            view.entities.get_entity(surf_pages=True, name=self.name).check()
             view.toolbar.configuration.item_select('Edit selected Cloud Volume')
             view = view.browser.create_view(VolumeEditView, additional_context={'object': self})
         else:
@@ -289,7 +290,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         """Delete the Volume"""
         if from_manager:
             view = navigate_to(storage_manager, 'Volumes')
-            view.entities.get_entity(name=self.name).check()
+            view.entities.get_entity(surf_pages=True, name=self.name).check()
             view.toolbar.configuration.item_select(
                 'Delete selected Cloud Volumes', handle_alert=True)
         else:
@@ -346,7 +347,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
                         storage_manager=None, from_manager=None):
         if from_manager:
             view = navigate_to(storage_manager, 'Volumes')
-            view.entities.get_entity(name=self.name).check()
+            view.entities.get_entity(surf_pages=True, name=self.name).check()
             view.toolbar.configuration.item_select('Attach selected Cloud Volume to an Instance')
             view = view.browser.create_view(AttachInstanceView, additional_context={'object': self})
         else:
@@ -371,7 +372,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
     def detach_instance(self, name, cancel=False, storage_manager=None, from_manager=None):
         if from_manager:
             view = navigate_to(storage_manager, 'Volumes')
-            view.entities.get_entity(name=self.name).check()
+            view.entities.get_entity(surf_pages=True, name=self.name).check()
             view.toolbar.configuration.item_select('Detach selected Cloud Volume from an Instance')
             view = view.browser.create_view(DetachInstanceView, additional_context={'object': self})
         else:
@@ -397,7 +398,10 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         """
         view = navigate_to(self.parent, 'All')
         view.toolbar.view_selector.select("List View")
-        view.browser.refresh()
+        if self.provider.one_of(OpenStackProvider):
+            self.refresh()
+        else:
+            view.browser.refresh()
 
         for item in view.entities.elements.read():
             if self.name in item['Name']:

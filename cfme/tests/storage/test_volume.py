@@ -69,8 +69,9 @@ def create_volume(appliance, provider, is_from_manager=False, az=None, cancel=Fa
                   should_assert=False):
     volume_collection = appliance.collections.volumes
     manager = appliance.collections.block_managers.filter({"provider": provider}).all()[0]
+    name = fauxfactory.gen_alpha()
     if provider.one_of(OpenStackProvider):
-        volume = volume_collection.create(name=fauxfactory.gen_alpha(),
+        volume = volume_collection.create(name=name,
                                           storage_manager=manager,
                                           tenant=provider.data['provisioning']['cloud_tenant'],
                                           volume_size=STORAGE_SIZE,
@@ -79,7 +80,7 @@ def create_volume(appliance, provider, is_from_manager=False, az=None, cancel=Fa
                                           from_manager=is_from_manager)
     elif provider.one_of(EC2Provider):
         az = az if az else provider.region + 'a'
-        volume = volume_collection.create(name=fauxfactory.gen_alpha(),
+        volume = volume_collection.create(name=name,
                                           storage_manager=manager,
                                           volume_type='General Purpose SSD (GP2)',
                                           volume_size=STORAGE_SIZE,
@@ -137,9 +138,10 @@ def test_storage_volume_crud(appliance, provider, from_manager):
     # update volume
     old_name = volume.name
     new_name = fauxfactory.gen_alpha()
-    updates = {'volume_name': new_name, 'volume_size': STORAGE_SIZE + 1}
     if provider.one_of(OpenStackProvider):
         updates = {'volume_name': new_name}
+    else:
+        updates = {'volume_name': new_name, 'volume_size': STORAGE_SIZE + 1}
 
     storage_manager = appliance.collections.block_managers.filter({"provider": provider}).all()[0]
     volume = volume.update(updates, storage_manager, from_manager)
@@ -155,7 +157,8 @@ def test_storage_volume_crud(appliance, provider, from_manager):
     assert not volume.exists
 
 
-@pytest.mark.meta(blockers=[BZ(1684939, unblock=lambda provider: provider.one_of(EC2Provider))])
+@pytest.mark.meta(blockers=[BZ(1684939, forced_streams=["5.10"],
+                               unblock=lambda provider: provider.one_of(EC2Provider))])
 @pytest.mark.tier(1)
 def test_storage_volume_attach_detach(appliance, provider, instance_fixture, from_manager):
     volume = create_volume(appliance, provider, from_manager, az=instance_fixture.
@@ -166,15 +169,11 @@ def test_storage_volume_attach_detach(appliance, provider, instance_fixture, fro
     # attach
     volume.attach_instance(name=instance_fixture.name, mountpoint='/dev/sdm',
                            storage_manager=storage_manager, from_manager=from_manager)
-    if provider.one_of(OpenStackProvider):
-        storage_manager.refresh()
     wait_for(lambda: volume.status == 'in-use', delay=15, timeout=600)
 
     # detach
     volume.detach_instance(name=instance_fixture.name, storage_manager=storage_manager,
                            from_manager=from_manager)
-    if provider.one_of(OpenStackProvider):
-        storage_manager.refresh()
     wait_for(lambda: volume.status == 'available', delay=15, timeout=600)
 
     # cleanup
