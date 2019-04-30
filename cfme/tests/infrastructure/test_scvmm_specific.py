@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
@@ -38,14 +39,13 @@ def test_no_dvd_ruins_refresh(provider, vm):
     vm.wait_to_appear()
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_vm_mac_scvmm():
+def test_vm_mac_scvmm(provider):
     """
     Bugzilla:
         1514461
 
-    Test case covers this BZ - we can"t get MAC ID of VM at the moment
+    Test case covers this BZ - we can't get MAC ID of VM at the moment
 
     Polarion:
         assignee: jdupuy
@@ -59,7 +59,18 @@ def test_vm_mac_scvmm():
             1.
             2. MAC Address should match what is in SCVMM
     """
-    pass
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.all()[0]
+    # get mac address(es) from SCVMM
+    mac_addresses = [entry["PhysicalAddress"] for entry in vm.mgmt.raw["VirtualNetworkAdapters"]]
+    # get mac address(es) from CFME
+    view = navigate_to(vm, "Details", use_resetter=False)
+    try:
+        mac_address = view.entities.summary('Properties').get_text_of("MAC Address")
+    except NameError:
+        # since some vms have plural 'Addresses'.
+        mac_address = view.entities.summary('Properties').get_text_of("MAC Addresses")
+    assert mac_address in mac_addresses
 
 
 @pytest.mark.manual
