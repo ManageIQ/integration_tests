@@ -138,6 +138,10 @@ yaml.safe_dump(data, stream=open("{file}", "w"))'"""
             logger.info("%s:%s No podtesting tag.", self.log_name, self.provider_key)
             return
 
+        if '511' in self.stream or 'upstream' in self.stream:
+            logger.info('Podified appliances not available for 5.11+ or upstream')
+            return False
+
         if self.does_template_exist():
             logger.info("Template already exists.")
             return True
