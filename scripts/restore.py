@@ -54,7 +54,7 @@ psql_output = run_command(
 count = psql_output.split("\n")[2].strip()
 if count > 2:
     logger.info("Too many postgres threads({})... restarting".format(count))
-    run_command("systemctl restart {}-postgresql".format(current_appliance.db.postgres_version))
+    current_appliance.db_service.restart()
     time.sleep(60)
 run_command(
     "cd /var/www/miq/vmdb/backup_and_restore/;"

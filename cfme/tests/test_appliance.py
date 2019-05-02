@@ -99,7 +99,7 @@ def test_service_enabled(appliance, service):
         casecomponent: Appliance
     """
     if service == 'postgresql':
-        service = '{}-postgresql'.format(appliance.db.postgres_version)
+        service = str(appliance.db.service_name)
     if appliance.os_version >= '7':
         cmd = 'systemctl is-enabled {}'.format(service)
     else:

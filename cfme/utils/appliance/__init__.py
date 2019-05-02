@@ -309,7 +309,7 @@ class IPAppliance(object):
     auditd = SystemdService.declare(unit_name='auditd')
     chronyd = SystemdService.declare(unit_name='chronyd')
     collectd = SystemdService.declare(unit_name='collectd')
-    db_service = SystemdService.declare(unit_name=ApplianceDB.service_name)
+    # db_service unit_name is initialized in the __init__()
     evmserverd = SystemdService.declare(unit_name='evmserverd')
     httpd = SystemdService.declare(unit_name='httpd')
     merkyl = SystemdService.declare(unit_name='merkyl')
@@ -406,6 +406,7 @@ class IPAppliance(object):
             # only set when given so we can defer to therest api via the
             # cached property
             self.version = Version(version)
+        self.db_service = SystemdService.declare(unit_name=self.db.service_name)
 
     def unregister(self):
         """ unregisters appliance from RHSM/SAT6 """
