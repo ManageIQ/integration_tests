@@ -32,9 +32,18 @@
         <table class="table table-striped">
             <thead>
                 <tr>
+                    <td colspan="6"><em>
+                        Total: {{ provider.num_currently_managing }} |
+                        Max. appliance count limit: {{ provider.appliance_limit }} |
+                        Currently provisioning: {{ provider.num_currently_provisioning }} |
+                        Total prov. slots: {{ provider.num_simultaneous_provisioning }} |
+                        Remaining prov. slots: {{ provider.remaining_provisioning_slots }}
+                    </em></td>
+                </tr>
+                <tr>
                     <th>Appliance name</th>
-                    <th>Template</th>
-                    <th>Group</th>
+                    <th>IP Address</th>
+                    <th>Version</th>
                     <th>Owner</th>
                     <th>Expires in</th>
                     <th>Power state</th>
@@ -45,8 +54,8 @@
                 {% for appliance in provider.currently_managed_appliances %}
                     <tr>
                         <td>{{ appliance.name }}</td>
-                        <td>{{ appliance.template.name }}</td>
-                        <td>{{ appliance.template.template_group.id }}</td>
+                        <td>{{ appliance.ip_address }}</td>
+                        <td>{{ appliance.version }}</td>
                         <td>{{ appliance.owner.username }}</td>
                         <td>{{ appliance.expires_in }}</td>
                         <td>{{ appliance.power_state }}</td>
@@ -57,15 +66,6 @@
             {% endif %}
             </tbody>
             <tfoot>
-                <tr>
-                    <td colspan="6"><em>
-                        Total: {{ provider.num_currently_managing }} |
-                        Max. appliance count limit: {{ provider.appliance_limit }} |
-                        Currently provisioning: {{ provider.num_currently_provisioning }} |
-                        Total prov. slots: {{ provider.num_simultaneous_provisioning }} |
-                        Remaining prov. slots: {{ provider.remaining_provisioning_slots }}
-                    </em></td>
-                </tr>
                 <tr>
                     <td>Provider load:</td>
                     <td colspan="4">{{ provider.load|progress }}</td>
