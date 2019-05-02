@@ -60,6 +60,7 @@ pytest_plugins = (
     'cfme.fixtures.appliance_update',
     'cfme.fixtures.blockers',
     'cfme.fixtures.browser',
+    'cfme.fixtures.bzs',
     'cfme.fixtures.cfme_data',
     'cfme.fixtures.datafile',
     'cfme.fixtures.depot',

@@ -2,6 +2,7 @@ import click
 
 from artifactor.__main__ import main as art_main
 from cfme.scripting.appliance import main as app_main
+from cfme.scripting.bz import main as bz_main
 from cfme.scripting.conf import main as conf_main
 from cfme.scripting.ipyshell import main as shell_main
 from cfme.scripting.polarion import main as polarion_main
@@ -25,6 +26,7 @@ cli.add_command(conf_main, name="conf")
 cli.add_command(sprout_main, name="sprout")
 cli.add_command(setup_main, name="setup-env")
 cli.add_command(polarion_main, name="polarion")
+cli.add_command(bz_main, name="bz")
 
 if __name__ == '__main__':
     cli()
