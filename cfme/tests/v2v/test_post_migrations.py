@@ -63,9 +63,11 @@ def test_migration_post_attribute(appliance, provider, mapping_data_vm_obj_mini,
         target_provider=provider,
         vm_list=mapping_data_vm_obj_mini.vm_list
     )
-    assert migration_plan.in_progress
-    assert migration_plan.completed
-    assert migration_plan.successful
+    assert migration_plan.wait_for_state("Started")
+    assert migration_plan.wait_for_state("In_Progress")
+    assert migration_plan.wait_for_state("Completed")
+    assert migration_plan.wait_for_state("Successful")
+
     migrated_vm = get_migrated_vm(src_vm_obj, provider)
 
     # Test1: mac address matches between source and target vm

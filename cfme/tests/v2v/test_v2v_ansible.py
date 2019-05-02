@@ -159,12 +159,11 @@ def test_migration_playbooks(request, appliance, source_provider, provider,
         pre_checkbox=True,
         post_checkbox=True
     )
-    # wait_for plan to start/track progress and complete is handled in respective methods
-    # so they can be immediately asserted here .
-    assert migration_plan.plan_started
-    assert migration_plan.in_progress
-    assert migration_plan.completed
-    assert migration_plan.successful
+
+    assert migration_plan.wait_for_state("Started")
+    assert migration_plan.wait_for_state("In_Progress")
+    assert migration_plan.wait_for_state("Completed")
+    assert migration_plan.wait_for_state("Successful")
 
     migrated_vm = get_migrated_vm_obj(src_vm_obj, provider)
     assert src_vm_obj.mac_address == migrated_vm.mac_address

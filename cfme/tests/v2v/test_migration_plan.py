@@ -44,7 +44,6 @@ def test_migration_plan(
         assignee: sshveta
         casecomponent: V2V
         initialEstimate: 1/4h
-        subcomponent: RHV
     """
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
@@ -64,10 +63,10 @@ def test_migration_plan(
         infra_map=mapping.name,
         vm_list=mapping_data_vm_obj_single_datastore.vm_list
     )
-    assert migration_plan.plan_started
-    assert migration_plan.in_progress
-    assert migration_plan.completed
-    assert migration_plan.successful
+    assert migration_plan.wait_for_state("Started")
+    assert migration_plan.wait_for_state("In_Progress")
+    assert migration_plan.wait_for_state("Completed")
+    assert migration_plan.wait_for_state("Successful")
     # validate MAC address matches between source and target VMs
     migrated_vm = get_migrated_vm_obj(src_vm_obj, provider)
     assert src_vm_obj.mac_address == migrated_vm.mac_address
