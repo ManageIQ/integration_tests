@@ -594,9 +594,14 @@ class ButtonGroupObjectTypeView(AutomateCustomizationView):
 
     @property
     def is_displayed(self):
+        expected_title = (
+            "Button Groups"
+            if self.browser.product_version < "5.11"
+            else "{} Button Groups".format(self.context["object"].type)
+        )
         return (
             self.in_customization
-            and self.title.text == "Button Groups"
+            and self.title.text == expected_title
             and not self.buttons.is_dimmed
             and self.buttons.is_opened
             and self.buttons.tree.currently_selected
@@ -617,19 +622,23 @@ class ButtonGroupDetailView(AutomateCustomizationView):
     @property
     def is_displayed(self):
         # Unassigned Buttons is default group for each custom button object
-        expected_title = (
-            '{} Button Group "Unassigned Buttons"'.format(self.context["object"].type)
-            if self.context["object"].text == "[Unassigned Buttons]"
-            else 'Button Group "{}"'.format(self.context["object"].text)
-        )
+        obj = self.context["object"]
+
+        if obj.text == "[Unassigned Buttons]":
+            expected_title = '{} Button Group "{}"'.format(obj.type, "Unassigned Buttons")
+        else:
+            expected_title = (
+                'Button Group "{}"'.format(obj.text)
+                if self.browser.product_version < "5.11"
+                else '{} Button Group "{}"'.format(obj.type, obj.text)
+            )
 
         return (
             self.in_customization
             and self.title.text == expected_title
             and self.buttons.is_opened
             and not self.buttons.is_dimmed
-            and self.buttons.tree.currently_selected
-            == ["Object Types", self.context["object"].type, self.context["object"].text]
+            and self.buttons.tree.currently_selected == ["Object Types", obj.type, obj.text]
         )
 
 
