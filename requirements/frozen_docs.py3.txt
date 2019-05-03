@@ -257,7 +257,7 @@ python-swiftclient==3.7.0
 pytz==2019.1
 pyvcloud==19.1.2
 pyvmomi==6.7.1.2018.12
-pywinrm==0.3.0
+pywinrm2
 PyYAML==5.1
 pyzmq==18.0.1
 qtconsole==4.4.3
@@ -313,7 +313,8 @@ Werkzeug==0.15.2
 widgetastic.core==0.37
 widgetastic.patternfly==0.1.0
 widgetsnbextension==3.4.2
-wrapanapi==3.1.4
+git+git://github.com/izapolsk/wrapanapi@move_to_py3#wrapanapi
+#wrapanapi==3.1.4
 wrapt==1.11.1
 xmltodict==0.12.0
 yaycl==0.3.0
