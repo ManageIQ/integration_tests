@@ -285,10 +285,10 @@ class BaseButton(BaseEntity, Updateable):
     ):
         view = navigate_to(self, "simulate")
 
-        # Group and User are EVM type objects
+        # Group and User are EVM type objects. workaround for <5.11
         target_type = (
             "EVM {}".format(self.group.type)
-            if self.group.type in ["Group", "User"]
+            if self.group.type in ["Group", "User"] and self.appliance.version < "5.11"
             else self.group.type
         )
 

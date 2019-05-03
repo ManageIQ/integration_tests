@@ -342,14 +342,11 @@ def test_custom_button_quotes(appliance, provider, setup_provider, dialog, reque
 @pytest.mark.meta(
     blockers=[BZ(1535215, forced_streams=["5.10"], unblock=lambda button_tag: button_tag != "Evm")]
 )
-@pytest.mark.uncollectif(
-    lambda appliance, button_tag: appliance.version < "5.10" and button_tag == "Evm",
-    reason="for lower version evm custom button object not supported",
-)
 @pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE_PER_TYPE)
 @pytest.mark.parametrize("button_tag", ["Evm", "Build"])
 def test_custom_button_simulation(request, appliance, provider, setup_provider, button_tag):
     """ Test whether custom button works with simulation option
+    Note: For version less than 5.10 EVM custom button object not supported.
 
     Polarion:
         assignee: ndhandre
