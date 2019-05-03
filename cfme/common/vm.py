@@ -895,7 +895,7 @@ class VM(BaseVM):
             # two part fill, widget seems to block warn selection when open
             changed_date = view.form.fill({
                 'retirement_date': {'datetime_select': fill_date}})
-            view.title.click()  # close datetime widget
+            # view.title.click()  # close datetime widget
             changed_warn = view.form.fill({'retirement_warning': warn})
             changed = changed_date or changed_warn
         elif fill_offset:
