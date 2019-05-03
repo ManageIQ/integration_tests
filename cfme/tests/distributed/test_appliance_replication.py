@@ -17,6 +17,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     test_requirements.distributed,
+    # TODO: refactor to use appliance fixtures that use sprout
     pytest.mark.uncollect(reason="test framework broke browser_steal"),
 ]
 
@@ -38,6 +39,7 @@ def get_replication_appliances(appliance):
        with unique region numbers.
     """
     ver_to_prov = str(appliance.version)
+    # FIXME: refactor to use appliance fixtures that use sprout, or pass provider name
     appl1 = provision_appliance(ver_to_prov, 'long-test_repl_A')
     appl2 = provision_appliance(ver_to_prov, 'long-test_repl_B')
     appl1.configure(region=1)
