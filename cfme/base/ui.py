@@ -410,7 +410,11 @@ class Configuration(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.settings.select_item('Configuration')
+        if self.obj.appliance.version < "5.11":
+            self.prerequisite_view.settings.select_item('Configuration')
+        else:
+            self.prerequisite_view.configuration_settings.click()
+
         self.prerequisite_view.browser.handle_alert(wait=2, cancel=False, squash=True)
 
 
