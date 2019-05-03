@@ -139,7 +139,6 @@ def main(**kwargs):
              'auth_url': provider_dict.get('auth_url'),
              }
         provider = get_mgmt(kwargs['provider'], providers=providers, credentials=credentials)
-        flavors = provider_dict['template_upload'].get('flavors', ['m1.medium'])
         provider_type = provider_data['management_systems'][kwargs['provider']]['type']
         deploy_args = {
             'vm_name': kwargs['vm_name'],
@@ -149,11 +148,16 @@ def main(**kwargs):
         provider = get_mgmt(kwargs['provider'])
         provider_dict = cfme_data['management_systems'][kwargs['provider']]
         provider_type = provider_dict['type']
-        flavors = cfme_data['appliance_provisioning']['default_flavors'].get(provider_type, [])
         deploy_args = {
             'vm_name': kwargs['vm_name'],
             'template': kwargs['template'],
         }
+
+    yaml_flavor = [
+        provider_dict.get('sprout', {}).get('flavor_name')
+        or provider_dict.get('provisioning', {}).get('instance_type')
+        or provider_dict.get('template_upload', {}).get('flavor_name')
+    ]  # None if none of them are set
 
     logger.info('Connecting to %s', kwargs['provider'])
 
@@ -199,14 +203,13 @@ def main(**kwargs):
         # filter openstack flavors based on what's available
         available_flavors = provider.list_flavor()
         logger.info("Available flavors on provider: %s", available_flavors)
-        generic_flavors = filter(lambda f: f in available_flavors, flavors)
+        generic_flavors = filter(lambda f: f in available_flavors, yaml_flavor)
 
         try:
-            flavor = (kwargs.get('flavor') or
-                      provider_dict.get('sprout', {}).get('flavor_name') or
-                      generic_flavors[0])
+            # TODO py3 filter needs next() instead of indexing
+            flavor = (kwargs.get('flavor', yaml_flavor) or generic_flavors[0])
         except IndexError:
-            raise Exception('--flavor is required for RHOS instances and '
+            raise Exception('flavor is required for RHOS instances and '
                             'default is not set or unavailable on provider')
         logger.info('Selected flavor: %s', flavor)
 

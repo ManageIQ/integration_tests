@@ -27,6 +27,8 @@ def proxy_machine():
     """
     depot_machine_name = random_vm_name('proxy')
     data = conf.cfme_data.get("proxy_template")
+    if data is None:
+        pytest.skip('Missing proxy_template in cfme_data.yaml, cannot deploy proxy')
     proxy_provider_key = data["provider"]
     proxy_template_name = data["template_name"]
     proxy_port = data['port']

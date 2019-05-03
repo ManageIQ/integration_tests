@@ -2853,33 +2853,37 @@ class Appliance(IPAppliance):
             raise
 
 
-def provision_appliance(version=None, vm_name_prefix='cfme', template=None, provider_name=None,
-                        vm_name=None):
+def provision_appliance(
+    provider_name,
+    version=None,
+    vm_name_prefix='cfme',
+    template=None,
+    vm_name=None
+):
     """Provisions fresh, unconfigured appliance of a specific version
 
     Note:
-        Version must be mapped to template name under ``appliance_provisioning > versions``
-        in ``cfme_data.yaml``.
         If no matching template for given version is found, and trackerbot is set up,
         the latest available template of the same stream will be used.
-        E.g.: if there is no template for 5.5.5.1 but there is 5.5.5.3, it will be used instead.
+        E.g.: if there is no template for 5.10.5.1 but there is 5.10.5.3, it will be used instead.
         If both template name and version are specified, template name takes priority.
 
     Args:
+        provider_name: key of the provider from cfme_data to provision on
         version: version of appliance to provision
         vm_name_prefix: name prefix to use when deploying the appliance vm
 
     Returns: Unconfigured appliance; instance of :py:class:`Appliance`
 
     Usage:
-        my_appliance = provision_appliance('5.5.1.8', 'my_tests')
+        my_appliance = provision_appliance('rhv-43-prov', '5.10.1.8', 'my_tests')
         ...other configuration...
         my_appliance.db.enable_internal()
         my_appliance.wait_for_web_ui()
         my_appliance.set_ntp_sources()
 
         or
-        my_appliance = provision_appliance('5.5.1.8', 'my_tests')
+        my_appliance = provision_appliance('vcenter-65-prov', '5.10.1.8', 'my_tests')
         my_appliance.configure()
     """
 
@@ -2898,26 +2902,19 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         template_data = trackerbot.latest_template(api, stream, provider_name)
         return template_data.get('latest_template')
 
-    if provider_name is None:
-        provider_name = conf.cfme_data.get('appliance_provisioning', {})['default_provider']
-
     if template is not None:
         template_name = template
     elif version is not None:
-        templates_by_version = conf.cfme_data.get('appliance_provisioning', {}).get('versions', {})
-        try:
-            template_name = templates_by_version[version]
-        except KeyError:
-            # We try to get the latest template from the same stream - if trackerbot is set up
-            if conf.env.get('trackerbot', {}):
-                template_name = _get_latest_template()
-                if not template_name:
-                    raise ApplianceException('No template found for stream {} on provider {}'
-                        .format(get_stream(version), provider_name))
-                logger.warning('No template found matching version %s, using %s instead.',
-                    version, template_name)
-            else:
-                raise ApplianceException('No template found matching version {}'.format(version))
+        # We try to get the latest template from the same stream - if trackerbot is set up
+        if conf.env.get('trackerbot', {}):
+            template_name = _get_latest_template()
+            if not template_name:
+                raise ApplianceException('No template found for stream {} on provider {}'
+                    .format(get_stream(version), provider_name))
+            logger.warning('No template found matching version %s, using %s instead.',
+                version, template_name)
+        else:
+            raise ApplianceException('No template found matching version {}'.format(version))
     else:
         raise ApplianceException('Either version or template name must be specified')
 
