@@ -17,6 +17,8 @@ def pytest_configure(config):
     Note:
         Additional filter is added to the global_filters dict of active filters here.
     """
+    if config.getoption('--help'):
+        return
 
     cmd_filter = config.getvalueorskip('use_provider')
     if not cmd_filter:

@@ -71,6 +71,9 @@ def pytest_addhooks(pluginmanager):
 @pytest.mark.trylast
 def pytest_configure(config):
     """Configures the parallel session, then fires pytest_parallel_configured."""
+    if config.getoption('--help'):
+        return
+
     reporter = terminalreporter.reporter()
     holder = config.pluginmanager.get_plugin(APPLIANCE_PLUGIN)
 

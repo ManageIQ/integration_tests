@@ -27,7 +27,12 @@ def pytest_configure(config):
             if appliance.get('is_dev', False):
                 is_dev = True
     tb_url = trackerbot.conf.get('url')
-    if store.parallelizer_role == 'master' or tb_url is None or is_dev:
+    if (
+        config.getoption('--help') or
+        store.parallelizer_role == 'master' or
+        tb_url is None or
+        is_dev
+    ):
         return
 
     # A further optimization here is to make the calls to trackerbot per provider

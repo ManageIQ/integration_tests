@@ -248,6 +248,8 @@ class CoverageManager(object):
 
 class UiCoveragePlugin(object):
     def pytest_configure(self, config):
+        if config.getoption('--help'):
+            return
         # cleanup cruft from previous runs
         if store.parallelizer_role != 'slave':
             clean_coverage_dir()

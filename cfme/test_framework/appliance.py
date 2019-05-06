@@ -47,6 +47,8 @@ def appliances_from_cli(cli_appliances, appliance_version):
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
 
+    if config.getoption('--help'):
+        return
     reporter = terminalreporter.reporter()
     if config.getoption('--dummy-appliance'):
         appliances = [DummyAppliance.from_config(config)]
