@@ -1589,18 +1589,19 @@ def generic_shepherd(self, preconfigured):
             with transaction.atomic():
                 # Now look for templates that are on non-busy providers
                 tpl_free = filter(
-                    lambda t: t.provider.free,
-                    possible_templates_for_provision)
+                    lambda t: not t.provider.disabled and t.provider.free,
+                    possible_templates_for_provision
+                )
                 if tpl_free:
                     chosen_template = sorted(tpl_free, key=lambda t: t.provider.appliance_load)[0]
                     new_appliance_name = gen_appliance_name(chosen_template.id)
                     appliance = Appliance(
                         template=chosen_template,
-                        name=new_appliance_name)
+                        name=new_appliance_name
+                    )
                     appliance.save()
-                    self.logger.info(
-                        "Adding an appliance to shepherd: {}/{}".format(appliance.id,
-                                                                        appliance.name))
+                    self.logger.info("Adding an appliance to shepherd: %s/%s",
+                                     appliance.id, appliance.name)
                     clone_template_to_appliance.delay(appliance.id, None)
         elif len(appliances) > pool_size:
             # Too many appliances, kill the surplus
