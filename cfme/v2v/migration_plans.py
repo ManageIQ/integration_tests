@@ -446,8 +446,8 @@ class MigrationPlan(BaseEntity):
 
     def wait_for_state(self, state):
         try:
-            if state in self.MIGRATION_STATES.keys():
-                method = self.MIGRATION_STATES[state]
+            method = self.MIGRATION_STATES.get(state)
+            if method:
                 return bool(method(self))
             else:
                 raise ValueError("Value {} not defined.It should be 'Started', 'In_Progress',"
