@@ -435,3 +435,30 @@ def test_orphaned_archived_vms_get_excluded_from_used_quota_counts():
         1515979
     """
     pass
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+def test_quota_with_reconfigure_resize_disks():
+    """Test that Quota gets checked against the resize of the disk of VMs.
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/6h
+        testSteps:
+            1. Add VMware provider
+            2. Provision a VM
+            3. Set tenant quota limit for storage
+            4. Resize the disk of the VM over quota limit
+        expectedResults:
+            1.
+            2.
+            3.
+            4. VM reconfiguration request for resize the disk must be exceeded with proper reason.
+
+    Bugzilla:
+        1533263
+    """
+    pass
