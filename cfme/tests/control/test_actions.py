@@ -856,6 +856,9 @@ def test_action_cancel_clone(
     For this test we need big template otherwise CFME won't have enough time
     to cancel the task https://bugzilla.redhat.com/show_bug.cgi?id=1383372#c9
 
+    Metadata:
+        test_flag: policy, actions
+
     Bugzilla:
         1383372
         1685201
@@ -912,7 +915,7 @@ def test_action_check_compliance(
     compliant or not. After reloading vm details screen the compliance status should be changed.
 
     Metadata:
-        test_flag: policy
+        test_flag: policy, actions
 
     Polarion:
         assignee: jdupuy
