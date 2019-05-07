@@ -1,4 +1,5 @@
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import FlashMessages
 from widgetastic_patternfly import NavDropdown
@@ -15,6 +16,7 @@ class BaseLoggedInPage(View):
     CSRF_TOKEN = '//meta[@name="csrf-token"]'
     flash = FlashMessages('.//div[@id="flash_msg_div"]')
     help = NavDropdown('.//li[./a[@id="dropdownMenu1"]]|.//li[./a[@id="help-menu"]]')
+    configuration_settings = Text('.//li[./a[@title="Configuration"]]')      # 5.11+
     settings = SettingsNavDropdown('.//li[./a[@id="dropdownMenu2"]]')
     navigation = VerticalNavigation('#maintab')
 
