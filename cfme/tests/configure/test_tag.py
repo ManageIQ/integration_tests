@@ -12,6 +12,7 @@ from cfme.rest.gen_data import tags as _tags
 from cfme.rest.gen_data import tenants as _tenants
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
@@ -91,6 +92,8 @@ def test_map_tagging_crud(appliance, category, soft_assert):
         assignee: anikifor
         initialEstimate: 1/4h
         casecomponent: Tagging
+    Bugzilla:
+        1707328
     """
     label = fauxfactory.gen_alphanumeric(8)
     map_tags_collection = appliance.collections.map_tags
@@ -113,8 +116,9 @@ def test_map_tagging_crud(appliance, category, soft_assert):
 
     map_tag_entity.delete()
     view = appliance.browser.create_view(navigator.get_class(map_tags_collection, 'All').VIEW)
-    view.flash.assert_success_message('Container Label Tag Mapping "{}": Delete successful'
-                                      .format(map_tag_entity.label))
+    if not BZ(1707328).blocks:
+        view.flash.assert_success_message('Container Label Tag Mapping "{}": Delete successful'
+                                          .format(map_tag_entity.label))
 
 
 def test_updated_tag_name_on_vm(provider, tag, request):
