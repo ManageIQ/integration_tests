@@ -986,7 +986,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         logger.debug('Waiting for SSH to %s to become connective.',
                      self.hostname)
         self.wait_for_ssh()
-        logger.debug('SSH to %s ready.', self.hostname)
+        logger.debug('SSH port on %s ready.', self.hostname)
 
         # IPAppliance.ssh_client only connects to its address
         if self.openshift_creds:
@@ -1012,17 +1012,25 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             }
         if self.is_dev:
             connect_kwargs.update({'is_dev': True})
-        ssh_client = ssh.SSHClient(**connect_kwargs)
-        try:
-            ssh_client.get_transport().is_active()
-            logger.info('default appliance ssh credentials are valid')
-        except Exception as e:
-            if self.is_dev:
-                raise Exception('SSH access on a dev alliance, (unsupported)')
-            logger.error(e)
-            logger.error('default appliance ssh credentials failed, trying establish ssh connection'
-                         ' using ssh private key')
-            ssh_client = self.ssh_client_with_privatekey()
+
+        def create_ssh_connection():
+            ssh_client = ssh.SSHClient(**connect_kwargs)
+            try:
+                ssh_client.get_transport().is_active()
+                logger.info('default appliance ssh credentials are valid')
+            except Exception as e:
+                if self.is_dev:
+                    raise Exception('SSH access on a dev appliance (unsupported): {}'.format(e))
+                logger.exception(
+                    ('default appliance ssh credentials failed: {}, '
+                     'trying establish ssh connection using ssh private key').format(e))
+                ssh_client.close()
+
+                ssh_client = self.ssh_client_with_privatekey()
+            assert ssh_client.run_command('true').success
+            return ssh_client
+
+        ssh_client = wait_for(func=create_ssh_connection, delay=5, timeout=120).out
         # FIXME: properly store ssh clients we made
         store.ssh_clients_to_close.append(ssh_client)
         return ssh_client
@@ -1044,7 +1052,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         except (AttributeError, KeyError, IOError):
             self.log.exception('appliance.swap could not be retrieved from REST, falling back')
             value = self.ssh_client.run_command(
-                'free -m | tr -s " " " " | cut -f 3 -d " " | tail -n 1', reraise=True, timeout=15)
+                'free -m | tr -s " " " " | cut -f 3 -d " " | tail -n 1', timeout=15)
             try:
                 value = int(value.output.strip())
             except (TypeError, ValueError):

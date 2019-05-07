@@ -262,14 +262,13 @@ class SSHClient(paramiko.SSHClient):
             self.connect()
         return super(SSHClient, self).get_transport(*args, **kwargs)
 
-    def run_command(self, command, timeout=RUNCMD_TIMEOUT, reraise=False, ensure_host=False,
+    def run_command(self, command, timeout=RUNCMD_TIMEOUT, ensure_host=False,
                     ensure_user=False, container=None):
         """Run a command over SSH.
 
         Args:
             command: The command. Supports taking dicts as version picking.
             timeout: Timeout after which the command execution fails.
-            reraise: Does not muffle the paramiko exceptions in the log.
             ensure_host: Ensure that the command is run on the machine with the IP given, not any
                 container or such that we might be using by default.
             ensure_user: Ensure that the command is run as the user we logged in, so in case we are
@@ -282,13 +281,13 @@ class SSHClient(paramiko.SSHClient):
         # this is some kind of watchdog to handle this issue
         try:
             with gevent.Timeout(timeout):
-                return self._run_command(command, timeout, reraise, ensure_host, ensure_user,
+                return self._run_command(command, timeout, ensure_host, ensure_user,
                                          container)
         except gevent.Timeout:
             logger.error("command %s couldn't finish in given timeout %s", command, timeout)
             raise
 
-    def _run_command(self, command, timeout=RUNCMD_TIMEOUT, reraise=False, ensure_host=False,
+    def _run_command(self, command, timeout=RUNCMD_TIMEOUT, ensure_host=False,
                      ensure_user=False, container=None):
         if isinstance(command, dict):
             command = VersionPicker(command).pick(self.vmdb_version)
@@ -380,11 +379,6 @@ class SSHClient(paramiko.SSHClient):
             if exit_status != 0:
                 logger.warning('Exit code %d!', exit_status)
             return SSHResult(rc=exit_status, output=''.join(output), command=command)
-        except paramiko.SSHException:
-            if reraise:
-                raise
-            else:
-                logger.exception('Exception happened during SSH call')
         except socket.timeout:
             logger.exception(
                 "Command %r timed out. Output before it failed was:\n%r",
