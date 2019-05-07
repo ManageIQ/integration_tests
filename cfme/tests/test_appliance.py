@@ -6,6 +6,8 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils import conf
+from cfme.utils.log_validator import LogValidator
+from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
 
@@ -406,3 +408,49 @@ def test_appliance_log_error():
         initialEstimate: 1/2h
     """
     pass
+
+
+def test_codename_in_log(appliance):
+    """
+    check whether logs contains a mention of appliance codename
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Appliance
+        initialEstimate: 1/60h
+    """
+    log = '/var/www/miq/vmdb/log/evm.log'
+    lv = LogValidator(log,
+                      matched_patterns=[r'.*Codename: \w+$'],
+                      hostname=appliance.hostname)
+    lv.fix_before_start()
+    appliance.ssh_client.run_command('appliance_console_cli --server=restart')
+
+    @wait_for_decorator
+    def codename_in_log():
+        try:
+            lv.validate_logs()
+        except pytest.Fail:
+            return False
+        else:
+            return True
+
+
+def test_codename_in_stdout(appliance):
+    """
+    check whether stdout contains a mention of appliance codename
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Appliance
+        initialEstimate: 1/60h
+    """
+    cursor = appliance.ssh_client.run_command(
+        'journalctl -u evmserverd --show-cursor | tail -n1').output.split('-- cursor: ')[1]
+    appliance.ssh_client.run_command('appliance_console_cli --server=restart')
+
+    @wait_for_decorator
+    def codename_in_stdout():
+        r = appliance.ssh_client.run_command(
+            r'journalctl -u evmserverd -c "{}" | egrep -i "codename: \w+$"'.format(cursor))
+        return r.success
