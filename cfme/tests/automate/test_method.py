@@ -283,29 +283,23 @@ def test_send_email_method(request, klass):
         1688500
         1702304
     """
-    # Resetting role - 'notifier' to default value
-    request.addfinalizer(
-        lambda: klass.appliance.server.settings.update_server_roles_ui({"notifier": False})
-    )
-
     mail_to = fauxfactory.gen_email()
     mail_cc = fauxfactory.gen_email()
     mail_bcc = fauxfactory.gen_email()
 
-    script = '''
-                \nto = "{mail_to}"
-                \nsubject = "Hello"
-                \nbody = "Hi"
-                \nbcc = "{mail_bcc}"
-                \ncc = "{mail_cc}"
-                \ncontent_type = "message"
-                \nfrom = "cfadmin@cfserver.com"
-             '''
-    script = script.format(mail_cc=mail_cc, mail_bcc=mail_bcc, mail_to=mail_to)
-    script += (
-        "$evm.execute(:send_email, to, from, subject, body, {:bcc => bcc, :cc => cc, "
-        ":content_type => content_type})"
+    # Ruby code to send emails
+    script = (
+        'to = "{mail_to}"\n'
+        'subject = "Hello"\n'
+        'body = "Hi"\n'
+        'bcc = "{mail_bcc}"\n'
+        'cc = "{mail_cc}"\n'
+        'content_type = "message"\n'
+        'from = "cfadmin@cfserver.com"\n'
+        "$evm.execute(:send_email, to, from, subject, body, {{:bcc => bcc, :cc => cc,"
+        ":content_type => content_type}})"
     )
+    script = script.format(mail_cc=mail_cc, mail_bcc=mail_bcc, mail_to=mail_to)
 
     # Adding schema for executing method - send_email which helps to send emails
     klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
