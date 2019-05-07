@@ -28,6 +28,9 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    if config.getoption('--help'):
+        return
+
     from cfme.fixtures.pytest_store import store
 
     marks_to_skip = []

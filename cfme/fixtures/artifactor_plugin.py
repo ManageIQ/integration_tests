@@ -118,6 +118,8 @@ def pytest_addoption(parser):
 
 @pytest.mark.tryfirst
 def pytest_configure(config):
+    if config.getoption('--help'):
+        return
     art_client = get_client(
         art_config=env.get('artifactor', {}),
         pytest_config=config)

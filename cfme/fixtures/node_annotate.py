@@ -30,6 +30,8 @@ class MarkFromMap(object):
 
 
 def pytest_configure(config):
+    if config.getoption('--help'):
+        return
     path = cfme_data.get('cfme_annotations_path')
     if path:
         to_parse = project_path.join(path)
