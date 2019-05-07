@@ -269,13 +269,11 @@ def test_task_id_for_method_automation_log(request, generic_catalog_item):
 
 @pytest.mark.meta(blockers=[BZ(1704439)])
 @pytest.mark.meta(server_roles="+notifier")
-def test_send_email_method(request, klass):
+def test_send_email_method(smtp_test, klass):
     """
     Polarion:
         assignee: ghubale
         initialEstimate: 1/20h
-        caseimportance: high
-        testtype: functional
         startsin: 5.10
         casecomponent: Automate
 
@@ -318,16 +316,6 @@ def test_send_email_method(request, klass):
         description=fauxfactory.gen_alphanumeric(),
         fields={'execute': {'value': method.name}}
     )
-
-    # Setting Outgoing SMTP E-mail Server
-    klass.appliance.server.settings.update_smtp_server(
-        {"host": "smtp.corp.redhat.com", "domain": "redhat.com", "auth": "none"}
-    )
-
-    # Resetting SMTP E-mail Server settings to default
-    request.addfinalizer(lambda: klass.appliance.server.settings.update_smtp_server(
-        {"host": "localhost", "domain": "mydomain.com", "auth": "login"}
-    ))
 
     result = LogValidator(
         "/var/www/miq/vmdb/log/evm.log",
