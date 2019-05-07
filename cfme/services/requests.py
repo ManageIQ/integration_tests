@@ -185,6 +185,7 @@ class Request(BaseEntity):
             view.breadcrumb.click_location(view.breadcrumb.locations[1], handle_alert=True)
         view.flash.assert_no_error()
 
+    @variable
     def remove_request(self, cancel=False):
         """Opens the specified request and deletes it - removes from UI
         Args:
@@ -192,6 +193,16 @@ class Request(BaseEntity):
         """
         view = navigate_to(self, 'Details')
         view.toolbar.delete.click(handle_alert=not cancel)
+
+    @remove_request.variant("rest")
+    def remove_request_rest(self):
+        if "service" in self.rest.request_type:
+            request = self.appliance.rest_api.collections.service_requests.find_by(id=self.rest.id)
+            request[0].action.delete()
+        else:
+            raise NotImplementedError(
+                "{} does not support delete operation via REST".format(self.rest.request_type)
+            )
 
     @variable(alias='rest')
     def is_finished(self):
