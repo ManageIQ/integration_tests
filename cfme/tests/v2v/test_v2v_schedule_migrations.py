@@ -60,9 +60,9 @@ def test_schedule_migration(appliance, provider, mapping_data_vm_obj_mini, soft_
     view.plans_not_started_list.schedule_migration(migration_plan.name)
     soft_assert("Migration scheduled" in view.plans_not_started_list.get_clock(migration_plan.name))
 
-    assert migration_plan.plan_started
-    assert migration_plan.in_progress
-    assert migration_plan.completed
-    assert migration_plan.successful
+    assert migration_plan.wait_for_state("Started")
+    assert migration_plan.wait_for_state("In_Progress")
+    assert migration_plan.wait_for_state("Completed")
+    assert migration_plan.wait_for_state("Successful")
     migrated_vm = get_migrated_vm(src_vm_obj, provider)
     soft_assert(src_vm_obj.mac_address == migrated_vm.mac_address)
