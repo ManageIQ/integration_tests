@@ -150,14 +150,13 @@ def set_conversion_instance_for_rhev(appliance, transformation_method, rhev_host
         transformation_method : vddk or ssh as per test requirement
         rhev_hosts: hosts in rhev to configure for conversion
     """
+    # Delete all prior conversion hosts otherwise it creates duplicate entries
+    delete_hosts = appliance.ssh_client.run_rails_command("ConversionHost.delete_all")
+    if not delete_hosts.success:
+        pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
 
     for host in rhev_hosts:
         # set conversion host via rails console
-        # Delete all prior conversion hosts otherwise it creates duplicate entries
-        delete_hosts = appliance.ssh_client.run_rails_command("'ConversionHost.delete_all'")
-        if not delete_hosts.success:
-            pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
-
         set_conv_host = appliance.ssh_client.run_rails_command(
             "'r = Host.find_by(name:{host});\
         c_host = ConversionHost.create(name:{host},resource:r);\

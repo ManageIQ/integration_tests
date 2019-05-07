@@ -218,7 +218,7 @@ class AddMigrationPlanView(View):
                     if vm.name in row.vm_name.read():
                         # select checkbox
                         row[0].fill(True)
-            self.clear_filters.click()
+                self.clear_filters.click()
             was_change = True
             self.after_fill(was_change)
             return was_change
@@ -317,7 +317,6 @@ class MigrationPlanRequestDetailsView(View):
 
     def plan_in_progress(self):
         """Return True or False, depending on migration plan status.
-
         If none of the VM migrations are in progress, return True.
         """
         self.items_on_page.item_select("15")
@@ -443,7 +442,7 @@ class MigrationPlan(BaseEntity):
         view.wait_displayed()
         wait_for(func=view.plan_in_progress,
                  message="migration plan is in progress, be patient please",
-                 delay=5, num_sec=2400)
+                 delay=5, num_sec=3600)
         request_details_list = view.migration_request_details_list
         return request_details_list
 
