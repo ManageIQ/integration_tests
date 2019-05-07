@@ -4094,7 +4094,7 @@ def test_puma_server():
     Worker]
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         casecomponent: WebUI
         initialEstimate: 1/2h
     """
