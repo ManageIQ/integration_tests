@@ -26,6 +26,7 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import HiddenFileInput
 from widgetastic_manageiq import MigrationDashboardStatusCard
@@ -367,7 +368,11 @@ class MigrationPlan(BaseEntity):
     post_checkbox = attr.ib(default=False)
     start_migration = attr.ib(default="Start migration immediately")
 
-    @property
+    MIGRATION_STATES = {'Started': lambda self: self.plan_started(),
+                        'In_Progress': lambda self: self.in_progress(),
+                        'Completed': lambda self: self.completed(),
+                        'Successful': lambda self: self.successful()}
+
     def plan_started(self):
         """waits until the plan begins and starts showing progress time"""
         view = navigate_to(self, "InProgress")
@@ -380,14 +385,12 @@ class MigrationPlan(BaseEntity):
             handle_exception=True
         )
 
-    @property
     def in_progress(self):
         """
         Migration plan takes some time to complete.
         Plan is visible means migration is still in progress so we wait until
         the plan is invisible(or till migration is complete).
         """
-
         view = navigate_to(self, "InProgress")
 
         def _in_progress():
@@ -416,9 +419,9 @@ class MigrationPlan(BaseEntity):
             message="migration plan is in progress, be patient please",
             delay=5,
             num_sec=1800,
+            fail_cond=False
         )
 
-    @property
     def completed(self):
         """ Uses search box to find migration plan, return True if found.
             checks if plan is completed.
@@ -426,7 +429,6 @@ class MigrationPlan(BaseEntity):
         view = navigate_to(self, "Complete")
         return self.name in view.plans_completed_list.read()
 
-    @property
     def successful(self):
         """ Find migration plan and checks if plan is successful."""
         view = navigate_to(self, "Complete")
@@ -444,6 +446,17 @@ class MigrationPlan(BaseEntity):
                  delay=5, num_sec=2400)
         request_details_list = view.migration_request_details_list
         return request_details_list
+
+    def wait_for_state(self, state):
+        try:
+            method = self.MIGRATION_STATES.get(state)
+            if method:
+                return bool(method(self))
+            else:
+                raise ValueError("Value {} not defined.It should be 'Started', 'In_Progress',"
+                                 " 'Completed' or 'Successful'".format(state))
+        except TimedOutError:
+            logger.info("Wait for state :%s timed out", state)
 
 
 @attr.s
