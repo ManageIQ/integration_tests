@@ -1213,7 +1213,7 @@ def test_copied_user_password_inheritance(appliance, group_collection, request):
 def test_delete_default_tenant(appliance):
     """
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: low
         tags: cfme_tenancy
@@ -1248,7 +1248,7 @@ def test_superadmin_tenant_crud(request, appliance):
         * This test is not depending on any other test and can be executed against fresh appliance.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: low
         tags: cfme_tenancy
@@ -1286,7 +1286,7 @@ def test_superadmin_tenant_project_crud(request, appliance):
         * This test is not depending on any other test and can be executed against fresh appliance.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
@@ -1334,7 +1334,7 @@ def test_superadmin_child_tenant_crud(request, appliance, number_of_childrens):
         * This test is not depending on any other test and can be executed against fresh appliance.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
@@ -1380,7 +1380,7 @@ def test_unique_name_on_parent_level(request, appliance, collection_name):
         * This test is not depending on any other test and can be executed against fresh appliance.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
@@ -1423,7 +1423,7 @@ def test_superadmin_tenant_admin_crud(appliance, group_collection):
     Super admin is able to create new tenant administrator
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
@@ -1450,7 +1450,7 @@ def test_tenant_unique_catalog(appliance, request, catalog_obj):
     name "catalog" defined.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
@@ -1479,7 +1479,7 @@ def test_tenant_visibility_service_template_catalogs_all_parents():
     in parent tenants.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: medium
         tags: cfme_tenancy
@@ -1497,7 +1497,7 @@ def test_tenant_visibility_services_all_childs():
     Members of parent tenant can see services of all child tenants.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: medium
         tags: cfme_tenancy
@@ -1515,7 +1515,7 @@ def test_tenant_osp_mapping_refresh():
     tenants.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         caseimportance: medium
         casecomponent: Appliance
         tags: cfme_tenancy
@@ -1540,7 +1540,7 @@ def test_tenant_visibility_providers_all_parents():
     Child tenants can see providers which were defined in parent tenants.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: medium
         tags: cfme_tenancy
@@ -1558,7 +1558,7 @@ def test_tenant_visibility_miq_requests_all_childs():
     Tenant members can see MIQ requests of this tenant and its children.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: medium
         tags: cfme_tenancy
@@ -1575,7 +1575,7 @@ def test_tenant_osp_mapping_delete():
     Tenants created by tenant mapping cannot be deleted.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: medium
         tags: cfme_tenancy
@@ -1598,7 +1598,7 @@ def test_tenant_ssui_users_can_see_their_services():
     Self Service UI - users can see their services
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: medium
         tags: cfme_tenancy
@@ -1644,7 +1644,7 @@ def test_tenant_unique_automation_domain_name_on_parent_level(appliance, request
     used twice.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
@@ -1679,7 +1679,7 @@ def test_tenantadmin_user_crud():
     As a Tenant Admin I want to be able to create users in my tenant
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
@@ -1710,7 +1710,7 @@ def test_tenant_automation_domains():
     Tenants can see Automation domains owned by tenant or parent tenants
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
@@ -1757,7 +1757,7 @@ def test_superadmin_child_tenant_delete_parent_catalog(appliance, group_collecti
         1375713
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
@@ -1802,7 +1802,7 @@ def test_verify_groups_for_tenant_user():
     where user belongs to)
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: medium
         tags: cfme_tenancy
@@ -1820,7 +1820,7 @@ def test_tenant_visibility_service_template_items_all_parents():
     tenants.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: medium
         tags: cfme_tenancy
@@ -1838,7 +1838,7 @@ def test_tenantadmin_group_crud():
     roles in my tenant and assign roles
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
@@ -1862,7 +1862,7 @@ def test_tenant_visibility_vms_all_childs():
     child tenants.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: medium
         tags: cfme_tenancy
@@ -1879,7 +1879,7 @@ def test_tenant_ldap_group_switch_between_tenants():
     User who is member of 2 or more LDAP groups can switch between tenants
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: high
         tags: cfme_tenancy
@@ -1916,7 +1916,7 @@ def test_tenant_visibility_miq_ae_namespaces_all_parents():
     Child tenants can see MIQ AE namespaces of parent tenants.
 
     Polarion:
-        assignee: mnadeem
+        assignee: nachandr
         casecomponent: Configuration
         caseimportance: medium
         tags: cfme_tenancy
