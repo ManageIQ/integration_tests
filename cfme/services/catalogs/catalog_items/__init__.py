@@ -361,7 +361,11 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
     def button_group_exists(self, name):
         view = navigate_to(self, "Details")
         path = view.catalog_items.tree.read()
-        path.extend(["Actions", "{} (Group)".format(name)])
+
+        # For 5.11+ no group tagging hover points group or button
+        path.extend(
+            ["Actions", "{}{}".format(name, " (Group)" if self.appliance.version < "5.11" else "")]
+        )
 
         try:
             view.catalog_items.tree.fill(path)
@@ -372,13 +376,17 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
     def delete_button_group(self, name):
         view = navigate_to(self, "Details")
         path = view.catalog_items.tree.read()
-        path.extend(["Actions", "{} (Group)".format(name)])
+
+        # For 5.11+ no group tagging hover points group or button
+        path.extend(
+            ["Actions", "{}{}".format(name, " (Group)" if self.appliance.version < "5.11" else "")]
+        )
         view.catalog_items.tree.fill(path)
         view.configuration.item_select("Remove this Button Group", handle_alert=True)
         view.flash.assert_no_error()
 
         # TODO(BZ-1687289): To avoid improper page landing adding a workaround.
-        if BZ(1687289).blocks:
+        if BZ(1687289, forced_streams=['5.11']).blocks:
             view.browser.refresh()
 
     def add_button(self, **kwargs):
@@ -434,7 +442,7 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         view.flash.assert_no_error()
 
         # TODO(BZ-1687289): To avoid improper page landing adding a workaround.
-        if BZ(1687289).blocks:
+        if BZ(1687289, forced_streams=['5.11']).blocks:
             view.browser.refresh()
 
     @property
