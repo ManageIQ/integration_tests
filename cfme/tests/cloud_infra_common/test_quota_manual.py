@@ -445,7 +445,6 @@ def test_quota_with_reconfigure_resize_disks():
     Polarion:
         assignee: ghubale
         casecomponent: Infra
-        caseimportance: high
         initialEstimate: 1/6h
         testSteps:
             1. Add VMware provider
@@ -456,7 +455,8 @@ def test_quota_with_reconfigure_resize_disks():
             1.
             2.
             3.
-            4. VM reconfiguration request for resize the disk must be exceeded with proper reason.
+            4. VM reconfiguration request for resizing the disk should be denied with reason quota
+               exceeded.
 
     Bugzilla:
         1533263
