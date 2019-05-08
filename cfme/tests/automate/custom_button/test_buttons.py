@@ -242,6 +242,7 @@ def test_button_required(appliance, field):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[BZ(1706900)])
 def test_open_url_availability(appliance):
     """Test open URL option should only available for Single display.
 
@@ -258,10 +259,13 @@ def test_open_url_availability(appliance):
         testSteps:
             1. Create a Button with other than Single display options
             2. Assert flash message.
+
+    Bugzilla:
+        1706900
     """
 
     unassigned_gp = appliance.collections.button_groups.instantiate(
-        text="[Unassigned Buttons]", hover="Unassigned buttons", type="Provider"
+        text="[Unassigned Buttons]", hover="Unassigned buttons", type="VM and Instance"
     )
     button_coll = appliance.collections.buttons
     button_coll.group = unassigned_gp  # Need for supporting navigation
@@ -279,6 +283,7 @@ def test_open_url_availability(appliance):
         }
     )
 
+    # check open url facility other than single display.
     for display in ["List", "Single and list"]:
         view.options.display_for.fill(display)
         view.add_button.click()
