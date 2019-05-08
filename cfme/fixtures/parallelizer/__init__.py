@@ -314,14 +314,13 @@ class ParallelSession(object):
                 yield
                 if polls % poll_report_modulo == 0:
                     remaining_time = int(poll_num_sec - (time() - start_time))
-                    self.print_message(
-                        '{} still shutting down, '
-                        'will continue polling for {} seconds '
-                        .format(slaveid.decode('ascii'), remaining_time), blue=True)
+                    self.print_message('{} shutting down, will continue polling for {} seconds'
+                                       .format(slaveid.decode('ascii'), remaining_time),
+                                       blue=True)
                 sleep(poll_sleep_time)
 
         # start the poll
-        for poll in sleep_and_poll():
+        for _ in sleep_and_poll():
             ec = process.poll()
             if ec is None:
                 continue
@@ -581,14 +580,13 @@ class ParallelSession(object):
                 prov = provs[0]
                 # Already too many slaves with provider
                 app = slave.appliance
-                self.print_message(
-                    'cleansing appliance', slave, purple=True)
+                self.print_message('removing providers from appliance', slave, purple=True)
                 try:
                     app.delete_all_providers()
                 except Exception as e:
-                    self.print_message(
-                        'cloud not cleanse', slave, red=True)
-                    self.print_message('error:', e, red=True)
+                    self.print_message('exception during provider removal: {}'.format(e),
+                                       slave,
+                                       red=True)
             slave.provider_allocation = [prov]
             self._pool.remove(test_group)
             return test_group
