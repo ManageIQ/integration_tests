@@ -16,6 +16,7 @@ from cfme.fixtures.provider import win7_template
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.provider(
@@ -319,6 +320,7 @@ def test_migrations_different_os_templates(
     [["SSH", ["nfs", "nfs", [rhel7_minimal]]]],
     indirect=True,
 )
+@pytest.mark.meta(blockers=[BZ(1707983, forced_streams=['5.10'])])
 def test_single_vm_migration_with_ssh(
     request, appliance, provider, mapping_data_multiple_vm_obj_single_datastore
 ):
