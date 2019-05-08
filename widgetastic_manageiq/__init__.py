@@ -5348,3 +5348,23 @@ class SearchBox(TextInput):
         self.browser.send_keys(value, self)
         self.browser.send_keys(Keys.ENTER, self)
         return True
+
+
+class AutomateRadioGroup(RadioGroup):
+    """RadioGroup for Custom Button"""
+
+    LABELS = ".//label"
+    BUTTON = './/label[normalize-space(.)={}]/preceding-sibling::input[@type="radio"][1]'
+
+    @property
+    def selected(self):
+        for name in self.button_names:
+            bttn = self.browser.element(self.BUTTON.format(quote(name)))
+            if bttn.get_attribute("checked") is not None:
+                return name
+
+    def select(self, name):
+        if self.selected != name:
+            self.browser.element(self.BUTTON.format(quote(name))).click()
+            return True
+        return False
