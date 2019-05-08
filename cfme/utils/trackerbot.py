@@ -9,6 +9,7 @@ from six.moves.urllib_parse import parse_qs
 from six.moves.urllib_parse import urlparse
 
 from cfme.utils.conf import env
+from cfme.utils.log import logger
 from cfme.utils.providers import providers_data
 
 session = requests.Session()
@@ -297,10 +298,11 @@ def composite_uncollect(build, source='jenkins', limit_ts=None):
         resp = session.get(
             conf['ostriz'],
             params=params,
-            timeout=10)
+            timeout=(6, 60)  # 6s connect, 60s read
+        )
         return resp.json()
-    except Exception as e:
-        print(e)
+    except Exception:
+        logger.exception('Composite Uncollect hit an exception making request')
         return {'tests': []}
 
 
