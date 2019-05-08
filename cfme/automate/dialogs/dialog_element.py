@@ -242,6 +242,3 @@ class Edit(CFMENavigateStep):
     VIEW = EditElementView
 
     prerequisite = NavigateToAttribute('dialog', 'Edit')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.element.edit_element("Text Box")
