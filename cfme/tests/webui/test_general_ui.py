@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.common.provider_views import ProviderAddView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -226,6 +227,28 @@ def test_infrastructure_filter_20k_vms(appliance, create_20k_vms):
     assert items_amount >= 20000, 'Vms count is less than should be filtered'
 
 
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.tier(2)
+def test_welcoming_page(appliance, has_no_providers):
+    """This test case checks the new welcoming page when there is no provider in the appliance
+
+    Polarion:
+        assignee: pvala
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/5h
+
+    Bugzilla:
+        1678190
+    """
+    appliance.server.logout()
+    view = navigate_to(appliance.server, "LoggedIn")
+    assert view.add_button.is_displayed
+    view.add_button.click()
+    add_infra_view = appliance.server.create_view(ProviderAddView)
+    assert add_infra_view.is_displayed
+
+
 @pytest.mark.ignore_stream('5.10')
 @pytest.mark.manual
 @pytest.mark.tier(1)
@@ -401,28 +424,6 @@ def test_timeout():
             4. There should be redirection to login view.
             5. Log in.
             6. There should be redirection to dashboard view.
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_welcoming_page():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/5h
-        setup:
-            1. Login to a new appliance.
-        testSteps:
-            1. Check if the welcome/landing page contains `Add a Provider` action.
-        expectedResults:
-            1. Welcome/Landing page must show the next action, ie. `Add a Provider
-
-    Bugzilla:
-        1678190
     """
     pass
 

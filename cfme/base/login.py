@@ -19,6 +19,7 @@ class BaseLoggedInPage(View):
     configuration_settings = Text('.//li[./a[@title="Configuration"]]')      # 5.11+
     settings = SettingsNavDropdown('.//li[./a[@id="dropdownMenu2"]]')
     navigation = VerticalNavigation('#maintab')
+    add_button = Text('//*[@id="main_div"]//div/a')
 
     @property
     def is_displayed(self):
