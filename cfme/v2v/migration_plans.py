@@ -381,7 +381,7 @@ class MigrationPlan(BaseEntity):
             func_args=[self.name],
             message="migration plan is starting, be patient please",
             delay=5,
-            num_sec=150,
+            num_sec=300,
             handle_exception=True
         )
 
@@ -479,7 +479,7 @@ class MigrationPlanCollection(BaseCollection):
         post_playbook=None,
         pre_checkbox=False,
         post_checkbox=False,
-        start_migration="Start migration immediately",
+        start_migration=True
     ):
         """Create new migration plan in UI
         Args:
@@ -495,7 +495,7 @@ class MigrationPlanCollection(BaseCollection):
             post_playbook: (string) post-migration playbook name
             pre_checkbox: checkbox premigration playbook
             post_checkbox: post migration checkbox
-            start_migration: (string) text of radio button to choose
+            start_migration: (bool) flag to start migration
         """
         view = navigate_to(self, "Add")
 
@@ -527,8 +527,13 @@ class MigrationPlanCollection(BaseCollection):
             'pre_checkbox': pre_checkbox,
             'post_checkbox': post_checkbox
         })
+
+        # Schedule migration check
         view.schedule.wait_displayed()
-        view.schedule.fill(start_migration)
+        start_selection = ("Start migration immediately"
+                           if start_migration else "Save migration plan to run later")
+        view.schedule.fill(start_selection)
+
         return self.instantiate(
             name=name,
             infra_map=infra_map,
@@ -566,7 +571,7 @@ class AddMigrationPlan(CFMENavigateStep):
 
 @navigator.register(MigrationPlanCollection, "NotStarted")
 class NotStartedPlans(CFMENavigateStep):
-    prerequisite = NavigateToAttribute("parent", "All")
+    prerequisite = NavigateToSibling("All")
 
     VIEW = NotStartedPlansView
 
