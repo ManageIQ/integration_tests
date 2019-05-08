@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -9,29 +10,29 @@ from cfme.markers.env_markers.provider import ONE_PER_VERSION
 
 
 pytestmark = [
-    pytest.mark.ignore_stream('5.8'),
     pytest.mark.provider(
-        classes=[RHEVMProvider],
+        classes=[RHEVMProvider, OpenStackProvider],
         selector=ONE_PER_VERSION,
-        required_flags=['v2v'],
-        scope="module"
+        required_flags=["v2v"],
+        scope="module",
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
         selector=ONE_PER_TYPE,
-        fixture_name='source_provider',
-        required_flags=['v2v'],
-        scope="module"
-    )
+        required_flags=["v2v"],
+        fixture_name="source_provider",
+        scope="module",
+    ),
+    pytest.mark.usefixtures("v2v_provider_setup")
 ]
 
 
 @pytest.fixture(scope="function")
-def get_clusters(appliance, v2v_providers):
+def get_clusters(appliance, provider, source_provider):
     clusters = {}
     try:
-        source_cluster = v2v_providers.vmware_provider.data.get("clusters")[0]
-        target_cluster = v2v_providers.rhv_provider.data.get("clusters")[0]
+        source_cluster = provider.data.get("clusters")[0]
+        target_cluster = source_provider.data.get("clusters")[0]
     except IndexError:
         pytest.skip("Cluster not found in given provider data")
     cluster_db = {
@@ -55,13 +56,13 @@ def get_clusters(appliance, v2v_providers):
 
 
 @pytest.fixture(scope="function")
-def get_datastores(appliance, v2v_providers):
+def get_datastores(appliance, provider, source_provider):
     datastores = {}
     try:
         source_ds = [
-            i.name for i in v2v_providers.vmware_provider.data.datastores if i.type == "nfs"][0]
+            i.name for i in provider.data.datastores if i.type == "nfs"][0]
         target_ds = [
-            i.name for i in v2v_providers.rhv_provider.data.datastores if i.type == "nfs"][0]
+            i.name for i in source_provider.data.datastores if i.type == "nfs"][0]
     except IndexError:
         pytest.skip("Datastore not found in given provider data")
     datastore_db = {
@@ -85,11 +86,11 @@ def get_datastores(appliance, v2v_providers):
 
 
 @pytest.fixture(scope="function")
-def get_networks(appliance, v2v_providers):
+def get_networks(appliance, provider, source_provider):
     networks = {}
     try:
-        source_network = v2v_providers.vmware_provider.data.get("vlans", [None])[0]
-        target_network = v2v_providers.rhv_provider.data.get("vlans", [None])[0]
+        source_network = provider.data.get("vlans", [None])[0]
+        target_network = source_provider.data.get("vlans", [None])[0]
     except IndexError:
         pytest.skip("Network not found in given provider data")
     network_db = {
@@ -181,88 +182,6 @@ def test_rest_mapping_bulk_delete_from_collection(
 
     mapping[0].action.delete()
     transformation_mappings.action.delete(*mapping)
-    assert appliance.rest_api.response
-    results = appliance.rest_api.response.json()["results"]
-    assert results[0]["success"] is False
-    assert results[1]["success"] is True
-
-
-def test_rest_conversion_crud(request, appliance):
-    """
-    Tests conversion host crud
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        testtype: functional
-        initialEstimate: 1/8h
-        subcomponent: RHV
-        startsin: 5.9
-        tags: V2V
-    """
-    conversion_host = appliance.rest_api.collections.conversion_hosts.action.create(
-        name=fauxfactory.gen_alphanumeric(),
-        resource_type="Host",
-        resource_id=1,
-        vddk_transport_supported="true",
-        ssh_transport_supported="false")[0]
-
-    assert conversion_host.exists
-
-    edited_host = appliance.rest_api.collections.conversion_hosts.action.edit(
-        id=conversion_host.id,
-        name=fauxfactory.gen_alphanumeric(),
-        resource_type="VmOrTemplate",
-        resource_id=2,
-        vddk_transport_supported="false",
-        ssh_transport_supported="true")[0]
-
-    @request.addfinalizer
-    def _cleanup():
-        if edited_host.exists:
-            edited_host.action.delete()
-
-    assert appliance.rest_api.response
-
-
-def test_rest_conversion_bulk_delete_from_collection(request, appliance):
-    """
-    Tests conversion host bulk delete from collection.
-
-    Bulk delete operation deletes all specified resources that exist. When the
-    resource doesn't exist at the time of deletion, the corresponding result
-    has "success" set to false.
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        testtype: functional
-        initialEstimate: 1/8h
-        subcomponent: RHV
-        startsin: 5.9
-        tags: V2V
-    """
-    conversion_host = appliance.rest_api.collections.conversion_hosts
-    data = [
-        {
-            "name": fauxfactory.gen_alphanumeric(),
-            "resource_type": "Host",
-            "resource_id": 1,
-            "vddk_transport_supported": "true",
-            "ssh_transport_supported": "false"
-        }
-        for _ in range(2)
-    ]
-    hosts_obj = conversion_host.action.create(*data)
-
-    @request.addfinalizer
-    def _cleanup():
-        for m in hosts_obj:
-            if m.exists:
-                m.action.delete()
-
-    hosts_obj[0].action.delete()
-    conversion_host.action.delete(*hosts_obj)
     assert appliance.rest_api.response
     results = appliance.rest_api.response.json()["results"]
     assert results[0]["success"] is False
