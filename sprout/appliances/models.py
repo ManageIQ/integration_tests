@@ -1548,6 +1548,7 @@ class AppliancePool(MetadataMixin):
         return User.objects\
             .filter(groups__in=common_groups, is_active=True)\
             .exclude(pk=self.owner.pk)\
+            .distinct()\
             .order_by("last_name", "first_name", 'username')
 
     @property
