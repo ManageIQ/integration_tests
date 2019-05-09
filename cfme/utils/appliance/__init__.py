@@ -2945,7 +2945,7 @@ def provision_appliance(
     template = provider.get_template(template_name)
     template.deploy(**deploy_args)
 
-    return Appliance(provider_name, vm_name)
+    return Appliance.from_provider(provider_name, vm_name)
 
 
 class ApplianceStack(LocalStack):
