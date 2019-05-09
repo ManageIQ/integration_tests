@@ -68,20 +68,17 @@ def instance_fixture(appliance, provider, small_template):
 def create_volume(appliance, provider, is_from_manager=False, az=None, cancel=False,
                   should_assert=False):
     volume_collection = appliance.collections.volumes
-    manager = appliance.collections.block_managers.filter({"provider": provider}).all()[0]
     name = fauxfactory.gen_alpha()
     if provider.one_of(OpenStackProvider):
         volume = volume_collection.create(name=name,
-                                          storage_manager=manager,
                                           tenant=provider.data['provisioning']['cloud_tenant'],
                                           volume_size=STORAGE_SIZE,
                                           provider=provider,
                                           cancel=cancel,
                                           from_manager=is_from_manager)
     elif provider.one_of(EC2Provider):
-        az = az if az else provider.region + 'a'
+        az = az if az else "{}a".format(provider.region)
         volume = volume_collection.create(name=name,
-                                          storage_manager=manager,
                                           volume_type='General Purpose SSD (GP2)',
                                           volume_size=STORAGE_SIZE,
                                           provider=provider,
@@ -143,17 +140,16 @@ def test_storage_volume_crud(appliance, provider, from_manager):
     else:
         updates = {'volume_name': new_name, 'volume_size': STORAGE_SIZE + 1}
 
-    storage_manager = appliance.collections.block_managers.filter({"provider": provider}).all()[0]
-    volume = volume.update(updates, storage_manager, from_manager)
+    volume = volume.update(updates, from_manager)
     if provider.one_of(EC2Provider):
         wait_for(lambda: volume.size == '{} GB'.format(updates.get('volume_size')), delay=15,
                  timeout=900)
 
     updates = {'volume_name': old_name}
-    volume = volume.update(updates, storage_manager, from_manager)
+    volume = volume.update(updates, from_manager)
 
     # delete volume
-    volume.delete(wait=True, storage_manager=storage_manager, from_manager=from_manager)
+    volume.delete(wait=True, from_manager=from_manager)
     assert not volume.exists
 
 
@@ -163,17 +159,14 @@ def test_storage_volume_crud(appliance, provider, from_manager):
 def test_storage_volume_attach_detach(appliance, provider, instance_fixture, from_manager):
     volume = create_volume(appliance, provider, from_manager, az=instance_fixture.
                            vm_default_args["environment"]["availability_zone"], should_assert=True)
-    storage_manager = appliance.collections.block_managers.filter(
-        {"provider": provider}).all()[0]
 
     # attach
     volume.attach_instance(name=instance_fixture.name, mountpoint='/dev/sdm',
-                           storage_manager=storage_manager, from_manager=from_manager)
+                           from_manager=from_manager)
     wait_for(lambda: volume.status == 'in-use', delay=15, timeout=600)
 
     # detach
-    volume.detach_instance(name=instance_fixture.name, storage_manager=storage_manager,
-                           from_manager=from_manager)
+    volume.detach_instance(name=instance_fixture.name, from_manager=from_manager)
     wait_for(lambda: volume.status == 'available', delay=15, timeout=600)
 
     # cleanup

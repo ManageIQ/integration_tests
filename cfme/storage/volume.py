@@ -267,10 +267,10 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         except TimedOutError:
             logger.error('Timed out waiting for Volume to disappear, continuing')
 
-    def update(self, updates, storage_manager=None, from_manager=None):
+    def update(self, updates, from_manager=None):
         """Edit cloud volume"""
         if from_manager:
-            view = navigate_to(storage_manager, 'Volumes')
+            view = navigate_to(self.parent.manager, 'Volumes')
             view.entities.get_entity(surf_pages=True, name=self.name).check()
             view.toolbar.configuration.item_select('Edit selected Cloud Volume')
             view = view.browser.create_view(VolumeEditView, additional_context={'object': self})
@@ -286,10 +286,10 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         return volume_collection.instantiate(
             name=updates.get('volume_name'), provider=self.provider)
 
-    def delete(self, wait=True, storage_manager=None, from_manager=None):
+    def delete(self, wait=True, from_manager=None):
         """Delete the Volume"""
         if from_manager:
-            view = navigate_to(storage_manager, 'Volumes')
+            view = navigate_to(self.parent.manager, 'Volumes')
             view.entities.get_entity(surf_pages=True, name=self.name).check()
             view.toolbar.configuration.item_select(
                 'Delete selected Cloud Volumes', handle_alert=True)
@@ -344,9 +344,9 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
                 return snapshot_collection.instantiate(name, self.provider)
 
     def attach_instance(self, name, mountpoint=None, cancel=False, reset=False,
-                        storage_manager=None, from_manager=None):
+                        from_manager=None):
         if from_manager:
-            view = navigate_to(storage_manager, 'Volumes')
+            view = navigate_to(self.parent.manager, 'Volumes')
             view.entities.get_entity(surf_pages=True, name=self.name).check()
             view.toolbar.configuration.item_select('Attach selected Cloud Volume to an Instance')
             view = view.browser.create_view(AttachInstanceView, additional_context={'object': self})
@@ -369,9 +369,9 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
                 view = self.create_view(VolumeDetailsView)
                 view.flash.assert_no_error()
 
-    def detach_instance(self, name, cancel=False, storage_manager=None, from_manager=None):
+    def detach_instance(self, name, cancel=False, from_manager=None):
         if from_manager:
-            view = navigate_to(storage_manager, 'Volumes')
+            view = navigate_to(self.parent.manager, 'Volumes')
             view.entities.get_entity(surf_pages=True, name=self.name).check()
             view.toolbar.configuration.item_select('Detach selected Cloud Volume from an Instance')
             view = view.browser.create_view(DetachInstanceView, additional_context={'object': self})
@@ -464,7 +464,13 @@ class VolumeCollection(BaseCollection, TaggableCollection):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     ENTITY = Volume
 
-    def create(self, name, storage_manager, provider, tenant=None, volume_type=None, volume_size=1,
+    @property
+    def manager(self):
+        coll = self.appliance.collections.block_managers.filter({"provider": self.filters.get(
+            'provider')})
+        return coll.all()[0]
+
+    def create(self, name, provider, tenant=None, volume_type=None, volume_size=1,
                cancel=False, az=None, from_manager=False):
         """Create new storage volume
 
@@ -480,12 +486,12 @@ class VolumeCollection(BaseCollection, TaggableCollection):
             object for the :py:class: cfme.storage.volume.Volume
         """
         if from_manager:
-            view = navigate_to(storage_manager, 'AddVolume')
+            view = navigate_to(self.manager, 'AddVolume')
         else:
             view = navigate_to(self, 'Add')
 
         if not cancel:
-            view.form.fill({'storage_manager': storage_manager.name,
+            view.form.fill({'storage_manager': self.manager.name,
                             'tenant': tenant,
                             'volume_name': name,
                             'volume_type': volume_type,
@@ -526,10 +532,10 @@ class VolumeCollection(BaseCollection, TaggableCollection):
         else:
             raise ItemNotFound('No Cloud Volume for Deletion')
 
-    def all(self, storage_manager=None, from_manager=None):
+    def all(self, from_manager=None):
         """returning all Volumes objects for respective storage manager type"""
         if from_manager:
-            view = navigate_to(storage_manager, 'Volumes')
+            view = navigate_to(self.manager, 'Volumes')
         else:
             view = navigate_to(self, 'All')
         view.toolbar.view_selector.select("List View")
