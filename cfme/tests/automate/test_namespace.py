@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.explorer.namespace import NamespaceAddView
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
@@ -120,3 +121,25 @@ def test_wrong_namespace_name(request, domain):
     wrong_namespace = namespace.instantiate(name=wrong_namespace)
     request.addfinalizer(wrong_namespace.delete_if_exists)
     assert not wrong_namespace.exists
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+def test_remove_openshift_deployment_in_automate(appliance):
+    """This test case will test successful removal of OpenShift "Deployment" from Automate domain -
+    ManageIQ.
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/20h
+        caseimportance: high
+        caseposneg: negative
+        testtype: functional
+        startsin: 5.11
+        casecomponent: Automate
+
+    Bugzilla:
+        1672937
+    """
+    view = navigate_to(appliance.collections.domains, 'All')
+    assert not view.datastore.tree.has_path('Datastore', 'ManageIQ (Locked)', 'Deployment')
