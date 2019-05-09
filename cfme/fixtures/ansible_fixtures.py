@@ -85,41 +85,41 @@ def ansible_catalog_item(appliance, ansible_repository):
 
 @pytest.fixture(scope="module")
 def ansible_catalog(appliance, ansible_catalog_item):
-    catalog_ = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
-                                                     description="my ansible catalog",
-                                                     items=[ansible_catalog_item.name])
-    ansible_catalog_item.catalog = catalog_
-    yield catalog_
+    catalog = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
+                                                    description="my ansible catalog",
+                                                    items=[ansible_catalog_item.name])
+    ansible_catalog_item.catalog = catalog
+    yield catalog
 
-    if catalog_.exists:
-        catalog_.delete()
+    if catalog.exists:
+        catalog.delete()
         ansible_catalog_item.catalog = None
 
 
 @pytest.fixture(scope="module")
 def ansible_service_catalog(appliance, ansible_catalog_item, ansible_catalog):
-    service_catalog_ = ServiceCatalogs(appliance, ansible_catalog, ansible_catalog_item.name)
-    return service_catalog_
+    service_catalog = ServiceCatalogs(appliance, ansible_catalog, ansible_catalog_item.name)
+    return service_catalog
 
 
 @pytest.fixture
 def ansible_service_request(appliance, ansible_catalog_item):
     request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request_ = appliance.collections.requests.instantiate(description=request_descr)
-    yield service_request_
+    service_request = appliance.collections.requests.instantiate(description=request_descr)
+    yield service_request
 
-    if service_request_.exists():
+    if service_request.exists():
         service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
         appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
 
 
 @pytest.fixture
 def ansible_service(appliance, ansible_catalog_item):
-    service_ = MyService(appliance, ansible_catalog_item.name)
-    yield service_
+    service = MyService(appliance, ansible_catalog_item.name)
+    yield service
 
-    if service_.exists:
-        service_.delete()
+    if service.exists:
+        service.delete()
 
 
 @pytest.fixture(scope="module")

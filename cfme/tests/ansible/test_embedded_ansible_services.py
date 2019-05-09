@@ -188,7 +188,7 @@ def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(2)
 def test_service_ansible_playbook_provision_in_requests(
-    appliance, ansible_catalog_item, ansible_service_catalog, request
+    appliance, ansible_catalog_item, ansible_service, ansible_service_request, request
 ):
     """Tests if ansible playbook service provisioning is shown in service requests.
 
@@ -199,7 +199,8 @@ def test_service_ansible_playbook_provision_in_requests(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    ansible_service_catalog.order()
+    ansible_service.order()
+    ansible_service_request.wait_for_request()
     cat_item_name = ansible_catalog_item.name
     request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
     service_request = appliance.collections.requests.instantiate(description=request_descr)
@@ -207,11 +208,13 @@ def test_service_ansible_playbook_provision_in_requests(
 
     @request.addfinalizer
     def _finalize():
-        _service = MyService(appliance, cat_item_name)
+        service = MyService(appliance, cat_item_name)
         if service_request.exists():
             service_request.wait_for_request()
             appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-        _service.delete_if_exists()
+
+        if service.exists:
+            service.delete()
 
     assert service_request.exists()
 
@@ -342,7 +345,7 @@ def test_service_ansible_playbook_order_retire(
 
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_plays_table(
-    ansible_service_catalog, ansible_service_request, ansible_service, soft_assert
+    ansible_service_request, ansible_service, soft_assert
 ):
     """Plays table in provisioned and retired service should contain at least one row.
 
@@ -353,7 +356,7 @@ def test_service_ansible_playbook_plays_table(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    ansible_service_catalog.order()
+    ansible_service.order()
     ansible_service_request.wait_for_request()
     view = navigate_to(ansible_service, "Details")
     soft_assert(view.provisioning.plays.row_count > 1, "Plays table in provisioning tab is empty")
