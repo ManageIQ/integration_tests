@@ -6,7 +6,6 @@ from os import path as os_path
 from subprocess import check_call
 
 import attr
-import diaper
 import fauxfactory
 import gevent
 import iso8601
@@ -99,7 +98,7 @@ class SSHResult(object):
 _ssh_key_file = project_path.join('.generated_ssh_key')
 _ssh_pubkey_file = project_path.join('.generated_ssh_key.pub')
 
-_client_session = []
+_client_session = list()
 
 
 class SSHClient(paramiko.SSHClient):
@@ -204,9 +203,11 @@ class SSHClient(paramiko.SSHClient):
             logger.debug('scp progress for %r: %s of %s ', filename, sent, size)
 
     def close(self):
-        with diaper:
-            _client_session.remove(self)
         super(SSHClient, self).close()
+        try:
+            _client_session.remove(self)
+        except (AttributeError, ValueError):
+            pass
 
     @property
     def connected(self):
