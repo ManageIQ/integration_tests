@@ -340,3 +340,7 @@ def test_send_email_method(smtp_test, klass):
         execute_methods=True,
     )
     result.validate_logs()
+
+    # TODO(GH-8820): This issue should be fixed to check mails sent to person in 'cc' and 'bcc'
+    # Check whether the mail sent via automate method really arrives
+    wait_for(lambda: len(smtp_test.get_emails(to_address=mail_to)) > 0, num_sec=60, delay=10)
