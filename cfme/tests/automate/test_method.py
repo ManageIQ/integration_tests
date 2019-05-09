@@ -33,6 +33,8 @@ def test_method_crud(klass):
         initialEstimate: 1/16h
         tags: automate
     """
+    # ToDo: Update this test case for other types of automate methods like builtin, expression, uri,
+    # playbook, Ansible Tower Job Template and Ansible Tower Workflow Template
     method = klass.methods.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
