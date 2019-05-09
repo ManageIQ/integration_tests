@@ -28,7 +28,7 @@ def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
     """Grab fresh appliance and set time and date through appliance_console_cli and check result
 
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/6h
@@ -48,7 +48,7 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
     """Set and check timezones are set correctly through appliance conosle cli
 
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/12h
@@ -62,7 +62,7 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
 def test_appliance_console_cli_set_hostname(configured_appliance):
     """
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/12h
@@ -79,7 +79,7 @@ def test_appliance_console_cli_set_hostname(configured_appliance):
 def test_appliance_console_cli_internal_fetch_key(app_creds, unconfigured_appliance, appliance):
     """
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/3h
@@ -98,7 +98,7 @@ def test_appliance_console_cli_external_join(app_creds, appliance,
                                              temp_appliance_unconfig_funcscope):
     """
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/4h
@@ -117,7 +117,7 @@ def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance
                                                unconfigured_appliance_secondary):
     """
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/3h
@@ -135,7 +135,7 @@ def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance
 def test_appliance_console_cli_external_auth(auth_type, ipa_crud, configured_appliance):
     """
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         caseimportance: high
         casecomponent: Auth
         initialEstimate: 1/4h
@@ -168,7 +168,7 @@ def no_ipa_config(configured_appliance):
 def test_appliance_console_cli_ipa(ipa_crud, configured_appliance, no_ipa_config):
     """
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         caseimportance: high
         initialEstimate: 1/4h
         casecomponent: Auth
@@ -184,7 +184,7 @@ def test_appliance_console_cli_ipa(ipa_crud, configured_appliance, no_ipa_config
 def test_appliance_console_cli_extend_storage(unconfigured_appliance):
     """
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/6h
@@ -200,7 +200,7 @@ def test_appliance_console_cli_extend_storage(unconfigured_appliance):
 def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
     """
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/6h
@@ -217,7 +217,7 @@ def test_appliance_console_cli_extend_log_storage(unconfigured_appliance):
 def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, app_creds):
     """
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/6h
@@ -234,7 +234,7 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     """Tests the configuration of HA with three appliances including failover to standby node
 
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1h

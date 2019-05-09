@@ -678,7 +678,7 @@ def test_appliance_console_haproxy():
     tml/high_availability_guide/configuring_haproxy
 
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         casecomponent: Replication
         caseimportance: medium
         initialEstimate: 1/2h
@@ -718,6 +718,8 @@ def test_appliance_console_ha_setup_dc():
         startsin: 5.8
         testSteps:
             1. Setup HA
+                Follow this: https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.7/
+                html/high_availability_guide/installation
         expectedResults:
             1. Confirm primary database server, application server is
                running and it can access the webui
@@ -732,18 +734,20 @@ def test_appliance_console_screen():
     Test new screen package added to appliances. Should be able to run a
     task and switch terminal/screen within ssh to run other tasks
     simultaneously.
-    Just type "screen" after logging in to ssh to start using it. Once you
-    have screen running, "ctrl-a" intiates screen command "c" creates new
-    screen, "n" switch to next screen., "p" for previous screen, "d"
-    detach from screens (this takes you back to standard terminal) and run
-    screen -r to resume using screen.
 
     Polarion:
-        assignee: sbulage
+        assignee: mnadeem
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
         startsin: 5.9
+        testSteps:
+            1. Type 'screen'
+            2. Initiate screen commands by 'ctrl+a'
+            "c" creates new screen, "n" switch to next screen,
+            "p" for previous screen, "d" detach from screens.
+            3. After this, it will takes you back to standard terminal.
+            4. Type screen -r to resume using screen.
     """
     pass
 
@@ -759,6 +763,18 @@ def test_appliance_console_restart():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. RETURN clears info screen.
+            3. '16' Stop EVM Server Processes.
+            4. 'Y' Stop CFME Server Gracefully.
+            5. Wait for some time.
+            6. Cross-check service stopped.
+            7. '17' Start EVM Server Processes.
+            8. 'Y' to Start CFME server.
+            9. Wait for some time.
+            10. '21' Quit from appliance_console menu.
+            11. Open appliance IP into Browser.
     """
     pass
 
@@ -768,7 +784,10 @@ def test_appliance_console_restart():
 def test_appliance_console_ha_dc_re_establish():
     """
     Test that upon re-connection of networks the repmgr process continues
-    to replicate correctly to the disconnected node within DC2
+    to replicate correctly to the disconnected node within DC2.
+    To setup HA follow:
+    https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.7/h
+    tml/high_availability_guide//installation
 
     Polarion:
         assignee: sbulage
@@ -777,7 +796,10 @@ def test_appliance_console_ha_dc_re_establish():
         setup: Restore network connectivity between DC1 and DC2
         startsin: 5.8
         testSteps:
-            1. Restore network connectivity between DC1 and DC2
+            1. Setup HA
+            2. Disconnect DC2.
+            3. Check repmgr process replicating to DC1.
+            4. Restore network connectivity between DC1 and DC2
         expectedResults:
             1. Confirm replication is working correctly
     """
@@ -795,6 +817,13 @@ def test_appliance_console_evm_stop():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. RETURN clears info screen.
+            3. '16' Stop EVM Server Processes.
+            4. 'Y' Stop CFME Server Gracefully.
+            5. Wait for some time.
+            6. Cross-check service stopped.
     """
     pass
 
@@ -810,6 +839,13 @@ def test_appliance_console_evm_start():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
+        testSteps:
+            1. Make sure EVM servcer processes are stopped.
+            2. '17' Start EVM Server Processes.
+            3. 'Y' to Start CFME server.
+            4. Wait for some time.
+            5. '21' Quit from appliance_console menu.
+            6. Open appliance IP into Browser.
     """
     pass
 
@@ -825,6 +861,10 @@ def test_appliance_console_check_default_ip():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. See all default values related to IP
+            3. '21' Quit and Cross-check it on command line.
     """
     pass
 
@@ -903,6 +943,17 @@ def test_appliance_console_network_conf():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. RETURN clears info screen.
+            3. '1' configure network.
+            4. '2' configure static IPv4.
+            5. Set IPv4 address.
+            6. '3' configure static IPv6.
+            7. Set IPv6 address.
+            8. '5' Set Hostname.
+            9. '4' Test Network Configuration.
+            10. '20' Summary Information.
     """
     pass
 
@@ -919,6 +970,16 @@ def test_appliance_console_network_conf_negative():
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. RETURN clears info screen.
+            3. '1' configure network.
+            4. '2' configure static IPv4.
+            5. Set invalid IPv4 address.
+            6. Confirm network failure.
+            7. '3' configure static IPv6.
+            8. Set invalid IPv6 address.
+            9.  Confirm network failure.
     """
     pass
 
@@ -953,6 +1014,13 @@ def test_appliance_console_shutdown():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. RETURN clears info screen.
+            3. '19' Shut Down Appliance.
+            4. 'Y' Shut Down Appliance now.
+            5. Wait for some time.
+            6. You will be logged out from SSH.
     """
     pass
 
@@ -969,6 +1037,13 @@ def test_appliance_console_static_ip_negative():
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. RETURN clears info screen.
+            3. '1' configure network.
+            4. '2' configure static IPv4.
+            5. Set invalid IPv4 address.
+            6. Confirm network failure.
     """
     pass
 
@@ -981,15 +1056,20 @@ def test_appliance_console_ha_dc_failover():
     connection between DC1/2. This should create a split brain scenario,
     upon re-establishing connections we need to manually kill/shutdown DC1
     current primary.
+    To setup HA follow:
+    https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.7/h
+    tml/high_availability_guide//installation
 
     Polarion:
         assignee: sbulage
         casecomponent: Replication
         initialEstimate: 1/2h
-        setup: Failover to DC1 standby node, drop connections between DC"s, restore
-               network connectivity between DC1 and DC2 manually kill DC1 current
-               primary if its in a split brain scenario.
+        setup: Setup HA
         startsin: 5.8
+        testSteps:
+            1. Failover to DC1 standby node, drop connections between DC"s.
+            2. Restore network connectivity between DC1 and DC2
+            3. Manually kill DC1 current primary if its in a split brain scenario.
     """
     pass
 
@@ -1005,13 +1085,14 @@ def test_appliance_console_logfile():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
-        setup: -provision new appliance with additional disk
-               -ssh to appliance
-               -run appliance_console
-               -select option "Logfile Configuration"
-               -configure disk
-               -confirm new logfile disk is configured correctly
         startsin: 5.7
+        testSteps:
+            1. Provision new appliance with additional disk
+            2. SSH to appliance
+            3. Run appliance_console
+            4. Select option "Logfile Configuration"
+            5. Configure disk
+            6. Confirm new logfile disk is configured correctly
     """
     pass
 
@@ -1028,6 +1109,13 @@ def test_appliance_console_restore_db_network_negative():
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/3h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. RETURN clears info screen.
+            3. '6' Restore Database From Backup.
+            4. '2' Network File System (NFS).
+            5. Provide wrong information.
+            6. Confirm DB restore fails.
     """
     pass
 
@@ -1044,9 +1132,10 @@ def test_appliance_console_cli_rh_registration():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
-        setup: Provision appliace
-               ssh to it and run "subscription-manager register"
-               check changes within the ui
+        testSteps:
+            1. Provision appliace
+            2. SSH to it and run "subscription-manager register"
+            3. Check changes within the ui
     """
     pass
 
@@ -1063,6 +1152,11 @@ def test_appliance_console_extend_storage_negative():
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/12h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. RETURN clears info screen.
+            3. '11' Extend Temporary Storage.
+            4. Check there is no extra disk present.
     """
     pass
 
@@ -1114,6 +1208,11 @@ def test_appliance_console_datetime_negative():
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. RETURN clears info screen.
+            3. '3' Set Date and Time.
+            4. Provider invalid Date and Time.
     """
     pass
 
@@ -1130,6 +1229,14 @@ def test_appliance_console_key_fetch_negative():
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/6h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. RETURN clears info screen.
+            3. '14' Generate Custom Encryption Key.
+            4. 'Y' override exiting Encryption Key.
+            5. '2' Fetch key from remote machine.
+            6. Provider invalid IP address.
+            7. Check Encryption Key fetch failure.
     """
     pass
 
@@ -1149,5 +1256,9 @@ def test_appliance_console_negative():
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/6h
+        setup: Get an appliance without network attached.
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. Check info screen is blank with Network information.
     """
     pass
