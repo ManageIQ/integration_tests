@@ -199,6 +199,25 @@ class BaseEntity(NavigatableMixin):
                 raise NotImplementedError("Delete method is not implemented.")
         return False
 
+    @property
+    def expected_details_title(self):
+        """Provides expected Details/Summary Page title; which mostly used in EntityDetailsViews
+
+        .. code-block:: python
+            expected_title = self.context['object'].expected_details_title
+        """
+        return "{} (Summary)".format(self.name)
+
+    @property
+    def expected_details_breadcrumb(self):
+        """Provides expected Details/Summary Page breadcrumb active location;
+        which mostly used in EntityDetailsViews
+
+        .. code-block:: python
+            expected_breadcrumb = self.context['object'].expected_details_breadcrumb
+        """
+        return "{}{}".format(self.name, " (Summary)" if self.appliance.version < "5.11" else "")
+
 
 @attr.s
 class CollectionProperty(object):

@@ -113,13 +113,13 @@ class ProviderFlavorAllView(FlavorAllView):
 class FlavorDetailsView(FlavorView):
     @property
     def is_displayed(self):
-        expected_title = '{} (Summary)'.format(self.context['object'].name)
-        expected_provider = self.context['object'].provider.name
+        obj = self.context['object']
         return (
             self.in_availability_zones and
-            self.entities.title.text == expected_title and
-            self.entities.breadcrumb.active_location == expected_title and
-            self.entities.relationships.get_text_of('Cloud Provider') == expected_provider)
+            self.entities.title.text == obj.expected_details_title and
+            self.entities.breadcrumb.active_location == obj.expected_details_breadcrumb and
+            self.entities.relationships.get_text_of('Cloud Provider') == obj.provider.name
+        )
 
     toolbar = FlavorDetailsToolBar()
     sidebar = FlavorDetailsAccordion()

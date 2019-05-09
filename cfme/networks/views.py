@@ -121,7 +121,7 @@ class NetworkProviderDetailsView(BaseLoggedInPage):
     def is_displayed(self):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
-                self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
+                self.title.text == self.context['object'].expected_details_title)
 
 
 class NetworkProviderEditView(ProviderEditView):
@@ -207,7 +207,7 @@ class BalancerDetailsView(BaseLoggedInPage):
     def is_displayed(self):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Load Balancers'] and
-                self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
+                self.title.text == self.context['object'].expected_details_title)
 
 
 class CloudNetworkToolBar(View):
@@ -286,7 +286,7 @@ class CloudNetworkDetailsView(BaseLoggedInPage):
     def is_displayed(self):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Networks'] and
-                self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
+                self.title.text == self.context['object'].expected_details_breadcrumb)
 
 
 class CloudNetworkAddView(BaseLoggedInPage):
@@ -403,7 +403,7 @@ class NetworkPortDetailsView(BaseLoggedInPage):
     def is_displayed(self):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Network Ports'] and
-                self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
+                self.title.text == self.context['object'].expected_details_title)
 
 
 class NetworkRouterToolBar(View):
@@ -484,7 +484,7 @@ class NetworkRouterDetailsView(BaseLoggedInPage):
     def is_displayed(self):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Network Routers'] and
-                self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
+                self.title.text == self.context['object'].expected_details_title)
 
 
 class NetworkRouterAddView(BaseLoggedInPage):
@@ -620,7 +620,7 @@ class SecurityGroupDetailsView(BaseLoggedInPage):
     def is_displayed(self):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Security Groups'] and
-                self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
+                self.title.text == self.context['object'].expected_details_title)
 
 
 class SubnetToolBar(View):
@@ -724,7 +724,7 @@ class SubnetDetailsView(BaseLoggedInPage):
     def is_displayed(self):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Subnets'] and
-                self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
+                self.title.text == self.context['object'].expected_details_title)
 
 
 class NetworkEntitySubnetView(BaseLoggedInPage):

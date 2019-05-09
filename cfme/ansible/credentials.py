@@ -72,7 +72,7 @@ class CredentialDetailsView(CredentialsBaseView):
     def is_displayed(self):
         return (
             self.in_ansible_credentials and
-            self.title.text == "{} (Summary)".format(self.context["object"].name)
+            self.title.text == self.context["object"].expected_details_title
         )
 
 

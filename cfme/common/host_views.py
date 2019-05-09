@@ -96,8 +96,10 @@ class HostDetailsView(ComputeInfrastructureHostsView):
 
     @property
     def is_displayed(self):
-        title = "{name} (Summary)".format(name=self.context["object"].name)
-        return self.in_compute_infrastructure_hosts and self.breadcrumb.active_location == title
+        return (
+            self.in_compute_infrastructure_hosts and
+            self.breadcrumb.active_location == self.context["object"].expected_details_breadcrumb
+        )
 
 
 class HostDriftHistory(ComputeInfrastructureHostsView):
@@ -143,7 +145,7 @@ class HostTimelinesView(TimelinesView, ComputeInfrastructureHostsView):
     def is_displayed(self):
         return (
             self.in_compute_infrastructure_hosts and
-            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.locations and
+            self.context['object'].expected_details_breadcrumb in self.breadcrumb.locations and
             self.is_timelines)
 
 

@@ -43,7 +43,7 @@ class CloudProviderTimelinesView(TimelinesView, BaseLoggedInPage):
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
-            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.locations and
+            self.context['object'].expected_details_breadcrumb in self.breadcrumb.locations and
             self.is_timelines)
 
 

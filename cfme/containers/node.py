@@ -173,7 +173,7 @@ class NodeTimelinesView(TimelinesView, NodeView):
         """Is this page currently being displayed"""
         return (
             self.in_node and
-            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.locations and
+            self.context['object'].expected_details_breadcrumb in self.breadcrumb.locations and
             self.is_timelines)
 
 

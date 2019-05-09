@@ -131,11 +131,12 @@ class ClusterDetailsView(ClusterView):
     @property
     def is_displayed(self):
         """Determine if this page is currently being displayed"""
-        expected_title = '{} (Summary)'.format(self.context['object'].name)
+        obj = self.context['object']
         return (
             self.in_cluster and
-            self.entities.title.text == expected_title and
-            self.entities.breadcrumb.active_location == expected_title)
+            self.entities.title.text == obj.expected_details_title and
+            self.entities.breadcrumb.active_location == obj.expected_details_breadcrumb
+        )
 
     toolbar = View.nested(ClusterDetailsToolbar)
     sidebar = View.nested(ClusterDetailsAccordion)
@@ -151,7 +152,7 @@ class ClusterTimelinesView(TimelinesView, ClusterView):
         """Determine if this page is currently being displayed"""
         return (
             self.in_cluster and
-            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.locations and
+            self.context['object'].expected_details_breadcrumb in self.breadcrumb.locations and
             self.is_timelines)
 
 
