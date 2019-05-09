@@ -2739,10 +2739,12 @@ class Appliance(IPAppliance):
 
     @cached_property
     def mgmt(self):
-        return self.provider.mgmt.get_vm(self.vm_name)
+        # in this case provider is the wrapanapi mgmt class
+        return self.provider.get_vm(self.vm_name)
 
     def does_vm_exist(self):
-        return self.provider.mgmt.does_vm_exist(self.vm_name)
+        # in this case provider is the wrapanapi mgmt class
+        return self.provider.does_vm_exist(self.vm_name)
 
     def rename(self, new_name):
         """Changes appliance name
@@ -2943,6 +2945,10 @@ def provision_appliance(
     if prov_data["type"] == "virtualcenter":
         if "allowed_datastores" in prov_data:
             deploy_args["allowed_datastores"] = prov_data["allowed_datastores"]
+
+    if prov_data["type"] == "scvmm":
+        if "host_group" in prov_data.provisioning:
+            deploy_args["host_group"] = prov_data.provisioning["host_group"]
 
     template = provider.get_template(template_name)
     template.deploy(**deploy_args)
