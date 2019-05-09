@@ -15,17 +15,27 @@ from cfme.utils.path import data_path
 pytestmark = [pytest.mark.tier(1), test_requirements.report]
 
 
-@pytest.fixture()
-def widget_file(appliance):
-    yaml_name = "import_widget.yaml"
+def yaml_path(yaml_name):
+    """ Returns yaml path of the file with yaml_name name
+    """
+    yaml_name = yaml_name + ".yaml"
     try:
         fs = FTPClientWrapper(cfme_data.ftpserver.entities.reports)
         file_path = fs.download(yaml_name, os.path.join("/tmp", yaml_name))
     except (FTPException, AttributeError):
-        logger.exception("FTP download or YAML lookup of %s failed, defaulting to local", yaml_name)
-        file_path = data_path.join("ui/intelligence/import_widget.yaml").realpath().strpath
+        logger.exception(
+            "FTP download or YAML lookup of %s failed, defaulting to local", yaml_name
+        )
+        file_path = (
+            data_path.join("ui/intelligence/{}".format(yaml_name)).realpath().strpath
+        )
         logger.info("Importing from data path: %s", file_path)
 
+    return file_path
+
+
+@pytest.fixture()
+def widget(appliance):
     widget = appliance.collections.dashboard_report_widgets.instantiate(
         appliance.collections.dashboard_report_widgets.CHART,
         "testing widget",
@@ -33,38 +43,27 @@ def widget_file(appliance):
         filter="Configuration Management/Virtual Machines/Guest OS Information - any OS",
         active=True,
     )
-
-    yield file_path, widget
+    yield widget
 
     # delete the widget in case it was imported or created
     widget.delete_if_exists()
 
 
 @pytest.fixture(scope="function")
-def report_file(appliance):
-    yaml_name = "import_report.yaml"
-    try:
-        fs = FTPClientWrapper(cfme_data.ftpserver.entities.reports)
-        file_path = fs.download(yaml_name, os.path.join("/tmp", yaml_name))
-    except (FTPException, AttributeError):
-        logger.exception("FTP download or YAML lookup of %s failed, defaulting to local", yaml_name)
-        file_path = data_path.join("ui/intelligence/import_report.yaml").realpath().strpath
-        logger.info("Importing from data path: %s", file_path)
-
+def report(appliance):
     report = appliance.collections.reports.instantiate(
         type="My Company (All Groups)",
         subtype="Custom",
         menu_name="testing report",
         title="testing report title",
     )
-
-    yield file_path, report
+    yield report
 
     # delete the report in case it was imported or created
     report.delete_if_exists()
 
 
-def test_import_widget(appliance, widget_file):
+def test_import_widget(appliance, widget):
     """
     Polarion:
         assignee: pvala
@@ -75,17 +74,16 @@ def test_import_widget(appliance, widget_file):
             1. Import the widget data yaml.
             2. Check if widget created with import is same as the expected widget.
     """
-    file_path, widget = widget_file
     collection = appliance.collections.dashboard_report_widgets
 
-    collection.import_widget(file_path)
+    collection.import_widget(yaml_path("import_widget"))
     import_view = collection.create_view(ImportExportWidgetsCommitView)
     import_view.flash.assert_message("1 widget imported successfully")
 
     assert widget.exists
 
 
-def test_export_widget(appliance, widget_file):
+def test_export_widget(appliance, widget):
     """
     Polarion:
         assignee: pvala
@@ -93,7 +91,6 @@ def test_export_widget(appliance, widget_file):
         initialEstimate: 1/16h
         startsin: 5.3
     """
-    _, widget = widget_file
     collection = appliance.collections.dashboard_report_widgets
     collection.create(
         widget_class=getattr(collection, widget.TITLE.upper()),
@@ -105,7 +102,7 @@ def test_export_widget(appliance, widget_file):
     collection.export_widget(widget.title)
 
 
-def test_import_report(appliance, report_file):
+def test_import_report(appliance, report):
     """
     Polarion:
         assignee: pvala
@@ -117,10 +114,9 @@ def test_import_report(appliance, report_file):
             2. Check if report created with import is same as the expected report.
 
     """
-    file_path, report = report_file
     collection = appliance.collections.reports
 
-    collection.import_report(file_path)
+    collection.import_report(yaml_path("import_report"))
     view = collection.create_view(ImportExportCustomReportsView)
     assert view.is_displayed
     view.flash.assert_message("Imported Report: [{}]".format(report.menu_name))
@@ -128,7 +124,7 @@ def test_import_report(appliance, report_file):
     assert report.exists
 
 
-def test_export_report(appliance, report_file):
+def test_export_report(appliance, report):
     """
     Polarion:
         assignee: pvala
@@ -136,7 +132,6 @@ def test_export_report(appliance, report_file):
         initialEstimate: 1/16h
         startsin: 5.3
     """
-    _, report = report_file
     collection = appliance.collections.reports
     collection.create(
         menu_name=report.menu_name,
@@ -145,3 +140,60 @@ def test_export_report(appliance, report_file):
         report_fields=["Archived", "Autostart", "Boot Time"],
     )
     collection.export_report(report.menu_name)
+
+
+@pytest.mark.tier(3)
+@pytest.mark.parametrize("overwrite", [True, False], ids=("overwrite", "replace"))
+def test_import_duplicate_report(appliance, report, overwrite):
+    """
+    This case tests appliance behavior when a duplicate report is imported.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    collection = appliance.collections.reports
+    file_path = yaml_path("import_report")
+    collection.import_report(file_path)
+
+    view = collection.create_view(ImportExportCustomReportsView)
+    view.flash.assert_message("Imported Report: ", partial=True)
+
+    collection.import_report(file_path, overwrite=overwrite)
+
+    if overwrite:
+        view.flash.assert_message("Replaced Report: [{}]".format(report.menu_name))
+    else:
+        view.flash.assert_message(
+            "Skipping Report (already in DB): [{}]".format(report.menu_name)
+        )
+
+
+@pytest.mark.parametrize("yaml_name", ["invalid_yaml", "invalid_report"])
+def test_reports_invalid_file(appliance, yaml_name):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/16h
+    """
+    with pytest.raises(AssertionError, match="Error", partial=True):
+        appliance.collections.reports.import_report(yaml_path(yaml_name))
+
+
+@pytest.mark.parametrize("yaml_name", ["invalid_yaml", "invalid_widget"])
+def test_widgets_invalid_file(appliance, yaml_name):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/16h
+    """
+    with pytest.raises(AssertionError, match="Error", partial=True):
+        appliance.collections.dashboard_report_widgets.import_widget(
+            yaml_path(yaml_name)
+        )

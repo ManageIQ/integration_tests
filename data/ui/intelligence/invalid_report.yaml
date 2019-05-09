@@ -1,0 +1,24 @@
+---
+- MiqReport
+    title: testing report title
+    rpt_group: Custom
+    rpt_type: Custom
+    priority:
+    db: AvailabilityZone
+    cols:
+    - cpu_usagemhz_rate_average_avg_over_time_period
+    - cpu_usagemhz_rate_average_high_over_time_period
+    - cpu_usagemhz_rate_average_low_over_time_period
+    include: {}
+    col_order:
+    - cpu_usagemhz_rate_average_avg_over_time_period
+    - cpu_usagemhz_rate_average_high_over_time_period
+    - cpu_usagemhz_rate_average_low_over_time_period
+    headers:
+    - CPU - Aggregate Usage Rate for Child VMs for Collected Intervals 30 Day Avg
+      (MHz)
+    - CPU - Aggregate Usage Rate for Child VMs for Collected Intervals 30 Day High
+      Avg (MHz)
+    - CPU - Aggregate Usage Rate for Child VMs for Collected Intervals 30 Day Low
+      Avg (MHz)
+    menu_name: testing report
