@@ -17,6 +17,7 @@ from widgetastic_patternfly import Input
 
 from . import CloudIntelReportsView
 from . import ReportsMultiBoxSelect
+from cfme.intelligence.reports.import_export import ImportExportCommonForm
 from cfme.intelligence.reports.schedules import SchedulesFormCommon
 from cfme.intelligence.timelines import CloudIntelTimelinesView
 from cfme.modeling.base import BaseCollection
@@ -267,6 +268,22 @@ class ReportScheduleView(SchedulesFormCommon):
         )
 
 
+class ImportExportCustomReportsView(ImportExportCommonForm):
+    overwrite = Checkbox("overwrite")
+    preserve_owner = Checkbox("preserve_owner")
+    export_button = Button(id="export_button")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports
+            and self.title.text == "Import / Export"
+            and self.subtitle.text == "Custom Reports"
+            and self.import_export.tree.currently_selected
+            == ["Import / Export", "Custom Reports"]
+        )
+
+
 @attr.s
 class Report(BaseEntity, Updateable):
     _param_name = ParamClassName('title')
@@ -450,6 +467,45 @@ class ReportsCollection(BaseCollection):
         view.flash.assert_no_error()
         view.flash.assert_message('Report "{}" was added'.format(values["menu_name"]))
         return self.instantiate(**values)
+
+    def import_report(
+        self, filename, preserve_owner=False, overwrite=False
+    ):
+        """
+        Import yaml files containing report data
+        Args:
+            filename (str): Complete path to the file
+            preserve_owner (bool): If true, original owner of the report will be preserved
+            overwrite (bool): If true, a possible duplicate of the report will be overwritten
+        """
+        view = navigate_to(self, "ImportExport")
+        assert view.is_displayed
+
+        view.fill(
+            {
+                "upload_file": filename,
+                "preserve_owner": preserve_owner,
+                "overwrite": overwrite,
+            }
+        )
+        view.upload_button.click()
+        view.flash.assert_no_error()
+
+    def export_report(self, reports):
+        """
+        Export custom report
+        Args:
+            reports (str or lst): a single report name or a list of report names
+        """
+        if not isinstance(reports, list):
+            reports = [reports]
+
+        view = navigate_to(self, "ImportExport")
+        assert view.is_displayed
+
+        view.items_for_export.fill(reports)
+        view.export_button.click()
+        view.flash.assert_no_error()
 
 
 @attr.s
@@ -673,3 +729,12 @@ class SavedReportDetails(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.reports.tree.click_path(*self.obj.tree_path)
+
+
+@navigator.register(ReportsCollection, "ImportExport")
+class ImportExportCustomReports(CFMENavigateStep):
+    VIEW = ImportExportCustomReportsView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self, *args, **kwargs):
+        self.view.import_export.tree.click_path("Import / Export", "Custom Reports")
