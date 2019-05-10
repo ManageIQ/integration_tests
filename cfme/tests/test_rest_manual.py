@@ -103,24 +103,3 @@ def test_add_ansible_tower_rest():
         1621888
     """
     pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-@pytest.mark.tier(3)
-@pytest.mark.parametrize("method", ["POST", "DELETE"])
-def test_delete_automate_domain_via_api(method):
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: high
-        initialEstimate: 1/10h
-        setup:
-            1. Create an automate domain.
-        testSteps:
-            1. Delete the automate domain via REST
-        expectedResults:
-            1. Domain must be deleted successfully.
-    """
-    pass
