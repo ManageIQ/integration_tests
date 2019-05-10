@@ -165,7 +165,7 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
                    app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
     # Configure automatic failover on EVM appliance
-    command_set = ('ap', '', '8', TimedCommand('1', 30), '')
+    command_set = ('ap', '', '10', TimedCommand('1', 30), '')
     appl3.appliance_console.run_commands(command_set)
 
     with waiting_for_ha_monitor_started(appl3, app1_ip, timeout=300):
@@ -232,9 +232,9 @@ def restore_db(appl, location=''):
     interaction.send('1')
     interaction.expect('Enter the location of the local restore file: |/tmp/evm_db.backup| ')
     interaction.send(location)
-    interaction.expect('Should this file be deleted after completing the restore\? \(Y\/N\): ')
+    interaction.expect(r'Should this file be deleted after completing the restore\? \(Y\/N\): ')
     interaction.send('N')
-    interaction.expect('Are you sure you would like to restore the database\? \(Y\/N\): ')
+    interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
     interaction.send('Y')
     interaction.expect('Press any key to continue.', timeout=60)
 
