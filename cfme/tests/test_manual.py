@@ -373,25 +373,6 @@ def test_osp_vmware67_test_vm_migration_with_windows_2016_server():
 
 
 @pytest.mark.manual
-@test_requirements.snapshot
-@pytest.mark.tier(1)
-def test_rhos_test_notification_for_snapshot_delete_failure():
-    """
-    Bugzilla:
-        1581793
-    Test if cfme can report failure when deleting snapshot from RHOS.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: RHOS: test notification for snapshot delete failure
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_external_database_appliance():
     """
@@ -435,26 +416,6 @@ def test_sui_stack_service_vm_detail_page_should_show_correct_data():
         caseimportance: medium
         initialEstimate: 1/4h
         title: SUI : Stack Service VM detail page should show correct data
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.snapshot
-@pytest.mark.tier(1)
-def test_notification_for_snapshot_actions_on_openstack():
-    """
-    Bugzilla:
-        1429313
-    Test task notification for snapshot tasks: success and failure of
-    create and delete snapshot.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1h
-        title: Test notification for snapshot actions on OpenStack
     """
     pass
 
@@ -524,27 +485,6 @@ def test_ec2_public_images():
         caseimportance: critical
         initialEstimate: 2/3h
         casecomponent: Cloud
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(2)
-def test_sui_create_snapshot_from_vm_details_page_snapshot_page_and_service_details_page():
-    """
-    Snapshot can be created from VM details page , service details page
-    and snapshot page .
-    Check all pages and the snapshot count displayed on vm details page .
-
-    Polarion:
-        assignee: apagac
-        casecomponent: SelfServiceUI
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.9
-        title: SUI : Create snapshot from vm details page, snapshot page
-               and service details page
     """
     pass
 
@@ -3616,32 +3556,6 @@ def test_ec2_targeted_refresh_floating_ip():
 
 
 @pytest.mark.manual
-@test_requirements.snapshot
-@pytest.mark.tier(1)
-def test_notification_for_snapshot_delete_failure():
-    """
-    Bugzilla:
-        1449243
-
-    Requires ec2 access via web-ui.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: test notification for snapshot delete failure
-        testSteps:
-            1. Create a snapshot on EC2 provider
-            2. Try to delete snapshot via CFME UI
-        expectedResults:
-            1. Snapshot created
-            2. Snapshot not deleted and notification displayed
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_host_graph_by_vm_tag_vsphere6():
@@ -3998,37 +3912,6 @@ def test_satellite_host_groups_show_up_as_configuration_profiles_satellite_62():
 
 
 @pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(2)
-def test_snapshot_timeline_group_actions():
-    """
-    Test the SUI snapshot timeline.
-    Test grouping of actions in a timeline. Try to create a couple of
-    snapshots in a rapid succession, check how it looks in the timeline.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/3h
-        testSteps:
-            1. create a new vm
-            2. create multiple snapshots in fast succession (two should be enough)
-            3. go to the VM details page, then Monitoring -> Timelines
-            4. select "Management Events" and "Snapshot Activity" and click Apply
-            5. click on the group of events in timeline
-        expectedResults:
-            1. vm created
-            2. snapshots created
-            3. timelines page displayed
-            4. group of events displayed in the timeline
-            5. details of events displayed, correct number of events
-               displayed, time/date seems correct
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_if_no_password_is_exposed_in_logs_during_migration():
     """
     OSP: Test if no password is exposed in logs during migration
@@ -4110,31 +3993,6 @@ def test_ec2_targeted_refresh_network_port():
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(2)
-def test_snapshot_timeline_new_vm():
-    """
-    Test the SUI snapshot timeline.
-    See if there"s no timeline when there"s no snapshot.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/6h
-        testSteps:
-            1. create a new vm
-            2. go to the VM details page, then Monitoring -> Timelines
-            3. select "Management Events" and "Snapshot Activity" and click Apply
-        expectedResults:
-            1. vm created
-            2. timelines page displayed
-            3. no timeline visible, warning "No records found for this timeline" displayed
     """
     pass
 
@@ -4692,29 +4550,6 @@ def test_ec2_targeted_refresh_stack():
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.snapshot
-@pytest.mark.tier(2)
-def test_ssui_test_snapshot_vm_memory_checkbox_when_creating_snapshot_for_powered_off_vm():
-    """
-    Bugzilla:
-        1600043
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: [SSUI] Test "snapshot vm memory" checkbox when creating
-               snapshot for powered off vm.
-        testSteps:
-            1. test creating snapshot for powered off vm"s
-        expectedResults:
-            1. "snapshot vm memory" checkbox should not be displayed.
     """
     pass
 
@@ -6138,30 +5973,6 @@ def test_group_by_tag_azone_gce():
 
 
 @pytest.mark.manual
-@test_requirements.snapshot
-@pytest.mark.tier(1)
-def test_snapshot_tree_view_functionality():
-    """
-    Bugzilla:
-        1398239
-
-    Just test the snapshot tree view. Create a bunch of snapshots and see
-    if the snapshot tree seems right. Check if the last created snapshot
-    is active. Revert to some snapshot, then create another bunch of
-    snapshots and check if the tree is correct.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/4h
-        setup: https://bugzilla.redhat.com/show_bug.cgi?id=1398239
-        title: Test snapshot tree view functionality
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.replication
 @pytest.mark.tier(3)
 def test_distributed_zone_create_new():
@@ -6420,31 +6231,6 @@ def test_show_tag_info_for_playbook_services():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Show tag info for playbook services
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.snapshot
-@pytest.mark.tier(1)
-def test_snapshot_link_in_vm_summary_page_after_deleting_snapshot():
-    """
-    test snapshot link in vm summary page after deleting snapshot
-    Have a vm, create couple of snapshots. Delete one snapshot. From the
-    vm summary page use the history button and try to go back to
-    snapshots. Go to the vm summary page again and try to click snapshots
-    link, it should work.
-
-    Bugzilla:
-        1395116
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: https://bugzilla.redhat.com/show_bug.cgi?id=1395116
-        title: test snapshot link in vm summary page after deleting snapshot
     """
     pass
 
@@ -6809,25 +6595,6 @@ def test_check_all_availability_zones_for_amazon_provider():
 
 
 @pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(2)
-def test_sui_timeline_should_display_snapshots_at_the_time_of_creation():
-    """
-    Bugzilla:
-        1490510
-
-    Polarion:
-        assignee: apagac
-        casecomponent: SelfServiceUI
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.9
-        title: SUI : Timeline should display snapshots at the time of creation
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware67_test_vm_with_mutliple_nics_with_single_ip_ipv6_to_first_nic_and_ipv4_to_():
     """
     vmware67-Test VM with mutliple NICs with single IP (IPv6 to first NIC
@@ -6881,26 +6648,6 @@ def test_config_manager_change_zone():
         caseimportance: medium
         initialEstimate: 1h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(2)
-def test_sui_test_snapshot_count():
-    """
-    create few snapshots and check if the count displayed on service
-    details page is same as the number of snapshots created
-    and last snapshot created is displayed on service detail page .
-    Also click on the snapshot link should navigate to snapshot page .
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.9
     """
     pass
 
@@ -7128,40 +6875,6 @@ def test_distributed_field_zone_name_whitespace():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/30h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(2)
-def test_snapshot_timeline_crud():
-    """
-    Test the SUI snapshot timeline.
-    See if the data in the timeline are corresponding to the snapshot
-    actions. Try to create snapshots, revert to snapshot and delete
-    snapshot and see if the timeline reflects this correctly
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/2h
-        testSteps:
-            1. create a new vm
-            2. create two snapshots for the VM
-            3. revert to the first snapshot
-            4. delete all snapshots
-            5. go to the VM details page, then Monitoring -> Timelines
-            6. select "Management Events" and "Snapshot Activity" and click Apply
-        expectedResults:
-            1. vm created
-            2. snapshots created
-            3. revert successful
-            4. delete successful
-            5. timelines page displayed
-            6. snapshot timeline appears, all actions are in the timeline
-               and visible, the time/date appears correct
     """
     pass
 
@@ -10973,31 +10686,6 @@ def test_dialog_items_default_values_on_different_screens():
 
 
 @pytest.mark.manual
-@test_requirements.snapshot
-def test_creating_second_snapshot_on_suspended_vm():
-    """
-    Bugzilla:
-        1419872
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/3h
-        title: test creating second snapshot on suspended vm
-        testSteps:
-            1.Navigate to  compute->infrastructure->virtual machines
-              2.Select a vm with suspended state 3.Take a first snapshot.
-              snapshot successful 4.Take a second snapshot
-        expectedResults:
-            1. Flash message Snapshot not taken since the state of the
-               virtual machine has not changed since the last snapshot
-               operation should be displayed in UI
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_security_group_can_be_selected_while_creating_migration_plan():
     """
     OSP: Test security group can be selected while creating migration plan
@@ -11652,36 +11340,6 @@ def test_osp_kill_the_v2v_process_in_the_middle_by_rebooting_miq_cfme_appliance_
         subcomponent: OSP
         title: OSP: kill the v2v process in the middle- by rebooting
                miq/cfme appliance- should resume migration post restart
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.ssui
-@pytest.mark.tier(2)
-def test_snapshot_timeline_verify_data():
-    """
-    Test the SUI snapshot timeline.
-    See if data on the popup correspond to data shown below the timeline.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/3h
-        testSteps:
-            1. create a new vm
-            2. create a snapshot
-            3. go to the VM details page, then Monitoring -> Timelines
-            4. select "Management Events" and "Snapshot Activity" and click Apply
-            5. click on the event, compare data from the popup with data
-               shown below the timeline
-        expectedResults:
-            1. vm created
-            2. snapshot created
-            3. timelines page displayed
-            4. event displayed on timeline
-            5. data should be identical
     """
     pass
 

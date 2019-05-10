@@ -489,3 +489,379 @@ def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
 
     # Clean up if it appeared
     snapshot.delete()
+
+
+@pytest.mark.manual
+@test_requirements.ssui
+@test_requirements.snapshot
+@pytest.mark.tier(2)
+def test_sui_create_snapshot():
+    """
+    Snapshot can be created from VM details page, service details page
+    and snapshot page.
+    Check all pages and the snapshot count displayed on vm details page.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: SelfServiceUI
+        caseimportance: medium
+        initialEstimate: 1/4h
+        startsin: 5.9
+        title: SUI: Create snapshot from vm details page, snapshot page
+               and service details page
+        setup:
+            1. Add an infra provider
+            2. Create and order a service catalog which provisions a VM
+            3. Login to SSUI
+        testSteps:
+            1. Test that snapshot can be created from Service Details page
+                * Navigate to My Services -> <service_name>
+                * Click Snapshots -> Create
+                * Fill Name and click Create
+            2. Test that snapshot can be created from VM Details page
+                * Navigate to My Services -> <service_name> -> <vm_name>
+                * Click Snapshots -> Create
+                * Fill Name and click Create
+            3. Test that snapshot can be created from Snapshot page
+                * Navigate to My Services -> <service_name> -> <vm_name> -> Snapshots
+                * Click Configuration -> Create Snapshot
+                * Fill Name and click Create
+        expectedResults:
+            1. Snapshot successfully created
+            2. Snapshot successfully created
+            3. Snapshot successfully created
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.ssui
+@pytest.mark.tier(2)
+def test_snapshot_timeline_group_actions():
+    """
+    Test the SUI snapshot timeline.
+    Test grouping of actions in a timeline. Try to create a couple of
+    snapshots in a rapid succession, check how it looks in the timeline.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: SelfServiceUI
+        caseimportance: low
+        initialEstimate: 1/3h
+        setup:
+            1. Add infra provider
+        testSteps:
+            1. create a new vm
+            2. create multiple snapshots in fast succession (two should be enough)
+            3. go to the VM details page, then Monitoring -> Timelines
+            4. select "Management Events" and "Snapshot Activity" and click Apply
+            5. click on the group of events in timeline
+        expectedResults:
+            1. vm created
+            2. snapshots created
+            3. timelines page displayed
+            4. group of events displayed in the timeline
+            5. details of events displayed, correct number of events
+               displayed, time/date seems correct
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.ssui
+@pytest.mark.tier(2)
+def test_snapshot_timeline_new_vm():
+    """
+    Test the SUI snapshot timeline.
+    See if there"s no timeline when there"s no snapshot.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: SelfServiceUI
+        caseimportance: low
+        initialEstimate: 1/6h
+        setup:
+            1. Add infra provider
+        testSteps:
+            1. create a new vm
+            2. go to the VM details page, then Monitoring -> Timelines
+            3. select "Management Events" and "Snapshot Activity" and click Apply
+        expectedResults:
+            1. vm created
+            2. timelines page displayed
+            3. no timeline visible, warning "No records found for this timeline" displayed
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.snapshot
+@test_requirements.ssui
+@pytest.mark.tier(2)
+def test_ssui_snapshot_memory_checkbox():
+    """
+    Test "snapshot vm memory" checkbox when creating snapshot for powered off vm.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: SelfServiceUI
+        caseimportance: medium
+        initialEstimate: 1/4h
+        title: [SSUI] Test "snapshot vm memory" checkbox when creating
+               snapshot for powered off vm.
+        setup:
+            1. Add infra provider
+            2. Create and order a service catalog which provisions a VM
+            3. Power off testing VM
+        testSteps:
+            1. Via SSUI, test creating snapshot for powered off vm's
+        expectedResults:
+            1. "snapshot vm memory" checkbox should not be displayed.
+    Bugzilla:
+        1600043
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.snapshot
+@pytest.mark.tier(1)
+def test_snapshot_tree_view_functionality():
+    """
+    Just test the snapshot tree view. Create a bunch of snapshots and see
+    if the snapshot tree seems right. Check if the last created snapshot
+    is active. Revert to some snapshot, then create another bunch of
+    snapshots and check if the tree is correct.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/4h
+        title: Test snapshot tree view functionality
+        setup:
+            1. Add infra provider
+            2. Create testing VM
+        testSteps:
+            1. Create three snapshots
+            2. Revert to second snapshot
+            3. Create another two snapshots
+        expectedResults:
+            1. Snapshots created successfully; snapshot tree displays snapshots correctly;
+               last created snapshot is Active
+            2. Revert successful; snapshot tree displays snapshots correctly; active snapshot
+               is the one we reverted to
+            3. Snapshots created successfully; subtree in snapshots tree looks good; active
+               snapshot is the last one created
+    Bugzilla:
+        1398239
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.provider([VMwareProvider], override=True)
+@test_requirements.snapshot
+@pytest.mark.tier(1)
+def test_snapshot_link_after_deleting_snapshot():
+    """
+    test snapshot link in vm summary page after deleting snapshot
+    Have a vm, create couple of snapshots. Delete one snapshot. From the
+    vm summary page use the history button and try to go back to
+    snapshots. Go to the vm summary page again and try to click snapshots
+    link, it should work.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/6h
+        title: test snapshot link in vm summary page after deleting snapshot
+        setup:
+            1. Add vmware provider
+            2. Create testing VM
+        testSteps:
+            1. Create two snapshots
+            2. Delete one snapshot
+            3. Use history button to navigate back to VM summary page
+            4. From the vm summary page use the history button and try to go back to snapshots.
+            5. From vm summary page click the snapshot link
+        expectedResults:
+            1. Snapshots successfully created
+            2. Snapshot successfully deleted
+            3. VM summary page displayed
+            4. Snapshots page displayed
+            5. Snapshots page displayed
+    Bugzilla:
+        1395116
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.provider([VMwareProvider], override=True)
+@test_requirements.snapshot
+@test_requirements.ssui
+@pytest.mark.tier(2)
+def test_sui_snapshot_timeline_time_of_creation():
+    """
+    Timeline should display snapshots at the time of creation
+
+    Polarion:
+        assignee: apagac
+        casecomponent: SelfServiceUI
+        caseimportance: medium
+        initialEstimate: 1/4h
+        startsin: 5.9
+        title: SUI : Timeline should display snapshots at the time of creation
+        setup:
+            1. Add vmware provider
+            2. Create testing VM
+        testSteps:
+            1. Create two snapshots
+            2. Check the time of creation on the details page
+            3. Check the time of creation on timeline
+        expectedResults:
+            1. Snapshots created successfully
+            2. Snapshots time is correct
+            3. Snapshots time is correct
+    Bugzilla:
+        1490510
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.provider([VMwareProvider], override=True)
+@test_requirements.snapshot
+@test_requirements.ssui
+@pytest.mark.tier(2)
+def test_sui_test_snapshot_count():
+    """
+    create few snapshots and check if the count displayed on service
+    details page is same as the number of snapshots created
+    and last snapshot created is displayed on service detail page .
+    Also click on the snapshot link should navigate to snapshot page .
+
+    Polarion:
+        assignee: apagac
+        casecomponent: SelfServiceUI
+        caseimportance: medium
+        initialEstimate: 1/6h
+        startsin: 5.9
+        setup:
+            1. Add vmware provider
+            2. Create testing VM
+        testSteps:
+            1. Create three snapshots
+            2. Check the snapshot count displayed on service details page
+            3. Check that last created snapshot is displayed on service defails page
+            4. Click on that snapshot link
+        expectedResults:
+            1. Snapshots created successfully
+            2. Count should be 3
+            3. True
+            4. Snapshot page displayed
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.provider([VMwareProvider], override=True)
+@test_requirements.snapshot
+@test_requirements.ssui
+@pytest.mark.tier(2)
+def test_snapshot_timeline_crud():
+    """
+    Test the SUI snapshot timeline.
+    See if the data in the timeline are corresponding to the snapshot
+    actions. Try to create snapshots, revert to snapshot and delete
+    snapshot and see if the timeline reflects this correctly
+
+    Polarion:
+        assignee: apagac
+        casecomponent: SelfServiceUI
+        caseimportance: low
+        initialEstimate: 1/2h
+        setup:
+            1. Add vmware provider
+        testSteps:
+            1. create a new vm
+            2. create two snapshots for the VM
+            3. revert to the first snapshot
+            4. delete all snapshots
+            5. go to the VM details page, then Monitoring -> Timelines
+            6. select "Management Events" and "Snapshot Activity" and click Apply
+        expectedResults:
+            1. vm created
+            2. snapshots created
+            3. revert successful
+            4. delete successful
+            5. timelines page displayed
+            6. snapshot timeline appears, all actions are in the timeline
+               and visible, the time/date appears correct
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.provider([VMwareProvider], override=True)
+@test_requirements.snapshot
+def test_creating_second_snapshot_on_suspended_vm():
+    """
+    Test creating second snapshot on suspended vm.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/3h
+        title: test creating second snapshot on suspended vm
+        setup:
+            1. Add vmware provider
+            2. Create testing vm; suspend it
+        testSteps:
+            1. Take a first snapshot on suspended VM
+            2. Take a second snapshot on suspended VM
+        expectedResults:
+            1. Snapshot created successfully
+            2. Flash message Snapshot not taken since the state of the
+               virtual machine has not changed since the last snapshot
+               operation should be displayed in UI
+    Bugzilla:
+        1419872
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.snapshot
+@test_requirements.ssui
+@pytest.mark.tier(2)
+def test_snapshot_timeline_verify_data():
+    """
+    Test the SUI snapshot timeline.
+    See if data on the popup correspond to data shown below the timeline.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/3h
+        setup:
+            1. Add infra provider
+        testSteps:
+            1. create a new vm
+            2. create a snapshot
+            3. go to the VM details page, then Monitoring -> Timelines
+            4. select "Management Events" and "Snapshot Activity" and click Apply
+            5. click on the event, compare data from the popup with data
+               shown below the timeline
+        expectedResults:
+            1. vm created
+            2. snapshot created
+            3. timelines page displayed
+            4. event displayed on timeline
+            5. data should be identical
+    """
+    pass

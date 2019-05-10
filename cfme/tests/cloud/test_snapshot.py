@@ -2,6 +2,7 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 
 
@@ -34,5 +35,96 @@ def test_osp_snapshot_buttons():
             4. Snapshot link is not displayed
     Bugzilla:
         1690954
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.provider([OpenStackProvider])
+@test_requirements.snapshot
+@pytest.mark.tier(1)
+def test_rhos_notification_for_snapshot_failures():
+    """
+    Test if cfme can report failure when deleting or creating
+    snapshot on RHOS.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/4h
+        title: RHOS: test notification for snapshot create/delete failure
+        setup:
+            1. Add RHOS provider
+            2. Create a test VM on RHOS provider
+        testSteps:
+            1. Try to introduce a failure while creating snapshot
+                * Delete the VM in the process of creating a snapshot
+            2. Try to introduce a failure while deleting snapshot
+                * Disconnect machine from network and then try to delete snapshot
+        expectedResults:
+            1. Notification for failure when creating the snapshot appears
+            2. Notification for failure when deleting the snapshot appears
+    Bugzilla:
+        1581793
+
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.provider([OpenStackProvider])
+@test_requirements.snapshot
+@pytest.mark.tier(1)
+def test_notification_for_snapshot_actions_on_openstack():
+    """
+    Test task notification for snapshot tasks: success of create
+    and delete snapshot.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/3h
+        title: Test notification for snapshot actions on OpenStack
+        setup:
+            1. Add RHOS provider
+            2. Create a test VM on RHOS provider
+        testSteps:
+            1. Create a snapshot
+            2. Delete the snapshot
+        expectedResults:
+            1. Snapshot created successfully; notification displayed
+            2. Snapshot deleted successfully; notification displayed
+    Bugzilla:
+        1429313
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.provider([EC2Provider])
+@test_requirements.snapshot
+@pytest.mark.tier(1)
+def test_notification_for_snapshot_delete_failure_ec2():
+    """
+    Requires ec2 access via web-ui.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/4h
+        title: test notification for snapshot delete failure
+        setup:
+            1. Add ec2 provider
+        testSteps:
+            1. Create a snapshot on EC2 provider
+            2. Try to delete snapshot via CFME UI
+        expectedResults:
+            1. Snapshot created
+            2. Snapshot not deleted and notification displayed
+    Bugzilla:
+        1449243
     """
     pass
