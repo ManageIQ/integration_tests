@@ -105,6 +105,7 @@ def get_obj(relationship, appliance, **kwargs):
         host = kwargs.get("host")
         provider = kwargs.get("provider")
         view = navigate_to(host, "Details")
+        wait_for(lambda: True, timeout=15)
         cluster_name = view.entities.summary("Relationships").get_text_of("Cluster")
         obj = cluster_col.instantiate(name=cluster_name, provider=provider)
     elif relationship in ["Datastores", "VMs", "Templates"]:
