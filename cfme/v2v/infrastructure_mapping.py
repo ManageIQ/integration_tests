@@ -270,11 +270,11 @@ class InfrastructureMappingCollection(BaseCollection):
         print(mapping_name)
         return mapping_name in view.infra_mapping_list.read()
 
-    def delete(self, mapping_name):
+    def delete(self, mapping):
         view = navigate_to(self, "All", wait_for_view=20)
-        if self.mapping_exists(mapping_name):
+        if self.mapping_exists(mapping.name):
             mapping_list = view.infra_mapping_list
-            mapping_list.delete_mapping(mapping_name)
+            mapping_list.delete_mapping(mapping.name)
 
 
 @navigator.register(InfrastructureMappingCollection, "All")
