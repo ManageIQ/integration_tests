@@ -748,6 +748,11 @@ def test_appliance_console_screen():
             "p" for previous screen, "d" detach from screens.
             3. After this, it will takes you back to standard terminal.
             4. Type screen -r to resume using screen.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Check whether it will return back to ealier session.
     """
     pass
 
@@ -769,12 +774,22 @@ def test_appliance_console_restart():
             3. '16' Stop EVM Server Processes.
             4. 'Y' Stop CFME Server Gracefully.
             5. Wait for some time.
-            6. Cross-check service stopped.
-            7. '17' Start EVM Server Processes.
-            8. 'Y' to Start CFME server.
-            9. Wait for some time.
-            10. '21' Quit from appliance_console menu.
-            11. Open appliance IP into Browser.
+            6. '17' Start EVM Server Processes.
+            7. 'Y' to Start CFME server.
+            8. Wait for some time.
+            9. '21' Quit from appliance_console menu.
+            10. Open appliance IP into Browser.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Cross-check service stopped.
+            6.
+            7.
+            8. Cross-check service started.
+            9.
+            10. Confirm that Appliance is running into browser.
     """
     pass
 
@@ -801,7 +816,10 @@ def test_appliance_console_ha_dc_re_establish():
             3. Check repmgr process replicating to DC1.
             4. Restore network connectivity between DC1 and DC2
         expectedResults:
-            1. Confirm replication is working correctly
+            1.
+            2.
+            3.
+            4. Confirm replication is working correctly
     """
     pass
 
@@ -823,7 +841,12 @@ def test_appliance_console_evm_stop():
             3. '16' Stop EVM Server Processes.
             4. 'Y' Stop CFME Server Gracefully.
             5. Wait for some time.
-            6. Cross-check service stopped.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Cross-check service stopped.
     """
     pass
 
@@ -845,7 +868,12 @@ def test_appliance_console_evm_start():
             3. 'Y' to Start CFME server.
             4. Wait for some time.
             5. '21' Quit from appliance_console menu.
-            6. Open appliance IP into Browser.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Confirm EVM service is being started.
+            5. Confirm replication is working correctly
     """
     pass
 
@@ -863,8 +891,10 @@ def test_appliance_console_check_default_ip():
         initialEstimate: 1/6h
         testSteps:
             1. 'ap' launches appliance_console.
-            2. See all default values related to IP
-            3. '21' Quit and Cross-check it on command line.
+            2. '21' Quit.
+        expectedResults:
+            1. See all default values related to IP
+            2. Cross-check default vaules via commandline.
     """
     pass
 
@@ -954,6 +984,17 @@ def test_appliance_console_network_conf():
             8. '5' Set Hostname.
             9. '4' Test Network Configuration.
             10. '20' Summary Information.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7.
+            8.
+            9.
+            10. Check IP and hostname values matches in Summary Information.
     """
     pass
 
@@ -976,10 +1017,16 @@ def test_appliance_console_network_conf_negative():
             3. '1' configure network.
             4. '2' configure static IPv4.
             5. Set invalid IPv4 address.
-            6. Confirm network failure.
-            7. '3' configure static IPv6.
-            8. Set invalid IPv6 address.
-            9.  Confirm network failure.
+            6. '3' configure static IPv6.
+            7. Set invalid IPv6 address.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Check network failure with IPv4.
+            6.
+            7. Check network failure with IPv6.
     """
     pass
 
@@ -1020,7 +1067,12 @@ def test_appliance_console_shutdown():
             3. '19' Shut Down Appliance.
             4. 'Y' Shut Down Appliance now.
             5. Wait for some time.
-            6. You will be logged out from SSH.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. You will be logged out from SSH.
     """
     pass
 
@@ -1043,7 +1095,12 @@ def test_appliance_console_static_ip_negative():
             3. '1' configure network.
             4. '2' configure static IPv4.
             5. Set invalid IPv4 address.
-            6. Confirm network failure.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Confirm network failure.
     """
     pass
 
@@ -1070,6 +1127,10 @@ def test_appliance_console_ha_dc_failover():
             1. Failover to DC1 standby node, drop connections between DC"s.
             2. Restore network connectivity between DC1 and DC2
             3. Manually kill DC1 current primary if its in a split brain scenario.
+        expectedResults:
+            1. Confirm HA setup is fine and no connection to between DC's.
+            2. Check connectivity between Both DC's
+            3. Check DC1 current primary killed/removed.
     """
     pass
 
@@ -1092,7 +1153,12 @@ def test_appliance_console_logfile():
             3. Run appliance_console
             4. Select option "Logfile Configuration"
             5. Configure disk
-            6. Confirm new logfile disk is configured correctly
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Confirm new logfile disk is configured correctly
     """
     pass
 
@@ -1115,7 +1181,12 @@ def test_appliance_console_restore_db_network_negative():
             3. '6' Restore Database From Backup.
             4. '2' Network File System (NFS).
             5. Provide wrong information.
-            6. Confirm DB restore fails.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Confirm DB restore fails.
     """
     pass
 
@@ -1135,7 +1206,9 @@ def test_appliance_console_cli_rh_registration():
         testSteps:
             1. Provision appliace
             2. SSH to it and run "subscription-manager register"
-            3. Check changes within the ui
+        expectedResults:
+            1.
+            2. Check changes within the ui
     """
     pass
 
@@ -1156,7 +1229,10 @@ def test_appliance_console_extend_storage_negative():
             1. 'ap' launches appliance_console.
             2. RETURN clears info screen.
             3. '11' Extend Temporary Storage.
-            4. Check there is no extra disk present.
+        expectedResults:
+            1.
+            2.
+            3. Check there is no extra disk present.
     """
     pass
 
@@ -1213,6 +1289,11 @@ def test_appliance_console_datetime_negative():
             2. RETURN clears info screen.
             3. '3' Set Date and Time.
             4. Provider invalid Date and Time.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Invalid date/time should not be applied, check for failure there.
     """
     pass
 
@@ -1236,7 +1317,13 @@ def test_appliance_console_key_fetch_negative():
             4. 'Y' override exiting Encryption Key.
             5. '2' Fetch key from remote machine.
             6. Provider invalid IP address.
-            7. Check Encryption Key fetch failure.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6. Check Encryption Key fetch failure.
     """
     pass
 
@@ -1259,6 +1346,7 @@ def test_appliance_console_negative():
         setup: Get an appliance without network attached.
         testSteps:
             1. 'ap' launches appliance_console.
-            2. Check info screen is blank with Network information.
+        expectedResults:
+            1. Check info screen is blank with Network information.
     """
     pass
