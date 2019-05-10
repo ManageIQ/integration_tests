@@ -114,15 +114,15 @@ class StorageManagerVolumeAllView(VolumeAllView):
 class VolumeDetailsView(VolumeView):
     @property
     def is_displayed(self):
-        expected_title = '{} (Summary)'.format(self.context['object'].name)
+        obj = self.context['object']
         # The field in relationships table changes based on volume status so look for either
         try:
             provider = self.entities.relationships.get_text_of('Cloud Provider')
         except NameError:
             provider = self.entities.relationships.get_text_of('Parent Cloud Provider')
         return (self.in_volume and
-                self.entities.title.text == expected_title and
-                self.entities.breadcrumb.active_location == expected_title and
+                self.entities.title.text == obj.expected_details_title and
+                self.entities.breadcrumb.active_location == obj.expected_details_breadcrumb and
                 provider == self.context['object'].provider.name)
 
     toolbar = View.nested(VolumeDetailsToolbar)

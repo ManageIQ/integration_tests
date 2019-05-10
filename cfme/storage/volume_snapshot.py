@@ -105,12 +105,13 @@ class VolumeSnapshotDetailsView(VolumeSnapshotView):
 
     @property
     def is_displayed(self):
-        expected_title = '{} (Summary)'.format(self.context['object'].name)
+        obj = self.context['object']
 
         return (
             self.in_volume_snapshots and
-            self.entities.title.text == expected_title and
-            self.entities.breadcrumb.active_location == expected_title)
+            self.entities.title.text == obj.expected_details_title and
+            self.entities.breadcrumb.active_location == obj.expected_details_breadcrumb
+        )
 
     toolbar = View.nested(VolumeSnapshotDetailsToolbar)
     sidebar = View.nested(VolumeSnapshotDetailSidebar)

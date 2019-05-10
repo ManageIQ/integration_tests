@@ -107,12 +107,12 @@ class VolumeBackupDetailsView(VolumeBackupView):
     """The detail Volume Backup page"""
     @property
     def is_displayed(self):
-        expected_title = '{} (Summary)'.format(self.context['object'].name)
+        obj = self.context['object']
 
         return (
             self.in_volume_backup and
-            self.title.text == expected_title and
-            self.entities.breadcrumb.active_location == expected_title)
+            self.title.text == obj.expected_details_title and
+            self.entities.breadcrumb.active_location == obj.expected_details_breadcrumb)
 
     toolbar = View.nested(VolumeBackupDetailsToolbar)
     sidebar = View.nested(VolumeBackupDetailSidebar)

@@ -95,11 +95,12 @@ class ObjectStoreObjectDetailsView(ObjectStoreObjectView):
     """The detail Object Store Object page"""
     @property
     def is_displayed(self):
-        expected_title = '{} (Summary)'.format(self.context['object'].key)
+        obj = self.context['object']
 
         return (
-            self.title.text == expected_title and
-            self.entities.breadcrumb.active_location == expected_title)
+            self.title.text == obj.expected_details_title and
+            self.entities.breadcrumb.active_location == obj.expected_details_breadcrumb
+        )
 
     toolbar = View.nested(ObjectStoreObjectDetailsToolbar)
     sidebar = View.nested(ObjectStoreObjectDetailsSidebar)
@@ -116,6 +117,10 @@ class ObjectStoreObject(BaseEntity, Taggable):
     """
     key = attr.ib()
     provider = attr.ib()
+
+    @property
+    def name(self):
+        return self.key
 
 
 @attr.s

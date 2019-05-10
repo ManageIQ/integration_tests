@@ -59,15 +59,15 @@ class VolumeTypeDetailsEntities(View):
 class VolumeTypeDetailsView(VolumeTypeView):
     @property
     def is_displayed(self):
-        expected_title = '{} (Summary)'.format(self.context['object'].name)
+        obj = self.context['object']
         try:
             provider = self.entities.relationships.get_text_of('Cloud Provider')
         except NameError:
             provider = self.entities.relationships.get_text_of('Parent Cloud Provider')
         return (self.in_volume_type and
-                self.entities.title.text == expected_title and
-                self.entities.breadcrumb.active_location == expected_title and
-                provider == self.context['object'].provider.name)
+                self.entities.title.text == obj.expected_details_title and
+                self.entities.breadcrumb.active_location == obj.expected_details_breadcrumb and
+                provider == obj.provider.name)
 
     toolbar = View.nested(VolumeTypeDetailsToolbar)
     entities = View.nested(VolumeTypeDetailsEntities)

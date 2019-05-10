@@ -97,11 +97,12 @@ class SecurityGroupAllView(SecurityGroupView):
 class SecurityGroupDetailsView(SecurityGroupView):
     @property
     def is_displayed(self):
-        expected_title = '{} (Summary)'.format(self.context['object'].name)
+        obj = self.context['object']
         return (
             self.in_security_groups and
-            self.entities.title.text == expected_title and
-            self.entities.breadcrumb.active_location == expected_title)
+            self.entities.title.text == obj.expected_details_title and
+            self.entities.breadcrumb.active_location == obj.expected_details_breadcrumb
+        )
 
     toolbar = View.nested(SecurityGroupDetailsToolbar)
     sidebar = View.nested(SecurityGroupDetailsAccordion)

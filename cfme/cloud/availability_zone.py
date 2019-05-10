@@ -120,12 +120,12 @@ class AvailabilityZoneDetailsView(AvailabilityZoneView):
     """Collect the view components into a single view"""
     @property
     def is_displayed(self):
-        expected_title = "{} (Summary)".format(self.context['object'].name)
-        expected_detail = self.context['object'].provider.name
+        obj = self.context['object']
         return (
             self.in_availability_zones and
-            self.entities.title.text == expected_title and
-            self.entities.relationships.get_text_of('Cloud Provider') == expected_detail)
+            self.entities.title.text == obj.expected_details_title and
+            self.entities.relationships.get_text_of('Cloud Provider') == obj.provider.name
+        )
 
     toolbar = View.nested(AvailabilityZoneDetailsToolBar)
     sidebar = View.nested(AvailabilityZoneDetailsAccordion)
@@ -138,7 +138,7 @@ class CloudAvailabilityZoneTimelinesView(TimelinesView, AvailabilityZoneView):
         return (
             self.in_availability_zones and
             self.breadcrumb.active_location == 'Timelines' and
-            "{} (Summary)".format(self.context['object'].name) in self.breadcrumb.locations and
+            self.context['object'].expected_details_breadcrumb in self.breadcrumb.locations and
             self.is_timelines)
 
 

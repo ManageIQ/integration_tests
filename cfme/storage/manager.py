@@ -112,11 +112,11 @@ class StorageManagerDetailsView(StorageManagerView):
     """The details page for Storage Manager or Provider"""
     @property
     def is_displayed(self):
-        expected_title = '{} (Summary)'.format(self.context['object'].name)
+        obj = self.context['object']
 
         return(
-            self.title.text == expected_title and
-            self.entities.breadcrumb.active_location == expected_title)
+            self.title.text == obj.expected_details_title and
+            self.entities.breadcrumb.active_location == obj.expected_details_breadcrumb)
 
     toolbar = View.nested(StorageManagerDetailsToolbar)
     sidebar = View.nested(StorageManagerDetailsAccordion)
