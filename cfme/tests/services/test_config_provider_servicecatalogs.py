@@ -38,7 +38,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope='module')
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def config_manager(config_manager_obj):
     """ Fixture that provides a random config manager and sets it up"""
     if config_manager_obj.type == "Ansible Tower":
