@@ -2,8 +2,11 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.common.provider_views import CloudProviderAddView
+from cfme.common.provider_views import ContainerProviderAddView
 from cfme.common.provider_views import InfraProviderAddView
 from cfme.common.provider_views import InfraProvidersView
+from cfme.common.provider_views import PhysicalProviderAddView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -250,6 +253,31 @@ def test_welcoming_page(appliance, has_no_providers):
 
     add_infra_view = appliance.server.create_view(InfraProviderAddView)
     assert add_infra_view.is_displayed
+
+
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.parametrize(
+    ("provider_type", "add_view"),
+    [
+        ("infra_providers", InfraProviderAddView),
+        ("cloud_providers", CloudProviderAddView),
+        ("containers_providers", ContainerProviderAddView),
+        ("physical_providers", PhysicalProviderAddView),
+    ],
+    ids=["infra", "cloud", "container", "physical"],
+)
+def test_add_button_on_provider_all_page(
+    appliance, provider_type, add_view, has_no_providers
+):
+    provider = getattr(appliance.collections, provider_type)
+
+    view = navigate_to(provider, "All")
+    assert view.is_displayed
+    assert view.add_button.is_displayed
+    view.add_button.click()
+
+    displayed_view = provider.create_view(add_view)
+    assert displayed_view.is_displayed
 
 
 @pytest.mark.ignore_stream('5.10')
