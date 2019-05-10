@@ -2,7 +2,8 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.provider_views import ProviderAddView
+from cfme.common.provider_views import InfraProviderAddView
+from cfme.common.provider_views import InfraProvidersView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -241,11 +242,13 @@ def test_welcoming_page(appliance, has_no_providers):
     Bugzilla:
         1678190
     """
-    appliance.server.logout()
-    view = navigate_to(appliance.server, "LoggedIn")
+    appliance.server.login()
+    view = appliance.server.create_view(InfraProvidersView)
     assert view.add_button.is_displayed
+
     view.add_button.click()
-    add_infra_view = appliance.server.create_view(ProviderAddView)
+
+    add_infra_view = appliance.server.create_view(InfraProviderAddView)
     assert add_infra_view.is_displayed
 
 

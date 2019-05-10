@@ -314,6 +314,7 @@ class ProvidersView(BaseLoggedInPage):
     sidebar = View.nested(ProviderSideBar)
     search = View.nested(Search)
     including_entities = View.include(ProviderEntitiesView, use_parent=True)
+    add_button = Text('//*[@id="main_div"]//div/a')
 
     @View.nested
     class my_filters(Accordion):  # noqa
