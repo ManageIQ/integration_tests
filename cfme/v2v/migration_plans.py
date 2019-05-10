@@ -218,7 +218,7 @@ class AddMigrationPlanView(View):
                     if vm.name in row.vm_name.read():
                         # select checkbox
                         row[0].fill(True)
-                self.clear_filters.click()
+                    self.clear_filters.click()
             was_change = True
             self.after_fill(was_change)
             return was_change
@@ -433,16 +433,17 @@ class MigrationPlan(BaseEntity):
         view = navigate_to(self, "Complete")
         return view.plans_completed_list.is_plan_succeeded(self.name)
 
-    def get_plan_vm_list(self):
+    def get_plan_vm_list(self, wait_for_migration=True):
         """
         Navigates to plan details and waits for plan to complete
         returns : List of Vm's on plan details page
         """
         view = navigate_to(self, "Details")
         view.wait_displayed()
-        wait_for(func=view.plan_in_progress,
-                 message="migration plan is in progress, be patient please",
-                 delay=5, num_sec=3600)
+        if wait_for_migration:
+            wait_for(func=view.plan_in_progress,
+                    message="migration plan is in progress, be patient please",
+                    delay=5, num_sec=3600)
         request_details_list = view.migration_request_details_list
         return request_details_list
 
