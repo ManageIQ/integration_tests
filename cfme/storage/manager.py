@@ -17,6 +17,10 @@ from cfme.common import TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
+from cfme.storage.volume import AttachInstanceView
+from cfme.storage.volume import DetachInstanceView
+from cfme.storage.volume import StorageManagerVolumeAllView
+from cfme.storage.volume import VolumeAddView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
@@ -245,6 +249,49 @@ class StorageManagerDetails(CFMENavigateStep):
             row.click()
         except NoSuchElementException:
             raise ItemNotFound('Could not locate {}'.format(self.obj.name))
+
+
+@navigator.register(StorageManager, 'Volumes')
+class StorageManagerVolumesAll(CFMENavigateStep):
+    VIEW = StorageManagerVolumeAllView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        volume_count = int(
+            self.prerequisite_view.entities.relationships.get_text_of("Cloud Volumes"))
+        if volume_count > 0:
+            self.prerequisite_view.entities.relationships.click_at("Cloud Volumes")
+        else:
+            raise ItemNotFound('{} has no volumes'.format(self.obj.name))
+
+
+@navigator.register(StorageManager, 'AddVolume')
+class StorageManagerVolumesAdd(CFMENavigateStep):
+    VIEW = VolumeAddView
+    prerequisite = NavigateToSibling('Volumes')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Add a new Cloud Volume')
+
+
+@navigator.register(StorageManager, 'VolumeAttachInstance')
+class AttachInstance(CFMENavigateStep):
+    VIEW = AttachInstanceView
+    prerequisite = NavigateToSibling('Volumes')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Attach selected Cloud Volume to '
+                                                                 'an Instance')
+
+
+@navigator.register(StorageManager, 'VolumeDetachInstance')
+class DetachInstance(CFMENavigateStep):
+    VIEW = DetachInstanceView
+    prerequisite = NavigateToSibling('Volumes')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Detach selected Cloud Volume from'
+                                                                 ' an Instance')
 
 
 @navigator.register(StorageManager, 'EditTagsFromDetails')

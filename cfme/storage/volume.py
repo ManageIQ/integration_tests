@@ -13,6 +13,7 @@ from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 
 from cfme.base.ui import BaseLoggedInPage
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
 from cfme.common import TaggableCollection
@@ -27,6 +28,8 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.update import Updateable
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Accordion
@@ -100,6 +103,14 @@ class VolumeAllView(VolumeView):
         tree = ManageIQTree()
 
 
+class StorageManagerVolumeAllView(VolumeAllView):
+    @property
+    def is_displayed(self):
+        return (
+            self.entities.title.text == "{} (All Cloud Volumes)".format(self.context['object'].name)
+        )
+
+
 class VolumeDetailsView(VolumeView):
     @property
     def is_displayed(self):
@@ -126,10 +137,14 @@ class VolumeAddEntities(View):
 
 class VolumeAddForm(View):
     storage_manager = BootstrapSelect(name='storage_manager_id')
-    tenant = BootstrapSelect(name='cloud_tenant_id')
+    tenant = BootstrapSelect(name='cloud_tenant_id')  # is for openstack block storage only
     volume_name = TextInput(name='name')
-    volume_type = BootstrapSelect(name='volume_type')
-    size = TextInput(name='size')
+    volume_type = BootstrapSelect(name=VersionPicker({Version.lowest(): 'aws_volume_type',
+                                                      '5.10': 'volume_type'}))
+    volume_size = TextInput(name='size')
+    az = BootstrapSelect(name='aws_availability_zone_id')  # is for ec2 block storage only
+    iops = TextInput(name='aws_iops')  # is for ec2 block storage only
+    encryption = BootstrapSwitch(name="aws_encryption")  # is for ec2 block storage only
     add = Button('Add')
     cancel = Button('Cancel')
 
@@ -151,6 +166,7 @@ class VolumeEditView(VolumeView):
     is_displayed = displayed_not_implemented
 
     volume_name = TextInput(name='name')
+    volume_size = TextInput(name='size')
     save = Button('Save')
 
 
@@ -251,21 +267,35 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         except TimedOutError:
             logger.error('Timed out waiting for Volume to disappear, continuing')
 
-    def update(self, updates):
+    def update(self, updates, from_manager=None):
         """Edit cloud volume"""
-        view = navigate_to(self, 'Edit')
-        view.fill({'volume_name': updates.get('name')})
+        if from_manager:
+            view = navigate_to(self.parent.manager, 'Volumes')
+            view.entities.get_entity(surf_pages=True, name=self.name).check()
+            view.toolbar.configuration.item_select('Edit selected Cloud Volume')
+            view = view.browser.create_view(VolumeEditView, additional_context={'object': self})
+        else:
+            view = navigate_to(self, 'Edit')
+        view.fill(updates)
 
         view.save.click()
-
-        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(updates.get('name')))
+        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(
+            updates.get('volume_name')))
         wait_for(lambda: not self.exists, delay=20, timeout=500, fail_func=self.refresh)
+        volume_collection = self.appliance.collections.volumes
+        return volume_collection.instantiate(
+            name=updates.get('volume_name'), provider=self.provider)
 
-    def delete(self, wait=True):
+    def delete(self, wait=True, from_manager=None):
         """Delete the Volume"""
-
-        view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Delete this Cloud Volume', handle_alert=True)
+        if from_manager:
+            view = navigate_to(self.parent.manager, 'Volumes')
+            view.entities.get_entity(surf_pages=True, name=self.name).check()
+            view.toolbar.configuration.item_select(
+                'Delete selected Cloud Volumes', handle_alert=True)
+        else:
+            view = navigate_to(self, 'Details')
+            view.toolbar.configuration.item_select('Delete this Cloud Volume', handle_alert=True)
         view.flash.assert_success_message('Delete initiated for 1 Cloud Volume.')
 
         if wait:
@@ -313,8 +343,15 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
                 view.save.click()
                 return snapshot_collection.instantiate(name, self.provider)
 
-    def attach_instance(self, name, mountpoint=None, cancel=False, reset=False):
-        view = navigate_to(self, 'AttachInstance')
+    def attach_instance(self, name, mountpoint=None, cancel=False, reset=False,
+                        from_manager=None):
+        if from_manager:
+            view = navigate_to(self.parent.manager, 'Volumes')
+            view.entities.get_entity(surf_pages=True, name=self.name).check()
+            view.toolbar.configuration.item_select('Attach selected Cloud Volume to an Instance')
+            view = view.browser.create_view(AttachInstanceView, additional_context={'object': self})
+        else:
+            view = navigate_to(self, 'AttachInstance')
 
         # Reset and Attach buttons are only active when view is changed
         changed = view.fill({'instance': name, 'mountpoint': mountpoint})
@@ -332,8 +369,14 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
                 view = self.create_view(VolumeDetailsView)
                 view.flash.assert_no_error()
 
-    def detach_instance(self, name, cancel=False):
-        view = navigate_to(self, 'DetachInstance')
+    def detach_instance(self, name, cancel=False, from_manager=None):
+        if from_manager:
+            view = navigate_to(self.parent.manager, 'Volumes')
+            view.entities.get_entity(surf_pages=True, name=self.name).check()
+            view.toolbar.configuration.item_select('Detach selected Cloud Volume from an Instance')
+            view = view.browser.create_view(DetachInstanceView, additional_context={'object': self})
+        else:
+            view = navigate_to(self, 'DetachInstance')
 
         # Detach button is only active when view is changed
         changed = view.instance.fill(name)
@@ -355,6 +398,10 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         """
         view = navigate_to(self.parent, 'All')
         view.toolbar.view_selector.select("List View")
+        if self.provider.one_of(OpenStackProvider):
+            self.refresh()
+        else:
+            view.browser.refresh()
 
         for item in view.entities.elements.read():
             if self.name in item['Name']:
@@ -368,6 +415,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
             :py:class:`str` size of volume.
         """
         view = navigate_to(self, 'Details')
+        view.browser.refresh()
         return view.entities.properties.get_text_of('Size')
 
     @property
@@ -416,38 +464,40 @@ class VolumeCollection(BaseCollection, TaggableCollection):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     ENTITY = Volume
 
-    def create(
-        self,
-        name,
-        storage_manager,
-        tenant,
-        provider,
-        volume_type=None,
-        size=1,
-        cancel=False
-    ):
+    @property
+    def manager(self):
+        coll = self.appliance.collections.block_managers.filter({"provider": self.filters.get(
+            'provider')})
+        return coll.all()[0]
+
+    def create(self, name, provider, tenant=None, volume_type=None, volume_size=1,
+               cancel=False, az=None, from_manager=False):
         """Create new storage volume
 
         Args:
             name: volume name
             storage_manager: storage manager name
             tenant: tenant name
-            size: volume size in GB
+            volume_size: volume size in GB
             provider: provider
             cancel: bool
 
         Returns:
             object for the :py:class: cfme.storage.volume.Volume
         """
-
-        view = navigate_to(self, 'Add')
+        if from_manager:
+            view = navigate_to(self.manager, 'AddVolume')
+        else:
+            view = navigate_to(self, 'Add')
 
         if not cancel:
-            view.form.fill({'storage_manager': storage_manager,
+            view.form.fill({'storage_manager': self.manager.name,
                             'tenant': tenant,
                             'volume_name': name,
                             'volume_type': volume_type,
-                            'size': size})
+                            'volume_size': volume_size,
+                            'az': az,
+                            })
             view.form.add.click()
             base_message = 'Cloud Volume "{}" created'
             view.flash.assert_success_message(base_message.format(name))
@@ -482,9 +532,12 @@ class VolumeCollection(BaseCollection, TaggableCollection):
         else:
             raise ItemNotFound('No Cloud Volume for Deletion')
 
-    def all(self):
+    def all(self, from_manager=None):
         """returning all Volumes objects for respective storage manager type"""
-        view = navigate_to(self, 'All')
+        if from_manager:
+            view = navigate_to(self.manager, 'Volumes')
+        else:
+            view = navigate_to(self, 'All')
         view.toolbar.view_selector.select("List View")
         volumes = []
         try:
