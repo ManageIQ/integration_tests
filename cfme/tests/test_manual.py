@@ -1005,43 +1005,6 @@ def test_osp_kill_the_v2v_process_in_the_middle_restart_evmserverd_should_resume
     pass
 
 
-@pytest.mark.manual
-def test_storage_ebs_volume_crud():
-    """
-    Requires:
-    test_storage_ebs_added
-    Steps to test:
-    Create:
-    1. Go to Storage -> Block Storage -> Volumes
-    2. Add a new cloud volume
-    3.Form to fill:
-    ec2 EBS Storage Manager
-    us-east-1
-    volume_test
-    Magnetic
-    6
-    Encryption off
-    4. Add
-    Read:
-    1. Select "volume_test" and go to its summary
-    Edit:
-    1. Configuration -> Edit this Cloud Volume
-    2. Change volume name from "volume_test" to "volume_edited_test"
-    3. Select "volume_edited_test" in Block Volume list and go to its
-    summary
-    Delete:
-    1. Configuration -> Delete this Cloud Volume
-    2. Check whether volume was deleted
-
-    Polarion:
-        assignee: mmojzis
-        initialEstimate: 1/4h
-        startsin: 5.8
-        casecomponent: Cloud
-    """
-    pass
-
-
 @pytest.mark.manual('manualonly')
 def test_ec2_deploy_cfme_image():
     """
@@ -1065,6 +1028,7 @@ def test_ec2_deploy_cfme_image():
         casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 4h
+        endsin: 5.11
     """
     pass
 
@@ -2527,27 +2491,6 @@ def test_osp_test_delete_infra_mapping():
 
 
 @pytest.mark.manual
-def test_storage_ebs_snapshot_create():
-    """
-    Requires: An ec2 provider
-    1) Create a block storage volume
-    2) Go to its summary
-    3) Select Configuration in toolbar and click on Create a Snapshot of
-    this Cloud Volume
-    4) Go to Storage -> Block Storage -> Snapshots
-    5) Check whether newly created snapshot appears
-
-    Polarion:
-        assignee: mmojzis
-        caseimportance: medium
-        casecomponent: Cloud
-        initialEstimate: 1/5h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.replication
 @pytest.mark.tier(3)
 def test_distributed_delete_offline_worker_appliance():
@@ -2830,32 +2773,6 @@ def test_osp_test_multiple_sources_to_single_target_mapping_for_clusters_ds_netw
 
 
 @pytest.mark.manual
-@test_requirements.storage
-def test_storage_volume_in_use_delete_openstack():
-    """
-    Requires:
-    RHCF3-21779 - test_storage_volume_attach[openstack]
-    Steps to test:
-    1. Check after attached status of volume in-used or not
-    2. Now try to delete volume from Detail page
-    3. check for flash message " Cloud Volume "Volume_name" cannot be
-    removed because it is attached to one or more Instances "
-    4. Navigate on All page
-    5. try to delete volume from All page
-    6. check for flash message " Cloud Volume "Volume_name" cannot be
-    removed because it is attached to one or more Instances "
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_ec2_add_delete_add_provider():
     """
     Polarion:
@@ -2959,27 +2876,6 @@ def test_storage_object_store_container_edit_tag_openstack():
         casecomponent: Cloud
         initialEstimate: 1/8h
         startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_storage_ebs_volume_detach():
-    """
-    Requires:
-    test_storage_ebs_volume_attach
-    Steps to test:
-    1. Go to Storage -> Block Storage -> Volumes
-    2. Select volume from test_storage_ebs_volume_attach
-    3. Configuration -> Detach this Cloud Volume
-    4. Select instance from test_storage_ebs_volume_attach and Save
-    5. Check whether volume was detached from that instance
-
-    Polarion:
-        assignee: mmojzis
-        initialEstimate: 1/6h
-        casecomponent: Cloud
-        startsin: 5.8
     """
     pass
 
@@ -3472,28 +3368,6 @@ def test_osp_test_retry_plan():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test retry plan
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.storage
-def test_storage_volume_detach_openstack():
-    """
-    Requires:
-    test_storage_volume_attach[openstack]
-    Steps to test:
-    1. Go to Storage -> Block Storage -> Volumes
-    2. Select volume from test_storage_openstack_volume_attach
-    3. Configuration -> Detach this Cloud Volume from an instance
-    4. Select instance from test_storage_openstack_volume_attach and Save
-    5. Check whether volume was detached from that instance
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1/8h
-        startsin: 5.7
     """
     pass
 
@@ -5082,23 +4956,6 @@ def test_verify_that_a_user_with_a_custom_tag_can_view_vms_with_the_same_tag():
 
 
 @pytest.mark.manual
-def test_storage_ebs_snapshot_delete():
-    """
-    Requires: test_storage_ebs_snapshot_create
-    1) Delete previously created EBS snapshot from volume
-    2) Check whether snapshot is not displayed anymore
-
-    Polarion:
-        assignee: mmojzis
-        caseimportance: medium
-        casecomponent: Cloud
-        initialEstimate: 1/15h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_candu_graphs_datastore_vsphere6():
@@ -5227,32 +5084,6 @@ def test_multiple_stack_deployment():
         initialEstimate: 1/8h
         startsin: 5.5
         title: Multiple Stack deployment
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.storage
-def test_storage_volume_attach_openstack():
-    """
-    Requires:
-    An Openstack Cloud Provider
-    Step to test:
-    1. Create an Openstack instance
-    2 . Go to Storage -> Block Storage -> Volumes
-    3. Create an Openstack Volume
-    4. Select created volume
-    5. Configuration -> Attach this Cloud Volume
-    Fill in form:
-    Created instance
-    /dev/sdf
-    6. Check whether volume was attached to that instance
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1/4h
-        startsin: 5.7
     """
     pass
 
@@ -5679,31 +5510,6 @@ def test_chargeback_report_filter_tag():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_storage_ebs_volume_attach():
-    """
-    Requires:
-    An ec2 provider
-    Step to test:
-    1. Create an ec2 instance in region us-east-1
-    2. Create an ebs volume in region us-east-1
-    3. Go to Storage -> Block Storage -> Volumes
-    4. Select created volume
-    5. Configuration -> Attach this Cloud Volume
-    Fill in form:
-    Created instance
-    /dev/sdf
-    6. Check whether volume was attached to that instance
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1/6h
-        startsin: 5.8
     """
     pass
 
@@ -9169,26 +8975,6 @@ def test_osp_test_migration_plan_delete():
 
 
 @pytest.mark.manual
-def test_storage_ebs_added_in_ec2_provider():
-    """
-    Requires:
-    test_storage_ebs_added
-    Steps to test:
-    1. Add an EC2 provider
-    2. Wait for refresh
-    3. Go to EC2 provider summary
-    4. Check whether ebs storage manager is paired with EC2 provider
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1/10h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_ds_and_volume_availiblity_in_source_and_target():
     """
     OSP: Test DS and Volume availiblity in source and target
@@ -9225,47 +9011,6 @@ def test_notification_window_can_be_closed_by_clicking_x():
         initialEstimate: 1/15h
         startsin: 5.9
         title: Notification window can be closed by clicking 'x'
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_storage_ebs_volume_crud_from_manager_list():
-    """
-    Bugzilla:
-        1449293
-
-    Requires:
-    test_storage_ebs_added
-    Steps to test:
-    Create:
-    1. Go to Storage -> Block Storage -> Block Storage Manager -> Volumes
-    Relationship
-    2. Add a new cloud volume
-    3.Form to fill:
-    ec2 EBS Storage Manager
-    us-east-1
-    volume_test
-    Magnetic
-    6
-    Encryption off
-    4. Add
-    Read:
-    1. Select "volume_test" and go to its summary
-    Edit:
-    1. Configuration -> Edit this Cloud Volume
-    2. Change volume name from "volume_test" to "volume_edited_test"
-    3. Select "volume_edited_test" in Block Volume list and go to its
-    summary
-    Delete:
-    1. Configuration -> Delete this Cloud Volume
-    2. Check whether volume was deleted
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1/4h
-        startsin: 5.8
     """
     pass
 
@@ -9442,24 +9187,6 @@ def test_chargeback_preview():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_storage_ebs_added():
-    """
-    Steps to test:
-    1. Add an ec2 provider
-    2. Go to Storage -> Block Storage -> Managers
-    3. Check whether ebs storage manager was added automatically
-
-    Polarion:
-        assignee: mmojzis
-        caseimportance: critical
-        casecomponent: Cloud
-        initialEstimate: 1/10h
-        startsin: 5.8
     """
     pass
 

@@ -121,13 +121,15 @@ def test_storage_volume_crud(appliance, provider, from_manager):
         * Storage provider
 
     Steps:
-        * Crate new volume
+        * Create new volume
+        * Update volume
         * Delete volume
 
     Polarion:
         assignee: mmojzis
         initialEstimate: 1/4h
         casecomponent: Cloud
+        caseimportance: high
     """
     # create volume
     volume = create_volume(appliance, provider, from_manager, should_assert=True)
@@ -157,6 +159,25 @@ def test_storage_volume_crud(appliance, provider, from_manager):
                                unblock=lambda provider: provider.one_of(EC2Provider))])
 @pytest.mark.tier(1)
 def test_storage_volume_attach_detach(appliance, provider, instance_fixture, from_manager):
+    """ Test storage volume attach/detach
+
+    prerequisites:
+        * Storage provider
+        * Instance
+
+    Steps:
+        * Create new volume
+        * Attach that volume to instance
+        * Detach that volume from instance
+        * Delete that volume
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Cloud
+        startsin: 5.7
+        caseimportance: high
+    """
     volume = create_volume(appliance, provider, from_manager, az=instance_fixture.
                            vm_default_args["environment"]["availability_zone"], should_assert=True)
 
@@ -171,6 +192,32 @@ def test_storage_volume_attach_detach(appliance, provider, instance_fixture, fro
 
     # cleanup
     volume.delete()
+
+
+@pytest.mark.manual
+@test_requirements.storage
+def test_storage_volume_attached_delete():
+    """
+    Requires:
+    RHCF3-21779 - test_storage_volume_attach[openstack]
+    Steps to test:
+    1. Check after attached status of volume in-used or not
+    2. Now try to delete volume from Detail page
+    3. check for flash message " Cloud Volume "Volume_name" cannot be
+    removed because it is attached to one or more Instances "
+    4. Navigate on All page
+    5. try to delete volume from All page
+    6. check for flash message " Cloud Volume "Volume_name" cannot be
+    removed because it is attached to one or more Instances "
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/16h
+        startsin: 5.7
+    """
+    pass
 
 
 def test_storage_volume_edit_tag(volume):

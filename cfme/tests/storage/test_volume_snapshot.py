@@ -95,7 +95,7 @@ def test_storage_snapshot_create_cancelled_validation(volume, snapshot_create_fr
         * Assert flash message
 
     Polarion:
-        assignee: apagac
+        assignee: mmojzis
         initialEstimate: 1/4h
         casecomponent: Cloud
     """
@@ -126,7 +126,7 @@ def test_storage_snapshot_create_reset_validation(volume, snapshot_create_from):
         * Assert flash message
 
     Polarion:
-        assignee: apagac
+        assignee: mmojzis
         initialEstimate: 1/4h
         casecomponent: Cloud
     """
@@ -146,11 +146,13 @@ def test_storage_volume_snapshot_crud(volume, provider, snapshot_create_from):
         * Volume
 
     Steps:
-        * Create a snapshot
-        * Delete a snapshot
+        * Create new snapshot
+        * Updates that snapshot
+        * Delete delete that snapshot
 
     Polarion:
-        assignee: apagac
+        assignee: mmojzis
+        caseimportance: medium
         initialEstimate: 1/4h
         casecomponent: Cloud
     """
