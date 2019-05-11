@@ -303,7 +303,7 @@ class ProviderEntitiesView(BaseEntitiesView):
 
 class ProvidersView(BaseLoggedInPage):
     """
-     represents Main view displaying all providers
+    represents Main view displaying all providers
     """
     @property
     def is_displayed(self):
@@ -314,7 +314,7 @@ class ProvidersView(BaseLoggedInPage):
     sidebar = View.nested(ProviderSideBar)
     search = View.nested(Search)
     including_entities = View.include(ProviderEntitiesView, use_parent=True)
-    add_button = Text('//*[@id="main_div"]//div/a')
+    add_button = Button('Add a Provider')
 
     @View.nested
     class my_filters(Accordion):  # noqa

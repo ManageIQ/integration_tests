@@ -269,10 +269,18 @@ def test_welcoming_page(appliance, has_no_providers):
 def test_add_button_on_provider_all_page(
     appliance, provider_type, add_view, has_no_providers
 ):
+    """
+    This test checks if the `Add a Provider` button is displayed on a providers all page
+
+    Polarion:
+        assignee: pvala
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/5h
+    """
     provider = getattr(appliance.collections, provider_type)
 
     view = navigate_to(provider, "All")
-    assert view.is_displayed
     assert view.add_button.is_displayed
     view.add_button.click()
 
