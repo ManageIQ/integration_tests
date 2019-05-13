@@ -30,6 +30,8 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import FonticonPicker
@@ -334,7 +336,8 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
 
     def delete(self):
         view = navigate_to(self, 'Details')
-        view.configuration.item_select('Remove Catalog Item', handle_alert=True)
+        view.configuration.item_select(VersionPicker({Version.lowest(): 'Remove Catalog Item',
+            '5.11': 'Delete Catalog Item'}), handle_alert=True)
         view = self.create_view(AllCatalogItemView)
         assert view.is_displayed
         view.flash.assert_success_message('The selected Catalog Item was deleted')
