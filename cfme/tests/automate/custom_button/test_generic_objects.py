@@ -285,7 +285,10 @@ def test_custom_button_expression_evm_obj(appliance, request, setup_obj, button_
     tag = tag_cat.collections.tags.instantiate(name="engineering", display_name="Engineering")
 
     view = navigate_to(setup_obj, "Details")
-    custom_button_group = Dropdown(view, group.hover)
+    custom_button_group = Dropdown(view, group.text)
+
+    # TODO(ndhandre): add hover check if group disabled
+
     if tag.display_name in [item.display_name for item in setup_obj.get_tags()]:
         if expression == "enablement":
             assert custom_button_group.item_enabled(button.text)

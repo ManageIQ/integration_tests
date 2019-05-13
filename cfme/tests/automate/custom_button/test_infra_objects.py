@@ -374,6 +374,9 @@ def test_custom_button_expression_infra_obj(
             3. Navigate to object Detail page
             4. Check: button should not enable/visible without tag
             5. Check: button should enable/visible with tag
+
+    Bugzilla:
+        1705141
     """
 
     group, obj_type = button_group
@@ -394,29 +397,22 @@ def test_custom_button_expression_infra_obj(
     tag = tag_cat.collections.tags.instantiate(name="engineering", display_name="Engineering")
 
     view = navigate_to(setup_obj, "Details")
-    custom_button_group = Dropdown(view, group.hover)
+    custom_button_group = Dropdown(view, group.text)
 
-    # Note: For higher version (5.10+), button group having single button;
-    # If button is disabled then group disabled.
+    # TODO(ndhandre): add hover check if group disabled
 
     if tag.display_name in [item.display_name for item in setup_obj.get_tags()]:
         if expression == "enablement":
             assert custom_button_group.item_enabled(button.text)
             setup_obj.remove_tag(tag)
-            if appliance.version < "5.10":
-                assert not custom_button_group.item_enabled(button.text)
-            else:
-                assert not custom_button_group.is_enabled
+            assert not custom_button_group.is_enabled
         elif expression == "visibility":
             assert button.text in custom_button_group.items
             setup_obj.remove_tag(tag)
             assert not custom_button_group.is_displayed
     else:
         if expression == "enablement":
-            if appliance.version < "5.10":
-                assert not custom_button_group.item_enabled(button.text)
-            else:
-                assert not custom_button_group.is_enabled
+            assert not custom_button_group.is_enabled
             setup_obj.add_tag(tag)
             assert custom_button_group.item_enabled(button.text)
         elif expression == "visibility":
