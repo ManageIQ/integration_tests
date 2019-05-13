@@ -118,4 +118,7 @@ def ansible_tower_dialog(request, appliance):
     service_dialog = service_dialogs.instantiate(
         label=rest_resource.label,
         description=rest_resource.description)
-    return service_dialog
+    yield service_dialog
+
+    if service_dialog.exists:
+        service_dialog.delete()
