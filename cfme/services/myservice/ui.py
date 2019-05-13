@@ -126,6 +126,8 @@ class MyServiceDetailView(MyServicesView):
     title = Text('#explorer_title_text')
     toolbar = View.nested(MyServiceDetailsToolbar)
     entities = View.nested(MyServiceDetailsEntities)
+    provisioning_tab = Text('//*[@id="provisioning_tab"]')
+    retirement_tab = Text('//*[@id="retirement_tab"]')
 
     @View.nested
     class provisioning(View):  # noqa

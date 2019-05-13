@@ -65,7 +65,6 @@ def ansible_catalog_item(appliance, ansible_repository):
             "repository": ansible_repository.name,
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
-            "verbosity": "3 (Debug)",
             "create_new": True,
             "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
             "extra_vars": [("some_var", "some_value")]
@@ -74,7 +73,6 @@ def ansible_catalog_item(appliance, ansible_repository):
             "repository": ansible_repository.name,
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
-            "verbosity": "3 (Debug)",
             "extra_vars": [("some_var", "some_value")]
         }
     )

@@ -323,6 +323,7 @@ def test_service_ansible_playbook_order_retire(
     order_value,
     result,
     action,
+    request
 ):
     """Test ordering and retiring ansible playbook service against default host, blank field and
     unavailable host.
@@ -337,6 +338,21 @@ def test_service_ansible_playbook_order_retire(
     ansible_service_catalog.ansible_dialog_values = {"hosts": order_value}
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
+    cat_item_name = ansible_catalog_item.name
+    request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
+    service_request = appliance.collections.requests.instantiate(description=request_descr)
+    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+
+    @request.addfinalizer
+    def _finalize():
+        service = MyService(appliance, cat_item_name)
+        if service_request.exists():
+            service_request.wait_for_request()
+            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+
+        if service.exists:
+            service.delete()
+
     if action == "retirement":
         ansible_service.retire()
     view = navigate_to(ansible_service, "Details")
@@ -407,6 +423,9 @@ def test_service_ansible_playbook_pass_extra_vars(
     if action == "retirement":
         ansible_service.retire()
     view = navigate_to(ansible_service, "Details")
+    # To avoid NoSuchElementException
+    if action == "provisioning":
+        view.provisioning_tab.click()
     stdout = getattr(view, action).standart_output
     stdout.wait_displayed()
     pre = stdout.text
