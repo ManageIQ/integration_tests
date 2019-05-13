@@ -195,12 +195,8 @@ class ReportMenu(BaseEntity):
             selected_options = selected_menu.parent_view.report_select.all_options
             for report in reports:
                 if report in selected_options:
-                    raise Exception(
-                        "Report already present in the menu {}/{}. Cannot move.".format(
-                            folder, subfolder
-                        )
-                    )
-
+                    # pass, since the report is already present
+                    pass
             # fill method replaces all the options in all_options with the value passed as argument
             # We do not want to replace any value, we just want to move the new reports to a given
             # menu. This is a work-around for that purpose.
