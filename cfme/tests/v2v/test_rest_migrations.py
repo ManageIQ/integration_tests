@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -10,6 +11,8 @@ from cfme.markers.env_markers.provider import ONE_PER_VERSION
 
 
 pytestmark = [
+    pytest.mark.tier(1),
+    test_requirements.v2v,
     pytest.mark.provider(
         classes=[RHEVMProvider, OpenStackProvider],
         selector=ONE_PER_VERSION,
@@ -120,6 +123,7 @@ def test_rest_mapping_create(request, appliance, get_clusters, get_datastores, g
     Polarion:
         assignee: ytale
         casecomponent: V2V
+        caseimportance: high
         testtype: functional
         initialEstimate: 1/8h
         subcomponent: RHV
@@ -152,6 +156,7 @@ def test_rest_mapping_bulk_delete_from_collection(
     Polarion:
         assignee: ytale
         casecomponent: V2V
+        caseimportance: high
         testtype: functional
         initialEstimate: 1/8h
         subcomponent: RHV
