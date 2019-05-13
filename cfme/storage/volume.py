@@ -476,7 +476,7 @@ class VolumeCollection(BaseCollection, TaggableCollection):
 
         Args:
             name: volume name
-            storage_manager: storage manager name
+            from_manager: create on the storage manager
             tenant: tenant name
             volume_size: volume size in GB
             provider: provider

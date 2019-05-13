@@ -404,7 +404,8 @@ class ButtonCollection(BaseCollection):
             args = [group, text, hover, image, dialog]
         elif type == "Ansible Playbook":
             button_class = AnsiblePlaybookButton
-            args = [group, text, hover, image, playbook_cat_item, inventory, hosts]
+            args = [group, text, hover, image, playbook_cat_item, inventory]
+            kwargs['hosts'] = hosts
         return button_class.from_collection(self, *args, **kwargs)
 
     def create(
