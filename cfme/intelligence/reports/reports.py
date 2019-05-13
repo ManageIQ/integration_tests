@@ -7,7 +7,9 @@ from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Checkbox
+from widgetastic.widget import FileInput
 from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Select
 from widgetastic.widget import Table as VanillaTable
 from widgetastic.widget import Text
 from widgetastic.widget import View
@@ -17,7 +19,6 @@ from widgetastic_patternfly import Input
 
 from . import CloudIntelReportsView
 from . import ReportsMultiBoxSelect
-from cfme.intelligence.reports.import_export import ImportExportCommonForm
 from cfme.intelligence.reports.schedules import SchedulesFormCommon
 from cfme.intelligence.timelines import CloudIntelTimelinesView
 from cfme.modeling.base import BaseCollection
@@ -30,6 +31,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import InputButton
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import ReportToolBarViewSelector
 from widgetastic_manageiq import Table
@@ -268,9 +270,17 @@ class ReportScheduleView(SchedulesFormCommon):
         )
 
 
-class ImportExportCustomReportsView(ImportExportCommonForm):
+class ImportExportCustomReportsView(CloudIntelReportsView):
+    title = Text("#explorer_title_text")
+    subtitle = Text(locator=".//div[@id='main_div']/h2")
+
+    upload_file = FileInput(id="upload_file")
+    upload_button = InputButton("commit")
+
     overwrite = Checkbox("overwrite")
     preserve_owner = Checkbox("preserve_owner")
+
+    items_for_export = Select(id="choices_chosen")
     export_button = Button(id="export_button")
 
     @property
@@ -469,21 +479,20 @@ class ReportsCollection(BaseCollection):
         return self.instantiate(**values)
 
     def import_report(
-        self, filename, preserve_owner=False, overwrite=False
+        self, filepath, preserve_owner=False, overwrite=False
     ):
         """
         Import yaml files containing report data
         Args:
-            filename (str): Complete path to the file
+            filepath (str): Complete path to the file
             preserve_owner (bool): If true, original owner of the report will be preserved
             overwrite (bool): If true, a possible duplicate of the report will be overwritten
         """
         view = navigate_to(self, "ImportExport")
-        assert view.is_displayed
 
         view.fill(
             {
-                "upload_file": filename,
+                "upload_file": filepath,
                 "preserve_owner": preserve_owner,
                 "overwrite": overwrite,
             }
@@ -491,19 +500,15 @@ class ReportsCollection(BaseCollection):
         view.upload_button.click()
         view.flash.assert_no_error()
 
-    def export_report(self, reports):
+    def export_report(self, *reports):
         """
         Export custom report
         Args:
-            reports (str or lst): a single report name or a list of report names
+            reports (str, tuple): name of reports to be exported
         """
-        if not isinstance(reports, list):
-            reports = [reports]
-
         view = navigate_to(self, "ImportExport")
-        assert view.is_displayed
 
-        view.items_for_export.fill(reports)
+        view.items_for_export.fill(*reports)
         view.export_button.click()
         view.flash.assert_no_error()
 

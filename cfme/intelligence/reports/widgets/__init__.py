@@ -2,6 +2,7 @@ import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.widget import Checkbox
+from widgetastic.widget import FileInput
 from widgetastic.widget import Select
 from widgetastic.widget import Text
 from widgetastic_patternfly import BootstrapSelect
@@ -9,7 +10,6 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
 from cfme.intelligence.reports import CloudIntelReportsView
-from cfme.intelligence.reports.import_export import ImportExportCommonForm
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -18,6 +18,7 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import InputButton
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import Table
 
@@ -135,21 +136,20 @@ class DashboardReportWidgetsCollection(BaseCollection):
         view.flash.assert_no_error()
         return dashboard_widget
 
-    def import_widget(self, filename, cancel=False):
+    def import_widget(self, filepath, cancel=False):
         """
         Import yaml files containing widget data
         Args:
-            filename (str): Complete path to the file
+            filepath (str): Complete path to the file
             cancel (bool): If true, widgets will not be imported
         """
         view = navigate_to(self, "ImportExport")
-        assert view.is_displayed
 
-        view.fill({"upload_file": filename})
+        view.fill({"upload_file": filepath})
         view.upload_button.click()
         view.flash.assert_no_error()
 
-        import_view = self.create_view(ImportExportWidgetsCommitView)
+        import_view = self.create_view(ImportExportWidgetsCommitView, wait='5s')
         import_view.table.check_all()
 
         if cancel:
@@ -159,19 +159,15 @@ class DashboardReportWidgetsCollection(BaseCollection):
             import_view.commit_button.click()
             import_view.flash.assert_no_error()
 
-    def export_widget(self, widgets):
+    def export_widget(self, *widgets):
         """
         Export custom widgets
         Args:
-            widgets (str, list): a single widget name or a list of widget names
+            widgets (str, tuple): name of widgets to be exported
         """
-        if not isinstance(widgets, list):
-            widgets = [widgets]
-
         view = navigate_to(self, "ImportExport")
-        assert view.is_displayed
 
-        view.items_for_export.fill(widgets)
+        view.items_for_export.fill(*widgets)
         view.export_button.click()
         view.flash.assert_no_error()
 
@@ -268,8 +264,15 @@ class BaseEditDashboardWidgetView(DashboardWidgetsView):
         )
 
 
-class ImportExportWidgetsView(ImportExportCommonForm):
+class ImportExportWidgetsView(CloudIntelReportsView):
+    title = Text("#explorer_title_text")
+    subtitle = Text(locator=".//div[@id='main_div']/h2")
+
+    upload_file = FileInput(id="upload_file")
+    upload_button = InputButton("commit")
+
     items_for_export = Select(id="widgets_")
+    export_button = Button(value="Export")
 
     @property
     def is_displayed(self):

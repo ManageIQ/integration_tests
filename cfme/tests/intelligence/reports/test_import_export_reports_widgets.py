@@ -58,7 +58,7 @@ def test_import_widget(appliance, widget_file):
 
     collection.import_widget(file_path)
     import_view = collection.create_view(ImportExportWidgetsCommitView)
-    import_view.flash.assert_message("imported successfully", partial=True)
+    import_view.flash.assert_message("1 widget imported successfully")
 
     assert widget.exists
 
@@ -101,7 +101,7 @@ def test_import_report(appliance, report_file):
     collection.import_report(file_path)
     view = collection.create_view(ImportExportCustomReportsView)
     assert view.is_displayed
-    view.flash.assert_message("Imported Report: ", partial=True)
+    view.flash.assert_message("Imported Report: [{}]".format(report.menu_name))
 
     assert report.exists
 

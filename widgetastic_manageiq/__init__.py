@@ -5372,3 +5372,7 @@ class AutomateRadioGroup(RadioGroup):
             self.browser.element(self.BUTTON.format(quote(name))).click()
             return True
         return False
+
+
+class InputButton(Input, ClickableMixin):
+    pass
