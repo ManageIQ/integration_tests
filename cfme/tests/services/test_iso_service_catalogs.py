@@ -33,7 +33,12 @@ pytestmark = [
 @pytest.fixture(scope="module")
 def iso_cust_template(provider, appliance):
     iso_cust_template = provider.data['provisioning']['iso_kickstart']
-    return get_template_from_config(iso_cust_template, create=True, appliance=appliance)
+    try:
+        return get_template_from_config(iso_cust_template, create=True, appliance=appliance)
+    except KeyError:
+        pytest.skip("No such template '{}' available in 'customization_templates'".format(
+            iso_cust_template
+        ))
 
 
 @pytest.fixture(scope="module")
