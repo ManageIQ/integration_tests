@@ -1834,10 +1834,18 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         return self.is_embedded_ansible_role_enabled and self.supervisord.running
 
     @property
+    def is_failover_monitor_started(self):
+        log = '/var/www/miq/vmdb/log/evm.log'
+        return self.ssh_client.run_command(
+            # TODO(jhenner) change this to LogValidator
+            "grep 'Starting database failover monitor'".format(log)).success
+
+    @property
     def is_failover_started(self):
         log = ('/var/www/miq/vmdb/log/ha_admin.log' if self.version < 5.10
                else '/var/www/miq/vmdb/log/evm.log')
         return self.ssh_client.run_command(
+            # TODO(jhenner) change this to LogValidator
             "grep 'Starting to execute failover' {}".format(log)).success
 
     def is_ha_monitor_started(self, standby_server_ip=None):

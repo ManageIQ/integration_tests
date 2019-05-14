@@ -310,6 +310,10 @@ def test_update_ha_webui(ha_appliances_with_providers, appliance, request, old_v
 
     if BZ(1704835, forced_streams=get_stream(ha_appliances_with_providers[2].version)).blocks:
         ha_appliances_with_providers[2].evm_failover_monitor.restart()
+        wait_for(lambda: ha_appliances_with_providers[2].is_failover_monitor_started,
+                 timeout=30)
+
+    assert ha_appliances_with_providers[2].evm_failover_monitor.running
 
     # Cause failover to occur
     result = ha_appliances_with_providers[0].ssh_client.run_command(
