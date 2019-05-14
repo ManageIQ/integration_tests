@@ -205,7 +205,7 @@ def service_vm(appliance, provider, catalog_item):
 
 
 @pytest.fixture(scope="module")
-def service_generic(appliance, generic_catalog_item):
+def generic_service(appliance, generic_catalog_item):
     """ This is global fixture to order generic service and return service and catalog item"""
 
     service_catalogs = ServiceCatalogs(
