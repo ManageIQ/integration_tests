@@ -512,6 +512,6 @@ def test_edit_action_buttons(action_for_testing):
 
     assert view.save_button.disabled
     assert view.reset_button.disabled
-    # prep for deletion of the action during teardown
+    # click the cancel button and navigate to "Details" so that the action can be deleted
     view.cancel_button.click()
     navigate_to(action_for_testing, "Details")
