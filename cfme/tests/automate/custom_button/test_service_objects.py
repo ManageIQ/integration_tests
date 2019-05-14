@@ -1,8 +1,11 @@
 import fauxfactory
 import pytest
+from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.services.myservice import MyService
 from cfme.tests.automate.custom_button import CustomButtonSSUIDropdwon
 from cfme.tests.automate.custom_button import log_request_check
@@ -713,3 +716,66 @@ def test_custom_button_open_url_service_obj(objects, button_group):
         1550002
     """
     pass
+
+
+@pytest.fixture(params=["Service", "Provider"], scope="module")
+def unassigned_btn_setup(request, appliance, provider, service):
+    if request.param == "Service":
+        obj = MyService(appliance, name=service.name)
+        destinations = [ViaUI, ViaSSUI]
+    else:
+        # only service is different than other custom button object so selecting one i.e. provider
+        obj = provider
+        destinations = [ViaUI]
+
+    gp = appliance.collections.button_groups.instantiate(
+        text="[Unassigned Buttons]", hover="Unassigned buttons", type=request.param
+    )
+    yield obj, gp, destinations
+
+
+@pytest.mark.provider([VMwareProvider], override=True, scope="module", selector=ONE)
+def test_custom_button_unassigned_behavior_objs(
+    appliance, setup_provider, unassigned_btn_setup, request
+):
+    """ Test unassigned custom button behavior
+
+    Note: Service unassigned custom button should display on SSUI but not OPS UI.
+    For other than service objects also follows same behaviour i.e. not display on OPS UI.
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/6h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.8
+        casecomponent: CustomButton
+        testSteps:
+            1. Create unassigned custom button on service and one other custom button object.
+            2. Check destinations OPS UI should not display unassigned button but SSUI should.
+
+    Bugzilla:
+        1653195
+    """
+
+    obj, gp, destinations = unassigned_btn_setup
+
+    with appliance.context.use(ViaUI):
+        button = gp.buttons.create(
+            text="btn_{}".format(fauxfactory.gen_alphanumeric(3)),
+            hover="btn_hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+            system="Request",
+            request="InspectMe",
+        )
+        assert button.exists
+        request.addfinalizer(button.delete_if_exists)
+
+    # check for button as per destination and UI.
+    for dest in destinations:
+        navigate_to = ssui_nav if dest is ViaSSUI else ui_nav
+
+        with appliance.context.use(dest):
+            view = navigate_to(obj, "Details")
+            btn = Button(view, button.text)
+            assert btn.is_displayed if dest is ViaSSUI else not btn.is_displayed
