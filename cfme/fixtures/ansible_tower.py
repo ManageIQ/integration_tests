@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme.rest.gen_data import _creating_skeleton
+from cfme.utils.blockers import GH
 
 
 def ansible_tower_dialog_rest(request, appliance):
@@ -120,5 +121,6 @@ def ansible_tower_dialog(request, appliance):
         description=rest_resource.description)
     yield service_dialog
 
-    if service_dialog.exists:
-        service_dialog.delete()
+    if !GH(8836):
+        if service_dialog.exists:
+            service_dialog.delete()
