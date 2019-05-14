@@ -234,7 +234,7 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     """Tests the configuration of HA with three appliances including failover to standby node
 
     Polarion:
-        assignee: mnadeem
+        assignee: sbulage
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1h
