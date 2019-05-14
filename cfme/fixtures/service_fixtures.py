@@ -202,3 +202,26 @@ def service_vm(appliance, provider, catalog_item):
         service.delete()
     if provision_request.exists:
         provision_request.remove_request(method="rest")
+
+
+@pytest.fixture(scope="module")
+def service_generic(appliance, generic_catalog_item):
+    """ This is global fixture to order generic service and return service and catalog item"""
+
+    service_catalogs = ServiceCatalogs(
+        appliance, catalog=generic_catalog_item.catalog, name=generic_catalog_item.name
+    )
+    provision_request = service_catalogs.order()
+    logger.info("Waiting for service provision request for service %s", generic_catalog_item.name)
+    provision_request.wait_for_request()
+
+    if not provision_request.is_finished():
+        pytest.skip("Failed to provision service '{}'".format(generic_catalog_item.name))
+
+    service = MyService(appliance, generic_catalog_item.dialog.label)
+    yield service, generic_catalog_item
+
+    if service.exists:
+        service.delete()
+    if provision_request.exists:
+        provision_request.remove_request(method="rest")
