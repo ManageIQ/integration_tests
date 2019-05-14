@@ -152,6 +152,10 @@ class VolumeSnapshot(BaseEntity, Taggable):
         """
         view = navigate_to(self.parent, 'All')
         view.toolbar.view_selector.select("List View")
+        try:
+            view.entities.get_entity(name=self.name, surf_pages=True)
+        except ItemNotFound:
+            return False
 
         for item in view.entities.elements.read():
             if self.name in item['Name']:

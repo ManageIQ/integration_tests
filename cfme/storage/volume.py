@@ -402,6 +402,10 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
             self.refresh()
         else:
             view.browser.refresh()
+        try:
+            view.entities.get_entity(name=self.name, surf_pages=True)
+        except ItemNotFound:
+            return False
 
         for item in view.entities.elements.read():
             if self.name in item['Name']:
