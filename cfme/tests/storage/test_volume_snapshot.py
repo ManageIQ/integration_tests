@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.volume import VolumeDetailsView
 from cfme.storage.volume import VolumeSnapshotView
@@ -15,7 +16,7 @@ pytestmark = [
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider(
-        [OpenStackProvider],
+        [EC2Provider, OpenStackProvider],
         scope='module',
         required_fields=[['provisioning', 'cloud_tenant']]
     )
@@ -28,12 +29,22 @@ STORAGE_SIZE = 1
 def volume(appliance, provider):
     # create new volume
     volume_collection = appliance.collections.volumes
-    manager_name = '{} Cinder Manager'.format(provider.name)
-    volume = volume_collection.create(name=fauxfactory.gen_alpha(),
-                                      storage_manager=manager_name,
-                                      tenant=provider.data['provisioning']['cloud_tenant'],
-                                      size=STORAGE_SIZE,
-                                      provider=provider)
+    name = fauxfactory.gen_alpha()
+    if provider.one_of(OpenStackProvider):
+        volume = volume_collection.create(name=name,
+                                          tenant=provider.data['provisioning']['cloud_tenant'],
+                                          volume_size=STORAGE_SIZE,
+                                          provider=provider,
+                                          cancel=False)
+    elif provider.one_of(EC2Provider):
+        az = "{}a".format(provider.region)
+        volume = volume_collection.create(name=name,
+                                          volume_type='General Purpose SSD (GP2)',
+                                          volume_size=STORAGE_SIZE,
+                                          provider=provider,
+                                          az=az,
+                                          cancel=False)
+    assert volume.exists
     yield volume
 
     try:
@@ -120,7 +131,7 @@ def test_storage_snapshot_create_reset_validation(volume):
 
 
 @pytest.mark.tier(1)
-def test_storage_volume_snapshot_crud(volume):
+def test_storage_volume_snapshot_crud(volume, provider):
     """ Test storage snapshot crud
 
     prerequisites:
@@ -152,8 +163,9 @@ def test_storage_volume_snapshot_crud(volume):
         logger.error('Snapshot count increment fails')
 
     # check for status of snapshot
+    status = 'completed' if provider.one_of(EC2Provider) else 'available'
     try:
-        wait_for(lambda: snapshot.status == 'available',
+        wait_for(lambda: snapshot.status == status,
                  delay=20, timeout=1200, fail_func=snapshot.refresh)
     except TimedOutError:
         logger.error('Snapshot Creation fails:'
