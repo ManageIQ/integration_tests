@@ -42,10 +42,22 @@ def test_evmserverd_stop(appliance, request):
 
     server_name_key = 'Server'
 
+    @wait_for_decorator(timeout="2m", delay=5)
+    def get_server_names():
+        """ Wait for the server name to appear on the appliance.
+            This test was experiencing KeyErrors before this wait was included.
+        """
+        return all(
+            [bool(
+                server.get(server_name_key, False)
+            ) for server in appliance.ssh_client.status["servers"]]
+        )
+
     server_names = {
         server[server_name_key].rstrip('*')  # evm* shows up in status
         for server in appliance.ssh_client.status["servers"]
     }
+
     request.addfinalizer(appliance.evmserverd.start)
     appliance.evmserverd.stop()
 
