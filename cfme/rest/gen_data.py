@@ -368,7 +368,7 @@ def automation_requests_data(vm, requests_collection=False, approve=True, num=4)
     return [data for _ in range(num)]
 
 
-def groups(request, appliance, role, tenant, num=1, **kwargs):
+def groups(request, appliance, role, num=1, **kwargs):
     tenant = kwargs.pop("tenant", appliance.rest_api.collections.tenants.get(name="My Company"))
     if num > 1 and kwargs:
         raise Exception("kwargs cannot be used when num is more than 1")

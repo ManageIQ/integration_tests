@@ -22,14 +22,11 @@ STORAGE_SIZE = 1
 @pytest.fixture(scope='module')
 def backup(appliance, provider):
     volume_collection = appliance.collections.volumes
-    storage_manager = '{} Cinder Manager'.format(provider.name)
     backup_collection = appliance.collections.volume_backups.filter({'provider': provider})
-
     # create new volume
     volume = volume_collection.create(name=fauxfactory.gen_alpha(),
-                                      storage_manager=storage_manager,
                                       tenant=provider.data['provisioning']['cloud_tenant'],
-                                      size=STORAGE_SIZE,
+                                      volume_size=STORAGE_SIZE,
                                       provider=provider)
 
     # create new backup for crated volume

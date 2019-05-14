@@ -5,6 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
 from cfme.control.explorer import alert_profiles
+from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
@@ -200,8 +201,11 @@ def service_request(appliance, ansible_catalog_item):
 def service(appliance, ansible_catalog_item):
     _service = MyService(appliance, ansible_catalog_item.name)
     yield _service
-
-    _service.delete_if_exists()
+    try:
+        if _service.exists:
+            _service.delete()
+    except ItemNotFound:
+        pass
 
 
 @pytest.fixture
