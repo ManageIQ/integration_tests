@@ -182,6 +182,31 @@ class BZ(Blocker):
         return self.data
 
     @property
+    def can_test_on_current_upstream_appliance(self):
+        bug = self.data
+        if not bug.can_test_on_upstream:
+            return False
+        if version.appliance_is_downstream():
+            return False
+
+        change_states = {"POST", "MODIFIED"}
+        # With these states, the change is in upstream
+        if bug.status not in {"POST", "MODIFIED", "ON_QA", "VERIFIED", "RELEASE_PENDING"}:
+            return False
+        history = bug.get_history_raw()["bugs"][0]["history"]
+        changes = []
+        # We look for status changes in the history
+        for event in history:
+            for change in event["changes"]:
+                if change["field_name"].lower() != "status":
+                    continue
+                if change["added"] in change_states:
+                    changes.append(event["when"])
+                    return event["when"] < version.appliance_build_datetime()
+        else:
+            return False
+
+    @property
     def blocks(self):
         try:
             bug = self.data
@@ -191,7 +216,8 @@ class BZ(Blocker):
             if bug.is_opened:
                 result = True
             if bug.upstream_bug:
-                if not version.appliance_is_downstream() and bug.can_test_on_upstream:
+                if (not version.appliance_is_downstream() and
+                        self.can_test_on_current_upstream_appliance):
                     result = False
             if not result and version.appliance_is_downstream():
                 if bug.fixed_in is not None:
