@@ -18,6 +18,20 @@ from widgetastic_manageiq import FolderManager
 from widgetastic_manageiq import ManageIQTree
 
 
+class AllReportMenusView(CloudIntelReportsView):
+    title = Text("#explorer_title_text")
+    reports_tree = ManageIQTree("menu_roles_treebox")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports
+            and self.title.text == "All EVM Groups"
+            and self.edit_report_menus.is_opened
+            and self.edit_report_menus.tree.currently_selected == ["All EVM Groups"]
+        )
+
+
 class EditReportMenusView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
     reports_tree = ManageIQTree("menu_roles_treebox")
@@ -180,7 +194,7 @@ class ReportMenu(BaseEntity):
             view.manager.commit()
             view.save_button.click()
 
-    def move_reports(self, group, folder, subfolder, reports):
+    def move_reports(self, group, folder, subfolder, *reports):
         """ Moves a list of reports to a given menu
         Args:
             group: User group
@@ -188,21 +202,32 @@ class ReportMenu(BaseEntity):
             subfolder: Subfolder under which the reports are to be moved.
             reports: List of reports that are to be moved.
         """
-        if not isinstance(reports, list):
-            reports = [reports]
+        reports = list(reports)
+        cancel_view = ""
 
         with self.manage_subfolder(group, folder, subfolder) as selected_menu:
             selected_options = selected_menu.parent_view.report_select.all_options
-            for report in reports:
-                if report in selected_options:
-                    # pass, since the report is already present
-                    pass
+
+            if set(selected_options) & set(reports):
+                # If the report is already present, we stay on the same page after fill is complete.
+                cancel_view = self.create_view(EditReportMenusView)
+
             # fill method replaces all the options in all_options with the value passed as argument
             # We do not want to replace any value, we just want to move the new reports to a given
             # menu. This is a work-around for that purpose.
             reports.extend(selected_options)
-
             selected_menu.parent_view.report_select.fill(reports)
+
+        if cancel_view:
+            assert cancel_view.is_displayed
+            cancel_view.cancel_button.click()
+            message = 'Edit of Report Menu for role "{}" was cancelled by the user'
+        else:
+            message = 'Report Menu for role "{}" was saved'
+
+        view = self.create_view(AllReportMenusView)
+        assert view.is_displayed
+        view.flash.assert_message(message.format(group))
 
 
 @attr.s
@@ -222,3 +247,12 @@ class EditReportMenus(CFMENavigateStep):
             "All EVM Groups",
             self.obj.group
         )
+
+
+@navigator.register(ReportMenusCollection, "All")
+class ReportMenus(CFMENavigateStep):
+    VIEW = AllReportMenusView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self, *args, **kwargs):
+        self.view.edit_report_menus.tree.click_path("All EVM Groups")
