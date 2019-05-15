@@ -286,7 +286,7 @@ class CloudNetworkDetailsView(BaseLoggedInPage):
     def is_displayed(self):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Networks'] and
-                self.title.text == self.context['object'].expected_details_breadcrumb)
+                self.title.text == self.context['object'].expected_details_title)
 
 
 class CloudNetworkAddView(BaseLoggedInPage):
