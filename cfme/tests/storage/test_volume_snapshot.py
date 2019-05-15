@@ -5,6 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.storage.manager import StorageManagerVolumeAllView
 from cfme.storage.volume import VolumeDetailsView
 from cfme.storage.volume import VolumeSnapshotView
 from cfme.utils.log import logger
@@ -79,8 +80,9 @@ def snapshot(volume):
             msg=str(e)))
 
 
+@pytest.mark.parametrize('snapshot_create_from', [True, False], ids=['from_manager', 'from_volume'])
 @pytest.mark.tier(3)
-def test_storage_snapshot_create_cancelled_validation(volume):
+def test_storage_snapshot_create_cancelled_validation(volume, snapshot_create_from):
     """ Test snapshot create cancelled
 
     prerequisites:
@@ -99,14 +101,19 @@ def test_storage_snapshot_create_cancelled_validation(volume):
     """
 
     snapshot_name = fauxfactory.gen_alpha()
-    volume.create_snapshot(snapshot_name, cancel=True)
-    view = volume.create_view(VolumeDetailsView, wait='10s')
+    volume.create_snapshot(snapshot_name, cancel=True, from_manager=snapshot_create_from)
+    if snapshot_create_from:
+        view = volume.browser.create_view(StorageManagerVolumeAllView, additional_context={
+            'object': volume.parent.manager}, wait='10s')
+    else:
+        view = volume.create_view(VolumeDetailsView, wait='10s')
     view.flash.assert_message(
         'Snapshot of Cloud Volume "{}" was cancelled by the user'.format(volume.name))
 
 
+@pytest.mark.parametrize('snapshot_create_from', [True, False], ids=['from_manager', 'from_volume'])
 @pytest.mark.tier(3)
-def test_storage_snapshot_create_reset_validation(volume):
+def test_storage_snapshot_create_reset_validation(volume, snapshot_create_from):
     """ Test snapshot create reset button validation
 
     prerequisites:
@@ -125,13 +132,14 @@ def test_storage_snapshot_create_reset_validation(volume):
     """
 
     snapshot_name = fauxfactory.gen_alpha()
-    volume.create_snapshot(snapshot_name, reset=True)
+    volume.create_snapshot(snapshot_name, reset=True, from_manager=snapshot_create_from)
     view = volume.create_view(VolumeSnapshotView)
     view.flash.assert_message('All changes have been reset')
 
 
+@pytest.mark.parametrize('snapshot_create_from', [True, False], ids=['from_manager', 'from_volume'])
 @pytest.mark.tier(1)
-def test_storage_volume_snapshot_crud(volume, provider):
+def test_storage_volume_snapshot_crud(volume, provider, snapshot_create_from):
     """ Test storage snapshot crud
 
     prerequisites:
@@ -150,7 +158,7 @@ def test_storage_volume_snapshot_crud(volume, provider):
     # create new snapshot
     initial_snapshot_count = volume.snapshots_count
     snapshot_name = fauxfactory.gen_alpha()
-    snapshot = volume.create_snapshot(snapshot_name)
+    snapshot = volume.create_snapshot(snapshot_name, from_manager=snapshot_create_from)
     view = volume.create_view(VolumeDetailsView, wait='10s')
     view.flash.assert_success_message(
         'Snapshot for Cloud Volume "{}" created'.format(volume.name))
