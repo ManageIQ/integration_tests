@@ -427,7 +427,7 @@ def dialog(appliance, automate_flavour_method):
     dialog_rest.action.delete()
 
 
-def get_result(request, appliance, catalog, catalog_item_name, dialog_values=None):
+def get_quota_message(request, appliance, catalog, catalog_item_name, dialog_values=None):
     """Returns the quota requested by particular type of flavor type"""
     service_catalogs = ServiceCatalogs(appliance, catalog, catalog_item_name, dialog_values)
     service_catalogs.order()
@@ -488,9 +488,12 @@ def test_custom_service_dialog_quota_flavors(request, provider, provisioning, di
     # Ordering service catalog item with different flavor types
     for flavor in flavors:
         flavor_type = {'option_0_instance_type': flavor.name}
-        requested_storage = get_result(
+        requested_storage = get_quota_message(
             request=request, appliance=appliance, catalog=catalog_item.catalog,
             catalog_item_name=catalog_item.name, dialog_values=flavor_type
         )
         result.append(requested_storage)
+
+    # Checks if catalog item is ordered with different flavor by asserting requested storage of
+    # different flavors which should not match
     assert result[0] != result[1]
