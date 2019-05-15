@@ -15,6 +15,7 @@ from cfme.utils.version import VersionPicker
 
 from cfme.utils.single import single
 
+
 @attr.s
 class Server(BaseEntity, sentaku.modeling.ElementMixin):
     _param_name = ParamClassName('name')
