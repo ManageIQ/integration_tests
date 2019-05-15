@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
-import urllib2
 
 import fauxfactory
 import pytest
+import urllib2
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
