@@ -54,7 +54,6 @@ def test_v2v_infra_map_data(appliance, source_provider, provider, soft_assert):
             2. Create infra map
             3. Test infra map UI
     """
-    # TODO: Add edit map test after infra map list refactor
     map_data = infra_mapping_default_data(source_provider, provider)
     map_collection = appliance.collections.v2v_infra_mappings
     mapping = map_collection.create(**map_data)

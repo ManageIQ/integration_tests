@@ -71,7 +71,7 @@ class ComponentView(View):
 
         @property
         def is_displayed(self):
-            return (self.source.is_displayed and self.source.is_displayed and
+            return (self.source.is_displayed and
                     (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0))
 
     def fill(self, values):
