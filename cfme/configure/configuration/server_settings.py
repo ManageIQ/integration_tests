@@ -218,7 +218,7 @@ class ServerInformation(Updateable, Pretty):
                     'rhn_mirror', 'database_synchronization_role', 'git_owner', 'websocket',
                     'storage_metrics_processor', 'storage_metrics_collector',
                     'storage_metrics_coordinator', 'storage_inventory', 'vmdb_storage_bridge',
-                    'cockpit_ws')
+                    'cockpit_ws', 'remote_console')
 
     _basic_information = ['hostname', 'company_name', 'appliance_name', 'appliance_zone',
                           'time_zone', 'locale']
