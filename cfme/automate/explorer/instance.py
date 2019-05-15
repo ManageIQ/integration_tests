@@ -23,6 +23,7 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from widgetastic_manageiq import Table
 
 
@@ -49,8 +50,8 @@ class InstanceDetailsView(AutomateExplorerView):
             self.in_explorer and
             self.title.text.startswith('Automate Instance [{}'.format(
                 self.context['object'].display_name or self.context['object'].name)) and
-            self.datastore.is_opened and check_tree_path(self.datastore.tree.currently_selected,
-                                                         self.context['object'].tree_path)
+            self.datastore.is_opened and (BZ(1704439).blocks or check_tree_path(
+                self.datastore.tree.currently_selected, self.context["object"].tree_path))
         )
 
 
@@ -216,6 +217,11 @@ class Instance(BaseEntity, Copiable):
         return self.parent_obj.tree_path_name_only + [self.name]
 
     def update(self, updates):
+
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
+
         view = navigate_to(self, 'Edit')
         changed = view.fill(updates)
         if changed:
@@ -248,6 +254,10 @@ class Instance(BaseEntity, Copiable):
             result_view.flash.assert_message(
                 'Automate Instance "{}": Delete successful'.format(self.description or self.name))
 
+            # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+            if BZ(1704439).blocks:
+                self.browser.refresh()
+
 
 @attr.s
 class InstanceCollection(BaseCollection):
@@ -279,6 +289,11 @@ class InstanceCollection(BaseCollection):
             add_page.add_button.click()
             add_page.flash.assert_no_error()
             add_page.flash.assert_message('Automate Instance "{}" was added'.format(name))
+
+            # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+            if BZ(1704439).blocks:
+                self.browser.refresh()
+
             return self.instantiate(
                 name=name,
                 display_name=display_name,
@@ -320,6 +335,10 @@ class InstanceCollection(BaseCollection):
         for instance in checked_instances:
             all_page.flash.assert_message(
                 'Automate Instance "{}": Delete successful'.format(instance.name))
+
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
 
 
 @navigator.register(InstanceCollection)

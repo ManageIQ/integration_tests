@@ -20,6 +20,7 @@ from cfme.utils import clear_property_cache
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import UpDownSelect
 
@@ -240,6 +241,10 @@ class Domain(BaseEntity, Fillable):
             domains_view.flash.assert_message(
                 'Automate Domain "{}": Delete successful'.format(self.description or self.name))
 
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
+
     def lock(self):
         # Ensure this has correct data
         self.description
@@ -247,6 +252,11 @@ class Domain(BaseEntity, Fillable):
         details_page.configuration.item_select('Lock this Domain')
         details_page.flash.assert_no_error()
         details_page.flash.assert_message('The selected Automate Domain were marked as Locked')
+
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
+
         clear_property_cache(self, 'locked')
         assert self.locked
 
@@ -257,10 +267,20 @@ class Domain(BaseEntity, Fillable):
         details_page.configuration.item_select('Unlock this Domain')
         details_page.flash.assert_no_error()
         details_page.flash.assert_message('The selected Automate Domain were marked as Unlocked')
+
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
+
         clear_property_cache(self, 'locked')
         assert not self.locked
 
     def update(self, updates):
+
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
+
         view = navigate_to(self, 'Edit')
         changed = view.fill(updates)
         if changed:
@@ -326,6 +346,11 @@ class DomainCollection(BaseCollection):
             if enabled is None:
                 # Assume
                 enabled = False
+
+            # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+            if BZ(1704439).blocks:
+                self.browser.refresh()
+
             return self.instantiate(
                 name=name, description=description, enabled=enabled, locked=False)
 
@@ -391,6 +416,10 @@ class DomainCollection(BaseCollection):
         for domain in checked_domains:
             all_page.flash.assert_message(
                 'Automate Domain "{}": Delete successful'.format(domain.description or domain.name))
+
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
 
     def set_order(self, items):
         if not isinstance(items, (list, tuple)):

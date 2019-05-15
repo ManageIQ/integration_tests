@@ -6,6 +6,7 @@ from cfme import test_requirements
 from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.automate.simulation import simulate
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -40,7 +41,8 @@ def test_method_crud(klass):
         script='$evm.log(:info, ":P")',
     )
     view = method.create_view(ClassDetailsView)
-    view.flash.assert_message('Automate Method "{}" was added'.format(method.name))
+    if not BZ(1704439).blocks:
+        view.flash.assert_message('Automate Method "{}" was added'.format(method.name))
     assert method.exists
     origname = method.name
     with update(method):

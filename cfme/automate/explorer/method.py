@@ -27,9 +27,8 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
-from cfme.utils.version import Version
-from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Input
 from widgetastic_manageiq import ScriptBox
@@ -77,27 +76,18 @@ class Inputs(View, ClickableMixin):
             return results
 
         def delete(self):
-            if self.browser.product_version < '5.10':
-                xpath = './/img[contains(@alt, "Click to delete this")]'
-            else:
-                xpath = './/a/i[contains(@class, "pficon-delete")]'
+            xpath = './/a/i[contains(@class, "pficon-delete")]'
             self.browser.click(xpath, parent=self)
             try:
                 del self.row_id
             except AttributeError:
                 pass
 
-    add_field = Text(VersionPicker({
-        Version.lowest(): '//img[@alt="Equal green"]',
-        '5.10': '//*[@id="inputs_div"]//i[contains(@class, "fa-plus")]'
-    }))
+    add_field = Text('//*[@id="inputs_div"]//i[contains(@class, "fa-plus")]')
     name = Input(locator='.//td/input[contains(@id, "field_name")]')
     data_type = Select(locator='.//td/select[contains(@id, "field_datatype")]')
     default_value = Input(locator='.//td/input[contains(@id, "field_default_value")]')
-    finish_add_field = Text(VersionPicker({
-        Version.lowest(): '//img[@alt="Add this entry"]',
-        '5.10': '//a[@title="Add this entry"]'
-    }))
+    finish_add_field = Text('//a[@title="Add this entry"]')
 
     def read(self):
         return self.inputs.read()
@@ -305,7 +295,7 @@ class MethodEditView(AutomateExplorerView):
     cancel_button = Button('Cancel')
 
     def before_fill(self, values):
-        location = self.context['object'].location
+        location = self.context['object'].location.lower()
         if 'display_name' in values and location in ['inline', 'playbook']:
             values['{}_display_name'.format(location)] = values['display_name']
             del values['display_name']
@@ -319,9 +309,10 @@ class MethodEditView(AutomateExplorerView):
             self.in_explorer and
             self.datastore.is_opened and
             'Editing Automate Method "{}"'.format(self.context['object'].name) in self.title.text
-            and check_tree_path(
+            and (BZ(1704439).blocks or check_tree_path(
                 self.datastore.tree.currently_selected,
                 self.context['object'].tree_path, partial=True))
+        )
 
 
 class Method(BaseEntity, Copiable):
@@ -388,7 +379,11 @@ class Method(BaseEntity, Copiable):
 
     @property
     def tree_path(self):
-        icon_name_map = {'inline': 'fa-ruby', 'playbook': 'vendor-ansible'}
+        if self.browser.product_version < '5.11':
+            location = 'inline'
+        else:
+            location = 'Inline'
+        icon_name_map = {location: 'fa-ruby', 'playbook': 'vendor-ansible'}
         if self.display_name:
             return self.parent_obj.tree_path + [
                 (icon_name_map[self.location], '{} ({})'.format(self.display_name, self.name))]
@@ -400,6 +395,11 @@ class Method(BaseEntity, Copiable):
         return self.parent_obj.tree_path_name_only + [self.name]
 
     def update(self, updates):
+
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
+
         view = navigate_to(self, 'Edit')
         changed = view.fill(updates)
         if changed:
@@ -422,6 +422,10 @@ class Method(BaseEntity, Copiable):
             result_view.flash.assert_message(
                 'Automate Method "{}": Delete successful'.format(self.name))
 
+            # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+            if BZ(1704439).blocks:
+                self.browser.refresh()
+
 
 @attr.s
 class MethodCollection(BaseCollection):
@@ -438,8 +442,14 @@ class MethodCollection(BaseCollection):
             hosts=None, max_ttl=None, logging_output=None, escalate_privilege=None, verbosity=None,
             playbook_input_parameters=None, inputs=None):
         add_page = navigate_to(self, 'Add')
+
+        if self.browser.product_version < '5.11':
+            location = location
+        else:
+            location = location.capitalize()
+
         add_page.fill({'location': location})
-        if location == 'inline':
+        if location == 'inline' or 'Inline':
             add_page.wait_displayed()
             add_page.fill({
                 'inline_name': name,
@@ -480,6 +490,13 @@ class MethodCollection(BaseCollection):
         else:
             add_page.add_button.click()
             add_page.flash.assert_no_error()
+
+            # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+            if BZ(1704439).blocks:
+                view = self.create_view(ClassDetailsView)
+                view.flash.assert_message('Automate Method "{}" was added'.format(name))
+                self.browser.refresh()
+
             return self.instantiate(
                 name=name,
                 display_name=display_name,
@@ -532,6 +549,10 @@ class MethodCollection(BaseCollection):
         for method in checked_methods:
             all_page.flash.assert_message(
                 'Automate Method "{}": Delete successful'.format(method.name))
+
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
 
 
 @navigator.register(MethodCollection)
