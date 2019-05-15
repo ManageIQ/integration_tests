@@ -242,7 +242,6 @@ def test_button_required(appliance, field):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1706900)])
 def test_open_url_availability(appliance):
     """Test open URL option should only available for Single display.
 
@@ -271,6 +270,10 @@ def test_open_url_availability(appliance):
     button_coll.group = unassigned_gp  # Need for supporting navigation
 
     view = navigate_to(button_coll, "Add")
+
+    # check for VM and Instance open url option enable for single display
+    assert view.options.open_url.is_enabled
+
     view.fill(
         {
             "options": {
@@ -286,8 +289,14 @@ def test_open_url_availability(appliance):
     # check open url facility other than single display.
     for display in ["List", "Single and list"]:
         view.options.display_for.fill(display)
-        view.add_button.click()
-        view.flash.assert_message("URL can be opened only by buttons for a single entity")
+        if appliance.version < "5.11":
+            # less than 5.11; we have flash message for display checks
+            view.add_button.click()
+            view.flash.assert_message("URL can be opened only by buttons for a single entity")
+        else:
+            # from 5.11; for other than single checkbox will disabled
+            assert not view.options.open_url.is_enabled
+
     view.cancel_button.click()
 
 
