@@ -121,6 +121,6 @@ def ansible_tower_dialog(request, appliance):
         description=rest_resource.description)
     yield service_dialog
 
-    if !GH(8836):
+    if not GH(8836).blocks or appliance.version != '5.11':
         if service_dialog.exists:
             service_dialog.delete()
