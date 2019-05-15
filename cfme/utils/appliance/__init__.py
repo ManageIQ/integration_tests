@@ -1833,32 +1833,6 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def is_embedded_ansible_running(self):
         return self.is_embedded_ansible_role_enabled and self.supervisord.running
 
-    @property
-    def is_failover_monitor_started(self):
-        log = '/var/www/miq/vmdb/log/evm.log'
-        return self.ssh_client.run_command(
-            # TODO(jhenner) change this to LogValidator
-            "grep 'Starting database failover monitor'".format(log)).success
-
-    @property
-    def is_failover_started(self):
-        log = ('/var/www/miq/vmdb/log/ha_admin.log' if self.version < 5.10
-               else '/var/www/miq/vmdb/log/evm.log')
-        return self.ssh_client.run_command(
-            # TODO(jhenner) change this to LogValidator
-            "grep 'Starting to execute failover' {}".format(log)).success
-
-    def is_ha_monitor_started(self, standby_server_ip=None):
-        if self.version < '5.10':
-            assert standby_server_ip, (
-                'The is_ha_monitor_started() needs a standby_server_ip when appliance '
-                'version is < 5.10')
-            return self.ssh_client.run_command(
-                "grep {} /var/www/miq/vmdb/config/failover_databases.yml".format(standby_server_ip)
-            ).success
-        else:
-            return self.evm_failover_monitor.running
-
     def wait_for_embedded_ansible(self, timeout=1200):
         """Waits for embedded ansible to be ready
 

@@ -22,6 +22,7 @@ from cfme.utils.conf import auth_data
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.providers import list_providers_by_class
 from cfme.utils.single import single
 from cfme.utils.version import Version
@@ -40,6 +41,19 @@ except ImportError:
 
 
 TimedCommand = namedtuple("TimedCommand", ["command", "timeout"])
+
+
+@contextmanager
+def waiting_for_ha_monitor_started(appl, standby_server_ip, timeout):
+    if appl.version < '5.10':
+        with LogValidator(
+                "/var/www/miq/vmdb/config/failover_databases.yml",
+                matched_patterns=[standby_server_ip],
+                hostname=appl.hostname).waiting(timeout=timeout):
+            yield
+    else:
+        yield
+        wait_for(lambda: appl.evm_failover_monitor.running, timeout=300)
 
 
 @pytest.fixture()
@@ -460,17 +474,16 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     interaction.expect('Press any key to continue.', timeout=20)
     interaction.send('')
     interaction.expect('Choose the advanced setting: ')
-    # Configure Application Database Failover Monitor
-    interaction.send('8' if apps2.version < '5.10' else '10')
-    interaction.expect('Choose the failover monitor configuration: ')
-    interaction.send('1')
-    # Failover Monitor Service configured successfully
-    interaction.expect('Press any key to continue.')
-    interaction.send('')
 
-    wait_for(
-        apps2.is_ha_monitor_started, func_args=[app1_ip], timeout=300, handle_exception=True
-    )
+    with waiting_for_ha_monitor_started(apps2, app1_ip, timeout=300):
+        # Configure Application Database Failover Monitor
+        interaction.send('8' if apps2.version < '5.10' else '10')
+        interaction.expect('Choose the failover monitor configuration: ')
+        interaction.send('1')
+        # Failover Monitor Service configured successfully
+        interaction.expect('Press any key to continue.')
+        interaction.send('')
+
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, apps2).setup()
     provider_app_crud(EC2Provider, apps2).setup()

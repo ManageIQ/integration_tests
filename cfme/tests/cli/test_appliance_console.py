@@ -8,6 +8,7 @@ from wait_for import TimedOutError
 from wait_for import wait_for
 
 from cfme import test_requirements
+from cfme.fixtures.cli import waiting_for_ha_monitor_started
 from cfme.utils import os
 from cfme.utils.conf import hidden
 from cfme.utils.log import logger
@@ -18,6 +19,8 @@ pytestmark = [
     pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
                             reason="cli isn't supported in pod appliance")
 ]
+
+evm_log = '/var/www/miq/vmdb/log/evm.log'
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 LoginOption = namedtuple('LoginOption', ['name', 'option', 'index'])
@@ -300,16 +303,20 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
                    RETURN, pwd, pwd, app0_ip, app1_ip, 'y', TimedCommand('y', 360), RETURN)
 
     apps[1].appliance_console.run_commands(command_set)
-    # Configure automatic failover on EVM appliance
-    command_set = ('ap', RETURN, '10', TimedCommand('1', 30), RETURN)
-    apps[2].appliance_console.run_commands(command_set)
 
-    wait_for(apps[2].is_ha_monitor_started, func_args=[app1_ip], timeout=300, handle_exception=True)
-    # Cause failover to occur
-    result = apps[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-    assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
+    with waiting_for_ha_monitor_started(apps[2], app1_ip, timeout=300):
+        # Configure automatic failover on EVM appliance
+        command_set = ('ap', RETURN, '10', TimedCommand('1', 30), RETURN)
+        apps[2].appliance_console.run_commands(command_set)
 
-    wait_for(lambda: apps[2].is_failover_started, timeout=450, handle_exception=True)
+    with LogValidator(evm_log,
+                      matched_patterns=['Starting to execute failover'],
+                      hostname=apps[2].hostname).waiting(timeout=450):
+        # Cause failover to occur
+        result = apps[0].ssh_client.run_command(
+            'systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
+        assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
+
     apps[2].evmserverd.wait_for_running()
     apps[2].wait_for_web_ui()
 

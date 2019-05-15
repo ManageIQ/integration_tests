@@ -5,16 +5,20 @@ import pytest
 from wait_for import wait_for
 
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.fixtures.cli import waiting_for_ha_monitor_started
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import manager
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.providers import list_providers_by_class
 from cfme.utils.ssh import SSHClient
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
+
+evm_log = '/var/www/miq/vmdb/log/evm.log'
 
 
 def provider_app_crud(provider_class, appliance):
@@ -179,11 +183,12 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     command_set = ('ap', '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
                    app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
-    # Configure automatic failover on EVM appliance
-    command_set = ('ap', '', '8', TimedCommand('1', 30), '')
-    appl3.appliance_console.run_commands(command_set)
 
-    wait_for(appl3.is_ha_monitor_started, func_args=[app1_ip], timeout=300, handle_exception=True)
+    with waiting_for_ha_monitor_started(appl3, app1_ip, timeout=300):
+        # Configure automatic failover on EVM appliance
+        command_set = ('ap', '', '8', TimedCommand('1', 30), '')
+        appl3.appliance_console.run_commands(command_set)
+
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl3).setup()
     provider_app_crud(EC2Provider, appl3).setup()
@@ -464,11 +469,15 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
     assert providers_before_restore == set(appl3.managed_provider_names), (
         'Restored DB is missing some providers'
     )
-    # Cause failover to occur
-    result = appl1.ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-    assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
 
-    wait_for(lambda: appl3.is_failover_started, timeout=450, handle_exception=True)
+    with LogValidator(evm_log,
+                      matched_patterns=['Starting to execute failover'],
+                      hostname=appl3.hostname).waiting(timeout=450):
+        # Cause failover to occur
+        result = appl1.ssh_client.run_command(
+            'systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
+        assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
+
     appl3.evmserverd.wait_for_running()
     appl3.wait_for_web_ui()
     # Assert providers still exist after ha failover

@@ -1,4 +1,5 @@
 import re
+from contextlib import contextmanager
 
 from .ssh import SSHTail
 from cfme.utils.log import logger
@@ -127,3 +128,9 @@ class LogValidator(object):
             return True
         else:
             return self._is_valid
+
+    @contextmanager
+    def waiting(self, **kwargs):
+        self.start_monitoring()
+        yield
+        self.validate(**kwargs)
