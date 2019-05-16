@@ -4,7 +4,6 @@ import os
 
 import pytest
 
-from cfme import test_requirements
 from cfme.utils import conf
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for_decorator
@@ -357,36 +356,6 @@ def test_appliance_exec_scripts():
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_appliance_replicate_database_disconnection_with_backlog():
-    """
-    Test replication re-connect with backlog
-
-    Polarion:
-        assignee: mnadeem
-        casecomponent: Replication
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_appliance_replicate_database_disconnection():
-    """
-    test replication re-connection w/ no backlog
-
-    Polarion:
-        assignee: mnadeem
-        casecomponent: Replication
-        initialEstimate: 1/2h
     """
     pass
 
