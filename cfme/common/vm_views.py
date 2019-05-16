@@ -430,7 +430,7 @@ class RetirementViewWithOffset(BaseLoggedInPage):
 
         @retirement_date.register('Specific Date and Time', default=True)
         class RetirementDateSelectionView(View):
-            datetime_select = TextInput(id='retirement_date_datepicker')
+            datetime_select = Calendar('retirement_date_datepicker')
 
         @retirement_date.register('Time Delay from Now')
         class RetirementOffsetSelectionView(View):
