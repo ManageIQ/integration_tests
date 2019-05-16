@@ -12,4 +12,4 @@ def main():
         os.execl(sys.executable, sys.executable, *sys.argv)
     else:
         import pytest
-        pytest.main()
+        return pytest.main()
