@@ -6,6 +6,7 @@ from cfme import test_requirements
 from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.automate.simulation import simulate
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -267,3 +268,82 @@ def test_task_id_for_method_automation_log(request, generic_catalog_item):
     wait_for(lambda: service_request.request_state == "active", fail_func=service_request.reload,
              timeout=60, delay=3)
     result.validate_logs()
+
+
+@pytest.mark.meta(blockers=[BZ(1704439)])
+@pytest.mark.meta(server_roles="+notifier")
+def test_send_email_method(smtp_test, klass):
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/20h
+        startsin: 5.10
+        casecomponent: Automate
+
+    Bugzilla:
+        1688500
+        1702304
+    """
+    mail_to = fauxfactory.gen_email()
+    mail_cc = fauxfactory.gen_email()
+    mail_bcc = fauxfactory.gen_email()
+
+    # Ruby code to send emails
+    script = (
+        'to = "{mail_to}"\n'
+        'subject = "Hello"\n'
+        'body = "Hi"\n'
+        'bcc = "{mail_bcc}"\n'
+        'cc = "{mail_cc}"\n'
+        'content_type = "message"\n'
+        'from = "cfadmin@cfserver.com"\n'
+        "$evm.execute(:send_email, to, from, subject, body, {{:bcc => bcc, :cc => cc,"
+        ":content_type => content_type}})"
+    )
+    script = script.format(mail_cc=mail_cc, mail_bcc=mail_bcc, mail_to=mail_to)
+
+    # Adding schema for executing method - send_email which helps to send emails
+    klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
+
+    # Adding method - send_email for sending mails
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location='inline',
+        script=script)
+
+    # Adding instance to call automate method - send_email
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={'execute': {'value': method.name}}
+    )
+
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/evm.log",
+        matched_patterns=[
+            '.*:to=>"{mail_to}".*.*:cc=>"{mail_cc}".*.*:bcc=>"{mail_bcc}".*'.format(
+                mail_to=mail_to, mail_cc=mail_cc, mail_bcc=mail_bcc
+            )
+        ],
+    )
+    result.fix_before_start()
+
+    # Executing automate method - send_email using simulation
+    simulate(
+        appliance=klass.appliance,
+        attributes_values={
+            "namespace": klass.namespace.name,
+            "class": klass.name,
+            "instance": instance.name,
+        },
+        message="create",
+        request="Call_Instance",
+        execute_methods=True,
+    )
+    result.validate_logs()
+
+    # TODO(GH-8820): This issue should be fixed to check mails sent to person in 'cc' and 'bcc'
+    # Check whether the mail sent via automate method really arrives
+    wait_for(lambda: len(smtp_test.get_emails(to_address=mail_to)) > 0, num_sec=60, delay=10)
