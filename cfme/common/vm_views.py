@@ -3,7 +3,6 @@ import os
 
 from lxml.html import document_fromstring
 from widgetastic.widget import ConditionalSwitchableView
-from widgetastic.widget import Image
 from widgetastic.widget import ParametrizedView
 from widgetastic.widget import TableRow
 from widgetastic.widget import Text
