@@ -198,8 +198,11 @@ def set_agent_creds(appliance, request, provider):
 def local_setup_provider(request, setup_provider_modscope, provider, appliance):
     # TODO: allow for vddk parameterization
     if provider.one_of(VMwareProvider):
-        vddk_url = conf.cfme_data.get("basic_info").get("vddk_url").get('v6_0')
-        appliance.install_vddk(vddk_url=vddk_url)
+        vddk_url = conf.cfme_data.get("basic_info", {}).get("vddk_url", {}).get('v6_0', None)
+        if vddk_url is None:
+            pytest.skip('Could not locate vddk url in cfme_data')
+        else:
+            appliance.install_vddk(vddk_url=vddk_url)
         request.addfinalizer(appliance.uninstall_vddk)
 
     if provider.one_of(EC2Provider):
