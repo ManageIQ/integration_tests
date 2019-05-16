@@ -2,6 +2,8 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -9,26 +11,31 @@ from cfme.markers.env_markers.provider import ONE_PER_VERSION
 
 
 pytestmark = [
+    pytest.mark.tier(1),
+    test_requirements.v2v,
     pytest.mark.provider(
-        classes=[RHEVMProvider],
+        classes=[RHEVMProvider, OpenStackProvider],
         selector=ONE_PER_VERSION,
-        required_flags=["v2v"]
+        required_flags=["v2v"],
+        scope="module",
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
         selector=ONE_PER_TYPE,
-        fixture_name="second_provider",
-        required_flags=["v2v"]
-    )
+        required_flags=["v2v"],
+        fixture_name="source_provider",
+        scope="module",
+    ),
+    pytest.mark.usefixtures("v2v_provider_setup")
 ]
 
 
 @pytest.fixture(scope="function")
-def get_clusters(appliance, v2v_providers):
+def get_clusters(appliance, provider, source_provider):
     clusters = {}
     try:
-        source_cluster = v2v_providers.vmware_provider.data.get("clusters")[0]
-        target_cluster = v2v_providers.rhv_provider.data.get("clusters")[0]
+        source_cluster = provider.data.get("clusters")[0]
+        target_cluster = source_provider.data.get("clusters")[0]
     except IndexError:
         pytest.skip("Cluster not found in given provider data")
     cluster_db = {
@@ -52,13 +59,13 @@ def get_clusters(appliance, v2v_providers):
 
 
 @pytest.fixture(scope="function")
-def get_datastores(appliance, v2v_providers):
+def get_datastores(appliance, provider, source_provider):
     datastores = {}
     try:
         source_ds = [
-            i.name for i in v2v_providers.vmware_provider.data.datastores if i.type == "nfs"][0]
+            i.name for i in provider.data.datastores if i.type == "nfs"][0]
         target_ds = [
-            i.name for i in v2v_providers.rhv_provider.data.datastores if i.type == "nfs"][0]
+            i.name for i in source_provider.data.datastores if i.type == "nfs"][0]
     except IndexError:
         pytest.skip("Datastore not found in given provider data")
     datastore_db = {
@@ -82,11 +89,11 @@ def get_datastores(appliance, v2v_providers):
 
 
 @pytest.fixture(scope="function")
-def get_networks(appliance, v2v_providers):
+def get_networks(appliance, provider, source_provider):
     networks = {}
     try:
-        source_network = v2v_providers.vmware_provider.data.get("vlans", [None])[0]
-        target_network = v2v_providers.rhv_provider.data.get("vlans", [None])[0]
+        source_network = provider.data.get("vlans", [None])[0]
+        target_network = source_provider.data.get("vlans", [None])[0]
     except IndexError:
         pytest.skip("Network not found in given provider data")
     network_db = {
@@ -116,6 +123,7 @@ def test_rest_mapping_create(request, appliance, get_clusters, get_datastores, g
     Polarion:
         assignee: ytale
         casecomponent: V2V
+        caseimportance: high
         testtype: functional
         initialEstimate: 1/8h
         subcomponent: RHV
@@ -148,6 +156,7 @@ def test_rest_mapping_bulk_delete_from_collection(
     Polarion:
         assignee: ytale
         casecomponent: V2V
+        caseimportance: high
         testtype: functional
         initialEstimate: 1/8h
         subcomponent: RHV
