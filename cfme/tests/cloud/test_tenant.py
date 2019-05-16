@@ -14,20 +14,6 @@ pytestmark = [pytest.mark.provider([OpenStackProvider], scope='module')]
 TENANTS = ["parent_{}".format(fauxfactory.gen_alphanumeric()),
            "child_{}".format(fauxfactory.gen_alphanumeric())]
 
-# Tree path navigation (for quota management permissions) to particular node of product feature in
-# RBAC for roles
-PRODUCT_FEATURES = [
-    [
-        "Everything",
-        "Settings",
-        "Configuration",
-        "Access Control",
-        "Tenants",
-        "Modify",
-        "Manage Quotas",
-        "Manage Quotas ({tenant})".format(tenant=tenant)] for tenant in TENANTS
-]
-
 
 @pytest.fixture(scope='function')
 def tenant(provider, setup_provider, appliance):
@@ -104,9 +90,23 @@ def check_permissions(appliance, assigned_tenant):
     assert not view.toolbar.configuration.has_item('Manage Quotas')
 
 
+@pytest.fixture(scope="module")
+def product_features(appliance):
+    """Tree path navigation (for quota management permissions) to particular node of product feature
+     in RBAC for roles
+     """
+    config = "Settings,Configuration" if appliance.version < "5.11" else "Main Configuration"
+    product_feature = [
+        "Everything,{config},Access Control,Tenants,Modify,Manage Quotas,Manage Quotas ({tenant})".
+        format(config=config, tenant=tenant).split(",") for tenant in TENANTS
+    ]
+    return product_feature
+
+
 @test_requirements.quota
 @pytest.mark.tier(1)
-def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant, child_tenant):
+def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant, child_tenant,
+                                                  product_features):
     """
     Polarion:
         assignee: ghubale
@@ -201,7 +201,7 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
         # role_[0] and role_[1] is the first and second role from the list of two role created
         # above; Providing 'False' while updating role means it restrict user from accessing that
         # particular tenant.
-        role_[i].update({'product_features': [(PRODUCT_FEATURES[i], False)]})
+        role_[i].update({'product_features': [(product_features[i], False)]})
 
     # Logged in with user1 and then checking; this user should not have access of manage quota for
     # tenant1(parent tenant).
