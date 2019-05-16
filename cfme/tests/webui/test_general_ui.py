@@ -2,6 +2,11 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.common.provider_views import CloudProviderAddView
+from cfme.common.provider_views import ContainerProviderAddView
+from cfme.common.provider_views import InfraProviderAddView
+from cfme.common.provider_views import InfraProvidersView
+from cfme.common.provider_views import PhysicalProviderAddView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -226,6 +231,63 @@ def test_infrastructure_filter_20k_vms(appliance, create_20k_vms):
     assert items_amount >= 20000, 'Vms count is less than should be filtered'
 
 
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.tier(2)
+def test_welcoming_page(appliance, has_no_providers):
+    """This test case checks the new welcoming page when there is no provider in the appliance
+
+    Polarion:
+        assignee: pvala
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/5h
+
+    Bugzilla:
+        1678190
+    """
+    appliance.server.login()
+    view = appliance.server.create_view(InfraProvidersView)
+    assert view.add_button.is_displayed
+
+    view.add_button.click()
+
+    add_infra_view = appliance.server.create_view(InfraProviderAddView)
+    assert add_infra_view.is_displayed
+
+
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.parametrize(
+    ("provider_type", "add_view"),
+    [
+        ("infra_providers", InfraProviderAddView),
+        ("cloud_providers", CloudProviderAddView),
+        ("containers_providers", ContainerProviderAddView),
+        ("physical_providers", PhysicalProviderAddView),
+    ],
+    ids=["infra", "cloud", "container", "physical"],
+)
+def test_add_button_on_provider_all_page(
+    appliance, provider_type, add_view, has_no_providers
+):
+    """
+    This test checks if the `Add a Provider` button is displayed on a providers all page
+
+    Polarion:
+        assignee: pvala
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/5h
+    """
+    provider = getattr(appliance.collections, provider_type)
+
+    view = navigate_to(provider, "All")
+    assert view.add_button.is_displayed
+    view.add_button.click()
+
+    displayed_view = provider.create_view(add_view)
+    assert displayed_view.is_displayed
+
+
 @pytest.mark.ignore_stream('5.10')
 @pytest.mark.manual
 @pytest.mark.tier(1)
@@ -401,28 +463,6 @@ def test_timeout():
             4. There should be redirection to login view.
             5. Log in.
             6. There should be redirection to dashboard view.
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_welcoming_page():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/5h
-        setup:
-            1. Login to a new appliance.
-        testSteps:
-            1. Check if the welcome/landing page contains `Add a Provider` action.
-        expectedResults:
-            1. Welcome/Landing page must show the next action, ie. `Add a Provider
-
-    Bugzilla:
-        1678190
     """
     pass
 
