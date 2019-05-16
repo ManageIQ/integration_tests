@@ -845,3 +845,60 @@ def test_null_coalescing_fields():
     Bugzilla:
         1698184
     """
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+def test_service_retirement_from_automate_method():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        startsin: 5.11
+        casecomponent: Automate
+        testSteps:
+            1. Create service catalog item and order
+            2. Create a writeable domain and copy ManageIQ/System/Request to this domain
+            3. Create retire_automation_service instance and set meth5 to retire_automation_service.
+            4. Create retire_automation_service method with sample code given below:
+               > service = $evm.root['service']
+               > $evm.log(:info, "create_retire_request for  service #{service}")
+               > request = $evm.execute(:create_retire_request, service)
+               > $evm.log(:info, "Create request for create_retire_request for request #{request}")
+            5. Execute this method using simulation
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Service should be retired.
+
+    Bugzilla:
+        1700524
+    """
+    pass
+
+
+@pytest.mark.tier(1)
+def test_retire_vm_with_vm_user_role():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        startsin: 5.10
+        casecomponent: Automate
+        testSteps:
+            1. Copy vm-user role
+            2. Assign it to user
+            3. User retire VM
+        expectedResults:
+            1.
+            2.
+            3. VM should be retired
+
+    Bugzilla:
+        1687597
+    """
+    pass
