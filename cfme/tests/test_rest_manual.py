@@ -8,27 +8,6 @@ from cfme import test_requirements
 @pytest.mark.manual
 @test_requirements.rest
 @pytest.mark.tier(3)
-def test_cloud_volume_types():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Cloud
-        caseimportance: high
-        initialEstimate: 1/30h
-        startsin: 5.10
-        setup:
-            1. Add a cloud provider to the appliance.
-        testSteps:
-            1. Send GET request: /api/cloud_volume_types/:id
-        expectedResults:
-            1. Successful 200 OK response.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-@pytest.mark.tier(3)
 def test_create_rhev_provider_with_metric():
     """
     Polarion:
