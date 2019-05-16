@@ -417,28 +417,12 @@ class PublishVmView(BaseLoggedInPage):
     is_displayed = displayed_not_implemented
 
 
-class RetirementView(BaseLoggedInPage):
+class RetirementViewWithOffset(BaseLoggedInPage):
     """
-    Set Retirement date view for vms/instances
-    The title actually as Instance|VM.VM_TYPE string in it, otherwise the same
+    Set Retirement Date view for VMs / Instances
     """
     title = Text('#explorer_title_text')
 
-    @View.nested
-    class form(View):  # noqa
-        retirement_date = Calendar(name='retirementDate')
-        remove_date = Image(locator='.//div[@id="retirement_date_div"]//a/img[@alt="Set to blank"]')
-        retirement_warning = BootstrapSelect(id='retirementWarning')
-        entities = View.nested(BaseNonInteractiveEntitiesView)
-        save = Button('Save')
-        cancel = Button('Cancel')
-
-    # TODO match quadicon and title
-    is_displayed = displayed_not_implemented
-
-
-class RetirementViewWithOffset(RetirementView):
-    """The form portion, with 59z+ offset mode selection"""
     @View.nested
     class form(View):  # noqa
         retirement_mode = BootstrapSelect(id='formMode')
@@ -463,6 +447,8 @@ class RetirementViewWithOffset(RetirementView):
         entities = View.nested(BaseNonInteractiveEntitiesView)
         save = Button('Save')
         cancel = Button('Cancel')
+
+    is_displayed = displayed_not_implemented
 
 
 class EditView(BaseLoggedInPage):
