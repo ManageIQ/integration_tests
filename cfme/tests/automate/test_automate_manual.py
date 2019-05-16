@@ -876,14 +876,17 @@ def test_service_retirement_from_automate_method():
         assignee: ghubale
         initialEstimate: 1/8h
         caseposneg: positive
-        startsin: 5.10
+        startsin: 5.11
         casecomponent: Automate
         testSteps:
             1. Create service catalog item and order
             2. Create a writeable domain and copy ManageIQ/System/Request to this domain
             3. Create retire_automation_service instance and set meth5 to retire_automation_service.
-            4. Create retire_automation_service method with sample code given at
-               https://bugzilla.redhat.com/show_bug.cgi?id=1700524#c7
+            4. Create retire_automation_service method with sample code given below:
+               > service = $evm.root['service']
+               > $evm.log(:info, "create_retire_request for  service #{service}")
+               > request = $evm.execute(:create_retire_request, service)
+               > $evm.log(:info, "Create request for create_retire_request for request #{request}")
             5. Execute this method using simulation
         expectedResults:
             1.
