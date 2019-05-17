@@ -56,14 +56,14 @@ import pytest
 
 ansible = pytest.mark.requirement(
     "Ansible Automation",
-    description='Ansible Automation Requirement',
+    description='Embedded Ansible Automation Requirement',
     assignee_id='sbulage',
 )
 
 access = pytest.mark.requirement(
     "Access",
     description='Direct integration of SaaS offerings in MIQ/CFME',
-    assignee_id='sbulage',
+    assignee_id='juwatts',
 )
 
 alert = pytest.mark.requirement(
