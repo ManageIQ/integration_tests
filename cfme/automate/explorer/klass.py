@@ -27,9 +27,7 @@ from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.version import LOWEST
-from cfme.utils.version import Version
-from cfme.utils.version import VersionPicker
+from cfme.utils.blockers import BZ
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import WaitTab
 
@@ -70,9 +68,14 @@ class ClassDetailsView(AutomateExplorerView):
             self.in_explorer and
             self.title.text == 'Automate Class "{}"'.format(
                 self.context['object'].display_name or self.context['object'].name) and
-            self.datastore.is_opened and
-            check_tree_path(self.datastore.tree.currently_selected,
-                            self.context['object'].tree_path, partial=True)
+            self.datastore.is_opened and (
+                BZ(1704439).blocks
+                or check_tree_path(
+                    self.datastore.tree.currently_selected,
+                    self.context["object"].tree_path,
+                    partial=True,
+                )
+            )
         )
 
 
@@ -91,16 +94,10 @@ class ClassAddView(ClassForm):
 
     @property
     def is_displayed(self):
-        expected_title = VersionPicker(
-            {
-                LOWEST: 'Adding a new Class',
-                '5.10': 'Adding a new Automate Class'
-            }
-        ).pick(self.browser.product_version)
         return (
             self.in_explorer and
             self.datastore.is_opened and
-            self.title.text == expected_title
+            self.title.text == 'Adding a new Automate Class'
         )
 
 
@@ -109,12 +106,7 @@ class ClassEditView(ClassForm):
 
     @property
     def is_displayed(self):
-        expected_title = VersionPicker(
-            {
-                LOWEST: 'Editing Class "{}"',
-                '5.10': 'Editing Automate Class "{}"'
-            }
-        ).pick(self.browser.product_version)
+        expected_title = 'Editing Automate Class "{}"'
         return (
             self.in_explorer and
             self.title.text == expected_title.format(self.context['object'].name))
@@ -219,7 +211,16 @@ class Class(BaseEntity, Copiable):
             result_view.flash.assert_message(
                 'Automate Class "{}": Delete successful'.format(self.description or self.name))
 
+            # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+            if BZ(1704439).blocks:
+                self.browser.refresh()
+
     def update(self, updates):
+
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
+
         view = navigate_to(self, 'Edit')
         changed = view.fill(updates)
         if changed:
@@ -269,6 +270,11 @@ class ClassCollection(BaseCollection):
             add_page.flash.assert_no_error()
             add_page.flash.assert_message('Automate Class "/{}/{}" was added'
                                           .format('/'.join(self.tree_path[1:]), name))
+
+            # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+            if BZ(1704439).blocks:
+                self.browser.refresh()
+
             return self.instantiate(name=name, display_name=display_name, description=description)
 
     def delete(self, *classes):
@@ -304,6 +310,10 @@ class ClassCollection(BaseCollection):
         for klass in checked_classes:
             all_page.flash.assert_message(
                 'Automate Class "{}": Delete successful'.format(klass.description or klass.name))
+
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
 
 
 @navigator.register(ClassCollection)
@@ -387,10 +397,7 @@ class ClassSchemaEditView(ClassDetailsView):
             max_time = Input(name=ParametrizedString('fields_max_time_{@row_id}'))
 
             def delete(self):
-                if self.browser.product_version < '5.10':
-                    xpath = './/img[@alt="Click to delete this field from schema"]'
-                else:
-                    xpath = './/a[@title="Click to delete this field from schema"]'
+                xpath = './/a[@title="Click to delete this field from schema"]'
                 self.browser.click(xpath, parent=self)
                 try:
                     del self.row_id
@@ -404,10 +411,7 @@ class ClassSchemaEditView(ClassDetailsView):
                     result.append((browser.get_attribute('value', e), ))
                 return result
 
-        add_field = VersionPicker({
-            Version.lowest(): Text('//img[@alt="Equal green"]'),
-            '5.10': Text('//div[@id="class_fields_div"]//i[contains(@class, "fa-plus")]')
-        })
+        add_field = Text('//div[@id="class_fields_div"]//i[contains(@class, "fa-plus")]')
         name = Input(name='field_name')
         type = BootstrapSelect('field_aetype')
         data_type = BootstrapSelect('field_datatype')
@@ -422,10 +426,7 @@ class ClassSchemaEditView(ClassDetailsView):
         on_error = Input(name='field_on_error')
         max_retries = Input(name='field_max_retries')
         max_time = Input(name='field_max_time')
-        finish_add_field = VersionPicker({
-            Version.lowest(): Text('//img[@alt="Add this entry"]'),
-            '5.10': Text('//a[@title="Add this entry"]')
-        })
+        finish_add_field = Text('//a[@title="Add this entry"]')
 
         save_button = Button('Save')
         reset_button = Button('Reset')

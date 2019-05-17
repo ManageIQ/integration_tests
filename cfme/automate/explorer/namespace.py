@@ -31,7 +31,7 @@ class NamespaceDetailsView(AutomateExplorerView):
             self.in_explorer and
             self.title.text == 'Automate Namespace "{}"'.format(self.context['object'].name) and
             self.datastore.is_opened and (
-                BZ(1611969, forced_streams=['5.10']).blocks or
+                BZ(1704439).blocks or
                 check_tree_path(
                     self.datastore.tree.currently_selected,
                     self.context['object'].tree_path)
@@ -154,26 +154,29 @@ class Namespace(BaseEntity):
             result_view.flash.assert_message(
                 'Automate Namespace "{}": Delete successful'.format(self.description or self.name))
 
+            # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+            if BZ(1704439).blocks:
+                self.browser.refresh()
+
     def update(self, updates):
+
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
+
         view = navigate_to(self, 'Edit')
         changed = view.fill(updates)
         if changed:
             view.save_button.click()
         else:
             view.cancel_button.click()
+
         view = self.create_view(NamespaceDetailsView, override=updates)
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
-            if self.appliance.version >= '5.8.2':
-                text = (
-                    updates.get('description', self.description) or
-                    updates.get('name', self.name))
-                view.flash.assert_message(
-                    'Automate Namespace "{}" was saved'.format(text))
-            else:
-                view.flash.assert_message(
-                    'Automate Namespace "{}" was saved'.format(updates.get('name', self.name)))
+            text = (updates.get('description', self.description) or updates.get('name', self.name))
+            view.flash.assert_message('Automate Namespace "{}" was saved'.format(text))
         else:
             view.flash.assert_message(
                 'Edit of Automate Namespace "{}" was cancelled by the user'.format(self.name))
@@ -206,11 +209,13 @@ class NamespaceCollection(BaseCollection):
         else:
             add_page.add_button.click()
             add_page.flash.assert_no_error()
-            if self.appliance.version >= '5.8.2':
-                add_page.flash.assert_message(
-                    'Automate Namespace "{}" was added'.format(description or name))
-            else:
-                add_page.flash.assert_message('Automate Namespace "{}" was added'.format(name))
+            add_page.flash.assert_message(
+                'Automate Namespace "{}" was added'.format(description or name))
+
+            # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+            if BZ(1704439).blocks:
+                self.browser.refresh()
+
             return self.instantiate(name=name, description=description)
 
     def delete(self, *namespaces):
@@ -249,6 +254,10 @@ class NamespaceCollection(BaseCollection):
             all_page.flash.assert_message(
                 'Automate Namespace "{}": Delete successful'.format(
                     namespace.description or namespace.name))
+
+        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
+        if BZ(1704439).blocks:
+            self.browser.refresh()
 
 
 @navigator.register(NamespaceCollection)

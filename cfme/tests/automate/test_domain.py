@@ -9,7 +9,6 @@ from cfme.automate.explorer.klass import ClassCopyView
 from cfme.automate.explorer.method import MethodCopyView
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
@@ -217,25 +216,15 @@ def test_domain_lock_unlock(domain, appliance):
     assert not details.configuration.is_displayed
     # class
     details = navigate_to(cls, 'Details')
-    if appliance.version < '5.10':
-        assert details.configuration.items == ['Copy selected Instances']
-        assert not details.configuration.item_enabled('Copy selected Instances')
-    else:
-        assert not details.configuration.is_enabled
+    assert not details.configuration.is_enabled
     details.schema.select()
     assert not details.configuration.is_displayed
     # instance
     details = navigate_to(inst, 'Details')
-    if appliance.version < '5.10':
-        assert details.configuration.items == ['Copy this Instance']
-    else:
-        assert not details.configuration.is_enabled
+    assert not details.configuration.is_enabled
     # method
     details = navigate_to(meth, 'Details')
-    if appliance.version < '5.10':
-        assert details.configuration.items == ['Copy this Method']
-    else:
-        assert not details.configuration.is_enabled
+    assert not details.configuration.is_enabled
     # Unlock it
     domain.unlock()
     # Check that it is editable
@@ -258,7 +247,6 @@ def test_domain_lock_unlock(domain, appliance):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1686762)])
 def test_object_attribute_type_in_automate_schedule(appliance):
     """
     Polarion:

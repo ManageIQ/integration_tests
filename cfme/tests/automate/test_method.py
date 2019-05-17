@@ -44,7 +44,8 @@ def test_method_crud(klass):
         script='$evm.log(:info, ":P")',
     )
     view = method.create_view(ClassDetailsView)
-    view.flash.assert_message('Automate Method "{}" was added'.format(method.name))
+    if not BZ(1704439).blocks:
+        view.flash.assert_message('Automate Method "{}" was added'.format(method.name))
     assert method.exists
     origname = method.name
     with update(method):
