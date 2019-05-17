@@ -1169,24 +1169,6 @@ def test_user_change_password(appliance, request):
         assert appliance.server.current_full_name() == user.name
 
 
-def test_tenant_quota_input_validate(appliance):
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Quota
-        tags: quota
-        initialEstimate: 1/8h
-    """
-    roottenant = appliance.collections.tenants.get_root_tenant()
-    fields = [('cpu', 2.5), ('storage', '1.x'), ('memory', '2.x'), ('vm', 1.5)]
-
-    for field in fields:
-        view = navigate_to(roottenant, 'ManageQuotas')
-        view.form.fill({'{}_cb'.format(field[0]): True, '{}_txt'.format(field[0]): field[1]})
-        assert view.save_button.disabled
-        view.form.fill({'{}_cb'.format(field[0]): False})
-
-
 def test_copied_user_password_inheritance(appliance, group_collection, request):
     """Test to verify that dialog for copied user should appear and password field should be
     empty

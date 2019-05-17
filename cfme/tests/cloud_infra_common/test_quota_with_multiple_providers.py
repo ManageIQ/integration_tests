@@ -1,5 +1,6 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -21,6 +22,8 @@ pytestmark = [
 ]
 
 
+@test_requirements.quota
+@pytest.mark.tier(2)
 def test_show_quota_used_on_tenant_screen(appliance, v2v_providers):
     """Test show quota used on tenant quota screen even when no quotas are set.
 

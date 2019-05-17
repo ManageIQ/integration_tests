@@ -4,6 +4,7 @@ import pytest
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
+from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -16,6 +17,7 @@ from cfme.utils.update import update
 
 
 pytestmark = [
+    test_requirements.quota,
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 ]
@@ -194,10 +196,10 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider,
     assert provision_request.row.reason.text == "Quota Exceeded"
 
 
-@pytest.mark.rhv2
-@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 # Here set_entity_quota_tag is used for setting the tag value.
 # Here custom_prov_data is used to provide the value fo the catalog item to be created.
+@pytest.mark.rhv2
+@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 @pytest.mark.parametrize(
     ['set_entity_quota_tag', 'custom_prov_data'],
     [
@@ -370,10 +372,10 @@ def test_quota_infra(request, appliance, admin_email, entities,
         [{'hardware': {'memory': '4096'}}],
         [{}],  # This parameterization is for selecting storage while provisioning VM.
         # But it is not possible to parameterize storage size.
-        # Becuase it is defined in disk formats(Thin, Thick, Default and other types).
+        # Because it is defined in disk formats(Thin, Thick, Default and other types).
         # Also it varies with providers.
         # But we don't need to select storage because by default storage is already more than
-        #  assigned storage quota which is 2GB maximum.
+        # assigned storage quota which is 2GB maximum.
         [{'hardware': {'vm_num': '21'}}],
         [{'hardware': {'num_sockets': '8'}}]
     ],

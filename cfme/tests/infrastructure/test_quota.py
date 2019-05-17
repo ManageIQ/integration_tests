@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 from riggerlib import recursive_update
 
+from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -12,6 +13,7 @@ from cfme.utils.log import logger
 from cfme.utils.update import update
 
 pytestmark = [
+    test_requirements.quota,
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 ]
@@ -180,8 +182,8 @@ def custom_prov_data(request, prov_data, vm_name, template_name):
     prov_data['catalog']['catalog_name'] = {'name': template_name}
 
 
+# Here custom_prov_data is the dict required during provisioning of the VM.
 @pytest.mark.rhv2
-# Here cust_prov_data is the dict required during provisioning of the VM.
 @pytest.mark.parametrize(
     ['custom_prov_data'],
     [
