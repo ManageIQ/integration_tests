@@ -312,7 +312,8 @@ webencodings==0.5.1
 websocket-client==0.40.0
 Werkzeug==0.15.2
 widgetastic.core==0.37
-widgetastic.patternfly==0.1.2
+#widgetastic.patternfly==0.1.2
+git+git://github.com/john-dupuy/widgetastic.patternfly.git@add-modal-widget#widgetastic.patternfly
 widgetsnbextension==3.4.2
 wrapanapi==3.1.6
 wrapt==1.11.1
