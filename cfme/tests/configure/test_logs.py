@@ -106,7 +106,12 @@ def test_provider_log_updated(appliance, provider, log_exists):
     assert log_before != log_after, "Log hashes are the same"
 
 
-@pytest.mark.meta(blockers=[BZ(1633656, forced_streams=['5.10', 'upstream'])])
+@pytest.mark.meta(blockers=[BZ(1633656,
+                               unblock=lambda provider: provider.one_of(AzureProvider, EC2Provider),
+                               forced_streams=["5.10", "upstream"]
+                               )
+                            ]
+                  )
 def test_provider_log_level(appliance, provider, log_exists):
     """
     Tests that log level in advanced settings affects log files
