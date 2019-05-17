@@ -1,9 +1,13 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
+
+
+pytestmark = [test_requirements.rest]
 
 
 @pytest.fixture(params=[True, False], ids=["global", "local"])

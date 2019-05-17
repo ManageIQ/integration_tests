@@ -234,6 +234,7 @@ def test_generic_objects_tag_ui(appliance, generic_object, tag_place):
         #            for tag in tag_available), 'Assigned tag was not removed from the details page'
 
 
+@test_requirements.rest
 def test_generic_objects_tag_rest(appliance, generic_object, tags):
     """Tests assigning and unassigning tags using REST.
 
@@ -243,7 +244,7 @@ def test_generic_objects_tag_rest(appliance, generic_object, tags):
     Polarion:
         initialEstimate: 1/4h
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Tagging
         caseimportance: high
     """
     tag = tags[0]

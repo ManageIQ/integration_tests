@@ -35,7 +35,7 @@ def test_default_view_cloud_reset(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: Cloud
+        casecomponent: Settings
         caseimportance: high
         initialEstimate: 1/20h
         tags: settings
@@ -56,7 +56,7 @@ def test_cloud_default_view(appliance, group_name, expected_view):
 
     Polarion:
         assignee: pvala
-        casecomponent: Cloud
+        casecomponent: Settings
         caseimportance: high
         initialEstimate: 1/10h
         tags: settings
@@ -80,7 +80,7 @@ def test_cloud_compare_view(appliance, expected_view):
 
     Polarion:
         assignee: pvala
-        casecomponent: Cloud
+        casecomponent: Settings
         caseimportance: high
         initialEstimate: 1/10h
         tags: settings

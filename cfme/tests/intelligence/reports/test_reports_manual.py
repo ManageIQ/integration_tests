@@ -435,7 +435,6 @@ def test_report_menus_moving_reports():
 
 @pytest.mark.manual
 @test_requirements.report
-@test_requirements.timelines
 @pytest.mark.tier(2)
 @pytest.mark.parametrize(
     "report_type", ["hosts", "vm_operation", "policy_events", "custom"]

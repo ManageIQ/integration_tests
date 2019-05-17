@@ -13,7 +13,7 @@ from cfme.utils.wait import wait_for
 
 
 pytestmark = [
-    test_requirements.power,
+    test_requirements.rest,
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
     pytest.mark.tier(2),
     pytest.mark.provider([BaseProvider], scope='module'),

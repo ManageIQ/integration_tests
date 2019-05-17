@@ -3,6 +3,7 @@ import time
 
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.browser import ensure_browser_open
 from cfme.utils.browser import quit
 from cfme.utils.wait import wait_for
@@ -45,6 +46,7 @@ def test_session_timeout(request, appliance):
     )
 
 
+@test_requirements.rest
 @pytest.mark.tier(0)
 def test_bind_timeout_rest(appliance, request):
     """Sets the session timeout via REST
@@ -54,7 +56,7 @@ def test_bind_timeout_rest(appliance, request):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
     """

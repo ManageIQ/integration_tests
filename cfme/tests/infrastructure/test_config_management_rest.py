@@ -17,7 +17,7 @@ pytest_generate_tests = generate(
     managers_type='Ansible Tower',
     scope='module'
 )
-pytestmark = [test_requirements.tower]
+pytestmark = [test_requirements.rest]
 
 
 @pytest.fixture(scope='module')
@@ -95,7 +95,7 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Auth
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -109,7 +109,7 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Auth
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -131,7 +131,7 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Auth
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -158,7 +158,7 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Auth
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -180,7 +180,7 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Auth
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -202,7 +202,7 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Auth
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -223,7 +223,7 @@ class TestAuthenticationsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Auth
             caseimportance: medium
             initialEstimate: 1/4h
         """

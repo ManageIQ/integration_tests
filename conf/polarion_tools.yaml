@@ -116,6 +116,7 @@ docstrings:
             - Rest
             - SelfServiceUI
             - Services
+            - Settings
             - SmartState
             - Stack
             - Tagging

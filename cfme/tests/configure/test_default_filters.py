@@ -14,7 +14,7 @@ def test_default_filters_reset(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: high
         initialEstimate: 1/8h
         tags: settings
@@ -31,7 +31,7 @@ def test_cloudimage_defaultfilters(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/6h
         tags: settings
@@ -47,7 +47,7 @@ def test_cloudinstance_defaultfilters(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/6h
         tags: settings
@@ -63,7 +63,7 @@ def test_infrastructurehost_defaultfilters(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/6h
         tags: settings
@@ -79,7 +79,7 @@ def test_infrastructurevms_defaultfilters(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/6h
         tags: settings
@@ -95,7 +95,7 @@ def test_infrastructuretemplates_defaultfilters(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/6h
         tags: settings
@@ -111,7 +111,7 @@ def test_servicetemplateandimages_defaultfilters(appliance, request):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/6h
         tags: settings
@@ -130,7 +130,7 @@ def test_servicevmsandinstances_defaultfilters(appliance, request):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/6h
         tags: settings

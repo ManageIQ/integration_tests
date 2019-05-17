@@ -15,7 +15,6 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.rest,
-    test_requirements.control
 ]
 
 
@@ -36,7 +35,7 @@ class TestConditionsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Control
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -50,7 +49,7 @@ class TestConditionsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Control
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -67,7 +66,7 @@ class TestConditionsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Control
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -81,7 +80,7 @@ class TestConditionsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Control
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -98,7 +97,7 @@ class TestConditionsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Control
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -145,7 +144,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Control
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -159,7 +158,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Control
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -175,7 +174,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Control
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -192,7 +191,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Control
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -206,7 +205,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Control
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -225,7 +224,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Control
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -266,7 +265,7 @@ class TestPoliciesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Control
             caseimportance: high
             initialEstimate: 1/30h
         """

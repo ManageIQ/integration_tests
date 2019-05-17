@@ -17,7 +17,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.tier(2),
-    test_requirements.snapshot,
+    test_requirements.rest,
     pytest.mark.provider([VMwareProvider, RHEVMProvider, OpenStackProvider], scope='module'),
 ]
 

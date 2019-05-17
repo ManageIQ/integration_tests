@@ -746,6 +746,7 @@ class TestServiceRESTAPI(object):
         wait_for_retired(child)
 
 
+@test_requirements.rest
 class TestServiceDialogsRESTAPI(object):
     def check_returned_dialog(self, appliance):
         returned = appliance.rest_api.response.json()
@@ -767,7 +768,7 @@ class TestServiceDialogsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -876,7 +877,7 @@ class TestServiceTemplateRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1056,7 +1057,7 @@ class TestServiceCatalogsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1370,7 +1371,7 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1384,7 +1385,7 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1407,7 +1408,7 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1421,7 +1422,7 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1435,7 +1436,7 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1465,7 +1466,7 @@ class TestPendingRequestsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1577,7 +1578,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1592,7 +1593,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1611,7 +1612,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1626,7 +1627,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1641,7 +1642,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1659,7 +1660,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1696,7 +1697,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1745,7 +1746,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1776,7 +1777,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -1815,7 +1816,7 @@ class TestServiceOrderCart(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Services
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -2086,7 +2087,7 @@ def test_deny_service_ordering_via_api(
     """
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Services
         caseimportance: high
         initialEstimate: 1/10h
         setup:
@@ -2237,7 +2238,7 @@ def test_populate_default_dialog_values(
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/10h
         setup:

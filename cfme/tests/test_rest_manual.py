@@ -12,7 +12,7 @@ def test_cloud_volume_types():
     """
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/30h
         startsin: 5.10
@@ -33,7 +33,7 @@ def test_create_rhev_provider_with_metric():
     """
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/10h
         testSteps:
@@ -55,7 +55,7 @@ def test_custom_logos_via_api():
     """
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
         setup:

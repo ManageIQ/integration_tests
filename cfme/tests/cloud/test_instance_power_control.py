@@ -514,6 +514,7 @@ def test_instance_power_options_from_off(provider, testing_instance,
     check_power_options(soft_assert, testing_instance, 'off')
 
 
+@test_requirements.rest
 class TestInstanceRESTAPI(object):
     """ Tests using the /api/instances collection. """
     def verify_vm_power_state(self, vm, state):
@@ -543,7 +544,7 @@ class TestInstanceRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Cloud
             caseimportance: high
             initialEstimate: 1/4h
         """
@@ -566,7 +567,7 @@ class TestInstanceRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Cloud
             caseimportance: high
             initialEstimate: 1/4h
         """
@@ -590,7 +591,7 @@ class TestInstanceRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Cloud
             caseimportance: high
             initialEstimate: 1/4h
         """
@@ -624,7 +625,7 @@ class TestInstanceRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Cloud
             caseimportance: high
             initialEstimate: 1/4h
         """
@@ -650,7 +651,7 @@ class TestInstanceRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Cloud
             caseimportance: high
             initialEstimate: 1/4h
         """
@@ -682,7 +683,7 @@ class TestInstanceRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Cloud
             caseimportance: high
             initialEstimate: 1/4h
         """
@@ -713,7 +714,7 @@ class TestInstanceRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Cloud
             caseimportance: high
             initialEstimate: 1/4h
         """

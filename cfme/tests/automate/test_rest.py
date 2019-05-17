@@ -25,7 +25,7 @@ def test_rest_search_automate(appliance):
     Polarion:
         assignee: pvala
         caseimportance: low
-        casecomponent: Rest
+        casecomponent: Automate
         initialEstimate: 1/3h
     """
     rest_api = appliance.rest_api
@@ -48,7 +48,7 @@ def test_delete_automate_domain_from_detail(appliance, domain_rest, method):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Automate
         initialEstimate: 1/10h
     """
     delete_resources_from_detail([domain_rest], method=method, num_sec=50)
@@ -59,7 +59,7 @@ def test_delete_automate_domain_from_collection(appliance, domain_rest):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Automate
         initialEstimate: 1/10h
     """
     delete_resources_from_collection([domain_rest], not_found=True, num_sec=50)

@@ -15,7 +15,7 @@ def test_validate_landing_pages_for_rbac():
 
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/5h
         title: test validate landing pages for rbac
@@ -41,7 +41,7 @@ def test_my_settings_default_views_alignment():
     """
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/20h
         testSteps:

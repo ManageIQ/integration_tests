@@ -60,6 +60,7 @@ def test_order_catalog_item(appliance, provider, catalog_item, request,
     assert provision_request.is_succeeded(), msg
 
 
+@test_requirements.rest
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
 def test_order_catalog_item_via_rest(
@@ -70,7 +71,7 @@ def test_order_catalog_item_via_rest(
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Services
         caseimportance: high
         initialEstimate: 1/3h
         tags: service

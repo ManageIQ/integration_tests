@@ -14,7 +14,7 @@ from cfme.utils.rest import query_resource_attributes
 from cfme.utils.wait import wait_for
 
 pytestmark = [
-    test_requirements.auth
+    test_requirements.rest
 ]
 
 
@@ -36,7 +36,7 @@ class TestTenantsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -51,7 +51,7 @@ class TestTenantsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -70,7 +70,7 @@ class TestTenantsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -111,7 +111,7 @@ class TestTenantsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -126,7 +126,7 @@ class TestTenantsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -151,7 +151,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -166,7 +166,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -185,7 +185,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -226,7 +226,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -241,7 +241,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -256,7 +256,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -286,7 +286,7 @@ class TestRolesViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -330,7 +330,7 @@ class TestGroupsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -345,7 +345,7 @@ class TestGroupsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -364,7 +364,7 @@ class TestGroupsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -405,7 +405,7 @@ class TestGroupsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -420,7 +420,7 @@ class TestGroupsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -455,7 +455,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -470,7 +470,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -494,7 +494,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -520,7 +520,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -541,7 +541,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -582,7 +582,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -636,7 +636,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -665,7 +665,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -692,7 +692,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -720,7 +720,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -748,7 +748,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -775,7 +775,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -799,7 +799,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -814,7 +814,7 @@ class TestUsersViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """

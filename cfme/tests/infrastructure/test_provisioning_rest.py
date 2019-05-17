@@ -12,7 +12,7 @@ from cfme.utils.wait import wait_for
 
 
 pytestmark = [
-    test_requirements.provision,
+    test_requirements.rest,
     pytest.mark.tier(2),
     pytest.mark.meta(server_roles='+automate'),
     pytest.mark.usefixtures('setup_provider'),
@@ -100,7 +100,7 @@ def test_provision(request, appliance, provider, provision_data):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Provisioning
         caseimportance: high
         initialEstimate: 1/3h
     """
@@ -138,7 +138,7 @@ def test_provision_vlan(request, appliance, provision_data, vnic_profile, provid
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/6h
     """
@@ -190,7 +190,7 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Provisioning
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -232,7 +232,7 @@ def test_create_pending_provision_requests(request, appliance, provider, small_t
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Provisioning
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -274,7 +274,7 @@ def test_provision_attributes(appliance, provider, small_template, soft_assert):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Provisioning
         caseimportance: high
         initialEstimate: 1/4h
     """

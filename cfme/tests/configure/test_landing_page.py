@@ -1,5 +1,6 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.version import current_version
 
@@ -135,6 +136,7 @@ def set_to_default(page, my_settings):
     view.tabs.visual.save.click()
 
 
+@test_requirements.settings
 @pytest.mark.parametrize(
     "start_page",
     LANDING_PAGES if current_version() > "5.10" else LANDING_PAGES_5_9,

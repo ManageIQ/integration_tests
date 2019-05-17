@@ -513,7 +513,7 @@ def test_vm_disk_reconfig_via_rest(appliance, full_vm):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/10h
         setup:

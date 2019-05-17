@@ -18,7 +18,7 @@ def test_time_profile_crud(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: high
         initialEstimate: 1/8h
         tags: settings
@@ -41,7 +41,7 @@ def test_time_profile_name_max_character_validation(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/8h
         tags: settings
@@ -62,7 +62,7 @@ def test_days_required_error_validation(appliance, soft_assert):
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: low
         initialEstimate: 1/15h
     """
@@ -84,7 +84,7 @@ def test_hours_required_error_validation(appliance, soft_assert):
 
     Polarion:
         assignee: anikifor
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: low
         initialEstimate: 1/30h
     """
@@ -106,7 +106,7 @@ def test_time_profile_description_required_error_validation(appliance, soft_asse
 
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/8h
         tags: settings
@@ -129,7 +129,7 @@ def test_time_profile_copy(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/8h
         tags: settings
