@@ -320,7 +320,7 @@ def admin_email(appliance):
 
 
 @pytest.fixture(scope="module")
-def automate_flavour_method(appliance, klass, namespace):
+def automate_flavor_method(appliance, klass, namespace):
     """This fixture used to create automate method using following script"""
     script = """
                 FLAVOR_CLASS = 'Flavor'.freeze\n
@@ -375,7 +375,7 @@ def set_roottenant_quota(request, appliance):
 
 
 @pytest.fixture(scope="module")
-def dialog(appliance, automate_flavour_method):
+def dialog(appliance, automate_flavor_method):
     """This fixture is used to create dynamic service dialog"""
     data = {
         "buttons": "submit,cancel",
@@ -411,9 +411,9 @@ def dialog(appliance, automate_flavour_method):
                                 "type": "DialogFieldDropDownList",
                                 "resource_action": {
                                     "resource_type": "DialogField",
-                                    "ae_namespace": automate_flavour_method.namespace.name,
-                                    "ae_class": automate_flavour_method.klass.name,
-                                    "ae_instance": automate_flavour_method.name,
+                                    "ae_namespace": automate_flavor_method.namespace.name,
+                                    "ae_class": automate_flavor_method.klass.name,
+                                    "ae_instance": automate_flavor_method.name,
                                 },
                             },
                         ],
@@ -463,8 +463,7 @@ def get_quota_message(request, appliance, catalog, catalog_item_name, dialog_val
     ids=['max_storage']
 )
 def test_custom_service_dialog_quota_flavors(request, provider, provisioning, dialog, catalog,
-                                             appliance, automate_flavour_method, admin_email,
-                                             set_roottenant_quota):
+                                             appliance, admin_email, set_roottenant_quota):
     """Test quota with instance/flavor type in custom dialog
 
     Polarion:
