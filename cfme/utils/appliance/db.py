@@ -29,12 +29,6 @@ class ApplianceDB(AppliancePlugin):
     def pg_prefix(self):
         return '/opt/rh/rh-postgresql95/root' if self.appliance.version < '5.11' else ''
 
-    @property
-    def service_name(self):
-        cmd_result = self.ssh_client.run_command("echo $APPLIANCE_PG_SERVICE")
-        assert cmd_result.success
-        return cmd_result.output
-
     @cached_property
     def client(self):
         # slightly crappy: anything that changes self.address should also del(self.client)

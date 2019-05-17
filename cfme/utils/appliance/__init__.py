@@ -34,6 +34,7 @@ from .db import ApplianceDB
 from .implementations.rest import ViaREST
 from .implementations.ssui import ViaSSUI
 from .implementations.ui import ViaUI
+from .services import DynaService
 from .services import SystemdException
 from .services import SystemdService
 from cfme.fixtures import ui_coverage
@@ -309,7 +310,6 @@ class IPAppliance(object):
     auditd = SystemdService.declare(unit_name='auditd')
     chronyd = SystemdService.declare(unit_name='chronyd')
     collectd = SystemdService.declare(unit_name='collectd')
-    # db_service unit_name is initialized in the __init__()
     evmserverd = SystemdService.declare(unit_name='evmserverd')
     httpd = SystemdService.declare(unit_name='httpd')
     merkyl = SystemdService.declare(unit_name='merkyl')
@@ -317,6 +317,7 @@ class IPAppliance(object):
     rabbitmq_server = SystemdService.declare(unit_name='rabbitmq-server')
     sssd = SystemdService.declare(unit_name='sssd')
     supervisord = SystemdService.declare(unit_name='supervisord')
+    db_service = DynaService.declare(service_name_getting_cmd="echo $APPLIANCE_PG_SERVICE")
     db = ApplianceDB.declare()
 
     CONFIG_MAPPING = {
@@ -406,7 +407,6 @@ class IPAppliance(object):
             # only set when given so we can defer to therest api via the
             # cached property
             self.version = Version(version)
-        self.db_service = SystemdService.declare(unit_name=self.db.service_name)
 
     def unregister(self):
         """ unregisters appliance from RHSM/SAT6 """

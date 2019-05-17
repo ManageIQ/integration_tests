@@ -13,9 +13,7 @@ class SystemdException(AppliancePluginException):
 
 
 @attr.s
-class SystemdService(AppliancePlugin):
-    unit_name = attr.ib()
-
+class BaseService(AppliancePlugin):
     @logger_wrap('SystemdService command runner: {}')
     def _run_service_command(
         self,
@@ -114,3 +112,19 @@ class SystemdService(AppliancePlugin):
             unit_name='',
             log_callback=log_callback
         )
+
+
+@attr.s
+class SystemdService(BaseService):
+    unit_name = attr.ib(type=str)
+
+
+@attr.s
+class DynaService(BaseService):
+    service_name_getting_cmd = attr.ib(type=str)
+
+    @property
+    def unit_name(self):
+        cmd_result = self.appliance.ssh_client.run_command(self.service_name_getting_cmd)
+        assert cmd_result.success
+        return cmd_result.output
