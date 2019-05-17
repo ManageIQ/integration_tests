@@ -108,6 +108,12 @@ custom_button = pytest.mark.requirement(
     assignee_id='ndhandre',
 )
 
+customer_stories = pytest.mark.requirement(
+    "Customer Stories",
+    description='Integration of multiple FAs, Customer Day2 Scenarios',
+    assignee_id='ndhandre',
+)
+
 multi_tenancy = pytest.mark.requirement(
     "MIQ Multi-Tenancy",
     description='Support for Tenants in MIQ/CFME',
