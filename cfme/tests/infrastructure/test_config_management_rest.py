@@ -250,7 +250,7 @@ def config_manager_rest(config_manager_obj):
 
 @pytest.mark.tier(3)
 @test_requirements.rest
-def test_config_manager_create(config_manager_rest):
+def test_config_manager_create_rest(config_manager_rest):
     """
     Polarion:
         assignee: pvala
@@ -267,7 +267,7 @@ def test_config_manager_create(config_manager_rest):
 
 @pytest.mark.tier(3)
 @test_requirements.rest
-def test_config_manager_edit(request, config_manager_rest):
+def test_config_manager_edit_rest(request, config_manager_rest):
     """Test editing a config manager using REST API.
 
     Polarion:
@@ -287,7 +287,7 @@ def test_config_manager_edit(request, config_manager_rest):
 @pytest.mark.tier(3)
 @test_requirements.rest
 @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-def test_config_manager_delete_details(config_manager_rest, method):
+def test_config_manager_delete_rest(config_manager_rest, method):
     """Tests deletion of the config manager from detail using REST API.
 
     Polarion:
