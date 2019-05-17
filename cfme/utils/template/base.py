@@ -76,6 +76,7 @@ class ProviderTemplateUpload(object):
     provider_type = None
     log_name = None
     image_pattern = None
+    blocked_streams = []
 
     def __init__(self, provider_key, stream, template_name, image_url=None, **kwargs):
         """
@@ -428,13 +429,19 @@ class ProviderTemplateUpload(object):
     @log_wrap("template upload script")
     def main(self):
         track = False
+        teardown = False
         try:
+            if self.stream in self.blocked_streams:
+                logger.info('This stream (%s) is blocked for the given provider type, %s',
+                            self.stream, self.provider_type)
+                return True
             if self.provider_type != 'openshift' and self.mgmt.does_template_exist(
                     self.template_name):
                 logger.info("(template-upload) [%s:%s:%s] Template already exists",
                             self.log_name, self.provider_key, self.template_name)
                 track = True
             else:
+                teardown = True
                 if self.decorated_run():
                     track = True
             if track and self.provider_type != 'openshift':
@@ -451,4 +458,5 @@ class ProviderTemplateUpload(object):
             return False
 
         finally:
-            self.teardown()
+            if teardown:
+                self.teardown()

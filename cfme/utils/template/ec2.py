@@ -13,6 +13,7 @@ class EC2TemplateUpload(ProviderTemplateUpload):
     log_name = 'EC2'
     provider_type = 'ec2'
     image_pattern = re.compile(r'<a href="?\'?([^"\']*ec2[^"\'>]*)')
+    blocked_streams = ['upstream', 'downstream-511z']
 
     @property
     def bucket_name(self):

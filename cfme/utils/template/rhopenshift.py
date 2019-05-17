@@ -10,6 +10,7 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
     log_name = "OPENSHIFT"
     provider_type = "openshift"
     image_pattern = re.compile(r'<a href="?\'?(openshift-pods/*)')
+    blocked_streams = ['upstream', 'downstream-511z']
 
     template_filenames = ()
 
