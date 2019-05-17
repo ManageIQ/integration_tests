@@ -26,6 +26,8 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView
@@ -35,7 +37,10 @@ class ManagePoliciesView(BaseLoggedInPage):
     """
     Manage policies page
     """
-    policy_profiles = CheckableBootstrapTreeview(tree_id='protectbox')
+    policy_profiles = CheckableBootstrapTreeview(VersionPicker({
+        Version.lowest(): "protectbox",
+        "5.11": "protect_treebox"
+    }))
     breadcrumb = BreadCrumb()  # some views have breadcrumb, some not
     entities = View.nested(BaseNonInteractiveEntitiesView)
     save = Button('Save')
