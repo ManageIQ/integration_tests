@@ -238,11 +238,29 @@ class ProviderTemplateUpload(object):
 
     @log_wrap("add template to trackerbot")
     def track_template(self, **kwargs):
-        trackerbot.trackerbot_add_provider_template(self.stream,
-                                                    self.provider_key,
-                                                    self.template_name,
-                                                    **kwargs)
-        return True
+        """Call trackerbot API to create the providertemplate record
+
+        Returns:
+            None - when template already existed
+            bool - true when record added, false when record add fails (without exception)
+        """
+        result = trackerbot.add_provider_template(
+            kwargs.pop('stream', self.stream),
+            kwargs.pop('provider_key', self.provider_key),
+            kwargs.pop('template_name', self.template_name),
+            **kwargs
+        )
+        if result:
+            logger.info('Added trackerbot record: [%s] / [%s] / [%s]',
+                        self.stream, self.provider_key, self.template_name)
+        elif result is None:
+            logger.warning('Trackerbot record already existed: [%s] / [%s] / [%s]',
+                           self.stream, self.provider_key, self.template_name)
+        else:
+            logger.error('FAILED adding trackerbot record:  [%s] / [%s] / [%s]',
+                         self.stream, self.provider_key, self.template_name)
+
+        return result
 
     @log_wrap("deploy template")
     def deploy_template(self):
