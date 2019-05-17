@@ -586,7 +586,7 @@ class Workers(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and self.view.workers.is_displayed and
-            self.view.workers.is_active)
+            self.view.workers.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.workers.select()
@@ -600,7 +600,7 @@ class CustomLogos(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and self.view.custom_logos.is_displayed and
-            self.view.custom_logos.is_active)
+            self.view.custom_logos.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.customlogos.select()
@@ -614,7 +614,7 @@ class Advanced(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and self.view.advanced.is_displayed and
-            self.view.advanced.is_active)
+            self.view.advanced.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.advanced.select()
@@ -838,7 +838,7 @@ class DiagnosticsDetails(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and self.view.summary.is_displayed and
-            self.view.summary.is_active)
+            self.view.summary.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.summary.select()
@@ -852,7 +852,7 @@ class DiagnosticsWorkers(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and self.view.workers.is_displayed and
-            self.view.workers.is_active)
+            self.view.workers.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.workers.select()
@@ -866,7 +866,7 @@ class ServerDiagnosticsCollectLogs(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and self.view.collectlogs.is_displayed and
-            self.view.collectlogs.is_active)
+            self.view.collectlogs.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.collectlogs.select()
@@ -880,7 +880,7 @@ class CFMELog(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and self.view.cfmelog.is_displayed and
-            self.view.cfmelog.is_active)
+            self.view.cfmelog.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.cfmelog.select()
@@ -894,7 +894,7 @@ class AuditLog(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and self.view.auditlog.is_displayed and
-            self.view.auditlog.is_active)
+            self.view.auditlog.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.auditlog.select()
@@ -908,7 +908,7 @@ class ProductionLog(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and self.view.productionlog.is_displayed and
-            self.view.productionlog.is_active)
+            self.view.productionlog.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.productionlog.select()
@@ -922,7 +922,7 @@ class Utilization(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and self.view.utilization.is_displayed and
-            self.view.utilization.is_active)
+            self.view.utilization.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.utilization.select()
@@ -936,7 +936,7 @@ class Timelines(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and self.view.timelines.is_displayed and
-            self.view.timelines.is_active)
+            self.view.timelines.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.timelines.select()
@@ -1112,7 +1112,7 @@ class RegionAdvanced(CFMENavigateStep):
     def am_i_here(self):
         return (
             self.view.is_displayed and self.view.advanced.is_displayed and
-            self.view.advanced.is_active)
+            self.view.advanced.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.advanced.select()
