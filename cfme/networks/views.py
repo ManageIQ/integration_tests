@@ -13,8 +13,6 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common.provider_views import ProviderAddView
 from cfme.common.provider_views import ProviderEditView
 from cfme.exceptions import displayed_not_implemented
-from cfme.utils.version import Version
-from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ManageIQTree
@@ -35,8 +33,7 @@ class NetworkProviderToolBar(View):
 class NetworkProviderDetailsToolBar(NetworkProviderToolBar):
     """ Represents provider details toolbar """
     monitoring = Dropdown(text='Monitoring')
-    download = VersionPicker({Version.lowest(): Button(title='Download summary in PDF format'),
-                              "5.10": Button(title='Print or export summary')})
+    download = Button(title='Print or export summary')
 
 
 class NetworkProviderSideBar(View):
@@ -142,8 +139,7 @@ class BalancerToolBar(View):
 
 class BalancerDetailsToolBar(BalancerToolBar):
     """ Represents details toolbar of balancer summary """
-    download = VersionPicker({Version.lowest(): Button(title='Download summary in PDF format'),
-                              "5.10": Button(title='Print or export summary')})
+    download = Button(title='Print or export summary')
 
 
 class BalancerSideBar(View):
@@ -221,8 +217,7 @@ class CloudNetworkToolBar(View):
 class CloudNetworkDetailsToolBar(View):
     """ Represents provider details toolbar """
     policy = Dropdown(text='Policy')
-    download = VersionPicker({Version.lowest(): Button(title='Download summary in PDF format'),
-                              "5.10": Button(title='Print or export summary')})
+    download = Button(title='Print or export summary')
 
 
 class CloudNetworkSideBar(View):
@@ -326,8 +321,7 @@ class NetworkPortToolBar(View):
 class NetworkPortDetailsToolBar(View):
     """ Represents toolbar of summary of port """
     policy = Dropdown(text='Policy')
-    download = VersionPicker({Version.lowest(): Button(title='Download summary in PDF format'),
-                              "5.10": Button(title='Print or export summary')})
+    download = Button(title='Print or export summary')
 
 
 class NetworkPortSideBar(View):
@@ -419,8 +413,7 @@ class NetworkRouterDetailsToolBar(View):
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     edit = Dropdown(text='Edit')
-    download = VersionPicker({Version.lowest(): Button(title='Download summary in PDF format'),
-                              "5.10": Button(title='Print or export summary')})
+    download = Button(title='Print or export summary')
 
 
 class NetworkRouterSideBar(View):
@@ -540,8 +533,7 @@ class SecurityGroupToolBar(View):
 class SecurityGroupDetailsToolBar(View):
     """ Represents provider details toolbar """
     policy = Dropdown(text='Policy')
-    download = VersionPicker({Version.lowest(): Button(title='Download summary in PDF format'),
-                              "5.10": Button(title='Print or export summary')})
+    download = Button(title='Print or export summary')
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
@@ -635,8 +627,7 @@ class SubnetDetailsToolBar(View):
     """ Represents provider details toolbar """
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
-    download = VersionPicker({Version.lowest(): Button(title='Download summary in PDF format'),
-                              "5.10": Button(title='Print or export summary')})
+    download = Button(title='Print or export summary')
 
 
 class SubnetAddView(BaseLoggedInPage):
@@ -869,8 +860,7 @@ class FloatingIpToolBar(View):
 class FloatingIpDetailsToolBar(View):
     """ Represents toolbar of summary of port """
     policy = Dropdown(text='Policy')
-    download = VersionPicker({Version.lowest(): Button(title='Download summary in PDF format'),
-                              "5.10": Button(title='Print or export summary')})
+    download = Button(title='Print or export summary')
 
 
 class FloatingIpDetailsSideBar(View):

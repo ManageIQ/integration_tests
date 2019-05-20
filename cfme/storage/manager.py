@@ -44,7 +44,7 @@ class StorageManagerDetailsToolbar(View):
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     monitoring = Dropdown('Monitoring')
-    download = Button(title='Download summary in PDF format')
+    download = Button(title='Print or export summary')
 
 
 class StorageManagerEntities(View):

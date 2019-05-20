@@ -45,7 +45,7 @@ class VolumeBackupDetailsToolbar(View):
     """The toolbar on the Volume Backup detail page"""
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
-    download = Button('Download summary in PDF format')
+    download = Button('Print or export summary')
 
 
 class VolumeBackupDetailsEntities(View):

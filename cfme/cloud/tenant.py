@@ -55,7 +55,7 @@ class TenantDetailsToolbar(View):
     """The toolbar on the tenant details page"""
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
-    download = Button('Download summary in PDF format')
+    download = Button('Print or export summary')
 
 
 class TenantDetailsAccordion(View):

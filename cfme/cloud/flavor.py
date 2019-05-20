@@ -57,7 +57,7 @@ class FlavorEntities(BaseEntitiesView):
 
 class FlavorDetailsToolBar(View):
     policy = Dropdown('Policy')
-    download = Button(title='Download summary in PDF format')
+    download = Button(title='Print or export summary')
     configuration = Dropdown('Configuration')
 
 

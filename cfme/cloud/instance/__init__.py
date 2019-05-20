@@ -47,7 +47,7 @@ class InstanceDetailsToolbar(View):
     lifecycle = Dropdown('Lifecycle')
     monitoring = Dropdown('Monitoring')
     power = Dropdown('Instance Power Functions')  # title
-    download = Button(title='Download summary in PDF format')
+    download = Button(title='Print or export summary')
     access = Dropdown("Access")
 
 

@@ -54,7 +54,7 @@ class ConfigManagementDetailsToolbar(View):
     refresh = Button(title='Refresh this page')
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')
-    download = Button(title='Download summary in PDF format')
+    download = Button(title='Print or export summary')
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 

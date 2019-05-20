@@ -54,7 +54,7 @@ class ProviderDetailsToolBar(View):
     reload = Button(title='Refresh this page')
     policy = Dropdown(text='Policy')
     authentication = Dropdown(text='Authentication')
-    download = Button(title='Download summary in PDF format')
+    download = Button(title='Print or export summary')
 
     view_selector = View.nested(DetailsToolBarViewSelector)
 

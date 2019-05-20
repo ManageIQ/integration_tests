@@ -45,7 +45,7 @@ class VolumeTypeAllView(VolumeTypeView):
 
 class VolumeTypeDetailsToolbar(View):
     policy = Dropdown('Policy')
-    download = Button('Download summary in PDF format')
+    download = Button('Print or export summary')
 
 
 class VolumeTypeDetailsEntities(View):

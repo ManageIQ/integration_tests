@@ -39,7 +39,7 @@ class ResourcePoolDetailsToolbar(View):
     """The toolbar on the details page"""
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
-    download = Button(title='Download summary in PDF format')
+    download = Button(title='Print or export summary')
 
 
 class ResourcePoolDetailsAccordion(View):

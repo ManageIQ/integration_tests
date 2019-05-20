@@ -52,7 +52,7 @@ class VolumeToolbar(View):
 class VolumeDetailsToolbar(View):
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
-    download = Button('Download summary in PDF format')
+    download = Button('Print or export summary')
 
 
 class VolumeDetailsEntities(View):

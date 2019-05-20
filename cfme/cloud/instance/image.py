@@ -48,7 +48,7 @@ class ImageDetailsToolbar(View):
     configuration = Dropdown('Configuration')
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')
-    download = Button(title='Download summary in PDF format')
+    download = Button(title='Print or export summary')
 
 
 class ImageDetailsEntities(VMDetailsEntities):
