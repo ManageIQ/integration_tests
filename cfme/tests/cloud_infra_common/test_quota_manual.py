@@ -6,40 +6,6 @@ from cfme import test_requirements
 pytestmark = [test_requirements.quota, pytest.mark.manual]
 
 
-@pytest.mark.tier(1)
-def test_custom_service_dialog_quota_flavors():
-    """
-    Test quota with instance_type in custom dialog
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/4h
-        caseimportance: low
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.8
-        casecomponent: Configuration
-        tags: quota
-        title: Test quota with instance_type in custom dialog
-        testSteps:
-            1. Set tenant quota for storage.
-            2. Create a service dialog with field: option_0_instance_type
-            3. Attach that dialog to catalog item
-            4. Order the service by changing the flavor from the drop-down list.
-
-        expectedResults:
-            1.
-            2.
-            3. Quota exceeded message should be displayed
-
-    Bugzilla:
-        1499193
-        1581288
-        1657628
-    """
-    pass
-
-
 @pytest.mark.tier(3)
 @pytest.mark.manual('manualonly')
 def test_quota_for_simultaneous_service_catalog_request_with_different_users():

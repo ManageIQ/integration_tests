@@ -191,8 +191,9 @@ class Request(BaseEntity):
         Args:
             cancel: Whether to cancel the deletion.
         """
-        view = navigate_to(self, 'Details')
-        view.toolbar.delete.click(handle_alert=not cancel)
+        if self.exists_ui:
+            view = navigate_to(self, 'Details')
+            view.toolbar.delete.click(handle_alert=not cancel)
 
     @remove_request.variant("rest")
     def remove_request_rest(self):
