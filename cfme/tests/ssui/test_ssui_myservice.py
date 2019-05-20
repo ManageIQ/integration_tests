@@ -216,3 +216,30 @@ def test_vm_console(request, appliance, setup_provider, context, configure_webso
                 take_screenshot("ConsoleScreenshot")
                 vm_console.switch_to_appliance()
                 raise
+
+
+@pytest.mark.manual
+@test_requirements.ssui
+@pytest.mark.tier(2)
+@pytest.mark.parametrize('context', [ViaSSUI])
+def test_suspend_vm_service_details(context):
+    """
+    Test suspending VM from SSUI service details page.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/4h
+        setup:
+            1. Have a service catalog item that provisions a VM
+        testSteps:
+            1. In SSUI, navigate to My Services -> <service name> to see service details
+            2. In Resources section, choose 'Suspend' from dropdown
+        expectedResults:
+            1. Service details displayed
+            2. VM is suspended; VM is NOT in Unknown Power State
+    Bugzilla:
+        1670373
+    """
+    pass

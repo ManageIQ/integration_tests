@@ -128,3 +128,40 @@ def test_notification_for_snapshot_delete_failure_ec2():
         1449243
     """
     pass
+
+
+@pytest.mark.manual
+@pytest.mark.provider([OpenStackProvider])
+@test_requirements.snapshot
+@pytest.mark.tier(2)
+def test_snapshot_cloud_tenant():
+    """
+    Verify that snapshot created on an instance belonging to a non-admin tenant also belongs
+    to the same non-admin tenant.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Cloud
+        caseimportance: high
+        initialEstimate: 1/4h
+        startsin: 5.10
+        setup:
+            1. Have OSP provider added
+            2. Have non-admin cloud tenant created
+            3. Deploy a new instance with non-admin cloud tenant
+        testSteps:
+            1. Create snapshot on newly deployed instance
+            2. Navigate Compute -> Cloud -> Tenants -> <your tenant> -> Images
+            3. Verify the snapshot is displayed here
+            4. Navigate Compute -> Cloud -> Tenants -> admin -> Images
+            5. Verify the snapshot is NOT displayed here
+        expectedResults:
+            1. Snapshot created
+            2. Navigation successful
+            3. Snapshot displayed for non-admin tenant
+            4. Navigation successful
+            5. Snapshot NOT displayed for admin tenant
+    Bugzilla:
+        1685300
+    """
+    pass

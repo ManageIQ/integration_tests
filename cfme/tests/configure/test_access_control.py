@@ -1993,3 +1993,31 @@ def test_host_clusters_pod_filter():
         1631694
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_my_tasks_api():
+    """
+    Test that user with My Tasks product feature can see only his tasks via API
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/6h
+        startsin: 5.10
+        testSteps:
+            1. Create a user with Settings -> Tasks -> View -> My Tasks (but not All Tasks),
+                for example EvmRole-support
+            2. Navigate to Tasks via UI, verify you can see only "My Tasks"
+            3. Query API with the user: curl -k "https://<username>:<password>@<IP>/api/tasks/"
+        expectedResults:
+            1. User created
+            2. "My Tasks" displayed
+            3. Only tasks belonging to the user displayed
+    Bugzilla:
+        1639387
+    """
+    pass
