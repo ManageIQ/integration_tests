@@ -8,68 +8,6 @@ from cfme import test_requirements
 @pytest.mark.manual
 @test_requirements.report
 @pytest.mark.tier(1)
-def test_reports_should_generate_with_no_errors_in_logs():
-    """
-    Bugzilla:
-        1592480
-
-    See comment 21 of BZ above
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        initialEstimate: 1/2h
-        startsin: 5.9
-        title: Reports should generate with no errors in logs
-        setup:
-            1. SSH into the appliance and vmdb
-            2. Clone gist: https://gist.github.com/87dddcfbd549b03099f8e55f632b2b57.git
-            3. Run: bin/rails r bz_1592480_db_replication_script.rb
-            4. Run: bin/rails c.
-            5. Execute:
-                irb> r = MiqReport.where(:name => "BZ 1592480 Example Report").first
-                irb> puts Benchmark.measure { r.queue_generate_table(:report_sync => true) }
-            6. Log into the appliance.
-            7. Navigate to Cloud Intel > Reports > Saved Reports
-        testSteps:
-            1. Locate the newly created report.
-        expectedResults:
-            1. Report must be accessible.
-    """
-
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_generate_persistent_volumes():
-    """
-    Bugzilla:
-        1563861
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup:
-            1. Add ocp39-hawk provider, or any other provider that has persistent volumes
-            (use provider.mgmt.list_persistent_volumes() to see if a provider has it).
-            2. Create a report based on Persistent Volumes, with Capacity and Storage Capacity
-            columns.
-            3. Queue the report.
-        testSteps:
-            1. Check the report columns.
-        expectedResults:
-            1. Values for Capacity must not be in hash(key:value pair) format.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
 def test_reports_import_invalid_file():
     """
     Polarion:
@@ -170,27 +108,6 @@ def test_import_duplicate_report():
 @pytest.mark.manual
 @test_requirements.report
 @pytest.mark.tier(1)
-def test_reports_create_schedule_for_base_report_one_time_a_day():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/16h
-        setup:
-            1. Navigate to Cloud Intel > Reports > All Schedules.
-            2. Click on `Configuration` and select `Add a new Schedule`.
-        testSteps:
-            1. Create schedule that runs report daily.
-        expectedResults:
-            1. Schedule must run successfully.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
 def test_after_setting_certain_types_of_filters_filter_tab_should_be_accessible_and_editable():
     """
     Bugzilla:
@@ -243,59 +160,6 @@ def test_date_should_be_change_in_editing_reports_scheduled():
         expectedResults:
             1. "Timer" must change accordingly.
             2. "Starting Date" must change accordingly.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_report_export_import_run_custom_report():
-    """
-    Bugzilla:
-        1498471
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.3
-        setup:
-            1. Create a custom report and queue it.
-            2. Navigate to Import/Export > Custom Reports
-        testSteps:
-            1. Export the custom report.
-            2. Make some minor change to the exported report yaml(e.g. change report name)
-            and import the custom report again.
-            3. Queue a new report from the imported custom report.
-            Check if all the rows behave consistently.
-        expectedResults:
-            1. The report must be exported successfully.
-            2. Report must be imported successfully and must be visible in the custom report's menu.
-            3. All rows must be consistent with the rows from old report.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_create_schedule_for_base_report_hourly():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/16h
-        setup:
-            1. Navigate to Cloud Intel > Reports > All Schedules.
-            2. Click on `Configuration` and select `Add a new Schedule`.
-        testSteps:
-            1. Create schedule that runs report hourly during the day.
-        expectedResults:
-            1. Check it was ran successfully.
-
     """
     pass
 
