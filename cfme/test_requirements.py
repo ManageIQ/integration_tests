@@ -153,7 +153,7 @@ dialog = pytest.mark.requirement(
 discovery = pytest.mark.requirement(
     "Provider Discovery",
     description='Discovery of Cloud/Infra/etc providers',
-    assignee_id='ndhandre',
+    assignee_id='pvala',
 )
 
 distributed = pytest.mark.requirement(

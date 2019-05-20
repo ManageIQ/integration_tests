@@ -20,6 +20,7 @@ pytestmark = [
 ]
 
 
+@test_requirements.rest
 class TestVmOwnershipRESTAPI(object):
     @pytest.fixture(scope="function")
     def vm(self, request, provider, appliance):
@@ -34,7 +35,7 @@ class TestVmOwnershipRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Infra
             caseimportance: high
             initialEstimate: 1/3h
         """
@@ -60,7 +61,7 @@ class TestVmOwnershipRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Infra
             caseimportance: high
             initialEstimate: 1/3h
         """
@@ -95,7 +96,7 @@ class TestVmOwnershipRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Infra
             caseimportance: high
             initialEstimate: 1/3h
         """

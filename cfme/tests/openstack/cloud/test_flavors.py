@@ -296,7 +296,7 @@ def test_filter_by_flavor_via_api(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/10h
         setup:

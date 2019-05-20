@@ -29,7 +29,8 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
-    test_requirements.provision, pytest.mark.tier(2),
+    test_requirements.provision,
+    pytest.mark.tier(2),
     pytest.mark.provider(gen_func=providers,
                          filters=[ProviderFilter(classes=[CloudProvider, InfraProvider],
                                                  required_flags=['provision'])],
@@ -285,6 +286,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
         raise
 
 
+@test_requirements.rest
 @pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
 def test_provision_from_template_using_rest(appliance, request, provider, vm_name, auto):
     """ Tests provisioning from a template using the REST API.
@@ -294,7 +296,7 @@ def test_provision_from_template_using_rest(appliance, request, provider, vm_nam
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Provisioning
         caseimportance: high
         initialEstimate: 1/30h
     """

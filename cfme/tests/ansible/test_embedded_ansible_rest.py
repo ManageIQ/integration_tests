@@ -11,7 +11,7 @@ pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=['+embedded_ansible']),
     pytest.mark.ignore_stream('upstream'),
-    test_requirements.ansible,
+    test_requirements.rest,
 ]
 
 
@@ -69,7 +69,7 @@ class TestReposRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Ansible
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -105,7 +105,7 @@ class TestReposRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Ansible
             caseimportance: medium
             initialEstimate: 1/4h
 
@@ -129,7 +129,7 @@ class TestReposRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Ansible
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -145,7 +145,7 @@ class TestPayloadsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Ansible
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -163,7 +163,7 @@ class TestPayloadsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Ansible
             caseimportance: medium
             initialEstimate: 1/4h
         """
@@ -179,7 +179,7 @@ class TestPayloadsRESTAPI(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Ansible
             caseimportance: medium
             initialEstimate: 1/4h
         """

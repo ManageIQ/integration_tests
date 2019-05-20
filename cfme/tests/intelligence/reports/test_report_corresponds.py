@@ -4,9 +4,12 @@ from random import sample
 import fauxfactory
 import pytest
 
-import cfme.utils
 from cfme import test_requirements
+from cfme.utils.net import resolve_ips
 from cfme.utils.providers import get_crud_by_name
+
+
+pytestmark = [test_requirements.report]
 
 
 @pytest.fixture(scope="function")
@@ -34,7 +37,6 @@ def report_vms(appliance, infra_provider):
 
 
 @pytest.mark.tier(3)
-@test_requirements.report
 def test_custom_vm_report(soft_assert, report_vms):
     """
     Polarion:
@@ -50,7 +52,7 @@ def test_custom_vm_report(soft_assert, report_vms):
             continue  # Might disappear meanwhile
         provider_name = row["Provider Name"]
         provider_mgmt = get_crud_by_name(provider_name).mgmt
-        provider_hosts_and_ips = cfme.utils.net.resolve_ips(provider_mgmt.list_host())
+        provider_hosts_and_ips = resolve_ips(provider_mgmt.list_host())
         provider_datastores = provider_mgmt.list_datastore()
         provider_clusters = provider_mgmt.list_cluster()
         soft_assert(provider_mgmt.does_vm_exist(row["Name"]),
@@ -69,7 +71,7 @@ def test_custom_vm_report(soft_assert, report_vms):
         # Because of mixing long and short host names, we have to use both-directional `in` op.
         if row[host]:
             found = False
-            possible_ips_or_hosts = cfme.utils.net.resolve_ips((row[host], ))
+            possible_ips_or_hosts = resolve_ips((row[host], ))
             for possible_ip_or_host in possible_ips_or_hosts:
                 for host_ip in provider_hosts_and_ips:
                     if possible_ip_or_host in host_ip or host_ip in possible_ip_or_host:

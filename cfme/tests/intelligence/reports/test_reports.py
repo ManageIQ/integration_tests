@@ -56,7 +56,7 @@ def test_non_admin_user_reports_access_rest(appliance, request, rbac_api):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/12h
         tags: report

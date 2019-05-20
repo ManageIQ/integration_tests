@@ -14,7 +14,7 @@ from cfme.utils.wait import wait_for
 from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
-    test_requirements.provision,
+    test_requirements.rest,
     pytest.mark.provider(classes=[InfraProvider], selector=ONE),
     pytest.mark.usefixtures('setup_provider')
 ]
@@ -35,7 +35,7 @@ def test_query_vm_attributes(vm, soft_assert):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -56,7 +56,7 @@ def test_vm_scan(appliance, vm, from_detail):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/3h
     """
@@ -88,7 +88,7 @@ def test_edit_vm(request, vm, appliance, from_detail):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -121,7 +121,7 @@ def test_delete_vm_from_detail(vm, method):
     Polarion:
         assignee: pvala
         initialEstimate: 1/4h
-        casecomponent: Rest
+        casecomponent: Infra
     """
     delete_resources_from_detail([vm], method=method, num_sec=300, delay=10)
 
@@ -132,6 +132,6 @@ def test_delete_vm_from_collection(vm):
     Polarion:
         assignee: pvala
         initialEstimate: 1/4h
-        casecomponent: Rest
+        casecomponent: Infra
     """
     delete_resources_from_collection([vm], not_found=True, num_sec=300, delay=10)

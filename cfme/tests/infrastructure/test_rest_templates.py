@@ -65,7 +65,7 @@ def test_query_template_attributes(request, appliance, provider, soft_assert):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Services
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -93,7 +93,7 @@ def test_set_ownership(appliance, template, from_detail):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Services
         initialEstimate: 1/8h
     """
     if "set_ownership" not in appliance.rest_api.collections.templates.action.all:
@@ -129,7 +129,7 @@ def test_delete_template_from_detail_post(template):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Services
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -145,7 +145,7 @@ def test_delete_template_from_detail_delete(template):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Services
         caseimportance: high
         initialEstimate: 1/4h
     """
@@ -161,7 +161,7 @@ def test_delete_template_from_collection(template):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Services
         caseimportance: high
         initialEstimate: 1/4h
     """

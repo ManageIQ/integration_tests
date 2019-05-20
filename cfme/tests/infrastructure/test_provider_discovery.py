@@ -2,6 +2,7 @@ from itertools import combinations
 
 import pytest
 
+from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -9,6 +10,9 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
 from cfme.utils.providers import get_crud
 from cfme.utils.wait import wait_for_decorator
+
+
+pytestmark = [test_requirements.discovery]
 
 
 def generate_signature(combination):

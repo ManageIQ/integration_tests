@@ -2,10 +2,11 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.infrastructure.pxe import SystemImageType
 from cfme.utils.update import update
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [test_requirements.general_ui, pytest.mark.tier(3)]
 
 
 @pytest.mark.sauce

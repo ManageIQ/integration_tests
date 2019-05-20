@@ -5,7 +5,11 @@ import pytest
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 
-pytestmark = [test_requirements.service, pytest.mark.tier(3), pytest.mark.ignore_stream("upstream")]
+pytestmark = [
+    test_requirements.general_ui,
+    pytest.mark.tier(3),
+    pytest.mark.ignore_stream("upstream")
+]
 
 
 @pytest.fixture(scope="module")

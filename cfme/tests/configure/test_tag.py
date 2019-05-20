@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
@@ -168,6 +169,7 @@ def test_updated_tag_name_on_vm(provider, tag, request):
     ), 'tag is not assigned'
 
 
+@test_requirements.rest
 class TestTagsViaREST(object):
 
     COLLECTIONS_BULK_TAGS = ("services", "vms")
@@ -244,7 +246,7 @@ class TestTagsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: high
             initialEstimate: 1/6h
         """
@@ -275,7 +277,7 @@ class TestTagsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: high
             initialEstimate: 1/30h
         """
@@ -304,7 +306,7 @@ class TestTagsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: high
             initialEstimate: 1/30h
         """
@@ -319,7 +321,7 @@ class TestTagsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: high
             initialEstimate: 1/30h
         """
@@ -334,7 +336,7 @@ class TestTagsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: high
             initialEstimate: 1/30h
         """
@@ -370,7 +372,7 @@ class TestTagsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: high
             initialEstimate: 1/5h
         """
@@ -407,7 +409,7 @@ class TestTagsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: high
             initialEstimate: 1/5h
         """
@@ -462,7 +464,7 @@ class TestTagsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: high
             initialEstimate: 1/5h
         """
@@ -499,7 +501,7 @@ class TestTagsViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: high
             initialEstimate: 1/30h
         """

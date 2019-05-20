@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
+
+pytestmark = [test_requirements.report]
+
 
 @pytest.fixture(scope="module")
 def report(appliance):

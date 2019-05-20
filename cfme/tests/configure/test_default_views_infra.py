@@ -75,7 +75,7 @@ def test_default_view_infra_reset(appliance):
 
     Polarion:
         assignee: pvala
-        casecomponent: Infra
+        casecomponent: Settings
         caseimportance: high
         initialEstimate: 1/20h
         tags: settings
@@ -96,7 +96,7 @@ def test_infra_default_view(appliance, group_name, view):
 
     Polarion:
         assignee: pvala
-        casecomponent: Infra
+        casecomponent: Settings
         caseimportance: high
         initialEstimate: 1/10h
         tags: settings
@@ -121,7 +121,7 @@ def test_infra_compare_view(appliance, expected_view):
 
     Polarion:
         assignee: pvala
-        casecomponent: Infra
+        casecomponent: Settings
         caseimportance: high
         initialEstimate: 1/10h
         tags: settings
@@ -145,7 +145,7 @@ def test_vm_visibility_off(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Infra
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/10h
         tags: settings
@@ -158,7 +158,7 @@ def test_vm_visibility_on(appliance):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Infra
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/5h
         tags: settings

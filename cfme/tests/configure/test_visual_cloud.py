@@ -92,7 +92,7 @@ def test_cloud_grid_page_per_item(appliance, request, page, value, set_grid):
 
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/10h
         tags: settings
@@ -126,7 +126,7 @@ def test_cloud_tile_page_per_item(appliance, request, page, value, set_tile):
 
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/10h
         tags: settings
@@ -160,7 +160,7 @@ def test_cloud_list_page_per_item(appliance, request, page, value, set_list):
 
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/10h
         tags: settings
@@ -195,7 +195,7 @@ def test_cloud_start_page(request, appliance, start_page):
 
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/6h
         tags: settings
@@ -211,7 +211,7 @@ def test_cloudprovider_noquads(request, set_cloud_provider_quad):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Configuration
+        casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/10h
         tags: settings

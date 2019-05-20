@@ -8,6 +8,7 @@ from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.path import data_path
 
+pytestmark = [test_requirements.report]
 
 report_crud_dir = data_path.join("reports_crud")
 
@@ -104,7 +105,6 @@ def test_shuffle_first_level(appliance, group, report_menus):
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("group", GROUPS)
-@test_requirements.report
 def test_add_reports_to_available_reports_menu(appliance, request, group,
                                                report_menus, custom_report_values):
     """This test case moves custom menu to existing menus

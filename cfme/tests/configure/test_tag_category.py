@@ -53,7 +53,7 @@ def test_query_custom_category_via_api(appliance, custom_category):
     """
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
         setup:
@@ -75,6 +75,7 @@ def test_query_custom_category_via_api(appliance, custom_category):
     assert custom_category.name in all_categories_name
 
 
+@test_requirements.rest
 class TestCategoriesViaREST(object):
     @pytest.fixture(scope="function")
     def categories(self, request, appliance):
@@ -92,7 +93,7 @@ class TestCategoriesViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -113,7 +114,7 @@ class TestCategoriesViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/3h
         """
@@ -153,7 +154,7 @@ class TestCategoriesViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """
@@ -168,7 +169,7 @@ class TestCategoriesViaREST(object):
 
         Polarion:
             assignee: pvala
-            casecomponent: Rest
+            casecomponent: Configuration
             caseimportance: low
             initialEstimate: 1/4h
         """

@@ -12,6 +12,7 @@ from cfme.utils.rest import assert_response
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for_decorator
 
+pytestmark = [test_requirements.report]
 
 REPORT_CRUD_DIR = data_path.join("reports_crud")
 SCHEDULES_CRUD_DIR = data_path.join("schedules_crud")
@@ -59,7 +60,6 @@ def get_custom_report(appliance, custom_report_values):
 @pytest.mark.rhel_testing
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@test_requirements.report
 def test_custom_report_crud(custom_report_values, appliance):
     """
     Bugzilla:
@@ -82,7 +82,6 @@ def test_custom_report_crud(custom_report_values, appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@test_requirements.report
 def test_reports_schedule_crud(schedule_data, appliance):
     """
     Bugzilla:
@@ -255,7 +254,6 @@ def test_dashboard_crud(appliance):
 
 
 @pytest.mark.tier(2)
-@test_requirements.report
 def test_run_report(appliance):
     """
     Polarion:
@@ -280,7 +278,6 @@ def test_run_report(appliance):
 
 
 @pytest.mark.tier(3)
-@test_requirements.report
 def test_import_report(appliance):
     """
     Polarion:

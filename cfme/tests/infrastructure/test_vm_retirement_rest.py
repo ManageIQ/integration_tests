@@ -11,7 +11,7 @@ from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for
 
 pytestmark = [
-    test_requirements.retirement,
+    test_requirements.rest,
     pytest.mark.provider(classes=[InfraProvider], selector=ONE),
     pytest.mark.usefixtures("setup_provider"),
 ]
@@ -83,7 +83,7 @@ def test_retire_vm_now(appliance, vm, from_collection):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/3h
     """
@@ -130,7 +130,7 @@ def test_retire_vm_future(appliance, vm, from_collection):
 
     Polarion:
         assignee: pvala
-        casecomponent: Rest
+        casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/3h
     """
