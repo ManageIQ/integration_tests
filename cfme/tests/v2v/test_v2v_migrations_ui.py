@@ -37,7 +37,7 @@ pytestmark = [
 
 
 @pytest.mark.tier(1)
-def test_v2v_infra_map_data(appliance, source_provider, provider, soft_assert):
+def test_v2v_infra_map_data(request, appliance, source_provider, provider, soft_assert):
     """
     Test to validate infra map data
 
@@ -57,6 +57,10 @@ def test_v2v_infra_map_data(appliance, source_provider, provider, soft_assert):
     map_data = infra_mapping_default_data(source_provider, provider)
     map_collection = appliance.collections.v2v_infra_mappings
     mapping = map_collection.create(**map_data)
+
+    @request.addfinalizer
+    def _cleanup():
+        map_collection.delete(mapping)
     view = navigate_to(map_collection, "All")
     mapping_list = view.infra_mapping_list
 
@@ -190,7 +194,8 @@ def test_v2v_infra_map_ui(appliance, source_provider, provider, soft_assert):
 
 
 @pytest.mark.tier(1)
-def test_v2v_plan_ui(appliance, source_provider, provider, mapping_data_vm_obj_mini, soft_assert):
+def test_v2v_plan_ui(
+        request, appliance, source_provider, provider, mapping_data_vm_obj_mini, soft_assert):
     """
     Test to validate non-functional UI tests on migration plan wizard
 
@@ -213,6 +218,10 @@ def test_v2v_plan_ui(appliance, source_provider, provider, mapping_data_vm_obj_m
     plan_description = fauxfactory.gen_string("alphanumeric", length=10)
     map_data = infra_mapping_default_data(source_provider, provider)
     mapping = map_collection.create(**map_data)
+
+    @request.addfinalizer
+    def _cleanup():
+        map_collection.delete(mapping)
     view = navigate_to(plan_collection, "Add")
 
     # Test1: Migration plan name check
@@ -274,7 +283,7 @@ def test_v2v_plan_ui(appliance, source_provider, provider, mapping_data_vm_obj_m
 
 
 @pytest.mark.tier(3)
-def test_v2v_infra_map_special_chars(appliance, source_provider, provider, soft_assert):
+def test_v2v_infra_map_special_chars(request, appliance, source_provider, provider, soft_assert):
     """
     Test infra map with special characters
 
@@ -294,6 +303,10 @@ def test_v2v_infra_map_special_chars(appliance, source_provider, provider, soft_
     map_data = infra_mapping_default_data(source_provider, provider)
     map_data["name"] = fauxfactory.gen_special(length=4)
     mapping = map_collection.create(**map_data)
+
+    @request.addfinalizer
+    def _cleanup():
+        map_collection.delete(mapping)
     view = navigate_to(map_collection, "All")
     soft_assert(mapping.name in view.infra_mapping_list.read())
     view.infra_mapping_list.delete_mapping(mapping.name)
@@ -305,6 +318,7 @@ def test_v2v_infra_map_special_chars(appliance, source_provider, provider, soft_
         pass
 
 
+@pytest.mark.uncollectif(lambda provider: provider.one_of(OpenStackProvider))
 def test_v2v_rbac(appliance, new_credential):
     """
     Test migration with role-based access control
