@@ -196,12 +196,12 @@ class SavedReportDetailsView(CloudIntelReportsView):
     class download(ParametrizedView):  # noqa
         PARAMETERS = ("format", )
         ALL_LINKS = ".//a[starts-with(@name, 'download_choice__render_report_')]"
-        download_button = Button(title="Download")
+        download = Button(title="Download")
         link = Text(ParametrizedLocator(".//a[normalize-space()={format|quote}]"))
 
         def __init__(self, *args, **kwargs):
             ParametrizedView.__init__(self, *args, **kwargs)
-            self.download_button.click()
+            self.download.click()
             self.link.click()
 
         @classmethod

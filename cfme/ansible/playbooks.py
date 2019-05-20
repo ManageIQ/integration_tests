@@ -53,7 +53,7 @@ class PlaybookDetailsView(PlaybookBaseView):
     class toolbar(View):   # noqa
         configuration = Dropdown("Configuration")
         policy = Dropdown(text='Policy')
-        download_button = Button(title="Print or export summary")
+        download = Button(title="Print or export summary")
 
     breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
     entities = View.nested(PlaybookDetailsEntities)
