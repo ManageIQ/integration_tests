@@ -82,24 +82,3 @@ def test_custom_logos_via_api():
         1578076
     """
     pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-@pytest.mark.tier(3)
-def test_add_ansible_tower_rest():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: medium
-        initialEstimate: 1/10h
-        testSteps:
-            1. Add Ansible Tower via REST
-        expectedResults:
-            1. Provider must be added and validated successfully.
-
-    Bugzilla:
-        1621888
-    """
-    pass

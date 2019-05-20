@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from manageiq_client.api import APIException
+from manageiq_client.api import Entity as RestEntity
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
@@ -22,6 +24,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
+from cfme.utils.rest import assert_response
 from cfme.utils.update import Updateable
 from cfme.utils.version import LATEST
 from cfme.utils.version import LOWEST
@@ -400,6 +403,74 @@ class ConfigManager(Updateable, Pretty, Navigatable):
                 )
                 # check the provider is indeed deleted
                 assert not self.exists
+
+    @property
+    def rest_api_entity(self):
+        """Returns the rest entity of config manager provider"""
+        # Since config manager provider is slightly different from other normal providers,
+        # we cannot obtain it's rest entity the normal way, instead, we use Entity class
+        # of manageiq_client library to instantiate the rest entity.
+        provider_id = self.appliance.rest_api.collections.providers.get(
+            name=self.ui_name
+        ).provider_id
+
+        return RestEntity(
+            self.appliance.rest_api.collections.providers,
+            data={
+                "href": self.appliance.url_path(
+                    "/api/providers/{}?provider_class=provider".format(provider_id)
+                )
+            },
+        )
+
+    def create_rest(self):
+        """Create the config manager in CFME using REST"""
+        if "ansible_tower" in self.key:
+            config_type = "AnsibleTower"
+        elif "satellite" in self.key:
+            config_type = "Foreman"
+
+        payload = {
+            "type": "ManageIQ::Providers::{}::Provider".format(config_type),
+            "url": self.url,
+            "name": self.name,
+            "verify_ssl": self.ssl,
+            "credentials": {
+                "userid": self.credentials.view_value_mapping["username"],
+                "password": self.credentials.view_value_mapping["password"],
+            },
+        }
+        try:
+            self.appliance.rest_api.post(
+                api_endpoint_url=self.appliance.url_path(
+                    "/api/providers/?provider_class=provider"
+                ),
+                **payload
+            )
+        except APIException as err:
+            raise AssertionError("Provider wasn't added: {}".format(err))
+
+        response = self.appliance.rest_api.response
+        if not response:
+            raise AssertionError(
+                "Provider wasn't added, status code {}".format(response.status_code)
+            )
+
+        assert_response(self.appliance)
+        return True
+
+    def delete_rest(self):
+        """Deletes the config manager from CFME using REST"""
+        try:
+            self.rest_api_entity.action.delete()
+        except APIException as err:
+            raise AssertionError("Provider wasn't deleted: {}".format(err))
+
+        response = self.appliance.rest_api.response
+        if not response:
+            raise AssertionError(
+                "Provider wasn't deleted, status code {}".format(response.status_code)
+            )
 
     @property
     def exists(self):
