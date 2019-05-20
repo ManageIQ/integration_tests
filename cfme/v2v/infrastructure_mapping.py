@@ -46,7 +46,7 @@ class InfraMappingCommonButtons(InfrastructureMappingView):
     next_btn = Button("Next")
     cancel_btn = Button("Cancel")
     save = Button("Save")
-    create = Button("Create")
+    create_btn = Button("Create")
     add_mapping = Button("Add Mapping")
     remove_mapping = Button("Remove Selected")
     remove_all_mappings = Button("Remove All")
@@ -68,6 +68,11 @@ class ComponentView(View):
         def after_fill(self, was_change):
             if not self.parent.add_mapping.disabled:
                 self.parent.add_mapping.click()
+
+        @property
+        def is_displayed(self):
+            return (self.source.is_displayed and
+                    (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0))
 
     def fill(self, values):
         was_change = True
@@ -117,20 +122,20 @@ class InfrastructureMappingForm(InfrastructureMappingView):
         comp_name = "network"
 
         def after_fill(self, was_change):
-            if self.create.is_displayed:
-                self.create.click()
+            if self.create_btn.is_displayed:
+                self.create_btn.click()
             elif self.save.is_displayed:
                 self.save.click()
 
     @View.nested
     class result(View):  # noqa
-        close = Button("Close")
+        close_btn = Button("Close")
         continue_to_plan_wizard = Button("Continue to the plan wizard")
         success_icon = Text('.//div[contains(@class,"wizard-pf-success-icon")]')
 
     def after_fill(self, was_change):
         if was_change:
-            self.result.close.click()
+            self.result.close_btn.click()
 
 
 class AllInfraMappingView(InfrastructureMappingView):
@@ -240,7 +245,7 @@ class InfrastructureMapping(BaseEntity):
         """
         view = navigate_to(self, "Edit", wait_for_view=20)
         self.name = updates.get('name')
-        self.description = updates.get('name')
+        self.description = updates.get('description')
         self.clusters = updates.get('clusters')
         self.datastores = updates.get('datastores')
         self.networks = updates.get('networks')

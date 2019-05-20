@@ -1,10 +1,12 @@
-"""Test to validate basic navigations.Later to be replaced with End-to-End functional testing."""
+"""V2V tests to validate functional and non-function UI usecases"""
 import fauxfactory
 import pytest
 from widgetastic.exceptions import NoSuchElementException
 
-from cfme.exceptions import ItemNotFound
-from cfme.fixtures.provider import small_template
+from cfme import test_requirements
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.fixtures.provider import rhel7_minimal
+from cfme.fixtures.v2v_fixtures import infra_mapping_default_data
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -13,395 +15,322 @@ from cfme.tests.services.test_service_rbac import new_group
 from cfme.tests.services.test_service_rbac import new_role
 from cfme.tests.services.test_service_rbac import new_user
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
-from cfme.v2v.migrations import MigrationPlanRequestDetailsView
-
+from cfme.v2v.migration_plans import MigrationPlanRequestDetailsView
 
 pytestmark = [
+    test_requirements.v2v,
     pytest.mark.provider(
-        classes=[RHEVMProvider],
+        classes=[RHEVMProvider, OpenStackProvider],
         selector=ONE_PER_VERSION,
-        required_flags=['v2v'],
+        required_flags=["v2v"],
         scope="module"
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
         selector=ONE_PER_TYPE,
-        fixture_name='source_provider',
-        required_flags=['v2v'],
+        fixture_name="source_provider",
+        required_flags=["v2v"],
         scope="module"
-    )
+    ),
+    pytest.mark.usefixtures("v2v_provider_setup")
 ]
 
 
-@pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
-def test_infra_mapping_ui_assertions(appliance, v2v_providers, form_data_single_datastore,
-                                    host_creds, conversion_tags, soft_assert):
+@pytest.mark.tier(1)
+def test_v2v_infra_map_data(request, appliance, source_provider, provider, soft_assert):
     """
+    Test to validate infra map data
+
     Polarion:
-        assignee: kkulkarn
+        assignee: ytale
+        initialEstimate: 1/2h
+        caseimportance: critical
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/4h
-        subcomponent: RHV
-        upstream: yes
+        testSteps:
+            1. Add source and target provider
+            2. Create infra map
+            3. Test infra map UI
     """
-    # TODO: This test case does not support update
-    # as update is not a supported feature for mapping.
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
-    view = navigate_to(infrastructure_mapping_collection, 'All')
-    if appliance.version >= '5.10':  # As mapping could be on any page due to pagination
-        infrastructure_mapping_collection.find_mapping(mapping)  # We need to find mapping first
-    soft_assert(mapping.name in view.infra_mapping_list.read())
+    map_data = infra_mapping_default_data(source_provider, provider)
+    map_collection = appliance.collections.v2v_infra_mappings
+    mapping = map_collection.create(**map_data)
+
+    @request.addfinalizer
+    def _cleanup():
+        map_collection.delete(mapping)
+    view = navigate_to(map_collection, "All")
     mapping_list = view.infra_mapping_list
+
+    # Test1: Check custom map in infra map list
+    soft_assert(mapping.name in mapping_list.read())
+
+    # Test2: Validate infra map description
     soft_assert(str(mapping_list.get_map_description(mapping.name)) == mapping.description)
-    soft_assert(mapping.form_data['cluster']['mappings'][0]['sources'][0].format() in
-        mapping_list.get_map_source_clusters(mapping.name)[0])
-    soft_assert(mapping.form_data['cluster']['mappings'][0]['target'][0].format() in
-     mapping_list.get_map_target_clusters(mapping.name)[0])
-    soft_assert(mapping.form_data['datastore'].values()[0]['mappings'][0]['sources'][0].format() in
-     mapping_list.get_map_source_datastores(mapping.name)[0])
-    soft_assert(mapping.form_data['datastore'].values()[0]['mappings'][0]['target'][0].format() in
-     mapping_list.get_map_target_datastores(mapping.name)[0])
-    soft_assert(mapping.form_data['network'].values()[0]['mappings'][0]['sources'][0].format() in
-     mapping_list.get_map_source_networks(mapping.name)[0])
-    soft_assert(mapping.form_data['network'].values()[0]['mappings'][0]['target'][0].format() in
-     mapping_list.get_map_target_networks(mapping.name)[0])
 
-    # Testing if refreshing hosts cause any "Network Missing"
-    rhv_prov = v2v_providers.rhv_provider
-    host = rhv_prov.hosts.all()[0]
-    host.refresh(cancel=True)
-    view = navigate_to(infrastructure_mapping_collection, 'All')
-    mapping_list = view.infra_mapping_list
-    soft_assert(mapping_list.get_map_source_networks(mapping.name) != [])
-    soft_assert(mapping_list.get_map_target_networks(mapping.name) != [])
+    # Test3: Source cluster from UI
+    soft_assert(mapping.clusters[0].sources[0].format() in
+                mapping_list.get_map_source_clusters(mapping.name)[0])
 
-    mapping_list.delete_mapping(mapping.name)
-    view.browser.refresh()
-    view.wait_displayed()
-    try:
-        assert mapping.name not in view.infra_mapping_list.read()
-    except NoSuchElementException:
-        # meaning there was only one mapping that is deleted, list is empty
-        pass
+    # Test4: Target cluster from UI
+    soft_assert(mapping.clusters[0].targets[0].format() in
+                mapping_list.get_map_target_clusters(mapping.name)[0])
+
+    # Test5: Source datastore from UI
+    soft_assert(mapping.datastores[0].sources[0].format() in
+                mapping_list.get_map_source_datastores(mapping.name)[0])
+
+    # Test6: Target datastore from UI
+    soft_assert(mapping.datastores[0].targets[0].format() in
+                mapping_list.get_map_target_datastores(mapping.name)[0])
+
+    # Test5: Source network from UI
+    soft_assert(mapping.networks[0].sources[0].format() in
+                mapping_list.get_map_source_networks(mapping.name)[0])
+
+    # Test6: Target network from UI
+    soft_assert(mapping.networks[0].targets[0].format() in
+                mapping_list.get_map_target_networks(mapping.name)[0])
 
 
-@pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
-def test_v2v_ui_set1(appliance, v2v_providers, form_data_single_datastore, soft_assert):
-    """Perform UI Validations on Infra_Mappings Wizard.
+@pytest.mark.tier(1)
+def test_v2v_infra_map_ui(appliance, source_provider, provider, soft_assert):
+    """
+    Test to validate non-functional UI tests on infrastructure mappings wizard
 
     Polarion:
-        assignee: kkulkarn
+        assignee: ytale
+        initialEstimate: 1/2h
+        caseimportance: critical
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/4h
-        subcomponent: RHV
-        upstream: yes
+        testSteps:
+            1. Add source and target provider
+            2. Create infra map
+            3. Validate non-functional tests
     """
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
+    map_collection = appliance.collections.v2v_infra_mappings
+    map_name = fauxfactory.gen_string("alphanumeric", length=26)
+    map_description = fauxfactory.gen_string("alphanumeric", length=130)
+    map_data = infra_mapping_default_data(source_provider, provider)
+    view = navigate_to(map_collection, "Add")
 
-    view = navigate_to(infrastructure_mapping_collection, 'Add')
-    mapping_name = fauxfactory.gen_string("alphanumeric", length=50)
-    view.form.general.name.fill(mapping_name)
+    # Test1: 24 characters can be entered in name field
+    view.general.name.fill(map_name)
+    soft_assert(len(view.general.name.read()) == 24)
 
-    # Assert only 24 characters can be entered in name field
-    soft_assert(len(view.form.general.name.read()) == 24)
+    # Test2: 128 characters can be entered in description field
+    view.general.name.fill(map_name)
+    view.general.description.fill(map_description)
+    soft_assert(len(view.general.description.read()) == 128)
+    if map_data['plan_type'] == "osp":
+        view.general.plan_type.fill("Red Hat OpenStack Platform")
+    view.general.next_btn.click()
 
-    mapping_name = fauxfactory.gen_string("alphanumeric", length=10)
-    view.form.general.name.fill(mapping_name)
-    view.form.general.description.fill(fauxfactory.gen_string("alphanumeric", length=150))
+    # Test3: Source and target clusters can be mapped
+    cluster_view = view.cluster.MappingFillView(object_type='cluster')
+    cluster_view.wait_displayed("5s")
+    cluster_data = {
+        'source': map_data['clusters'][0].sources, 'target': map_data['clusters'][0].targets}
+    soft_assert(len(cluster_view.source.all_items) > 0)
+    soft_assert(len(cluster_view.target.all_items) > 0)
+    soft_assert(
+        view.cluster.add_mapping.root_browser.get_attribute('disabled', view.cluster.add_mapping))
+    cluster_view.fill(cluster_data)
 
-    # Assert only 128 characters can be entered in description field
-    soft_assert(len(view.form.general.description.read()) == 128)
-    view.form.general.next_btn.click()
+    # Test4: Multiple source and single target clusters can be mapped
+    view.general.remove_all_mappings.click()
+    cluster_data = {
+        'source': cluster_view.source.all_items, 'target': map_data['clusters'][0].targets}
+    cluster_view.fill(cluster_data)
+    view.general.next_btn.click()
 
-    view.form.cluster.wait_displayed()
+    # Test5: Single source and single target datastores can be mapped
+    datastore_view = view.datastore.MappingFillView(object_type='datastore')
+    datastore_view.wait_displayed("5s")
+    datastore_data = {
+        'source': map_data['datastores'][0].sources, 'target': map_data['datastores'][0].targets}
+    soft_assert(len(datastore_view.source.all_items) > 0)
+    soft_assert(len(datastore_view.target.all_items) > 0)
+    soft_assert(view.datastore.add_mapping.root_browser.get_attribute(
+        'disabled', view.datastore.add_mapping))
+    datastore_view.fill(datastore_data)
 
-    # Assert source clusters and target clusters are available
-    soft_assert(len(view.form.cluster.source_clusters.all_items) > 0)
-    soft_assert(len(view.form.cluster.target_clusters.all_items) > 0)
+    # Test6: Multiple source and single target datastores mapping
+    view.general.remove_all_mappings.click()
+    datastore_data = {
+        'source': datastore_view.source.all_items, 'target': map_data['datastores'][0].targets}
+    datastore_view.fill(datastore_data)
+    view.general.next_btn.click()
 
-    # Assert Add Mapping button is disables before selecting source and target clusters
-    soft_assert(view.form.cluster.add_mapping.root_browser.
-        get_attribute('disabled', view.form.cluster.add_mapping) == 'true')
-    view.form.cluster.source_clusters.fill(form_data_single_datastore['cluster']
-        ['mappings'][0]['sources'])
-    view.form.cluster.target_clusters.fill(form_data_single_datastore['cluster']
-        ['mappings'][0]['target'])
+    # Test7: Single source and single target networks can be mapped
+    network_view = view.network.MappingFillView(object_type='network')
+    network_view.wait_displayed("5s")
+    network_data = {
+        'source': map_data['networks'][0].sources, 'target': map_data['networks'][0].targets}
+    soft_assert(len(network_view.source.all_items) > 0)
+    soft_assert(len(network_view.target.all_items) > 0)
+    soft_assert(
+        view.network.add_mapping.root_browser.get_attribute('disabled', view.network.add_mapping))
+    network_view.fill(network_data)
 
-    # Test Datacenter name in source and destination mapping select list:
-    soft_assert(v2v_providers.vmware_provider.data['datacenters'][0]
-                in view.form.cluster.source_clusters.all_items[0])
-    soft_assert(v2v_providers.rhv_provider.data['datacenters'][0]
-                in view.form.cluster.target_clusters.all_items[0])
+    # Test8: Multiple source and single target networks can be mapped
+    view.general.remove_all_mappings.click()
+    network_data = {
+        'source': network_view.source.all_items, 'target': map_data['networks'][0].targets}
+    network_view.fill(network_data)
+    view.general.create_btn.click()
+    view.result.close_btn.click()
 
-    # Assert Add Mapping button is enabled before selecting source and target clusters
-    soft_assert(not view.form.cluster.add_mapping.root_browser.
-        get_attribute('disabled', view.form.cluster.add_mapping))
-    view.form.cluster.add_mapping.click()
-    view.form.cluster.next_btn.click()
-
-    # Test multiple Datastore sources can be mapped to single target
-    view.form.datastore.wait_displayed()
-    datastore_mapping_sources = view.form.datastore.source_datastores.all_items
-    datastore_mapping_target = view.form.datastore.target_datastores.all_items[0]
-    view.form.datastore.source_datastores.fill(datastore_mapping_sources)
-    view.form.datastore.target_datastores.fill([datastore_mapping_target])
-    view.form.datastore.add_mapping.click()
-    soft_assert(len(view.form.datastore.mappings_tree.mapping_sources) ==
-        len(datastore_mapping_sources))
-
-    assert (view.form.datastore.mappings_tree.mapping_targets[0].split('(')[0]
-            in datastore_mapping_target)
-    view.form.datastore.next_btn.click()
-
-    # Test multiple Network sources can be mapped to single target
-    view.form.network.wait_displayed()
-    network_mapping_sources = view.form.network.source_networks.all_items
-    network_mapping_target = view.form.network.target_networks.all_items[0]
-    view.form.network.source_networks.fill(network_mapping_sources)
-    view.form.network.target_networks.fill([network_mapping_target])
-    view.form.network.add_mapping.click()
-    soft_assert(len(view.form.network.mappings_tree.mapping_sources) ==
-        len(network_mapping_sources))
-    soft_assert(view.form.network.mappings_tree.mapping_targets[0] in network_mapping_target)
-    view.form.network.next_btn.click()
-
-    view.form.result.wait_displayed()
-    soft_assert(view.form.result.continue_to_plan_wizard.is_displayed)
-    view.form.result.close.click()
-
-    # Test multiple mappings cannot be created with same name:
-    view = navigate_to(infrastructure_mapping_collection, 'Add')
-    view.form.general.name.fill(mapping_name)
-    view.form.general.description.fill('some description')
-    soft_assert('a unique name' in view.form.general.name_help_text.read())
+    # Test9: Map with duplicate name
+    view = navigate_to(map_collection, 'Add')
+    view.general.name.fill(map_name)
+    view.general.description.fill(map_description)
+    soft_assert('a unique name' in view.general.name_help_text.read())
 
 
-def test_v2v_ui_no_providers(appliance, v2v_providers, soft_assert):
+@pytest.mark.tier(1)
+def test_v2v_plan_ui(
+        request, appliance, source_provider, provider, mapping_data_vm_obj_mini, soft_assert):
     """
+    Test to validate non-functional UI tests on migration plan wizard
+
     Polarion:
-        assignee: kkulkarn
+        assignee: ytale
+        initialEstimate: 2/4h
+        caseimportance: critical
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/4h
-        subcomponent: RHV
-        upstream: yes
+        testSteps:
+            1. Add source and target provider
+            2. Create migration plan
+            3. Validate non-functional tests
     """
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    view = navigate_to(infrastructure_mapping_collection, 'All')
-    soft_assert(view.create_infrastructure_mapping.is_displayed)
-    is_provider_1_deleted = v2v_providers.vmware_provider.delete_if_exists(cancel=False)
-    is_provider_2_deleted = v2v_providers.rhv_provider.delete_if_exists(cancel=False)
-    # Test after removing Providers, users cannot Create Infrastructure Mapping
-    view = navigate_to(infrastructure_mapping_collection, 'All')
-    soft_assert(view.configure_providers.is_displayed)
-    soft_assert(not view.create_infrastructure_mapping.is_displayed)
-    # Test with no provider_setup added migration plans not visible
-    # soft_assert(not view.create_migration_plan.is_displayed)
-    # Following leaves to appliance in the state it was before this test deleted provider_setup
-    if is_provider_1_deleted:
-        v2v_providers.vmware_provider.create(validate_inventory=True)
-    if is_provider_2_deleted:
-        v2v_providers.rhv_provider.create(validate_inventory=True)
+    map_collection = appliance.collections.v2v_infra_mappings
+    plan_collection = appliance.collections.v2v_migration_plans
+    plan_name = fauxfactory.gen_string("alphanumeric", length=10)
+    plan_description = fauxfactory.gen_string("alphanumeric", length=10)
+    map_data = infra_mapping_default_data(source_provider, provider)
+    mapping = map_collection.create(**map_data)
 
+    @request.addfinalizer
+    def _cleanup():
+        map_collection.delete(mapping)
+    view = navigate_to(plan_collection, "Add")
 
-@pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
-def test_v2v_mapping_with_special_chars(appliance, v2v_providers, form_data_single_datastore,
-                                        soft_assert):
-    """
-    Polarion:
-        assignee: kkulkarn
-        casecomponent: V2V
-        initialEstimate: 1/4h
-        subcomponent: RHV
-        upstream: yes
-    """
-    # Test mapping can be created with non-alphanumeric name e.g '!@#$%^&*()_+)=-,./,''[][]]':
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    form_data_single_datastore['general']['name'] = fauxfactory.gen_special(length=10)
-    mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
-    view = navigate_to(infrastructure_mapping_collection, 'All')
-    soft_assert(mapping.name in view.infra_mapping_list.read())
-    mapping_list = view.infra_mapping_list
-    mapping_list.delete_mapping(mapping.name)
-    view.browser.refresh()
-    view.wait_displayed()
-    try:
-        assert mapping.name not in view.infra_mapping_list.read()
-    except NoSuchElementException:
-        # meaning there was only one mapping that is deleted, list is empty
-        pass
-
-
-@pytest.mark.parametrize('form_data_single_datastore', [['nfs', 'nfs']], indirect=True)
-def test_v2v_ui_set2(request, appliance, v2v_providers, form_data_single_datastore, soft_assert):
-    """
-    Polarion:
-        assignee: kkulkarn
-        casecomponent: V2V
-        initialEstimate: 1/4h
-        subcomponent: RHV
-        upstream: yes
-    """
-    # Test migration plan name 24 chars and description 128 chars max length
-    # Test earlier infra mapping can be viewed in migration plan wizard
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    migration_plan_collection = appliance.collections.v2v_plans
-
-    mapping = infrastructure_mapping_collection.create(form_data_single_datastore)
-
-    view = navigate_to(migration_plan_collection, 'Add')
+    # Test1: Migration plan name check
     view.general.infra_map.select_by_visible_text(mapping.name)
     soft_assert(view.general.infra_map.read() == mapping.name)
 
-    view.general.name.fill(fauxfactory.gen_string("alphanumeric", length=50))
-    # Assert only 24 characters can be entered in name field
+    # Test2: 24 characters can be entered in name field of migration plan
+    view.general.name.fill(fauxfactory.gen_string("alphanumeric", length=26))
     soft_assert(len(view.general.name.read()) == 24)
-    plan_name = fauxfactory.gen_string("alphanumeric", length=7)
     view.general.name.fill(plan_name)
-    view.general.description.fill(fauxfactory.gen_string("alphanumeric", length=150))
-    # Assert only 128 characters can be entered in description field
+
+    # Test3: 128 characters can be entered in description field of migration plan
+    view.general.description.fill(fauxfactory.gen_string("alphanumeric", length=130))
     soft_assert(len(view.general.description.read()) == 128)
-    plan_description = fauxfactory.gen_string("alphanumeric", length=15)
     view.general.description.fill(plan_description)
     view.next_btn.click()
     view.vms.wait_displayed()
 
-    # Test VM Selection based on infrastructure mapping
-    # We will have rows in the table if discovery is working
+    # Test4: VM number count check
     soft_assert(len([row for row in view.vms.table.rows()]) > 0)
-
-    vm_selected = view.vms.select_by_name('v2v')
+    view.vms.fill({"vm_list": mapping_data_vm_obj_mini.vm_list})
+    if map_data['plan_type'] == "osp":
+        view.instance_properties.wait_displayed()
+        view.next_btn.click()
+    view.advanced.wait_displayed()
     view.next_btn.click()
-    view.next_btn.click()
-    view.options.wait_displayed()
-    view.options.run_migration.select("Save migration plan to run later")
-    # Test Create migration plan -Create and Read
-    view.options.create.click()
-    view.results.close.click()
+    view.schedule.run_migration.select("Save migration plan to run later")
+    view.schedule.create.click()
+    view.close_btn.click()
 
-    @request.addfinalizer
-    def _cleanup():
-        view = navigate_to(migration_plan_collection, 'All')
-        view.migration_plans_not_started_list.migrate_plan(plan_name)
+    # Test5: Plan name displayed in migration plan list page
+    new_view = navigate_to(plan_collection, "NotStarted")
+    soft_assert(plan_name in new_view.plans_not_started_list.read())
 
-    view = navigate_to(migration_plan_collection, 'All')
-    soft_assert(plan_name in view.migration_plans_not_started_list.read())
-    soft_assert(view.migration_plans_not_started_list.get_plan_description(plan_name) ==
-     plan_description)
-    # Test Associated Plans count  correctly Displayed in Map List view
-    soft_assert(str(len(vm_selected)) in view.migration_plans_not_started_list.
-        get_vm_count_in_plan(plan_name))
-    view.migration_plans_not_started_list.select_plan(plan_name)
-    view = appliance.browser.create_view(MigrationPlanRequestDetailsView, wait='10s')
-    view.items_on_page.item_select('15')
-    soft_assert(set(view.migration_request_details_list.read()) == set(vm_selected))
-    # Test plan has unique name
-    view = navigate_to(migration_plan_collection, 'All')
-    view.create_migration_plan.click()
-    view = navigate_to(migration_plan_collection, 'Add')
+    # Test6: Plan description displayed in migration plan list page
+    soft_assert(new_view.plans_not_started_list.get_plan_description(plan_name) == plan_description)
+
+    # Test7: VM number displayed in migration plan list page
+    soft_assert(str(len(mapping_data_vm_obj_mini.vm_list)) in
+                new_view.plans_not_started_list.get_vm_count_in_plan(plan_name))
+    new_view.plans_not_started_list.select_plan(plan_name)
+    new_view = appliance.browser.create_view(MigrationPlanRequestDetailsView, wait='10s')
+    new_view.items_on_page.item_select("15")
+
+    # Test8: Plan with duplicate name
+    view = navigate_to(plan_collection, "Add")
     view.general.wait_displayed()
     view.general.infra_map.select_by_visible_text(mapping.name)
     view.general.name.fill(plan_name)
-    view.general.description.fill(fauxfactory.gen_string("alphanumeric", length=150))
-    soft_assert('a unique name' in view.general.name_help_text.read())
+    view.general.description.fill(fauxfactory.gen_string("alphanumeric", length=10))
+    soft_assert("a unique name" in view.general.name_help_text.read())
     view.cancel_btn.click()
 
-    view = navigate_to(infrastructure_mapping_collection, 'All')
-    soft_assert(view.infra_mapping_list.get_associated_plans_count(mapping.name) ==
-     '1 Associated Plan')
+    # Test9: Associated plan check
+    view = navigate_to(map_collection, "All")
+    soft_assert(
+        view.infra_mapping_list.get_associated_plans_count(mapping.name) == '1 Associated Plan')
     soft_assert(view.infra_mapping_list.get_associated_plans(mapping.name) == plan_name)
 
 
-@pytest.mark.parametrize('form_data_multiple_vm_obj_single_datastore', [['nfs', 'nfs',
-    [small_template, small_template]]], indirect=True)
-def test_v2v_ui_migration_plan_sorting(appliance, v2v_providers, host_creds, conversion_tags,
-        form_data_multiple_vm_obj_single_datastore, soft_assert):
+@pytest.mark.tier(3)
+def test_v2v_infra_map_special_chars(request, appliance, source_provider, provider, soft_assert):
     """
-    Polarion:
-        assignee: sshveta
-        initialEstimate: 1/4h
-        casecomponent: V2V
-    """
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    migration_plan_collection = appliance.collections.v2v_plans
-
-    mapping = infrastructure_mapping_collection.create(
-        form_data_multiple_vm_obj_single_datastore[0])
-
-    # creating two plans, with 1 VM in each, hence vm_list[0]/[1]
-    plan1 = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
-        .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=[form_data_multiple_vm_obj_single_datastore.vm_list[0]], start_migration=False)
-    plan2 = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
-        .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=[form_data_multiple_vm_obj_single_datastore.vm_list[1]], start_migration=False)
-
-    view = navigate_to(migration_plan_collection, 'All')
-
-    plans_list_before_sort = view.migration_plans_not_started_list.read()
-    view.sort_direction.click()
-    plans_list_after_sort = view.migration_plans_not_started_list.read()
-    soft_assert(plans_list_before_sort != plans_list_after_sort)
-
-    view.migration_plans_not_started_list.schedule_migration(plan1.name, after_mins=5)
-    view.wait_displayed()
-    view.migration_plans_not_started_list.schedule_migration(plan2.name, after_mins=10)
-    view.wait_displayed()
-    view.sort_type_dropdown.item_select("Scheduled Time")
-    plans_list_before_sort = view.migration_plans_not_started_list.read()
-    view.sort_direction.click()
-    plans_list_after_sort = view.migration_plans_not_started_list.read()
-    soft_assert(plans_list_before_sort != plans_list_after_sort)
-    # TODO: Create new method to unschedule the migration plans.
-    view.migration_plans_not_started_list.schedule_migration(plan1.name)
-    view.wait_displayed()
-    view.migration_plans_not_started_list.schedule_migration(plan2.name)
-
-    for plan in (plan1, plan2):
-        view.switch_to("Not Started Plans")
-        view.wait_displayed()
-        try:
-            view.migration_plans_not_started_list.migrate_plan(plan.name)
-        except ItemNotFound:
-            logger.info("Item not found in Not Started List, switching to In Progress plans.")
-        view.switch_to("In Progress Plans")
-        wait_for(func=view.progress_card.is_plan_started, func_args=[plan.name],
-            message="migration plan is starting, be patient please", delay=5, num_sec=150,
-            handle_exception=True, fail_cond=False)
-        wait_for(func=view.plan_in_progress, func_args=[plan.name], delay=5, num_sec=600,
-            handle_exception=True)
-
-    view.switch_to("Completed Plans")
-    view.wait_displayed()
-    plans_list_before_sort = view.migration_plans_completed_list.read()
-    view.sort_direction.click()
-    plans_list_after_sort = view.migration_plans_completed_list.read()
-    soft_assert(plans_list_before_sort != plans_list_after_sort)
-    # Test Archive completed migration  plan
-    view.browser.refresh()
-    view.wait_displayed()
-    view.switch_to("Completed Plans")
-    view.wait_displayed()
-    view.migration_plans_completed_list.archive_plan(plan1.name)
-    view.switch_to("Archived Plans")
-    view.wait_displayed()
-    soft_assert(plan1.name in view.migration_plans_archived_list.read())
-
-
-def test_migration_rbac(appliance, new_credential, v2v_providers):
-    """Test migration with role-based access control
+    Test infra map with special characters
 
     Polarion:
         assignee: ytale
+        initialEstimate: 1/2h
+        caseimportance: low
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        customerscenario: true
-        initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
+        testSteps:
+            1. Add source and target provider
+            2. Create infra map with special characters
+    """
+    map_collection = appliance.collections.v2v_infra_mappings
+    map_data = infra_mapping_default_data(source_provider, provider)
+    map_data["name"] = fauxfactory.gen_special(length=4)
+    mapping = map_collection.create(**map_data)
+
+    @request.addfinalizer
+    def _cleanup():
+        map_collection.delete(mapping)
+    view = navigate_to(map_collection, "All")
+    soft_assert(mapping.name in view.infra_mapping_list.read())
+    view.infra_mapping_list.delete_mapping(mapping.name)
+    view.wait_displayed()
+    try:
+        assert mapping.name not in view.infra_mapping_list.read()
+    except NoSuchElementException:
+        # meaning there was only one mapping that is deleted, list is empty
+        pass
+
+
+@pytest.mark.uncollectif(lambda provider: provider.one_of(OpenStackProvider))
+def test_v2v_rbac(appliance, new_credential):
+    """
+    Test migration with role-based access control
+
+    Polarion:
+        assignee: ytale
+        initialEstimate: 1/2h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: V2V
     """
     role = new_role(appliance=appliance,
                     product_features=[(['Everything'], True)])
@@ -427,59 +356,98 @@ def test_migration_rbac(appliance, new_credential, v2v_providers):
                                                     'rbac should allow this')
 
 
-def test_edit_mapping_fields(appliance, v2v_providers, edited_form_data,
-                             host_creds, conversion_tags, soft_assert):
-    _form_data, edited_form_data = edited_form_data
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(_form_data)
-    mapping.update(edited_form_data)
-
-    view = navigate_to(infrastructure_mapping_collection, 'All')
-    infrastructure_mapping_collection.find_mapping(mapping)
-    mapping_list = view.infra_mapping_list
-    soft_assert(str(mapping_list.get_map_description(mapping.name)) == "my edited description")
-    soft_assert(edited_form_data['datastore'].values()[0]['mappings'][0]['sources'][0].format() in
-                mapping_list.get_map_source_datastores(mapping.name)[1])
-    soft_assert(edited_form_data['datastore'].values()[0]['mappings'][0]['target'][0].format() in
-                mapping_list.get_map_target_datastores(mapping.name)[1])
-    soft_assert(edited_form_data['network'].values()[0]['mappings'][0]['sources'][0].format() in
-                mapping_list.get_map_source_networks(mapping.name)[1])
-    soft_assert(edited_form_data['network'].values()[0]['mappings'][0]['target'][0].format() in
-                mapping_list.get_map_target_networks(mapping.name)[1])
-
-
-def test_conversion_host_tags(appliance, v2v_providers):
-    """Tests following cases:
-
-    1)Test Attribute in UI indicating host has/has not been configured as conversion host like Tags
-    2)Test converstion host tags
+@pytest.mark.tier(1)
+@pytest.mark.parametrize(
+    'mapping_data_vm_obj_single_datastore', [['iscsi', 'iscsi', rhel7_minimal]], indirect=True)
+def test_v2v_infra_map_edit(request, appliance, source_provider, provider,
+                            mapping_data_vm_obj_single_datastore, soft_assert):
+    """
+    Test migration by editing migration mapping fields
 
     Polarion:
-        assignee: kkulkarn
+        assignee: ytale
+        initialEstimate: 1/2h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/4h
-        subcomponent: RHV
-        upstream: yes
     """
-    tag1 = (appliance.collections.categories.instantiate(
-            display_name='V2V - Transformation Host *')
-            .collections.tags.instantiate(display_name='t'))
+    map_collection = appliance.collections.v2v_infra_mappings
+    mapping_data = infra_mapping_default_data(source_provider, provider)
+    mapping = map_collection.create(**mapping_data)
 
-    tag2 = (appliance.collections.categories.instantiate(
-            display_name='V2V - Transformation Method')
-            .collections.tags.instantiate(display_name='VDDK'))
+    @request.addfinalizer
+    def _cleanup():
+        map_collection.delete(mapping)
 
-    # We just pick the first available host hence [0]
-    host = v2v_providers.rhv_provider.hosts.all()[0]
-    # Remove any prior tags
-    host.remove_tags(host.get_tags())
+    edited_mapping = mapping_data_vm_obj_single_datastore.infra_mapping_data
+    mapping.update(edited_mapping)
+    view = navigate_to(map_collection, 'All')
+    mapping_list = view.infra_mapping_list
 
-    host.add_tag(tag1)
-    assert host.get_tags()[0].category.display_name in tag1.category.display_name
-    host.remove_tag(tag1)
+    # Test1: Check custom map in infra map list
+    soft_assert(mapping.name in mapping_list.read())
 
-    host.add_tag(tag2)
-    assert host.get_tags()[0].category.display_name in tag2.category.display_name
-    host.remove_tag(tag2)
+    # Test2: Validate infra map description
+    soft_assert(mapping.description == str(mapping_list.get_map_description(mapping.name)))
 
-    host.remove_tags(host.get_tags())
+    # Test3: Source cluster from UI
+    soft_assert(mapping.clusters[0].sources[0].format() in
+                mapping_list.get_map_source_clusters(mapping.name)[0])
+
+    # Test4: Target cluster from UI
+    soft_assert(mapping.clusters[0].targets[0].format() in
+                mapping_list.get_map_target_clusters(mapping.name)[0])
+
+    # Test5: Source datastore from UI
+    soft_assert(mapping.datastores[0].sources[0].format() in
+                mapping_list.get_map_source_datastores(mapping.name)[0])
+
+    # Test6: Target datastore from UI
+    soft_assert(mapping.datastores[0].targets[0].format() in
+                mapping_list.get_map_target_datastores(mapping.name)[0])
+
+    # Test5: Source network from UI
+    soft_assert(mapping.networks[0].sources[0].format() in
+                mapping_list.get_map_source_networks(mapping.name)[0])
+
+    # Test6: Target network from UI
+    soft_assert(mapping.networks[0].targets[0].format() in
+                mapping_list.get_map_target_networks(mapping.name)[0])
+
+
+@pytest.mark.tier(2)
+def test_v2v_with_no_providers(appliance, source_provider, provider, soft_assert):
+    """
+    Test V2V UI with no source and target provider
+
+    Polarion:
+        assignee: ytale
+        initialEstimate: 1/2h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: V2V
+        testSteps:
+            1. Remove source and target providers
+            2. Check can we add infra map
+            3. Add providers back
+    """
+    map_collection = appliance.collections.v2v_infra_mappings
+    is_source_provider_deleted = source_provider.delete_if_exists(cancel=False)
+    is_target_provider_deleted = provider.delete_if_exists(cancel=False)
+    view = navigate_to(map_collection, "All")
+
+    # Test1: Check 'Configure provider' get displayed after provider deletion
+    soft_assert(view.configure_providers.is_displayed)
+
+    # Test2: Check 'add infra map' don't get displayed on overview page
+    soft_assert(not view.create_infra_mapping.is_displayed)
+
+    # Adding provider back to the test
+    if is_source_provider_deleted:
+        source_provider.create(validate_inventory=True)
+    if is_target_provider_deleted:
+        provider.create(validate_inventory=True)
