@@ -13,6 +13,7 @@ class GoogleCloudTemplateUpload(ProviderTemplateUpload):
     provider_type = 'gce'
     log_name = 'GCE'
     image_pattern = re.compile(r'<a href="?\'?([^"\']*gce[^"\'>]*)')
+    blocked_streams = ['upstream', 'downstream-511z']
 
     @property
     def bucket_name(self):

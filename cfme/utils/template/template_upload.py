@@ -41,35 +41,42 @@ def parse_cmd_line():
         '--provider-type',
         dest='provider_type',
         choices=PROVIDER_TYPES,
-        help='Provider type')
+        help='Provider type'
+    )
     provider_group.add_argument(
         '--provider',
         nargs='+',
         dest='provider',
-        help='Specific provider keys list')
+        help='Specific provider keys list'
+    )
     parser.add_argument(
         '--glance',
         dest='glance_key',
         default=None,
-        help='key for the glance server information in cfme_data.template_upload')
+        help='key for the glance server information in cfme_data.template_upload'
+    )
     parser.add_argument(
         '--stream',
         dest='stream',
         help='Stream (downstream-59z)name for the image_url, or default to stable/latest in stream'
-             'Please check the cfme_data file for current streams.')
+             'Please check the cfme_data file for current streams.'
+    )
     parser.add_argument(
         '--image-url',
         dest='image_url',
-        help='URL for the image file to be uploaded. Please use with --stream.')
+        help='URL for the image file to be uploaded. Please use with --stream.'
+    )
     parser.add_argument(
         '--template-name',
         dest='template_name',
-        help='Set the name of the template')
+        help='Set the name of the template'
+    )
     parser.add_argument(
         '--print-name-only',
         dest='print_name_only',
         action="store_true",
-        help='Only print the template name that will be generated without actually running it.')
+        help='Only print the template name that will be generated without actually running it.'
+    )
 
     return parser.parse_known_args()
 
@@ -130,7 +137,7 @@ if __name__ == '__main__':
 
     thread_queue = []
 
-    # threaded loop
+    # create uploader objects for each provider
     for provider_type in provider_types:
         provider_keys = list_provider_keys(provider_type)
         if cmd_args.provider:
