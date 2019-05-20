@@ -123,6 +123,8 @@ def test_v2v_infra_map_ui(appliance, source_provider, provider, soft_assert):
     view.general.name.fill(map_name)
     view.general.description.fill(map_description)
     soft_assert(len(view.general.description.read()) == 128)
+    if map_data['plan_type'] == "osp":
+        view.general.plan_type.fill("Red Hat OpenStack Platform")
     view.general.next_btn.click()
 
     # Test3: Source and target clusters can be mapped
@@ -213,16 +215,16 @@ def test_v2v_plan_ui(appliance, source_provider, provider, mapping_data_vm_obj_m
     mapping = map_collection.create(**map_data)
     view = navigate_to(plan_collection, "Add")
 
-    # Test1: Infra mapping name check
+    # Test1: Migration plan name check
     view.general.infra_map.select_by_visible_text(mapping.name)
     soft_assert(view.general.infra_map.read() == mapping.name)
 
-    # Test2: 24 characters can be entered in name field
+    # Test2: 24 characters can be entered in name field of migration plan
     view.general.name.fill(fauxfactory.gen_string("alphanumeric", length=26))
     soft_assert(len(view.general.name.read()) == 24)
     view.general.name.fill(plan_name)
 
-    # Test3: 128 characters can be entered in description field
+    # Test3: 128 characters can be entered in description field of migration plan
     view.general.description.fill(fauxfactory.gen_string("alphanumeric", length=130))
     soft_assert(len(view.general.description.read()) == 128)
     view.general.description.fill(plan_description)
@@ -232,6 +234,10 @@ def test_v2v_plan_ui(appliance, source_provider, provider, mapping_data_vm_obj_m
     # Test4: VM number count check
     soft_assert(len([row for row in view.vms.table.rows()]) > 0)
     view.vms.fill({"vm_list": mapping_data_vm_obj_mini.vm_list})
+    if map_data['plan_type'] == "osp":
+        view.instance_properties.wait_displayed()
+        view.next_btn.click()
+    view.advanced.wait_displayed()
     view.next_btn.click()
     view.schedule.run_migration.select("Save migration plan to run later")
     view.schedule.create.click()
