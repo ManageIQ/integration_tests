@@ -7,7 +7,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
-    test_requirements.service,
+    test_requirements.dialog,
     pytest.mark.tier(2)
 ]
 

@@ -7,6 +7,11 @@ from cfme import test_requirements
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 
+pytestmark = [
+    test_requirements.dialog,
+    pytest.mark.tier(2)
+]
+
 
 @pytest.fixture(scope="function")
 def dialog_cat_item(appliance, catalog):
@@ -47,7 +52,6 @@ def dialog_cat_item(appliance, catalog):
     sd.delete_if_exists()
 
 
-@test_requirements.service
 def test_dialog_element_regex_validation(appliance, dialog_cat_item):
     """Tests Service Dialog Elements with regex validation.
 
