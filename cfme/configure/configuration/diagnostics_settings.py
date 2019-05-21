@@ -564,8 +564,7 @@ class DiagnosticsCollectLogsSlave(CFMENavigateStep):
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.appliance.server_region_string(),
             "Zone: {} (current)".format(self.appliance.server.zone.description),
-            prepare_server_name("Server: {} [{}]".format(slave_server.name,
-                                int(slave_server.sid))))
+            "Server: {} [{}]".format(slave_server.name, int(slave_server.sid)))
         self.prerequisite_view.collectlogs.select()
 
 

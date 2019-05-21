@@ -529,10 +529,10 @@ class ServerView(ConfigurationView):
             "Zones",
             "Zone: {} (current)".format(self.context['object'].zone.description),
             "Server: {name} [{sid}]{current}".format(
-                 name = self.context['object'].name,
-                 sid = self.context['object'].sid,
-                 current = '' if self.context['object'] in self.context['object'].slave_servers
-                 else ' (current)')]
+                name=self.context['object'].name,
+                sid=self.context['object'].sid,
+                current='' if self.context['object'] in self.context['object'].slave_servers
+                else ' (current)')]
 
         return (self.accordions.settings.tree.currently_selected == expected_list)
 
@@ -548,8 +548,8 @@ class Details(CFMENavigateStep):
             "Zones",
             "Zone: {} (current)".format(self.obj.appliance.server.zone.description),
             "Server: {name} [{sid}]{current}".format(
-                name = self.obj.appliance.server.name,
-                sid = self.obj.sid,
+                name=self.obj.appliance.server.name,
+                sid=self.obj.sid,
                 current='' if self.obj in self.obj.slave_servers else ' (current)'))
         self.prerequisite_view.accordions.settings.tree.click_path(*path)
 
@@ -801,10 +801,10 @@ class ServerDiagnosticsView(ConfigurationView):
         expected_list = [self.context['object'].zone.region.settings_string,
             "Zone: {} (current)".format(self.context['object'].zone.description),
             "Server: {name} [{sid}]{current}".format(
-                name = self.context['object'].name,
-                sid = self.context['object'].sid,
-                current = '' if self.context['object'] in self.context['object'].slave_servers
-                else ' (current)')]
+            name=self.context['object'].name,
+            sid=self.context['object'].sid,
+            current='' if self.context['object'] in self.context['object'].slave_servers
+            else ' (current)')]
         return (self.accordions.diagnostics.tree.currently_selected == expected_list)
 
 
@@ -824,9 +824,10 @@ class Diagnostics(CFMENavigateStep):
             self.obj.zone.region.settings_string,
             "Zone: {} (current)".format(self.obj.zone.description),
             "Server: {name} [{sid}]{current}".format(
-                name = self.obj.appliance.server.name,
-                sid = self.obj.sid,
-                current = '' if self.obj in self.obj.slave_servers else ' (current)'))
+                name=self.obj.appliance.server.name,
+                sid=self.obj.sid,
+                current='' if self.obj in self.obj.slave_servers
+                else ' (current)'))
 
 
 @navigator.register(Server)
