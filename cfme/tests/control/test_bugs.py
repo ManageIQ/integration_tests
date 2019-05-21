@@ -181,6 +181,17 @@ def setup_disk_usage_alert(appliance):
     assert not result.failed
 
 
+@pytest.fixture
+def action_for_testing(appliance):
+    action_ = appliance.collections.actions.create(
+        fauxfactory.gen_alphanumeric(),
+        action_type="Tag",
+        action_values={"tag": ("My Company Tags", "Department", "Accounting")}
+    )
+    yield action_
+    action_.delete()
+
+
 @pytest.mark.meta(blockers=[BZ(1155284)])
 def test_scope_windows_registry_stuck(request, appliance, infra_provider):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable.
@@ -481,3 +492,26 @@ def test_accordion_after_condition_creation(appliance, condition_class):
     assert view.conditions.tree.currently_selected == [
         "All Conditions", "{} Conditions".format(condition_class.TREE_NODE), condition.description
     ]
+
+
+@pytest.mark.meta(blockers=[BZ(1708434)], automates=[1708434])
+def test_edit_action_buttons(action_for_testing):
+    """
+    This tests the bug where the save/reset button are always enabled, even on initial load.
+
+    Bugzilla:
+        1708434
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Control
+        caseimportance: medium
+        initialEstimate: 1/30h
+    """
+    view = navigate_to(action_for_testing, "Edit")
+
+    assert view.save_button.disabled
+    assert view.reset_button.disabled
+    # click the cancel button and navigate to "Details" so that the action can be deleted
+    view.cancel_button.click()
+    navigate_to(action_for_testing, "Details")
