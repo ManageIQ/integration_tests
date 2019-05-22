@@ -5,6 +5,7 @@ import os
 import pytest
 
 from cfme.utils import conf
+from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for_decorator
 
@@ -187,6 +188,7 @@ def test_cpu_total(appliance):
     assert int(result.output) >= 4
 
 
+@pytest.mark.meta(blockers=[BZ(1712929, forced_streams=['5.11'])])  # against RHEL
 @pytest.mark.ignore_stream("upstream")
 def test_certificates_present(appliance, soft_assert):
     """Test whether the required product certificates are present.
