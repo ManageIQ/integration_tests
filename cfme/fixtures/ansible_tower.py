@@ -31,6 +31,7 @@ def ansible_tower_dialog_rest(request, appliance):
                                 "data_type": "string",
                                 "display": "edit",
                                 "required": False,
+                                "default_value": uid,
                                 "options": {
                                     "protected": False
                                 },
@@ -121,6 +122,5 @@ def ansible_tower_dialog(request, appliance):
         description=rest_resource.description)
     yield service_dialog
 
-    if not GH(8836).blocks or appliance.version != '5.11':
-        if service_dialog.exists:
-            service_dialog.delete()
+    if appliance.version < '5.11' or not GH(8836).blocks:
+        service_dialog.delete_if_exists()

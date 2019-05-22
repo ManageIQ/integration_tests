@@ -12,9 +12,8 @@ from cfme.utils.log import logger
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
-    pytest.mark.parametrize('job_type', ['template', 'workflow', 'template_survey',
-        'template_limit'],
-        ids=['template_job', 'workflow_job', 'template_survey_job', 'template_limit_job'],
+    pytest.mark.parametrize('job_type', ['template', 'template_limit', 'template_survey'],
+        ids=['template_job', 'template_limit_job', 'template_survey_job'],
         scope='module'),
     pytest.mark.ignore_stream('upstream'),
     pytest.mark.uncollectif(lambda appliance,
@@ -79,8 +78,7 @@ def test_order_tower_catalog_item(appliance, config_manager, catalog_item, reque
         caseimportance: high
     """
     if job_type == 'template_limit':
-        config_manager_obj = config_manager
-        host = config_manager_obj.yaml_data['provisioning_data']['inventory_host']
+        host = config_manager.yaml_data['provisioning_data']['inventory_host']
         dialog_values = {'limit': host}
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name,
             dialog_values=dialog_values)
