@@ -3,7 +3,7 @@ import re
 
 import fauxfactory
 import pytest
-import urllib2
+from six.moves.urllib.request import urlopen
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -26,7 +26,7 @@ SIZES = {"KB": 1024, "MB": 1024**2, "GB": 1024**3, "TB": 1024**4}
 
 def get_vhd_name(url, pattern="hyperv"):
     """ Given URL finds VHD file name """
-    html = urllib2.urlopen(url).read()
+    html = urlopen(url).read().decode("utf-8")
     files = re.findall('href="(.*vhd)"', html)
     image_name = None
     for name in files:
@@ -62,14 +62,25 @@ def cfme_vhd(provider, appliance):
     # download the image to SCVMM library
     provider.mgmt.download_file(url + image_name, image_name)
     provider.mgmt.update_scvmm_library()
+    # check to make sure that the file is in the library
+    assert image_name in provider.mgmt.list_vhds()
+
     yield image_name
 
 
 def create_appliance(provider, vhd):
     """ Create an appliance from the VHD provided on SCVMM """
     # script to create template
-    version = ".".join(re.findall(r"\d+", vhd)[0:4])
+    version = ".".join(re.findall(r"\d+", vhd)[0:4])  # [0:4] gets the 4 version numbers for CFME
     template_name = "cfme-{}-template".format(version)
+    vhd_path = provider.data.get("vhd_path")
+    small_disk = provider.data.get("small_disk")
+
+    if not vhd_path:
+        pytest.skip("vhd_path not present in yamls, skipping test")
+    if not small_disk:
+        pytest.skip("No small_disk vhd specified, skipping test")
+
     template_script = """
         $networkName = "cfme2"
         $templateName = "{template_name}"
@@ -79,9 +90,9 @@ def create_appliance(provider, vhd):
         $minMemorySizeMb = 128
         $cpuCount = 4
         $srcName = "{image}"
-        $srcPath = "L:\\Library\\VHDs\\$srcName"
-        $dbDiskName = "Blank Disk - Large.vhd"
-        $dbDiskSrcPath = "L:\\Library\\VHDs\\$dbDiskName"
+        $srcPath = "{vhd_path}\\$srcName"
+        $dbDiskName = "{small_disk}"
+        $dbDiskSrcPath = "{vhd_path}\\$dbDiskName"
         $scvmmFqdn = "{hostname}"
 
         $JobGroupId01 = [Guid]::NewGuid().ToString()
@@ -107,7 +118,9 @@ def create_appliance(provider, vhd):
         user=provider.mgmt.user,
         image=vhd,
         hostname=provider.mgmt.host,
-        template_name=template_name
+        template_name=template_name,
+        vhd_path=vhd_path,
+        small_disk=small_disk,
     )
     # create the template
     provider.mgmt.run_script(template_script)
