@@ -2675,7 +2675,7 @@ class Appliance(IPAppliance):
             self.set_resolvable_hostname(log_callback=log_callback)
 
     @logger_wrap("Configure Appliance: {}")
-    def configure(self, setup_fleece=False, log_callback=None, **kwargs):
+    def configure(self, setup_fleece=False, log_callback=None, on_openstack=False, **kwargs):
         """Configures appliance - database setup, rename, ntp sync
 
         Utility method to make things easier.
@@ -2689,7 +2689,7 @@ class Appliance(IPAppliance):
             loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
             key_address: Fetch encryption key from this address if set, generate a new key if
                          ``None`` (default ``None``)
-
+            on_openstack: If appliance is running on Openstack provider (default ``False``)
         """
         log_callback("Configuring appliance {} on {}".format(self.vm_name, self.provider_key))
         if kwargs:
@@ -2697,7 +2697,7 @@ class Appliance(IPAppliance):
                 self._custom_configure(**kwargs)
         else:
             # Defer to the IPAppliance.
-            super(Appliance, self).configure(log_callback=log_callback)
+            super(Appliance, self).configure(log_callback=log_callback, on_openstack=on_openstack)
         # And do configure the fleecing if requested
         if setup_fleece:
             self.configure_fleecing(log_callback=log_callback)
