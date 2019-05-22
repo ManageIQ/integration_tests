@@ -68,6 +68,9 @@ class MiqBrowserPlugin(DefaultPlugin):
 
     ENSURE_PAGE_SAFE = jsmin('''\
         try {
+            if (ManageIQ.observe.queue.length != 0)
+                return false;
+
             var drawer = angular.element(document.getElementById("miq-notifications-drawer"));
             if (drawer && drawer.is(':visible')){
                 drawer.hide();
@@ -480,8 +483,13 @@ class CFMENavigateStep(NavigateStep):
                 recycle = True
             elif not self.obj.appliance.server.logged_in():
                 # Session timeout or whatever like that, login screen appears.
-                logger.exception("Looks like we are logged out. Try again.")
-                recycle = True
+                # logger.exception("Looks like we are logged out. Try again.")
+                # recycle = True
+
+                # it is commented out because it invalidates current selenium session but we
+                # keep on using that session for some reason
+                # let's uncomment this if we encounter such issue again
+                pass
             else:
                 logger.error("Could not determine the reason for failing the navigation. " +
                     " Reraising.  Exception: {}".format(str(e)))
