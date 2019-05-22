@@ -72,6 +72,12 @@ alert = pytest.mark.requirement(
     assignee_id='jdupuy',
 )
 
+app_console = pytest.mark.requirement(
+    "Appliance Console",
+    description='Appliance console operations support',
+    assignee_id='mnadeem'
+)
+
 auth = pytest.mark.requirement(
     "Authentication",
     description='Authentication in MIQ/CFME, external authentication provider support',
@@ -117,7 +123,7 @@ customer_stories = pytest.mark.requirement(
 multi_tenancy = pytest.mark.requirement(
     "MIQ Multi-Tenancy",
     description='Support for Tenants in MIQ/CFME',
-    assignee_id='mnadeem',
+    assignee_id='nachandr',
 )
 
 chargeback = pytest.mark.requirement(
@@ -268,7 +274,7 @@ relationships = pytest.mark.requirement(
 replication = pytest.mark.requirement(
     "Appliance Database Replication",
     description='Replication between appliance instances',
-    assignee_id='jhenner',
+    assignee_id='mnadeem',
 )
 
 report = pytest.mark.requirement(
