@@ -32,9 +32,7 @@ class AllReportMenusView(CloudIntelReportsView):
         )
 
 
-class EditReportMenusView(CloudIntelReportsView):
-    title = Text("#explorer_title_text")
-    reports_tree = ManageIQTree("menu_roles_treebox")
+class EditReportMenusView(AllReportMenusView):
     # Buttons
     save_button = Button("Save")
     reset_button = Button("Reset")
@@ -74,7 +72,7 @@ class ReportMenu(BaseEntity):
 
     def go_to_group(self, group_name):
         self.group = group_name
-        view = navigate_to(self, "EditReportMenus")
+        view = navigate_to(self, "Edit")
         assert view.is_displayed
         return view
 
@@ -133,6 +131,10 @@ class ReportMenu(BaseEntity):
         view = self.go_to_group(group)
         view.default_button.click()
         view.save_button.click()
+        flash_view = self.create_view(AllReportMenusView)
+        assert flash_view.flash.assert_message(
+            'Report Menu for role "{}" was saved'.format(group)
+        )
 
     @contextmanager
     def manage_subfolder(self, group, folder, subfolder):
@@ -161,6 +163,10 @@ class ReportMenu(BaseEntity):
             # If no exception happens, save!
             view.commit_button.click()
             view.save_button.click()
+            flash_view = self.create_view(AllReportMenusView)
+            flash_view.flash.assert_message(
+                'Report Menu for role "{}" was saved'.format(group)
+            )
 
     @contextmanager
     def manage_folder(self, group, folder=None):
@@ -193,6 +199,10 @@ class ReportMenu(BaseEntity):
             # If no exception happens, save!
             view.manager.commit()
             view.save_button.click()
+            flash_view = self.create_view(AllReportMenusView)
+            flash_view.flash.assert_message(
+                'Report Menu for role "{}" was saved'.format(group)
+            )
 
     def move_reports(self, group, folder, subfolder, *reports):
         """ Moves a list of reports to a given menu
@@ -208,9 +218,11 @@ class ReportMenu(BaseEntity):
         with self.manage_subfolder(group, folder, subfolder) as selected_menu:
             selected_options = selected_menu.parent_view.report_select.all_options
 
-            if set(selected_options) & set(reports):
-                # If the report is already present, we stay on the same page after fill is complete.
-                cancel_view = self.create_view(EditReportMenusView)
+            diff = set(selected_options) & set(reports)
+            if diff and (len(diff) == len(reports)):
+                cancel_view = self.create_view(AllReportMenusView)
+                # If all the reports to be moved are already present, raise an exception to exit.
+                raise FolderManager._BailOut
 
             # fill method replaces all the options in all_options with the value passed as argument
             # We do not want to replace any value, we just want to move the new reports to a given
@@ -219,15 +231,11 @@ class ReportMenu(BaseEntity):
             selected_menu.parent_view.report_select.fill(reports)
 
         if cancel_view:
-            assert cancel_view.is_displayed
-            cancel_view.cancel_button.click()
-            message = 'Edit of Report Menu for role "{}" was cancelled by the user'
-        else:
-            message = 'Report Menu for role "{}" was saved'
-
-        view = self.create_view(AllReportMenusView)
-        assert view.is_displayed
-        view.flash.assert_message(message.format(group))
+            cancel_view.flash.assert_message(
+                'Edit of Report Menu for role "{}" was cancelled by the user'.format(
+                    group
+                )
+            )
 
 
 @attr.s
@@ -237,15 +245,16 @@ class ReportMenusCollection(BaseCollection):
     ENTITY = ReportMenu
 
 
-@navigator.register(ReportMenu)
+@navigator.register(ReportMenu, "Edit")
 class EditReportMenus(CFMENavigateStep):
     VIEW = EditReportMenusView
-    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+    prerequisite = NavigateToAttribute(
+        "appliance.collections.intel_report_menus", "All"
+    )
 
     def step(self, *args, **kwargs):
         self.view.edit_report_menus.tree.click_path(
-            "All EVM Groups",
-            self.obj.group
+            "All EVM Groups", self.obj.group
         )
 
 

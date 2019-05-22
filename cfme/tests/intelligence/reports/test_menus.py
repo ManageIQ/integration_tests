@@ -38,8 +38,7 @@ def report_menus(group, appliance):
 
 def crud_files_reports():
     result = []
-    if not REPORT_CRUD_DIR.exists:
-        REPORT_CRUD_DIR.mkdir()
+    REPORT_CRUD_DIR.ensure(dir=True)
     for file_name in REPORT_CRUD_DIR.listdir():
         if file_name.isfile() and file_name.basename.endswith(".yaml"):
             result.append(file_name.basename)
@@ -56,7 +55,7 @@ def custom_report_values(request):
 def get_custom_report(appliance, custom_report_values):
     custom_report = appliance.collections.reports.create(**custom_report_values)
     yield custom_report
-    custom_report.delete()
+    custom_report.delete_if_exists()
 
 
 @pytest.mark.parametrize("group", GROUPS)
@@ -93,13 +92,11 @@ def test_shuffle_first_level(appliance, group, report_menus):
     # Find a folder
     view = navigate_to(appliance.collections.reports, "All")
     tree = view.reports.tree.read_contents()[1]
-    # Select some folder that has at least 3 children
-    folders = map(
-        lambda item: item[0],
-        filter(lambda item: isinstance(item[1], list) and len(item[1]) >= 3, tree),
-    )
 
+    # Select some folder that has at least 3 children
+    folders = [i[0] for i in tree if isinstance(i[1], list) and len(i[1]) >= 3]
     selected_folder = random.choice(folders)
+
     # Shuffle the order
     with report_menus.manage_folder(group, selected_folder) as folder:
         order = shuffle(folder.fields)
