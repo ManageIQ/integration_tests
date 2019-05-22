@@ -302,7 +302,9 @@ def test_appliance_console_packages(appliance):
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    assert appliance.ssh_client.run_command('scl --list | grep -v rh-ruby').success
+    if appliance.ssh_client.run_command('which scl').success:
+        # We have the scl command. Therefore we need to check the packages.
+        assert appliance.ssh_client.run_command('scl --list | grep -v rh-ruby').success
 
 
 @pytest.mark.manual
