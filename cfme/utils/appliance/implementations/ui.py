@@ -21,9 +21,9 @@ from widgetastic.browser import DefaultPlugin
 from widgetastic.utils import VersionPick
 from widgetastic.widget import Text
 from widgetastic.widget import View
-from widgetastic_patternfly import Modal
 
 from . import Implementation
+from .common import HandleModalsMixin
 from cfme import exceptions
 from cfme.fixtures.pytest_store import store
 from cfme.utils.browser import manager
@@ -31,7 +31,7 @@ from cfme.utils.log import create_sublogger
 from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-from cfme.utils.wait import TimedOutError
+
 
 VersionPick.VERSION_CLASS = Version
 
@@ -231,7 +231,7 @@ class MiqBrowserPlugin(DefaultPlugin):
         self.browser.page_dirty = None
 
 
-class MiqBrowser(Browser):
+class MiqBrowser(Browser, HandleModalsMixin):
     def __init__(self, selenium, endpoint, extra_objects=None):
         extra_objects = extra_objects or {}
         extra_objects.update({
@@ -265,52 +265,6 @@ class MiqBrowser(Browser):
     @property
     def product_version(self):
         return self.appliance.version
-
-    def handle_modal(self, cancel=False, wait=10.0, squash=False, fill=None):
-        try:
-            modal = Modal(parent=self)
-            if wait:
-                wait_for(lambda: modal.is_displayed, num_sec=wait)
-
-            if modal.is_displayed:
-                if fill is not None:
-                    modal.fill(fill)
-
-                if cancel:
-                    self.logger.info('  dismissing')
-                    # modal.dismiss()
-                    modal.cancel()
-                else:
-                    self.logger.info('  accepting')
-                    # modal.accept()
-                    modal.submit()
-
-                return True
-
-        except TimedOutError:
-            self.logger.warning("modal dialog didn't show up")
-            return None
-
-        except Exception:
-            if squash:
-                return False
-            else:
-                raise
-
-    def handle_alert(self, cancel=False, wait=30.0, squash=False, prompt=None, check_present=False,
-                     handle_modal=True, handle_alert=True, **kwargs):
-        results = []
-        if handle_modal:
-            results.append(self.handle_modal(cancel=cancel, wait=wait, squash=squash, **kwargs))
-
-        if handle_alert:
-            results.append(super(MiqBrowser, self).handle_alert(cancel=cancel,
-                                                                wait=wait,
-                                                                squash=squash,
-                                                                prompt=prompt,
-                                                                check_present=check_present))
-
-        return results[0] if results[0] else results[-1]
 
 
 def can_skip_badness_test(fn):
