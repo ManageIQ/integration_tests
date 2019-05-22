@@ -11,7 +11,7 @@ from cfme.configure.access_control import AddUserView
 from cfme.configure.tasks import TasksView
 from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.exceptions import RBACOperationBlocked
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -21,7 +21,7 @@ from cfme.utils.update import update
 
 pytestmark = [
     test_requirements.rbac,
-    pytest.mark.provider(classes=[VMwareProvider], selector=ONE),
+    pytest.mark.provider(classes=[RHEVMProvider], selector=ONE),
     pytest.mark.usefixtures('setup_provider')
 ]
 
