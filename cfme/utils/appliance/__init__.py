@@ -318,6 +318,7 @@ class IPAppliance(object):
     sssd = SystemdService.declare(unit_name='sssd')
     supervisord = SystemdService.declare(unit_name='supervisord')
     db_service = DynaService.declare(service_name_getting_cmd="echo $APPLIANCE_PG_SERVICE")
+    firewalld = SystemdService.declare(unit_name='firewalld')
     db = ApplianceDB.declare()
 
     CONFIG_MAPPING = {
@@ -1035,6 +1036,13 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         # FIXME: properly store ssh clients we made
         store.ssh_clients_to_close.append(ssh_client)
         return ssh_client
+
+    @cached_property
+    def default_iface(self):
+        default_iface_cmd = self.ssh_client.run_command(
+            "ip r | awk '/^default/ { print $5 }'")
+        assert default_iface_cmd.success
+        return default_iface_cmd.output.strip()
 
     @property
     def swap(self):

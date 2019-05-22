@@ -61,8 +61,7 @@ def test_firewalld_running(appliance):
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    result = appliance.ssh_client.run_command('systemctl status firewalld').output
-    assert 'active (running)' in result
+    assert appliance.firewalld.is_active
 
 
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
@@ -110,13 +109,8 @@ def test_service_enabled(appliance, service):
 
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
-@pytest.mark.parametrize('proto,port', [
-    ('tcp', 22),
-    ('tcp', 80),
-    ('tcp', 443),
-])
-def test_iptables_rules(appliance, proto, port):
-    """Verifies key iptable rules are in place
+def test_firewalld_services_are_active(appliance):
+    """Verifies key firewalld services are in place
 
     Polarion:
         assignee: jhenner
@@ -125,22 +119,44 @@ def test_iptables_rules(appliance, proto, port):
         casecomponent: Appliance
         upstream: no
     """
-    # get the current iptables state, nicely formatted for us by iptables-save
-    result = appliance.ssh_client.run_command('iptables-save')
-    # get everything from the input chain
-    input_rules = filter(lambda line: line.startswith('-A IN'), result.output.splitlines())
+    manageiq_zone = "manageiq"
+    result = appliance.ssh_client.run_command(
+        'firewall-cmd --permanent --zone={} --list-services'.format(manageiq_zone))
+    assert {'ssh', 'http', 'https'} <= set(result.output.split())
 
-    # filter to make sure we have a rule that matches the given proto and port
-    def rule_filter(rule):
-        # iptables-save should put all of these in order for us
-        # if not, this can be broken up into its individual components
-        matches = [
-            '-p {proto}',
-            '-m {proto} --dport {port}',
-            '-j ACCEPT'
-        ]
-        return all([match.format(proto=proto, port=port) in rule for match in matches])
-    assert filter(rule_filter, input_rules)
+    default_iface_zone = appliance.ssh_client.run_command(
+        "firewall-cmd --get-zone-of-interface {}".format(appliance.default_iface)
+    ).output.strip()
+    assert default_iface_zone == manageiq_zone
+
+
+@pytest.mark.meta(blockers=[BZ(1712944)])
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+def test_firewalld_active_zone_after_restart(appliance):
+    """Verifies key firewalld active zone survives firewalld restart
+
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/4h
+        testtype: functional
+        casecomponent: Appliance
+        upstream: no
+    """
+    manageiq_zone = "manageiq"
+
+    def get_def_iface_zone():
+        default_iface_zone_cmd = appliance.ssh_client.run_command(
+            "firewall-cmd --get-zone-of-interface {}".format(appliance.default_iface)
+        )
+        assert default_iface_zone_cmd.success
+        return default_iface_zone_cmd.output.strip()
+
+    assert get_def_iface_zone() == manageiq_zone
+
+    assert appliance.firewalld.restart()
+
+    assert get_def_iface_zone() == manageiq_zone
 
 
 # this is based on expected changes tracked in github/ManageIQ/cfme_build repo
