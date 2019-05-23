@@ -174,3 +174,132 @@ def test_webmks_vm_console(request, appliance, provider, vm_obj, configure_webso
         take_screenshot("ConsoleScreenshot")
         vm_console.switch_to_appliance()
         raise
+
+
+@pytest.mark.manual
+def test_webmks_console_matrix():
+    """
+    This testcase is here to reflect testing matrix for webmks consoles. Combinations listed
+    are being tested manually. Originally, there was one testcase for every combination, this
+    approach reduces number of needed testcases.
+
+    Testing matrix:
+        Systems:
+            - fedora latest
+            - rhel 6.x
+            - rhel 7.x
+            - windows 2012
+            - windows 7
+            - windows 10
+        Browsers:
+            - firefox latest
+            - chrome latest
+            - edge latest
+            - explorer 11
+        Providers:
+            - vsphere 6
+            - vsphere 65
+            - vsphere 67
+
+    Importance:
+        High:
+            - fedora latest + firefox, chrome + vsphere 67
+            - rhel 7.x + firefox, chrome + vsphere 67
+            - windows 10 + firefox, chrome, edge + vsphere 67
+        Medium:
+            - everything else
+
+    Testcases:
+        - test_webmks_console_firefox_vsphere67_win10
+        - test_webmks_console_firefox_vsphere67_rhel7x
+        - test_webmks_console_firefox_vsphere67_fedora
+        - test_webmks_console_firefox_vsphere67_win7
+        - test_webmks_console_firefox_vsphere67_win2012
+        - test_webmks_console_firefox_vsphere65_rhel7x
+        - test_webmks_console_firefox_vsphere65_fedora
+        - test_webmks_console_firefox_vsphere65_win2012
+        - test_webmks_console_firefox_vsphere65_win7
+        - test_webmks_console_firefox_vsphere65_win10
+        - test_webmks_console_firefox_vsphere6_win10
+        - test_webmks_console_firefox_vsphere6_win7
+        - test_webmks_console_firefox_vsphere6_win2012
+        - test_webmks_console_firefox_vsphere6_fedora
+        - test_webmks_console_firefox_vsphere6_rhel7x
+        - test_webmks_console_chrome_vsphere67_rhel7x
+        - test_webmks_console_chrome_vsphere67_fedora
+        - test_webmks_console_chrome_vsphere67_win10
+        - test_webmks_console_chrome_vsphere67_win7
+        - test_webmks_console_chrome_vsphere67_win2012
+        - test_webmks_console_chrome_vsphere65_rhel7x
+        - test_webmks_console_chrome_vsphere65_win7
+        - test_webmks_console_chrome_vsphere65_fedora
+        - test_webmks_console_chrome_vsphere65_win10
+        - test_webmks_console_chrome_vsphere65_win2012
+        - test_webmks_console_chrome_vsphere6_win2012
+        - test_webmks_console_chrome_vsphere6_win7
+        - test_webmks_console_chrome_vsphere6_rhel7x
+        - test_webmks_console_chrome_vsphere6_win10
+        - test_webmks_console_chrome_vsphere6_fedora
+        - test_webmks_console_edge_vsphere67_win10
+        - test_webmks_console_edge_vsphere65_win10
+        - test_webmks_console_edge_vsphere6_win10
+        - test_webmks_console_ie11_vsphere67_win2012
+        - test_webmks_console_ie11_vsphere67_win7
+        - test_webmks_console_ie11_vsphere65_win7
+        - test_webmks_console_ie11_vsphere65_win2012
+        - test_webmks_console_ie11_vsphere6_win2012
+        - test_webmks_console_ie11_vsphere6_win7
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        initialEstimate: 2h
+        caseimportance: high
+        setup:
+            1. Login to CFME Appliance as admin.
+            2. On top right click Administrator|EVM -> Configuration.
+            3. Under VMware Console Support section and click on Dropdown in front
+               of "Use" and select "VMware WebMKS".
+            4. Click save at the bottom of the page.
+               This will setup your appliance for using VMware WebMKS Console and not
+               to use VMRC Plug in which is Default when you setup appliance.
+            5. Provision a testing VM.
+        testSteps:
+            1. Navigate to testing VM
+            2. Launch the console by Access -> VM Console
+            3. Make sure the console accepts commands
+            4. Make sure the characters are visible
+        expectedResults:
+            1. VM Details displayed
+            2. Console launched
+            3. Console accepts characters
+            4. Characters not garbled; no visual defect
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_webmks_console_passwordwithspecialchars():
+    """
+    VMware WebMKS Remote Console Test; password with special characters
+
+    Bugzilla:
+        1545927
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: critical
+        initialEstimate: 1/3h
+        setup: On CFME Appliance do the following:
+               1) Login to CFME Appliance as admin.
+               2) On top right click Administrator|EVM -> Configuration.
+               3) Under VMware Console Support section and click on Dropdown in front
+               of "Use" and select "VMware WebMKS".
+               4) Click save at the bottom of the page.
+               This will setup your appliance for using VMware WebMKS Console and not
+               to use VMRC Plug in which is Default when you setup appliance.
+        startsin: 5.8
+    """
+    pass
