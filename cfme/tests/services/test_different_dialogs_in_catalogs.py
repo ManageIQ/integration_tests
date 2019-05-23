@@ -18,7 +18,7 @@ pytestmark = [
                         unblock=lambda provider: not provider.one_of(RHEVMProvider))]),
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
-    test_requirements.service,
+    test_requirements.dialog,
     pytest.mark.long_running,
     pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE,
                          required_fields=[['provisioning', 'template'],

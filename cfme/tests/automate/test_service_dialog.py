@@ -9,7 +9,7 @@ from cfme.utils.update import update
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
-    test_requirements.automate,
+    test_requirements.dialog,
     pytest.mark.tier(3)
 ]
 

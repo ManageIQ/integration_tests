@@ -8,7 +8,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 
 pytestmark = [
     pytest.mark.long_running,
-    test_requirements.service,
+    test_requirements.dialog,
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.meta(server_roles="+automate")
 ]
