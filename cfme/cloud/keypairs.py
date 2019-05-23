@@ -42,7 +42,7 @@ class KeyPairToolbar(View):
 class KeyPairDetailsToolbar(View):
     policy = Dropdown('Policy')
     configuration = Dropdown('Configuration')
-    download = Button(title='Download summary in PDF format')
+    download = Button(title='Print or export summary')
 
 
 class KeyPairDetailsAccordion(View):

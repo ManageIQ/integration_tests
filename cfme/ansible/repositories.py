@@ -60,7 +60,7 @@ class RepositoryDetailsView(RepositoryBaseView):
     class toolbar(View):  # noqa
         refresh = Button(title="Refresh this page")
         configuration = Dropdown("Configuration")
-        download = Button(title="Download summary in PDF format")
+        download = Button(title="Print or export summary")
         policy = Dropdown(text='Policy')
 
     @View.nested

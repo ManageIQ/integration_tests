@@ -44,7 +44,7 @@ class StackDetailsToolbar(View):
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     lifecycle = Dropdown('Lifecycle')
-    download = Button('Download summary in PDF format')
+    download = Button('Print or export summary')
 
 
 class StackSubpageToolbar(View):

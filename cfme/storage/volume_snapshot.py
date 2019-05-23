@@ -41,7 +41,7 @@ class VolumeSnapshotDetailsToolbar(View):
     """The toolbar on the Volume Snapshot detail page"""
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
-    download = Button('Download summary in PDF format')
+    download = Button('Print or export summary')
 
 
 class VolumeSnapshotDetailsEntities(View):

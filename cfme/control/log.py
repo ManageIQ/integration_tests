@@ -14,7 +14,7 @@ class ControlLogView(BaseLoggedInPage):
     title = Text(".//div[@id='main-content']//h1")
     subtitle = Text(".//div[@id='main_div']/h3")
     refresh_button = Button(id="refresh_log")
-    download_button = Button(id="fetch_log")
+    download = Button(id="fetch_log")
 
     @property
     def is_displayed(self):
@@ -22,7 +22,7 @@ class ControlLogView(BaseLoggedInPage):
             self.title.text == "Log" and
             "Last 1000 lines from server" in self.subtitle.text and
             self.refresh_button.is_displayed and
-            self.download_button.is_displayed
+            self.download.is_displayed
         )
 
 

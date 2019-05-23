@@ -61,7 +61,7 @@ class CredentialDetailsView(CredentialsBaseView):
     @View.nested
     class toolbar(View):  # noqa
         configuration = Dropdown("Configuration")
-        download = Button(title="Download summary in PDF format")
+        download = Button(title="Print or export summary")
         policy = Dropdown(text='Policy')
 
     @View.nested

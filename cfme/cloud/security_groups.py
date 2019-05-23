@@ -38,7 +38,7 @@ class SecurityGroupToolbar(View):
 class SecurityGroupDetailsToolbar(View):
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
-    download = Button(title='Download summary in PDF format')
+    download = Button(title='Print or export summary')
 
 
 class SecurityGroupDetailsAccordion(View):

@@ -53,7 +53,7 @@ class ClusterDetailsToolbar(View):
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     monitoring = Dropdown('Monitoring')
-    download = Button('Download summary in PDF format')
+    download = Button('Print or export summary')
 
 
 class ClusterDetailsAccordion(View):

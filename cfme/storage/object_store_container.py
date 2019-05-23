@@ -38,7 +38,7 @@ class ObjectStoreContainerToolbar(View):
 class ObjectStoreContainerDetailsToolbar(View):
     """The toolbar on the Object Store Containers detail page"""
     policy = Dropdown('Policy')
-    download = Button(title='Download summary in PDF format')
+    download = Button(title='Print or export summary')
 
 
 class ObjectStoreContainerDetailsEntities(View):

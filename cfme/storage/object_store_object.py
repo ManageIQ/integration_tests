@@ -37,7 +37,7 @@ class ObjectStoreObjectToolbar(View):
 class ObjectStoreObjectDetailsToolbar(View):
     """The toolbar on the Object Store Object detail page"""
     policy = Dropdown('Policy')
-    download = Button(title='Download summary in PDF format')
+    download = Button(title='Print or export summary')
 
 
 class ObjectStoreObjectDetailsEntities(View):

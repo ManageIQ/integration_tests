@@ -44,7 +44,7 @@ class AvailabilityZoneDetailsToolBar(View):
     """View containing the toolbar widgets"""
     policy = Dropdown('Policy')
     monitoring = Dropdown('Monitoring')
-    download = Button(title='Download summary in PDF format')  # Title attribute, no displayed text
+    download = Button(title='Print or export summary')  # Title attribute, no displayed text
 
     view_selector = View.nested(ItemsToolBarViewSelector)
 
