@@ -10,7 +10,6 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 
-from cfme.base.ui import prepare_server_name
 from cfme.base.ui import ServerDiagnosticsView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -549,8 +548,8 @@ class DiagnosticsCollectLogs(CFMENavigateStep):
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.appliance.server_region_string(),
             "Zone: {} (current)".format(self.appliance.server.zone.description),
-            prepare_server_name("Server: {} [{}] (current)".format(self.appliance.server.name,
-                                self.appliance.server.sid)))
+            "Server: {} [{}] (current)".format(self.appliance.server.name,
+                                self.appliance.server.sid))
         self.prerequisite_view.collectlogs.select()
 
 
@@ -565,8 +564,7 @@ class DiagnosticsCollectLogsSlave(CFMENavigateStep):
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.appliance.server_region_string(),
             "Zone: {} (current)".format(self.appliance.server.zone.description),
-            prepare_server_name("Server: {} [{}]".format(slave_server.name,
-                                int(slave_server.sid))))
+            "Server: {} [{}]".format(slave_server.name, int(slave_server.sid)))
         self.prerequisite_view.collectlogs.select()
 
 

@@ -63,20 +63,6 @@ def address(self):
     return self.appliance.url
 
 
-def prepare_server_name(name):
-    # there is a bug in CF 5.10 UI when it has different number of spaces in different html attrs
-    # this is temporary workaround until BZ(1668849)  is fixed
-    if BZ(1668849).blocks:
-        new_name = re.escape(name)
-        new_name = new_name.replace(r'\ ', r'\s*')
-        new_name = re.compile(new_name)
-    else:
-        import warnings
-        warnings.warn('REMOVE ME: BZ#1668849 and/or revert whole commit')
-        new_name = name
-    return new_name
-
-
 class LoginPage(View):
     flash = FlashMessages('.//div[@id="flash_msg_div"]')
 
@@ -537,21 +523,18 @@ class ServerView(ConfigurationView):
         if not (self.in_configuration and self.accordions.settings.is_displayed):
             return False
 
-        # checking  that tree contains all expected entities
-        currently_selected = self.accordions.settings.tree.currently_selected
-        if not ({self.context['object'].zone.region.settings_string, "Zones",
-                 "Zone: {} (current)".format(self.context['object'].zone.description)} <=
-                set(currently_selected)):
-            return False
-
-        if not (re.match(prepare_server_name(("Server: {name} [{sid}]{current}".format(
+        # check that tree contains all expected entities
+        expected_list = [
+            self.context['object'].zone.region.settings_string,
+            "Zones",
+            "Zone: {} (current)".format(self.context['object'].zone.description),
+            "Server: {name} [{sid}]{current}".format(
                 name=self.context['object'].name,
                 sid=self.context['object'].sid,
-                current='' if self.context['object'] in self.context['object'].slave_servers else
-                ' (current)'))), currently_selected[-1])):
-            return False
+                current='' if self.context['object'] in self.context['object'].slave_servers
+                else ' (current)')]
 
-        return True
+        return (self.accordions.settings.tree.currently_selected == expected_list)
 
 
 @navigator.register(Server, 'Details')
@@ -564,11 +547,10 @@ class Details(CFMENavigateStep):
             self.obj.zone.region.settings_string,
             "Zones",
             "Zone: {} (current)".format(self.obj.appliance.server.zone.description),
-            prepare_server_name("Server: {name} [{sid}]{current}".format(
+            "Server: {name} [{sid}]{current}".format(
                 name=self.obj.appliance.server.name,
                 sid=self.obj.sid,
                 current='' if self.obj in self.obj.slave_servers else ' (current)'))
-        )
         self.prerequisite_view.accordions.settings.tree.click_path(*path)
 
 
@@ -816,20 +798,14 @@ class ServerDiagnosticsView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        currently_selected = self.accordions.diagnostics.tree.currently_selected
-        if not ({self.context['object'].zone.region.settings_string,
-                 "Zone: {} (current)".format(self.context['object'].zone.description)}
-                <= set(currently_selected)):
-            return False
-
-        if not (re.match(prepare_server_name("Server: {name} [{sid}]{current}".format(
-                name=self.context['object'].name,
-                sid=self.context['object'].sid,
-                current='' if self.context['object'] in self.context['object'].slave_servers else
-                ' (current)')), currently_selected[-1])):
-            return False
-
-        return True
+        expected_list = [self.context['object'].zone.region.settings_string,
+            "Zone: {} (current)".format(self.context['object'].zone.description),
+            "Server: {name} [{sid}]{current}".format(
+            name=self.context['object'].name,
+            sid=self.context['object'].sid,
+            current='' if self.context['object'] in self.context['object'].slave_servers
+            else ' (current)')]
+        return (self.accordions.diagnostics.tree.currently_selected == expected_list)
 
 
 class ServerDiagnosticsCollectLogsView(ServerDiagnosticsView):
@@ -847,10 +823,11 @@ class Diagnostics(CFMENavigateStep):
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.obj.zone.region.settings_string,
             "Zone: {} (current)".format(self.obj.zone.description),
-            prepare_server_name("Server: {name} [{sid}]{current}".format(
+            "Server: {name} [{sid}]{current}".format(
                 name=self.obj.appliance.server.name,
                 sid=self.obj.sid,
-                current='' if self.obj in self.obj.slave_servers else ' (current)')))
+                current='' if self.obj in self.obj.slave_servers
+                else ' (current)'))
 
 
 @navigator.register(Server)
@@ -1034,8 +1011,8 @@ class RegionView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        match_string = [self.context['object'].settings_string]
-        return self.accordions.settings.tree.currently_selected == match_string
+        expected_list = [self.context['object'].settings_string]
+        return (self.accordions.settings.tree.currently_selected == expected_list)
 
 
 class RegionChangeNameView(RegionView):
