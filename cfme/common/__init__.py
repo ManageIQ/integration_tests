@@ -458,7 +458,9 @@ class Taggable(TaggableCommonBase):
                 tag_category, tag_name = tag.split(':')
                 category = self.appliance.collections.categories.instantiate(
                     display_name=tag_category)
-                tags.append(category.collections.tags.instantiate(display_name=tag_name.strip()))
+                tags.append(category.collections.tags.instantiate(
+                    display_name=tag_name.strip(),
+                    name=tag_category.strip()))
         return tags
 
 

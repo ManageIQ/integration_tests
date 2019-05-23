@@ -91,6 +91,7 @@ def test_tag_mapping_azure_instances(tagged_vm, map_tags):
             3.
             4. Field value is "My Company Tags Testing: testing"
     """
+    tagged_vm.provider.refresh_provider_relationships()
     view = navigate_to(tagged_vm, 'Details')
 
     def my_company_tags():
@@ -98,7 +99,8 @@ def test_tag_mapping_azure_instances(tagged_vm, map_tags):
     # sometimes it's not updated immediately after provider refresh
     wait_for(
         my_company_tags,
-        timeout=300,
+        timeout=600,
+        delay=45,
         fail_func=view.toolbar.reload.click
     )
     assert view.tag.get_text_of('My Company Tags')[0] == 'Testing: testing'
@@ -210,7 +212,10 @@ def test_mapping_tags(
 
     # check the tag shows up
     provider.refresh_provider_relationships(method='ui')
-    soft_assert('{}: {}'.format(category.name, tag_value) in entity.get_tags())
+    soft_assert(any(
+        tag.category.display_name == category.name and tag.display_name == tag_value
+        for tag in entity.get_tags()
+    ), '{}: {} was not found in tags'.format(category.name, tag_value))
 
     # delete it
     map_tag.delete()
