@@ -742,4 +742,4 @@ class ImportExportCustomReports(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
     def step(self, *args, **kwargs):
-        self.view.import_export.tree.click_path("Import / Export", "Custom Reports")
+        self.prerequisite_view.import_export.tree.click_path("Import / Export", "Custom Reports")

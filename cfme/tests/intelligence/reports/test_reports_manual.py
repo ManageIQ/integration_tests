@@ -201,7 +201,6 @@ def test_reports_manage_report_menu_accordion_with_users():
 
 @pytest.mark.manual
 @test_requirements.report
-@pytest.mark.tier(1)
 def test_report_menus_moving_reports():
     """
     Polarion:

@@ -334,4 +334,4 @@ class ImportExportWidgets(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
     def step(self, *args, **kwargs):
-        self.view.import_export.tree.click_path("Import / Export", "Widgets")
+        self.prerequisite_view.import_export.tree.click_path("Import / Export", "Widgets")
