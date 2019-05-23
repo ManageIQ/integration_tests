@@ -11,6 +11,7 @@ from widgetastic.browser import Browser
 from widgetastic.browser import DefaultPlugin
 
 from . import Implementation
+from .common import HandleModalsMixin
 from cfme import exceptions
 from cfme.fixtures.pytest_store import store
 from cfme.utils.browser import manager
@@ -19,7 +20,7 @@ from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 
-class MiqSSUIBrowser(Browser):
+class MiqSSUIBrowser(HandleModalsMixin, Browser):
     def __init__(self, selenium, endpoint, extra_objects=None):
         extra_objects = extra_objects or {}
         extra_objects.update({
