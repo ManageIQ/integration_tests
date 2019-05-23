@@ -379,16 +379,13 @@ class Method(BaseEntity, Copiable):
 
     @property
     def tree_path(self):
-        if self.browser.product_version < '5.11':
-            location = 'inline'
-        else:
-            location = 'Inline'
-        icon_name_map = {location: 'fa-ruby', 'playbook': 'vendor-ansible'}
+        icon_name_map = {'inline': 'fa-ruby', 'playbook': 'vendor-ansible'}
         if self.display_name:
             return self.parent_obj.tree_path + [
-                (icon_name_map[self.location], '{} ({})'.format(self.display_name, self.name))]
+                (icon_name_map[self.location.lower()], '{} ({})'.format(self.display_name,
+                                                                        self.name))]
         else:
-            return self.parent_obj.tree_path + [(icon_name_map[self.location], self.name)]
+            return self.parent_obj.tree_path + [(icon_name_map[self.location.lower()], self.name)]
 
     @property
     def tree_path_name_only(self):
