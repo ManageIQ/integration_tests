@@ -485,6 +485,9 @@ class ButtonCollection(BaseCollection):
                 view.advanced.enablement.define_exp.click()
 
             view.advanced.enablement.expression.fill_tag(tag=tag, value=enablement["value"])
+            view.advanced.enablement.disabled_text.fill(
+                "Tag - {} : {}".format(enablement["tag"], enablement["value"])
+            )
 
         view.fill({"advanced": {"system": system, "request": request}})
 
