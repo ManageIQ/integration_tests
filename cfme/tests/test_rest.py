@@ -49,7 +49,7 @@ def wait_for_requests(requests):
     wait_for(_finished, num_sec=45, delay=5, message="requests finished")
 
 
-COLLECTIONS_IN_59 = {
+COLLECTIONS_ALL = {
     "actions",
     "alert_definition_profiles",
     "alert_definitions",
@@ -63,21 +63,33 @@ COLLECTIONS_IN_59 = {
     "categories",
     "chargebacks",
     "cloud_networks",
+    "cloud_object_store_containers",
     "cloud_subnets",
+    "cloud_templates",
     "cloud_tenants",
+    "cloud_volume_types",
     "cloud_volumes",
     "clusters",
     "conditions",
     "configuration_script_payloads",
     "configuration_script_sources",
+    "configuration_scripts",
     "container_deployments",
+    "container_groups",
+    "container_images",
     "container_nodes",
     "container_projects",
+    "container_templates",
+    "container_volumes",
     "containers",
+    "conversion_hosts",
     "currencies",
     "custom_button_sets",
     "custom_buttons",
+    "customization_scripts",
+    "customization_templates",
     "data_stores",
+    "enterprises",
     "event_streams",
     "events",
     "features",
@@ -98,7 +110,11 @@ COLLECTIONS_IN_59 = {
     "notifications",
     "orchestration_stacks",
     "orchestration_templates",
+    "physical_chassis",
+    "physical_racks",
     "physical_servers",
+    "physical_storages",
+    "physical_switches",
     "pictures",
     "policies",
     "policy_actions",
@@ -106,6 +122,8 @@ COLLECTIONS_IN_59 = {
     "providers",
     "provision_dialogs",
     "provision_requests",
+    "pxe_images",
+    "pxe_servers",
     "rates",
     "regions",
     "reports",
@@ -114,15 +132,19 @@ COLLECTIONS_IN_59 = {
     "resource_pools",
     "results",
     "roles",
+    "search_filters",
     "security_groups",
     "servers",
     "service_catalogs",
     "service_dialogs",
+    "service_offerings",
     "service_orders",
+    "service_parameters_sets",
     "service_requests",
     "service_templates",
     "services",
     "settings",
+    "switches",
     "tags",
     "tasks",
     "templates",
@@ -133,33 +155,13 @@ COLLECTIONS_IN_59 = {
     "zones",
 }
 
+COLLECTIONS_NOT_IN_510 = {"customization_templates", "pxe_images", "pxe_servers"}
+COLLECTIONS_NOT_IN_511 = {"container_deployments"}
 
-COLLECTIONS_NEWER_THAN_59 = {
-    "cloud_object_store_containers",
-    "cloud_templates",
-    "cloud_volume_types",
-    "configuration_scripts",
-    "container_groups",
-    "container_images",
-    "container_templates",
-    "container_volumes",
-    "conversion_hosts",
-    "customization_scripts",
-    "enterprises",
-    "physical_chassis",
-    "physical_racks",
-    "physical_storages",
-    "physical_switches",
-    "search_filters",
-    "service_offerings",
-    "service_parameters_sets",
-    "switches"
-}
+COLLECTIONS_IN_510 = COLLECTIONS_ALL - COLLECTIONS_NOT_IN_510
+COLLECTIONS_IN_511 = COLLECTIONS_ALL - COLLECTIONS_NOT_IN_511
+COLLECTIONS_IN_UPSTREAM = COLLECTIONS_IN_510
 
-
-COLLECTIONS_IN_UPSTREAM = COLLECTIONS_IN_59
-COLLECTIONS_IN_510 = COLLECTIONS_IN_59 | COLLECTIONS_NEWER_THAN_59
-COLLECTIONS_ALL = COLLECTIONS_IN_59 | COLLECTIONS_IN_510
 # non-typical collections without "id" and "resources", or additional parameters are required
 COLLECTIONS_OMITTED = {"automate_workspaces", "metric_rollups", "settings"}
 
@@ -168,6 +170,7 @@ def _collection_not_in_this_version(appliance, collection_name):
     return (
         (collection_name not in COLLECTIONS_IN_UPSTREAM and appliance.version.is_in_series(
             'upstream')) or
+        (collection_name not in COLLECTIONS_IN_511 and appliance.version.is_in_series('5.11')) or
         (collection_name not in COLLECTIONS_IN_510 and appliance.version.is_in_series('5.10'))
     )
 
@@ -478,15 +481,15 @@ def test_datetime_filtering(appliance, provider):
     older_resources = _get_filtered_resources('<')
     newer_resources = _get_filtered_resources('>')
     matching_resources = _get_filtered_resources('=')
-    # BZ1437529
-    assert matching_resources
+
+    assert not matching_resources
+
     if older_resources:
         last_older = collection.get(id=older_resources[-1]['id'])
         assert last_older.created_on < baseline_vm.created_on
     if newer_resources:
         first_newer = collection.get(id=newer_resources[0]['id'])
-        # BZ1437529
-        assert first_newer.created_on > baseline_vm.created_on
+        assert first_newer.created_on == baseline_vm.created_on
 
 
 def test_date_filtering(appliance, provider):
@@ -675,9 +678,8 @@ def test_attributes_present(appliance, collection_name):
         assert 'id' in resource
         assert 'href' in resource
         assert resource['href'] == '{}/{}'.format(collection._href, resource['id'])
-        if appliance.version >= '5.8':
-            assert 'href_slug' in resource
-            assert resource['href_slug'] == '{}/{}'.format(collection.name, resource['id'])
+        assert 'href_slug' in resource
+        assert resource['href_slug'] == '{}/{}'.format(collection.name, resource['id'])
 
 
 @pytest.mark.parametrize('vendor', ['Microsoft', 'Redhat', 'Vmware'])
