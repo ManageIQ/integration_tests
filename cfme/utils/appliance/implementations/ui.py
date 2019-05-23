@@ -231,7 +231,7 @@ class MiqBrowserPlugin(DefaultPlugin):
         self.browser.page_dirty = None
 
 
-class MiqBrowser(Browser, HandleModalsMixin):
+class MiqBrowser(HandleModalsMixin, Browser):
     def __init__(self, selenium, endpoint, extra_objects=None):
         extra_objects = extra_objects or {}
         extra_objects.update({

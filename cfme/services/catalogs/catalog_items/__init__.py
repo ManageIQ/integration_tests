@@ -5,6 +5,7 @@ import fauxfactory
 from cached_property import cached_property
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
+from widgetastic.utils import VersionPick
 from widgetastic.utils import WaitFillViewStrategy
 from widgetastic.widget import Checkbox
 from widgetastic.widget import ClickableMixin
@@ -30,6 +31,7 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.version import LOWEST
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import FonticonPicker
@@ -334,10 +336,15 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
 
     def delete(self):
         view = navigate_to(self, 'Details')
-        view.configuration.item_select('Remove Catalog Item', handle_alert=True)
+        view.configuration.item_select(VersionPick({LOWEST: 'Remove Catalog Item',
+                                                    '5.11': 'Delete Catalog Item'}),
+                                       handle_alert=True)
+
         view = self.create_view(AllCatalogItemView)
         assert view.is_displayed
-        view.flash.assert_success_message('The selected Catalog Item was deleted')
+        view.flash.assert_success_message(VersionPick(
+            {LOWEST: 'The selected Catalog Item was deleted',
+             '5.11': 'The catalog item "{}" has been successfully deleted'.format(self.name)}))
 
     def add_button_group(self, **kwargs):
         button_name = kwargs.get("text", "gp_{}".format(fauxfactory.gen_alpha()))
