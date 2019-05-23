@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from time import sleep
+
 from selenium.webdriver.support import expected_conditions
 from widgetastic_patternfly import Modal
 
@@ -54,6 +56,9 @@ class HandleModalsMixin(object):
 
         def _check_alert_present():
             if modal.is_displayed:
+                # infinispinner if accept button is clicked too quick in  modal
+                # BZ(1713399)
+                sleep(1)
                 return modal
             return expected_conditions.alert_is_present()
 
