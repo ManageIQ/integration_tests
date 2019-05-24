@@ -255,7 +255,10 @@ class EmbeddedView(View):
 
     @property
     def is_displayed(self):
-        return self.title.text == "Select Item"
+        return (self.title.text == "Select Item" and
+                self.tree.has_path("Datastore", "RedHat (Locked)") and
+                self.tree.has_path("Datastore", "ManageIQ (Locked)")
+                )
 
 
 class MethodAddView(AutomateExplorerView):
