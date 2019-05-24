@@ -1,74 +1,77 @@
-"""Test to validate basic navigations.Later to be replaced with End-to-End functional testing."""
 import time
 
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import rhel7_minimal
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
-from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.provider(
-        classes=[RHEVMProvider],
+        classes=[RHEVMProvider, OpenStackProvider],
         selector=ONE_PER_VERSION,
-        required_flags=['v2v'],
-        scope="module"
+        required_flags=["v2v"],
+        scope="module",
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
         selector=ONE_PER_TYPE,
-        fixture_name='source_provider',
-        required_flags=['v2v'],
-        scope="module"
-    )
+        required_flags=["v2v"],
+        fixture_name="source_provider",
+        scope="module",
+    ),
+    pytest.mark.usefixtures("v2v_provider_setup"),
+    test_requirements.v2v
 ]
 
 
-@pytest.mark.parametrize('form_data_multiple_vm_obj_single_datastore', [['nfs', 'nfs',
+@pytest.mark.tier(1)
+@pytest.mark.parametrize('mapping_data_multiple_vm_obj_single_datastore', [['nfs', 'nfs',
     [rhel7_minimal, rhel7_minimal]]],
     indirect=True)
-@pytest.mark.parametrize('cancel_migration_after_percent', [1, 10, 50, 80])
-def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, host_creds,
-                                        conversion_tags,
-                                        form_data_multiple_vm_obj_single_datastore, soft_assert,
-                                        cancel_migration_after_percent):
+def test_dual_vm_cancel_migration(request, appliance, soft_assert, provider,
+                                  mapping_data_multiple_vm_obj_single_datastore):
     """
     Polarion:
-        assignee: ytale
-        initialEstimate: 1/4h
+        assignee: sshveta
+        initialEstimate: 1/2h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
+        testSteps:
+            1. Add source and target provider
+            2. Create infra map and migration plan
+            3. Start migration plan and cancel.
     """
-    # TODO: Improve this test to cover cancel operation at various stages in migration.
     # This test will make use of migration request details page to track status of migration
-    infrastructure_mapping_collection = appliance.collections.v2v_mappings
-    mapping = infrastructure_mapping_collection.create(
-        form_data_multiple_vm_obj_single_datastore.form_data)
+    cancel_migration_after_percent = 20
+    infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
+    mapping_data = mapping_data_multiple_vm_obj_single_datastore.infra_mapping_data
+    mapping = infrastructure_mapping_collection.create(**mapping_data)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
 
-    migration_plan_collection = appliance.collections.v2v_plans
+    migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()), description="desc_{}"
-        .format(fauxfactory.gen_alphanumeric()), infra_map=mapping.name,
-        vm_list=form_data_multiple_vm_obj_single_datastore.vm_list, start_migration=True)
-    # as migration is started, try to track progress using migration plan request details page
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
-                                                            'All').VIEW.pick())
-    wait_for(func=view.progress_card.is_plan_started, func_args=[migration_plan.name],
-        message="migration plan is starting, be patient please", delay=5, num_sec=150,
-        handle_exception=True, fail_cond=False)
-    view.progress_card.select_plan(migration_plan.name)
-    view = appliance.browser.create_view(navigator.get_class(migration_plan_collection,
-                                                             'Details').VIEW, wait='10s')
-    request_details_list = view.migration_request_details_list
+        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        infra_map=mapping.name,
+        target_provider=provider,
+        vm_list=mapping_data_multiple_vm_obj_single_datastore.vm_list,
+    )
+
+    assert migration_plan.wait_for_state("Started")
+    request_details_list = migration_plan.get_plan_vm_list(wait_for_migration=False)
     vms = request_details_list.read()
 
     def _get_plan_status_and_cancel():
@@ -76,25 +79,17 @@ def test_dual_vm_migration_cancel_migration(request, appliance, v2v_providers, h
         for vm in vms:
             clock_reading1 = request_details_list.get_clock(vm)
             time.sleep(1)  # wait 1 sec to see if clock is ticking
-            logger.info("For vm %s, current message is %s", vm,
-                request_details_list.get_message_text(vm))
-            current_progress_text = request_details_list.get_progress_description(vm)
             if request_details_list.progress_percent(vm) > cancel_migration_after_percent:
                 request_details_list.cancel_migration(vm, confirmed=True)
-            logger.info("For vm %s, current progress description is %s", vm,
-                current_progress_text)
             clock_reading2 = request_details_list.get_clock(vm)
-            logger.info("clock_reading1: %s, clock_reading2:%s", clock_reading1, clock_reading2)
-            logger.info("For vm %s, is currently in progress: %s", vm,
-              request_details_list.is_in_progress(vm))
             migration_plan_in_progress_tracker.append(request_details_list.is_in_progress(vm) and
               (clock_reading1 < clock_reading2))
         return not any(migration_plan_in_progress_tracker)
 
     wait_for(func=_get_plan_status_and_cancel, message="migration plan is in progress,"
-        "be patient please", delay=5, num_sec=3600)
+             "be patient please", delay=5, num_sec=3600)
 
     for vm in vms:
         soft_assert(request_details_list.is_cancelled(vm))
         soft_assert(request_details_list.progress_percent(vm) < 100.0 or
-            "Virtual machine migrated" not in request_details_list.get_message_text(vm))
+                    "Virtual machine migrated" not in request_details_list.get_message_text(vm))
