@@ -49,7 +49,8 @@ def pytest_generate_tests(metafunc):
                 reason='Could not parse z_version from: {}'.format(version)
             )))
         else:
-            if z_version < 1:
+            z_version = z_version - 1
+            if z_version < 0:
                 reason_str = ('No previous z-stream version to update from: {}'
                     .format(version))
                 logger.debug(reason_str)
@@ -59,7 +60,7 @@ def pytest_generate_tests(metafunc):
                 ))
             else:
                 versions.append("{split_ver[0]}.{split_ver[1]}.{z_version}".format(
-                    split_ver=split_ver, z_version=z_version - 1))
+                    split_ver=split_ver, z_version=z_version))
     else:
         versions.append(old_version_pytest_arg)
     metafunc.parametrize('old_version', versions, indirect=True)
