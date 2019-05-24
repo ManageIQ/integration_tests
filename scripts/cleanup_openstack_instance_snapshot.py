@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Cleanup unused instance snapshot from glance repository
 
@@ -7,45 +7,61 @@ Usage: scripts/cleanup_openstack_instance_snapshot.py [optional list of provider
 If no providers specified, it will cleanup all of them.
 
 """
-import sys
+import argparse
 from datetime import datetime
 from datetime import timedelta
 
-import iso8601
 import tzlocal
 
+from cfme.utils.log import add_stdout_handler
+from cfme.utils.log import logger
 from cfme.utils.providers import get_mgmt
 from cfme.utils.providers import list_provider_keys
 
-local_tz = tzlocal.get_localzone()
+LOCAL_TZ = tzlocal.get_localzone()
 GRACE_TIME = timedelta(hours=2)
-time_limit = datetime.now(tz=local_tz) - GRACE_TIME
+TIME_LIMIT = datetime.now(tz=LOCAL_TZ) - GRACE_TIME
+
+# log to stdout too
+add_stdout_handler(logger)
 
 
-def main(*providers):
-    for provider_key in providers:
-        print("Cleaning up {}".format(provider_key))
-        api = get_mgmt(provider_key).gapi
+def parse_cmd_line():
+    parser = argparse.ArgumentParser(argument_default=None)
+    parser.add_argument('--name', default='test_snapshot_',
+                        help='Starting pettern of snaphsot name '
+                             'e.g. --name test_ delete all snapshot starting with test_')
+    parser.add_argument('--providers', default=list_provider_keys("openstack"), nargs='+',
+                        help='List of provider keys e.g. --providers rhos13 rhos12'
+                        )
+    args = parser.parse_args()
+    return args
+
+
+def main(args):
+    """ Cleanup all snapshots name starting with test_snapshot and created by >= 2 hours before
+
+    :param providers: Lists provider keys
+    :return:
+    """
+    for provider_key in args.providers:
+        logger.info("Cleaning up {}".format(provider_key))
+        provider_obj = get_mgmt(provider_key)
+
         try:
-            images = api.images.list()
-        except Exception as e:
-            print("Connect to provider failed:{} {} {}".format(
-                provider_key, type(e).__name__, str(e)))
+            images = provider_obj.list_templates()
+        except Exception:
+            logger.exception("Unable to get the list of templates")
             continue
 
         for img in images:
-            if "test_snapshot_" in img.name \
-                    and iso8601.parse_date(img.created_at) < time_limit:
-                print("Deleting {}".format(img.name))
+            if img.name.startswith(args.name) and img.creation_time < TIME_LIMIT:
+                logger.info("Deleting {}".format(img.name))
                 try:
-                    api.images.delete(img.id)
-                except Exception as e:
-                    print("Delete failed: {} {}".format(type(e).__name__, str(e)))
+                    img.delete()
+                except Exception:
+                    logger.exception("Snapshot {} Deletion failed".format(img.name))
 
 
 if __name__ == "__main__":
-    provs = sys.argv[1:]
-    if provs:
-        main(*provs)
-    else:
-        main(*list_provider_keys("openstack"))
+    main(parse_cmd_line())

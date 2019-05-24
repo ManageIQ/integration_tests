@@ -56,7 +56,7 @@ def full_test_vm(setup_provider, provider, full_template, request):
 def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
     name = fauxfactory.gen_alphanumeric(8)
     return InfraVm.Snapshot(
-        name="snpshot_{}".format(name) if has_name else None,
+        name="test_snapshot_{}".format(name) if has_name else None,
         description="snapshot_{}".format(name) if create_description else None,
         memory=memory,
         parent_vm=test_vm
