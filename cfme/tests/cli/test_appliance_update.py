@@ -240,9 +240,7 @@ def test_update_distributed_webui(ext_appliances_with_providers, appliance,
         wait_for(do_appliance_versions_match, func_args=(appliance, updated_appliance),
                 num_sec=900, delay=20, handle_exception=True,
                 message='Waiting for appliance to update')
-    for updated_appliance in ext_appliances_with_providers:
         updated_appliance.evmserverd.wait_for_running()
-    for updated_appliance in ext_appliances_with_providers:
         updated_appliance.wait_for_web_ui()
 
     # Verify that existing provider can detect new VMs on both apps
