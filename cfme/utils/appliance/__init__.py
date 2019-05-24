@@ -575,6 +575,30 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 log_callback('systemd httpd.service file written')
                 self.httpd.daemon_reload()
 
+    def set_rails_deprecation(self, filename='production.rb', behavior=':notify'):
+        """Update config/environments/production.rb to control rails deprecation message behavior
+
+        Args:
+            file (str): filename to set behavior in - should be production.rb or development.rb
+            behavior (str): formatted string for the desired behavior, common are:
+                            :notify, :log, :raise
+        """
+        if filename not in ['production.rb', 'development.rb']:
+            logger.error('Invalid file passed for setting rails deprecation behavior, skipping')
+            return False
+        file = os.path.join('/var/www/miq/vmdb/config/environments', filename)
+        with self.ssh_client as client:
+            # use sed to replace config.active_support.deprecation = <current> with `behavior`
+            result = client.run_command(
+                r'sed -i "s/config\.active_support\.deprecation = .*/'
+                r'config\.active_support\.deprecation = {}/gm" {}'
+                .format(behavior, file)
+            )
+            # sed returns 0 even if the match didn't work, so checking success doesn't really help
+            # it will return non-0 if the file wasn't found for some reason
+
+        return result.success
+
     # Configuration methods
     @logger_wrap("Configure IPAppliance: {}")
     def configure(self, log_callback=None, **kwargs):
@@ -596,6 +620,10 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                          ``None`` (default ``None``)
             on_openstack: If appliance is running on Openstack provider (default ``False``)
             on_gce: If appliance is running on GCE provider (default ``False``)
+            rails_deprecations: string value for .config.active_support.deprecation in
+                                production.rb. Default productization is ``:notify``
+                                QE default is ``:log``
+                                To hard-fault on rails deprecations, use ``:raise``
         """
 
         log_callback("Configuring appliance {}".format(self.hostname))
@@ -606,6 +634,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         db_address = kwargs.pop('db_address', None)
         on_gce = kwargs.pop('on_gce', False)
         on_openstack = kwargs.pop('on_openstack', False)
+        rails_deprecations = kwargs.pop('rails_deprecations', ':log')
         with self as ipapp:
             ipapp.wait_for_ssh()
 
@@ -622,6 +651,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 ssh_client.run_command('service auditd restart', ensure_host=True)
 
             ipapp.wait_for_ssh()
+
+            self.set_rails_deprecation(behavior=rails_deprecations)
 
             self.fix_httpd_issue(log_callback=log_callback)
 
