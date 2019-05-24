@@ -93,3 +93,73 @@ def test_dual_vm_cancel_migration(request, appliance, soft_assert, provider,
         soft_assert(request_details_list.is_cancelled(vm))
         soft_assert(request_details_list.progress_percent(vm) < 100.0 or
                     "Virtual machine migrated" not in request_details_list.get_message_text(vm))
+
+
+@pytest.mark.tier(2)
+@pytest.mark.parametrize(
+    "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True)
+def test_cancel_migration_attachments(
+        request, appliance, soft_assert, provider, mapping_data_vm_obj_single_datastore):
+    """
+    Test to cancel migration and check attached instance, volume and port is removed from provider
+    Polarion:
+        assignee: ytale
+        initialEstimate: 1/2h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: V2V
+    """
+    infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
+    mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
+    mapping = infrastructure_mapping_collection.create(**mapping_data)
+    vm_obj = mapping_data_vm_obj_single_datastore.vm_list[0]
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+
+    migration_plan_collection = appliance.collections.v2v_migration_plans
+    migration_plan = migration_plan_collection.create(
+        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        infra_map=mapping.name,
+        target_provider=provider,
+        vm_list=[vm_obj])
+
+    migration_plan.wait_for_state("Started")
+    request_details_list = migration_plan.get_plan_vm_list(wait_for_migration=False)
+    vm_detail = request_details_list.read()[0]
+
+    def _get_plan_status_and_cancel():
+        migration_plan_in_progress_tracker = []
+        clock_reading1 = request_details_list.get_clock(vm_detail)
+        time.sleep(1)  # wait 1 sec to see if clock is ticking
+        if request_details_list.progress_percent(vm_detail) > 20:
+            request_details_list.cancel_migration(vm_detail, confirmed=True)
+        clock_reading2 = request_details_list.get_clock(vm_detail)
+        migration_plan_in_progress_tracker.append(
+            request_details_list.is_in_progress(vm_detail) and (clock_reading1 < clock_reading2))
+        return not any(migration_plan_in_progress_tracker)
+
+    wait_for(
+        func=_get_plan_status_and_cancel,
+        delay=10,
+        num_sec=3600,
+        message="migration plan is in progress, be patient please")
+
+    soft_assert(request_details_list.is_cancelled(vm_detail))
+    soft_assert(request_details_list.progress_percent(vm_detail) < 100.0 or
+                "Virtual machine migrated" not in request_details_list.get_message_text(vm_detail))
+
+    # Test1: Check if instance is on openstack/rhevm provider
+    soft_assert(not provider.mgmt.find_vms(name=vm_obj.name))
+
+    if provider.one_of(OpenStackProvider):
+        # Test2: Check if instance has any volumes attached
+        server = provider.mgmt.get_vm(name=vm_obj.name)
+        soft_assert(not server.attached_volumes)
+
+        # Test3: Check if instance has any ports attached
+        soft_assert(provider.mgmt.get_ports(uuid=server.uuid))
