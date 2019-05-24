@@ -239,7 +239,7 @@ def get_apps(appliance, old_version, count, preconfigured, pytest_config):
         yield apps
     except AuthException:
         msg = ('Sprout credentials key or yaml maps missing or invalid,'
-               'unable to provision appliance version %s'.format(str(picked_version)))
+               'unable to provision appliance version {}'.format(picked_version))
         logger.exception(msg)
         pytest.skip(msg)
     finally:
