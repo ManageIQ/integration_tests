@@ -367,6 +367,7 @@ def copy_domains(original_request_class, domain):
 
 
 # Not collected for EC2 in generate_tests above
+@pytest.mark.meta(blockers=[BZ(1713632)])
 @pytest.mark.parametrize("disks", [1, 2])
 @pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
                       override=True)
