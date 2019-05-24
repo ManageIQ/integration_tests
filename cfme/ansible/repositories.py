@@ -342,7 +342,7 @@ class Add(CFMENavigateStep):
         wait_for(
             dropdown.item_enabled,
             func_args=["Add New Repository"],
-            timeout=60,
+            timeout=120,
             fail_func=self.prerequisite_view.browser.refresh
         )
         dropdown.item_select("Add New Repository")
