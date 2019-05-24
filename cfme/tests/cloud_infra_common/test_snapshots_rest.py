@@ -73,7 +73,7 @@ def vm_snapshot(request, appliance, collection, vm):
     snap_desc = 'snapshot {}'.format(uid)
     request.addfinalizer(lambda: _delete_snapshot(vm, snap_desc))
     vm.snapshots.action.create(
-        name='snapshot_{}'.format(uid),
+        name='test_snapshot_{}'.format(uid),
         description=snap_desc,
         memory=False,
     )
