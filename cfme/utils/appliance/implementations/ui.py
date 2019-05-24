@@ -177,10 +177,6 @@ class MiqBrowserPlugin(DefaultPlugin):
 
     def ensure_page_safe(self, timeout='20s'):
         # THIS ONE SHOULD ALWAYS USE JAVASCRIPT ONLY, NO OTHER SELENIUM INTERACTION
-        if (self.browser.page_dirty and self.browser.alert_present and
-                self.browser.get_alert().text == 'Abandon changes?'):
-            self.browser.handle_alert()
-
         def _check():
             result = self.browser.execute_script(self.ENSURE_PAGE_SAFE, silent=True)
             # TODO: Logging
@@ -317,6 +313,11 @@ class CFMENavigateStep(NavigateStep):
                 br.widgetastic.execute_script('miqSparkleOff();', silent=True)
             except:  # noqa
                 pass
+
+        # This alert appears when we try to leave page with some made changes
+        if (br.widgetastic.page_dirty and br.widgetastic.alert_present and
+                br.widgetastic.get_alert().text == 'Abandon changes?'):
+            br.widgetastic.handle_alert()
 
         # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right
         # here

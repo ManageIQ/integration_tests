@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from time import sleep
 
-from selenium.webdriver.support import expected_conditions
+from widgetastic.exceptions import NoAlertPresentException
 from widgetastic_patternfly import Modal
 
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
@@ -13,6 +14,17 @@ class HandleModalsMixin(object):
     def _modal_alert(self):
         return Modal(parent=self)
 
+    @property
+    def alert_present(self):
+        """Checks whether there is any alert present.
+
+        Returns:
+            :py:class:`bool`."""
+        if not self.handles_alerts:
+            return False
+
+        return bool(self.get_alert())
+
     def get_alert(self):
         """Returns the current alert object.
 
@@ -21,8 +33,12 @@ class HandleModalsMixin(object):
         """
         if not self.handles_alerts:
             return None
-        modal = self._modal_alert
-        return modal if modal.is_displayed else self.selenium.switch_to_alert()
+
+        try:
+            return self.selenium.switch_to_alert()
+        except NoAlertPresentException:
+            modal = self._modal_alert
+            return modal if modal.is_displayed else None
 
     def handle_alert(self, cancel=False, wait=30.0, squash=False, prompt=None, check_present=False):
         """Handles an alert popup.
@@ -52,20 +68,13 @@ class HandleModalsMixin(object):
         if not self.handles_alerts:
             return None
 
-        modal = self._modal_alert
-
-        def _check_alert_present():
-            if modal.is_displayed:
-                # infinispinner if accept button is clicked too quick in  modal
-                # BZ(1713399)
-                sleep(1)
-                return modal
-            return expected_conditions.alert_is_present()
-
         # throws timeout exception if not found
         try:
             if wait:
-                wait_for(lambda: _check_alert_present, num_sec=wait)
+                alert = wait_for(self.get_alert, num_sec=wait, fail_condition=None).out
+                if isinstance(alert, Modal) and BZ(1713399):
+                    # infinispinner if accept button is clicked too quick in  modal
+                    sleep(1)
 
             popup = self.get_alert()
             self.logger.info('handling alert: %r', popup.text)
