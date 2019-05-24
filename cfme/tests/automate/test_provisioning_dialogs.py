@@ -10,16 +10,15 @@ from cfme.utils.update import update
 
 @pytest.mark.rhel_testing
 @pytest.mark.sauce
-@test_requirements.automate
+@test_requirements.provision
 @pytest.mark.tier(3)
 def test_provisioning_dialog_crud(appliance):
     """
     Polarion:
-        assignee: ghubale
-        casecomponent: Automate
+        assignee: jhenner
+        casecomponent: Provisioning
         initialEstimate: 1/10h
         caseimportance: medium
-        tags: automate
     """
     # CREATE
     collection = appliance.collections.provisioning_dialogs
@@ -67,11 +66,10 @@ for name in ProvisioningDialogsCollection.ALLOWED_TYPES:
 def test_provisioning_dialogs_sorting(appliance, name, by, order):
     """
     Polarion:
-        assignee: nansari
-        casecomponent: Automate
+        assignee: pvala
+        casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/30h
-        tags: automate
     """
     view = navigate_to(appliance.collections.provisioning_dialogs, 'All')
     view.sidebar.provisioning_dialogs.tree.click_path("All Dialogs", name)

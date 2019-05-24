@@ -46,6 +46,7 @@ def tenant(provider, setup_provider, appliance):
             provider.mgmt.remove_tenant(tenant.name)
 
 
+@test_requirements.multi_tenancy
 def test_tenant_crud(tenant):
     """ Tests tenant create and delete
 
@@ -53,7 +54,7 @@ def test_tenant_crud(tenant):
         test_flag: tenant
 
     Polarion:
-        assignee: rhcf3_machine
+        assignee: nachandr
         initialEstimate: 1/4h
         casecomponent: Cloud
     """
@@ -95,7 +96,7 @@ def child_tenant(new_tenant):
 def check_permissions(appliance, assigned_tenant):
     """This function is used to check user permissions for particular tenant"""
     view = navigate_to(appliance.collections.tenants, 'All')
-    # TODO: (GH-8662) Need to restructure tenant entity by considering RBAC roles
+    # TODO(GH-8662): Need to restructure tenant entity by considering RBAC roles
     for tenant in view.table:
         if tenant["Name"].text == assigned_tenant:
             tenant.click()
@@ -211,3 +212,27 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
     # tenant2(child tenant).
     with user_[1]:
         check_permissions(appliance=appliance, assigned_tenant=child_tenant.name)
+
+
+@test_requirements.quota
+@pytest.mark.tier(2)
+def test_tenant_quota_input_validate(appliance):
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
+    roottenant = appliance.collections.tenants.get_root_tenant()
+    fields = [('cpu', 2.5), ('storage', '1.x'), ('memory', '2.x'), ('vm', 1.5)]
+
+    for field in fields:
+        view = navigate_to(roottenant, 'ManageQuotas')
+        # Enforcing quota for 'My Company' tenant. For example: To put the values of vm quota. It
+        # needs Enforced - True for 'Allocated Number of Virtual Machines'('vm_cb': True) which
+        # enables the value field('vm_txt': 1.5)
+        view.form.fill({'{}_cb'.format(field[0]): True, '{}_txt'.format(field[0]): field[1]})
+        assert view.save_button.disabled
+        # Clean-up of enforced quota
+        view.form.fill({'{}_cb'.format(field[0]): False})
