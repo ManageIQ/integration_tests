@@ -2,6 +2,12 @@
 """Manual VMware Provider tests"""
 import pytest
 
+from cfme import test_requirements
+
+pytestmark = [
+    test_requirements.vmware
+]
+
 
 @pytest.mark.manual
 @pytest.mark.tier(3)

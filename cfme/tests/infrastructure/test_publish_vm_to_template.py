@@ -1,6 +1,7 @@
 import pytest
 from wrapanapi import VmState
 
+from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -11,7 +12,9 @@ from cfme.utils.virtual_machines import deploy_template
 
 pytestmark = [
     pytest.mark.provider([InfraProvider],
-    required_fields=[['templates', 'small_template']])
+    required_fields=[['templates', 'small_template']]),
+    test_requirements.vmware,
+    test_requirements.rhev
 ]
 
 
