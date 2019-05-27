@@ -6,6 +6,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 pytestmark = [test_requirements.rest, pytest.mark.tier(1)]
 
 
+@pytest.mark.ignore_stream("5.10")
 def test_update_advanced_settings_new_key(appliance, request):
     """
     This test case checks updating advanced settings with a new key-value pair
