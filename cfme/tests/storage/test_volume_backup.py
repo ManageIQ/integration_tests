@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.log import logger
 
@@ -91,3 +92,48 @@ def test_storage_volume_backup_delete(backup):
 
     backup.parent.delete(backup)
     assert not backup.exists
+
+
+@pytest.mark.manual
+@test_requirements.storage
+def test_storage_volume_backup_restore_openstack():
+    """
+    Requires:
+    test_storage_volume_backup[openstack]
+    1 . Go back to the summary page of the respective volume.
+    2 . Restore Volume [configuration > Restore from backup of this cloud
+    volume > select cloud volume backup]
+    3. check in Task whether restored or not.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/5h
+        startsin: 5.7
+        upstream: yes
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.storage
+def test_storage_volume_backup_restore_from_backup_page_openstack():
+    """
+    Requires:
+    test_storage_volume_backup[openstack]
+    1) Navigate to Volume Backups [Storage > Block Storage > Volume
+    Backups]
+    2) Select respective Volume backups
+    3) Restore Volume [configuration > Restore backup to cloud volume
+    4) Select Proper Volume to restore
+    5) check in Task whether restored or not.
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/5h
+        startsin: 5.9
+    """
+    pass

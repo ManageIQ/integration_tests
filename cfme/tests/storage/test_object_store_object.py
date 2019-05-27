@@ -4,6 +4,7 @@ import tempfile
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.wait import wait_for
 
@@ -57,3 +58,50 @@ def test_object_add_remove_tag(storage_object):
     storage_object.remove_tag(added_tag)
     tag_available = storage_object.get_tags()
     assert not tag_available
+
+
+@pytest.mark.manual
+@test_requirements.storage
+def test_storage_object_store_object_remove():
+    """
+    Requirs:
+    OpenstackProvider
+    1) Navigate to Object Store Object [Storage > Object Storage > Object
+    Store Objects]
+    2) Select objects for removal
+    3) Remove [Configuration > Remove Object Storage Objects from
+    Inventory]
+    4) Verify object removed or not
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/8h
+        startsin: 5.8
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.storage
+def test_storage_object_store_object_edit_tag_openstack():
+    """
+    Requirs:
+    OpenstackProvider
+    1) Navigate to Object Store Object [Storage > Object Storage > Object
+    Store Objects]
+    2) go to summery pages of any object
+    2) add tag : [Policy > Edit Tags]
+    3) Verify the tag is assigned
+    4) remove tag: [Policy > Edit Tags]
+    5) Verify the tag is removed
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/8h
+        startsin: 5.8
+    """
+    pass

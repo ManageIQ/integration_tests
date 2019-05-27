@@ -1484,28 +1484,6 @@ def test_osp_vmware60_test_vm_migration_with_windows_7():
 
 
 @pytest.mark.manual
-@test_requirements.storage
-def test_storage_volume_backup_restore_openstack():
-    """
-    Requires:
-    test_storage_volume_backup[openstack]
-    1 . Go back to the summary page of the respective volume.
-    2 . Restore Volume [configuration > Restore from backup of this cloud
-    volume > select cloud volume backup]
-    3. check in Task whether restored or not.
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/5h
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware60_test_vm_migration_with_windows_2012_server():
     """
     OSP: vmware60-Test VM migration with Windows 2012 server
@@ -2245,29 +2223,6 @@ def test_service_chargeback_retired_service():
 
 
 @pytest.mark.manual
-@test_requirements.storage
-def test_storage_object_store_object_remove():
-    """
-    Requirs:
-    OpenstackProvider
-    1) Navigate to Object Store Object [Storage > Object Storage > Object
-    Store Objects]
-    2) Select objects for removal
-    3) Remove [Configuration > Remove Object Storage Objects from
-    Inventory]
-    4) Verify object removed or not
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_networking_before_and_after_migration_mac_address():
     """
     OSP: Test networking before and after migration (MAC Address)
@@ -2858,29 +2813,6 @@ def test_api_edit_user_no_groups():
 
 
 @pytest.mark.manual
-@test_requirements.storage
-def test_storage_object_store_container_edit_tag_openstack():
-    """
-    Requirs:
-    OpenstackProvider
-    1) Add Object Store Container
-    2) go to summery pages
-    2) add tag : [Policy > Edit Tags]
-    3) Verify the tag is assigned
-    4) remove tag: [Policy > Edit Tags]
-    5) Verify the tag is removed
-
-    Polarion:
-        assignee: mmojzis
-        caseimportance: medium
-        casecomponent: Cloud
-        initialEstimate: 1/8h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_associated_tags_before_and_after_migration_department_accounting_kind():
     """
     OSP: Test associated tags before and after migration
@@ -3052,30 +2984,6 @@ def test_osp_test_warnings_after_bad_failed_imports():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test warnings after bad/failed imports
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.storage
-def test_storage_object_store_object_edit_tag_openstack():
-    """
-    Requirs:
-    OpenstackProvider
-    1) Navigate to Object Store Object [Storage > Object Storage > Object
-    Store Objects]
-    2) go to summery pages of any object
-    2) add tag : [Policy > Edit Tags]
-    3) Verify the tag is assigned
-    4) remove tag: [Policy > Edit Tags]
-    5) Verify the tag is removed
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.8
     """
     pass
 
@@ -9749,29 +9657,6 @@ def test_osp_vmware67_test_vm_migration_from_iscsi_storage_in_vmware_to_iscsi_on
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware67-Test VM migration from iSCSI Storage in VMware to iSCSI on OSP
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.storage
-def test_storage_volume_backup_restore_from_backup_page_openstack():
-    """
-    Requires:
-    test_storage_volume_backup[openstack]
-    1) Navigate to Volume Backups [Storage > Block Storage > Volume
-    Backups]
-    2) Select respective Volume backups
-    3) Restore Volume [configuration > Restore backup to cloud volume
-    4) Select Proper Volume to restore
-    5) check in Task whether restored or not.
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/5h
-        startsin: 5.9
     """
     pass
 
