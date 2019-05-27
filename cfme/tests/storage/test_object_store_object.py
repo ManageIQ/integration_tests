@@ -64,14 +64,8 @@ def test_object_add_remove_tag(storage_object):
 @test_requirements.storage
 def test_storage_object_store_object_remove():
     """
-    Requirs:
-    OpenstackProvider
-    1) Navigate to Object Store Object [Storage > Object Storage > Object
-    Store Objects]
-    2) Select objects for removal
-    3) Remove [Configuration > Remove Object Storage Objects from
-    Inventory]
-    4) Verify object removed or not
+    Requires:
+        OpenstackProvider
 
     Polarion:
         assignee: mmojzis
@@ -79,6 +73,16 @@ def test_storage_object_store_object_remove():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.8
+        testSteps:
+            1. Navigate to Object Store Object [Storage > Object Storage > Object
+            Store Objects]
+            2. Select objects for removal
+            3. Remove [Configuration > Remove Object Storage Objects from
+            Inventory]
+        expectedResults:
+            1.
+            2.
+            3. Verify object removed or not
     """
     pass
 
@@ -87,21 +91,25 @@ def test_storage_object_store_object_remove():
 @test_requirements.storage
 def test_storage_object_store_object_edit_tag_openstack():
     """
-    Requirs:
-    OpenstackProvider
-    1) Navigate to Object Store Object [Storage > Object Storage > Object
-    Store Objects]
-    2) go to summery pages of any object
-    2) add tag : [Policy > Edit Tags]
-    3) Verify the tag is assigned
-    4) remove tag: [Policy > Edit Tags]
-    5) Verify the tag is removed
+    Requires:
+        OpenstackProvider
 
     Polarion:
-        assignee: mmojzis
+        assignee: anikifor
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.8
+        testSteps:
+            1. Navigate to Object Store Object [Storage > Object Storage > Object
+            Store Objects]
+            2. go to summery pages of any object
+            3. add tag : [Policy > Edit Tags]
+            4. remove tag: [Policy > Edit Tags]
+        expectedResults:
+            1.
+            2.
+            3. Verify the tag is assigned
+            4. Verify the tag is removed
     """
     pass

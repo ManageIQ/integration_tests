@@ -141,20 +141,18 @@ def test_storage_snapshot_create_reset_validation(volume, snapshot_create_from):
 @pytest.mark.tier(1)
 def test_storage_volume_snapshot_crud(volume, provider, snapshot_create_from):
     """ Test storage snapshot crud
-
     prerequisites:
         * Volume
-
-    Steps:
-        * Create new snapshot
-        * Updates that snapshot
-        * Delete delete that snapshot
 
     Polarion:
         assignee: mmojzis
         caseimportance: medium
         initialEstimate: 1/4h
         casecomponent: Cloud
+        testSteps:
+            1. Create new snapshot
+            2. Updates that snapshot
+            3. Delete delete that snapshot
     """
 
     # create new snapshot

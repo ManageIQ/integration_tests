@@ -57,20 +57,24 @@ def test_add_remove_tag(container):
 @test_requirements.storage
 def test_storage_object_store_container_edit_tag_openstack():
     """
-    Requirs:
-    OpenstackProvider
-    1) Add Object Store Container
-    2) go to summery pages
-    2) add tag : [Policy > Edit Tags]
-    3) Verify the tag is assigned
-    4) remove tag: [Policy > Edit Tags]
-    5) Verify the tag is removed
+    Requires:
+        OpenstackProvider
 
     Polarion:
-        assignee: mmojzis
+        assignee: anikifor
         caseimportance: medium
         casecomponent: Cloud
         initialEstimate: 1/8h
         startsin: 5.7
+        testSteps:
+            1. Add Object Store Container
+            2. go to summery pages
+            3. add tag : [Policy > Edit Tags]
+            4. remove tag: [Policy > Edit Tags]
+        expectedResults:
+            1.
+            2.
+            3. Verify the tag is assigned
+            4. Verify the tag is removed
     """
     pass
