@@ -115,7 +115,7 @@ class ButtonFormCommon(AutomateCustomizationView):
                 return [(i,) for i in range(1, 6)]
 
         role_show = BootstrapSelect(id="visibility_typ")
-        roles = RolesSelector()
+        roles = RolesSelector(locator="//label[contains(text(),'User Roles')]/../div/table")
 
     cancel_button = Button("Cancel")
 
@@ -523,6 +523,7 @@ class ButtonCollection(BaseCollection):
 
         if roles:
             view.advanced.role_show.fill("<By Role>")
+            view.advanced.roles.wait_displayed("20s")
             view.advanced.roles.fill(roles)
         else:
             view.advanced.role_show.fill("<To All>")

@@ -5375,27 +5375,31 @@ class AutomateRadioGroup(RadioGroup):
 
 
 class RolesSelector(Widget):
-    """This widget for custom button role selection"""
+    """This widget for custom button role selection
 
-    ROOT = "//div[@class='col-md-10']//table"
+    Args:
+        locator: A locator to the role table `<table>` tag.
+    """
+
+    ROOT = ParametrizedLocator("{@locator}")
     CELLS = "./tbody/tr/td"
     INPUTS = "./tbody/tr/td/input"
 
-    def __init__(self, parent, logger=None):
+    def __init__(self, parent, locator, logger=None):
         Widget.__init__(self, parent=parent, logger=logger)
+        self.locator = locator
 
     @property
-    def _elements(self):
+    def _cell_input_map(self):
         br = self.browser
         return {
-            br.text(name): el
-            for name, el in zip(br.elements(self.CELLS), br.elements(self.INPUTS))
+            br.text(name): el for name, el in zip(br.elements(self.CELLS), br.elements(self.INPUTS))
         }
 
     @property
     def roles(self):
         """all available roles"""
-        return list(self._elements.keys())
+        return list(self._cell_input_map.keys())
 
     @property
     def currently_selected(self):
@@ -5404,31 +5408,35 @@ class RolesSelector(Widget):
 
     def role_selected(self, role):
         """Check role is selected or not"""
-        if isinstance(role, str):
-            role = self._elements.get(role)
+        if isinstance(role, six.string_types):
+            role = self._cell_input_map.get(role)
         return self.browser.is_selected(role)
 
     def select_all(self):
         """Select all available roles"""
-        for el in self._elements.values():
+        for el in self._cell_input_map.values():
             if not self.role_selected(el):
                 el.click()
 
     def clear_all(self):
         """Clear all selected roles"""
-        for el in self._elements.values():
+        for el in self._cell_input_map.values():
             if self.role_selected(el):
                 el.click()
 
     def fill(self, roles):
-        """select roles"""
+        """Select roles"""
         if set(roles) == set(self.currently_selected):
             return False
         for role in roles:
-            el= self._elements.get(role)
+            el = self._cell_input_map.get(role)
             if not self.role_selected(el):
                 el.click()
         return True
+
+    def read(self):
+        """Read selected roles"""
+        return self.currently_selected
 
 
 class InputButton(Input, ClickableMixin):
