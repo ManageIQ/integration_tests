@@ -28,6 +28,7 @@ from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import MultiBoxOrderedSelect
 from widgetastic_manageiq import PotentiallyInvisibleTab
+from widgetastic_manageiq import RolesSelector
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 
@@ -113,7 +114,8 @@ class ButtonFormCommon(AutomateCustomizationView):
             def all(cls, browser):
                 return [(i,) for i in range(1, 6)]
 
-        # TODO: Role Access
+        role_show = BootstrapSelect(id="visibility_typ")
+        roles = RolesSelector()
 
     cancel_button = Button("Cancel")
 
@@ -183,6 +185,7 @@ class ButtonDetailView(AutomateCustomizationView):
     type = SummaryFormItem("Object Attribute", "Type")
 
     show = SummaryFormItem("Visibility", "Show")
+    user_roles = SummaryFormItem("Visibility", "User Roles")
 
     @property
     def is_displayed(self):
@@ -220,9 +223,15 @@ class BaseButton(BaseEntity, Updateable):
                         "hosts": updates.get("hosts"),
                     },
                 },
-                "advanced": {"system": updates.get("system"), "request": updates.get("request")},
+                "advanced": {
+                    "system": updates.get("system"),
+                    "request": updates.get("request"),
+                    "role_show": updates.get("role_show"),
+                    "roles": updates.get("roles"),
+                },
             }
         )
+
         if changed:
             view.save_button.click()
         else:
@@ -293,6 +302,16 @@ class BaseButton(BaseEntity, Updateable):
                 view.submit_button.click()
             view.flash.assert_no_error()
 
+    @property
+    def user_roles(self):
+        """This property use to check roles
+
+        Return: `To All` if button not assigned to specific role else `list` of roles
+        """
+        view = navigate_to(self, "Details")
+        show = view.show.read()
+        return show if show == "To All" else view.user_roles.read().split(", ")
+
 
 @attr.s
 class DefaultButton(BaseButton):
@@ -311,6 +330,7 @@ class DefaultButton(BaseButton):
         attributes: Button attribute
         visibility: Visibility expression in terms of tag and its value
         enablement: Enablement expression in terms of tag and its value
+        roles: button assigned to specific roles
     """
 
     group = attr.ib()
@@ -325,6 +345,7 @@ class DefaultButton(BaseButton):
     attributes = attr.ib(default=None)
     visibility = attr.ib(default=None)
     enablement = attr.ib(default=None)
+    roles = attr.ib(default=None)
 
 
 @attr.s
@@ -346,6 +367,7 @@ class AnsiblePlaybookButton(BaseButton):
         attributes: Button attribute
         visibility: Visibility expression in terms of tag and its value
         enablement: Enablement expression in terms of tag and its value
+        roles: button assigned to specific roles
     """
 
     group = attr.ib()
@@ -362,6 +384,7 @@ class AnsiblePlaybookButton(BaseButton):
     attributes = attr.ib(default=None)
     visibility = attr.ib(default=None)
     enablement = attr.ib(default=None)
+    roles = attr.ib(default=None)
 
 
 @attr.s
@@ -389,6 +412,7 @@ class ButtonCollection(BaseCollection):
         attributes=None,
         visibility=None,
         enablement=None,
+        roles=None,
     ):
         kwargs = {
             "display": display,
@@ -398,6 +422,7 @@ class ButtonCollection(BaseCollection):
             "attributes": attributes,
             "visibility": visibility,
             "enablement": enablement,
+            "roles": roles,
         }
         if type == "Default":
             button_class = DefaultButton
@@ -405,7 +430,7 @@ class ButtonCollection(BaseCollection):
         elif type == "Ansible Playbook":
             button_class = AnsiblePlaybookButton
             args = [group, text, hover, image, playbook_cat_item, inventory]
-            kwargs['hosts'] = hosts
+            kwargs["hosts"] = hosts
         return button_class.from_collection(self, *args, **kwargs)
 
     def create(
@@ -428,6 +453,7 @@ class ButtonCollection(BaseCollection):
         attributes=None,
         visibility=None,
         enablement=None,
+        roles=None,
     ):
         self.group = group or self.parent
 
@@ -495,6 +521,12 @@ class ButtonCollection(BaseCollection):
             for i, dict_ in enumerate(attributes, 1):
                 view.advanced.attribute(i).fill(dict_)
 
+        if roles:
+            view.advanced.role_show.fill("<By Role>")
+            view.advanced.roles.fill(roles)
+        else:
+            view.advanced.role_show.fill("<To All>")
+
         view.add_button.click()
         view = self.create_view(ButtonGroupDetailView, self.group, wait="15s")
         view.flash.assert_no_error()
@@ -519,6 +551,7 @@ class ButtonCollection(BaseCollection):
             attributes=attributes,
             visibility=visibility,
             enablement=enablement,
+            roles=roles,
         )
 
 
@@ -648,8 +681,7 @@ class NewButtonGroupView(ButtonGroupFormCommon):
 
     @property
     def is_displayed(self):
-        ver = self.browser.appliance.version
-        expected_title = "Adding a new {} Group".format("Buttons" if ver < "5.10" else "Button")
+        expected_title = "Adding a new {} Group".format("Button")
         return (
             self.in_customization
             and self.title.text == expected_title
@@ -668,8 +700,7 @@ class EditButtonGroupView(ButtonGroupFormCommon):
 
     @property
     def is_displayed(self):
-        ver = self.browser.appliance.version
-        expected_title = "Editing {} Group".format("Buttons" if ver < "5.10" else "Button")
+        expected_title = "Editing {} Group".format("Button")
 
         return (
             self.in_customization
