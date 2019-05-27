@@ -345,23 +345,6 @@ def test_reconfigure_service_fields_empty_after_deploying_service():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_default_view_settings_should_apply_for_service_catalogs():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1553337
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_order_service_after_deleting_provider():
     """
     Polarion:

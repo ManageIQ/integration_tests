@@ -254,6 +254,7 @@ class DefaultViewsForm(View):
         catalog_items = ViewButtonGroup('Services', 'Catalog Items')
         templates = ViewButtonGroup('Services', 'Templates & Images')
         vms_instances = ViewButtonGroup('Services', 'VMs & Instances')
+        service_catalogs = ViewButtonGroup('Services', 'Service Catalogs')
 
     @View.nested
     class containers(View):                                                             # noqa
@@ -478,6 +479,7 @@ class DefaultViews(Updateable, NavigatableMixin):
                                                'configuration_management_providers'],
         'VMs': ['infrastructure', 'vms'],
         'My Services': ['services', 'my_services'],
+        'Service Catalogs': ['services', 'service_catalogs'],
         'Catalog Items': ['services', 'catalog_items'],
         'Templates & Images': ['services', 'templates'],
         'VMs & Instances': ['services', 'vms_instances'],

@@ -7,6 +7,7 @@ from six import string_types
 from cfme import test_requirements
 from cfme.exceptions import ItemNotFound
 from cfme.services.myservice import MyService
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.workloads import TemplatesImages
 from cfme.services.workloads import VmsInstances
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -21,12 +22,13 @@ pytestmark = [pytest.mark.tier(3),
 # due to navmazing or collections. all items have to be put back once navigation change is fully
 # done
 
-gtl_params = {
+GTL_PARAMS = {
     'Infrastructure Providers': 'infra_providers',  # collection name
     'VMs': 'infra_vms',  # collection name
     'My Services': MyService,
     'VMs & Instances': VmsInstances,
-    'Templates & Images': TemplatesImages
+    'Templates & Images': TemplatesImages,
+    'Service Catalogs': ServiceCatalogs
 }
 
 
@@ -89,8 +91,11 @@ def test_default_view_infra_reset(appliance):
     assert not view.tabs.default_views.reset.disabled
 
 
-@pytest.mark.parametrize('group_name', gtl_params.keys(), scope="module")
+@pytest.mark.parametrize('group_name', GTL_PARAMS.keys(), scope="module")
 @pytest.mark.parametrize('view', ['List View', 'Tile View', 'Grid View'])
+@pytest.mark.uncollectif(
+    lambda view, group_name: view == "Grid View" and group_name == "Service Catalogs"
+)
 def test_infra_default_view(appliance, group_name, view):
     """This test case changes the default view of an infra related page and asserts the change.
 
@@ -100,8 +105,11 @@ def test_infra_default_view(appliance, group_name, view):
         caseimportance: high
         initialEstimate: 1/10h
         tags: settings
+
+    Bugzilla:
+        1553337
     """
-    page = _get_page(gtl_params[group_name], appliance)
+    page = _get_page(GTL_PARAMS[group_name], appliance)
     default_views = appliance.user.my_settings.default_views
     old_default = default_views.get_default_view(group_name)
     default_views.set_default_view(group_name, view)
