@@ -5374,5 +5374,62 @@ class AutomateRadioGroup(RadioGroup):
         return False
 
 
+class RolesSelector(Widget):
+    """This widget for custom button role selection"""
+
+    ROOT = "//div[@class='col-md-10']//table"
+    CELLS = "./tbody/tr/td"
+    INPUTS = "./tbody/tr/td/input"
+
+    def __init__(self, parent, logger=None):
+        Widget.__init__(self, parent=parent, logger=logger)
+
+    @property
+    def _elements(self):
+        br = self.browser
+        return {
+            br.text(name): el
+            for name, el in zip(br.elements(self.CELLS), br.elements(self.INPUTS))
+        }
+
+    @property
+    def roles(self):
+        """all available roles"""
+        return list(self._elements.keys())
+
+    @property
+    def currently_selected(self):
+        """Currently selected roles"""
+        return [r for r in self.roles if self.role_selected(r)]
+
+    def role_selected(self, role):
+        """Check role is selected or not"""
+        if isinstance(role, str):
+            role = self._elements.get(role)
+        return self.browser.is_selected(role)
+
+    def select_all(self):
+        """Select all available roles"""
+        for el in self._elements.values():
+            if not self.role_selected(el):
+                el.click()
+
+    def clear_all(self):
+        """Clear all selected roles"""
+        for el in self._elements.values():
+            if self.role_selected(el):
+                el.click()
+
+    def fill(self, roles):
+        """select roles"""
+        if set(roles) == set(self.currently_selected):
+            return False
+        for role in roles:
+            el= self._elements.get(role)
+            if not self.role_selected(el):
+                el.click()
+        return True
+
+
 class InputButton(Input, ClickableMixin):
     pass
