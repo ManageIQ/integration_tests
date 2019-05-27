@@ -19,8 +19,8 @@ pytestmark = [
 def report(appliance):
     report = appliance.collections.reports.instantiate(
         type="Configuration Management",
-        subtype="Hosts",
-        menu_name="Virtual Infrastructure Platforms",
+        subtype="Virtual Machines",
+        menu_name="Guest OS Information - any OS",
     ).queue(wait_for_finish=True)
     yield report
     if report.exists:
