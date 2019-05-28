@@ -223,7 +223,11 @@ class ZoneCollection(BaseCollection, sentaku.modeling.ElementMixin):
         parent = self.filters.get('parent')
         for zone in zone_collection:
             zone.reload(attributes=['region_number'])
-            if parent and zone.region_number != parent.number:
+            # starting in 5.11 there's a maintenance zone that is not shown in the UI but
+            # is visible in API. We need to skip it for the correct navigation.
+            # https://bugzilla.redhat.com/show_bug.cgi?id=1455145
+            maintenance = 'Maintenance Zone'
+            if (parent and zone.region_number != parent.number) or zone.description == maintenance:
                 continue
             zones.append(self.instantiate(
                 name=zone.name, description=zone.description, id=zone.id
